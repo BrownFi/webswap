@@ -1,4 +1,4 @@
-import { addLiquidity, Currency, currencyEquals, ETHER, TokenAmount, WETH } from '@brownfi/sdk'
+import { addLiquidity, Currency, currencyEquals, TokenAmount, WETH } from '@brownfi/sdk'
 import React, { useCallback, useContext, useState } from 'react'
 import { Plus } from 'react-feather'
 import ReactGA from 'react-ga'
