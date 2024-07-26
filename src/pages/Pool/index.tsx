@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from 'react'
 import styled, { ThemeContext } from 'styled-components'
-import { Pair, JSBI } from '@brownfi/sdk'
+import { Pair, JSBI, toV2LiquidityToken } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
 import { SwapPoolTabs } from '../../components/NavigationTabs'
 
@@ -16,7 +16,7 @@ import { AutoColumn } from '../../components/Column'
 
 import { useActiveWeb3React } from '../../hooks'
 import { usePairs } from '../../data/Reserves'
-import { toV2LiquidityToken, useTrackedTokenPairs } from '../../state/user/hooks'
+import { useTrackedTokenPairs } from '../../state/user/hooks'
 import { Dots } from '../../components/swap/styleds'
 import { CardSection, DataCard, CardNoise, CardBGImage } from '../../components/earn/styled'
 import { useStakingInfo } from '../../state/stake/hooks'
