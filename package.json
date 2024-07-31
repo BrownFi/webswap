@@ -1,9 +1,11 @@
 {
-  "name": "@uniswap/interface",
-  "description": "Uniswap Interface",
+  "name": "@brownfi/interface",
+  "description": "Brownfi Interface",
   "homepage": ".",
   "private": true,
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.21.4",
+    "@babel/preset-env": "^7.21.5",
     "@brownfi/sdk": "../brownfi-tool/dist",
     "@ethersproject/experimental": "^5.0.1",
     "@popperjs/core": "^2.4.4",
@@ -26,8 +28,8 @@
     "@types/styled-components": "^5.1.0",
     "@types/testing-library__cypress": "^5.0.5",
     "@types/wcag-contrast": "^3.0.0",
-    "@typescript-eslint/eslint-plugin": "^2.31.0",
-    "@typescript-eslint/parser": "^2.31.0",
+    "@typescript-eslint/eslint-plugin": "5.56.0",
+    "@typescript-eslint/parser": "5.56.0",
     "@uniswap/governance": "^1.0.2",
     "@uniswap/liquidity-staker": "^1.0.2",
     "@uniswap/merkle-distributor": "1.0.1",
@@ -38,7 +40,6 @@
     "@web3-react/fortmatic-connector": "^6.0.9",
     "@web3-react/injected-connector": "^6.0.7",
     "@web3-react/portis-connector": "^6.0.9",
-    "@web3-react/walletconnect-connector": "^6.1.1",
     "@web3-react/walletlink-connector": "^6.0.9",
     "ajv": "^6.12.3",
     "cids": "^1.0.0",
@@ -64,10 +65,10 @@
     "polished": "^3.3.2",
     "prettier": "^1.17.0",
     "qs": "^6.9.4",
-    "react": "^16.13.1",
+    "react": "^17.0.1",
     "react-confetti": "^6.0.0",
     "react-device-detect": "^1.6.2",
-    "react-dom": "^16.13.1",
+    "react-dom": "^17.0.1",
     "react-feather": "^2.0.8",
     "react-ga": "^2.5.7",
     "react-i18next": "^10.7.0",
@@ -75,7 +76,7 @@
     "react-popper": "^2.2.3",
     "react-redux": "^7.2.0",
     "react-router-dom": "^5.0.0",
-    "react-scripts": "^3.4.1",
+    "react-scripts": "3.4.1",
     "react-spring": "^8.0.27",
     "react-use-gesture": "^6.0.14",
     "react-virtualized-auto-sizer": "^1.0.2",
@@ -85,14 +86,15 @@
     "serve": "^11.3.2",
     "start-server-and-test": "^1.11.0",
     "styled-components": "^4.2.0",
-    "typescript": "^3.8.3",
+    "typescript": "4.9.5",
     "use-count-up": "^2.2.5",
     "wcag-contrast": "^3.0.0",
     "workbox-core": "^6.1.0",
     "workbox-expiration": "^6.1.0",
     "workbox-precaching": "^6.1.0",
     "workbox-routing": "^6.1.0",
-    "workbox-strategies": "^6.1.0"
+    "workbox-strategies": "^6.1.0",
+    "customize-cra": "^1.0.0"
   },
   "scripts": {
     "start": "npm install && react-scripts start",
@@ -108,21 +110,16 @@
       "node_modules"
     ]
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
+  ],
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@uniswap/default-token-list": "^2.0.0",
-    "@uniswap/sdk": "^3.0.3"
+    "@uniswap/sdk": "^3.0.3",
+    "@walletconnect/ethereum-provider": "2.8.1",
+    "@walletconnect/modal": "2.4.7"
   }
 }
