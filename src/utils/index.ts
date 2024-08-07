@@ -17,17 +17,27 @@ export function isAddress(value: any): string | false {
   }
 }
 
-const ETHERSCAN_PREFIXES: { [chainId in ChainId]: string } = {
-  1: '',
-  [ChainId.SEPOLIA]: 'sepolia.'
-}
-
 export function getEtherscanLink(
   chainId: ChainId,
   data: string,
   type: 'transaction' | 'token' | 'address' | 'block'
 ): string {
-  const prefix = `https://${ETHERSCAN_PREFIXES[chainId] || ETHERSCAN_PREFIXES[1]}etherscan.io`
+  let prefix: string
+
+  switch (chainId) {
+    case ChainId.SEPOLIA:
+      prefix = 'https://sepolia.etherscan.io'
+      break
+    case ChainId.SN_MAIN:
+      prefix = 'https://starkscan.co/'
+      break
+    case ChainId.SN_SEPOLIA:
+      prefix = 'https://sepolia.starkscan.co/'
+      break
+    default:
+      prefix = 'https://etherscan.io'
+      break
+  }
 
   switch (type) {
     case 'transaction': {

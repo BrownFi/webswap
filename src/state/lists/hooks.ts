@@ -39,7 +39,9 @@ export type TokenAddressMap = Readonly<
  */
 const EMPTY_LIST: TokenAddressMap = {
   [ChainId.SEPOLIA]: {},
-  [ChainId.MAINNET]: {}
+  [ChainId.MAINNET]: {},
+  [ChainId.SN_MAIN]: {},
+  [ChainId.SN_SEPOLIA]: {}
 }
 
 const listCache: WeakMap<TokenList, TokenAddressMap> | null =
@@ -94,7 +96,9 @@ export function useAllLists(): {
 function combineMaps(map1: TokenAddressMap, map2: TokenAddressMap): TokenAddressMap {
   return {
     1: { ...map1[1], ...map2[1] },
-    [ChainId.SEPOLIA]: { ...map1[ChainId.SEPOLIA], ...map2[ChainId.SEPOLIA] }
+    [ChainId.SEPOLIA]: { ...map1[ChainId.SEPOLIA], ...map2[ChainId.SEPOLIA] },
+    [ChainId.SN_SEPOLIA]: { ...map1[ChainId.SN_SEPOLIA], ...map2[ChainId.SN_SEPOLIA] },
+    [ChainId.SN_MAIN]: { ...map1[ChainId.SN_MAIN], ...map2[ChainId.SN_MAIN] }
   }
 }
 
