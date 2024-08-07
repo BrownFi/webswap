@@ -194,7 +194,7 @@ export default function RemoveLiquidity({
       setAttemptingTxn(true)
       const response = await removeLiquidity(
         chainId,
-        library,
+        library as any,
         account,
         parsedAmounts,
         currencyA,

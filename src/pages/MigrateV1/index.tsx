@@ -24,7 +24,10 @@ export default function MigrateV1() {
   const { account, chainId } = useActiveWeb3React()
 
   const [tokenSearch, setTokenSearch] = useState<string>('')
-  const handleTokenSearchChange = useCallback(e => setTokenSearch(e.target.value), [setTokenSearch])
+  const handleTokenSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => setTokenSearch(e.target.value),
+    [setTokenSearch]
+  )
 
   // automatically add the search token
   const token = useToken(tokenSearch)

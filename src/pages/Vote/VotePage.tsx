@@ -17,7 +17,6 @@ import {
   useUserVotesAsOfBlock
 } from '../../state/governance/hooks'
 import { DateTime } from 'luxon'
-import ReactMarkdown from 'react-markdown'
 import VoteModal from '../../components/vote/VoteModal'
 import { JSBI, TokenAmount } from '@brownfi/sdk'
 import { useActiveWeb3React } from '../../hooks'
@@ -89,11 +88,6 @@ const Progress = styled.div<{ status: 'for' | 'against'; percentageString?: stri
   width: ${({ percentageString }) => percentageString};
 `
 
-const MarkDownWrapper = styled.div`
-  max-width: 640px;
-  overflow: hidden;
-`
-
 const WrapSmall = styled(RowBetween)`
   ${({ theme }) => theme.mediaWidth.upToSmall`
     align-items: flex-start;
@@ -102,10 +96,6 @@ const WrapSmall = styled(RowBetween)`
 `
 
 const DetailText = styled.div`
-  word-break: break-all;
-`
-
-const ProposerAddressLink = styled(ExternalLink)`
   word-break: break-all;
 `
 
@@ -293,20 +283,6 @@ export default function VotePage({
               </DetailText>
             )
           })}
-        </AutoColumn>
-        <AutoColumn gap="md">
-          <TYPE.mediumHeader fontWeight={600}>Description</TYPE.mediumHeader>
-          <MarkDownWrapper>
-            <ReactMarkdown source={proposalData?.description} />
-          </MarkDownWrapper>
-        </AutoColumn>
-        <AutoColumn gap="md">
-          <TYPE.mediumHeader fontWeight={600}>Proposer</TYPE.mediumHeader>
-          <ProposerAddressLink
-            href={proposalData?.proposer && chainId ? getEtherscanLink(chainId, proposalData?.proposer, 'address') : ''}
-          >
-            <ReactMarkdown source={proposalData?.proposer} />
-          </ProposerAddressLink>
         </AutoColumn>
       </ProposalInfo>
     </PageWrapper>

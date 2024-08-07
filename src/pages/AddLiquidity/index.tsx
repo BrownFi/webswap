@@ -133,7 +133,7 @@ export default function AddLiquidity({
       setAttemptingTxn(true)
       const response = await addLiquidity(
         chainId,
-        library,
+        library as any,
         account,
         parsedAmountA,
         parsedAmountB,

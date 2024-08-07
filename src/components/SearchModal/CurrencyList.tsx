@@ -182,7 +182,7 @@ export default function CurrencyList({
   } = useAllInactiveTokens()
 
   const Row = useCallback(
-    ({ data, index, style }) => {
+    ({ data, index, style }: any) => {
       const currency: Currency = data[index]
       const isSelected = Boolean(selectedCurrency && currencyEquals(selectedCurrency, currency))
       const otherSelected = Boolean(otherCurrency && currencyEquals(otherCurrency, currency))

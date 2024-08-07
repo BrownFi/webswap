@@ -49,7 +49,7 @@ export function useSwapCallback(
           allowedSlippage,
           recipient,
           chainId,
-          library,
+          library as any,
           deadline as any
         )
         const inputSymbol = trade.inputAmount.currency.symbol

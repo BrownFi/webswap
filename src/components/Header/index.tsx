@@ -30,6 +30,7 @@ import { Dots } from '../swap/styleds'
 import Modal from '../Modal'
 import UniBalanceContent from './UniBalanceContent'
 import usePrevious from '../../hooks/usePrevious'
+import SelectChain from './SelectChain'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -354,6 +355,7 @@ export default function Header() {
         </HeaderLinks>
       </HeaderRow>
       <HeaderControls>
+        <SelectChain />
         <HeaderElement>
           <HideSmall>
             {chainId && NETWORK_LABELS[chainId] && (

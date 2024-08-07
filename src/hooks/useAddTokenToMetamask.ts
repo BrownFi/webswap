@@ -19,8 +19,6 @@ export default function useAddTokenToMetamask(
         .request({
           method: 'wallet_watchAsset',
           params: {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-            //@ts-ignore // need this for incorrect ethers provider type
             type: 'ERC20',
             options: {
               address: token.address,
@@ -29,7 +27,7 @@ export default function useAddTokenToMetamask(
               image: getTokenLogoURL(token.address)
             }
           }
-        })
+        } as any)
         .then(success => {
           setSuccess(success)
         })

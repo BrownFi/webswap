@@ -9,7 +9,7 @@ import { calculateGasMargin } from '../../utils'
 import { TransactionResponse } from '@ethersproject/providers'
 import { useTransactionAdder } from '../transactions/hooks'
 import { useState, useEffect, useCallback } from 'react'
-import { abi as GOV_ABI } from '@uniswap/governance/build/GovernorAlpha.json'
+import GOV_ABI from '@uniswap/governance/build/GovernorAlpha.json'
 
 interface ProposalDetail {
   target: string
@@ -63,7 +63,7 @@ export function useDataFromEventLogs() {
 
   // create filter for these specific events
   const filter = { ...govContract?.filters?.['ProposalCreated'](), fromBlock: 0, toBlock: 'latest' }
-  const eventParser = new ethers.utils.Interface(GOV_ABI)
+  const eventParser = new ethers.utils.Interface(GOV_ABI.abi)
 
   useEffect(() => {
     async function fetchData() {

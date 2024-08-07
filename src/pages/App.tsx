@@ -74,6 +74,7 @@ function TopLevelModals() {
 }
 
 export default function App() {
+  console.log(process.env)
   return (
     <Suspense fallback={null}>
       <Route component={GoogleAnalyticsReporter} />
