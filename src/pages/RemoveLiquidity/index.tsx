@@ -197,8 +197,6 @@ export default function RemoveLiquidity({
         library as any,
         account,
         parsedAmounts,
-        currencyA,
-        currencyB,
         tokenA,
         tokenB,
         deadline as any,

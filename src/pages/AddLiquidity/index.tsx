@@ -137,8 +137,6 @@ export default function AddLiquidity({
         account,
         parsedAmountA,
         parsedAmountB,
-        currencyA,
-        currencyB,
         deadline as any,
         noLiquidity,
         allowedSlippage
