@@ -10,7 +10,7 @@ import { ArrowLeft, AlertTriangle } from 'react-feather'
 import { transparentize } from 'polished'
 import useTheme from 'hooks/useTheme'
 import { ButtonPrimary } from 'components/Button'
-import { SectionBreak } from 'components/swap/styleds'
+// import { SectionBreak } from 'components/swap/styleds'
 import { useAddUserToken } from 'state/user/hooks'
 import { getEtherscanLink } from 'utils'
 import { useActiveWeb3React } from 'hooks'
@@ -33,7 +33,7 @@ const WarningWrapper = styled(Card)<{ highWarning: boolean }>`
 
 const AddressText = styled(TYPE.blue)`
   font-size: 12px;
-
+  color: ${({ theme }) => theme.greenMain};
   ${({ theme }) => theme.mediaWidth.upToSmall`
     font-size: 10px;
 `}
@@ -67,24 +67,28 @@ export function ImportToken({ tokens, onBack, onDismiss, handleCurrencySelect }:
     <Wrapper>
       <PaddedColumn gap="14px" style={{ width: '100%', flex: '1 1' }}>
         <RowBetween>
-          {onBack ? <ArrowLeft style={{ cursor: 'pointer' }} onClick={onBack} /> : <div></div>}
-          <TYPE.mediumHeader>Import {tokens.length > 1 ? 'Tokens' : 'Token'}</TYPE.mediumHeader>
-          {onDismiss ? <CloseIcon onClick={onDismiss} /> : <div></div>}
+          {onBack ? <ArrowLeft style={{ cursor: 'pointer' }} onClick={onBack} color="white" /> : <div></div>}
+          <TYPE.mediumHeader color={'white'} fontWeight={'bold'}>
+            Import {tokens.length > 1 ? 'Tokens' : 'Token'}
+          </TYPE.mediumHeader>
+          {onDismiss ? <CloseIcon onClick={onDismiss} color="white" /> : <div></div>}
         </RowBetween>
       </PaddedColumn>
-      <SectionBreak />
+      {/* <SectionBreak /> */}
       <PaddedColumn gap="md">
         {tokens.map(token => {
           const list = chainId && inactiveTokenList?.[chainId]?.[token.address]?.list
           return (
-            <Card backgroundColor={theme.bg2} key={'import' + token.address} className=".token-warning-container">
+            <Card backgroundColor={'#323038'} key={'import' + token.address} className=".token-warning-container">
               <AutoColumn gap="10px">
                 <AutoRow align="center">
                   <CurrencyLogo currency={token} size={'24px'} />
-                  <TYPE.body ml="8px" mr="8px" fontWeight={500}>
+                  <TYPE.body ml="8px" mr="8px" fontWeight={500} fontSize="16px" color="white">
                     {token.symbol}
                   </TYPE.body>
-                  <TYPE.darkGray fontWeight={300}>{token.name}</TYPE.darkGray>
+                  <TYPE.darkGray fontWeight={500} fontSize={'12px'} color={'white'} opacity={0.5}>
+                    {token.name}
+                  </TYPE.darkGray>
                 </AutoRow>
                 {chainId && (
                   <ExternalLink href={getEtherscanLink(chainId, token.address, 'address')}>

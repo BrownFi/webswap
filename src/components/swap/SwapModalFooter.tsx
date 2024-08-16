@@ -42,15 +42,15 @@ export default function SwapModalFooter({
 
   return (
     <>
-      <AutoColumn gap="0px">
-        <RowBetween align="center">
-          <Text fontWeight={400} fontSize={14} color={theme.text2}>
+      <AutoColumn gap="8px">
+        <RowBetween align="center" className="!mb-[4px]">
+          <Text fontWeight={500} fontSize={14} color={theme.white}>
             Price
           </Text>
           <Text
             fontWeight={500}
             fontSize={14}
-            color={theme.text1}
+            color={'white'}
             style={{
               justifyContent: 'center',
               alignItems: 'center',
@@ -68,7 +68,7 @@ export default function SwapModalFooter({
 
         <RowBetween>
           <RowFixed>
-            <TYPE.black fontSize={14} fontWeight={400} color={theme.text2}>
+            <TYPE.black fontSize={14} fontWeight={500} color={theme.white}>
               {trade.tradeType === TradeType.EXACT_INPUT ? 'Minimum received' : 'Maximum sold'}
             </TYPE.black>
             <QuestionHelper text="Your transaction will revert if there is a large, unfavorable price movement before it is confirmed." />
@@ -88,7 +88,7 @@ export default function SwapModalFooter({
         </RowBetween>
         <RowBetween>
           <RowFixed>
-            <TYPE.black color={theme.text2} fontSize={14} fontWeight={400}>
+            <TYPE.black color={theme.white} fontSize={14} fontWeight={500}>
               Price Impact
             </TYPE.black>
             <QuestionHelper text="The difference between the market price and your price due to trade size." />
@@ -97,7 +97,7 @@ export default function SwapModalFooter({
         </RowBetween>
         <RowBetween>
           <RowFixed>
-            <TYPE.black fontSize={14} fontWeight={400} color={theme.text2}>
+            <TYPE.black fontSize={14} fontWeight={500} color={theme.white}>
               Liquidity Provider Fee
             </TYPE.black>
             <QuestionHelper text="A portion of each trade (0.30%) goes to liquidity providers as a protocol incentive." />

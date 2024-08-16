@@ -14,7 +14,7 @@ import { useIsUserAddedToken, useIsTokenActive } from 'hooks/Tokens'
 import { CheckCircle } from 'react-feather'
 
 const TokenSection = styled.div<{ dim?: boolean }>`
-  padding: 4px 20px;
+  padding: 4px 40px;
   height: 56px;
   display: grid;
   grid-template-columns: auto minmax(auto, 1fr) auto;
@@ -70,9 +70,13 @@ export default function ImportRow({
       <CurrencyLogo currency={token} size={'24px'} style={{ opacity: dim ? '0.6' : '1' }} />
       <AutoColumn gap="4px" style={{ opacity: dim ? '0.6' : '1' }}>
         <AutoRow>
-          <TYPE.body fontWeight={500}>{token.symbol}</TYPE.body>
-          <TYPE.darkGray ml="8px" fontWeight={300}>
-            <NameOverflow title={token.name}>{token.name}</NameOverflow>
+          <TYPE.body fontWeight={500} color="white" fontSize={'16px'} className="!text-white">
+            {token.symbol}
+          </TYPE.body>
+          <TYPE.darkGray ml="8px" fontWeight={500} fontSize="12px" color={'white'} opacity={0.5}>
+            <NameOverflow title={token.name} className="!text-white">
+              {token.name}
+            </NameOverflow>
           </TYPE.darkGray>
         </AutoRow>
         {list && list.logoURI && (

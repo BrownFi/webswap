@@ -57,47 +57,51 @@ export const Checkbox = styled.input`
 `
 
 export const PaddedColumn = styled(AutoColumn)`
-  padding: 20px;
+  padding: 32px 40px 12px 40px;
 `
 
 export const MenuItem = styled(RowBetween)`
-  padding: 4px 20px;
-  height: 56px;
+  margin: 0 40px;
+  padding: 12px;
+  height: 68px;
   display: grid;
   grid-template-columns: auto minmax(auto, 1fr) auto minmax(0, 72px);
   grid-gap: 16px;
   cursor: ${({ disabled }) => !disabled && 'pointer'};
   pointer-events: ${({ disabled }) => disabled && 'none'};
   :hover {
-    background-color: ${({ theme, disabled }) => !disabled && theme.bg2};
+    background-color: #323038;
   }
   opacity: ${({ disabled, selected }) => (disabled || selected ? 0.5 : 1)};
+  border-bottom: 1px solid #323135;
+  width: calc(100% - 80px) !important;
 `
 
 export const SearchInput = styled.input`
   position: relative;
   display: flex;
-  padding: 16px;
   align-items: center;
   width: 100%;
   white-space: nowrap;
   background: none;
   border: none;
   outline: none;
-  border-radius: 20px;
-  color: ${({ theme }) => theme.text1};
-  border-style: solid;
-  border: 1px solid ${({ theme }) => theme.bg3};
+  border-radius: 0;
+  color: white;
+  border: 0;
   -webkit-appearance: none;
 
-  font-size: 18px;
-
+  font-size: 14px;
+  background-color: #131216;
+  font-weight: 500;
+  height: 44px;
+  padding: 0 20px 0 50px;
   ::placeholder {
     color: ${({ theme }) => theme.text3};
   }
   transition: border 100ms;
   :focus {
-    border: 1px solid ${({ theme }) => theme.primary1};
+    border: 0;
     outline: none;
   }
 `

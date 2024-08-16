@@ -4,7 +4,7 @@ import { darken } from 'polished'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Link as HistoryLink } from 'react-router-dom'
 
-import { ArrowLeft } from 'react-feather'
+import { ChevronLeft } from 'react-feather'
 import { RowBetween } from '../Row'
 // import QuestionHelper from '../QuestionHelper'
 import Settings from '../Settings'
@@ -52,8 +52,10 @@ const ActiveText = styled.div`
   font-size: 20px;
 `
 
-const StyledArrowLeft = styled(ArrowLeft)`
+const StyledArrowLeft = styled(ChevronLeft)`
   color: ${({ theme }) => theme.text1};
+  margin-right: 12px;
+  width: 24px;
 `
 
 export function SwapPoolTabs({ active }: { active: 'swap' | 'pool' }) {
@@ -75,7 +77,7 @@ export function FindPoolTabs() {
     <Tabs>
       <RowBetween style={{ padding: '1rem 1rem 0 1rem' }}>
         <HistoryLink to="/pool">
-          <StyledArrowLeft />
+          <StyledArrowLeft color="white" />
         </HistoryLink>
         <ActiveText>Import Pool</ActiveText>
         <Settings />
@@ -90,16 +92,21 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
 
   return (
     <Tabs>
-      <RowBetween style={{ padding: '1rem 1rem 0 1rem' }}>
-        <HistoryLink
-          to="/pool"
-          onClick={() => {
-            adding && dispatch(resetMintState())
-          }}
-        >
-          <StyledArrowLeft />
-        </HistoryLink>
-        <ActiveText>{creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}</ActiveText>
+      <RowBetween style={{ padding: '32px 32px 10px 32px' }}>
+        <div className="flex items-center">
+          <HistoryLink
+            to="/pool"
+            onClick={() => {
+              adding && dispatch(resetMintState())
+            }}
+          >
+            <StyledArrowLeft color="white" />
+          </HistoryLink>
+          <ActiveText className="text-white !text-[24px]" style={{ fontFamily: 'Russo One' }}>
+            {creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}
+          </ActiveText>
+        </div>
+
         <Settings />
       </RowBetween>
     </Tabs>

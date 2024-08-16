@@ -56,7 +56,11 @@ const FixedContentRow = styled.div`
 `
 
 function Balance({ balance }: { balance: CurrencyAmount }) {
-  return <StyledBalanceText title={balance.toExact()}>{balance.toSignificant(4)}</StyledBalanceText>
+  return (
+    <StyledBalanceText title={balance.toExact()} fontSize={'16px'} fontWeight={500} color="white">
+      {balance.toSignificant(4)}
+    </StyledBalanceText>
+  )
 }
 
 const TagContainer = styled.div`
@@ -126,12 +130,12 @@ function CurrencyRow({
       disabled={isSelected}
       selected={otherSelected}
     >
-      <CurrencyLogo currency={currency} size={'24px'} />
+      <CurrencyLogo currency={currency} size={'28px'} />
       <Column>
-        <Text title={currency.name} fontWeight={500}>
+        <Text title={currency.name} fontWeight={500} fontSize={'16px'} color={'white'}>
           {currency.symbol}
         </Text>
-        <TYPE.darkGray ml="0px" fontSize={'12px'} fontWeight={300}>
+        <TYPE.darkGray ml="0px" fontSize={'12px'} fontWeight={500} color="white" opacity={'0.5'}>
           {currency.name} {!isOnSelectedList && customAdded && '• Added by user'}
         </TYPE.darkGray>
       </Column>
@@ -254,7 +258,7 @@ export default function CurrencyList({
       width="100%"
       itemData={itemData}
       itemCount={itemData.length}
-      itemSize={56}
+      itemSize={68}
       itemKey={itemKey}
     >
       {Row}

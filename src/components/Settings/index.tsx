@@ -1,5 +1,5 @@
 import React, { useContext, useRef, useState } from 'react'
-import { Settings, X } from 'react-feather'
+import { X } from 'react-feather'
 import ReactGA from 'react-ga'
 import { Text } from 'rebass'
 import styled, { ThemeContext } from 'styled-components'
@@ -20,19 +20,7 @@ import QuestionHelper from '../QuestionHelper'
 import { RowBetween, RowFixed } from '../Row'
 import Toggle from '../Toggle'
 import TransactionSettings from '../TransactionSettings'
-
-const StyledMenuIcon = styled(Settings)`
-  height: 20px;
-  width: 20px;
-
-  > * {
-    stroke: ${({ theme }) => theme.text2};
-  }
-
-  :hover {
-    opacity: 0.7;
-  }
-`
+import settings from '../../assets/svg/settings.svg'
 
 const StyledCloseIcon = styled(X)`
   height: 20px;
@@ -54,10 +42,10 @@ const StyledMenuButton = styled.button`
   background-color: transparent;
   margin: 0;
   padding: 0;
-  height: 35px;
+  // height: 35px;
 
-  padding: 0.15rem 0.5rem;
-  border-radius: 0.5rem;
+  // padding: 0.15rem 0.5rem;
+  // border-radius: 0.5rem;
 
   :hover,
   :focus {
@@ -66,7 +54,7 @@ const StyledMenuButton = styled.button`
   }
 
   svg {
-    margin-top: 2px;
+    // margin-top: 2px;
   }
 `
 const EmojiWrapper = styled.div`
@@ -87,11 +75,11 @@ const StyledMenu = styled.div`
 `
 
 const MenuFlyout = styled.span`
-  min-width: 20.125rem;
-  background-color: ${({ theme }) => theme.bg2};
+  min-width: 391px;
+  background-color: #3f3d44;
   box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
     0px 24px 32px rgba(0, 0, 0, 0.01);
-  border-radius: 12px;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   font-size: 1rem;
@@ -144,7 +132,7 @@ export default function SettingsTab() {
     <StyledMenu ref={node as any}>
       <Modal isOpen={showConfirmation} onDismiss={() => setShowConfirmation(false)} maxHeight={100}>
         <ModalContentWrapper>
-          <AutoColumn gap="lg">
+          <AutoColumn>
             <RowBetween style={{ padding: '0 2rem' }}>
               <div />
               <Text fontWeight={500} fontSize={20}>
@@ -180,7 +168,10 @@ export default function SettingsTab() {
         </ModalContentWrapper>
       </Modal>
       <StyledMenuButton onClick={toggle} id="open-settings-dialog-button">
-        <StyledMenuIcon />
+        <div className="w-[40px] h-[40px] flex items-center justify-center bg-[#131216]">
+          <img src={settings} alt="settings" className="w-[24px]" />
+        </div>
+
         {expertMode ? (
           <EmojiWrapper>
             <span role="img" aria-label="wizard-icon">
@@ -191,8 +182,8 @@ export default function SettingsTab() {
       </StyledMenuButton>
       {open && (
         <MenuFlyout>
-          <AutoColumn gap="md" style={{ padding: '1rem' }}>
-            <Text fontWeight={600} fontSize={14}>
+          <AutoColumn style={{ padding: '1rem' }} gap={'20px'}>
+            <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
               Transaction Settings
             </Text>
             <TransactionSettings
@@ -201,12 +192,13 @@ export default function SettingsTab() {
               deadline={ttl}
               setDeadline={setTtl}
             />
-            <Text fontWeight={600} fontSize={14}>
+            <div className="w-full h-[1px] bg-[#323135]"></div>
+            <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
               Interface Settings
             </Text>
             <RowBetween>
               <RowFixed>
-                <TYPE.black fontWeight={400} fontSize={14} color={theme.text2}>
+                <TYPE.black fontWeight={500} fontSize={16} color={theme.white}>
                   Toggle Expert Mode
                 </TYPE.black>
                 <QuestionHelper text="Bypasses confirmation modals and allows high slippage trades. Use at your own risk." />
@@ -229,7 +221,7 @@ export default function SettingsTab() {
             </RowBetween>
             <RowBetween>
               <RowFixed>
-                <TYPE.black fontWeight={400} fontSize={14} color={theme.text2}>
+                <TYPE.black fontWeight={500} fontSize={16} color={theme.white}>
                   Disable Multihops
                 </TYPE.black>
                 <QuestionHelper text="Restricts swaps to direct pairs only." />

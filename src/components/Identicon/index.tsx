@@ -6,10 +6,11 @@ import { useActiveWeb3React } from '../../hooks'
 import Jazzicon from 'jazzicon'
 
 const StyledIdenticonContainer = styled.div`
-  height: 1rem;
-  width: 1rem;
-  border-radius: 1.125rem;
+  height: 40px;
+  width: 40px;
+  border-radius: 20px;
   background-color: ${({ theme }) => theme.bg4};
+  margin-right: 12px;
 `
 
 export default function Identicon() {
@@ -20,7 +21,7 @@ export default function Identicon() {
   useEffect(() => {
     if (account && ref.current) {
       ref.current.innerHTML = ''
-      ref.current.appendChild(Jazzicon(16, parseInt(account.slice(2, 10), 16)))
+      ref.current.appendChild(Jazzicon(40, parseInt(account.slice(2, 10), 40)))
     }
   }, [account])
 

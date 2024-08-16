@@ -2,15 +2,15 @@ import React, { useContext, useMemo } from 'react'
 import styled, { ThemeContext } from 'styled-components'
 import { Pair, JSBI, toV2LiquidityToken } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
-import { SwapPoolTabs } from '../../components/NavigationTabs'
+// import { SwapPoolTabs } from '../../components/NavigationTabs'
 
 import FullPositionCard from '../../components/PositionCard'
 import { useUserHasLiquidityInAllTokens } from '../../data/V1'
 import { useTokenBalancesWithLoadingIndicator } from '../../state/wallet/hooks'
-import { StyledInternalLink, ExternalLink, TYPE, HideSmall } from '../../theme'
+import { StyledInternalLink, TYPE, HideSmall } from '../../theme'
 import { Text } from 'rebass'
 import Card from '../../components/Card'
-import { RowBetween, RowFixed } from '../../components/Row'
+import { RowBetween } from '../../components/Row'
 import { ButtonPrimary, ButtonSecondary } from '../../components/Button'
 import { AutoColumn } from '../../components/Column'
 
@@ -18,18 +18,13 @@ import { useActiveWeb3React } from '../../hooks'
 import { usePairs } from '../../data/Reserves'
 import { useTrackedTokenPairs } from '../../state/user/hooks'
 import { Dots } from '../../components/swap/styleds'
-import { CardSection, DataCard, CardNoise, CardBGImage } from '../../components/earn/styled'
 import { useStakingInfo } from '../../state/stake/hooks'
 import { BIG_INT_ZERO } from '../../constants'
 
 const PageWrapper = styled(AutoColumn)`
-  max-width: 640px;
+  max-width: 894px;
   width: 100%;
-`
-
-const VoteCard = styled(DataCard)`
-  background: radial-gradient(76.02% 75.41% at 1.84% 0%, #27ae60 0%, #000000 100%);
-  overflow: hidden;
+  background-color: #1d1c21;
 `
 
 const TitleRow = styled(RowBetween)`
@@ -38,15 +33,6 @@ const TitleRow = styled(RowBetween)`
     gap: 12px;
     width: 100%;
     flex-direction: column-reverse;
-  `};
-`
-
-const ButtonRow = styled(RowFixed)`
-  gap: 8px;
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    width: 100%;
-    flex-direction: row-reverse;
-    justify-content: space-between;
   `};
 `
 
@@ -131,57 +117,28 @@ export default function Pool() {
   return (
     <>
       <PageWrapper>
-        <SwapPoolTabs active={'pool'} />
-        <VoteCard>
-          <CardBGImage />
-          <CardNoise />
-          <CardSection>
-            <AutoColumn gap="md">
-              <RowBetween>
-                <TYPE.white fontWeight={600}>Liquidity provider rewards</TYPE.white>
-              </RowBetween>
-              <RowBetween>
-                <TYPE.white fontSize={14}>
-                  {`Liquidity providers earn a 0.3% fee on all trades proportional to their share of the pool. Fees are added to the pool, accrue in real time and can be claimed by withdrawing your liquidity.`}
-                </TYPE.white>
-              </RowBetween>
-              <ExternalLink
-                style={{ color: 'white', textDecoration: 'underline' }}
-                target="_blank"
-                href="https://uniswap.org/docs/v2/core-concepts/pools/"
-              >
-                <TYPE.white fontSize={14}>Read more about providing liquidity</TYPE.white>
-              </ExternalLink>
-            </AutoColumn>
-          </CardSection>
-          <CardBGImage />
-          <CardNoise />
-        </VoteCard>
+        {/* <SwapPoolTabs active={'pool'} /> */}
 
-        <AutoColumn gap="lg" justify="center">
+        <AutoColumn gap="lg" justify="center" className="p-[32px]">
           <AutoColumn gap="lg" style={{ width: '100%' }}>
             <TitleRow style={{ marginTop: '1rem' }} padding={'0'}>
               <HideSmall>
-                <TYPE.mediumHeader style={{ marginTop: '0.5rem', justifySelf: 'flex-start' }}>
+                <TYPE.mediumHeader style={{ fontFamily: 'Russo One', fontSize: '24px' }} color={'white'}>
                   Your liquidity
                 </TYPE.mediumHeader>
               </HideSmall>
-              <ButtonRow>
-                <ResponsiveButtonSecondary as={Link} padding="6px 8px" to="/create/ETH">
-                  Create a pair
+              <div className="flex items-center flex-1 justify-end">
+                <ResponsiveButtonSecondary as={Link} to="/create/ETH" className="!h-[40px] mr-[16px] !px-[18px] !py-0">
+                  <Text fontWeight={700} fontSize={14} color={'white'}>
+                    Create a pair
+                  </Text>
                 </ResponsiveButtonSecondary>
-                <ResponsiveButtonPrimary
-                  id="join-pool-button"
-                  as={Link}
-                  padding="6px 8px"
-                  borderRadius="12px"
-                  to="/add/ETH"
-                >
-                  <Text fontWeight={500} fontSize={16}>
+                <ResponsiveButtonPrimary id="join-pool-button" as={Link} to="/add/ETH" className="!h-[40px]">
+                  <Text fontWeight={700} fontSize={14} color={'white'}>
                     Add Liquidity
                   </Text>
                 </ResponsiveButtonPrimary>
-              </ButtonRow>
+              </div>
             </TitleRow>
 
             {!account ? (
@@ -198,14 +155,14 @@ export default function Pool() {
               </EmptyProposals>
             ) : allV2PairsWithLiquidity?.length > 0 || stakingPairs?.length > 0 ? (
               <>
-                <ButtonSecondary>
+                {/* <ButtonSecondary>
                   <RowBetween>
                     <ExternalLink href={'https://uniswap.info/account/' + account}>
                       Account analytics and accrued fees
                     </ExternalLink>
                     <span> ↗</span>
                   </RowBetween>
-                </ButtonSecondary>
+                </ButtonSecondary> */}
                 {v2PairsWithoutStakedAmount.map(v2Pair => (
                   <FullPositionCard key={v2Pair.liquidityToken.address} pair={v2Pair} />
                 ))}
@@ -229,7 +186,7 @@ export default function Pool() {
             )}
 
             <AutoColumn justify={'center'} gap="md">
-              <Text textAlign="center" fontSize={14} style={{ padding: '.5rem 0 .5rem 0' }}>
+              <Text textAlign="center" fontSize={14} style={{ padding: '.5rem 0 .5rem 0' }} color={'white'}>
                 {hasV1Liquidity ? 'Uniswap V1 liquidity found!' : "Don't see a pool you joined?"}{' '}
                 <StyledInternalLink id="import-pool-link" to={hasV1Liquidity ? '/migrate/v1' : '/find'}>
                   {hasV1Liquidity ? 'Migrate now.' : 'Import it.'}

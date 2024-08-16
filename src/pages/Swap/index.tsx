@@ -5,12 +5,12 @@ import ReactGA from 'react-ga'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
 import AddressInputPanel from '../../components/AddressInputPanel'
-import { ButtonError, ButtonLight, ButtonPrimary, ButtonConfirmed } from '../../components/Button'
+import { ButtonError, ButtonPrimary, ButtonConfirmed } from '../../components/Button'
 import Card, { GreyCard } from '../../components/Card'
 import Column, { AutoColumn } from '../../components/Column'
 import ConfirmSwapModal from '../../components/swap/ConfirmSwapModal'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
-import { SwapPoolTabs } from '../../components/NavigationTabs'
+// import { SwapPoolTabs } from '../../components/NavigationTabs'
 import { AutoRow, RowBetween } from '../../components/Row'
 import AdvancedSwapDetailsDropdown from '../../components/swap/AdvancedSwapDetailsDropdown'
 import BetterTradeLink, { DefaultVersionLink } from '../../components/swap/BetterTradeLink'
@@ -49,6 +49,8 @@ import { useIsTransactionUnsupported } from 'hooks/Trades'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
 import { isTradeBetter } from 'utils/trades'
 import { RouteComponentProps } from 'react-router-dom'
+import switchIcon from '../../assets/svg/switch.svg'
+import connectWalletIcon from '../../assets/svg/account_balance_wallet.svg'
 
 export default function Swap({ history }: RouteComponentProps) {
   const loadedUrlParams = useDefaultsFromURLSearch()
@@ -307,7 +309,7 @@ export default function Swap({ history }: RouteComponentProps) {
         onConfirm={handleConfirmTokenWarning}
         onDismiss={handleDismissTokenWarning}
       />
-      <SwapPoolTabs active={'swap'} />
+      {/* <SwapPoolTabs active={'swap'} /> */}
       <AppBody>
         <SwapHeader />
         <Wrapper id="swap-page">
@@ -325,9 +327,9 @@ export default function Swap({ history }: RouteComponentProps) {
             onDismiss={handleConfirmDismiss}
           />
 
-          <AutoColumn gap={'md'}>
+          <AutoColumn gap={'8px'}>
             <CurrencyInputPanel
-              label={independentField === Field.OUTPUT && !showWrap && trade ? 'From (estimated)' : 'From'}
+              label={'You Pay'}
               value={formattedAmounts[Field.INPUT]}
               showMaxButton={!atMaxAmountInput}
               currency={currencies[Field.INPUT]}
@@ -336,18 +338,28 @@ export default function Swap({ history }: RouteComponentProps) {
               onCurrencySelect={handleInputSelect}
               otherCurrency={currencies[Field.OUTPUT]}
               id="swap-currency-input"
+              showCommonBases={true}
             />
-            <AutoColumn justify="space-between">
-              <AutoRow justify={isExpertMode ? 'space-between' : 'center'} style={{ padding: '0 1rem' }}>
+            <AutoColumn justify="space-between" className="relative">
+              <AutoRow
+                justify={isExpertMode ? 'space-between' : 'center'}
+                style={{ padding: '0 1rem' }}
+                className="absolute z-[9] top-[-20px]"
+              >
                 <ArrowWrapper clickable>
-                  <ArrowDown
-                    size="16"
+                  <a
                     onClick={() => {
                       setApprovalSubmitted(false) // reset 2 step UI for approvals
                       onSwitchTokens()
                     }}
+                  >
+                    <img src={switchIcon} className="w-[40px]" alt="switch" />
+                  </a>
+                  {/* <ArrowDown
+                    size="16"
+                    
                     color={currencies[Field.INPUT] && currencies[Field.OUTPUT] ? theme.primary1 : theme.text2}
-                  />
+                  /> */}
                 </ArrowWrapper>
                 {recipient === null && !showWrap && isExpertMode ? (
                   <LinkStyledButton id="add-recipient-button" onClick={() => onChangeRecipient('')}>
@@ -359,12 +371,13 @@ export default function Swap({ history }: RouteComponentProps) {
             <CurrencyInputPanel
               value={formattedAmounts[Field.OUTPUT]}
               onUserInput={handleTypeOutput}
-              label={independentField === Field.INPUT && !showWrap && trade ? 'To (estimated)' : 'To'}
+              label={'Your Receive'}
               showMaxButton={false}
               currency={currencies[Field.OUTPUT]}
               onCurrencySelect={handleOutputSelect}
               otherCurrency={currencies[Field.INPUT]}
               id="swap-currency-output"
+              showCommonBases={true}
             />
 
             {recipient !== null && !showWrap ? (
@@ -416,7 +429,10 @@ export default function Swap({ history }: RouteComponentProps) {
                 <TYPE.main mb="4px">Unsupported Asset</TYPE.main>
               </ButtonPrimary>
             ) : !account ? (
-              <ButtonLight onClick={toggleWalletModal}>Connect Wallet</ButtonLight>
+              <ButtonPrimary onClick={toggleWalletModal}>
+                <img src={connectWalletIcon} alt="icon" className="w-[24px] mr-[8px]" />
+                Connect Wallet
+              </ButtonPrimary>
             ) : showWrap ? (
               <ButtonPrimary disabled={Boolean(wrapInputError)} onClick={onWrap}>
                 {wrapInputError ??
@@ -424,8 +440,12 @@ export default function Swap({ history }: RouteComponentProps) {
               </ButtonPrimary>
             ) : noRoute && userHasSpecifiedInputOutput ? (
               <GreyCard style={{ textAlign: 'center' }}>
-                <TYPE.main mb="4px">Insufficient liquidity for this trade.</TYPE.main>
-                {singleHopOnly && <TYPE.main mb="4px">Try enabling multi-hop trades.</TYPE.main>}
+                <p className="mb-[4px] text-white font-bold opacity-[0.5]">Insufficient liquidity for this trade.</p>
+                {singleHopOnly && (
+                  <TYPE.main className="mb-[4px] !text-white font-bold opacity-[0.5]">
+                    Try enabling multi-hop trades.
+                  </TYPE.main>
+                )}
               </GreyCard>
             ) : showApproveFlow ? (
               <RowBetween>

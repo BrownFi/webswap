@@ -48,7 +48,7 @@ export function colors(darkMode: boolean): Colors {
     text5: darkMode ? '#2C2F36' : '#EDEEF2',
 
     // backgrounds / greys
-    bg1: darkMode ? '#212429' : '#FFFFFF',
+    bg1: darkMode ? '#3F3D44' : '#3F3D44',
     bg2: darkMode ? '#2C2F36' : '#F7F8FA',
     bg3: darkMode ? '#40444F' : '#EDEEF2',
     bg4: darkMode ? '#565A69' : '#CED0D9',
@@ -59,7 +59,7 @@ export function colors(darkMode: boolean): Colors {
     advancedBG: darkMode ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.6)',
 
     //primary colors
-    primary1: darkMode ? '#2172E5' : '#ff007a',
+    primary1: darkMode ? '#773030' : '#773030',
     primary2: darkMode ? '#3680E7' : '#FF8CC3',
     primary3: darkMode ? '#4D8FEA' : '#FF99C9',
     primary4: darkMode ? '#376bad70' : '#F6DDE8',
@@ -80,7 +80,10 @@ export function colors(darkMode: boolean): Colors {
     green1: '#27AE60',
     yellow1: '#FFE270',
     yellow2: '#F3841E',
-    blue1: '#2172E5'
+    blue1: '#2172E5',
+
+    menuText: 'rgba(255, 255, 255, 0.5)',
+    greenMain: '#27E3AB'
 
     // dont wanna forget these blue yet
     // blue4: darkMode ? '#153d6f70' : '#C4D9F8',
@@ -136,13 +139,13 @@ export const TYPE = {
     return <TextWrapper fontWeight={500} color={'primary1'} {...props} />
   },
   black(props: TextProps) {
-    return <TextWrapper fontWeight={500} color={'text1'} {...props} />
+    return <TextWrapper fontWeight={500} color={'white'} {...props} />
   },
   white(props: TextProps) {
     return <TextWrapper fontWeight={500} color={'white'} {...props} />
   },
   body(props: TextProps) {
-    return <TextWrapper fontWeight={400} fontSize={16} color={'text1'} {...props} />
+    return <TextWrapper fontWeight={500} fontSize={16} color={'text1'} {...props} />
   },
   largeHeader(props: TextProps) {
     return <TextWrapper fontWeight={600} fontSize={24} {...props} />
@@ -151,7 +154,7 @@ export const TYPE = {
     return <TextWrapper fontWeight={500} fontSize={20} {...props} />
   },
   subHeader(props: TextProps) {
-    return <TextWrapper fontWeight={400} fontSize={14} {...props} />
+    return <TextWrapper fontWeight={500} fontSize={14} {...props} />
   },
   small(props: TextProps) {
     return <TextWrapper fontWeight={500} fontSize={11} {...props} />
@@ -178,12 +181,14 @@ export const TYPE = {
 
 export const FixedGlobalStyle = createGlobalStyle`
 html, input, textarea, button {
-  font-family: 'Inter', sans-serif;
+  font-family: "Montserrat", sans-serif !important;
   font-display: fallback;
+  font-weight: 500;
 }
 @supports (font-variation-settings: normal) {
   html, input, textarea, button {
-    font-family: 'Inter var', sans-serif;
+    font-family: 'Montserrat var', sans-serif;
+    font-weight: 500;
   }
 }
 

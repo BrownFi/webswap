@@ -1,6 +1,6 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
-import { animated, useTransition, useSpring } from 'react-spring'
+import { animated, useTransition, useSpring } from '@react-spring/web'
 import { DialogOverlay, DialogContent } from '@reach/dialog'
 import { isMobile } from 'react-device-detect'
 import '@reach/dialog/styles.css'
@@ -44,7 +44,7 @@ const StyledDialogContent = styled(({ minHeight, maxHeight, mobile, isOpen, ...r
 
     align-self: ${({ mobile }) => (mobile ? 'flex-end' : 'center')};
 
-    max-width: 420px;
+    max-width: 550px;
     ${({ maxHeight }) =>
       maxHeight &&
       css`
@@ -56,7 +56,7 @@ const StyledDialogContent = styled(({ minHeight, maxHeight, mobile, isOpen, ...r
         min-height: ${minHeight}vh;
       `}
     display: flex;
-    border-radius: 20px;
+    border-radius: 0;
     ${({ theme }) => theme.mediaWidth.upToMedium`
       width: 65vw;
       margin: 0;
@@ -91,7 +91,7 @@ export default function Modal({
   initialFocusRef,
   children
 }: ModalProps) {
-  const fadeTransition = useTransition(isOpen, null, {
+  const fadeTransition = useTransition(isOpen, {
     config: { duration: 200 },
     from: { opacity: 0 },
     enter: { opacity: 1 },
@@ -112,12 +112,12 @@ export default function Modal({
 
   return (
     <>
-      {fadeTransition.map(
-        ({ item, key, props }) =>
+      {fadeTransition?.(
+        (style: any, item: any, key: any) =>
           item && (
             <StyledDialogOverlay
               key={key}
-              style={props}
+              style={style}
               onDismiss={onDismiss}
               initialFocusRef={initialFocusRef}
               unstable_lockFocusAcrossFrames={false}

@@ -15,7 +15,7 @@ const CopyIcon = styled(LinkStyledButton)`
   :active,
   :focus {
     text-decoration: none;
-    color: ${({ theme }) => theme.text2};
+    color: ${({ theme }) => theme.greenMain};
   }
 `
 const TransactionStatusText = styled.span`
@@ -23,6 +23,7 @@ const TransactionStatusText = styled.span`
   font-size: 0.825rem;
   ${({ theme }) => theme.flexRowNoWrap};
   align-items: center;
+  color: #27e3ab;
 `
 
 export default function CopyHelper(props: { toCopy: string; children?: React.ReactNode }) {

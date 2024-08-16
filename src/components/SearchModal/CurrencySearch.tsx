@@ -7,7 +7,7 @@ import { FixedSizeList } from 'react-window'
 import { Text } from 'rebass'
 import { useActiveWeb3React } from '../../hooks'
 import { useAllTokens, useToken, useIsUserAddedToken, useFoundOnInactiveList } from '../../hooks/Tokens'
-import { CloseIcon, TYPE, ButtonText, IconWrapper } from '../../theme'
+import { CloseIcon, TYPE, ButtonText } from '../../theme'
 import { isAddress } from '../../utils'
 import Column from '../Column'
 import Row, { RowBetween, RowFixed } from '../Row'
@@ -15,15 +15,15 @@ import CommonBases from './CommonBases'
 import CurrencyList from './CurrencyList'
 import { filterTokens, useSortedTokensByQuery } from './filtering'
 import { useTokenComparator } from './sorting'
-import { PaddedColumn, SearchInput, Separator } from './styleds'
+import { PaddedColumn, SearchInput } from './styleds'
 import AutoSizer from 'react-virtualized-auto-sizer'
 import styled from 'styled-components'
 import useToggle from 'hooks/useToggle'
 import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import useTheme from 'hooks/useTheme'
 import ImportRow from './ImportRow'
-import { Edit } from 'react-feather'
 import useDebounce from 'hooks/useDebounce'
+import searchIcon from '../../assets/svg/search.svg'
 
 const ContentWrapper = styled(Column)`
   width: 100%;
@@ -37,8 +37,8 @@ const Footer = styled.div`
   padding: 20px;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-  background-color: ${({ theme }) => theme.bg1};
-  border-top: 1px solid ${({ theme }) => theme.bg2};
+  // background-color: ${({ theme }) => theme.bg1};
+  // border-top: 1px solid ${({ theme }) => theme.bg2};
 `
 
 interface CurrencySearchProps {
@@ -164,12 +164,13 @@ export function CurrencySearch({
     <ContentWrapper>
       <PaddedColumn gap="16px">
         <RowBetween>
-          <Text fontWeight={500} fontSize={16}>
+          <Text fontWeight={500} fontSize={24} fontFamily={'Russo One'} color="white">
             Select a token
           </Text>
-          <CloseIcon onClick={onDismiss} />
+          <CloseIcon onClick={onDismiss} color="white" />
         </RowBetween>
-        <Row>
+        <Row className="relative">
+          <img src={searchIcon} className="w-[24px] absolute left-[16px] z-[2]" alt="search" />
           <SearchInput
             type="text"
             id="token-search-input"
@@ -185,17 +186,21 @@ export function CurrencySearch({
           <CommonBases chainId={chainId} onSelect={handleCurrencySelect} selectedCurrency={selectedCurrency} />
         )}
       </PaddedColumn>
-      <Separator />
+      {/* <Separator /> */}
       {searchToken && !searchTokenIsAdded ? (
         <Column style={{ padding: '20px 0', height: '100%' }}>
           <ImportRow token={searchToken} showImportView={showImportView} setImportToken={setImportToken} />
         </Column>
       ) : filteredSortedTokens?.length > 0 || filteredInactiveTokens?.length > 0 ? (
         <div style={{ flex: '1' }}>
+          <div className="flex items-center justify-between mt-[20px] mb-[12px] px-[40px]">
+            <p className="text-[14px] font-medium text-white opacity-[0.5]">Asset</p>
+            <p className="text-[14px] font-medium text-white opacity-[0.5]">Balance</p>
+          </div>
           <AutoSizer disableWidth>
             {({ height }: { height: number }) => (
               <CurrencyList
-                height={height}
+                height={height - 40}
                 showETH={showETH}
                 currencies={
                   filteredInactiveTokens ? filteredSortedTokens.concat(filteredInactiveTokens) : filteredSortedTokens
@@ -222,10 +227,7 @@ export function CurrencySearch({
         <Row justify="center">
           <ButtonText onClick={showManageView} color={theme.blue1} className="list-token-manage-button">
             <RowFixed>
-              <IconWrapper size="16px" marginRight="6px">
-                <Edit />
-              </IconWrapper>
-              <TYPE.main color={theme.blue1}>Manage</TYPE.main>
+              <TYPE.main color={theme.greenMain}>Manage</TYPE.main>
             </RowFixed>
           </ButtonText>
         </Row>

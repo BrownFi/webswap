@@ -1,6 +1,6 @@
 import React, { useRef, RefObject, useCallback, useState, useMemo } from 'react'
 import Column from 'components/Column'
-import { PaddedColumn, Separator, SearchInput } from './styleds'
+import { PaddedColumn, SearchInput } from './styleds'
 import Row, { RowBetween, RowFixed } from 'components/Row'
 import { TYPE, ExternalLinkIcon, TrashIcon, ButtonText, ExternalLink } from 'theme'
 import { useToken } from 'hooks/Tokens'
@@ -30,7 +30,7 @@ const Footer = styled.div`
   border-radius: 20px;
   border-top-right-radius: 0;
   border-top-left-radius: 0;
-  border-top: 1px solid ${({ theme }) => theme.bg3};
+  // border-top: 1px solid ${({ theme }) => theme.bg3};
   padding: 20px;
   text-align: center;
 `
@@ -79,14 +79,14 @@ export default function ManageTokens({
           <RowFixed>
             <CurrencyLogo currency={token} size={'20px'} />
             <ExternalLink href={getEtherscanLink(chainId, token.address, 'address')}>
-              <TYPE.main ml={'10px'} fontWeight={600}>
+              <TYPE.main ml={'10px'} fontWeight={600} color={'white'}>
                 {token.symbol}
               </TYPE.main>
             </ExternalLink>
           </RowFixed>
           <RowFixed>
             <TrashIcon onClick={() => removeToken(chainId, token.address)} />
-            <ExternalLinkIcon href={getEtherscanLink(chainId, token.address, 'address')} />
+            <ExternalLinkIcon href={getEtherscanLink(chainId, token.address, 'address')} color="#27E3AB" />
           </RowFixed>
         </RowBetween>
       ))
@@ -96,7 +96,7 @@ export default function ManageTokens({
   return (
     <Wrapper>
       <Column style={{ width: '100%', flex: '1 1' }}>
-        <PaddedColumn gap="14px">
+        <PaddedColumn gap="14px" className="!pt-[20px]">
           <Row>
             <SearchInput
               type="text"
@@ -106,6 +106,7 @@ export default function ManageTokens({
               autoComplete="off"
               ref={inputRef as RefObject<HTMLInputElement>}
               onChange={handleInput}
+              className="!pl-[20px]"
             />
           </Row>
           {searchQuery !== '' && !isAddressSearch && <TYPE.error error={true}>Enter valid token address</TYPE.error>}
@@ -120,15 +121,15 @@ export default function ManageTokens({
             </Card>
           )}
         </PaddedColumn>
-        <Separator />
+        {/* <Separator /> */}
         <PaddedColumn gap="lg">
           <RowBetween>
-            <TYPE.main fontWeight={600}>
+            <TYPE.main fontWeight={600} color={'white'}>
               {userAddedTokens?.length} Custom {userAddedTokens.length === 1 ? 'Token' : 'Tokens'}
             </TYPE.main>
             {userAddedTokens.length > 0 && (
               <ButtonText onClick={handleRemoveAll}>
-                <TYPE.blue>Clear all</TYPE.blue>
+                <TYPE.blue className="!text-[#27E3AB]">Clear all</TYPE.blue>
               </ButtonText>
             )}
           </RowBetween>

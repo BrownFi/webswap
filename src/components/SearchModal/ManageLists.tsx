@@ -173,7 +173,7 @@ const ListRow = memo(function ListRow({ listUrl }: { listUrl: string }) {
         </Row>
         <RowFixed mt="4px">
           <StyledListUrlText active={isActive} mr="6px">
-            {list.tokens.length} tokens
+            {list?.tokens?.length} tokens
           </StyledListUrlText>
           <StyledMenu ref={node as any}>
             <ButtonEmpty onClick={toggle} ref={setReferenceElement} padding="0">
@@ -316,7 +316,7 @@ export function ManageLists({
 
   return (
     <Wrapper>
-      <PaddedColumn gap="14px">
+      <PaddedColumn gap="14px" className="!pt-[20px]">
         <Row>
           <SearchInput
             type="text"
@@ -324,6 +324,7 @@ export function ManageLists({
             placeholder="https:// or ipfs:// or ENS name"
             value={listUrlInput}
             onChange={handleInput}
+            className="!pl-[20px]"
           />
         </Row>
         {addError ? (

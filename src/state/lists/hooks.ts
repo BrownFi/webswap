@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { UNSUPPORTED_LIST_URLS } from './../../constants/lists'
-import DEFAULT_TOKEN_LIST from '@uniswap/default-token-list'
+import DEFAULT_TOKEN_LIST from './defaultTokens.json'
 import { ChainId, Token } from '@brownfi/sdk'
 import { Tags, TokenInfo, TokenList } from '@uniswap/token-lists'
 import { useMemo } from 'react'
@@ -51,7 +51,7 @@ export function listToTokenMap(list: TokenList): TokenAddressMap {
   const result = listCache?.get(list)
   if (result) return result
 
-  const map = list.tokens.reduce<TokenAddressMap>(
+  const map = list?.tokens?.reduce<TokenAddressMap>(
     (tokenMap, tokenInfo) => {
       const tags: TagInfo[] =
         tokenInfo.tags
@@ -78,8 +78,9 @@ export function listToTokenMap(list: TokenList): TokenAddressMap {
     },
     { ...EMPTY_LIST }
   )
-  listCache?.set(list, map)
-  return map
+  console.log('map', map)
+  listCache?.set(list, map || {})
+  return map || {}
 }
 
 export function useAllLists(): {

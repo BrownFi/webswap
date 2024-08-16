@@ -54,10 +54,10 @@ const HeaderRow = styled.div`
 `
 
 const ContentWrapper = styled.div`
-  background-color: ${({ theme }) => theme.bg2};
-  padding: 2rem;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
+  // background-color: ${({ theme }) => theme.bg2};
+  // padding: 2rem;
+  // border-bottom-left-radius: 20px;
+  // border-bottom-right-radius: 20px;
 
   ${({ theme }) => theme.mediaWidth.upToMedium`padding: 1rem`};
 `
@@ -318,25 +318,24 @@ export default function WalletModal({
       )
     }
     return (
-      <UpperSection>
-        <CloseIcon onClick={toggleWalletModal}>
-          <CloseColor />
+      <UpperSection className="relative px-[40px] py-[32px]">
+        <CloseIcon onClick={toggleWalletModal} className="absolute top-[16px] right-[16px]">
+          <CloseColor color="white" />
         </CloseIcon>
         {walletView !== WALLET_VIEWS.ACCOUNT ? (
-          <HeaderRow color="blue">
-            <HoverText
-              onClick={() => {
-                setPendingError(false)
-                setWalletView(WALLET_VIEWS.ACCOUNT)
-              }}
-            >
-              Back
-            </HoverText>
-          </HeaderRow>
+          <HoverText
+            onClick={() => {
+              setPendingError(false)
+              setWalletView(WALLET_VIEWS.ACCOUNT)
+            }}
+            className="text-white mb-[16px]"
+          >
+            Back
+          </HoverText>
         ) : (
-          <HeaderRow>
-            <HoverText>Connect to a wallet</HoverText>
-          </HeaderRow>
+          <HoverText className="text-[24px] text-white mb-[20px]" style={{ fontFamily: 'Russo One' }}>
+            Connect to a wallet
+          </HoverText>
         )}
         <ContentWrapper>
           {walletView === WALLET_VIEWS.PENDING ? (
@@ -351,8 +350,10 @@ export default function WalletModal({
           )}
           {walletView !== WALLET_VIEWS.PENDING && (
             <Blurb>
-              <span>New to Ethereum? &nbsp;</span>{' '}
-              <ExternalLink href="https://ethereum.org/wallets/">Learn more about wallets</ExternalLink>
+              <span className="text-white">New to Ethereum? &nbsp;</span>{' '}
+              <ExternalLink href="https://ethereum.org/wallets/" className="text-[#27E3AB]">
+                Learn more about wallets
+              </ExternalLink>
             </Blurb>
           )}
         </ContentWrapper>

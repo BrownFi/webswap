@@ -2,21 +2,27 @@ import React from 'react'
 import styled from 'styled-components'
 import Settings from '../Settings'
 import { RowBetween } from '../Row'
-import { TYPE } from '../../theme'
 
 const StyledSwapHeader = styled.div`
-  padding: 12px 1rem 0px 1.5rem;
+  padding: 32px 24px 28px 32px;
   margin-bottom: -4px;
   width: 100%;
-  max-width: 420px;
+  max-width: 500px;
   color: ${({ theme }) => theme.text2};
+`
+
+const StyledSwaptitle = styled.p`
+  font-size: 24px;
+  color: white;
+  font-family: 'Russo One', sans-serif;
+  flex: 1;
 `
 
 export default function SwapHeader() {
   return (
     <StyledSwapHeader>
       <RowBetween>
-        <TYPE.black fontWeight={500}>Swap</TYPE.black>
+        <StyledSwaptitle>Swap Token</StyledSwaptitle>
         <Settings />
       </RowBetween>
     </StyledSwapHeader>

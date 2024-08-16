@@ -6,26 +6,29 @@ import { ExternalLink } from '../../theme'
 import { Text } from 'rebass'
 import { CloseIcon, CustomLightSpinner } from '../../theme/components'
 import { RowBetween, RowFixed } from '../Row'
-import { AlertTriangle, ArrowUpCircle, CheckCircle } from 'react-feather'
-import { ButtonPrimary, ButtonLight } from '../Button'
+import { CheckCircle } from 'react-feather'
+import { ButtonPrimary } from '../Button'
 import { AutoColumn, ColumnCenter } from '../Column'
 import Circle from '../../assets/images/blue-loader.svg'
 import MetaMaskLogo from '../../assets/images/metamask.png'
 import { getEtherscanLink } from '../../utils'
 import { useActiveWeb3React } from '../../hooks'
 import useAddTokenToMetamask from 'hooks/useAddTokenToMetamask'
+import checkCircle from '../../assets/svg/check_circle.svg'
+import cancel from '../../assets/svg/cancel.svg'
 
 const Wrapper = styled.div`
   width: 100%;
 `
 const Section = styled(AutoColumn)`
-  padding: 24px;
+  padding: 32px 40px;
 `
 
 const BottomSection = styled(Section)`
-  background-color: ${({ theme }) => theme.bg2};
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
+  padding-top: 0
+  // background-color: ${({ theme }) => theme.bg2};
+  // border-bottom-left-radius: 20px;
+  // border-bottom-right-radius: 20px;
 `
 
 const ConfirmedIcon = styled(ColumnCenter)`
@@ -40,25 +43,27 @@ const StyledLogo = styled.img`
 
 function ConfirmationPendingContent({ onDismiss, pendingText }: { onDismiss: () => void; pendingText: string }) {
   return (
-    <Wrapper>
+    <Wrapper className="relative">
       <Section>
         <RowBetween>
           <div />
-          <CloseIcon onClick={onDismiss} />
+          <span className="absolute top-[16px] right-[16px]">
+            <CloseIcon color="white" onClick={onDismiss} />
+          </span>
         </RowBetween>
         <ConfirmedIcon>
           <CustomLightSpinner src={Circle} alt="loader" size={'90px'} />
         </ConfirmedIcon>
         <AutoColumn gap="12px" justify={'center'}>
-          <Text fontWeight={500} fontSize={20}>
+          <Text fontWeight={600} fontSize={32} color={'white'}>
             Waiting For Confirmation
           </Text>
           <AutoColumn gap="12px" justify={'center'}>
-            <Text fontWeight={600} fontSize={14} color="" textAlign="center">
+            <Text fontWeight={600} fontSize={14} color="white" textAlign="center">
               {pendingText}
             </Text>
           </AutoColumn>
-          <Text fontSize={12} color="#565A69" textAlign="center">
+          <Text fontSize={12} color="#ffffff" textAlign="center" opacity={0.5}>
             Confirm this transaction in your wallet
           </Text>
         </AutoColumn>
@@ -85,28 +90,30 @@ function TransactionSubmittedContent({
   const { addToken, success } = useAddTokenToMetamask(currencyToAdd)
 
   return (
-    <Wrapper>
+    <Wrapper className="relative">
       <Section>
         <RowBetween>
           <div />
-          <CloseIcon onClick={onDismiss} />
+          <span className="absolute top-[16px] right-[16px]">
+            <CloseIcon color="white" onClick={onDismiss} />
+          </span>
         </RowBetween>
-        <ConfirmedIcon>
-          <ArrowUpCircle strokeWidth={0.5} size={90} color={theme.primary1} />
+        <ConfirmedIcon className="!pb-[20px] !pt-[40px]">
+          <img src={checkCircle} className="w-[100px]" alt="check" />
         </ConfirmedIcon>
         <AutoColumn gap="12px" justify={'center'}>
-          <Text fontWeight={500} fontSize={20}>
+          <Text fontWeight={600} fontSize={32} color="#27E39F">
             Transaction Submitted
           </Text>
           {chainId && hash && (
             <ExternalLink href={getEtherscanLink(chainId, hash, 'transaction')}>
-              <Text fontWeight={500} fontSize={14} color={theme.primary1}>
+              <Text fontWeight={500} fontSize={14} color={'#27E39F'}>
                 View on Etherscan
               </Text>
             </ExternalLink>
           )}
           {currencyToAdd && library?.provider?.isMetaMask && (
-            <ButtonLight mt="12px" padding="6px 12px" width="fit-content" onClick={addToken}>
+            <ButtonPrimary mt="12px" padding="6px 12px" width="100%" onClick={addToken}>
               {!success ? (
                 <RowFixed>
                   Add {currencyToAdd.symbol} to Metamask <StyledLogo src={MetaMaskLogo} />
@@ -117,13 +124,13 @@ function TransactionSubmittedContent({
                   <CheckCircle size={'16px'} stroke={theme.green1} style={{ marginLeft: '6px' }} />
                 </RowFixed>
               )}
-            </ButtonLight>
+            </ButtonPrimary>
           )}
-          <ButtonPrimary onClick={onDismiss} style={{ margin: '20px 0 0 0' }}>
+          {/* <ButtonLight onClick={onDismiss} style={{ margin: '20px 0 0 0' }}>
             <Text fontWeight={500} fontSize={20}>
               Close
             </Text>
-          </ButtonPrimary>
+          </ButtonLight> */}
         </AutoColumn>
       </Section>
     </Wrapper>
@@ -142,13 +149,15 @@ export function ConfirmationModalContent({
   bottomContent: () => React.ReactNode
 }) {
   return (
-    <Wrapper>
+    <Wrapper className="relative">
       <Section>
         <RowBetween>
-          <Text fontWeight={500} fontSize={20}>
+          <Text fontWeight={500} fontSize={24} fontFamily={'Russo One'} color={'white'}>
             {title}
           </Text>
-          <CloseIcon onClick={onDismiss} />
+          <span className="absolute top-[16px] right-[16px]">
+            <CloseIcon color="white" onClick={onDismiss} />
+          </span>
         </RowBetween>
         {topContent()}
       </Section>
@@ -160,20 +169,26 @@ export function ConfirmationModalContent({
 export function TransactionErrorContent({ message, onDismiss }: { message: string; onDismiss: () => void }) {
   const theme = useContext(ThemeContext)
   return (
-    <Wrapper>
+    <Wrapper className="relative">
       <Section>
         <RowBetween>
-          <Text fontWeight={500} fontSize={20}>
-            Error
+          <Text fontWeight={600} fontSize={24} color={'white'} fontFamily={'Russo One'}>
+            Review Swap
           </Text>
-          <CloseIcon onClick={onDismiss} />
+          <span className="absolute top-[16px] right-[16px]">
+            <CloseIcon color="white" onClick={onDismiss} />
+          </span>
         </RowBetween>
-        <AutoColumn style={{ marginTop: 20, padding: '2rem 0' }} gap="24px" justify="center">
-          <AlertTriangle color={theme.red1} style={{ strokeWidth: 1.5 }} size={64} />
-          <Text fontWeight={500} fontSize={16} color={theme.red1} style={{ textAlign: 'center', width: '85%' }}>
+        <div style={{ marginTop: 40 }}>
+          <div className="flex justify-center mb-[20px]">
+            <img src={cancel} className="w-[100px]" />
+          </div>
+          <p className="text-[32px] font-semibold text-[#FF3B6A] text-center mb-[20px]">Swap fail</p>
+
+          <Text fontWeight={500} fontSize={16} color={theme.white} style={{ textAlign: 'center' }}>
             {message}
           </Text>
-        </AutoColumn>
+        </div>
       </Section>
       <BottomSection gap="12px">
         <ButtonPrimary onClick={onDismiss}>Dismiss</ButtonPrimary>

@@ -1,15 +1,14 @@
 import React, { Suspense } from 'react'
 import { Route, Switch } from 'react-router-dom'
+import 'rc-slider/assets/index.css'
+import '../theme/index.css'
 import styled from 'styled-components'
 import GoogleAnalyticsReporter from '../components/analytics/GoogleAnalyticsReporter'
-import AddressClaimModal from '../components/claim/AddressClaimModal'
 import Header from '../components/Header'
-import Polling from '../components/Header/Polling'
+// import Polling from '../components/Header/Polling'
 import URLWarning from '../components/Header/URLWarning'
 import Popups from '../components/Popups'
 import Web3ReactManager from '../components/Web3ReactManager'
-import { ApplicationModal } from '../state/application/actions'
-import { useModalOpen, useToggleModal } from '../state/application/hooks'
 import DarkModeQueryParamReader from '../theme/DarkModeQueryParamReader'
 import AddLiquidity from './AddLiquidity'
 import {
@@ -30,12 +29,17 @@ import Swap from './Swap'
 import { OpenClaimAddressModalAndRedirectToSwap, RedirectPathToSwapOnly, RedirectToSwap } from './Swap/redirects'
 import Vote from './Vote'
 import VotePage from './Vote/VotePage'
+import Footer from 'components/Footer'
+import mathImage from '../assets/svg/math-image.svg'
+import csm from '../assets/svg/csm.svg'
 
 const AppWrapper = styled.div`
   display: flex;
   flex-flow: column;
   align-items: flex-start;
   overflow-x: hidden;
+  background-color: #131216;
+  min-height: 100vh;
 `
 
 const HeaderWrapper = styled.div`
@@ -68,9 +72,7 @@ const Marginer = styled.div`
 `
 
 function TopLevelModals() {
-  const open = useModalOpen(ApplicationModal.ADDRESS_CLAIM)
-  const toggle = useToggleModal(ApplicationModal.ADDRESS_CLAIM)
-  return <AddressClaimModal isOpen={open} onDismiss={toggle} />
+  return <div />
 }
 
 export default function App() {
@@ -79,14 +81,16 @@ export default function App() {
     <Suspense fallback={null}>
       <Route component={GoogleAnalyticsReporter} />
       <Route component={DarkModeQueryParamReader} />
-      <AppWrapper>
+      <AppWrapper className="relative">
+        <img src={csm} alt="csm" className="absolute  right-[40px] top-[100px]" />
+        <img src={mathImage} alt="math" className="absolute left-[40px] right-[40px] math-image bottom-[120px]" />
         <URLWarning />
         <HeaderWrapper>
           <Header />
         </HeaderWrapper>
         <BodyWrapper>
           <Popups />
-          <Polling />
+          {/* <Polling /> */}
           <TopLevelModals />
           <Web3ReactManager>
             <Switch>
@@ -117,6 +121,7 @@ export default function App() {
           </Web3ReactManager>
           <Marginer />
         </BodyWrapper>
+        <Footer />
       </AppWrapper>
     </Suspense>
   )

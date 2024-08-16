@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.math-image {
+  width: calc(100% - 80px);
+}
+
+.bg-gray {
+  background-color: #323038;
+}

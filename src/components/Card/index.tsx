@@ -5,8 +5,8 @@ import { Box } from 'rebass/styled-components'
 
 const Card = styled(Box)<{ width?: string; padding?: string; border?: string; borderRadius?: string }>`
   width: ${({ width }) => width ?? '100%'};
-  border-radius: 16px;
-  padding: 1.25rem;
+  border-radius: 0;
+  padding: 8px;
   padding: ${({ padding }) => padding};
   border: ${({ border }) => border};
   border-radius: ${({ borderRadius }) => borderRadius};
@@ -18,12 +18,18 @@ export const LightCard = styled(Card)`
   background-color: ${({ theme }) => theme.bg1};
 `
 
+export const RemoveLiqudityCard = styled(Card)`
+  border: 0;
+  background-color: #131216;
+  padding: 16px 24px;
+`
+
 export const LightGreyCard = styled(Card)`
   background-color: ${({ theme }) => theme.bg2};
 `
 
 export const GreyCard = styled(Card)`
-  background-color: ${({ theme }) => theme.bg3};
+  background-color: #1d1c21;
 `
 
 export const OutlineCard = styled(Card)`
@@ -43,16 +49,16 @@ export const PinkCard = styled(Card)`
 `
 
 const BlueCardStyled = styled(Card)`
-  background-color: ${({ theme }) => theme.primary5};
+  background-color: rgba(39, 227, 171, 0.1);
   color: ${({ theme }) => theme.primary1};
-  border-radius: 12px;
+  border-radius: 0;
   width: fit-content;
 `
 
 export const BlueCard = ({ children, ...rest }: CardProps) => {
   return (
     <BlueCardStyled {...rest}>
-      <Text fontWeight={500} color="#2172E5">
+      <Text fontWeight={500} color="#27E3AB" fontSize={12}>
         {children}
       </Text>
     </BlueCardStyled>

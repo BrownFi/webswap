@@ -1,11 +1,12 @@
 import { AbstractConnector } from '@web3-react/abstract-connector'
 import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core'
-import { darken, lighten } from 'polished'
+import { darken } from 'polished'
 import React, { useMemo } from 'react'
 import { Activity } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
 import CoinbaseWalletIcon from '../../assets/images/coinbaseWalletIcon.svg'
+import connectWalletIcon from '../../assets/svg/account_balance_wallet.svg'
 import FortmaticIcon from '../../assets/images/fortmaticIcon.png'
 import PortisIcon from '../../assets/images/portisIcon.png'
 import WalletConnectIcon from '../../assets/images/walletConnectIcon.svg'
@@ -40,9 +41,10 @@ const Web3StatusGeneric = styled(ButtonSecondary)`
   width: 100%;
   align-items: center;
   padding: 0.5rem;
-  border-radius: 12px;
+  border-radius: 0;
   cursor: pointer;
   user-select: none;
+  border: 0;
   :focus {
     outline: none;
   }
@@ -59,43 +61,51 @@ const Web3StatusError = styled(Web3StatusGeneric)`
 `
 
 const Web3StatusConnect = styled(Web3StatusGeneric)<{ faded?: boolean }>`
-  background-color: ${({ theme }) => theme.primary4};
+  background-color: #773030;
   border: none;
-  color: ${({ theme }) => theme.primaryText1};
-  font-weight: 500;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  height: 56px;
+  width: 190px;
+  border-radius: 0;
 
   :hover,
   :focus {
-    border: 1px solid ${({ theme }) => darken(0.05, theme.primary4)};
-    color: ${({ theme }) => theme.primaryText1};
+    border: 0;
+    // color: ${({ theme }) => theme.primaryText1};
   }
 
   ${({ faded }) =>
     faded &&
     css`
-      background-color: ${({ theme }) => theme.primary5};
-      border: 1px solid ${({ theme }) => theme.primary5};
-      color: ${({ theme }) => theme.primaryText1};
+      background-color: #773030;
 
       :hover,
       :focus {
-        border: 1px solid ${({ theme }) => darken(0.05, theme.primary4)};
-        color: ${({ theme }) => darken(0.05, theme.primaryText1)};
+        border: 0;
+        // color: ${({ theme }) => darken(0.05, theme.primaryText1)};
       }
     `}
 `
 
 const Web3StatusConnected = styled(Web3StatusGeneric)<{ pending?: boolean }>`
-  background-color: ${({ pending, theme }) => (pending ? theme.primary1 : theme.bg2)};
-  border: 1px solid ${({ pending, theme }) => (pending ? theme.primary1 : theme.bg3)};
-  color: ${({ pending, theme }) => (pending ? theme.white : theme.text1)};
+  background-color: #1e1e1e;
+  border: 0 !important;
+  outline: 0;
+  color: white;
   font-weight: 500;
+  font-size: 16px;
+  border-radius: 0;
+  height: 56px;
+  padding: 0 20px 0 8px;
+  // width: 190px;
   :hover,
   :focus {
-    background-color: ${({ pending, theme }) => (pending ? darken(0.05, theme.primary1) : lighten(0.05, theme.bg2))};
-
+    background-color: #1e1e1e;
+    border: 0 !important;
     :focus {
-      border: 1px solid ${({ pending, theme }) => (pending ? darken(0.1, theme.primary1) : darken(0.1, theme.bg3))};
+      border: 0 !important;
     }
   }
 `
@@ -135,25 +145,25 @@ function StatusIcon({ connector }: { connector: AbstractConnector }) {
     return <Identicon />
   } else if (connector === walletconnect) {
     return (
-      <IconWrapper size={16}>
+      <IconWrapper size={40}>
         <img src={WalletConnectIcon} alt={''} />
       </IconWrapper>
     )
   } else if (connector === walletlink) {
     return (
-      <IconWrapper size={16}>
+      <IconWrapper size={40}>
         <img src={CoinbaseWalletIcon} alt={''} />
       </IconWrapper>
     )
   } else if (connector === fortmatic) {
     return (
-      <IconWrapper size={16}>
+      <IconWrapper size={40}>
         <img src={FortmaticIcon} alt={''} />
       </IconWrapper>
     )
   } else if (connector === portis) {
     return (
-      <IconWrapper size={16}>
+      <IconWrapper size={40}>
         <img src={PortisIcon} alt={''} />
       </IconWrapper>
     )
@@ -183,6 +193,7 @@ function Web3StatusInner() {
   if (account) {
     return (
       <Web3StatusConnected id="web3-status-connected" onClick={toggleWalletModal} pending={hasPendingTransactions}>
+        {!hasPendingTransactions && connector && <StatusIcon connector={connector} />}
         {hasPendingTransactions ? (
           <RowBetween>
             <Text>{pending?.length} Pending</Text> <Loader stroke="white" />
@@ -190,10 +201,9 @@ function Web3StatusInner() {
         ) : (
           <>
             {hasSocks ? SOCK : null}
-            <Text>{ENSName || shortenAddress(account)}</Text>
+            <p className="text-[16px] font-medium">{ENSName || shortenAddress(account)}</p>
           </>
         )}
-        {!hasPendingTransactions && connector && <StatusIcon connector={connector} />}
       </Web3StatusConnected>
     )
   } else if (error) {
@@ -206,7 +216,8 @@ function Web3StatusInner() {
   } else {
     return (
       <Web3StatusConnect id="connect-wallet" onClick={toggleWalletModal} faded={!account}>
-        <Text>{t('Connect to a wallet')}</Text>
+        <img src={connectWalletIcon} className="w-[24px] mr-[8px]" alt="ico" />
+        <p className="text-[16px] font-bold">{t('Connect Wallet')}</p>
       </Web3StatusConnect>
     )
   }

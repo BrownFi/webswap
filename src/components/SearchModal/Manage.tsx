@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
-import { PaddedColumn, Separator } from './styleds'
+import { PaddedColumn } from './styleds'
 import { RowBetween } from 'components/Row'
-import { ArrowLeft } from 'react-feather'
+import { ChevronLeft } from 'react-feather'
 import { Text } from 'rebass'
 import { CloseIcon } from 'theme'
 import styled from 'styled-components'
@@ -18,21 +18,21 @@ const Wrapper = styled.div`
 `
 
 const ToggleWrapper = styled(RowBetween)`
-  background-color: ${({ theme }) => theme.bg3};
-  border-radius: 12px;
-  padding: 6px;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
 `
 
 const ToggleOption = styled.div<{ active?: boolean }>`
-  width: 48%;
+  width: 50%;
   padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 0;
   font-weight: 600;
-  background-color: ${({ theme, active }) => (active ? theme.bg1 : theme.bg3)};
-  color: ${({ theme, active }) => (active ? theme.text1 : theme.text2)};
+  background-color: ${({ theme, active }) => (active ? theme.primary1 : '#323038')};
+  color: white;
   user-select: none;
 
   :hover {
@@ -58,17 +58,24 @@ export default function Manage({
   const [showLists, setShowLists] = useState(true)
 
   return (
-    <Wrapper>
+    <Wrapper className="relative">
       <PaddedColumn>
         <RowBetween>
-          <ArrowLeft style={{ cursor: 'pointer' }} onClick={() => setModalView(CurrencyModalView.search)} />
-          <Text fontWeight={500} fontSize={20}>
-            Manage
-          </Text>
-          <CloseIcon onClick={onDismiss} />
+          <div className="flex items-center">
+            <ChevronLeft
+              style={{ cursor: 'pointer' }}
+              onClick={() => setModalView(CurrencyModalView.search)}
+              color={'white'}
+            />
+            <Text fontWeight={500} fontSize={24} fontFamily={'Russo One'} color={'white'}>
+              Manage
+            </Text>
+          </div>
+
+          <CloseIcon onClick={onDismiss} color={'white'} className="absolute top-[16px] right-[16px]" />
         </RowBetween>
       </PaddedColumn>
-      <Separator />
+      {/* <Separator /> */}
       <PaddedColumn style={{ paddingBottom: 0 }}>
         <ToggleWrapper>
           <ToggleOption onClick={() => setShowLists(!showLists)} active={showLists}>

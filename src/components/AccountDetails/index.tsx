@@ -24,12 +24,14 @@ import { ExternalLink, LinkStyledButton, TYPE } from '../../theme'
 
 const HeaderRow = styled.div`
   ${({ theme }) => theme.flexRowNoWrap};
-  padding: 1rem 1rem;
+  padding: 32px 40px 20px 40px;
   font-weight: 500;
-  color: ${props => (props.color === 'blue' ? ({ theme }) => theme.primary1 : 'inherit')};
+  color: white;
   ${({ theme }) => theme.mediaWidth.upToMedium`
     padding: 1rem;
   `};
+  font-size: 24px;
+  font-family: 'Russo One';
 `
 
 const UpperSection = styled.div`
@@ -54,12 +56,13 @@ const UpperSection = styled.div`
 
 const InfoCard = styled.div`
   padding: 1rem;
-  border: 1px solid ${({ theme }) => theme.bg3};
-  border-radius: 20px;
+  border: 0;
+  border-radius: 0;
   position: relative;
   display: grid;
   grid-row-gap: 12px;
   margin-bottom: 20px;
+  background-color: #323038;
 `
 
 const AccountGroupingRow = styled.div`
@@ -77,7 +80,7 @@ const AccountGroupingRow = styled.div`
 
 const AccountSection = styled.div`
   background-color: ${({ theme }) => theme.bg1};
-  padding: 0rem 1rem;
+  padding: 0rem 40px;
   ${({ theme }) => theme.mediaWidth.upToMedium`padding: 0rem 1rem 1.5rem 1rem;`};
 `
 
@@ -95,17 +98,14 @@ const YourAccount = styled.div`
 
 const LowerSection = styled.div`
   ${({ theme }) => theme.flexColumnNoWrap}
-  padding: 1.5rem;
+  padding: 0 40px 32px 40px;
   flex-grow: 1;
   overflow: auto;
-  background-color: ${({ theme }) => theme.bg2};
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
 
   h5 {
     margin: 0;
     font-weight: 400;
-    color: ${({ theme }) => theme.text3};
+    color: ${({ theme }) => theme.white};
   }
 `
 
@@ -144,8 +144,8 @@ const AddressLink = styled(ExternalLink)<{ hasENS: boolean; isENS: boolean }>`
 
 const CloseIcon = styled.div`
   position: absolute;
-  right: 1rem;
-  top: 14px;
+  right: 16px;
+  top: 16px;
   &:hover {
     cursor: pointer;
     opacity: 0.6;
@@ -154,15 +154,15 @@ const CloseIcon = styled.div`
 
 const CloseColor = styled(Close)`
   path {
-    stroke: ${({ theme }) => theme.text4};
+    stroke: ${({ theme }) => theme.white};
   }
 `
 
 const WalletName = styled.div`
   width: initial;
-  font-size: 0.825rem;
+  font-size: 14px;
   font-weight: 500;
-  color: ${({ theme }) => theme.text3};
+  color: ${({ theme }) => theme.white};
 `
 
 const IconWrapper = styled.div<{ size?: number }>`
@@ -293,7 +293,7 @@ export default function AccountDetails({
     <>
       <UpperSection>
         <CloseIcon onClick={toggleWalletModal}>
-          <CloseColor />
+          <CloseColor color="white" />
         </CloseIcon>
         <HeaderRow>Account</HeaderRow>
         <AccountSection>
@@ -303,23 +303,32 @@ export default function AccountDetails({
                 {formatConnectorName()}
                 <div>
                   {connector !== injected && connector !== walletlink && (
-                    <WalletAction
-                      style={{ fontSize: '.825rem', fontWeight: 400, marginRight: '8px' }}
+                    <a
                       onClick={() => {
                         ;(connector as any).close()
                       }}
+                      className="h-[26px] px-[8px] flex items-center bg-[#1E1E1E] mr-[8px]"
                     >
-                      Disconnect
-                    </WalletAction>
+                      <WalletAction
+                        style={{ fontSize: '12px', fontWeight: 'bold', color: 'white', backgroundColor: '#1E1E1E' }}
+                      >
+                        Disconnect
+                      </WalletAction>
+                    </a>
                   )}
-                  <WalletAction
-                    style={{ fontSize: '.825rem', fontWeight: 400 }}
+
+                  <a
                     onClick={() => {
                       openOptions()
                     }}
+                    className="h-[26px] px-[8px] flex items-center bg-[#773030]"
                   >
-                    Change
-                  </WalletAction>
+                    <WalletAction
+                      style={{ fontSize: '12px', fontWeight: 'bold', color: 'white', backgroundColor: '#773030' }}
+                    >
+                      Change
+                    </WalletAction>
+                  </a>
                 </div>
               </AccountGroupingRow>
               <AccountGroupingRow id="web3-account-identifier-row">
@@ -328,14 +337,14 @@ export default function AccountDetails({
                     <>
                       <div>
                         {getStatusIcon()}
-                        <p> {ENSName}</p>
+                        <p className="text-[32px] font-semibold text-white"> {ENSName}</p>
                       </div>
                     </>
                   ) : (
                     <>
                       <div>
                         {getStatusIcon()}
-                        <p> {account && shortenAddress(account)}</p>
+                        <p className="text-[32px] font-semibold text-white"> {account && shortenAddress(account)}</p>
                       </div>
                     </>
                   )}
@@ -348,7 +357,9 @@ export default function AccountDetails({
                       <div>
                         {account && (
                           <Copy toCopy={account}>
-                            <span style={{ marginLeft: '4px' }}>Copy Address</span>
+                            <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
+                              Copy Address
+                            </span>
                           </Copy>
                         )}
                         {chainId && account && (
@@ -357,8 +368,10 @@ export default function AccountDetails({
                             isENS={true}
                             href={chainId && getEtherscanLink(chainId, ENSName, 'address')}
                           >
-                            <LinkIcon size={16} />
-                            <span style={{ marginLeft: '4px' }}>View on Etherscan</span>
+                            <LinkIcon size={16} color="#27E3AB" />
+                            <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
+                              View on Etherscan
+                            </span>
                           </AddressLink>
                         )}
                       </div>
@@ -366,11 +379,13 @@ export default function AccountDetails({
                   </>
                 ) : (
                   <>
-                    <AccountControl>
+                    <AccountControl className="mt-[12px]">
                       <div>
                         {account && (
                           <Copy toCopy={account}>
-                            <span style={{ marginLeft: '4px' }}>Copy Address</span>
+                            <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
+                              Copy Address
+                            </span>
                           </Copy>
                         )}
                         {chainId && account && (
@@ -379,8 +394,10 @@ export default function AccountDetails({
                             isENS={false}
                             href={getEtherscanLink(chainId, account, 'address')}
                           >
-                            <LinkIcon size={16} />
-                            <span style={{ marginLeft: '4px' }}>View on Etherscan</span>
+                            <LinkIcon size={16} color="#27E3AB" />
+                            <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
+                              View on Etherscan
+                            </span>
                           </AddressLink>
                         )}
                       </div>
@@ -395,7 +412,9 @@ export default function AccountDetails({
       {!!pendingTransactions.length || !!confirmedTransactions.length ? (
         <LowerSection>
           <AutoRow mb={'1rem'} style={{ justifyContent: 'space-between' }}>
-            <TYPE.body>Recent Transactions</TYPE.body>
+            <TYPE.body color={theme.white} fontWeight={600} fontSize={'16px'}>
+              Recent Transactions
+            </TYPE.body>
             <LinkStyledButton onClick={clearAllTransactionsCallback}>(clear all)</LinkStyledButton>
           </AutoRow>
           {renderTransactions(pendingTransactions)}
@@ -403,7 +422,9 @@ export default function AccountDetails({
         </LowerSection>
       ) : (
         <LowerSection>
-          <TYPE.body color={theme.text1}>Your transactions will appear here...</TYPE.body>
+          <TYPE.body color={theme.white} fontWeight={500} fontSize={'14px'}>
+            Your transactions will appear here...
+          </TYPE.body>
         </LowerSection>
       )}
     </>

@@ -4,7 +4,6 @@ import styled from 'styled-components'
 import Option from './Option'
 import { SUPPORTED_WALLETS } from '../../constants'
 import { injected } from '../../connectors'
-import { darken } from 'polished'
 import Loader from '../Loader'
 
 const PendingSection = styled.div`
@@ -25,7 +24,7 @@ const LoadingMessage = styled.div<{ error?: boolean }>`
   ${({ theme }) => theme.flexRowNoWrap};
   align-items: center;
   justify-content: flex-start;
-  border-radius: 12px;
+  border-radius: 0;
   margin-bottom: 20px;
   color: ${({ theme, error }) => (error ? theme.red1 : 'inherit')};
   border: 1px solid ${({ theme, error }) => (error ? theme.red1 : theme.text4)};
@@ -42,10 +41,10 @@ const ErrorGroup = styled.div`
 `
 
 const ErrorButton = styled.div`
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 12px;
-  color: ${({ theme }) => theme.text1};
-  background-color: ${({ theme }) => theme.bg4};
+  color: white;
+  background-color: ${({ theme }) => theme.primary1};
   margin-left: 1rem;
   padding: 0.5rem;
   font-weight: 600;
@@ -53,7 +52,6 @@ const ErrorButton = styled.div`
 
   &:hover {
     cursor: pointer;
-    background-color: ${({ theme }) => darken(0.1, theme.text4)};
   }
 `
 
