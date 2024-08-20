@@ -19,6 +19,9 @@ import AccountDetails from '../AccountDetails'
 import Modal from '../Modal'
 import Option from './Option'
 import PendingView from './PendingView'
+import Web3 from 'web3'
+import { useActiveWeb3React } from 'hooks'
+import { ChainIdHex } from '@brownfi/sdk'
 
 const CloseIcon = styled.div`
   position: absolute;
@@ -127,6 +130,7 @@ export default function WalletModal({
 }) {
   // important that these are destructed from the account-specific web3-react context
   const { active, account, connector, activate, error } = useWeb3React()
+  const { chainId } = useActiveWeb3React()
 
   const [walletView, setWalletView] = useState(WALLET_VIEWS.ACCOUNT)
 
@@ -163,7 +167,62 @@ export default function WalletModal({
     }
   }, [setWalletView, active, error, connector, walletModalOpen, activePrevious, connectorPrevious])
 
+  const forceConnectAccount = async () => {
+    try {
+      if (window.ethereum) {
+        const web3 = new Web3(window.ethereum as any)
+
+        await (window.ethereum as any)?.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: ChainIdHex[chainId || ''] }] // chainId must be in hexadecimal numbers
+        })
+
+        const accounts: any = await web3.eth.getAccounts()
+
+        if (accounts && accounts.length > 0) {
+          await (window.ethereum as any).request({
+            method: 'wallet_requestPermissions',
+            params: [
+              {
+                eth_accounts: {}
+              }
+            ]
+          })
+          const newAccounts = await web3.eth.getAccounts()
+          if (newAccounts[0]) {
+            activate(injected, undefined, true).catch(error => {
+              console.error('Failed to activate after accounts changed', error)
+            })
+          }
+          return
+        }
+        const walletAddress = await (window.ethereum as any).request({
+          method: 'eth_requestAccounts',
+          params: [
+            {
+              eth_accounts: {}
+            }
+          ]
+        })
+
+        if (walletAddress[0]) {
+          activate(injected, undefined, true).catch(error => {
+            console.error('Failed to activate after accounts changed', error)
+          })
+        }
+
+        return
+      }
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
   const tryActivation = async (connector: AbstractConnector | undefined) => {
+    if (connector === injected && window.ethereum) {
+      forceConnectAccount()
+      return
+    }
     let name = ''
     Object.keys(SUPPORTED_WALLETS).map(key => {
       if (connector === SUPPORTED_WALLETS[key].connector) {

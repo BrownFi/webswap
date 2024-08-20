@@ -11,6 +11,7 @@ import Settings from '../Settings'
 import { useDispatch } from 'react-redux'
 import { AppDispatch } from 'state'
 import { resetMintState } from 'state/mint/actions'
+import { isMobile } from 'react-device-detect'
 
 const Tabs = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
@@ -92,7 +93,7 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
 
   return (
     <Tabs>
-      <RowBetween style={{ padding: '32px 32px 10px 32px' }}>
+      <RowBetween style={{ padding: isMobile ? '20px 20px 10px 20px' : '32px 32px 10px 32px' }}>
         <div className="flex items-center">
           <HistoryLink
             to="/pool"

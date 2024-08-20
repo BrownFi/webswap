@@ -9,6 +9,9 @@ const StyledSwapHeader = styled.div`
   width: 100%;
   max-width: 500px;
   color: ${({ theme }) => theme.text2};
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+   padding: 20px
+  `};
 `
 
 const StyledSwaptitle = styled.p`

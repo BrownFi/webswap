@@ -14,6 +14,8 @@ import downIcon from '../../assets/svg/arrow_drop_down.svg'
 import { useActiveWeb3React } from '../../hooks'
 import { useTranslation } from 'react-i18next'
 import useTheme from '../../hooks/useTheme'
+import { isMobile } from 'react-device-detect'
+import { getTokenSymbol } from 'utils'
 
 const InputRow = styled.div<{ selected: boolean }>`
   ${({ theme }) => theme.flexRowNoWrap}
@@ -148,7 +150,7 @@ export default function CurrencyInputPanel({
   const { t } = useTranslation()
 
   const [modalOpen, setModalOpen] = useState(false)
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
   const selectedCurrencyBalance = useCurrencyBalance(account ?? undefined, currency ?? undefined)
   const theme = useTheme()
 
@@ -162,7 +164,7 @@ export default function CurrencyInputPanel({
         {!hideInput && (
           <LabelRow>
             <RowBetween>
-              <TYPE.body color={'white'} fontWeight={500} fontSize={18} fontFamily={'Russo One'}>
+              <TYPE.body color={'white'} fontWeight={500} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
                 {label}
               </TYPE.body>
               <div className="flex items-center">
@@ -171,7 +173,7 @@ export default function CurrencyInputPanel({
                     onClick={onMax}
                     color={theme.white}
                     fontWeight={500}
-                    fontSize={16}
+                    fontSize={isMobile ? 14 : 16}
                     style={{ display: 'inline', cursor: 'pointer' }}
                   >
                     {!hideBalance && !!currency && selectedCurrencyBalance
@@ -224,7 +226,7 @@ export default function CurrencyInputPanel({
                       ? currency.symbol.slice(0, 4) +
                         '...' +
                         currency.symbol.slice(currency.symbol.length - 5, currency.symbol.length)
-                      : currency?.symbol) || t('Select token')}
+                      : getTokenSymbol(currency, chainId)) || t('Select token')}
                   </StyledTokenName>
                 )}
               </div>

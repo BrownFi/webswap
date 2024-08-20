@@ -44,7 +44,7 @@ export default function CommonBases({
       >
         <CurrencyLogo currency={ETHER} style={{ marginRight: 8 }} />
         <Text fontWeight={500} fontSize={14} color="white">
-          ETH
+          {chainId === ChainId.BSC_TESTNET ? 'BNB' : 'ETH'}
         </Text>
       </BaseWrapper>
       {(chainId ? SUGGESTED_BASES[chainId] : []).map((token: Token) => {

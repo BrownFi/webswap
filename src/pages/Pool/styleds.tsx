@@ -4,6 +4,9 @@ import styled from 'styled-components'
 export const Wrapper = styled.div`
   position: relative;
   padding: 0 32px 0 32px;
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+  padding: 0 20px 0 20px;
+ `};
 `
 
 export const ClickableText = styled(Text)`

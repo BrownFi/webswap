@@ -8,6 +8,9 @@ import { AutoColumn } from '../Column'
 export const Wrapper = styled.div`
   position: relative;
   padding: 0 32px;
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+   padding: 0 20px
+  `};
 `
 
 export const ArrowWrapper = styled.div<{ clickable: boolean }>`
@@ -41,7 +44,7 @@ export const ErrorText = styled(Text)<{ severity?: 0 | 1 | 2 | 3 | 4 }>`
       : severity === 2
       ? theme.yellow2
       : severity === 1
-      ? theme.text1
+      ? theme.white
       : theme.green1};
 `
 

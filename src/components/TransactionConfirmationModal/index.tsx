@@ -11,7 +11,7 @@ import { ButtonPrimary } from '../Button'
 import { AutoColumn, ColumnCenter } from '../Column'
 import Circle from '../../assets/images/blue-loader.svg'
 import MetaMaskLogo from '../../assets/images/metamask.png'
-import { getEtherscanLink } from '../../utils'
+import { getEtherscanLink, getScanText } from '../../utils'
 import { useActiveWeb3React } from '../../hooks'
 import useAddTokenToMetamask from 'hooks/useAddTokenToMetamask'
 import checkCircle from '../../assets/svg/check_circle.svg'
@@ -108,7 +108,7 @@ function TransactionSubmittedContent({
           {chainId && hash && (
             <ExternalLink href={getEtherscanLink(chainId, hash, 'transaction')}>
               <Text fontWeight={500} fontSize={14} color={'#27E39F'}>
-                View on Etherscan
+                View on {getScanText(chainId)}
               </Text>
             </ExternalLink>
           )}

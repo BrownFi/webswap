@@ -193,7 +193,7 @@ export function CurrencySearch({
         </Column>
       ) : filteredSortedTokens?.length > 0 || filteredInactiveTokens?.length > 0 ? (
         <div style={{ flex: '1' }}>
-          <div className="flex items-center justify-between mt-[20px] mb-[12px] px-[40px]">
+          <div className="flex items-center justify-between mt-[20px] mb-[12px] px-[20px] lg:px-[40px]">
             <p className="text-[14px] font-medium text-white opacity-[0.5]">Asset</p>
             <p className="text-[14px] font-medium text-white opacity-[0.5]">Balance</p>
           </div>

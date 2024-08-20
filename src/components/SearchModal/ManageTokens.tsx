@@ -12,7 +12,7 @@ import { getEtherscanLink, isAddress } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 import Card from 'components/Card'
 import ImportRow from './ImportRow'
-import useTheme from '../../hooks/useTheme'
+// import useTheme from '../../hooks/useTheme'
 
 import { CurrencyModalView } from './CurrencySearchModal'
 
@@ -45,7 +45,7 @@ export default function ManageTokens({
   const { chainId } = useActiveWeb3React()
 
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const theme = useTheme()
+  // const theme = useTheme()
 
   // manage focus on modal show
   const inputRef = useRef<HTMLInputElement>()
@@ -111,7 +111,7 @@ export default function ManageTokens({
           </Row>
           {searchQuery !== '' && !isAddressSearch && <TYPE.error error={true}>Enter valid token address</TYPE.error>}
           {searchToken && (
-            <Card backgroundColor={theme.bg2} padding="10px 0">
+            <Card padding="10px 0">
               <ImportRow
                 token={searchToken}
                 showImportView={() => setModalView(CurrencyModalView.importToken)}

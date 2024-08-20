@@ -4,7 +4,7 @@ import styled, { ThemeContext } from 'styled-components'
 import { useActiveWeb3React } from '../../hooks'
 import { AppDispatch } from '../../state'
 import { clearAllTransactions } from '../../state/transactions/actions'
-import { shortenAddress } from '../../utils'
+import { getScanText, shortenAddress } from '../../utils'
 import { AutoRow } from '../Row'
 import Copy from './Copy'
 import Transaction from './Transaction'
@@ -370,7 +370,7 @@ export default function AccountDetails({
                           >
                             <LinkIcon size={16} color="#27E3AB" />
                             <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
-                              View on Etherscan
+                              View on {getScanText(chainId)}
                             </span>
                           </AddressLink>
                         )}
@@ -396,7 +396,7 @@ export default function AccountDetails({
                           >
                             <LinkIcon size={16} color="#27E3AB" />
                             <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
-                              View on Etherscan
+                              View on {getScanText(chainId)}
                             </span>
                           </AddressLink>
                         )}

@@ -3,7 +3,7 @@ import React from 'react'
 // import { Text } from 'rebass'
 import { NavLink } from 'react-router-dom'
 import { darken } from 'polished'
-import { useTranslation } from 'react-i18next'
+// import { useTranslation } from 'react-i18next'
 
 import styled from 'styled-components'
 
@@ -262,7 +262,7 @@ export const StyledMenuButton = styled.button`
 
 export default function Header() {
   const { account } = useActiveWeb3React()
-  const { t } = useTranslation()
+  // const { t } = useTranslation()
 
   // const userEthBalance = useETHBalances(account ? [account] : [])?.[account ?? '']
   // const [isDark] = useDarkModeManager()
@@ -292,7 +292,7 @@ export default function Header() {
         </Title>
         <HeaderLinks>
           <StyledNavLink id={`swap-nav-link`} to={'/swap'}>
-            {t('swap')}
+            Swap
           </StyledNavLink>
           <StyledNavLink
             id={`pool-nav-link`}
@@ -305,13 +305,16 @@ export default function Header() {
               pathname.startsWith('/find')
             }
           >
-            {t('pool')}
+            Pool
           </StyledNavLink>
         </HeaderLinks>
       </HeaderRow>
       <HeaderControls>
-        <SelectChain />
-        <HeaderElement>
+        <div className="flex-1">
+          <SelectChain />
+        </div>
+
+        <HeaderElement className="flex-1">
           {/* <HideSmall>
             {chainId && NETWORK_LABELS[chainId] && (
               <NetworkCard title={NETWORK_LABELS[chainId]}>{NETWORK_LABELS[chainId]}</NetworkCard>

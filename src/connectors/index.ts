@@ -10,6 +10,7 @@ import UNISWAP_LOGO_URL from '../assets/svg/logo.svg'
 import { ChainId } from '@brownfi/sdk'
 
 const NETWORK_URL = process.env.REACT_APP_NETWORK_URL
+const SEPOLIA_URL = process.env.REACT_APP_SEPOLIA_URL
 const FORMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY
 const PORTIS_ID = process.env.REACT_APP_PORTIS_ID
 
@@ -23,13 +24,17 @@ export const network = new NetworkConnector({
   urls: { [NETWORK_CHAIN_ID]: NETWORK_URL }
 })
 
+export const networkSepolia = new NetworkConnector({
+  urls: { [ChainId.SEPOLIA]: SEPOLIA_URL as string }
+})
+
 let networkLibrary: Web3Provider | undefined
 export function getNetworkLibrary(): Web3Provider {
   return (networkLibrary = networkLibrary ?? new Web3Provider(network.provider as any))
 }
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [ChainId.MAINNET, ChainId.SEPOLIA]
+  supportedChainIds: [ChainId.MAINNET, ChainId.SEPOLIA, ChainId.BSC_TESTNET]
 })
 
 // mainnet only

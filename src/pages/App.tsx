@@ -6,7 +6,7 @@ import styled from 'styled-components'
 import GoogleAnalyticsReporter from '../components/analytics/GoogleAnalyticsReporter'
 import Header from '../components/Header'
 // import Polling from '../components/Header/Polling'
-import URLWarning from '../components/Header/URLWarning'
+// import URLWarning from '../components/Header/URLWarning'
 import Popups from '../components/Popups'
 import Web3ReactManager from '../components/Web3ReactManager'
 import DarkModeQueryParamReader from '../theme/DarkModeQueryParamReader'
@@ -84,7 +84,7 @@ export default function App() {
       <AppWrapper className="relative">
         <img src={csm} alt="csm" className="absolute  right-[40px] top-[100px]" />
         <img src={mathImage} alt="math" className="absolute left-[40px] right-[40px] math-image bottom-[120px]" />
-        <URLWarning />
+        {/* <URLWarning /> */}
         <HeaderWrapper>
           <Header />
         </HeaderWrapper>

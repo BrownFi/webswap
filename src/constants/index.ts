@@ -49,7 +49,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.MAINNET]: [WETH[ChainId.MAINNET]],
   [ChainId.SEPOLIA]: [WETH[ChainId.SEPOLIA]],
   [ChainId.SN_SEPOLIA]: [WETH[ChainId.SN_SEPOLIA]],
-  [ChainId.SN_MAIN]: [WETH[ChainId.SN_MAIN]]
+  [ChainId.SN_MAIN]: [WETH[ChainId.SN_MAIN]],
+  [ChainId.BSC_TESTNET]: [WETH[ChainId.BSC_TESTNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -174,7 +175,7 @@ export const SUPPORTED_WALLETS: { [key: string]: WalletInfo } = {
 export const NetworkContextName = 'NETWORK'
 
 // default allowed slippage, in bips
-export const INITIAL_ALLOWED_SLIPPAGE = 50
+export const INITIAL_ALLOWED_SLIPPAGE = 1000
 // 20 minutes, denominated in seconds
 export const DEFAULT_DEADLINE_FROM_NOW = 60 * 20
 

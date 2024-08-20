@@ -58,6 +58,9 @@ export const Checkbox = styled.input`
 
 export const PaddedColumn = styled(AutoColumn)`
   padding: 32px 40px 12px 40px;
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+   padding: 20px 20px 12px 20px;
+  `};
 `
 
 export const MenuItem = styled(RowBetween)`
@@ -75,6 +78,10 @@ export const MenuItem = styled(RowBetween)`
   opacity: ${({ disabled, selected }) => (disabled || selected ? 0.5 : 1)};
   border-bottom: 1px solid #323135;
   width: calc(100% - 80px) !important;
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+   width: calc(100% - 40px) !important;
+   margin: 0 20px;
+  `};
 `
 
 export const SearchInput = styled.input`

@@ -34,6 +34,9 @@ export function getEtherscanLink(
     case ChainId.SN_SEPOLIA:
       prefix = 'https://sepolia.starkscan.co/'
       break
+    case ChainId.BSC_TESTNET:
+      prefix = 'https://testnet.bscscan.com/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -116,4 +119,33 @@ export function escapeRegExp(string: string): string {
 export function isTokenOnList(defaultTokens: TokenAddressMap, currency?: Currency): boolean {
   if (currency === ETHER) return true
   return Boolean(currency instanceof Token && defaultTokens[currency.chainId]?.[currency.address])
+}
+
+export function getTokenSymbol(currency: Currency | null | undefined, chainId: ChainId | undefined) {
+  if (currency === ETHER) {
+    if (chainId === ChainId.BSC_TESTNET) {
+      return 'BNB'
+    }
+    return 'ETH'
+  }
+  return currency?.symbol
+}
+
+export function getTokenName(currency: Currency | null | undefined, chainId: ChainId | undefined) {
+  if (currency === ETHER) {
+    if (chainId === ChainId.BSC_TESTNET) {
+      return 'BNB'
+    }
+    return 'Ethereum'
+  }
+  return currency?.name
+}
+
+export function getScanText(chainId: ChainId) {
+  switch (chainId) {
+    case ChainId.BSC_TESTNET:
+      return 'Bscscan'
+    default:
+      return 'Etherscan'
+  }
 }

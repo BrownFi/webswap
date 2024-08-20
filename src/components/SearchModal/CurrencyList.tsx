@@ -14,7 +14,7 @@ import CurrencyLogo from '../CurrencyLogo'
 import { MouseoverTooltip } from '../Tooltip'
 import { MenuItem } from './styleds'
 import Loader from '../Loader'
-import { isTokenOnList } from '../../utils'
+import { getTokenName, getTokenSymbol, isTokenOnList } from '../../utils'
 import ImportRow from './ImportRow'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { LightGreyCard } from 'components/Card'
@@ -114,7 +114,7 @@ function CurrencyRow({
   otherSelected: boolean
   style: CSSProperties
 }) {
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
   const key = currencyKey(currency)
   const selectedTokenList = useCombinedActiveList()
   const isOnSelectedList = isTokenOnList(selectedTokenList, currency)
@@ -133,10 +133,10 @@ function CurrencyRow({
       <CurrencyLogo currency={currency} size={'28px'} />
       <Column>
         <Text title={currency.name} fontWeight={500} fontSize={'16px'} color={'white'}>
-          {currency.symbol}
+          {getTokenSymbol(currency, chainId)}
         </Text>
         <TYPE.darkGray ml="0px" fontSize={'12px'} fontWeight={500} color="white" opacity={'0.5'}>
-          {currency.name} {!isOnSelectedList && customAdded && '• Added by user'}
+          {getTokenName(currency, chainId)} {!isOnSelectedList && customAdded && '• Added by user'}
         </TYPE.darkGray>
       </Column>
       <TokenTags currency={currency} />

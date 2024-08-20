@@ -119,7 +119,7 @@ export default function Pool() {
       <PageWrapper>
         {/* <SwapPoolTabs active={'pool'} /> */}
 
-        <AutoColumn gap="lg" justify="center" className="p-[32px]">
+        <AutoColumn gap="lg" justify="center" className="p-[20px] lg:p-[32px]">
           <AutoColumn gap="lg" style={{ width: '100%' }}>
             <TitleRow style={{ marginTop: '1rem' }} padding={'0'}>
               <HideSmall>
@@ -127,7 +127,7 @@ export default function Pool() {
                   Your liquidity
                 </TYPE.mediumHeader>
               </HideSmall>
-              <div className="flex items-center flex-1 justify-end">
+              <div className="flex items-center flex-1 justify-end w-full lg:w-auto">
                 <ResponsiveButtonSecondary as={Link} to="/create/ETH" className="!h-[40px] mr-[16px] !px-[18px] !py-0">
                   <Text fontWeight={700} fontSize={14} color={'white'}>
                     Create a pair
