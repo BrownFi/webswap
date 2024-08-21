@@ -24,7 +24,7 @@ export function computeTradePriceBreakdown(
       )
 
   // remove lp fees from price impact
-  const priceImpactWithoutFeeFraction = trade && realizedLPFee ? trade.priceImpact.subtract(realizedLPFee) : undefined
+  const priceImpactWithoutFeeFraction = trade && realizedLPFee ? trade.priceImpact?.subtract(realizedLPFee) : undefined
 
   // the x*y=k impact
   const priceImpactWithoutFeePercent = priceImpactWithoutFeeFraction
@@ -37,7 +37,7 @@ export function computeTradePriceBreakdown(
     trade &&
     (trade.inputAmount instanceof TokenAmount
       ? new TokenAmount(trade.inputAmount.token, realizedLPFee.multiply(trade.inputAmount.raw).quotient)
-      : CurrencyAmount.ether(realizedLPFee.multiply(trade.inputAmount.raw).quotient))
+      : CurrencyAmount.ether(realizedLPFee.multiply(trade.inputAmount?.raw || JSBI.BigInt(0)).quotient))
 
   return { priceImpactWithoutFee: priceImpactWithoutFeePercent, realizedLPFee: realizedLPFeeAmount }
 }
@@ -67,10 +67,10 @@ export function formatExecutionPrice(trade?: Trade, inverted?: boolean): string 
     return ''
   }
   return inverted
-    ? `${trade.executionPrice.invert().toSignificant(6)} ${trade.inputAmount.currency.symbol} / ${
-        trade.outputAmount.currency.symbol
+    ? `${trade.executionPrice?.invert().toSignificant(6)} ${trade.inputAmount?.currency.symbol} / ${
+        trade.outputAmount?.currency.symbol
       }`
-    : `${trade.executionPrice.toSignificant(6)} ${trade.outputAmount.currency.symbol} / ${
-        trade.inputAmount.currency.symbol
+    : `${trade.executionPrice?.toSignificant(6)} ${trade.outputAmount?.currency.symbol} / ${
+        trade.inputAmount?.currency.symbol
       }`
 }

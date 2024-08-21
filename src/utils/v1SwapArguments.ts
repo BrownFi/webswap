@@ -23,8 +23,8 @@ export default function v1SwapArguments(
     throw new Error('too many pairs')
   }
   const isExactIn = trade.tradeType === TradeType.EXACT_INPUT
-  const inputETH = trade.inputAmount.currency === ETHER
-  const outputETH = trade.outputAmount.currency === ETHER
+  const inputETH = trade.inputAmount?.currency === ETHER
+  const outputETH = trade.outputAmount?.currency === ETHER
   if (inputETH && outputETH) throw new Error('ETHER to ETHER')
   const minimumAmountOut = toHex(trade.minimumAmountOut(options.allowedSlippage))
   const maximumAmountIn = toHex(trade.maximumAmountIn(options.allowedSlippage))
@@ -43,7 +43,7 @@ export default function v1SwapArguments(
         value: '0x0'
       }
     } else {
-      const outputToken = trade.outputAmount.currency
+      const outputToken = trade.outputAmount?.currency
       // should never happen, needed for type check
       if (!(outputToken instanceof Token)) {
         throw new Error('token to token')
@@ -68,7 +68,7 @@ export default function v1SwapArguments(
         value: '0x0'
       }
     } else {
-      const output = trade.outputAmount.currency
+      const output = trade.outputAmount?.currency
       if (!(output instanceof Token)) {
         throw new Error('invalid output amount currency')
       }

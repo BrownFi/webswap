@@ -1,7 +1,7 @@
 import { isTradeBetter } from 'utils/trades'
 import { Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
 import flatMap from 'lodash.flatmap'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import {
   BASES_TO_CHECK_TRADES_AGAINST,
@@ -96,66 +96,91 @@ const MAX_HOPS = 3
  * Returns the best trade for the exact amount of tokens in to the given token out
  */
 export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?: Currency): Trade | null {
+  const [trade, setTrade] = useState<Trade | null>(null)
   const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut)
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
-  return useMemo(() => {
-    if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
-      if (singleHopOnly) {
-        return (
-          Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, { maxHops: 1, maxNumResults: 1 })[0] ??
-          null
-        )
-      }
-      // search through trades with varying hops, find best trade out of them
-      let bestTradeSoFar: Trade | null = null
-      for (let i = 1; i <= MAX_HOPS; i++) {
-        const currentTrade: Trade | null =
-          Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, { maxHops: i, maxNumResults: 1 })[0] ??
-          null
-        // if current trade is best yet, save it
-        if (isTradeBetter(bestTradeSoFar, currentTrade, BETTER_TRADE_LESS_HOPS_THRESHOLD)) {
-          bestTradeSoFar = currentTrade
+  useEffect(() => {
+    const getTrade = async () => {
+      if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
+        if (singleHopOnly) {
+          const bestTradeIn = await Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, {
+            maxHops: 1,
+            maxNumResults: 1
+          })
+          setTrade(bestTradeIn?.[0] ?? null)
+          return
         }
+        // search through trades with varying hops, find best trade out of them
+        let bestTradeSoFar: Trade | null = null
+        for (let i = 1; i <= MAX_HOPS; i++) {
+          const bestTradeIn = await Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, {
+            maxHops: i,
+            maxNumResults: 1
+          })
+          const currentTrade: Trade | null = bestTradeIn?.[0] ?? null
+          // if current trade is best yet, save it
+          if (isTradeBetter(bestTradeSoFar, currentTrade, BETTER_TRADE_LESS_HOPS_THRESHOLD)) {
+            bestTradeSoFar = currentTrade
+          }
+        }
+        setTrade(bestTradeSoFar)
+        return
       }
-      return bestTradeSoFar
+
+      setTrade(null)
     }
 
-    return null
-  }, [allowedPairs, currencyAmountIn, currencyOut, singleHopOnly])
+    getTrade()
+  }, [allowedPairs?.length, currencyAmountIn?.raw.toString(), currencyOut?.name, singleHopOnly])
+
+  return trade
 }
 
 /**
  * Returns the best trade for the token in to the exact amount of token out
  */
 export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: CurrencyAmount): Trade | null {
+  const [trade, setTrade] = useState<Trade | null>(null)
+
   const allowedPairs = useAllCommonPairs(currencyIn, currencyAmountOut?.currency)
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
-  return useMemo(() => {
-    if (currencyIn && currencyAmountOut && allowedPairs.length > 0) {
-      if (singleHopOnly) {
-        return (
-          Trade.bestTradeExactOut(allowedPairs, currencyIn, currencyAmountOut, { maxHops: 1, maxNumResults: 1 })[0] ??
-          null
-        )
-      }
-      // search through trades with varying hops, find best trade out of them
-      let bestTradeSoFar: Trade | null = null
-      for (let i = 1; i <= MAX_HOPS; i++) {
-        const currentTrade =
-          Trade.bestTradeExactOut(allowedPairs, currencyIn, currencyAmountOut, { maxHops: i, maxNumResults: 1 })[0] ??
-          null
-        if (isTradeBetter(bestTradeSoFar, currentTrade, BETTER_TRADE_LESS_HOPS_THRESHOLD)) {
-          bestTradeSoFar = currentTrade
+  useEffect(() => {
+    const getTrade = async () => {
+      if (currencyIn && currencyAmountOut && allowedPairs.length > 0) {
+        if (singleHopOnly) {
+          const bestTradeOut = await Trade.bestTradeExactOut(allowedPairs, currencyIn, currencyAmountOut, {
+            maxHops: 1,
+            maxNumResults: 1
+          })
+          setTrade(bestTradeOut?.[0] ?? null)
+          return
         }
+        // search through trades with varying hops, find best trade out of them
+        let bestTradeSoFar: Trade | null = null
+        for (let i = 1; i <= MAX_HOPS; i++) {
+          const bestTradeOut = await Trade.bestTradeExactOut(allowedPairs, currencyIn, currencyAmountOut, {
+            maxHops: i,
+            maxNumResults: 1
+          })
+          const currentTrade = bestTradeOut?.[0] ?? null
+          if (isTradeBetter(bestTradeSoFar, currentTrade, BETTER_TRADE_LESS_HOPS_THRESHOLD)) {
+            bestTradeSoFar = currentTrade
+          }
+        }
+        setTrade(bestTradeSoFar)
+        return
       }
-      return bestTradeSoFar
+      setTrade(null)
     }
-    return null
-  }, [currencyIn, currencyAmountOut, allowedPairs, singleHopOnly])
+
+    getTrade()
+  }, [currencyIn?.name, currencyAmountOut?.raw?.toString(), allowedPairs?.length, singleHopOnly])
+
+  return trade
 }
 
 export function useIsTransactionUnsupported(currencyIn?: Currency, currencyOut?: Currency): boolean {

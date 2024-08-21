@@ -15,10 +15,10 @@ import SwapModalHeader from './SwapModalHeader'
 function tradeMeaningfullyDiffers(tradeA: Trade, tradeB: Trade): boolean {
   return (
     tradeA.tradeType !== tradeB.tradeType ||
-    !currencyEquals(tradeA.inputAmount.currency, tradeB.inputAmount.currency) ||
-    !tradeA.inputAmount.equalTo(tradeB.inputAmount) ||
-    !currencyEquals(tradeA.outputAmount.currency, tradeB.outputAmount.currency) ||
-    !tradeA.outputAmount.equalTo(tradeB.outputAmount)
+    !currencyEquals(tradeA.inputAmount?.currency, tradeB.inputAmount?.currency) ||
+    !tradeA.inputAmount?.equalTo(tradeB?.inputAmount as any) ||
+    !currencyEquals(tradeA.outputAmount?.currency, tradeB.outputAmount?.currency) ||
+    !tradeA.outputAmount?.equalTo(tradeB.outputAmount as any)
   )
 }
 
@@ -104,7 +104,7 @@ export default function ConfirmSwapModal({
       hash={txHash}
       content={confirmationContent}
       pendingText={pendingText}
-      currencyToAdd={trade?.outputAmount.currency}
+      currencyToAdd={trade?.outputAmount?.currency}
     />
   )
 }

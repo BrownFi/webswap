@@ -12,16 +12,22 @@ export function isTradeBetter(
   if (!tradeA || !tradeB) return undefined
 
   if (
-    tradeA.tradeType !== tradeB.tradeType ||
-    !currencyEquals(tradeA.inputAmount.currency, tradeB.inputAmount.currency) ||
-    !currencyEquals(tradeB.outputAmount.currency, tradeB.outputAmount.currency)
+    tradeA.inputAmount &&
+    tradeB.inputAmount &&
+    (tradeA.tradeType !== tradeB.tradeType ||
+      !currencyEquals(tradeA.inputAmount?.currency, tradeB.inputAmount?.currency) ||
+      !currencyEquals(tradeB.outputAmount?.currency, tradeB.outputAmount?.currency))
   ) {
     throw new Error('Trades are not comparable')
   }
 
   if (minimumDelta.equalTo(ZERO_PERCENT)) {
-    return tradeA.executionPrice.lessThan(tradeB.executionPrice)
+    return tradeA.executionPrice && tradeB?.executionPrice
+      ? tradeA.executionPrice?.lessThan(tradeB?.executionPrice)
+      : true
   } else {
-    return tradeA.executionPrice.raw.multiply(minimumDelta.add(ONE_HUNDRED_PERCENT)).lessThan(tradeB.executionPrice)
+    return tradeA.executionPrice && tradeB?.executionPrice
+      ? tradeA.executionPrice?.raw.multiply(minimumDelta.add(ONE_HUNDRED_PERCENT)).lessThan(tradeB.executionPrice)
+      : true
   }
 }

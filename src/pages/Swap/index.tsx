@@ -236,11 +236,14 @@ export default function Swap({ history }: RouteComponentProps) {
         })
       })
       .catch(error => {
+        // console.log('error', error.data, error.message, error.status)
         setSwapState({
           attemptingTxn: false,
           tradeToConfirm,
           showConfirm,
-          swapErrorMessage: error.message,
+          swapErrorMessage: error.message?.indexOf('user rejected transaction')
+            ? 'User rejected transaction'
+            : error.message,
           txHash: undefined
         })
       })
@@ -261,6 +264,8 @@ export default function Swap({ history }: RouteComponentProps) {
 
   // warnings on slippage
   const priceImpactSeverity = warningSeverity(priceImpactWithoutFee)
+
+  // console.log('priceImpactSeverity ===>', priceImpactSeverity)
 
   // show approve flow when: no error on inputs, not approved or pending, or approved in current session
   // never show if price impact is above threshold in non expert mode
