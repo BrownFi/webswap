@@ -6,6 +6,7 @@ import styled from 'styled-components'
 import { SUGGESTED_BASES } from '../../constants'
 import { AutoRow } from '../Row'
 import CurrencyLogo from '../CurrencyLogo'
+import { getTokenSymbol } from 'utils'
 
 const BaseWrapper = styled.div<{ disable?: boolean }>`
   border: 0;
@@ -53,7 +54,7 @@ export default function CommonBases({
           <BaseWrapper onClick={() => !selected && onSelect(token)} disable={selected} key={token.address}>
             <CurrencyLogo currency={token} style={{ marginRight: 8 }} size="20px" />
             <Text fontWeight={500} fontSize={14} color="white">
-              {token.symbol}
+              {getTokenSymbol(token, chainId)}
             </Text>
           </BaseWrapper>
         )

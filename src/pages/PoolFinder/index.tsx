@@ -20,6 +20,7 @@ import AppBody from '../AppBody'
 import { Dots } from '../Pool/styleds'
 import { BlueCard } from '../../components/Card'
 import { TYPE } from '../../theme'
+import { getTokenSymbol } from 'utils'
 
 enum Fields {
   TOKEN0 = 0,
@@ -27,7 +28,7 @@ enum Fields {
 }
 
 export default function PoolFinder() {
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
 
   const [showSearch, setShowSearch] = useState<boolean>(false)
   const [activeField, setActiveField] = useState<number>(Fields.TOKEN1)
@@ -99,7 +100,7 @@ export default function PoolFinder() {
             <Row>
               <CurrencyLogo currency={currency0} />
               <Text fontWeight={500} fontSize={20} marginLeft={'12px'}>
-                {currency0.symbol}
+                {getTokenSymbol(currency0, chainId)}
               </Text>
             </Row>
           ) : (
@@ -123,7 +124,7 @@ export default function PoolFinder() {
             <Row>
               <CurrencyLogo currency={currency1} />
               <Text fontWeight={500} fontSize={20} marginLeft={'12px'}>
-                {currency1.symbol}
+                {getTokenSymbol(currency1, chainId)}
               </Text>
             </Row>
           ) : (

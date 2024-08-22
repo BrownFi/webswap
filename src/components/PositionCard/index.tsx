@@ -24,6 +24,7 @@ import DoubleCurrencyLogo from '../DoubleLogo'
 import { RowBetween, RowFixed, AutoRow } from '../Row'
 import { Dots } from '../swap/styleds'
 import { BIG_INT_ZERO } from '../../constants'
+import { getTokenSymbol } from 'utils'
 
 export const FixedHeightRow = styled(RowBetween)`
   height: 24px;
@@ -51,7 +52,7 @@ interface PositionCardProps {
 }
 
 export function MinimalPositionCard({ pair, showUnwrapped = false, border }: PositionCardProps) {
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
 
   const currency0 = showUnwrapped ? pair.token0 : unwrappedToken(pair.token0)
   const currency1 = showUnwrapped ? pair.token1 : unwrappedToken(pair.token1)
@@ -94,7 +95,7 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
               <RowFixed>
                 <DoubleCurrencyLogo currency0={currency0} currency1={currency1} margin={true} size={20} />
                 <Text fontWeight={500} fontSize={20} color={'white'}>
-                  {currency0.symbol}/{currency1.symbol}
+                  {getTokenSymbol(currency0, chainId)}/{getTokenSymbol(currency1, chainId)}
                 </Text>
               </RowFixed>
               <RowFixed>
@@ -114,7 +115,7 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
               </FixedHeightRow>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {currency0.symbol}:
+                  {getTokenSymbol(currency0, chainId)}:
                 </Text>
                 {token0Deposited ? (
                   <RowFixed>
@@ -128,7 +129,7 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
               </FixedHeightRow>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {currency1.symbol}:
+                  {getTokenSymbol(currency1, chainId)}:
                 </Text>
                 {token1Deposited ? (
                   <RowFixed>
@@ -159,7 +160,7 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
 }
 
 export default function FullPositionCard({ pair, border, stakedBalance }: PositionCardProps) {
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -199,7 +200,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
           <AutoRow gap="8px">
             <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={20} />
             <Text fontWeight={600} fontSize={20} className="text-white">
-              {!currency0 || !currency1 ? <Dots>Loading</Dots> : `${currency0.symbol}/${currency1.symbol}`}
+              {!currency0 || !currency1 ? (
+                <Dots>Loading</Dots>
+              ) : (
+                `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
+              )}
             </Text>
           </AutoRow>
           <RowFixed gap="8px">
@@ -249,7 +254,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
             <FixedHeightRow>
               <RowFixed>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  Pooled {currency0.symbol}:
+                  Pooled {getTokenSymbol(currency0, chainId)}:
                 </Text>
               </RowFixed>
               {token0Deposited ? (
@@ -267,7 +272,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
             <FixedHeightRow>
               <RowFixed>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  Pooled {currency1.symbol}:
+                  Pooled {getTokenSymbol(currency1, chainId)}:
                 </Text>
               </RowFixed>
               {token1Deposited ? (

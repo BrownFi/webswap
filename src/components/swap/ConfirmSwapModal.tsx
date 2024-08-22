@@ -6,6 +6,8 @@ import TransactionConfirmationModal, {
 } from '../TransactionConfirmationModal'
 import SwapModalFooter from './SwapModalFooter'
 import SwapModalHeader from './SwapModalHeader'
+import { useActiveWeb3React } from 'hooks'
+import { getTokenSymbol } from 'utils'
 
 /**
  * Returns true if the trade requires a confirmation of details before we can submit it
@@ -47,6 +49,7 @@ export default function ConfirmSwapModal({
   swapErrorMessage: string | undefined
   onDismiss: () => void
 }) {
+  const { chainId } = useActiveWeb3React()
   const showAcceptChanges = useMemo(
     () => Boolean(trade && originalTrade && tradeMeaningfullyDiffers(trade, originalTrade)),
     [originalTrade, trade]
@@ -77,9 +80,10 @@ export default function ConfirmSwapModal({
   }, [allowedSlippage, onConfirm, showAcceptChanges, swapErrorMessage, trade])
 
   // text to show while loading
-  const pendingText = `Swapping ${trade?.inputAmount?.toSignificant(6)} ${
-    trade?.inputAmount?.currency?.symbol
-  } for ${trade?.outputAmount?.toSignificant(6)} ${trade?.outputAmount?.currency?.symbol}`
+  const pendingText = `Swapping ${trade?.inputAmount?.toSignificant(6)} ${getTokenSymbol(
+    trade?.inputAmount?.currency,
+    chainId
+  )} for ${trade?.outputAmount?.toSignificant(6)} ${getTokenSymbol(trade?.outputAmount?.currency, chainId)}`
 
   const confirmationContent = useCallback(
     () =>

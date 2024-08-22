@@ -6,6 +6,8 @@ import { RowBetween, RowFixed } from '../../components/Row'
 import CurrencyLogo from '../../components/CurrencyLogo'
 import { Field } from '../../state/mint/actions'
 import { TYPE } from '../../theme'
+import { useActiveWeb3React } from 'hooks'
+import { getTokenSymbol } from 'utils'
 
 export function ConfirmAddModalBottom({
   noLiquidity,
@@ -22,17 +24,18 @@ export function ConfirmAddModalBottom({
   poolTokenPercentage?: Percent
   onAdd: () => void
 }) {
+  const { chainId } = useActiveWeb3React()
   return (
     <>
       <RowBetween>
-        <TYPE.body className="!text-white">{currencies[Field.CURRENCY_A]?.symbol} Deposited</TYPE.body>
+        <TYPE.body className="!text-white">{getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} Deposited</TYPE.body>
         <RowFixed>
           <CurrencyLogo currency={currencies[Field.CURRENCY_A]} style={{ marginRight: '8px' }} />
           <TYPE.body className="!text-white">{parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}</TYPE.body>
         </RowFixed>
       </RowBetween>
       <RowBetween>
-        <TYPE.body className="!text-white">{currencies[Field.CURRENCY_B]?.symbol} Deposited</TYPE.body>
+        <TYPE.body className="!text-white">{getTokenSymbol(currencies[Field.CURRENCY_B], chainId)} Deposited</TYPE.body>
         <RowFixed>
           <CurrencyLogo currency={currencies[Field.CURRENCY_B]} style={{ marginRight: '8px' }} />
           <TYPE.body className="!text-white">{parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}</TYPE.body>
@@ -41,16 +44,17 @@ export function ConfirmAddModalBottom({
       <RowBetween>
         <TYPE.body className="!text-white">Rates</TYPE.body>
         <TYPE.body className="!text-white">
-          {`1 ${currencies[Field.CURRENCY_A]?.symbol} = ${price?.toSignificant(4)} ${
-            currencies[Field.CURRENCY_B]?.symbol
-          }`}
+          {`1 ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} = ${price?.toSignificant(4)} ${getTokenSymbol(
+            currencies[Field.CURRENCY_B],
+            chainId
+          )}`}
         </TYPE.body>
       </RowBetween>
       <RowBetween style={{ justifyContent: 'flex-end' }}>
         <TYPE.body className="!text-white">
-          {`1 ${currencies[Field.CURRENCY_B]?.symbol} = ${price?.invert().toSignificant(4)} ${
-            currencies[Field.CURRENCY_A]?.symbol
-          }`}
+          {`1 ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)} = ${price
+            ?.invert()
+            .toSignificant(4)} ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)}`}
         </TYPE.body>
       </RowBetween>
       <RowBetween>

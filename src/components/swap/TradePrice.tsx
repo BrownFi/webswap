@@ -5,6 +5,8 @@ import { Repeat } from 'react-feather'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
 import { StyledBalanceMaxMini } from './styleds'
+import { useActiveWeb3React } from 'hooks'
+import { getTokenSymbol } from 'utils'
 
 interface TradePriceProps {
   price?: Price
@@ -18,9 +20,10 @@ export default function TradePrice({ price, showInverted, setShowInverted }: Tra
   const formattedPrice = showInverted ? price?.toSignificant(6) : price?.invert()?.toSignificant(6)
 
   const show = Boolean(price?.baseCurrency && price?.quoteCurrency)
+  const { chainId } = useActiveWeb3React()
   const label = showInverted
-    ? `${price?.quoteCurrency?.symbol} per ${price?.baseCurrency?.symbol}`
-    : `${price?.baseCurrency?.symbol} per ${price?.quoteCurrency?.symbol}`
+    ? `${getTokenSymbol(price?.quoteCurrency, chainId)} per ${getTokenSymbol(price?.baseCurrency, chainId)}`
+    : `${getTokenSymbol(price?.baseCurrency, chainId)} per ${getTokenSymbol(price?.quoteCurrency, chainId)}`
 
   return (
     <Text

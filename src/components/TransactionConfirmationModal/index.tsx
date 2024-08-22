@@ -11,7 +11,7 @@ import { ButtonPrimary } from '../Button'
 import { AutoColumn, ColumnCenter } from '../Column'
 import Circle from '../../assets/images/blue-loader.svg'
 import MetaMaskLogo from '../../assets/images/metamask.png'
-import { getEtherscanLink, getScanText } from '../../utils'
+import { getEtherscanLink, getScanText, getTokenSymbol } from '../../utils'
 import { useActiveWeb3React } from '../../hooks'
 import useAddTokenToMetamask from 'hooks/useAddTokenToMetamask'
 import checkCircle from '../../assets/svg/check_circle.svg'
@@ -116,11 +116,11 @@ function TransactionSubmittedContent({
             <ButtonPrimary mt="12px" padding="6px 12px" width="100%" onClick={addToken}>
               {!success ? (
                 <RowFixed>
-                  Add {currencyToAdd.symbol} to Metamask <StyledLogo src={MetaMaskLogo} />
+                  Add {getTokenSymbol(currencyToAdd, chainId)} to Metamask <StyledLogo src={MetaMaskLogo} />
                 </RowFixed>
               ) : (
                 <RowFixed>
-                  Added {currencyToAdd.symbol}{' '}
+                  Added {getTokenSymbol(currencyToAdd, chainId)}{' '}
                   <CheckCircle size={'16px'} stroke={theme.green1} style={{ marginLeft: '6px' }} />
                 </RowFixed>
               )}

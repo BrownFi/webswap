@@ -5,12 +5,13 @@ import { ThemeContext } from 'styled-components'
 import { Field } from '../../state/swap/actions'
 import { TYPE } from '../../theme'
 import { ButtonPrimary } from '../Button'
-import { isAddress, shortenAddress } from '../../utils'
+import { getTokenSymbol, isAddress, shortenAddress } from '../../utils'
 import { computeSlippageAdjustedAmounts, computeTradePriceBreakdown, warningSeverity } from '../../utils/prices'
 import { AutoColumn } from '../Column'
 import CurrencyLogo from '../CurrencyLogo'
 import { RowBetween, RowFixed } from '../Row'
 import { TruncatedText, SwapShowAcceptChanges } from './styleds'
+import { useActiveWeb3React } from 'hooks'
 
 export default function SwapModalHeader({
   trade,
@@ -25,6 +26,7 @@ export default function SwapModalHeader({
   showAcceptChanges: boolean
   onAcceptChanges: () => void
 }) {
+  const { chainId } = useActiveWeb3React()
   const slippageAdjustedAmounts = useMemo(() => computeSlippageAdjustedAmounts(trade, allowedSlippage), [
     trade,
     allowedSlippage
@@ -45,7 +47,7 @@ export default function SwapModalHeader({
             color={showAcceptChanges && trade.tradeType === TradeType.EXACT_OUTPUT ? theme.primary1 : 'white'}
             className="flex-1"
           >
-            {trade.inputAmount?.toSignificant(6)} {trade.inputAmount?.currency?.symbol}
+            {trade.inputAmount?.toSignificant(6)} {getTokenSymbol(trade.inputAmount?.currency, chainId)}
           </TruncatedText>
           <CurrencyLogo currency={trade.inputAmount?.currency} size={'32px'} style={{ marginRight: '0' }} />
         </RowBetween>
@@ -65,7 +67,7 @@ export default function SwapModalHeader({
             }
             className="flex-1"
           >
-            {trade?.outputAmount?.toSignificant(6)} {trade.outputAmount?.currency.symbol}
+            {trade?.outputAmount?.toSignificant(6)} {getTokenSymbol(trade.outputAmount?.currency, chainId)}
           </TruncatedText>
           <CurrencyLogo currency={trade.outputAmount?.currency} size={'32px'} style={{ marginRight: '0' }} />
         </RowBetween>
@@ -92,7 +94,8 @@ export default function SwapModalHeader({
           <TYPE.italic textAlign="left" style={{ width: '100%' }} color={'white'} opacity={0.5}>
             {`Output is estimated. You will receive at least `}
             <b>
-              {slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(6)} {trade.outputAmount?.currency.symbol}
+              {slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(6)}{' '}
+              {getTokenSymbol(trade.outputAmount?.currency, chainId)}
             </b>
             {' or the transaction will revert.'}
           </TYPE.italic>
@@ -100,7 +103,8 @@ export default function SwapModalHeader({
           <TYPE.italic textAlign="left" style={{ width: '100%' }} color={'white'} opacity={0.5}>
             {`Input is estimated. You will sell at most `}
             <b>
-              {slippageAdjustedAmounts[Field.INPUT]?.toSignificant(6)} {trade.inputAmount?.currency.symbol}
+              {slippageAdjustedAmounts[Field.INPUT]?.toSignificant(6)}{' '}
+              {getTokenSymbol(trade.inputAmount?.currency, chainId)}
             </b>
             {' or the transaction will revert.'}
           </TYPE.italic>

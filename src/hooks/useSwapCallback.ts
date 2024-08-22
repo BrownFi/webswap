@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { INITIAL_ALLOWED_SLIPPAGE } from '../constants'
 import { getTradeVersion } from '../data/V1'
 import { useTransactionAdder } from '../state/transactions/hooks'
-import { isAddress, shortenAddress } from '../utils'
+import { getTokenSymbol, isAddress, shortenAddress } from '../utils'
 import { useActiveWeb3React } from './index'
 import useTransactionDeadline from './useTransactionDeadline'
 import useENS from './useENS'
@@ -52,8 +52,8 @@ export function useSwapCallback(
           library as any,
           deadline as any
         )
-        const inputSymbol = trade.inputAmount?.currency.symbol
-        const outputSymbol = trade.outputAmount?.currency.symbol
+        const inputSymbol = getTokenSymbol(trade.inputAmount?.currency, chainId)
+        const outputSymbol = getTokenSymbol(trade.outputAmount?.currency, chainId)
         const inputAmount = trade.inputAmount?.toSignificant(3)
         const outputAmount = trade.outputAmount?.toSignificant(3)
 

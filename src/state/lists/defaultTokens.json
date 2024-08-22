@@ -17,6 +17,22 @@
       "symbol": "AAVE",
       "decimals": 18,
       "logoURI": "https://assets.coingecko.com/coins/images/12645/thumb/AAVE.png?1601374110"
+    },
+    {
+      "chainId": 97,
+      "address": "0xA2A3Ef41b4b97eF530eac05147d3D942cB0C9faE",
+      "name": "Token A",
+      "symbol": "TokenA",
+      "decimals": 18,
+      "logoURI": "/images/logo.png"
+    },
+    {
+      "chainId": 97,
+      "address": "0xF4900fC3DCe66eeB6F994B4486b6B542AC763BEe",
+      "name": "Token B",
+      "symbol": "TokenB",
+      "decimals": 18,
+      "logoURI": "/images/logo.png"
     }
   ]
 }

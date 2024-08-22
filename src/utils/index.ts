@@ -128,6 +128,11 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     }
     return 'ETH'
   }
+
+  if (currency?.symbol === 'WETH' && chainId === ChainId.BSC_TESTNET) {
+    return 'WBNB'
+  }
+
   return currency?.symbol
 }
 

@@ -10,13 +10,15 @@ import QuestionHelper from '../QuestionHelper'
 import { RowBetween, RowFixed } from '../Row'
 import FormattedPriceImpact from './FormattedPriceImpact'
 import SwapRoute from './SwapRoute'
+import { getTokenSymbol } from 'utils'
+import { useActiveWeb3React } from 'hooks'
 
 function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippage: number }) {
   const theme = useContext(ThemeContext)
   const { priceImpactWithoutFee, realizedLPFee } = computeTradePriceBreakdown(trade)
   const isExactIn = trade.tradeType === TradeType.EXACT_INPUT
   const slippageAdjustedAmounts = computeSlippageAdjustedAmounts(trade, allowedSlippage)
-
+  const { chainId } = useActiveWeb3React()
   return (
     <>
       <AutoColumn style={{ padding: '0 16px' }}>
@@ -30,10 +32,14 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
           <RowFixed>
             <TYPE.black color={theme.white} fontSize={14}>
               {isExactIn
-                ? `${slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4)} ${trade.outputAmount?.currency.symbol}` ??
-                  '-'
-                : `${slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4)} ${trade.inputAmount?.currency?.symbol}` ??
-                  '-'}
+                ? `${slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4)} ${getTokenSymbol(
+                    trade.outputAmount?.currency,
+                    chainId
+                  )}` ?? '-'
+                : `${slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4)} ${getTokenSymbol(
+                    trade.inputAmount?.currency,
+                    chainId
+                  )}` ?? '-'}
             </TYPE.black>
           </RowFixed>
         </RowBetween>
@@ -55,7 +61,9 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
             <QuestionHelper text="A portion of each trade (0.30%) goes to liquidity providers as a protocol incentive." />
           </RowFixed>
           <TYPE.black fontSize={14} color={theme.white}>
-            {realizedLPFee ? `${realizedLPFee.toSignificant(4)} ${trade.inputAmount?.currency.symbol}` : '-'}
+            {realizedLPFee
+              ? `${realizedLPFee.toSignificant(4)} ${getTokenSymbol(trade.inputAmount?.currency, chainId)}`
+              : '-'}
           </TYPE.black>
         </RowBetween>
       </AutoColumn>

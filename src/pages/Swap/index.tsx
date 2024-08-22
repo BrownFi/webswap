@@ -1,7 +1,6 @@
 import { CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ArrowDown } from 'react-feather'
-import ReactGA from 'react-ga'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
 import AddressInputPanel from '../../components/AddressInputPanel'
@@ -22,7 +21,6 @@ import ProgressSteps from '../../components/ProgressSteps'
 import SwapHeader from '../../components/swap/SwapHeader'
 
 import { INITIAL_ALLOWED_SLIPPAGE } from '../../constants'
-import { getTradeVersion } from '../../data/V1'
 import { useActiveWeb3React } from '../../hooks'
 import { useCurrency, useAllTokens } from '../../hooks/Tokens'
 import { ApprovalState, useApproveCallbackFromTrade } from '../../hooks/useApproveCallback'
@@ -51,6 +49,8 @@ import { isTradeBetter } from 'utils/trades'
 import { RouteComponentProps } from 'react-router-dom'
 import switchIcon from '../../assets/svg/switch.svg'
 import connectWalletIcon from '../../assets/svg/account_balance_wallet.svg'
+import { getTokenSymbol } from 'utils'
+// import { ERC20_ABI } from 'constants/abis/erc20'
 
 export default function Swap({ history }: RouteComponentProps) {
   const loadedUrlParams = useDefaultsFromURLSearch()
@@ -77,7 +77,7 @@ export default function Swap({ history }: RouteComponentProps) {
       return !Boolean(token.address in defaultTokens)
     })
 
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
   const theme = useContext(ThemeContext)
 
   // toggle wallet when disconnected
@@ -214,36 +214,15 @@ export default function Swap({ history }: RouteComponentProps) {
     swapCallback()
       .then(hash => {
         setSwapState({ attemptingTxn: false, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: hash })
-
-        ReactGA.event({
-          category: 'Swap',
-          action:
-            recipient === null
-              ? 'Swap w/o Send'
-              : (recipientAddress ?? recipient) === account
-              ? 'Swap w/o Send + recipient'
-              : 'Swap w/ Send',
-          label: [
-            trade?.inputAmount?.currency?.symbol,
-            trade?.outputAmount?.currency?.symbol,
-            getTradeVersion(trade)
-          ].join('/')
-        })
-
-        ReactGA.event({
-          category: 'Routing',
-          action: singleHopOnly ? 'Swap with multihop disabled' : 'Swap with multihop enabled'
-        })
       })
       .catch(error => {
-        // console.log('error', error.data, error.message, error.status)
+        console.log('error', error.data, error.message, error.status)
         setSwapState({
           attemptingTxn: false,
           tradeToConfirm,
           showConfirm,
-          swapErrorMessage: error.message?.indexOf('user rejected transaction')
-            ? 'User rejected transaction'
-            : error.message,
+          swapErrorMessage:
+            error.message?.indexOf('user rejected transaction') !== -1 ? 'User rejected transaction' : error.message,
           txHash: undefined
         })
       })
@@ -305,6 +284,21 @@ export default function Swap({ history }: RouteComponentProps) {
   ])
 
   const swapIsUnsupported = useIsTransactionUnsupported(currencies?.INPUT, currencies?.OUTPUT)
+
+  // const test = async () => {
+  //   const contract = getContract(
+  //     '0xA2A3Ef41b4b97eF530eac05147d3D942cB0C9faE',
+  //     ERC20_ABI,
+  //     library as any,
+  //     account as any
+  //   )
+
+  //   const decimals = await contract.decimals()
+  //   console.log('decimals', decimals)
+  // }
+  // useEffect(() => {
+  //   test()
+  // }, [])
 
   return (
     <>
@@ -468,7 +462,7 @@ export default function Swap({ history }: RouteComponentProps) {
                   ) : approvalSubmitted && approval === ApprovalState.APPROVED ? (
                     'Approved'
                   ) : (
-                    'Approve ' + currencies[Field.INPUT]?.symbol
+                    'Approve ' + getTokenSymbol(currencies[Field.INPUT], chainId)
                   )}
                 </ButtonConfirmed>
                 <ButtonError

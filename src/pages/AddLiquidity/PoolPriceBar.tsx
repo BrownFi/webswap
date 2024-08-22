@@ -7,6 +7,8 @@ import { AutoRow } from '../../components/Row'
 import { ONE_BIPS } from '../../constants'
 import { Field } from '../../state/mint/actions'
 import { TYPE } from '../../theme'
+import { getTokenSymbol } from 'utils'
+import { useActiveWeb3React } from 'hooks'
 
 export function PoolPriceBar({
   currencies,
@@ -19,6 +21,7 @@ export function PoolPriceBar({
   poolTokenPercentage?: Percent
   price?: Price
 }) {
+  const { chainId } = useActiveWeb3React()
   const theme = useContext(ThemeContext)
   return (
     <AutoColumn gap="md">
@@ -26,13 +29,15 @@ export function PoolPriceBar({
         <AutoColumn justify="center">
           <TYPE.black>{price?.toSignificant(6) ?? '-'}</TYPE.black>
           <Text fontWeight={500} fontSize={14} color={theme.white} pt={1} opacity={0.6}>
-            {currencies[Field.CURRENCY_B]?.symbol} per {currencies[Field.CURRENCY_A]?.symbol}
+            {getTokenSymbol(currencies[Field.CURRENCY_B], chainId)} per{' '}
+            {getTokenSymbol(currencies[Field.CURRENCY_A], chainId)}
           </Text>
         </AutoColumn>
         <AutoColumn justify="center">
           <TYPE.black>{price?.invert()?.toSignificant(6) ?? '-'}</TYPE.black>
           <Text fontWeight={500} fontSize={14} color={theme.white} pt={1} opacity={0.6}>
-            {currencies[Field.CURRENCY_A]?.symbol} per {currencies[Field.CURRENCY_B]?.symbol}
+            {getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} per{' '}
+            {getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}
           </Text>
         </AutoColumn>
         <AutoColumn justify="center">

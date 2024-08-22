@@ -51,6 +51,10 @@ export default function CurrencyLogo({
     return []
   }, [currency, uriLocations])
 
+  if ((currency as any)?.logoURI) {
+    return <StyledEthereumLogo src={(currency as any)?.logoURI} size={size} style={style} />
+  }
+
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {
       return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
