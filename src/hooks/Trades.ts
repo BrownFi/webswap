@@ -132,7 +132,13 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
       setTrade(null)
     }
 
-    getTrade()
+    const timeout = setTimeout(() => {
+      getTrade()
+    }, 300)
+
+    return () => {
+      clearTimeout(timeout)
+    }
   }, [allowedPairs?.length, currencyAmountIn?.raw.toString(), currencyOut?.name, singleHopOnly])
 
   return trade
@@ -177,7 +183,13 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
       setTrade(null)
     }
 
-    getTrade()
+    const timeout = setTimeout(() => {
+      getTrade()
+    }, 300)
+
+    return () => {
+      clearTimeout(timeout)
+    }
   }, [currencyIn?.name, currencyAmountOut?.raw?.toString(), allowedPairs?.length, singleHopOnly])
 
   return trade
