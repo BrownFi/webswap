@@ -20,19 +20,11 @@
     },
     {
       "chainId": 97,
-      "address": "0xA2A3Ef41b4b97eF530eac05147d3D942cB0C9faE",
-      "name": "Token A",
-      "symbol": "TokenA",
+      "address": "0x349aD76798A7Bd5e04C9DD4dEfBEEa211dd665F6",
+      "name": "BUSD",
+      "symbol": "BUSD",
       "decimals": 18,
-      "logoURI": "/images/logo.png"
-    },
-    {
-      "chainId": 97,
-      "address": "0xF4900fC3DCe66eeB6F994B4486b6B542AC763BEe",
-      "name": "Token B",
-      "symbol": "TokenB",
-      "decimals": 18,
-      "logoURI": "/images/logo.png"
+      "logoURI": "https://s3.coinmarketcap.com/static/img/portraits/62da512ff192d82df80012bb.png"
     }
   ]
 }
