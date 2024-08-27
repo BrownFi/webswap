@@ -17,6 +17,18 @@ export function isAddress(value: any): string | false {
   }
 }
 
+export function formatStringToNumber(value: any, maximumFractionDigits = 2) {
+  if (!value && value !== 0) {
+    return '-'
+  }
+  const formatter = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits
+  })
+
+  return formatter.format(value).replace(/,/g, ',')
+}
+
 export function getEtherscanLink(
   chainId: ChainId,
   data: string,

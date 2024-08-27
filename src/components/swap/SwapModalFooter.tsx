@@ -9,15 +9,15 @@ import {
   computeSlippageAdjustedAmounts,
   computeTradePriceBreakdown,
   formatExecutionPrice,
-  warningSeverity
+  warningSeverity,
+  warningSeveritySlippage
 } from '../../utils/prices'
 import { ButtonError } from '../Button'
 import { AutoColumn } from '../Column'
 import QuestionHelper from '../QuestionHelper'
 import { AutoRow, RowBetween, RowFixed } from '../Row'
-import FormattedPriceImpact from './FormattedPriceImpact'
-import { StyledBalanceMaxMini, SwapCallbackError } from './styleds'
-import { getTokenSymbol } from 'utils'
+import { ErrorText, StyledBalanceMaxMini, SwapCallbackError } from './styleds'
+import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 
 export default function SwapModalFooter({
@@ -92,11 +92,13 @@ export default function SwapModalFooter({
         <RowBetween>
           <RowFixed>
             <TYPE.black color={theme.white} fontSize={14} fontWeight={500}>
-              Price Impact
+              Slippage
             </TYPE.black>
-            <QuestionHelper text="The difference between the market price and your price due to trade size." />
+            <QuestionHelper text="Slippage is the difference between your trading price and oracle price." />
           </RowFixed>
-          <FormattedPriceImpact priceImpact={priceImpactWithoutFee} />
+          <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.slippage || 0)}>
+            {trade ? formatStringToNumber(trade?.slippage) : '-'}%
+          </ErrorText>
         </RowBetween>
         <RowBetween>
           <RowFixed>

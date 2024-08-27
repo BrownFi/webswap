@@ -58,6 +58,6 @@ export const portis = new PortisConnector({
 // mainnet only
 export const walletlink = new WalletLinkConnector({
   url: NETWORK_URL,
-  appName: 'Uniswap',
+  appName: 'Brownfi',
   appLogoUrl: UNISWAP_LOGO_URL
 })

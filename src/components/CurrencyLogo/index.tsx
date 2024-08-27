@@ -55,6 +55,10 @@ export default function CurrencyLogo({
     return <StyledEthereumLogo src={(currency as any)?.logoURI} size={size} style={style} />
   }
 
+  if ((currency as any)?.symbol === 'WBNB') {
+    return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
+  }
+
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {
       return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />

@@ -76,23 +76,21 @@ export default function Pool() {
     tokenPairsWithLiquidityTokens
   ])
   // console.log('liquidityTokens', liquidityTokens)
-  const [v2PairsBalances, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(
-    account ?? undefined,
-    liquidityTokens
-  )
-
-  // console.log('v2PairsBalances', v2PairsBalances, account)
+  const [, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(account ?? undefined, liquidityTokens)
 
   // fetch the reserves for all V2 pools in which the user has a balance
-  const liquidityTokensWithBalances = useMemo(
-    () =>
-      tokenPairsWithLiquidityTokens.filter(({ liquidityToken }) =>
-        v2PairsBalances[liquidityToken.address]?.greaterThan('0')
-      ),
-    [tokenPairsWithLiquidityTokens, v2PairsBalances]
-  )
+  // const liquidityTokensWithBalances = useMemo(
+  //   () =>
+  //     tokenPairsWithLiquidityTokens.filter(({ liquidityToken }) =>
+  //       v2PairsBalances[liquidityToken.address]?.greaterThan('0')
+  //     ),
+  //   [tokenPairsWithLiquidityTokens, v2PairsBalances]
+  // )
+
+  const liquidityTokensWithBalances = tokenPairsWithLiquidityTokens
 
   const v2Pairs = usePairs(liquidityTokensWithBalances.map(({ tokens }) => tokens))
+
   const v2IsLoading =
     fetchingV2PairBalances || v2Pairs?.length < liquidityTokensWithBalances.length || v2Pairs?.some(V2Pair => !V2Pair)
 
@@ -124,7 +122,7 @@ export default function Pool() {
             <TitleRow style={{ marginTop: '1rem' }} padding={'0'}>
               <HideSmall>
                 <TYPE.mediumHeader style={{ fontFamily: 'Russo One', fontSize: '24px' }} color={'white'}>
-                  Your liquidity
+                  {account ? 'Your liquidity' : 'Pool liquidity'}
                 </TYPE.mediumHeader>
               </HideSmall>
               <div className="flex items-center flex-1 justify-end w-full lg:w-auto">
@@ -141,7 +139,7 @@ export default function Pool() {
               </div>
             </TitleRow>
 
-            {!account ? (
+            {false ? (
               <Card padding="40px">
                 <TYPE.body color={theme.text3} textAlign="center">
                   Connect to a wallet to view your liquidity.

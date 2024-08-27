@@ -62,6 +62,14 @@ export function warningSeverity(priceImpact: Percent | undefined): 0 | 1 | 2 | 3
   return 0
 }
 
+export function warningSeveritySlippage(slippage: number): 0 | 1 | 2 | 3 | 4 {
+  if (slippage > 15) return 4
+  if (slippage > 5) return 3
+  if (slippage > 3) return 2
+  if (slippage > 1) return 1
+  return 0
+}
+
 export function formatExecutionPrice(trade?: Trade, inverted?: boolean): string {
   if (!trade) {
     return ''

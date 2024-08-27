@@ -48,7 +48,7 @@ interface PositionCardProps {
   pair: Pair
   showUnwrapped?: boolean
   border?: string
-  stakedBalance?: TokenAmount // optional balance to indicate that liquidity is deposited in mining pool
+  stakedBalance?: TokenAmount
 }
 
 export function MinimalPositionCard({ pair, showUnwrapped = false, border }: PositionCardProps) {
@@ -233,80 +233,105 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
 
         {showMore && (
           <AutoColumn gap="8px">
-            <FixedHeightRow>
-              <Text fontSize={16} fontWeight={500} color={'white'}>
-                Your total pool tokens:
-              </Text>
-              <Text fontSize={16} fontWeight={500} color={'white'}>
-                {userPoolBalance ? userPoolBalance.toSignificant(4) : '-'}
-              </Text>
-            </FixedHeightRow>
-            {stakedBalance && (
+            <>
+              <h2 className="text-[20px] font-bold text-white" style={{ fontFamily: 'Russo One' }}>
+                Liquidity
+              </h2>
               <FixedHeightRow>
+                <div className="flex items-center">
+                  <CurrencyLogo currency={pair.token0} />
+                  <Text fontSize={16} fontWeight={500} color={'white'} marginLeft={'8px'}>
+                    {pair.token0.symbol}:
+                  </Text>
+                </div>
+
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  Pool tokens in rewards pool:
-                </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {stakedBalance.toSignificant(4)}
+                  {pair.reserve0.toSignificant(4)}
                 </Text>
               </FixedHeightRow>
+              <FixedHeightRow>
+                <div className="flex items-center">
+                  <CurrencyLogo currency={pair.token1} />
+                  <Text fontSize={16} fontWeight={500} color={'white'} marginLeft={'8px'}>
+                    {pair.token1.symbol}:
+                  </Text>
+                </div>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  {pair.reserve1.toSignificant(4)}
+                </Text>
+              </FixedHeightRow>
+            </>
+
+            {account && (
+              <>
+                <div className="w-full h-[1px] my-[8px] bg-white opacity-[0.1]" />
+                <FixedHeightRow>
+                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                    Your total pool tokens:
+                  </Text>
+                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                    {userPoolBalance ? userPoolBalance.toSignificant(4) : '-'}
+                  </Text>
+                </FixedHeightRow>
+                {stakedBalance && (
+                  <FixedHeightRow>
+                    <Text fontSize={16} fontWeight={500} color={'white'}>
+                      Pool tokens in rewards pool:
+                    </Text>
+                    <Text fontSize={16} fontWeight={500} color={'white'}>
+                      {stakedBalance.toSignificant(4)}
+                    </Text>
+                  </FixedHeightRow>
+                )}
+                <FixedHeightRow>
+                  <RowFixed>
+                    <Text fontSize={16} fontWeight={500} color={'white'}>
+                      Pooled {getTokenSymbol(currency0, chainId)}:
+                    </Text>
+                  </RowFixed>
+                  {token0Deposited ? (
+                    <RowFixed>
+                      <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
+                        {token0Deposited?.toSignificant(6)}
+                      </Text>
+                      <CurrencyLogo size="20px" style={{ marginLeft: '8px' }} currency={currency0} />
+                    </RowFixed>
+                  ) : (
+                    '-'
+                  )}
+                </FixedHeightRow>
+
+                <FixedHeightRow>
+                  <RowFixed>
+                    <Text fontSize={16} fontWeight={500} color={'white'}>
+                      Pooled {getTokenSymbol(currency1, chainId)}:
+                    </Text>
+                  </RowFixed>
+                  {token1Deposited ? (
+                    <RowFixed>
+                      <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
+                        {token1Deposited?.toSignificant(6)}
+                      </Text>
+                      <CurrencyLogo size="20px" style={{ marginLeft: '8px' }} currency={currency1} />
+                    </RowFixed>
+                  ) : (
+                    '-'
+                  )}
+                </FixedHeightRow>
+
+                <FixedHeightRow>
+                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                    Your pool share:
+                  </Text>
+                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                    {poolTokenPercentage
+                      ? (poolTokenPercentage.toFixed(2) === '0.00' ? '<0.01' : poolTokenPercentage.toFixed(2)) + '%'
+                      : '-'}
+                  </Text>
+                </FixedHeightRow>
+              </>
             )}
-            <FixedHeightRow>
-              <RowFixed>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
-                  Pooled {getTokenSymbol(currency0, chainId)}:
-                </Text>
-              </RowFixed>
-              {token0Deposited ? (
-                <RowFixed>
-                  <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
-                    {token0Deposited?.toSignificant(6)}
-                  </Text>
-                  <CurrencyLogo size="20px" style={{ marginLeft: '8px' }} currency={currency0} />
-                </RowFixed>
-              ) : (
-                '-'
-              )}
-            </FixedHeightRow>
 
-            <FixedHeightRow>
-              <RowFixed>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
-                  Pooled {getTokenSymbol(currency1, chainId)}:
-                </Text>
-              </RowFixed>
-              {token1Deposited ? (
-                <RowFixed>
-                  <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
-                    {token1Deposited?.toSignificant(6)}
-                  </Text>
-                  <CurrencyLogo size="20px" style={{ marginLeft: '8px' }} currency={currency1} />
-                </RowFixed>
-              ) : (
-                '-'
-              )}
-            </FixedHeightRow>
-
-            <FixedHeightRow>
-              <Text fontSize={16} fontWeight={500} color={'white'}>
-                Your pool share:
-              </Text>
-              <Text fontSize={16} fontWeight={500} color={'white'}>
-                {poolTokenPercentage
-                  ? (poolTokenPercentage.toFixed(2) === '0.00' ? '<0.01' : poolTokenPercentage.toFixed(2)) + '%'
-                  : '-'}
-              </Text>
-            </FixedHeightRow>
-
-            {/* <ButtonSecondary padding="8px" borderRadius="8px">
-              <ExternalLink
-                style={{ width: '100%', textAlign: 'center' }}
-                href={`https://uniswap.info/account/${account}`}
-                color={'white'}
-              >
-                View accrued fees and analytics<span style={{ fontSize: '11px' }}>↗</span>
-              </ExternalLink>
-            </ButtonSecondary> */}
             {userDefaultPoolBalance && JSBI.greaterThan(userDefaultPoolBalance.raw, BIG_INT_ZERO) && (
               <RowBetween marginTop="10px">
                 <ButtonPrimary
