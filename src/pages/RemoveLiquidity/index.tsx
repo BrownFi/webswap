@@ -15,7 +15,6 @@ import DoubleCurrencyLogo from '../../components/DoubleLogo'
 import { AddRemoveTabs } from '../../components/NavigationTabs'
 import { MinimalPositionCard } from '../../components/PositionCard'
 import Row, { RowBetween, RowFixed } from '../../components/Row'
-
 import Slider from '../../components/Slider'
 import CurrencyLogo from '../../components/CurrencyLogo'
 import { useActiveWeb3React } from '../../hooks'

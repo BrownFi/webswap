@@ -25,6 +25,8 @@ export function useDerivedBurnInfo(
     [Field.LIQUIDITY]?: TokenAmount
     [Field.CURRENCY_A]?: CurrencyAmount
     [Field.CURRENCY_B]?: CurrencyAmount
+    currencyA: Currency | undefined
+    currencyB: Currency | undefined
   }
   error?: string
 } {
@@ -101,6 +103,8 @@ export function useDerivedBurnInfo(
     [Field.LIQUIDITY]?: TokenAmount
     [Field.CURRENCY_A]?: TokenAmount
     [Field.CURRENCY_B]?: TokenAmount
+    currencyA: Currency | undefined
+    currencyB: Currency | undefined
   } = {
     [Field.LIQUIDITY_PERCENT]: percentToRemove,
     [Field.LIQUIDITY]:
@@ -114,7 +118,9 @@ export function useDerivedBurnInfo(
     [Field.CURRENCY_B]:
       tokenB && percentToRemove && percentToRemove.greaterThan('0') && liquidityValueB
         ? new TokenAmount(tokenB, percentToRemove.multiply(liquidityValueB.raw).quotient)
-        : undefined
+        : undefined,
+    currencyA,
+    currencyB
   }
 
   let error: string | undefined

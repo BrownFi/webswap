@@ -48,7 +48,6 @@ import { RouteComponentProps } from 'react-router-dom'
 import switchIcon from '../../assets/svg/switch.svg'
 import connectWalletIcon from '../../assets/svg/account_balance_wallet.svg'
 import { getTokenSymbol } from 'utils'
-// import { ERC20_ABI } from 'constants/abis/erc20'
 
 export default function Swap({ history }: RouteComponentProps) {
   const loadedUrlParams = useDefaultsFromURLSearch()
@@ -150,7 +149,6 @@ export default function Swap({ history }: RouteComponentProps) {
     history.push('/swap/')
   }, [history])
 
-  // modal and loading
   const [{ showConfirm, tradeToConfirm, swapErrorMessage, attemptingTxn, txHash }, setSwapState] = useState<{
     showConfirm: boolean
     tradeToConfirm: Trade | undefined
