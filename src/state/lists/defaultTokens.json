@@ -25,6 +25,14 @@
       "symbol": "BUSD",
       "decimals": 18,
       "logoURI": "https://s3.coinmarketcap.com/static/img/portraits/62da512ff192d82df80012bb.png"
+    },
+    {
+      "chainId": 89,
+      "address": "0x7cb2CF3dde3d518b408ea0B83738C067EEdb571D",
+      "name": "USD",
+      "symbol": "USD",
+      "decimals": 18,
+      "logoURI": "https://s3.coinmarketcap.com/static/img/portraits/62da512ff192d82df80012bb.png"
     }
   ]
 }

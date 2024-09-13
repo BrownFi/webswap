@@ -3,6 +3,7 @@ import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import EthereumLogo from '../../assets/images/ethereum-logo.png'
 import BNBLogo from '../../assets/images/bnb.svg'
+import VictionLogo from '../../assets/images/viction.png'
 import useHttpLocations from '../../hooks/useHttpLocations'
 import { WrappedTokenInfo } from '../../state/lists/hooks'
 import Logo from '../Logo'
@@ -61,6 +62,9 @@ export default function CurrencyLogo({
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {
       return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.VICTION_TESTNET) {
+      return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }

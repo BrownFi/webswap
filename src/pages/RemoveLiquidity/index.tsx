@@ -468,10 +468,11 @@ export default function RemoveLiquidity({
                         {oneCurrencyIsETH ? (
                           <StyledInternalLink
                             to={`/remove/${currencyA === ETHER ? WETH[chainId].address : currencyIdA}/${
-                              currencyB === ETHER ? WETH[chainId].address : currencyIdB
+                              currencyB === ETHER ? WETH[chainId]?.address : currencyIdB
                             }`}
                           >
-                            Receive {chainId === ChainId.BSC_TESTNET ? 'WBNB' : 'WETH'}
+                            Receive{' '}
+                            {chainId === ChainId.BSC_TESTNET ? 'WBNB' : chainId === ChainId.SEPOLIA ? 'WETH' : 'WVIC'}
                           </StyledInternalLink>
                         ) : oneCurrencyIsWETH ? (
                           <StyledInternalLink
@@ -479,7 +480,8 @@ export default function RemoveLiquidity({
                               currencyA && currencyEquals(currencyA, WETH[chainId]) ? 'ETH' : currencyIdA
                             }/${currencyB && currencyEquals(currencyB, WETH[chainId]) ? 'ETH' : currencyIdB}`}
                           >
-                            Receive {chainId === ChainId.BSC_TESTNET ? 'BNB' : 'ETH'}
+                            Receive{' '}
+                            {chainId === ChainId.BSC_TESTNET ? 'BNB' : chainId === ChainId.SEPOLIA ? 'ETH' : 'VIC'}
                           </StyledInternalLink>
                         ) : null}
                       </RowBetween>

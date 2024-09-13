@@ -13,6 +13,7 @@ const NETWORK_URL = process.env.REACT_APP_NETWORK_URL
 const SEPOLIA_URL = process.env.REACT_APP_SEPOLIA_URL
 const FORMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY
 const PORTIS_ID = process.env.REACT_APP_PORTIS_ID
+const VICTION_TESTNET_URL = process.env.REACT_APP_VICTION_TESTNET_URL
 
 export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '1')
 
@@ -28,13 +29,17 @@ export const networkSepolia = new NetworkConnector({
   urls: { [ChainId.SEPOLIA]: SEPOLIA_URL as string }
 })
 
+export const networkViction = new NetworkConnector({
+  urls: { [ChainId.VICTION_TESTNET]: VICTION_TESTNET_URL as string }
+})
+
 let networkLibrary: Web3Provider | undefined
 export function getNetworkLibrary(): Web3Provider {
   return (networkLibrary = networkLibrary ?? new Web3Provider(network.provider as any))
 }
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [ChainId.MAINNET, ChainId.SEPOLIA, ChainId.BSC_TESTNET]
+  supportedChainIds: [ChainId.MAINNET, ChainId.SEPOLIA, ChainId.BSC_TESTNET, ChainId.VICTION_TESTNET]
 })
 
 // mainnet only

@@ -49,6 +49,9 @@ export function getEtherscanLink(
     case ChainId.BSC_TESTNET:
       prefix = 'https://testnet.bscscan.com/'
       break
+    case ChainId.VICTION_TESTNET:
+      prefix = 'https://testnet.vicscan.xyz'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -138,11 +141,18 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     if (chainId === ChainId.BSC_TESTNET) {
       return 'BNB'
     }
+    if (chainId === ChainId.VICTION_TESTNET) {
+      return 'VIC'
+    }
     return 'ETH'
   }
 
   if (currency?.symbol === 'WETH' && chainId === ChainId.BSC_TESTNET) {
     return 'WBNB'
+  }
+
+  if (currency?.symbol === 'WETH' && chainId === ChainId.VICTION_TESTNET) {
+    return 'WVIC'
   }
 
   return currency?.symbol
@@ -153,6 +163,9 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     if (chainId === ChainId.BSC_TESTNET) {
       return 'BNB'
     }
+    if (chainId === ChainId.VICTION_TESTNET) {
+      return 'Viction'
+    }
     return 'Ethereum'
   }
   return currency?.name
@@ -162,6 +175,8 @@ export function getScanText(chainId: ChainId) {
   switch (chainId) {
     case ChainId.BSC_TESTNET:
       return 'Bscscan'
+    case ChainId.BSC_TESTNET:
+      return 'Vicscan'
     default:
       return 'Etherscan'
   }

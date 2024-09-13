@@ -8,7 +8,8 @@ const V1_FACTORY_ADDRESSES: { [chainId in ChainId]: string } = {
   [ChainId.SEPOLIA]: '',
   [ChainId.SN_MAIN]: '',
   [ChainId.SN_SEPOLIA]: '',
-  [ChainId.BSC_TESTNET]: ''
+  [ChainId.BSC_TESTNET]: '',
+  [ChainId.VICTION_TESTNET]: ''
 }
 
 const V1_FACTORY_INTERFACE = new Interface(V1_FACTORY_ABI)

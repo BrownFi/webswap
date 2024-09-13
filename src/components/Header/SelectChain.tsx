@@ -6,15 +6,18 @@ import { useModalOpen, useToggleModal } from '../../state/application/hooks'
 import down from '../../assets/svg/arrow_drop_down.svg'
 import check from '../../assets/svg/check.svg'
 import ethereum from '../../assets/images/ethereum-logo.png'
+import bnb from '../../assets/images/bnb.svg'
+import viction from '../../assets/images/viction.png'
 import Web3 from 'web3'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
-import { injected, network, networkSepolia } from 'connectors'
+import { injected, network, networkSepolia, networkViction } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
+import { CHAIN_TO_METAMASK } from '../../constants'
 
 const StyledMenuButton = styled.button`
-  width: 210px;
+  width: 240px;
   height: 56px;
   border: none;
   background-color: #1e1e1e;
@@ -60,7 +63,7 @@ const StyledMenu = styled.div`
 `
 
 const MenuFlyout = styled.span`
-  width: 210px;
+  width: 240px;
   background-color: #1e1e1e;
   box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
     0px 24px 32px rgba(0, 0, 0, 0.01);
@@ -75,7 +78,9 @@ const MenuFlyout = styled.span`
   z-index: 100;
 
   ${({ theme }) => theme.mediaWidth.upToMedium`
-    top: -60px;
+    top: -140px;
+    width: 210px;
+    left: 0
   `};
 `
 
@@ -98,6 +103,24 @@ const MenuItem = styled.div`
   }
 `
 
+const CHAINS: any = {
+  [ChainId.VICTION_TESTNET]: {
+    name: 'Viction Testnet',
+    chainId: ChainId.VICTION_TESTNET,
+    icon: viction
+  },
+  [ChainId.BSC_TESTNET]: {
+    name: 'BSC Testnet',
+    chainId: ChainId.BSC_TESTNET,
+    icon: bnb
+  },
+  [ChainId.SEPOLIA]: {
+    name: 'Sepolia',
+    chainId: ChainId.SEPOLIA,
+    icon: ethereum
+  }
+}
+
 export default function SelectChain() {
   const node = useRef<HTMLDivElement>()
   const open = useModalOpen(ApplicationModal.SELECT_CHAIN)
@@ -108,17 +131,35 @@ export default function SelectChain() {
   const handleSelectChain = async (chain: ChainId) => {
     if (account) {
       if (window.ethereum && connector === injected) {
-        if (chainId !== chain) {
-          const web3 = new Web3(window.ethereum as any)
-          await (window.ethereum as any)?.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: ChainIdHex[chain] }] // chainId must be in hexadecimal numbers
-          })
-          const accounts = await web3.eth.getAccounts()
-          if (accounts[0]) {
-            activate(injected, undefined, true).catch(error => {
-              console.error('Failed to activate after accounts changed', error)
+        try {
+          if (chainId !== chain) {
+            const web3 = new Web3(window.ethereum as any)
+            await (window.ethereum as any)?.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: ChainIdHex[chain] }] // chainId must be in hexadecimal numbers
             })
+            const accounts = await web3.eth.getAccounts()
+            if (accounts[0]) {
+              activate(injected, undefined, true).catch(error => {
+                console.error('Failed to activate after accounts changed', error)
+              })
+            }
+          }
+        } catch (e) {
+          // console.log(e)
+          if ((e as any)?.code === 4902 && CHAIN_TO_METAMASK[chain]) {
+            // console.log(CHAIN_TO_METAMASK[chain])
+            const web3 = new Web3(window.ethereum as any)
+            await (window.ethereum as any)?.request({
+              method: 'wallet_addEthereumChain',
+              params: [CHAIN_TO_METAMASK[chain]] // chainId must be in hexadecimal numbers
+            })
+            const accounts = await web3.eth.getAccounts()
+            if (accounts[0]) {
+              activate(injected, undefined, true).catch(error => {
+                console.error('Failed to activate after accounts changed', error)
+              })
+            }
           }
         }
       } else if (connector instanceof WalletConnectConnector) {
@@ -128,7 +169,7 @@ export default function SelectChain() {
         })
       }
     } else {
-      activate(chain === ChainId.BSC_TESTNET ? network : networkSepolia)
+      activate(chain === ChainId.BSC_TESTNET ? network : chainId === ChainId.SEPOLIA ? networkSepolia : networkViction)
     }
   }
 
@@ -137,8 +178,8 @@ export default function SelectChain() {
     <StyledMenu ref={node as any}>
       <StyledMenuButton onClick={toggle}>
         <div className="flex-1 flex items-center">
-          <img alt="icon" className="w-[28px] mr-[8px]" src={ethereum} />
-          {chainId === ChainId.BSC_TESTNET ? 'BSC Testnet' : 'Sepolia'}
+          <img alt="icon" className="w-[28px] mr-[8px] rounded-full" src={CHAINS[chainId || '']?.icon} />
+          {CHAINS[chainId || '']?.name}
         </div>
 
         <img src={down} alt="down" className="w-[24px] ml-[8px]" />
@@ -146,30 +187,21 @@ export default function SelectChain() {
 
       {open && (
         <MenuFlyout>
-          <MenuItem
-            id="link"
-            onClick={() => {
-              handleSelectChain(ChainId.BSC_TESTNET)
-            }}
-          >
-            <div className="flex-1 flex items-center">
-              <img alt="icon" className="w-[24px] mr-[12px]" src={ethereum} />
-              BSC Testnet
-            </div>
-            {chainId === ChainId.BSC_TESTNET && <img src={check} alt="check" className="w-[20px]" />}
-          </MenuItem>
-          <MenuItem
-            id="link"
-            onClick={() => {
-              handleSelectChain(ChainId.SEPOLIA)
-            }}
-          >
-            <div className="flex-1 flex items-center">
-              <img alt="icon" className="w-[24px] mr-[12px]" src={ethereum} />
-              Sepolia
-            </div>
-            {chainId === ChainId.SEPOLIA && <img src={check} alt="check" className="w-[20px]" />}
-          </MenuItem>
+          {Object.values(CHAINS).map((item: any) => (
+            <MenuItem
+              id="link"
+              onClick={() => {
+                handleSelectChain(item.chainId)
+              }}
+              key={item.chainId}
+            >
+              <div className="flex-1 flex items-center">
+                <img alt="icon" className="w-[24px] mr-[12px] rounded-full" src={item.icon} />
+                {item.name}
+              </div>
+              {chainId === item.chainId && <img src={check} alt="check" className="w-[20px]" />}
+            </MenuItem>
+          ))}
         </MenuFlyout>
       )}
     </StyledMenu>

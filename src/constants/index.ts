@@ -1,4 +1,4 @@
-import { ChainId, JSBI, Percent, Token, WETH } from '@brownfi/sdk'
+import { ChainId, ChainIdHex, JSBI, Percent, Token, WETH } from '@brownfi/sdk'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 
 import { fortmatic, injected, portis, walletconnect, walletlink } from '../connectors'
@@ -50,7 +50,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.SEPOLIA]: [WETH[ChainId.SEPOLIA]],
   [ChainId.SN_SEPOLIA]: [WETH[ChainId.SN_SEPOLIA]],
   [ChainId.SN_MAIN]: [WETH[ChainId.SN_MAIN]],
-  [ChainId.BSC_TESTNET]: [WETH[ChainId.BSC_TESTNET]]
+  [ChainId.BSC_TESTNET]: [WETH[ChainId.BSC_TESTNET]],
+  [ChainId.VICTION_TESTNET]: [WETH[ChainId.VICTION_TESTNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -211,3 +212,28 @@ export const BLOCKED_ADDRESSES: string[] = [
   '0xA7e5d5A720f06526557c513402f2e6B5fA20b008',
   '0x8576aCC5C05D6Ce88f4e49bf65BdF0C62F91353C'
 ]
+
+export const CHAIN_TO_METAMASK: any = {
+  [ChainId.BSC_TESTNET]: {
+    chainId: ChainIdHex[ChainId.BSC_TESTNET],
+    blockExplorerUrls: ['https://testnet.bscscan.com/'],
+    chainName: 'BSC Testnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'BNB',
+      symbol: 'BNB'
+    },
+    rpcUrls: [process.env.REACT_APP_NETWORK_URL]
+  },
+  [ChainId.VICTION_TESTNET]: {
+    chainId: ChainIdHex[ChainId.VICTION_TESTNET],
+    blockExplorerUrls: ['https://testnet.vicscan.xyz/'],
+    chainName: 'Viction Testnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Viction',
+      symbol: 'VIC'
+    },
+    rpcUrls: [process.env.REACT_APP_VICTION_TESTNET_URL]
+  }
+}
