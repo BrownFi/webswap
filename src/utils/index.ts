@@ -178,7 +178,8 @@ export function getScanText(chainId: ChainId) {
   switch (chainId) {
     case ChainId.BSC_TESTNET:
       return 'Bscscan'
-    case ChainId.BSC_TESTNET:
+    case ChainId.VICTION_MAINNET:
+    case ChainId.VICTION_TESTNET:
       return 'Vicscan'
     default:
       return 'Etherscan'
