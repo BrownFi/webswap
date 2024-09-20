@@ -51,7 +51,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.SN_SEPOLIA]: [WETH[ChainId.SN_SEPOLIA]],
   [ChainId.SN_MAIN]: [WETH[ChainId.SN_MAIN]],
   [ChainId.BSC_TESTNET]: [WETH[ChainId.BSC_TESTNET]],
-  [ChainId.VICTION_TESTNET]: [WETH[ChainId.VICTION_TESTNET]]
+  [ChainId.VICTION_TESTNET]: [WETH[ChainId.VICTION_TESTNET]],
+  [ChainId.VICTION_MAINNET]: [WETH[ChainId.VICTION_MAINNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -235,5 +236,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'VIC'
     },
     rpcUrls: [process.env.REACT_APP_VICTION_TESTNET_URL]
+  },
+  [ChainId.VICTION_MAINNET]: {
+    chainId: ChainIdHex[ChainId.VICTION_MAINNET],
+    blockExplorerUrls: ['https://vicscan.xyz/'],
+    chainName: 'Viction Mainnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Viction',
+      symbol: 'VIC'
+    },
+    rpcUrls: [process.env.REACT_APP_VICTION_MAINNET_URL]
   }
 }

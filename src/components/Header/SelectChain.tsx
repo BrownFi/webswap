@@ -12,7 +12,7 @@ import Web3 from 'web3'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
-import { injected, network, networkSepolia, networkViction } from 'connectors'
+import { injected, network, networkSepolia, networkViction, networkVictionMainnet } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
 
@@ -104,6 +104,11 @@ const MenuItem = styled.div`
 `
 
 const CHAINS: any = {
+  [ChainId.VICTION_MAINNET]: {
+    name: 'Viction Mainnet',
+    chainId: ChainId.VICTION_MAINNET,
+    icon: viction
+  },
   [ChainId.VICTION_TESTNET]: {
     name: 'Viction Testnet',
     chainId: ChainId.VICTION_TESTNET,
@@ -169,7 +174,15 @@ export default function SelectChain() {
         })
       }
     } else {
-      activate(chain === ChainId.BSC_TESTNET ? network : chainId === ChainId.SEPOLIA ? networkSepolia : networkViction)
+      activate(
+        chain === ChainId.BSC_TESTNET
+          ? network
+          : chain === ChainId.SEPOLIA
+          ? networkSepolia
+          : chain === ChainId.VICTION_MAINNET
+          ? networkVictionMainnet
+          : networkViction
+      )
     }
   }
 

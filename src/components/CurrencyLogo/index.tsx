@@ -58,12 +58,15 @@ export default function CurrencyLogo({
   if ((currency as any)?.symbol === 'WBNB') {
     return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
   }
+  if ((currency as any)?.symbol === 'WVIC') {
+    return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
+  }
 
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {
       return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
     }
-    if (chainId === ChainId.VICTION_TESTNET) {
+    if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />

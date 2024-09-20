@@ -8,7 +8,7 @@ import MetamaskIcon from '../../assets/images/metamask.png'
 import { ReactComponent as Close } from '../../assets/images/x.svg'
 import { fortmatic, injected, portis } from '../../connectors'
 import { OVERLAY_READY } from '../../connectors/Fortmatic'
-import { SUPPORTED_WALLETS } from '../../constants'
+import { CHAIN_TO_METAMASK, SUPPORTED_WALLETS } from '../../constants'
 import usePrevious from '../../hooks/usePrevious'
 import { ApplicationModal } from '../../state/application/actions'
 import { useModalOpen, useWalletModalToggle } from '../../state/application/hooks'
@@ -170,11 +170,20 @@ export default function WalletModal({
     try {
       if (window.ethereum) {
         const web3 = new Web3(window.ethereum as any)
-
-        await (window.ethereum as any)?.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: ChainIdHex[chainId || ''] }] // chainId must be in hexadecimal numbers
-        })
+        try {
+          await (window.ethereum as any)?.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: ChainIdHex[chainId || ''] }] // chainId must be in hexadecimal numbers
+          })
+        } catch (e) {
+          if ((e as any)?.code === 4902 && CHAIN_TO_METAMASK[chainId || '']) {
+            // console.log(CHAIN_TO_METAMASK[chain])\
+            await (window.ethereum as any)?.request({
+              method: 'wallet_addEthereumChain',
+              params: [CHAIN_TO_METAMASK[chainId || '']] // chainId must be in hexadecimal numbers
+            })
+          }
+        }
 
         const accounts: any = await web3.eth.getAccounts()
 

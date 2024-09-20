@@ -10,7 +10,7 @@ import { useActiveWeb3React } from '../../hooks'
 import { useCurrency } from '../../hooks/Tokens'
 import { useTradeExactIn, useTradeExactOut } from '../../hooks/Trades'
 import useParsedQueryString from '../../hooks/useParsedQueryString'
-import { isAddress } from '../../utils'
+import { isAddress, isNativeCurrency } from '../../utils'
 import { AppDispatch, AppState } from '../index'
 import { useCurrencyBalances } from '../wallet/hooks'
 import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies, typeInput } from './actions'
@@ -159,6 +159,10 @@ export function useDerivedSwapInfo(): {
   const v1Trade = useV1Trade(isExactIn, currencies[Field.INPUT], currencies[Field.OUTPUT], parsedAmount)
 
   let inputError: string | undefined
+
+  const reserve0 = v2Trade?.route?.pairs?.[0]?.reserve0
+  const reserve1 = v2Trade?.route?.pairs?.[0]?.reserve1
+
   if (!account) {
     inputError = 'Connect Wallet'
   }
@@ -192,7 +196,7 @@ export function useDerivedSwapInfo(): {
     v1Trade && allowedSlippage && computeSlippageAdjustedAmounts(v1Trade, allowedSlippage)
 
   // compare input balance to max input based on version
-  const [balanceIn, amountIn] = [
+  const [balanceIn, amountIn, amountOut] = [
     currencyBalances[Field.INPUT],
     toggledVersion === Version.v1
       ? slippageAdjustedAmountsV1
@@ -200,11 +204,36 @@ export function useDerivedSwapInfo(): {
         : null
       : slippageAdjustedAmounts
       ? slippageAdjustedAmounts[Field.INPUT]
+      : null,
+    toggledVersion === Version.v1
+      ? slippageAdjustedAmountsV1
+        ? slippageAdjustedAmountsV1[Field.OUTPUT]
+        : null
+      : slippageAdjustedAmounts
+      ? slippageAdjustedAmounts[Field.OUTPUT]
       : null
   ]
 
   if (balanceIn && amountIn && balanceIn.lessThan(amountIn)) {
     inputError = 'Insufficient ' + amountIn.currency.symbol + ' balance'
+  }
+
+  const compareIn =
+    inputCurrency?.symbol === reserve0?.token.symbol ||
+    (inputCurrency === ETHER && isNativeCurrency(reserve0?.token.symbol))
+      ? reserve0
+      : reserve1
+  const compareOut =
+    outputCurrency?.symbol === reserve1?.token.symbol ||
+    (outputCurrency === ETHER && isNativeCurrency(reserve1?.token.symbol))
+      ? reserve1
+      : reserve0
+
+  if (
+    (amountIn && compareIn && +amountIn?.toExact() > +compareIn.toExact() * 0.9) ||
+    (amountOut && compareOut && +amountOut?.toExact() > +compareOut.toExact() * 0.9)
+  ) {
+    inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
   }
 
   return {

@@ -33,6 +33,14 @@
       "symbol": "USD",
       "decimals": 18,
       "logoURI": "https://s3.coinmarketcap.com/static/img/portraits/62da512ff192d82df80012bb.png"
+    },
+    {
+      "chainId": 88,
+      "address": "0x0Fd0288AAAE91eaF935e2eC14b23486f86516c8C",
+      "name": "Coin98",
+      "symbol": "C98",
+      "decimals": 18,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/10903.png"
     }
   ]
 }

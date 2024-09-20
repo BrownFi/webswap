@@ -52,6 +52,9 @@ export function getEtherscanLink(
     case ChainId.VICTION_TESTNET:
       prefix = 'https://testnet.vicscan.xyz'
       break
+    case ChainId.VICTION_MAINNET:
+      prefix = 'https://vicscan.xyz'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -141,7 +144,7 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     if (chainId === ChainId.BSC_TESTNET) {
       return 'BNB'
     }
-    if (chainId === ChainId.VICTION_TESTNET) {
+    if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'VIC'
     }
     return 'ETH'
@@ -151,7 +154,7 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     return 'WBNB'
   }
 
-  if (currency?.symbol === 'WETH' && chainId === ChainId.VICTION_TESTNET) {
+  if (currency?.symbol === 'WETH' && (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET)) {
     return 'WVIC'
   }
 
@@ -163,7 +166,7 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     if (chainId === ChainId.BSC_TESTNET) {
       return 'BNB'
     }
-    if (chainId === ChainId.VICTION_TESTNET) {
+    if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'Viction'
     }
     return 'Ethereum'
@@ -180,4 +183,8 @@ export function getScanText(chainId: ChainId) {
     default:
       return 'Etherscan'
   }
+}
+
+export function isNativeCurrency(symbol: string | undefined) {
+  return symbol === 'WBNB' || symbol === 'WETH' || symbol === 'VIC'
 }
