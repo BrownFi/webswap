@@ -90,7 +90,7 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
   )
 }
 
-const MAX_HOPS = 3
+const MAX_HOPS = 1
 
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out

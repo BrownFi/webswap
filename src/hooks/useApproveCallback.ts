@@ -1,6 +1,6 @@
 import { MaxUint256 } from '@ethersproject/constants'
 import { TransactionResponse } from '@ethersproject/providers'
-import { Trade, TokenAmount, CurrencyAmount, ETHER } from '@brownfi/sdk'
+import { Trade, TokenAmount, CurrencyAmount, ETHER, ChainId, ROUTER_ADDRESS_WITH_PRICE } from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
 import { useTokenAllowance } from '../data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from '../data/V1'
@@ -108,5 +108,14 @@ export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) 
   )
   const tradeIsV1 = getTradeVersion(trade) === Version.v1
   const v1ExchangeAddress = useV1TradeExchangeAddress(trade)
-  return useApproveCallback(amountToApprove, tradeIsV1 ? v1ExchangeAddress : chainId ? ROUTER_ADDRESS[chainId] : '')
+  return useApproveCallback(
+    amountToApprove,
+    tradeIsV1
+      ? v1ExchangeAddress
+      : chainId
+      ? chainId === ChainId.VICTION_MAINNET
+        ? ROUTER_ADDRESS_WITH_PRICE[chainId]
+        : ROUTER_ADDRESS[chainId]
+      : ''
+  )
 }

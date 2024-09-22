@@ -105,7 +105,7 @@ export default function RemoveLiquidity({
     const liquidityAmount = parsedAmounts[Field.LIQUIDITY]
     if (!liquidityAmount) throw new Error('missing liquidity amount')
 
-    if (isArgentWallet) {
+    if (isArgentWallet || chainId === ChainId.VICTION_MAINNET) {
       return approveCallback()
     }
 
@@ -266,7 +266,7 @@ export default function RemoveLiquidity({
       <>
         <RowBetween>
           <Text color={theme.white} fontWeight={500} fontSize={16} opacity={0.5}>
-            {'UNI ' + getTokenSymbol(currencyA, chainId) + '/' + getTokenSymbol(currencyB, chainId)} Burned
+            {getTokenSymbol(currencyA, chainId) + '/' + getTokenSymbol(currencyB, chainId)} Burned
           </Text>
           <RowFixed>
             <DoubleCurrencyLogo currency0={currencyA} currency1={currencyB} margin={true} />
