@@ -52,7 +52,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.SN_MAIN]: [WETH[ChainId.SN_MAIN]],
   [ChainId.BSC_TESTNET]: [WETH[ChainId.BSC_TESTNET]],
   [ChainId.VICTION_TESTNET]: [WETH[ChainId.VICTION_TESTNET]],
-  [ChainId.VICTION_MAINNET]: [WETH[ChainId.VICTION_MAINNET]]
+  [ChainId.VICTION_MAINNET]: [WETH[ChainId.VICTION_MAINNET]],
+  [ChainId.SONIC_TESTNET]: [WETH[ChainId.SONIC_TESTNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -247,5 +248,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'VIC'
     },
     rpcUrls: [process.env.REACT_APP_VICTION_MAINNET_URL]
+  },
+  [ChainId.SONIC_TESTNET]: {
+    chainId: ChainIdHex[ChainId.SONIC_TESTNET],
+    blockExplorerUrls: ['https://testnet.soniclabs.com/'],
+    chainName: 'Sonic Testnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Sonic',
+      symbol: 'S'
+    },
+    rpcUrls: [process.env.REACT_APP_SONIC_TESTNET_URL]
   }
 }

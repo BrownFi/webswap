@@ -1,4 +1,4 @@
-import { addLiquidity, Currency, currencyEquals, TokenAmount, WETH } from '@brownfi/sdk'
+import { addLiquidity, ChainId, Currency, currencyEquals, TokenAmount, WETH } from '@brownfi/sdk'
 import React, { useCallback, useContext, useState } from 'react'
 import { Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
@@ -422,6 +422,12 @@ export default function AddLiquidity({
                     {error ?? 'Supply'}
                   </Text>
                 </ButtonError>
+
+                {chainId === ChainId.SONIC_TESTNET && (
+                  <Text fontWeight={500} fontSize={14} color={theme.text2} textAlign={'center'}>
+                    Pair S/Diamond = FTM/USD
+                  </Text>
+                )}
               </AutoColumn>
             )}
           </AutoColumn>

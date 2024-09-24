@@ -1,4 +1,4 @@
-import { CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
+import { ChainId, CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ArrowDown } from 'react-feather'
 import { Text } from 'rebass'
@@ -413,6 +413,11 @@ export default function Swap({ history }: RouteComponentProps) {
                         {allowedSlippage / 100}%
                       </ClickableText>
                     </RowBetween>
+                  )}
+                  {chainId === ChainId.SONIC_TESTNET && (
+                    <Text fontWeight={500} fontSize={14} color={theme.text2}>
+                      Pair S/Diamond = FTM/USD
+                    </Text>
                   )}
                 </AutoColumn>
               </Card>

@@ -8,11 +8,12 @@ import check from '../../assets/svg/check.svg'
 import ethereum from '../../assets/images/ethereum-logo.png'
 import bnb from '../../assets/images/bnb.svg'
 import viction from '../../assets/images/viction.png'
+import sonicIcon from '../../assets/images/sonic.png'
 import Web3 from 'web3'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
-import { injected, network, networkSepolia, networkViction, networkVictionMainnet } from 'connectors'
+import { injected, network, networkSepolia, networkSonic, networkViction, networkVictionMainnet } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
 
@@ -119,6 +120,11 @@ const CHAINS: any = {
     chainId: ChainId.BSC_TESTNET,
     icon: bnb
   },
+  [ChainId.SONIC_TESTNET]: {
+    name: 'Sonic Testnet',
+    chainId: ChainId.SONIC_TESTNET,
+    icon: sonicIcon
+  },
   [ChainId.SEPOLIA]: {
     name: 'Sepolia',
     chainId: ChainId.SEPOLIA,
@@ -181,6 +187,8 @@ export default function SelectChain() {
           ? networkSepolia
           : chain === ChainId.VICTION_MAINNET
           ? networkVictionMainnet
+          : chain === ChainId.SONIC_TESTNET
+          ? networkSonic
           : networkViction
       )
     }

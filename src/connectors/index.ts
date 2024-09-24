@@ -15,6 +15,7 @@ const FORMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY
 const PORTIS_ID = process.env.REACT_APP_PORTIS_ID
 const VICTION_TESTNET_URL = process.env.REACT_APP_VICTION_TESTNET_URL
 const VICTION_MAINNET_URL = process.env.REACT_APP_VICTION_MAINNET_URL
+const SONIC_TESTNET_URL = process.env.REACT_APP_SONIC_TESTNET_URL
 
 export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '1')
 
@@ -38,6 +39,10 @@ export const networkVictionMainnet = new NetworkConnector({
   urls: { [ChainId.VICTION_MAINNET]: VICTION_MAINNET_URL as string }
 })
 
+export const networkSonic = new NetworkConnector({
+  urls: { [ChainId.SONIC_TESTNET]: SONIC_TESTNET_URL as string }
+})
+
 let networkLibrary: Web3Provider | undefined
 export function getNetworkLibrary(): Web3Provider {
   return (networkLibrary = networkLibrary ?? new Web3Provider(network.provider as any))
@@ -49,7 +54,8 @@ export const injected = new InjectedConnector({
     ChainId.SEPOLIA,
     ChainId.BSC_TESTNET,
     ChainId.VICTION_TESTNET,
-    ChainId.VICTION_MAINNET
+    ChainId.VICTION_MAINNET,
+    ChainId.SONIC_TESTNET
   ]
 })
 

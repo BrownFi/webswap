@@ -55,6 +55,9 @@ export function getEtherscanLink(
     case ChainId.VICTION_MAINNET:
       prefix = 'https://vicscan.xyz'
       break
+    case ChainId.SONIC_TESTNET:
+      prefix = 'https://testnet.soniclabs.com'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -139,6 +142,32 @@ export function isTokenOnList(defaultTokens: TokenAddressMap, currency?: Currenc
   return Boolean(currency instanceof Token && defaultTokens[currency.chainId]?.[currency.address])
 }
 
+export function getNativeToken(chainId: ChainId) {
+  if (chainId === ChainId.BSC_TESTNET) {
+    return 'BNB'
+  }
+  if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
+    return 'VIC'
+  }
+  if (chainId === ChainId.SONIC_TESTNET) {
+    return 'S'
+  }
+  return 'ETH'
+}
+
+export function getWrappedNativeToken(chainId: ChainId) {
+  if (chainId === ChainId.BSC_TESTNET) {
+    return 'WBNB'
+  }
+  if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
+    return 'WVIC'
+  }
+  if (chainId === ChainId.SONIC_TESTNET) {
+    return 'WS'
+  }
+  return 'WETH'
+}
+
 export function getTokenSymbol(currency: Currency | null | undefined, chainId: ChainId | undefined) {
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {
@@ -146,6 +175,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     }
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'VIC'
+    }
+    if (chainId === ChainId.SONIC_TESTNET) {
+      return 'S'
     }
     return 'ETH'
   }
@@ -156,6 +188,10 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
 
   if (currency?.symbol === 'WETH' && (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET)) {
     return 'WVIC'
+  }
+
+  if (currency?.symbol === 'WETH' && chainId === ChainId.SONIC_TESTNET) {
+    return 'WS'
   }
 
   return currency?.symbol
@@ -169,6 +205,9 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'Viction'
     }
+    if (chainId === ChainId.SONIC_TESTNET) {
+      return 'Sonic'
+    }
     return 'Ethereum'
   }
   return currency?.name
@@ -181,11 +220,13 @@ export function getScanText(chainId: ChainId) {
     case ChainId.VICTION_MAINNET:
     case ChainId.VICTION_TESTNET:
       return 'Vicscan'
+    case ChainId.SONIC_TESTNET:
+      return 'Soniclabs'
     default:
       return 'Etherscan'
   }
 }
 
 export function isNativeCurrency(symbol: string | undefined) {
-  return symbol === 'WBNB' || symbol === 'WETH' || symbol === 'VIC'
+  return symbol === 'WBNB' || symbol === 'WETH' || symbol === 'WVIC' || symbol === 'WS'
 }

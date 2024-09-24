@@ -4,6 +4,7 @@ import styled from 'styled-components'
 import EthereumLogo from '../../assets/images/ethereum-logo.png'
 import BNBLogo from '../../assets/images/bnb.svg'
 import VictionLogo from '../../assets/images/viction.png'
+import sonicLogo from '../../assets/images/sonic.png'
 import useHttpLocations from '../../hooks/useHttpLocations'
 import { WrappedTokenInfo } from '../../state/lists/hooks'
 import Logo from '../Logo'
@@ -61,6 +62,9 @@ export default function CurrencyLogo({
   if ((currency as any)?.symbol === 'WVIC') {
     return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
   }
+  if ((currency as any)?.symbol === 'WS') {
+    return <StyledEthereumLogo src={sonicLogo} size={size} style={style} />
+  }
 
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {
@@ -68,6 +72,9 @@ export default function CurrencyLogo({
     }
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.SONIC_TESTNET) {
+      return <StyledEthereumLogo src={sonicLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }

@@ -38,7 +38,7 @@ import { Field } from '../../state/burn/actions'
 import { useWalletModalToggle } from '../../state/application/hooks'
 import { useUserSlippageTolerance } from '../../state/user/hooks'
 import { ROUTER_ADDRESS } from '@brownfi/sdk'
-import { getTokenSymbol } from 'utils'
+import { getNativeToken, getTokenSymbol, getWrappedNativeToken } from 'utils'
 
 export default function RemoveLiquidity({
   history,
@@ -105,7 +105,7 @@ export default function RemoveLiquidity({
     const liquidityAmount = parsedAmounts[Field.LIQUIDITY]
     if (!liquidityAmount) throw new Error('missing liquidity amount')
 
-    if (isArgentWallet || chainId === ChainId.VICTION_MAINNET) {
+    if (isArgentWallet || chainId === ChainId.VICTION_MAINNET || chainId === ChainId.SONIC_TESTNET) {
       return approveCallback()
     }
 
@@ -471,8 +471,7 @@ export default function RemoveLiquidity({
                               currencyB === ETHER ? WETH[chainId]?.address : currencyIdB
                             }`}
                           >
-                            Receive{' '}
-                            {chainId === ChainId.BSC_TESTNET ? 'WBNB' : chainId === ChainId.SEPOLIA ? 'WETH' : 'WVIC'}
+                            Receive {getWrappedNativeToken(chainId)}
                           </StyledInternalLink>
                         ) : oneCurrencyIsWETH ? (
                           <StyledInternalLink
@@ -480,8 +479,7 @@ export default function RemoveLiquidity({
                               currencyA && currencyEquals(currencyA, WETH[chainId]) ? 'ETH' : currencyIdA
                             }/${currencyB && currencyEquals(currencyB, WETH[chainId]) ? 'ETH' : currencyIdB}`}
                           >
-                            Receive{' '}
-                            {chainId === ChainId.BSC_TESTNET ? 'BNB' : chainId === ChainId.SEPOLIA ? 'ETH' : 'VIC'}
+                            Receive {getNativeToken(chainId)}
                           </StyledInternalLink>
                         ) : null}
                       </RowBetween>
@@ -586,6 +584,11 @@ export default function RemoveLiquidity({
                     </Text>
                   </ButtonError>
                 </RowBetween>
+              )}
+              {chainId === ChainId.SONIC_TESTNET && (
+                <Text fontWeight={500} fontSize={14} color={theme.text2} marginTop={'10px'} textAlign={'center'}>
+                  Pair S/Diamond = FTM/USD
+                </Text>
               )}
             </div>
           </AutoColumn>
