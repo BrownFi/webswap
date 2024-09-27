@@ -48,6 +48,8 @@ export interface Colors {
 
   menuText: Color
   greenMain: Color
+
+  gray: Color
 }
 
 export interface Grids {

@@ -65,6 +65,9 @@ export default function CurrencyLogo({
   if ((currency as any)?.symbol === 'WS') {
     return <StyledEthereumLogo src={sonicLogo} size={size} style={style} />
   }
+  if ((currency as any)?.symbol === 'WETH') {
+    return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
+  }
 
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {

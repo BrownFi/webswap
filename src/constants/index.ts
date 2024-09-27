@@ -53,7 +53,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.BSC_TESTNET]: [WETH[ChainId.BSC_TESTNET]],
   [ChainId.VICTION_TESTNET]: [WETH[ChainId.VICTION_TESTNET]],
   [ChainId.VICTION_MAINNET]: [WETH[ChainId.VICTION_MAINNET]],
-  [ChainId.SONIC_TESTNET]: [WETH[ChainId.SONIC_TESTNET]]
+  [ChainId.SONIC_TESTNET]: [WETH[ChainId.SONIC_TESTNET]],
+  [ChainId.MINATO_SONEIUM]: [WETH[ChainId.MINATO_SONEIUM]]
 }
 
 // used to construct intermediary pairs for trading
@@ -259,5 +260,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'S'
     },
     rpcUrls: [process.env.REACT_APP_SONIC_TESTNET_URL]
+  },
+  [ChainId.MINATO_SONEIUM]: {
+    chainId: ChainIdHex[ChainId.MINATO_SONEIUM],
+    blockExplorerUrls: ['https://explorer-testnet.soneium.org/'],
+    chainName: 'Minato',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_MINATO_SONEIUM_URL]
   }
 }

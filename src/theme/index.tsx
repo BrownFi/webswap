@@ -83,7 +83,8 @@ export function colors(darkMode: boolean): Colors {
     blue1: '#2172E5',
 
     menuText: 'rgba(255, 255, 255, 0.5)',
-    greenMain: '#27E3AB'
+    greenMain: '#27E3AB',
+    gray: '#999999'
 
     // dont wanna forget these blue yet
     // blue4: darkMode ? '#153d6f70' : '#C4D9F8',

@@ -45,7 +45,8 @@ const EMPTY_LIST: TokenAddressMap = {
   [ChainId.BSC_TESTNET]: {},
   [ChainId.VICTION_TESTNET]: {},
   [ChainId.VICTION_MAINNET]: {},
-  [ChainId.SONIC_TESTNET]: {}
+  [ChainId.SONIC_TESTNET]: {},
+  [ChainId.MINATO_SONEIUM]: {}
 }
 
 const listCache: WeakMap<TokenList, TokenAddressMap> | null =
@@ -107,7 +108,8 @@ function combineMaps(map1: TokenAddressMap, map2: TokenAddressMap): TokenAddress
     [ChainId.BSC_TESTNET]: { ...map1[ChainId.BSC_TESTNET], ...map2[ChainId.BSC_TESTNET] },
     [ChainId.VICTION_TESTNET]: { ...map1[ChainId.VICTION_TESTNET], ...map2[ChainId.VICTION_TESTNET] },
     [ChainId.VICTION_MAINNET]: { ...map1[ChainId.VICTION_MAINNET], ...map2[ChainId.VICTION_MAINNET] },
-    [ChainId.SONIC_TESTNET]: { ...map1[ChainId.SONIC_TESTNET], ...map2[ChainId.SONIC_TESTNET] }
+    [ChainId.SONIC_TESTNET]: { ...map1[ChainId.SONIC_TESTNET], ...map2[ChainId.SONIC_TESTNET] },
+    [ChainId.MINATO_SONEIUM]: { ...map1[ChainId.MINATO_SONEIUM], ...map2[ChainId.MINATO_SONEIUM] }
   }
 }
 

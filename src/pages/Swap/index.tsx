@@ -415,7 +415,7 @@ export default function Swap({ history }: RouteComponentProps) {
                     </RowBetween>
                   )}
                   {chainId === ChainId.SONIC_TESTNET && (
-                    <Text fontWeight={500} fontSize={14} color={theme.text2}>
+                    <Text fontWeight={500} fontSize={14} color={theme.gray}>
                       Pair S/Diamond = FTM/USD
                     </Text>
                   )}

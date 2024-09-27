@@ -16,6 +16,7 @@ const PORTIS_ID = process.env.REACT_APP_PORTIS_ID
 const VICTION_TESTNET_URL = process.env.REACT_APP_VICTION_TESTNET_URL
 const VICTION_MAINNET_URL = process.env.REACT_APP_VICTION_MAINNET_URL
 const SONIC_TESTNET_URL = process.env.REACT_APP_SONIC_TESTNET_URL
+const MINATO_SONEIUM_URL = process.env.REACT_APP_MINATO_SONEIUM_URL
 
 export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '1')
 
@@ -33,6 +34,10 @@ export const networkSepolia = new NetworkConnector({
 
 export const networkViction = new NetworkConnector({
   urls: { [ChainId.VICTION_TESTNET]: VICTION_TESTNET_URL as string }
+})
+
+export const networkMinato = new NetworkConnector({
+  urls: { [ChainId.MINATO_SONEIUM]: MINATO_SONEIUM_URL as string }
 })
 
 export const networkVictionMainnet = new NetworkConnector({
@@ -55,7 +60,8 @@ export const injected = new InjectedConnector({
     ChainId.BSC_TESTNET,
     ChainId.VICTION_TESTNET,
     ChainId.VICTION_MAINNET,
-    ChainId.SONIC_TESTNET
+    ChainId.SONIC_TESTNET,
+    ChainId.MINATO_SONEIUM
   ]
 })
 

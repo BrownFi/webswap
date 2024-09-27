@@ -6,7 +6,7 @@ import styled from 'styled-components'
 import { SUGGESTED_BASES } from '../../constants'
 import { AutoRow } from '../Row'
 import CurrencyLogo from '../CurrencyLogo'
-import { getTokenSymbol } from 'utils'
+import { getNativeToken, getTokenSymbol } from 'utils'
 
 const BaseWrapper = styled.div<{ disable?: boolean }>`
   border: 0;
@@ -45,7 +45,7 @@ export default function CommonBases({
       >
         <CurrencyLogo currency={ETHER} style={{ marginRight: 8 }} />
         <Text fontWeight={500} fontSize={14} color="white">
-          {chainId === ChainId.BSC_TESTNET ? 'BNB' : chainId === ChainId.SEPOLIA ? 'ETH' : 'VIC'}
+          {getNativeToken(chainId as ChainId)}
         </Text>
       </BaseWrapper>
       {(chainId ? SUGGESTED_BASES[chainId] : []).map((token: Token) => {

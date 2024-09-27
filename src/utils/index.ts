@@ -41,13 +41,13 @@ export function getEtherscanLink(
       prefix = 'https://sepolia.etherscan.io'
       break
     case ChainId.SN_MAIN:
-      prefix = 'https://starkscan.co/'
+      prefix = 'https://starkscan.co'
       break
     case ChainId.SN_SEPOLIA:
-      prefix = 'https://sepolia.starkscan.co/'
+      prefix = 'https://sepolia.starkscan.co'
       break
     case ChainId.BSC_TESTNET:
-      prefix = 'https://testnet.bscscan.com/'
+      prefix = 'https://testnet.bscscan.com'
       break
     case ChainId.VICTION_TESTNET:
       prefix = 'https://testnet.vicscan.xyz'
@@ -57,6 +57,9 @@ export function getEtherscanLink(
       break
     case ChainId.SONIC_TESTNET:
       prefix = 'https://testnet.soniclabs.com'
+      break
+    case ChainId.MINATO_SONEIUM:
+      prefix = 'https://explorer-testnet.soneium.org'
       break
     default:
       prefix = 'https://etherscan.io'
@@ -222,6 +225,8 @@ export function getScanText(chainId: ChainId) {
       return 'Vicscan'
     case ChainId.SONIC_TESTNET:
       return 'Soniclabs'
+    case ChainId.MINATO_SONEIUM:
+      return 'Soneium'
     default:
       return 'Etherscan'
   }

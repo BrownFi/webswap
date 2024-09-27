@@ -1,4 +1,4 @@
-import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
+import { ChainId, JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import React, { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'react-feather'
@@ -260,6 +260,12 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   {pair.reserve1.toSignificant(4)}
                 </Text>
               </FixedHeightRow>
+
+              {chainId === ChainId.SONIC_TESTNET && pair.token0.symbol === 'DIAM' && pair.token1.symbol === 'WS' && (
+                <Text fontWeight={500} fontSize={14} color={'#ffffff'} marginTop={'8px'}>
+                  Pair S/Diamond = FTM/USD
+                </Text>
+              )}
             </>
 
             {account && (

@@ -424,7 +424,7 @@ export default function AddLiquidity({
                 </ButtonError>
 
                 {chainId === ChainId.SONIC_TESTNET && (
-                  <Text fontWeight={500} fontSize={14} color={theme.text2} textAlign={'center'}>
+                  <Text fontWeight={500} fontSize={14} color={theme.gray} textAlign={'center'}>
                     Pair S/Diamond = FTM/USD
                   </Text>
                 )}

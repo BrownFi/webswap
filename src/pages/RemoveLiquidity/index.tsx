@@ -586,7 +586,7 @@ export default function RemoveLiquidity({
                 </RowBetween>
               )}
               {chainId === ChainId.SONIC_TESTNET && (
-                <Text fontWeight={500} fontSize={14} color={theme.text2} marginTop={'10px'} textAlign={'center'}>
+                <Text fontWeight={500} fontSize={14} color={theme.gray} marginTop={'10px'} textAlign={'center'}>
                   Pair S/Diamond = FTM/USD
                 </Text>
               )}
