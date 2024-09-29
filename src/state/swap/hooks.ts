@@ -218,21 +218,13 @@ export function useDerivedSwapInfo(): {
     inputError = 'Insufficient ' + amountIn.currency.symbol + ' balance'
   }
 
-  const compareIn =
-    inputCurrency?.symbol === reserve0?.token.symbol ||
-    (inputCurrency === ETHER && isNativeCurrency(reserve0?.token.symbol))
-      ? reserve0
-      : reserve1
   const compareOut =
     outputCurrency?.symbol === reserve1?.token.symbol ||
     (outputCurrency === ETHER && isNativeCurrency(reserve1?.token.symbol))
       ? reserve1
       : reserve0
 
-  if (
-    (amountIn && compareIn && +amountIn?.toExact() > +compareIn.toExact() * 0.9) ||
-    (amountOut && compareOut && +amountOut?.toExact() > +compareOut.toExact() * 0.9)
-  ) {
+  if (amountOut && compareOut && +amountOut?.toExact() > +compareOut.toExact() * 0.9) {
     inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
   }
 

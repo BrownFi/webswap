@@ -205,6 +205,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               ) : (
                 `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
               )}
+              {chainId === ChainId.SONIC_TESTNET &&
+              getTokenSymbol(currency0, chainId) === 'DIAM' &&
+              getTokenSymbol(currency1, chainId) === 'S'
+                ? ' (FTM/USD)'
+                : getTokenSymbol(currency0, chainId) === 'S' && getTokenSymbol(currency1, chainId) === 'CORAL'
+                ? ' (FTM/ETH)'
+                : ''}
             </Text>
           </AutoRow>
           <RowFixed gap="8px">
@@ -264,6 +271,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               {chainId === ChainId.SONIC_TESTNET && pair.token0.symbol === 'DIAM' && pair.token1.symbol === 'WS' && (
                 <Text fontWeight={500} fontSize={14} color={'#ffffff'} marginTop={'8px'}>
                   Pair S/Diamond = FTM/USD
+                </Text>
+              )}
+              {chainId === ChainId.SONIC_TESTNET && pair.token1.symbol === 'CORAL' && pair.token0.symbol === 'WS' && (
+                <Text fontWeight={500} fontSize={14} color={'#ffffff'} marginTop={'8px'}>
+                  Pair S/Diamond = FTM/ETH
                 </Text>
               )}
             </>

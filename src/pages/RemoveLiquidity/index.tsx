@@ -587,7 +587,11 @@ export default function RemoveLiquidity({
               )}
               {chainId === ChainId.SONIC_TESTNET && (
                 <Text fontWeight={500} fontSize={14} color={theme.gray} marginTop={'10px'} textAlign={'center'}>
-                  Pair S/Diamond = FTM/USD
+                  {currencyA?.symbol === 'DIAM' || currencyB?.symbol === 'DIAM'
+                    ? 'Pair S/Diamond = FTM/USD'
+                    : currencyA?.symbol === 'CORAL' || currencyB?.symbol === 'CORAL'
+                    ? 'Pair S/CORAL = FTM/ETH'
+                    : ''}
                 </Text>
               )}
             </div>

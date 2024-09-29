@@ -416,7 +416,11 @@ export default function Swap({ history }: RouteComponentProps) {
                   )}
                   {chainId === ChainId.SONIC_TESTNET && (
                     <Text fontWeight={500} fontSize={14} color={theme.gray}>
-                      Pair S/Diamond = FTM/USD
+                      {currencies[Field.INPUT]?.symbol === 'DIAM' || currencies[Field.OUTPUT]?.symbol === 'DIAM'
+                        ? 'Pair S/Diamond = FTM/USD'
+                        : currencies[Field.INPUT]?.symbol === 'CORAL' || currencies[Field.OUTPUT]?.symbol === 'CORAL'
+                        ? 'Pair S/CORAL = FTM/ETH'
+                        : ''}
                     </Text>
                   )}
                 </AutoColumn>

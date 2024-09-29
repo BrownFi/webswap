@@ -7,7 +7,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/plugin-transform-runtime": "^7.21.4",
     "@babel/preset-env": "^7.21.5",
-    "@brownfi/sdk": "../brownfi-tool/dist",
+    "@brownfi/sdk": "./lib/brownfi-tool",
     "@ethersproject/experimental": "^5.0.1",
     "@popperjs/core": "^2.4.4",
     "@reach/dialog": "^0.10.3",

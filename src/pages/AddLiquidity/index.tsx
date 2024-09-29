@@ -425,7 +425,12 @@ export default function AddLiquidity({
 
                 {chainId === ChainId.SONIC_TESTNET && (
                   <Text fontWeight={500} fontSize={14} color={theme.gray} textAlign={'center'}>
-                    Pair S/Diamond = FTM/USD
+                    {currencies[Field.CURRENCY_A]?.symbol === 'DIAM' || currencies[Field.CURRENCY_B]?.symbol === 'DIAM'
+                      ? 'Pair S/Diamond = FTM/USD'
+                      : currencies[Field.CURRENCY_A]?.symbol === 'CORAL' ||
+                        currencies[Field.CURRENCY_B]?.symbol === 'CORAL'
+                      ? 'Pair S/CORAL = FTM/ETH'
+                      : ''}
                   </Text>
                 )}
               </AutoColumn>
