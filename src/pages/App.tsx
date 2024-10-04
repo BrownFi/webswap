@@ -1,8 +1,9 @@
 import React, { Suspense } from 'react'
-import { Route, Switch } from 'react-router-dom'
+import { Route, Switch, useLocation } from 'react-router-dom'
 import 'rc-slider/assets/index.css'
 import '../theme/index.css'
 import styled from 'styled-components'
+import classNames from 'classnames'
 import GoogleAnalyticsReporter from '../components/analytics/GoogleAnalyticsReporter'
 import Header from '../components/Header'
 import Popups from '../components/Popups'
@@ -30,6 +31,7 @@ import VotePage from './Vote/VotePage'
 import Footer from 'components/Footer'
 import mathImage from '../assets/svg/math-image.svg'
 import csm from '../assets/svg/csm.svg'
+import Referral from 'components/Referral'
 
 const AppWrapper = styled.div`
   display: flex;
@@ -74,7 +76,9 @@ function TopLevelModals() {
 }
 
 export default function App() {
-  console.log(process.env)
+  const location = useLocation()
+
+  console.log(location)
   return (
     <Suspense fallback={null}>
       <Route component={GoogleAnalyticsReporter} />
@@ -117,8 +121,19 @@ export default function App() {
               <Route component={RedirectPathToSwapOnly} />
             </Switch>
           </Web3ReactManager>
+
+          <div
+            className={classNames(
+              'max-w-[500px] bg-[#1d1c21] w-full p-[32px] mt-[20px]',
+              location.pathname?.indexOf('/swap') !== -1 && '!mt-[0px]',
+              location.pathname?.indexOf('/pool') !== -1 && '!max-w-[894px]'
+            )}
+          >
+            <Referral />
+          </div>
           <Marginer />
         </BodyWrapper>
+
         <Footer />
       </AppWrapper>
     </Suspense>

@@ -225,7 +225,7 @@ export default function AccountDetails({
   ENSName,
   openOptions
 }: AccountDetailsProps) {
-  const { chainId, account, connector } = useActiveWeb3React()
+  const { chainId, account, connector, deactivate } = useActiveWeb3React()
   const theme = useContext(ThemeContext)
   const dispatch = useDispatch<AppDispatch>()
 
@@ -316,6 +316,20 @@ export default function AccountDetails({
                       </WalletAction>
                     </a>
                   )}
+                  {(connector === injected || connector === walletlink) && (
+                    <WalletAction
+                      style={{ fontSize: '.825rem', fontWeight: 400, marginRight: '8px' }}
+                      onClick={() => {
+                        deactivate()
+                        if ((connector as any).handleClose) {
+                          ;(connector as any).handleClose()
+                        }
+                        localStorage.clear()
+                      }}
+                    >
+                      Disconnect
+                    </WalletAction>
+                  )}
 
                   <a
                     onClick={() => {
@@ -350,6 +364,7 @@ export default function AccountDetails({
                   )}
                 </AccountControl>
               </AccountGroupingRow>
+
               <AccountGroupingRow>
                 {ENSName ? (
                   <>
