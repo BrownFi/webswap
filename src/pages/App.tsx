@@ -125,7 +125,6 @@ export default function App() {
           <div
             className={classNames(
               'max-w-[500px] bg-[#1d1c21] w-full p-[32px] mt-[20px]',
-              location.pathname?.indexOf('/swap') !== -1 && '!mt-[0px]',
               location.pathname?.indexOf('/pool') !== -1 && '!max-w-[894px]'
             )}
           >
