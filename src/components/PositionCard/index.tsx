@@ -275,7 +275,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               )}
               {chainId === ChainId.SONIC_TESTNET && pair.token1.symbol === 'CORAL' && pair.token0.symbol === 'WS' && (
                 <Text fontWeight={500} fontSize={14} color={'#ffffff'} marginTop={'8px'}>
-                  Pair S/Diamond = FTM/ETH
+                  Pair S/CORAL = FTM/ETH
                 </Text>
               )}
             </>
