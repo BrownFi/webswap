@@ -78,7 +78,6 @@ function TopLevelModals() {
 export default function App() {
   const location = useLocation()
 
-  console.log(location)
   return (
     <Suspense fallback={null}>
       <Route component={GoogleAnalyticsReporter} />
