@@ -52,9 +52,10 @@ import { getTokenSymbol } from 'utils'
 export default function Swap({ history }: RouteComponentProps) {
   const loadedUrlParams = useDefaultsFromURLSearch()
 
+  // console.log(loadedUrlParams?.inputCurrencyId)
   // token warning stuff
   const [loadedInputCurrency, loadedOutputCurrency] = [
-    useCurrency(loadedUrlParams?.inputCurrencyId),
+    useCurrency('WETH'),
     useCurrency(loadedUrlParams?.outputCurrencyId)
   ]
   const [dismissTokenWarning, setDismissTokenWarning] = useState<boolean>(false)

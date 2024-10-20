@@ -61,6 +61,9 @@ export function getEtherscanLink(
     case ChainId.MINATO_SONEIUM:
       prefix = 'https://explorer-testnet.soneium.org'
       break
+    case ChainId.BASE_SEPOLIA:
+      prefix = 'https://sepolia.basescan.org/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -227,6 +230,8 @@ export function getScanText(chainId: ChainId) {
       return 'Soniclabs'
     case ChainId.MINATO_SONEIUM:
       return 'Soneium'
+    case ChainId.BASE_SEPOLIA:
+      return 'Basescan'
     default:
       return 'Etherscan'
   }

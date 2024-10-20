@@ -10,6 +10,7 @@ import bnb from '../../assets/images/bnb.svg'
 import viction from '../../assets/images/viction.png'
 import sonicIcon from '../../assets/images/sonic.png'
 import soneiumIcon from '../../assets/images/soneium.svg'
+import baseIcon from '../../assets/svg/base.svg'
 import Web3 from 'web3'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
@@ -17,6 +18,7 @@ import { useActiveWeb3React } from 'hooks'
 import {
   injected,
   network,
+  networkBaseTestnet,
   networkMinato,
   networkSepolia,
   networkSonic,
@@ -143,6 +145,11 @@ const CHAINS: any = {
     name: 'Minato',
     chainId: ChainId.MINATO_SONEIUM,
     icon: soneiumIcon
+  },
+  [ChainId.BASE_SEPOLIA]: {
+    name: 'Base Sepolia',
+    chainId: ChainId.BASE_SEPOLIA,
+    icon: baseIcon
   }
 }
 
@@ -195,7 +202,9 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.BSC_TESTNET
+        chain === ChainId.BASE_SEPOLIA
+          ? networkBaseTestnet
+          : chain === ChainId.BSC_TESTNET
           ? network
           : chain === ChainId.SEPOLIA
           ? networkSepolia
@@ -214,7 +223,7 @@ export default function SelectChain() {
     // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30451
     <StyledMenu ref={node as any}>
       <StyledMenuButton onClick={toggle}>
-        <div className="flex-1 flex items-center">
+        <div className="flex items-center flex-1">
           <img alt="icon" className="w-[28px] mr-[8px] rounded-full" src={CHAINS[chainId || '']?.icon} />
           {CHAINS[chainId || '']?.name}
         </div>
@@ -232,7 +241,7 @@ export default function SelectChain() {
               }}
               key={item.chainId}
             >
-              <div className="flex-1 flex items-center">
+              <div className="flex items-center flex-1 whitespace-nowrap">
                 <img alt="icon" className="w-[24px] mr-[12px] rounded-full" src={item.icon} />
                 {item.name}
               </div>

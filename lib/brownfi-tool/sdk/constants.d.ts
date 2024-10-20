@@ -10,7 +10,8 @@ export declare enum ChainId {
     VICTION_TESTNET = 89,
     VICTION_MAINNET = 88,
     SONIC_TESTNET = 64165,
-    MINATO_SONEIUM = 1946
+    MINATO_SONEIUM = 1946,
+    BASE_SEPOLIA = 84532
 }
 export declare const ChainIdHex: any;
 export declare enum TradeType {
@@ -32,6 +33,7 @@ export declare const FACTORY_ADDRESS: {
     88: string;
     64165: string;
     1946: string;
+    84532: string;
 };
 export declare const INIT_CODE_HASH: {
     1: string;
@@ -41,6 +43,7 @@ export declare const INIT_CODE_HASH: {
     88: string;
     64165: string;
     1946: string;
+    84532: string;
 };
 export declare const MINIMUM_LIQUIDITY: JSBI;
 export declare const ZERO: JSBI;

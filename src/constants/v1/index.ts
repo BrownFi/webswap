@@ -12,7 +12,8 @@ const V1_FACTORY_ADDRESSES: { [chainId in ChainId]: string } = {
   [ChainId.VICTION_TESTNET]: '',
   [ChainId.VICTION_MAINNET]: '',
   [ChainId.SONIC_TESTNET]: '',
-  [ChainId.MINATO_SONEIUM]: ''
+  [ChainId.MINATO_SONEIUM]: '',
+  [ChainId.BASE_SEPOLIA]: ''
 }
 
 const V1_FACTORY_INTERFACE = new Interface(V1_FACTORY_ABI)
