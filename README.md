@@ -1,32 +1,12 @@
 # brownfi Interface
 
-[![Unit Tests](https://github.com/brownfi/brownfi-interface/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/brownfi/brownfi-interface/actions/workflows/unit-tests.yaml)
-[![Integration Tests](https://github.com/brownfi/brownfi-interface/actions/workflows/integration-tests.yaml/badge.svg)](https://github.com/brownfi/brownfi-interface/actions/workflows/integration-tests.yaml)
-[![Lint](https://github.com/brownfi/brownfi-interface/actions/workflows/lint.yml/badge.svg)](https://github.com/brownfi/brownfi-interface/actions/workflows/lint.yml)
-[![Release](https://github.com/brownfi/brownfi-interface/actions/workflows/release.yaml/badge.svg)](https://github.com/brownfi/brownfi-interface/actions/workflows/release.yaml)
+An open source interface for brownfi -- a protocol for decentralized exchange 
 
-An open source interface for brownfi -- a protocol for decentralized exchange of Ethereum tokens.
+- Website: https://browndex.io/
+- Twitter: https://twitter.com/BrownFidex
+- Mirror blog: https://mirror.xyz/0x64f4Fbd29b0AE2C8e18E7940CF823df5CB639bBa
 
-- Website: [brownfi.org](https://brownfi.org/)
-- Interface: [app.brownfi.org](https://app.brownfi.org)
-- Docs: [brownfi.org/docs/](https://brownfi.org/docs/)
-- Twitter: [@brownfiProtocol](https://twitter.com/brownfiProtocol)
-- Reddit: [/r/brownfi](https://www.reddit.com/r/brownfi/)
-- Email: [contact@brownfi.org](mailto:contact@brownfi.org)
-- Discord: [brownfi](https://discord.gg/FCfyBSbCU5)
-- Whitepaper: [Link](https://hackmd.io/C-DvwDSfSxuh-Gd4WKE_ig)
 
-## Accessing the brownfi Interface
-
-To access the brownfi Interface, use an IPFS gateway link from the
-[latest release](https://github.com/brownfi/brownfi-interface/releases/latest),
-or visit [app.brownfi.org](https://app.brownfi.org).
-
-## Listing a token
-
-Please see the
-[@brownfi/default-token-list](https://github.com/brownfi/default-token-list)
-repository.
 
 ## Development
 
