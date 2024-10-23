@@ -66,16 +66,13 @@ export default function Pool() {
 
   // fetch the user's balances of all tracked V2 LP tokens
   const trackedTokenPairs = useTrackedTokenPairs()
-  // console.log('trackedTokenPairs', trackedTokenPairs)
   const tokenPairsWithLiquidityTokens = useMemo(
     () => trackedTokenPairs.map(tokens => ({ liquidityToken: toV2LiquidityToken(tokens), tokens })),
     [trackedTokenPairs]
   )
-  // console.log('tokenPairsWithLiquidityTokens', tokenPairsWithLiquidityTokens)
   const liquidityTokens = useMemo(() => tokenPairsWithLiquidityTokens.map(tpwlt => tpwlt.liquidityToken), [
     tokenPairsWithLiquidityTokens
   ])
-  // console.log('liquidityTokens', liquidityTokens)
   const [, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(account ?? undefined, liquidityTokens)
 
   // fetch the reserves for all V2 pools in which the user has a balance
@@ -125,7 +122,7 @@ export default function Pool() {
                   {account ? 'Your liquidity' : 'Pool liquidity'}
                 </TYPE.mediumHeader>
               </HideSmall>
-              <div className="flex items-center flex-1 justify-end w-full lg:w-auto">
+              <div className="flex items-center justify-end flex-1 w-full lg:w-auto">
                 <ResponsiveButtonSecondary as={Link} to="/create/ETH" className="!h-[40px] mr-[16px] !px-[18px] !py-0">
                   <Text fontWeight={700} fontSize={14} color={'white'}>
                     Create a pair

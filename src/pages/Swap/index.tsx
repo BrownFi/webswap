@@ -52,7 +52,6 @@ import { getTokenSymbol } from 'utils'
 export default function Swap({ history }: RouteComponentProps) {
   const loadedUrlParams = useDefaultsFromURLSearch()
 
-  // console.log(loadedUrlParams?.inputCurrencyId)
   // token warning stuff
   const [loadedInputCurrency, loadedOutputCurrency] = [
     useCurrency('WETH'),
@@ -241,8 +240,6 @@ export default function Swap({ history }: RouteComponentProps) {
   // warnings on slippage
   const priceImpactSeverity = warningSeverity(priceImpactWithoutFee)
 
-  // console.log('priceImpactSeverity ===>', priceImpactSeverity)
-
   // show approve flow when: no error on inputs, not approved or pending, or approved in current session
   // never show if price impact is above threshold in non expert mode
   const showApproveFlow =
@@ -281,21 +278,6 @@ export default function Swap({ history }: RouteComponentProps) {
   ])
 
   const swapIsUnsupported = useIsTransactionUnsupported(currencies?.INPUT, currencies?.OUTPUT)
-
-  // const test = async () => {
-  //   const contract = getContract(
-  //     '0xA2A3Ef41b4b97eF530eac05147d3D942cB0C9faE',
-  //     ERC20_ABI,
-  //     library as any,
-  //     account as any
-  //   )
-
-  //   const decimals = await contract.decimals()
-  //   console.log('decimals', decimals)
-  // }
-  // useEffect(() => {
-  //   test()
-  // }, [])
 
   return (
     <>

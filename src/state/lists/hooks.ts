@@ -47,7 +47,8 @@ const EMPTY_LIST: TokenAddressMap = {
   [ChainId.VICTION_MAINNET]: {},
   [ChainId.SONIC_TESTNET]: {},
   [ChainId.MINATO_SONEIUM]: {},
-  [ChainId.BASE_SEPOLIA]: {}
+  [ChainId.BASE_SEPOLIA]: {},
+  [ChainId.UNICHAIN_SEPOLIA]: {}
 }
 
 const listCache: WeakMap<TokenList, TokenAddressMap> | null =
@@ -84,7 +85,6 @@ export function listToTokenMap(list: TokenList): TokenAddressMap {
     },
     { ...EMPTY_LIST }
   )
-  console.log('map', map)
   listCache?.set(list, map || {})
   return map || {}
 }
@@ -111,7 +111,8 @@ function combineMaps(map1: TokenAddressMap, map2: TokenAddressMap): TokenAddress
     [ChainId.VICTION_MAINNET]: { ...map1[ChainId.VICTION_MAINNET], ...map2[ChainId.VICTION_MAINNET] },
     [ChainId.SONIC_TESTNET]: { ...map1[ChainId.SONIC_TESTNET], ...map2[ChainId.SONIC_TESTNET] },
     [ChainId.MINATO_SONEIUM]: { ...map1[ChainId.MINATO_SONEIUM], ...map2[ChainId.MINATO_SONEIUM] },
-    [ChainId.BASE_SEPOLIA]: { ...map1[ChainId.BASE_SEPOLIA], ...map2[ChainId.BASE_SEPOLIA] }
+    [ChainId.BASE_SEPOLIA]: { ...map1[ChainId.BASE_SEPOLIA], ...map2[ChainId.BASE_SEPOLIA] },
+    [ChainId.UNICHAIN_SEPOLIA]: { ...map1[ChainId.UNICHAIN_SEPOLIA], ...map2[ChainId.UNICHAIN_SEPOLIA] }
   }
 }
 
@@ -156,11 +157,8 @@ export function useInactiveListUrls(): string[] {
 // get all the tokens from active lists, combine with local default tokens
 export function useCombinedActiveList(): TokenAddressMap {
   const activeListUrls = useActiveListUrls()
-  // console.log('activeListUrls', activeListUrls)
   const activeTokens = useCombinedTokenMapFromUrls(activeListUrls)
-  // console.log('activeTokens', activeTokens)
   const defaultTokenMap = listToTokenMap(DEFAULT_TOKEN_LIST)
-  // console.log('defaultTokenMap', defaultTokenMap)
   return combineMaps(activeTokens, defaultTokenMap)
 }
 

@@ -22,6 +22,7 @@ export declare const USDC: Token;
 export declare const USDT: Token;
 export declare const WBTC: Token;
 export declare const BASE_USDC: Token;
+export declare const UNICHAIN_USDC: Token;
 export declare const PINNED_PAIRS: {
     readonly [chainId in ChainId]?: [Token, Token][];
 };

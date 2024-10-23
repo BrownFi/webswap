@@ -22,6 +22,7 @@ import {
   networkMinato,
   networkSepolia,
   networkSonic,
+  networkUnichainTestnet,
   networkViction,
   networkVictionMainnet
 } from 'connectors'
@@ -150,6 +151,11 @@ const CHAINS: any = {
     name: 'Base Sepolia',
     chainId: ChainId.BASE_SEPOLIA,
     icon: baseIcon
+  },
+  [ChainId.UNICHAIN_SEPOLIA]: {
+    name: 'Unichain',
+    chainId: ChainId.UNICHAIN_SEPOLIA,
+    icon: ethereum
   }
 }
 
@@ -202,7 +208,9 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.BASE_SEPOLIA
+        chain === ChainId.UNICHAIN_SEPOLIA
+          ? networkUnichainTestnet
+          : chain === ChainId.BASE_SEPOLIA
           ? networkBaseTestnet
           : chain === ChainId.BSC_TESTNET
           ? network
