@@ -55,7 +55,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.VICTION_MAINNET]: [WETH[ChainId.VICTION_MAINNET]],
   [ChainId.SONIC_TESTNET]: [WETH[ChainId.SONIC_TESTNET]],
   [ChainId.MINATO_SONEIUM]: [WETH[ChainId.MINATO_SONEIUM]],
-  [ChainId.BASE_SEPOLIA]: [WETH[ChainId.BASE_SEPOLIA]]
+  [ChainId.BASE_SEPOLIA]: [WETH[ChainId.BASE_SEPOLIA]],
+  [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]]
 }
 
 // used to construct intermediary pairs for trading
@@ -278,10 +279,21 @@ export const CHAIN_TO_METAMASK: any = {
     blockExplorerUrls: ['https://sepolia.basescan.org/'],
     chainName: 'Base Sepolia Testnet',
     nativeCurrency: {
-      decimals: 18,
-      name: 'ETH',
-      symbol: 'ETH'
+      decimals: 6,
+      name: 'USDC',
+      symbol: 'USDC'
     },
     rpcUrls: [process.env.REACT_APP_BASE_SEPOLIA_URL]
+  },
+  [ChainId.UNICHAIN_SEPOLIA]: {
+    chainId: ChainIdHex[ChainId.UNICHAIN_SEPOLIA],
+    blockExplorerUrls: ['https://unichain-sepolia.blockscout.com/'],
+    chainName: 'Unichain Sepolia Testnet',
+    nativeCurrency: {
+      decimals: 6,
+      name: 'USD',
+      symbol: 'USD'
+    },
+    rpcUrls: [process.env.REACT_APP_UNICHAIN_SEPOLIA_URL]
   }
 }
