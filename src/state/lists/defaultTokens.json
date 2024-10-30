@@ -77,9 +77,9 @@
     {
       "chainId": 1301,
       "address": "0x8Aca9B80b6752Ec62e06eC48E07a301e97852dAA",
-      "name": "USD",
-      "symbol": "USD",
-      "decimals": 6,
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 18,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     }
   ]

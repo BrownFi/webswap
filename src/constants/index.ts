@@ -279,9 +279,9 @@ export const CHAIN_TO_METAMASK: any = {
     blockExplorerUrls: ['https://sepolia.basescan.org/'],
     chainName: 'Base Sepolia Testnet',
     nativeCurrency: {
-      decimals: 18,
-      name: 'ETH',
-      symbol: 'ETH'
+      decimals: 6,
+      name: 'USDC',
+      symbol: 'USDC'
     },
     rpcUrls: [process.env.REACT_APP_BASE_SEPOLIA_URL]
   },

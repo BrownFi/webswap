@@ -158,6 +158,9 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
     return 'VIC'
   }
+  if (chainId === ChainId.BASE_SEPOLIA) {
+    return 'USDC'
+  }
   if (chainId === ChainId.SONIC_TESTNET) {
     return 'S'
   }
@@ -235,11 +238,13 @@ export function getScanText(chainId: ChainId) {
       return 'Soneium'
     case ChainId.BASE_SEPOLIA:
       return 'Basescan'
+    case ChainId.UNICHAIN_SEPOLIA:
+      return 'Unichainscan'
     default:
       return 'Etherscan'
   }
 }
 
 export function isNativeCurrency(symbol: string | undefined) {
-  return symbol === 'WBNB' || symbol === 'WETH' || symbol === 'WVIC' || symbol === 'WS'
+  return symbol === 'WBNB' || symbol === 'WETH' || symbol === 'WVIC' || symbol === 'WS' || symbol === 'USDC'
 }
