@@ -291,8 +291,8 @@ export const CHAIN_TO_METAMASK: any = {
     chainName: 'Unichain Sepolia Testnet',
     nativeCurrency: {
       decimals: 6,
-      name: 'USD',
-      symbol: 'USD'
+      name: 'USDC',
+      symbol: 'USDC'
     },
     rpcUrls: [process.env.REACT_APP_UNICHAIN_SEPOLIA_URL]
   }
