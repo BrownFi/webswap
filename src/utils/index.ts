@@ -64,6 +64,9 @@ export function getEtherscanLink(
     case ChainId.BASE_SEPOLIA:
       prefix = 'https://sepolia.basescan.org/'
       break
+    case ChainId.UNICHAIN_SEPOLIA:
+      prefix = 'https://unichain-sepolia.blockscout.com/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -235,6 +238,8 @@ export function getScanText(chainId: ChainId) {
       return 'Soneium'
     case ChainId.BASE_SEPOLIA:
       return 'Basescan'
+    case ChainId.UNICHAIN_SEPOLIA:
+      return 'Unichainscan'
     default:
       return 'Etherscan'
   }
