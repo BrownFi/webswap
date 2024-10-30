@@ -290,9 +290,9 @@ export const CHAIN_TO_METAMASK: any = {
     blockExplorerUrls: ['https://unichain-sepolia.blockscout.com/'],
     chainName: 'Unichain Sepolia Testnet',
     nativeCurrency: {
-      decimals: 6,
-      name: 'USDC',
-      symbol: 'USDC'
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
     },
     rpcUrls: [process.env.REACT_APP_UNICHAIN_SEPOLIA_URL]
   }

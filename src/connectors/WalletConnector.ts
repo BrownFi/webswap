@@ -46,7 +46,6 @@ export class WalletConnectConnector extends AbstractConnector {
   }
 
   private handleDisconnect(): void {
-    // console.log('disconnect ====>')
     this.emitDeactivate()
     // we have to do this because of a @walletconnect/web3-provider bug
     if (this.walletConnectProvider) {
@@ -82,8 +81,6 @@ export class WalletConnectConnector extends AbstractConnector {
     this.walletConnectProvider.on('chainChanged', this.handleChainChanged)
     this.walletConnectProvider.on('accountsChanged', this.handleAccountsChanged)
 
-    // console.log('this.walletConnectProvider ===>', this.walletConnectProvider, this.walletConnectProvider.session, this.walletConnectProvider.connected, this.walletConnectProvider.isWalletConnect)
-
     const account = await this.walletConnectProvider
       .enable()
       .then((accounts: string[]): string => accounts[0])
@@ -97,13 +94,8 @@ export class WalletConnectConnector extends AbstractConnector {
         throw error
       })
 
-    // console.log('this.walletConnectProvider after ===>', this.walletConnectProvider, this.walletConnectProvider.session, this.walletConnectProvider.connected, this.walletConnectProvider.isWalletConnect)
-
     setTimeout(() => {
       const pairing = localStorage.getItem('wc@2:core:0.3//pairing')
-
-      // console.log('pairing ====>', pairing)
-
       if (pairing === '[]') {
         this.deactivate()
         localStorage.clear()
