@@ -56,7 +56,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.SONIC_TESTNET]: [WETH[ChainId.SONIC_TESTNET]],
   [ChainId.MINATO_SONEIUM]: [WETH[ChainId.MINATO_SONEIUM]],
   [ChainId.BASE_SEPOLIA]: [WETH[ChainId.BASE_SEPOLIA]],
-  [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]]
+  [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]],
+  [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -295,5 +296,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'ETH'
     },
     rpcUrls: [process.env.REACT_APP_UNICHAIN_SEPOLIA_URL]
+  },
+  [ChainId.AURORA_TESTNET]: {
+    chainId: ChainIdHex[ChainId.AURORA_TESTNET],
+    blockExplorerUrls: ['https://explorer.testnet.aurora.dev/'],
+    chainName: 'Aurora Testnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_AURORA_TESTNET_URL]
   }
 }

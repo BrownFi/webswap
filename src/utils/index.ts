@@ -67,6 +67,9 @@ export function getEtherscanLink(
     case ChainId.UNICHAIN_SEPOLIA:
       prefix = 'https://unichain-sepolia.blockscout.com/'
       break
+    case ChainId.AURORA_TESTNET:
+      prefix = 'https://explorer.testnet.aurora.dev/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -240,6 +243,8 @@ export function getScanText(chainId: ChainId) {
       return 'Basescan'
     case ChainId.UNICHAIN_SEPOLIA:
       return 'Unichainscan'
+    case ChainId.AURORA_TESTNET:
+      return 'Aurorascan'
     default:
       return 'Etherscan'
   }

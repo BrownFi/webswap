@@ -19,6 +19,7 @@ const SONIC_TESTNET_URL = process.env.REACT_APP_SONIC_TESTNET_URL
 const MINATO_SONEIUM_URL = process.env.REACT_APP_MINATO_SONEIUM_URL
 const BASE_TESTNET_URL = process.env.REACT_APP_BASE_SEPOLIA_URL
 const UNICHAIN_TESTNET_URL = process.env.REACT_APP_UNICHAIN_SEPOLIA_URL
+const AURORA_TESTNET_URL = process.env.REACT_APP_AURORA_TESTNET_URL
 
 export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '1')
 
@@ -58,6 +59,10 @@ export const networkUnichainTestnet = new NetworkConnector({
   urls: { [ChainId.UNICHAIN_SEPOLIA]: UNICHAIN_TESTNET_URL as string }
 })
 
+export const networkAuroraTestnet = new NetworkConnector({
+  urls: { [ChainId.AURORA_TESTNET]: AURORA_TESTNET_URL as string }
+})
+
 let networkLibrary: Web3Provider | undefined
 export function getNetworkLibrary(): Web3Provider {
   return (networkLibrary = networkLibrary ?? new Web3Provider(network.provider as any))
@@ -73,7 +78,8 @@ export const injected = new InjectedConnector({
     ChainId.SONIC_TESTNET,
     ChainId.MINATO_SONEIUM,
     ChainId.BASE_SEPOLIA,
-    ChainId.UNICHAIN_SEPOLIA
+    ChainId.UNICHAIN_SEPOLIA,
+    ChainId.AURORA_TESTNET
   ]
 })
 
