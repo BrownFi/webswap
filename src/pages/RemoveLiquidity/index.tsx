@@ -105,7 +105,12 @@ export default function RemoveLiquidity({
     const liquidityAmount = parsedAmounts[Field.LIQUIDITY]
     if (!liquidityAmount) throw new Error('missing liquidity amount')
 
-    if (isArgentWallet || chainId === ChainId.VICTION_MAINNET || chainId === ChainId.SONIC_TESTNET) {
+    if (
+      isArgentWallet ||
+      chainId === ChainId.VICTION_MAINNET ||
+      chainId === ChainId.SONIC_TESTNET ||
+      chainId === ChainId.AURORA_TESTNET
+    ) {
       return approveCallback()
     }
 

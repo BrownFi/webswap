@@ -81,6 +81,14 @@
       "symbol": "USDC",
       "decimals": 18,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 1313161555,
+      "address": "0xaca0aC694aCcB0d1d0C39046a0780CB5475d36E6",
+      "name": "USD",
+      "symbol": "USD",
+      "decimals": 6,
+      "logoURI": "https://s3.coinmarketcap.com/static/img/portraits/62da512ff192d82df80012bb.png"
     }
   ]
 }
