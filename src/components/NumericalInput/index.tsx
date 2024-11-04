@@ -37,14 +37,54 @@ const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: s
   }
 `
 
+const Loader = styled.div`
+  border-width: 0.3rem;
+  border-style: solid;
+  border-color: grey grey grey grey;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  position: relative;
+  -webkit-animation: spin 2s infinite;
+  animation: spin 2s infinite;
+  margin-right: auto;
+
+  &:before,
+  &:after {
+    content: '';
+    width: 0.1rem;
+    height: 0.1rem;
+    border-radius: 50%;
+    background: black;
+    position: absolute;
+    left: 0.125rem;
+  }
+
+  &:before {
+    top: 0.063rem;
+  }
+
+  &:after {
+    bottom: 0.063rem;
+  }
+
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`
+
 const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`) // match escaped "." characters via in a non-capturing group
 
 export const Input = React.memo(function InnerInput({
   value,
   onUserInput,
   placeholder,
+  loading,
   ...rest
 }: {
+  loading?: boolean
   value: string | number
   onUserInput: (input: string) => void
   error?: boolean
@@ -55,6 +95,10 @@ export const Input = React.memo(function InnerInput({
     if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
       onUserInput(nextUserInput)
     }
+  }
+
+  if (loading) {
+    return <Loader />
   }
 
   return (

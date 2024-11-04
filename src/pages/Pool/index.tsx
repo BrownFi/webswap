@@ -119,7 +119,7 @@ export default function Pool() {
             <TitleRow style={{ marginTop: '1rem' }} padding={'0'}>
               <HideSmall>
                 <TYPE.mediumHeader style={{ fontFamily: 'Russo One', fontSize: '24px' }} color={'white'}>
-                  {account ? 'Your liquidity' : 'Pool liquidity'}
+                  All Pools
                 </TYPE.mediumHeader>
               </HideSmall>
               <div className="flex items-center justify-end flex-1 w-full lg:w-auto">

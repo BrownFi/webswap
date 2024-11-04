@@ -245,6 +245,8 @@ export function getScanText(chainId: ChainId) {
       return 'Unichainscan'
     case ChainId.AURORA_TESTNET:
       return 'Aurorascan'
+    case ChainId.METIS_MAINNET:
+      return 'Metisscan'
     default:
       return 'Etherscan'
   }

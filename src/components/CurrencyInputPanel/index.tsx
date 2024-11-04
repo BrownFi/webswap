@@ -128,6 +128,7 @@ interface CurrencyInputPanelProps {
   id: string
   showCommonBases?: boolean
   customBalanceText?: string
+  loading?: boolean
 }
 
 export default function CurrencyInputPanel({
@@ -145,7 +146,8 @@ export default function CurrencyInputPanel({
   otherCurrency,
   id,
   showCommonBases,
-  customBalanceText
+  customBalanceText,
+  loading
 }: CurrencyInputPanelProps) {
   const { t } = useTranslation()
 
@@ -194,6 +196,7 @@ export default function CurrencyInputPanel({
               <NumericalInput
                 className="token-amount-input"
                 value={value}
+                loading={loading}
                 onUserInput={val => {
                   onUserInput(val)
                 }}

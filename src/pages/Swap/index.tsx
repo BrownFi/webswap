@@ -95,7 +95,9 @@ export default function Swap({ history }: RouteComponentProps) {
     currencyBalances,
     parsedAmount,
     currencies,
-    inputError: swapInputError
+    inputError: swapInputError,
+    loadingExactIn,
+    loadingExactOut
   } = useDerivedSwapInfo()
 
   const { wrapType, execute: onWrap, inputError: wrapInputError } = useWrapCallback(
@@ -317,6 +319,7 @@ export default function Swap({ history }: RouteComponentProps) {
               otherCurrency={currencies[Field.OUTPUT]}
               id="swap-currency-input"
               showCommonBases={true}
+              loading={loadingExactOut}
             />
             <AutoColumn justify="space-between" className="relative">
               <AutoRow
@@ -349,6 +352,7 @@ export default function Swap({ history }: RouteComponentProps) {
             <CurrencyInputPanel
               value={formattedAmounts[Field.OUTPUT]}
               onUserInput={handleTypeOutput}
+              loading={loadingExactIn}
               label={'Your Receive'}
               showMaxButton={false}
               currency={currencies[Field.OUTPUT]}

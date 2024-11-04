@@ -114,6 +114,8 @@ export function useDerivedSwapInfo(): {
   v2Trade: Trade | undefined
   inputError?: string
   v1Trade: Trade | undefined
+  loadingExactIn: boolean
+  loadingExactOut: boolean
 } {
   const { account } = useActiveWeb3React()
 
@@ -140,8 +142,10 @@ export function useDerivedSwapInfo(): {
   const isExactIn: boolean = independentField === Field.INPUT
   const parsedAmount = tryParseAmount(typedValue, (isExactIn ? inputCurrency : outputCurrency) ?? undefined)
 
-  const bestTradeExactIn = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined)
-  const bestTradeExactOut = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined)
+  const tradeIn = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined)
+  const tradeOut = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined)
+  const bestTradeExactIn = tradeIn.trade
+  const bestTradeExactOut = tradeOut.trade
 
   const v2Trade = isExactIn ? bestTradeExactIn : bestTradeExactOut
 
@@ -234,7 +238,9 @@ export function useDerivedSwapInfo(): {
     parsedAmount,
     v2Trade: v2Trade ?? undefined,
     inputError,
-    v1Trade
+    v1Trade,
+    loadingExactIn: tradeIn.loadingExactIn,
+    loadingExactOut: tradeOut.loadingExactOut
   }
 }
 

@@ -92,10 +92,15 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
 
 const MAX_HOPS = 1
 
+type TradeExactIn = {
+  trade: Trade | null
+  loadingExactIn: boolean
+}
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
  */
-export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?: Currency): Trade | null {
+export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?: Currency): TradeExactIn {
+  const [loading, setLoading] = useState(false)
   const [trade, setTrade] = useState<Trade | null>(null)
   const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut)
 
@@ -103,6 +108,7 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
 
   useEffect(() => {
     const getTrade = async () => {
+      setLoading(true)
       if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeIn = await Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, {
@@ -126,10 +132,12 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           }
         }
         setTrade(bestTradeSoFar)
+        setLoading(false)
         return
       }
 
       setTrade(null)
+      setLoading(false)
     }
 
     const timeout = setTimeout(() => {
@@ -141,13 +149,21 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
     }
   }, [allowedPairs?.length, currencyAmountIn?.raw.toString(), currencyOut?.name, singleHopOnly])
 
-  return trade
+  return {
+    trade: trade,
+    loadingExactIn: loading
+  }
 }
 
+type TradeExactOut = {
+  trade: Trade | null
+  loadingExactOut: boolean
+}
 /**
  * Returns the best trade for the token in to the exact amount of token out
  */
-export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: CurrencyAmount): Trade | null {
+export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: CurrencyAmount): TradeExactOut {
+  const [loading, setLoading] = useState(false)
   const [trade, setTrade] = useState<Trade | null>(null)
 
   const allowedPairs = useAllCommonPairs(currencyIn, currencyAmountOut?.currency)
@@ -156,6 +172,7 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
 
   useEffect(() => {
     const getTrade = async () => {
+      setLoading(true)
       if (currencyIn && currencyAmountOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeOut = await Trade.bestTradeExactOut(allowedPairs, currencyIn, currencyAmountOut, {
@@ -178,9 +195,11 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           }
         }
         setTrade(bestTradeSoFar)
+        setLoading(false)
         return
       }
       setTrade(null)
+      setLoading(false)
     }
 
     const timeout = setTimeout(() => {
@@ -192,7 +211,10 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
     }
   }, [currencyIn?.name, currencyAmountOut?.raw?.toString(), allowedPairs?.length, singleHopOnly])
 
-  return trade
+  return {
+    trade: trade,
+    loadingExactOut: loading
+  }
 }
 
 export function useIsTransactionUnsupported(currencyIn?: Currency, currencyOut?: Currency): boolean {

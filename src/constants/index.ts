@@ -57,7 +57,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.MINATO_SONEIUM]: [WETH[ChainId.MINATO_SONEIUM]],
   [ChainId.BASE_SEPOLIA]: [WETH[ChainId.BASE_SEPOLIA]],
   [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]],
-  [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]]
+  [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]],
+  [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -307,5 +308,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'ETH'
     },
     rpcUrls: [process.env.REACT_APP_AURORA_TESTNET_URL]
+  },
+  [ChainId.METIS_MAINNET]: {
+    chainId: ChainIdHex[ChainId.METIS_MAINNET],
+    blockExplorerUrls: ['andromeda-explorer.metis.io'],
+    chainName: 'Metis Mainnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_METIS_MAINNET_URL]
   }
 }
