@@ -70,6 +70,9 @@ export function getEtherscanLink(
     case ChainId.AURORA_TESTNET:
       prefix = 'https://explorer.testnet.aurora.dev/'
       break
+    case ChainId.METIS_MAINNET:
+      prefix = 'https://explorer.metis.io/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -167,6 +170,9 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.SONIC_TESTNET) {
     return 'S'
   }
+  if (chainId === ChainId.METIS_MAINNET) {
+    return 'METIS'
+  }
   return 'ETH'
 }
 
@@ -179,6 +185,9 @@ export function getWrappedNativeToken(chainId: ChainId) {
   }
   if (chainId === ChainId.SONIC_TESTNET) {
     return 'WS'
+  }
+  if (chainId === ChainId.METIS_MAINNET) {
+    return 'WMETIS'
   }
   return 'WETH'
 }
@@ -194,6 +203,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     if (chainId === ChainId.SONIC_TESTNET) {
       return 'S'
     }
+    if (chainId === ChainId.METIS_MAINNET) {
+      return 'METIS'
+    }
     return 'ETH'
   }
 
@@ -203,6 +215,10 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
 
   if (currency?.symbol === 'WETH' && (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET)) {
     return 'WVIC'
+  }
+
+  if (currency?.symbol === 'WETH' && chainId === ChainId.METIS_MAINNET) {
+    return 'WMETIS'
   }
 
   if (currency?.symbol === 'WETH' && chainId === ChainId.SONIC_TESTNET) {
@@ -222,6 +238,9 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     }
     if (chainId === ChainId.SONIC_TESTNET) {
       return 'Sonic'
+    }
+    if (chainId === ChainId.METIS_MAINNET) {
+      return 'Metis'
     }
     return 'Ethereum'
   }
@@ -253,5 +272,12 @@ export function getScanText(chainId: ChainId) {
 }
 
 export function isNativeCurrency(symbol: string | undefined) {
-  return symbol === 'WBNB' || symbol === 'WETH' || symbol === 'WVIC' || symbol === 'WS' || symbol === 'USDC'
+  return (
+    symbol === 'WBNB' ||
+    symbol === 'WETH' ||
+    symbol === 'WVIC' ||
+    symbol === 'WS' ||
+    symbol === 'USDC' ||
+    symbol === 'WMETIS'
+  )
 }

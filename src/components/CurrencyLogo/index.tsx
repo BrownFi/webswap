@@ -9,6 +9,7 @@ import useHttpLocations from '../../hooks/useHttpLocations'
 import { WrappedTokenInfo } from '../../state/lists/hooks'
 import Logo from '../Logo'
 import { useActiveWeb3React } from 'hooks'
+import metisLogo from '../../assets/images/metis.png'
 
 export const getTokenLogoURL = (address: string) =>
   `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${address}/logo.png`
@@ -65,6 +66,9 @@ export default function CurrencyLogo({
   if ((currency as any)?.symbol === 'WS') {
     return <StyledEthereumLogo src={sonicLogo} size={size} style={style} />
   }
+  if ((currency as any)?.symbol === 'WMETIS' || (currency as any)?.symbol === 'METIS') {
+    return <StyledEthereumLogo src={metisLogo} size={size} style={style} />
+  }
   if ((currency as any)?.symbol === 'WETH') {
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
@@ -78,6 +82,9 @@ export default function CurrencyLogo({
     }
     if (chainId === ChainId.SONIC_TESTNET) {
       return <StyledEthereumLogo src={sonicLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.METIS_MAINNET) {
+      return <StyledEthereumLogo src={metisLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }

@@ -315,8 +315,8 @@ export const CHAIN_TO_METAMASK: any = {
     chainName: 'Metis Mainnet',
     nativeCurrency: {
       decimals: 18,
-      name: 'ETH',
-      symbol: 'ETH'
+      name: 'Metis',
+      symbol: 'METIS'
     },
     rpcUrls: [process.env.REACT_APP_METIS_MAINNET_URL]
   }
