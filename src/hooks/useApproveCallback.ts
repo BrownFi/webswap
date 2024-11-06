@@ -113,7 +113,10 @@ export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) 
     tradeIsV1
       ? v1ExchangeAddress
       : chainId
-      ? chainId === ChainId.VICTION_MAINNET || chainId === ChainId.SONIC_TESTNET || chainId === ChainId.AURORA_TESTNET
+      ? chainId === ChainId.VICTION_MAINNET ||
+        chainId === ChainId.SONIC_TESTNET ||
+        chainId === ChainId.AURORA_TESTNET ||
+        chainId === ChainId.TAIKO_TESTNET
         ? ROUTER_ADDRESS_WITH_PRICE[chainId]
         : ROUTER_ADDRESS[chainId]
       : ''

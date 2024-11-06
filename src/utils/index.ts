@@ -70,6 +70,12 @@ export function getEtherscanLink(
     case ChainId.AURORA_TESTNET:
       prefix = 'https://explorer.testnet.aurora.dev/'
       break
+    case ChainId.METIS_MAINNET:
+      prefix = 'https://explorer.metis.io/'
+      break
+    case ChainId.TAIKO_TESTNET:
+      prefix = 'https://hekla.taikoexplorer.com/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -245,6 +251,10 @@ export function getScanText(chainId: ChainId) {
       return 'Unichainscan'
     case ChainId.AURORA_TESTNET:
       return 'Aurorascan'
+    case ChainId.METIS_MAINNET:
+      return 'Metisscan'
+    case ChainId.TAIKO_TESTNET:
+      return 'Taikoscan'
     default:
       return 'Etherscan'
   }

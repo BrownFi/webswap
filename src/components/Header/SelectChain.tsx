@@ -13,6 +13,7 @@ import soneiumIcon from '../../assets/images/soneium.svg'
 import baseIcon from '../../assets/svg/base.svg'
 import Web3 from 'web3'
 import auroraIcon from '../../assets/images/aurora.png'
+import taikoIcon from '../../assets/images/taiko.svg'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -26,7 +27,8 @@ import {
   networkUnichainTestnet,
   networkViction,
   networkVictionMainnet,
-  networkAuroraTestnet
+  networkAuroraTestnet,
+  networkTaikoTestnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
@@ -163,6 +165,11 @@ const CHAINS: any = {
     name: 'Aurora',
     chainId: ChainId.AURORA_TESTNET,
     icon: auroraIcon
+  },
+  [ChainId.TAIKO_TESTNET]: {
+    name: 'Taiko',
+    chainId: ChainId.TAIKO_TESTNET,
+    icon: taikoIcon
   }
 }
 
@@ -215,7 +222,9 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.AURORA_TESTNET
+        chain === ChainId.TAIKO_TESTNET
+          ? networkTaikoTestnet
+          : chain === ChainId.AURORA_TESTNET
           ? networkAuroraTestnet
           : chain === ChainId.UNICHAIN_SEPOLIA
           ? networkUnichainTestnet
