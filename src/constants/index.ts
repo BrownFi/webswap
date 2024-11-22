@@ -58,7 +58,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.BASE_SEPOLIA]: [WETH[ChainId.BASE_SEPOLIA]],
   [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]],
   [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]],
-  [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]]
+  [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]],
+  [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -318,6 +319,16 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'Metis',
       symbol: 'METIS'
     },
-    rpcUrls: [process.env.REACT_APP_METIS_MAINNET_URL]
+    rpcUrls: [process.env.REACT_APP_METIS_MAINNET_URL],
+  [ChainId.TAIKO_TESTNET]: {
+    chainId: ChainIdHex[ChainId.TAIKO_TESTNET],
+    blockExplorerUrls: ['https://hekla.taikoscan.network/'],
+    chainName: 'Taiko Testnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_TAIKO_TESTNET_URL]
   }
 }

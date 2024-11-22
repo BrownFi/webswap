@@ -109,7 +109,8 @@ export default function RemoveLiquidity({
       isArgentWallet ||
       chainId === ChainId.VICTION_MAINNET ||
       chainId === ChainId.SONIC_TESTNET ||
-      chainId === ChainId.AURORA_TESTNET
+      chainId === ChainId.AURORA_TESTNET ||
+      chainId === ChainId.TAIKO_TESTNET
     ) {
       return approveCallback()
     }

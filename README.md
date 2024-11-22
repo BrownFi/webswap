@@ -2,7 +2,7 @@
 
 An open source interface for brownfi -- a protocol for decentralized exchange 
 
-- Website: https://browndex.io/
+- Website: https://brownfi.io/
 - Twitter: https://twitter.com/BrownFidex
 - Mirror blog: https://mirror.xyz/0x64f4Fbd29b0AE2C8e18E7940CF823df5CB639bBa
 
