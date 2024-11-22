@@ -7,13 +7,13 @@ import down from '../../assets/svg/arrow_drop_down.svg'
 import check from '../../assets/svg/check.svg'
 // import ethereum from '../../assets/images/ethereum-logo.png'
 // import bnb from '../../assets/images/bnb.svg'
-// import viction from '../../assets/images/viction.png'
+import viction from '../../assets/images/viction.png'
 // import sonicIcon from '../../assets/images/sonic.png'
 // import soneiumIcon from '../../assets/images/soneium.svg'
 // import baseIcon from '../../assets/svg/base.svg'
 import Web3 from 'web3'
 // import auroraIcon from '../../assets/images/aurora.png'
-import metisIcon from '../../assets/images/metis.png'
+// import metisIcon from '../../assets/images/metis.png'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -26,9 +26,9 @@ import {
   // networkSonic,
   // networkUnichainTestnet,
   // networkViction,
-  // networkVictionMainnet,
+  networkVictionMainnet
   // networkAuroraTestnet,
-  networkMetisMainnet
+  // networkMetisMainnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
@@ -121,11 +121,11 @@ const MenuItem = styled.div`
 `
 
 const CHAINS: any = {
-  // [ChainId.VICTION_MAINNET]: {
-  //   name: 'Viction Mainnet',
-  //   chainId: ChainId.VICTION_MAINNET,
-  //   icon: viction
-  // },
+  [ChainId.VICTION_MAINNET]: {
+    name: 'Viction Mainnet',
+    chainId: ChainId.VICTION_MAINNET,
+    icon: viction
+  }
   // [ChainId.VICTION_TESTNET]: {
   //   name: 'Viction Testnet',
   //   chainId: ChainId.VICTION_TESTNET,
@@ -166,11 +166,11 @@ const CHAINS: any = {
   //   chainId: ChainId.AURORA_TESTNET,
   //   icon: auroraIcon
   // },
-  [ChainId.METIS_MAINNET]: {
-    name: 'Metis',
-    ChainId: ChainId.METIS_MAINNET,
-    icon: metisIcon
-  }
+  // [ChainId.METIS_MAINNET]: {
+  //   name: 'Metis',
+  //   ChainId: ChainId.METIS_MAINNET,
+  //   icon: metisIcon
+  // }
 }
 
 export default function SelectChain() {
@@ -220,7 +220,8 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.METIS_MAINNET ? networkMetisMainnet : networkMetisMainnet
+        networkVictionMainnet
+        // chain === ChainId.METIS_MAINNET ? networkMetisMainnet : networkMetisMainnet
         // chain === ChainId.METIS_MAINNET
         //   ? networkMetisMainnet
         //   : chain === ChainId.AURORA_TESTNET

@@ -46,9 +46,9 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
         <RowBetween>
           <RowFixed>
             <TYPE.black fontSize={14} fontWeight={400} color={theme.white}>
-              Slippage
+              Price Impact
             </TYPE.black>
-            <QuestionHelper text="Slippage is the difference between your trading price and oracle price." />
+            <QuestionHelper text="Price impact is the difference between your trading price and oracle price." />
           </RowFixed>
           <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.slippage || 0)}>
             {trade ? formatStringToNumber(trade?.slippage) : '-'}%

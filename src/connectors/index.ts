@@ -79,13 +79,13 @@ export const injected = new InjectedConnector({
     // ChainId.SEPOLIA,
     // ChainId.BSC_TESTNET,
     // ChainId.VICTION_TESTNET,
-    // ChainId.VICTION_MAINNET,
+    ChainId.VICTION_MAINNET
     // ChainId.SONIC_TESTNET,
     // ChainId.MINATO_SONEIUM,
     // ChainId.BASE_SEPOLIA,
     // ChainId.UNICHAIN_SEPOLIA,
     // ChainId.AURORA_TESTNET,
-    ChainId.METIS_MAINNET
+    // ChainId.METIS_MAINNET
   ]
 })
 
