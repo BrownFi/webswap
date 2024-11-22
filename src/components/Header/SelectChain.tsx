@@ -7,7 +7,7 @@ import down from '../../assets/svg/arrow_drop_down.svg'
 import check from '../../assets/svg/check.svg'
 import ethereum from '../../assets/images/ethereum-logo.png'
 import bnb from '../../assets/images/bnb.svg'
-import viction from '../../assets/images/viction.png'
+// import viction from '../../assets/images/viction.png'
 import sonicIcon from '../../assets/images/sonic.png'
 import soneiumIcon from '../../assets/images/soneium.svg'
 import baseIcon from '../../assets/svg/base.svg'
@@ -121,16 +121,16 @@ const MenuItem = styled.div`
 `
 
 const CHAINS: any = {
-  [ChainId.VICTION_MAINNET]: {
-    name: 'Viction Mainnet',
-    chainId: ChainId.VICTION_MAINNET,
-    icon: viction
-  },
-  [ChainId.VICTION_TESTNET]: {
-    name: 'Viction Testnet',
-    chainId: ChainId.VICTION_TESTNET,
-    icon: viction
-  },
+  // [ChainId.VICTION_MAINNET]: {
+  //   name: 'Viction Mainnet',
+  //   chainId: ChainId.VICTION_MAINNET,
+  //   icon: viction
+  // },
+  // [ChainId.VICTION_TESTNET]: {
+  //   name: 'Viction Testnet',
+  //   chainId: ChainId.VICTION_TESTNET,
+  //   icon: viction
+  // },
   [ChainId.BSC_TESTNET]: {
     name: 'BSC Testnet',
     chainId: ChainId.BSC_TESTNET,
