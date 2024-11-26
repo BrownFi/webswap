@@ -319,7 +319,8 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'Metis',
       symbol: 'METIS'
     },
-    rpcUrls: [process.env.REACT_APP_METIS_MAINNET_URL],
+    rpcUrls: [process.env.REACT_APP_METIS_MAINNET_URL]
+  },
   [ChainId.TAIKO_TESTNET]: {
     chainId: ChainIdHex[ChainId.TAIKO_TESTNET],
     blockExplorerUrls: ['https://hekla.taikoscan.network/'],
