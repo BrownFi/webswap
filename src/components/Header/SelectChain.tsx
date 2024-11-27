@@ -13,22 +13,22 @@ import viction from '../../assets/images/viction.png'
 // import baseIcon from '../../assets/svg/base.svg'
 import Web3 from 'web3'
 // import auroraIcon from '../../assets/images/aurora.png'
-// import metisIcon from '../../assets/images/metis.png'
+import metisIcon from '../../assets/images/metis.png'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
 import {
   injected,
-  // network,
-  // networkBaseTestnet,
-  // networkMinato,
-  // networkSepolia,
-  // networkSonic,
-  // networkUnichainTestnet,
-  // networkViction,
-  networkVictionMainnet
-  // networkAuroraTestnet,
-  // networkMetisMainnet
+  network,
+  networkBaseTestnet,
+  networkMinato,
+  networkSepolia,
+  networkSonic,
+  networkUnichainTestnet,
+  networkViction,
+  networkVictionMainnet,
+  networkAuroraTestnet,
+  networkMetisMainnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
@@ -125,52 +125,12 @@ const CHAINS: any = {
     name: 'Viction Mainnet',
     chainId: ChainId.VICTION_MAINNET,
     icon: viction
+  },
+  [ChainId.METIS_MAINNET]: {
+    name: 'Metis',
+    chainId: ChainId.METIS_MAINNET,
+    icon: metisIcon
   }
-  // [ChainId.VICTION_TESTNET]: {
-  //   name: 'Viction Testnet',
-  //   chainId: ChainId.VICTION_TESTNET,
-  //   icon: viction
-  // },
-  // [ChainId.BSC_TESTNET]: {
-  //   name: 'BSC Testnet',
-  //   chainId: ChainId.BSC_TESTNET,
-  //   icon: bnb
-  // },
-  // [ChainId.SONIC_TESTNET]: {
-  //   name: 'Sonic Testnet',
-  //   chainId: ChainId.SONIC_TESTNET,
-  //   icon: sonicIcon
-  // },
-  // [ChainId.SEPOLIA]: {
-  //   name: 'Sepolia',
-  //   chainId: ChainId.SEPOLIA,
-  //   icon: ethereum
-  // },
-  // [ChainId.MINATO_SONEIUM]: {
-  //   name: 'Minato',
-  //   chainId: ChainId.MINATO_SONEIUM,
-  //   icon: soneiumIcon
-  // },
-  // [ChainId.BASE_SEPOLIA]: {
-  //   name: 'Base Sepolia',
-  //   chainId: ChainId.BASE_SEPOLIA,
-  //   icon: baseIcon
-  // },
-  // [ChainId.UNICHAIN_SEPOLIA]: {
-  //   name: 'Unichain',
-  //   chainId: ChainId.UNICHAIN_SEPOLIA,
-  //   icon: ethereum
-  // },
-  // [ChainId.AURORA_TESTNET]: {
-  //   name: 'Aurora',
-  //   chainId: ChainId.AURORA_TESTNET,
-  //   icon: auroraIcon
-  // },
-  // [ChainId.METIS_MAINNET]: {
-  //   name: 'Metis',
-  //   ChainId: ChainId.METIS_MAINNET,
-  //   icon: metisIcon
-  // }
 }
 
 export default function SelectChain() {
@@ -220,27 +180,25 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        networkVictionMainnet
-        // chain === ChainId.METIS_MAINNET ? networkMetisMainnet : networkMetisMainnet
-        // chain === ChainId.METIS_MAINNET
-        //   ? networkMetisMainnet
-        //   : chain === ChainId.AURORA_TESTNET
-        //   ? networkAuroraTestnet
-        //   : chain === ChainId.UNICHAIN_SEPOLIA
-        //   ? networkUnichainTestnet
-        //   : chain === ChainId.BASE_SEPOLIA
-        //   ? networkBaseTestnet
-        //   : chain === ChainId.BSC_TESTNET
-        //   ? network
-        //   : chain === ChainId.SEPOLIA
-        //   ? networkSepolia
-        //   : chain === ChainId.VICTION_MAINNET
-        //   ? networkVictionMainnet
-        //   : chain === ChainId.SONIC_TESTNET
-        //   ? networkSonic
-        //   : chain === ChainId.MINATO_SONEIUM
-        //   ? networkMinato
-        //   : networkViction
+        chain === ChainId.METIS_MAINNET
+          ? networkMetisMainnet
+          : chain === ChainId.AURORA_TESTNET
+          ? networkAuroraTestnet
+          : chain === ChainId.UNICHAIN_SEPOLIA
+          ? networkUnichainTestnet
+          : chain === ChainId.BASE_SEPOLIA
+          ? networkBaseTestnet
+          : chain === ChainId.BSC_TESTNET
+          ? network
+          : chain === ChainId.SEPOLIA
+          ? networkSepolia
+          : chain === ChainId.VICTION_MAINNET
+          ? networkVictionMainnet
+          : chain === ChainId.SONIC_TESTNET
+          ? networkSonic
+          : chain === ChainId.MINATO_SONEIUM
+          ? networkMinato
+          : networkViction
       )
     }
   }
@@ -253,10 +211,8 @@ export default function SelectChain() {
           <img alt="icon" className="w-[28px] mr-[8px] rounded-full" src={CHAINS[chainId || '']?.icon} />
           {CHAINS[chainId || '']?.name}
         </div>
-
         <img src={down} alt="down" className="w-[24px] ml-[8px]" />
       </StyledMenuButton>
-
       {open && (
         <MenuFlyout>
           {Object.values(CHAINS).map((item: any) => (
