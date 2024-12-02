@@ -222,6 +222,17 @@ export const BLOCKED_ADDRESSES: string[] = [
 ]
 
 export const CHAIN_TO_METAMASK: any = {
+  [ChainId.VICTION_MAINNET]: {
+    chainId: ChainIdHex[ChainId.VICTION_MAINNET],
+    blockExplorerUrls: ['https://vicscan.xyz/'],
+    chainName: 'Viction Mainnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Viction',
+      symbol: 'VIC'
+    },
+    rpcUrls: [process.env.REACT_APP_VICTION_MAINNET_URL]
+  },
   [ChainId.BSC_TESTNET]: {
     chainId: ChainIdHex[ChainId.BSC_TESTNET],
     blockExplorerUrls: ['https://testnet.bscscan.com/'],
@@ -243,17 +254,6 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'VIC'
     },
     rpcUrls: [process.env.REACT_APP_VICTION_TESTNET_URL]
-  },
-  [ChainId.VICTION_MAINNET]: {
-    chainId: ChainIdHex[ChainId.VICTION_MAINNET],
-    blockExplorerUrls: ['https://vicscan.xyz/'],
-    chainName: 'Viction Mainnet',
-    nativeCurrency: {
-      decimals: 18,
-      name: 'Viction',
-      symbol: 'VIC'
-    },
-    rpcUrls: [process.env.REACT_APP_VICTION_MAINNET_URL]
   },
   [ChainId.SONIC_TESTNET]: {
     chainId: ChainIdHex[ChainId.SONIC_TESTNET],

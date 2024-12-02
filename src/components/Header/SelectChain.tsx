@@ -208,8 +208,12 @@ export default function SelectChain() {
     <StyledMenu ref={node as any}>
       <StyledMenuButton onClick={toggle}>
         <div className="flex items-center flex-1">
-          <img alt="icon" className="w-[28px] mr-[8px] rounded-full" src={CHAINS[chainId || '']?.icon} />
-          {CHAINS[chainId || '']?.name}
+          <img
+            alt="icon"
+            className="w-[28px] mr-[8px] rounded-full"
+            src={CHAINS[chainId || ChainId.VICTION_MAINNET]?.icon}
+          />
+          {CHAINS[chainId || ChainId.VICTION_MAINNET]?.name}
         </div>
         <img src={down} alt="down" className="w-[24px] ml-[8px]" />
       </StyledMenuButton>

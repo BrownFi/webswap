@@ -161,11 +161,11 @@ export function isTokenOnList(defaultTokens: TokenAddressMap, currency?: Currenc
 }
 
 export function getNativeToken(chainId: ChainId) {
-  if (chainId === ChainId.BSC_TESTNET) {
-    return 'BNB'
-  }
   if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
     return 'VIC'
+  }
+  if (chainId === ChainId.BSC_TESTNET) {
+    return 'BNB'
   }
   if (chainId === ChainId.BASE_SEPOLIA) {
     return 'USDC'
@@ -180,11 +180,11 @@ export function getNativeToken(chainId: ChainId) {
 }
 
 export function getWrappedNativeToken(chainId: ChainId) {
-  if (chainId === ChainId.BSC_TESTNET) {
-    return 'WBNB'
-  }
   if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
     return 'WVIC'
+  }
+  if (chainId === ChainId.BSC_TESTNET) {
+    return 'WBNB'
   }
   if (chainId === ChainId.SONIC_TESTNET) {
     return 'WS'
@@ -197,11 +197,11 @@ export function getWrappedNativeToken(chainId: ChainId) {
 
 export function getTokenSymbol(currency: Currency | null | undefined, chainId: ChainId | undefined) {
   if (currency === ETHER) {
-    if (chainId === ChainId.BSC_TESTNET) {
-      return 'BNB'
-    }
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'VIC'
+    }
+    if (chainId === ChainId.BSC_TESTNET) {
+      return 'BNB'
     }
     if (chainId === ChainId.SONIC_TESTNET) {
       return 'S'
@@ -233,11 +233,11 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
 
 export function getTokenName(currency: Currency | null | undefined, chainId: ChainId | undefined) {
   if (currency === ETHER) {
-    if (chainId === ChainId.BSC_TESTNET) {
-      return 'BNB'
-    }
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'Viction'
+    }
+    if (chainId === ChainId.BSC_TESTNET) {
+      return 'BNB'
     }
     if (chainId === ChainId.SONIC_TESTNET) {
       return 'Sonic'
