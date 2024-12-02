@@ -19,13 +19,11 @@ import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
 import {
   injected,
-  network,
   networkBaseTestnet,
   networkMinato,
   networkSepolia,
   networkSonic,
   networkUnichainTestnet,
-  networkViction,
   networkVictionMainnet,
   networkAuroraTestnet,
   networkMetisMainnet
@@ -189,7 +187,7 @@ export default function SelectChain() {
           : chain === ChainId.BASE_SEPOLIA
           ? networkBaseTestnet
           : chain === ChainId.BSC_TESTNET
-          ? network
+          ? networkVictionMainnet
           : chain === ChainId.SEPOLIA
           ? networkSepolia
           : chain === ChainId.VICTION_MAINNET
@@ -198,7 +196,7 @@ export default function SelectChain() {
           ? networkSonic
           : chain === ChainId.MINATO_SONEIUM
           ? networkMinato
-          : networkViction
+          : networkVictionMainnet
       )
     }
   }

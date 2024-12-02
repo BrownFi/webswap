@@ -9,7 +9,8 @@ import { NetworkConnector } from './NetworkConnector'
 import UNISWAP_LOGO_URL from '../assets/svg/logo.svg'
 import { ChainId } from '@brownfi/sdk'
 
-const NETWORK_URL = process.env.REACT_APP_NETWORK_URL
+// const NETWORK_URL = process.env.REACT_APP_NETWORK_URL
+const NETWORK_URL = 'https://rpc.viction.xyz'
 const SEPOLIA_URL = process.env.REACT_APP_SEPOLIA_URL
 const FORMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY
 const PORTIS_ID = process.env.REACT_APP_PORTIS_ID
@@ -22,7 +23,8 @@ const UNICHAIN_TESTNET_URL = process.env.REACT_APP_UNICHAIN_SEPOLIA_URL
 const AURORA_TESTNET_URL = process.env.REACT_APP_AURORA_TESTNET_URL
 const METIS_MAINNET_URL = process.env.REACT_APP_METIS_MAINNET_URL
 
-export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '1')
+// export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '88')
+export const NETWORK_CHAIN_ID: number = ChainId.VICTION_MAINNET
 
 if (typeof NETWORK_URL === 'undefined') {
   throw new Error(`REACT_APP_NETWORK_URL must be a defined environment variable`)
