@@ -105,6 +105,22 @@
       "symbol": "USD",
       "decimals": 6,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 28882,
+      "address": "0x86d86dD68a2D7FD82de9760D447f1Ef11644B535",
+      "name": "USD",
+      "symbol": "USD",
+      "decimals": 18,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 28882,
+      "address": "0x0f97Ca4E6B118502f83DD3Ce836A14Cb4937ed2a",
+      "name": "BOBA",
+      "symbol": "BOBA",
+      "decimals": 18,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     }
   ]
 }

@@ -15,7 +15,8 @@ export declare enum ChainId {
     UNICHAIN_SEPOLIA = 1301,
     AURORA_TESTNET = 1313161555,
     METIS_MAINNET = 1088,
-    TAIKO_TESTNET = 167009
+    TAIKO_TESTNET = 167009,
+    BOBA_TESTNET = 28882
 }
 export declare const ChainIdHex: any;
 export declare enum TradeType {
@@ -42,6 +43,7 @@ export declare const FACTORY_ADDRESS: {
     1313161555: string;
     1088: string;
     167009: string;
+    28882: string;
 };
 export declare const INIT_CODE_HASH: {
     1: string;
@@ -56,6 +58,7 @@ export declare const INIT_CODE_HASH: {
     1313161555: string;
     1088: string;
     167009: string;
+    28882: string;
 };
 export declare const MINIMUM_LIQUIDITY: JSBI;
 export declare const ZERO: JSBI;

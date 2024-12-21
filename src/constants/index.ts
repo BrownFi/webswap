@@ -59,7 +59,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]],
   [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]],
   [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]],
-  [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]]
+  [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]],
+  [ChainId.BOBA_TESTNET]: [WETH[ChainId.BOBA_TESTNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -320,5 +321,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'ETH'
     },
     rpcUrls: [process.env.REACT_APP_TAIKO_TESTNET_URL]
+  },
+  [ChainId.BOBA_TESTNET]: {
+    chainId: ChainIdHex[ChainId.BOBA_TESTNET],
+    blockExplorerUrls: ['https://testnet.bobascan.com/'],
+    chainName: 'BOBA Testnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_BOBA_TESTNET_URL]
   }
 }

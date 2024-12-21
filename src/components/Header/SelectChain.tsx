@@ -14,6 +14,7 @@ import baseIcon from '../../assets/svg/base.svg'
 import Web3 from 'web3'
 import auroraIcon from '../../assets/images/aurora.png'
 import taikoIcon from '../../assets/images/taiko.svg'
+import bobaIcon from '../../assets/images/boba.svg'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -25,10 +26,11 @@ import {
   networkSepolia,
   networkSonic,
   networkUnichainTestnet,
-  networkViction,
-  networkVictionMainnet,
+  // networkViction,
+  // networkVictionMainnet,
   networkAuroraTestnet,
-  networkTaikoTestnet
+  networkTaikoTestnet,
+  networkBobaTestnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
@@ -170,6 +172,11 @@ const CHAINS: any = {
     name: 'Taiko',
     chainId: ChainId.TAIKO_TESTNET,
     icon: taikoIcon
+  },
+  [ChainId.BOBA_TESTNET]: {
+    name: 'Boba',
+    chainId: ChainId.BOBA_TESTNET,
+    icon: bobaIcon
   }
 }
 
@@ -222,7 +229,9 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.TAIKO_TESTNET
+        chain === ChainId.BOBA_TESTNET
+          ? networkBobaTestnet
+          : chain === ChainId.TAIKO_TESTNET
           ? networkTaikoTestnet
           : chain === ChainId.AURORA_TESTNET
           ? networkAuroraTestnet
@@ -234,13 +243,11 @@ export default function SelectChain() {
           ? network
           : chain === ChainId.SEPOLIA
           ? networkSepolia
-          : chain === ChainId.VICTION_MAINNET
-          ? networkVictionMainnet
           : chain === ChainId.SONIC_TESTNET
           ? networkSonic
           : chain === ChainId.MINATO_SONEIUM
           ? networkMinato
-          : networkViction
+          : networkBobaTestnet
       )
     }
   }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { UNSUPPORTED_LIST_URLS } from './../../constants/lists'
 import DEFAULT_TOKEN_LIST from './defaultTokens.json'
@@ -51,7 +52,8 @@ const EMPTY_LIST: TokenAddressMap = {
   [ChainId.UNICHAIN_SEPOLIA]: {},
   [ChainId.AURORA_TESTNET]: {},
   [ChainId.METIS_MAINNET]: {},
-  [ChainId.TAIKO_TESTNET]: {}
+  [ChainId.TAIKO_TESTNET]: {},
+  [ChainId.BOBA_TESTNET]: {}
 }
 
 const listCache: WeakMap<TokenList, TokenAddressMap> | null =
@@ -88,7 +90,9 @@ export function listToTokenMap(list: TokenList): TokenAddressMap {
     },
     { ...EMPTY_LIST }
   )
+  // @ts-ignore
   listCache?.set(list, map || {})
+  // @ts-ignore
   return map || {}
 }
 
@@ -118,7 +122,8 @@ function combineMaps(map1: TokenAddressMap, map2: TokenAddressMap): TokenAddress
     [ChainId.UNICHAIN_SEPOLIA]: { ...map1[ChainId.UNICHAIN_SEPOLIA], ...map2[ChainId.UNICHAIN_SEPOLIA] },
     [ChainId.AURORA_TESTNET]: { ...map1[ChainId.AURORA_TESTNET], ...map2[ChainId.AURORA_TESTNET] },
     [ChainId.METIS_MAINNET]: { ...map1[ChainId.METIS_MAINNET], ...map2[ChainId.METIS_MAINNET] },
-    [ChainId.TAIKO_TESTNET]: { ...map1[ChainId.TAIKO_TESTNET], ...map2[ChainId.TAIKO_TESTNET] }
+    [ChainId.TAIKO_TESTNET]: { ...map1[ChainId.TAIKO_TESTNET], ...map2[ChainId.TAIKO_TESTNET] },
+    [ChainId.BOBA_TESTNET]: { ...map1[ChainId.BOBA_TESTNET], ...map2[ChainId.BOBA_TESTNET] }
   }
 }
 

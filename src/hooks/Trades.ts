@@ -95,7 +95,11 @@ const MAX_HOPS = 1
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
  */
-export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?: Currency): Trade | null {
+export function useTradeExactIn(
+  currencyAmountIn?: CurrencyAmount,
+  currencyOut?: Currency,
+  library: Web3Provider
+): Trade | null {
   const [trade, setTrade] = useState<Trade | null>(null)
   const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut)
 

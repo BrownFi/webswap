@@ -120,6 +120,7 @@
   ],
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@pythnetwork/pyth-evm-js": "^1.82.0",
     "@react-spring/web": "^9.7.4",
     "@starknet-react/chains": "^0.1.7",
     "@starknet-react/core": "^2.3.0",

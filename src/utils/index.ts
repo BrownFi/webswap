@@ -76,6 +76,9 @@ export function getEtherscanLink(
     case ChainId.TAIKO_TESTNET:
       prefix = 'https://hekla.taikoexplorer.com/'
       break
+    case ChainId.BOBA_TESTNET:
+      prefix = 'https://testnet.bobascan.com/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
