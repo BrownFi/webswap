@@ -95,13 +95,10 @@ const MAX_HOPS = 1
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
  */
-export function useTradeExactIn(
-  currencyAmountIn?: CurrencyAmount,
-  currencyOut?: Currency,
-  library: Web3Provider
-): Trade | null {
+export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?: Currency): Trade | null {
   const [trade, setTrade] = useState<Trade | null>(null)
   const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut)
+  const { account } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
@@ -109,7 +106,7 @@ export function useTradeExactIn(
     const getTrade = async () => {
       if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
-          const bestTradeIn = await Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, {
+          const bestTradeIn = await Trade.bestTradeExactIn(account, allowedPairs, currencyAmountIn, currencyOut, {
             maxHops: 1,
             maxNumResults: 1
           })
@@ -119,7 +116,7 @@ export function useTradeExactIn(
         // search through trades with varying hops, find best trade out of them
         let bestTradeSoFar: Trade | null = null
         for (let i = 1; i <= MAX_HOPS; i++) {
-          const bestTradeIn = await Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, {
+          const bestTradeIn = await Trade.bestTradeExactIn(account, allowedPairs, currencyAmountIn, currencyOut, {
             maxHops: i,
             maxNumResults: 1
           })
@@ -143,7 +140,7 @@ export function useTradeExactIn(
     return () => {
       clearTimeout(timeout)
     }
-  }, [allowedPairs?.length, currencyAmountIn?.raw.toString(), currencyOut?.name, singleHopOnly])
+  }, [allowedPairs?.length, currencyAmountIn?.raw.toString(), currencyOut?.name, singleHopOnly, account])
 
   return trade
 }
@@ -153,6 +150,7 @@ export function useTradeExactIn(
  */
 export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: CurrencyAmount): Trade | null {
   const [trade, setTrade] = useState<Trade | null>(null)
+  const { account } = useActiveWeb3React()
 
   const allowedPairs = useAllCommonPairs(currencyIn, currencyAmountOut?.currency)
 
@@ -162,7 +160,7 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
     const getTrade = async () => {
       if (currencyIn && currencyAmountOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
-          const bestTradeOut = await Trade.bestTradeExactOut(allowedPairs, currencyIn, currencyAmountOut, {
+          const bestTradeOut = await Trade.bestTradeExactOut(account, allowedPairs, currencyIn, currencyAmountOut, {
             maxHops: 1,
             maxNumResults: 1
           })
@@ -172,7 +170,7 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
         // search through trades with varying hops, find best trade out of them
         let bestTradeSoFar: Trade | null = null
         for (let i = 1; i <= MAX_HOPS; i++) {
-          const bestTradeOut = await Trade.bestTradeExactOut(allowedPairs, currencyIn, currencyAmountOut, {
+          const bestTradeOut = await Trade.bestTradeExactOut(account, allowedPairs, currencyIn, currencyAmountOut, {
             maxHops: i,
             maxNumResults: 1
           })
@@ -194,7 +192,7 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
     return () => {
       clearTimeout(timeout)
     }
-  }, [currencyIn?.name, currencyAmountOut?.raw?.toString(), allowedPairs?.length, singleHopOnly])
+  }, [currencyIn?.name, currencyAmountOut?.raw?.toString(), allowedPairs?.length, singleHopOnly, account])
 
   return trade
 }
