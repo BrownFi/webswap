@@ -95,7 +95,8 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
               <RowFixed>
                 <DoubleCurrencyLogo currency0={currency0} currency1={currency1} margin={true} size={20} />
                 <Text fontWeight={500} fontSize={20} color={'white'}>
-                  {getTokenSymbol(currency0, chainId)}/{getTokenSymbol(currency1, chainId)}
+                  {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currency0, chainId)}/
+                  {getTokenSymbol(currency1, chainId)}
                 </Text>
               </RowFixed>
               <RowFixed>
@@ -115,7 +116,7 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
               </FixedHeightRow>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {getTokenSymbol(currency0, chainId)}:
+                  {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currency0, chainId)}:
                 </Text>
                 {token0Deposited ? (
                   <RowFixed>
@@ -200,11 +201,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
           <AutoRow gap="8px">
             <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={20} />
             <Text fontWeight={600} fontSize={20} className="text-white">
-              {!currency0 || !currency1 ? (
-                <Dots>Loading</Dots>
-              ) : (
-                `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
-              )}
+              {chainId !== ChainId.BOBA_TESTNET ? (
+                !currency0 || !currency1 ? (
+                  <Dots>Loading</Dots>
+                ) : (
+                  `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
+                )
+              ) : null}
               {chainId === ChainId.SONIC_TESTNET &&
               getTokenSymbol(currency0, chainId) === 'DIAM' &&
               getTokenSymbol(currency1, chainId) === 'S'
@@ -212,6 +215,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 : getTokenSymbol(currency0, chainId) === 'S' && getTokenSymbol(currency1, chainId) === 'CORAL'
                 ? ' (FTM/ETH)'
                 : ''}
+              {chainId === ChainId.BOBA_TESTNET &&
+              getTokenSymbol(currency0, chainId) === 'ETH' &&
+              getTokenSymbol(currency1, chainId) === 'USD'
+                ? 'BOBA/USD'
+                : null}
             </Text>
           </AutoRow>
           <RowFixed gap="8px">
@@ -248,7 +256,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <div className="flex items-center">
                   <CurrencyLogo currency={pair.token0} />
                   <Text fontSize={16} fontWeight={500} color={'white'} marginLeft={'8px'}>
-                    {pair.token0.symbol}:
+                    {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : pair.token0.symbol}:
                   </Text>
                 </div>
 
@@ -304,7 +312,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <FixedHeightRow>
                   <RowFixed>
                     <Text fontSize={16} fontWeight={500} color={'white'}>
-                      Pooled {getTokenSymbol(currency0, chainId)}:
+                      Pooled {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currency0, chainId)}:
                     </Text>
                   </RowFixed>
                   {token0Deposited ? (

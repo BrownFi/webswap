@@ -24,7 +24,6 @@ export declare const WBTC: Token;
 export declare const BASE_USDC: Token;
 export declare const UNICHAIN_USDC: Token;
 export declare const METIS_USDC: Token;
-export declare const BOBA_USDC: Token;
 export declare const PINNED_PAIRS: {
     readonly [chainId in ChainId]?: [Token, Token][];
 };

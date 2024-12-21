@@ -5,6 +5,7 @@ import EthereumLogo from '../../assets/images/ethereum-logo.png'
 import BNBLogo from '../../assets/images/bnb.svg'
 import VictionLogo from '../../assets/images/viction.png'
 import sonicLogo from '../../assets/images/sonic.png'
+import bobaLogo from '../../assets/images/boba.svg'
 import useHttpLocations from '../../hooks/useHttpLocations'
 import { WrappedTokenInfo } from '../../state/lists/hooks'
 import Logo from '../Logo'
@@ -68,6 +69,9 @@ export default function CurrencyLogo({
   if ((currency as any)?.symbol === 'WETH') {
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
+  if ((currency as any)?.symbol === 'WBOBA') {
+    return <StyledEthereumLogo src={bobaLogo} size={size} style={style} />
+  }
 
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {
@@ -78,6 +82,9 @@ export default function CurrencyLogo({
     }
     if (chainId === ChainId.SONIC_TESTNET) {
       return <StyledEthereumLogo src={sonicLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.BOBA_TESTNET) {
+      return <StyledEthereumLogo src={bobaLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }

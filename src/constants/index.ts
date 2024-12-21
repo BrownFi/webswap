@@ -328,8 +328,8 @@ export const CHAIN_TO_METAMASK: any = {
     chainName: 'BOBA Testnet',
     nativeCurrency: {
       decimals: 18,
-      name: 'ETH',
-      symbol: 'ETH'
+      name: 'BOBA',
+      symbol: 'BOBA'
     },
     rpcUrls: [process.env.REACT_APP_BOBA_TESTNET_URL]
   }

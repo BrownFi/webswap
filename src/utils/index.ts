@@ -189,6 +189,9 @@ export function getWrappedNativeToken(chainId: ChainId) {
   if (chainId === ChainId.SONIC_TESTNET) {
     return 'WS'
   }
+  if (chainId === ChainId.BOBA_TESTNET) {
+    return 'WBOBA'
+  }
   return 'WETH'
 }
 
@@ -258,6 +261,8 @@ export function getScanText(chainId: ChainId) {
       return 'Metisscan'
     case ChainId.TAIKO_TESTNET:
       return 'Taikoscan'
+    case ChainId.BOBA_TESTNET:
+      return 'Bobascan'
     default:
       return 'Etherscan'
   }

@@ -24,7 +24,7 @@ import useIsArgentWallet from '../../hooks/useIsArgentWallet'
 import useTransactionDeadline from '../../hooks/useTransactionDeadline'
 
 import { useTransactionAdder } from '../../state/transactions/hooks'
-import { StyledInternalLink, TYPE } from '../../theme'
+import { TYPE } from '../../theme'
 import { currencyId } from '../../utils/currencyId'
 import useDebouncedChangeHandler from '../../utils/useDebouncedChangeHandler'
 import { wrappedCurrency } from '../../utils/wrappedCurrency'
@@ -38,7 +38,7 @@ import { Field } from '../../state/burn/actions'
 import { useWalletModalToggle } from '../../state/application/hooks'
 import { useUserSlippageTolerance } from '../../state/user/hooks'
 import { ROUTER_ADDRESS } from '@brownfi/sdk'
-import { getNativeToken, getTokenSymbol, getWrappedNativeToken } from 'utils'
+import { getTokenSymbol } from 'utils'
 
 export default function RemoveLiquidity({
   history,
@@ -273,7 +273,10 @@ export default function RemoveLiquidity({
       <>
         <RowBetween>
           <Text color={theme.white} fontWeight={500} fontSize={16} opacity={0.5}>
-            {getTokenSymbol(currencyA, chainId) + '/' + getTokenSymbol(currencyB, chainId)} Burned
+            {`${chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currencyA, chainId)}` +
+              '/' +
+              getTokenSymbol(currencyB, chainId)}{' '}
+            Burned
           </Text>
           <RowFixed>
             <DoubleCurrencyLogo currency0={currencyA} currency1={currencyB} margin={true} />
@@ -289,15 +292,15 @@ export default function RemoveLiquidity({
                 Price
               </Text>
               <Text fontWeight={500} fontSize={16} color={theme.white}>
-                1 {getTokenSymbol(currencyA, chainId)} = {tokenA ? pair.priceOf(tokenA).toSignificant(6) : '-'}{' '}
-                {getTokenSymbol(currencyB, chainId)}
+                1 {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currencyA, chainId)} ={' '}
+                {tokenA ? pair.priceOf(tokenA).toSignificant(6) : '-'} {getTokenSymbol(currencyB, chainId)}
               </Text>
             </RowBetween>
             <RowBetween>
               <div />
               <Text fontWeight={500} fontSize={16} color={theme.white}>
                 1 {getTokenSymbol(currencyB, chainId)} = {tokenB ? pair.priceOf(tokenB).toSignificant(6) : '-'}{' '}
-                {getTokenSymbol(currencyA, chainId)}
+                {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currencyA, chainId)}
               </Text>
             </RowBetween>
           </>
@@ -323,7 +326,7 @@ export default function RemoveLiquidity({
     [onUserInput]
   )
 
-  const oneCurrencyIsETH = currencyA === ETHER || currencyB === ETHER
+  // const oneCurrencyIsETH = currencyA === ETHER || currencyB === ETHER
   const oneCurrencyIsWETH = Boolean(
     chainId &&
       ((currencyA && currencyEquals(WETH[chainId], currencyA)) ||
@@ -455,7 +458,7 @@ export default function RemoveLiquidity({
                       <RowFixed>
                         <CurrencyLogo currency={currencyA} style={{ marginRight: '12px' }} />
                         <Text fontSize={24} fontWeight={500} id="remove-liquidity-tokena-symbol" color={'white'}>
-                          {getTokenSymbol(currencyA, chainId)}
+                          {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currencyA, chainId)}
                         </Text>
                       </RowFixed>
                     </RowBetween>
@@ -470,7 +473,7 @@ export default function RemoveLiquidity({
                         </Text>
                       </RowFixed>
                     </RowBetween>
-                    {chainId && (oneCurrencyIsWETH || oneCurrencyIsETH) ? (
+                    {/* {chainId && (oneCurrencyIsWETH || oneCurrencyIsETH) ? (
                       <RowBetween style={{ justifyContent: 'flex-end' }}>
                         {oneCurrencyIsETH ? (
                           <StyledInternalLink
@@ -490,7 +493,7 @@ export default function RemoveLiquidity({
                           </StyledInternalLink>
                         ) : null}
                       </RowBetween>
-                    ) : null}
+                    ) : null} */}
                   </AutoColumn>
                 </RemoveLiqudityCard>
               </>
@@ -545,15 +548,15 @@ export default function RemoveLiquidity({
                 <RowBetween>
                   Price:
                   <div>
-                    1 {getTokenSymbol(currencyA, chainId)} = {tokenA ? pair.priceOf(tokenA).toSignificant(6) : '-'}{' '}
-                    {getTokenSymbol(currencyB, chainId)}
+                    1 {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currencyA, chainId)} ={' '}
+                    {tokenA ? pair.priceOf(tokenA).toSignificant(6) : '-'} {getTokenSymbol(currencyB, chainId)}
                   </div>
                 </RowBetween>
                 <RowBetween>
                   <div />
                   <div>
                     1 {getTokenSymbol(currencyB, chainId)} = {tokenB ? pair.priceOf(tokenB).toSignificant(6) : '-'}{' '}
-                    {getTokenSymbol(currencyA, chainId)}
+                    {chainId === ChainId.BOBA_TESTNET ? 'BOBA' : getTokenSymbol(currencyA, chainId)}
                   </div>
                 </RowBetween>
               </div>
