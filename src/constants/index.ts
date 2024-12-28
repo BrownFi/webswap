@@ -60,7 +60,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]],
   [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]],
   [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]],
-  [ChainId.BOBA_TESTNET]: [WETH[ChainId.BOBA_TESTNET]]
+  [ChainId.BOBA_TESTNET]: [WETH[ChainId.BOBA_TESTNET]],
+  [ChainId.NEOX_MAINNET]: [WETH[ChainId.NEOX_MAINNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -332,5 +333,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'BOBA'
     },
     rpcUrls: [process.env.REACT_APP_BOBA_TESTNET_URL]
+  },
+  [ChainId.NEOX_MAINNET]: {
+    chainId: ChainIdHex[ChainId.NEOX_MAINNET],
+    blockExplorerUrls: ['https://xexplorer.neo.org/'],
+    chainName: 'NEO X Mainnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'GAS',
+      symbol: 'GAS'
+    },
+    rpcUrls: [process.env.REACT_APP_NEO_TESTNET_URL]
   }
 }

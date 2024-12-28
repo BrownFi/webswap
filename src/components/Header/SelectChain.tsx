@@ -15,6 +15,7 @@ import Web3 from 'web3'
 import auroraIcon from '../../assets/images/aurora.png'
 import taikoIcon from '../../assets/images/taiko.svg'
 import bobaIcon from '../../assets/images/boba.svg'
+import neoIcon from '../../assets/images/neox.png'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -30,7 +31,8 @@ import {
   // networkVictionMainnet,
   networkAuroraTestnet,
   networkTaikoTestnet,
-  networkBobaTestnet
+  networkBobaTestnet,
+  networkNeoMainnet
   // networkVictionMainnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
@@ -178,6 +180,11 @@ const CHAINS: any = {
     name: 'Boba',
     chainId: ChainId.BOBA_TESTNET,
     icon: bobaIcon
+  },
+  [ChainId.NEOX_MAINNET]: {
+    name: 'NeoX',
+    chainId: ChainId.NEOX_MAINNET,
+    icon: neoIcon
   }
 }
 
@@ -230,7 +237,9 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.BOBA_TESTNET
+        chain === ChainId.NEOX_MAINNET
+          ? networkNeoMainnet
+          : chain === ChainId.BOBA_TESTNET
           ? networkBobaTestnet
           : chain === ChainId.TAIKO_TESTNET
           ? networkTaikoTestnet

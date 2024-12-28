@@ -176,6 +176,9 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.SONIC_TESTNET) {
     return 'S'
   }
+  if (chainId === ChainId.NEOX_MAINNET) {
+    return 'GAS'
+  }
   return 'ETH'
 }
 
@@ -192,6 +195,9 @@ export function getWrappedNativeToken(chainId: ChainId) {
   if (chainId === ChainId.BOBA_TESTNET) {
     return 'WBOBA'
   }
+  if (chainId === ChainId.NEOX_MAINNET) {
+    return 'WGAS10'
+  }
   return 'WETH'
 }
 
@@ -205,6 +211,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     }
     if (chainId === ChainId.SONIC_TESTNET) {
       return 'S'
+    }
+    if (chainId === ChainId.NEOX_MAINNET) {
+      return 'GAS'
     }
     return 'ETH'
   }
@@ -221,6 +230,10 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     return 'WS'
   }
 
+  if (currency?.symbol === 'WETH' && chainId === ChainId.NEOX_MAINNET) {
+    return 'WGAS10'
+  }
+
   return currency?.symbol
 }
 
@@ -234,6 +247,9 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     }
     if (chainId === ChainId.SONIC_TESTNET) {
       return 'Sonic'
+    }
+    if (chainId === ChainId.NEOX_MAINNET) {
+      return 'GAS'
     }
     return 'Ethereum'
   }
@@ -263,11 +279,20 @@ export function getScanText(chainId: ChainId) {
       return 'Taikoscan'
     case ChainId.BOBA_TESTNET:
       return 'Bobascan'
+    case ChainId.NEOX_MAINNET:
+      return 'Neoxscan'
     default:
       return 'Etherscan'
   }
 }
 
 export function isNativeCurrency(symbol: string | undefined) {
-  return symbol === 'WBNB' || symbol === 'WETH' || symbol === 'WVIC' || symbol === 'WS' || symbol === 'USDC'
+  return (
+    symbol === 'WBNB' ||
+    symbol === 'WETH' ||
+    symbol === 'WVIC' ||
+    symbol === 'WS' ||
+    symbol === 'USDC' ||
+    symbol === 'WGAS10'
+  )
 }

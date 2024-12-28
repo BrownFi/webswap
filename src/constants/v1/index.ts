@@ -18,7 +18,8 @@ const V1_FACTORY_ADDRESSES: { [chainId in ChainId]: string } = {
   [ChainId.AURORA_TESTNET]: '',
   [ChainId.METIS_MAINNET]: '',
   [ChainId.TAIKO_TESTNET]: '',
-  [ChainId.BOBA_TESTNET]: ''
+  [ChainId.BOBA_TESTNET]: '',
+  [ChainId.NEOX_MAINNET]: ''
 }
 
 const V1_FACTORY_INTERFACE = new Interface(V1_FACTORY_ABI)

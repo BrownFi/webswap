@@ -121,6 +121,14 @@
       "symbol": "BOBA",
       "decimals": 18,
       "logoURI": "https://cdn.testnet.routescan.io/cdn/chains/boba/boba_32.avif"
+    },
+    {
+      "chainId": 47763,
+      "address": "0x68b55E582961968ef7758D8454D8A3e78c692e0B",
+      "name": "USD",
+      "symbol": "USD",
+      "decimals": 18,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     }
   ]
 }
