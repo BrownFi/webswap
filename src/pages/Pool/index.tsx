@@ -130,7 +130,7 @@ export default function Pool() {
                 </ResponsiveButtonSecondary>
                 <ResponsiveButtonPrimary id="join-pool-button" as={Link} to="/add/ETH" className="!h-[40px]">
                   <Text fontWeight={700} fontSize={14} color={'white'}>
-                    Add Liquidity
+                    All pools
                   </Text>
                 </ResponsiveButtonPrimary>
               </div>
