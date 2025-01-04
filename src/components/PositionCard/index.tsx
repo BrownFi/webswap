@@ -199,20 +199,23 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
         <FixedHeightRow>
           <AutoRow gap="8px">
             <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={20} />
-            <Text fontWeight={600} fontSize={20} className="text-white">
-              {!currency0 || !currency1 ? (
-                <Dots>Loading</Dots>
-              ) : (
-                `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
-              )}
-              {chainId === ChainId.SONIC_TESTNET &&
-              getTokenSymbol(currency0, chainId) === 'DIAM' &&
-              getTokenSymbol(currency1, chainId) === 'S'
-                ? ' (FTM/USD)'
-                : getTokenSymbol(currency0, chainId) === 'S' && getTokenSymbol(currency1, chainId) === 'CORAL'
-                ? ' (FTM/ETH)'
-                : ''}
-            </Text>
+            <div className="flex items-center">
+              <Text fontWeight={600} fontSize={20} className="text-white">
+                {!currency0 || !currency1 ? (
+                  <Dots>Loading</Dots>
+                ) : (
+                  `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
+                )}
+                {chainId === ChainId.SONIC_TESTNET &&
+                getTokenSymbol(currency0, chainId) === 'DIAM' &&
+                getTokenSymbol(currency1, chainId) === 'S'
+                  ? ' (FTM/USD)'
+                  : getTokenSymbol(currency0, chainId) === 'S' && getTokenSymbol(currency1, chainId) === 'CORAL'
+                  ? ' (FTM/ETH)'
+                  : ''}
+              </Text>
+              &nbsp;<Text className="text-[#27E3AB]">(APR/1D: 95%)</Text>
+            </div>
           </AutoRow>
           <RowFixed gap="8px">
             <ButtonEmpty
@@ -345,6 +348,15 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                     {poolTokenPercentage
                       ? (poolTokenPercentage.toFixed(2) === '0.00' ? '<0.01' : poolTokenPercentage.toFixed(2)) + '%'
                       : '-'}
+                  </Text>
+                </FixedHeightRow>
+
+                <FixedHeightRow>
+                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                    Your gains:
+                  </Text>
+                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                    +$100
                   </Text>
                 </FixedHeightRow>
               </>
