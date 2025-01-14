@@ -110,7 +110,8 @@ export default function RemoveLiquidity({
       chainId === ChainId.VICTION_MAINNET ||
       chainId === ChainId.SONIC_TESTNET ||
       chainId === ChainId.AURORA_TESTNET ||
-      chainId === ChainId.TAIKO_TESTNET
+      chainId === ChainId.TAIKO_TESTNET ||
+      chainId === ChainId.U2U_MAINNET
     ) {
       return approveCallback()
     }

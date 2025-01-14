@@ -22,6 +22,7 @@ const BASE_TESTNET_URL = process.env.REACT_APP_BASE_SEPOLIA_URL
 const UNICHAIN_TESTNET_URL = process.env.REACT_APP_UNICHAIN_SEPOLIA_URL
 const AURORA_TESTNET_URL = process.env.REACT_APP_AURORA_TESTNET_URL
 const METIS_MAINNET_URL = process.env.REACT_APP_METIS_MAINNET_URL
+const U2U_MAINNET_URL = process.env.REACT_APP_U2U_MAINNET_URL
 
 // export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '88')
 export const NETWORK_CHAIN_ID: number = ChainId.VICTION_MAINNET
@@ -70,13 +71,17 @@ export const networkMetisMainnet = new NetworkConnector({
   urls: { [ChainId.METIS_MAINNET]: METIS_MAINNET_URL as string }
 })
 
+export const networkU2UMainnet = new NetworkConnector({
+  urls: { [ChainId.U2U_MAINNET]: U2U_MAINNET_URL as string }
+})
+
 let networkLibrary: Web3Provider | undefined
 export function getNetworkLibrary(): Web3Provider {
   return (networkLibrary = networkLibrary ?? new Web3Provider(network.provider as any))
 }
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [ChainId.VICTION_MAINNET, ChainId.METIS_MAINNET]
+  supportedChainIds: [ChainId.VICTION_MAINNET, ChainId.METIS_MAINNET, ChainId.U2U_MAINNET]
 })
 
 // mainnet only

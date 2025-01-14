@@ -76,6 +76,9 @@ export function getEtherscanLink(
     case ChainId.TAIKO_TESTNET:
       prefix = 'https://hekla.taikoexplorer.com/'
       break
+    case ChainId.U2U_MAINNET:
+      prefix = 'https://u2uscan.xyz/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -176,6 +179,9 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.METIS_MAINNET) {
     return 'METIS'
   }
+  if (chainId === ChainId.U2U_MAINNET) {
+    return 'U2U'
+  }
   return 'ETH'
 }
 
@@ -191,6 +197,9 @@ export function getWrappedNativeToken(chainId: ChainId) {
   }
   if (chainId === ChainId.METIS_MAINNET) {
     return 'WMETIS'
+  }
+  if (chainId === ChainId.U2U_MAINNET) {
+    return 'WU2U'
   }
   return 'WETH'
 }
@@ -208,6 +217,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     }
     if (chainId === ChainId.METIS_MAINNET) {
       return 'METIS'
+    }
+    if (chainId === ChainId.U2U_MAINNET) {
+      return 'U2U'
     }
     return 'ETH'
   }
@@ -228,6 +240,10 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     return 'WS'
   }
 
+  if (currency?.symbol === 'WETH' && chainId === ChainId.U2U_MAINNET) {
+    return 'WU2U'
+  }
+
   return currency?.symbol
 }
 
@@ -244,6 +260,9 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     }
     if (chainId === ChainId.METIS_MAINNET) {
       return 'Metis'
+    }
+    if (chainId === ChainId.U2U_MAINNET) {
+      return 'U2U'
     }
     return 'Ethereum'
   }
@@ -271,6 +290,8 @@ export function getScanText(chainId: ChainId) {
       return 'Metisscan'
     case ChainId.TAIKO_TESTNET:
       return 'Taikoscan'
+    case ChainId.U2U_MAINNET:
+      return 'U2Uscan'
     default:
       return 'Etherscan'
   }
@@ -283,6 +304,7 @@ export function isNativeCurrency(symbol: string | undefined) {
     symbol === 'WVIC' ||
     symbol === 'WS' ||
     symbol === 'USDC' ||
-    symbol === 'WMETIS'
+    symbol === 'WMETIS' ||
+    symbol === 'WU2U'
   )
 }

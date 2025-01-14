@@ -5,6 +5,7 @@ import EthereumLogo from '../../assets/images/ethereum-logo.png'
 import BNBLogo from '../../assets/images/bnb.svg'
 import VictionLogo from '../../assets/images/viction.png'
 import sonicLogo from '../../assets/images/sonic.png'
+import u2uLogo from '../../assets/images/u2u.jpg'
 import useHttpLocations from '../../hooks/useHttpLocations'
 import { WrappedTokenInfo } from '../../state/lists/hooks'
 import Logo from '../Logo'
@@ -72,6 +73,9 @@ export default function CurrencyLogo({
   if ((currency as any)?.symbol === 'WETH') {
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
+  if ((currency as any)?.symbol === 'WU2U') {
+    return <StyledEthereumLogo src={u2uLogo} size={size} style={style} />
+  }
 
   if (currency === ETHER) {
     if (chainId === ChainId.BSC_TESTNET) {
@@ -85,6 +89,9 @@ export default function CurrencyLogo({
     }
     if (chainId === ChainId.METIS_MAINNET) {
       return <StyledEthereumLogo src={metisLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.U2U_MAINNET) {
+      return <StyledEthereumLogo src={u2uLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }

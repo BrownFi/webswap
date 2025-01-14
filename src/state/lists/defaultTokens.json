@@ -105,6 +105,14 @@
       "symbol": "USD",
       "decimals": 6,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 39,
+      "address": "0x0820957B320E901622385Cc6C4fca196b20b939F",
+      "name": "Pegged USDT",
+      "symbol": "pUSDT",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     }
   ]
 }

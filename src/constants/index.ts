@@ -59,7 +59,10 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]],
   [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]],
   [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]],
-  [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]]
+  [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]],
+  [ChainId.BOBA_TESTNET]: [WETH[ChainId.BOBA_TESTNET]],
+  [ChainId.NEOX_MAINNET]: [WETH[ChainId.NEOX_MAINNET]],
+  [ChainId.U2U_MAINNET]: [WETH[ChainId.U2U_MAINNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -331,5 +334,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'ETH'
     },
     rpcUrls: [process.env.REACT_APP_TAIKO_TESTNET_URL]
+  },
+  [ChainId.U2U_MAINNET]: {
+    chainId: ChainIdHex[ChainId.U2U_MAINNET],
+    blockExplorerUrls: ['https://u2uscan.xyz/'],
+    chainName: 'U2U Mainnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'U2U',
+      symbol: 'U2U'
+    },
+    rpcUrls: [process.env.REACT_APP_U2U_MAINNET_URL]
   }
 }

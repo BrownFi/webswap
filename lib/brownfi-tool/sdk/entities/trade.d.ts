@@ -71,7 +71,7 @@ export declare class Trade {
      */
     static exactOut(route: Route, amountOut: CurrencyAmount): Trade;
     constructor(route: Route, amount: CurrencyAmount, tradeType: TradeType);
-    init: (route: Route, amount: CurrencyAmount, tradeType: TradeType) => Promise<void>;
+    init: (route: Route, amount: CurrencyAmount, tradeType: TradeType, account: string) => Promise<void>;
     /**
      * Get the minimum amount that must be received from this trade for the given slippage tolerance
      * @param slippageTolerance tolerance of unfavorable slippage from the execution price of this trade
@@ -98,7 +98,7 @@ export declare class Trade {
      * @param originalAmountIn used in recursion; the original value of the currencyAmountIn parameter
      * @param bestTrades used in recursion; the current list of best trades
      */
-    static bestTradeExactIn(pairs: Pair[], currencyAmountIn: CurrencyAmount, currencyOut: Currency, { maxNumResults, maxHops }?: BestTradeOptions, currentPairs?: Pair[], originalAmountIn?: CurrencyAmount, bestTrades?: Trade[]): Promise<Trade[]>;
+    static bestTradeExactIn(account: string, pairs: Pair[], currencyAmountIn: CurrencyAmount, currencyOut: Currency, { maxNumResults, maxHops }?: BestTradeOptions, currentPairs?: Pair[], originalAmountIn?: CurrencyAmount, bestTrades?: Trade[]): Promise<Trade[]>;
     /**
      * similar to the above method but instead targets a fixed output amount
      * given a list of pairs, and a fixed amount out, returns the top `maxNumResults` trades that go from an input token
@@ -114,6 +114,6 @@ export declare class Trade {
      * @param originalAmountOut used in recursion; the original value of the currencyAmountOut parameter
      * @param bestTrades used in recursion; the current list of best trades
      */
-    static bestTradeExactOut(pairs: Pair[], currencyIn: Currency, currencyAmountOut: CurrencyAmount, { maxNumResults, maxHops }?: BestTradeOptions, currentPairs?: Pair[], originalAmountOut?: CurrencyAmount, bestTrades?: Trade[]): Promise<Trade[]>;
+    static bestTradeExactOut(account: string, pairs: Pair[], currencyIn: Currency, currencyAmountOut: CurrencyAmount, { maxNumResults, maxHops }?: BestTradeOptions, currentPairs?: Pair[], originalAmountOut?: CurrencyAmount, bestTrades?: Trade[]): Promise<Trade[]>;
 }
 export {};

@@ -14,6 +14,7 @@ import viction from '../../assets/images/viction.png'
 import Web3 from 'web3'
 // import auroraIcon from '../../assets/images/aurora.png'
 import metisIcon from '../../assets/images/metis.png'
+import u2uIcon from '../../assets/images/u2u.jpg'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -26,7 +27,8 @@ import {
   networkUnichainTestnet,
   networkVictionMainnet,
   networkAuroraTestnet,
-  networkMetisMainnet
+  networkMetisMainnet,
+  networkU2UMainnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
@@ -128,6 +130,11 @@ const CHAINS: any = {
     name: 'Metis',
     chainId: ChainId.METIS_MAINNET,
     icon: metisIcon
+  },
+  [ChainId.U2U_MAINNET]: {
+    name: 'U2U Mainnet',
+    chainId: ChainId.U2U_MAINNET,
+    icon: u2uIcon
   }
 }
 
@@ -178,7 +185,9 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.METIS_MAINNET
+        chain === ChainId.U2U_MAINNET
+          ? networkU2UMainnet
+          : chain === ChainId.METIS_MAINNET
           ? networkMetisMainnet
           : chain === ChainId.AURORA_TESTNET
           ? networkAuroraTestnet
