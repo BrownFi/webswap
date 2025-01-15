@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { useOnClickOutside } from '../../hooks/useOnClickOutside'
 import { ApplicationModal } from '../../state/application/actions'
@@ -32,6 +32,7 @@ import {
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
+import { useDefaultChain } from 'hooks/useDefaultChain'
 
 const StyledMenuButton = styled.button`
   width: 240px;
@@ -144,6 +145,8 @@ export default function SelectChain() {
   const toggle = useToggleModal(ApplicationModal.SELECT_CHAIN)
   useOnClickOutside(node, open ? toggle : undefined)
   const { account, chainId, activate, connector } = useActiveWeb3React()
+  const { getChainDefault, saveChainDefault } = useDefaultChain()
+  const savedChain = getChainDefault()
 
   const handleSelectChain = async (chain: ChainId) => {
     if (account) {
@@ -157,9 +160,13 @@ export default function SelectChain() {
             })
             const accounts = await web3.eth.getAccounts()
             if (accounts[0]) {
-              activate(injected, undefined, true).catch(error => {
-                console.error('Failed to activate after accounts changed', error)
-              })
+              activate(injected, undefined, true)
+                .then(() => {
+                  saveChainDefault(chain)
+                })
+                .catch(error => {
+                  console.error('Failed to activate after accounts changed', error)
+                })
             }
           }
         } catch (e) {
@@ -171,9 +178,13 @@ export default function SelectChain() {
             })
             const accounts = await web3.eth.getAccounts()
             if (accounts[0]) {
-              activate(injected, undefined, true).catch(error => {
-                console.error('Failed to activate after accounts changed', error)
-              })
+              activate(injected, undefined, true)
+                .then(() => {
+                  saveChainDefault(chain)
+                })
+                .catch(error => {
+                  console.error('Failed to activate after accounts changed', error)
+                })
             }
           }
         }
@@ -207,8 +218,17 @@ export default function SelectChain() {
           ? networkMinato
           : networkVictionMainnet
       )
+      saveChainDefault(chain)
     }
   }
+
+  useEffect(() => {
+    if (savedChain) {
+      handleSelectChain(Number(savedChain))
+      return
+    }
+    handleSelectChain(ChainId.VICTION_MAINNET)
+  }, [savedChain])
 
   return (
     // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30451
