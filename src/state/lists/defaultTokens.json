@@ -112,7 +112,7 @@
       "name": "Pegged USDT",
       "symbol": "pUSDT",
       "decimals": 6,
-      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+      "logoURI": "https://raw.githubusercontent.com/unicornultrafoundation/token-assets/master/tokens/0x0820957B320E901622385Cc6C4fca196b20b939F/logo.png"
     }
   ]
 }
