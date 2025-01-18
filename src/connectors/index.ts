@@ -23,6 +23,7 @@ const AURORA_TESTNET_URL = process.env.REACT_APP_AURORA_TESTNET_URL
 const TAIKO_TESTNET_URL = process.env.REACT_APP_TAIKO_TESTNET_URL
 const BOBA_TESTNET_URL = process.env.REACT_APP_BOBA_TESTNET_URL
 const NEO_TESTNET_URL = process.env.REACT_APP_NEO_TESTNET_URL
+const SCROLL_TESTNET_URL = process.env.REACT_APP_SCROLL_TESTNET_URL
 
 export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '1')
 
@@ -78,6 +79,10 @@ export const networkNeoMainnet = new NetworkConnector({
   urls: { [ChainId.NEOX_MAINNET]: NEO_TESTNET_URL as string }
 })
 
+export const networkScrollTestnet = new NetworkConnector({
+  urls: { [ChainId.SCROLL_TESTNET]: SCROLL_TESTNET_URL as string }
+})
+
 let networkLibrary: Web3Provider | undefined
 export function getNetworkLibrary(): Web3Provider {
   return (networkLibrary = networkLibrary ?? new Web3Provider(network.provider as any))
@@ -97,7 +102,8 @@ export const injected = new InjectedConnector({
     ChainId.AURORA_TESTNET,
     ChainId.TAIKO_TESTNET,
     ChainId.BOBA_TESTNET,
-    ChainId.NEOX_MAINNET
+    ChainId.NEOX_MAINNET,
+    ChainId.SCROLL_TESTNET
   ]
 })
 

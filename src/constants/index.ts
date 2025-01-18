@@ -61,7 +61,9 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]],
   [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]],
   [ChainId.BOBA_TESTNET]: [WETH[ChainId.BOBA_TESTNET]],
-  [ChainId.NEOX_MAINNET]: [WETH[ChainId.NEOX_MAINNET]]
+  [ChainId.NEOX_MAINNET]: [WETH[ChainId.NEOX_MAINNET]],
+  [ChainId.U2U_MAINNET]: [WETH[ChainId.U2U_MAINNET]],
+  [ChainId.SCROLL_TESTNET]: [WETH[ChainId.SCROLL_TESTNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -344,5 +346,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'GAS'
     },
     rpcUrls: [process.env.REACT_APP_NEO_TESTNET_URL]
+  },
+  [ChainId.SCROLL_TESTNET]: {
+    chainId: ChainIdHex[ChainId.SCROLL_TESTNET],
+    blockExplorerUrls: ['https://sepolia.scrollscan.com/'],
+    chainName: 'Scoll Sepolia',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_SCROLL_TESTNET_URL]
   }
 }

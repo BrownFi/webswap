@@ -19,7 +19,9 @@ const V1_FACTORY_ADDRESSES: { [chainId in ChainId]: string } = {
   [ChainId.METIS_MAINNET]: '',
   [ChainId.TAIKO_TESTNET]: '',
   [ChainId.BOBA_TESTNET]: '',
-  [ChainId.NEOX_MAINNET]: ''
+  [ChainId.NEOX_MAINNET]: '',
+  [ChainId.U2U_MAINNET]: '',
+  [ChainId.SCROLL_TESTNET]: ''
 }
 
 const V1_FACTORY_INTERFACE = new Interface(V1_FACTORY_ABI)

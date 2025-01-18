@@ -129,6 +129,14 @@
       "symbol": "USD",
       "decimals": 18,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 534351,
+      "address": "0x7878290DB8C4f02bd06E0E249617871c19508bE6",
+      "name": "USD",
+      "symbol": "USD",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     }
   ]
 }

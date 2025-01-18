@@ -16,6 +16,7 @@ import auroraIcon from '../../assets/images/aurora.png'
 import taikoIcon from '../../assets/images/taiko.svg'
 import bobaIcon from '../../assets/images/boba.svg'
 import neoIcon from '../../assets/images/neox.png'
+import scrollIcon from '../../assets/images/scroll.svg'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -32,7 +33,8 @@ import {
   networkAuroraTestnet,
   networkTaikoTestnet,
   networkBobaTestnet,
-  networkNeoMainnet
+  networkNeoMainnet,
+  networkScrollTestnet
   // networkVictionMainnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
@@ -185,6 +187,11 @@ const CHAINS: any = {
     name: 'NeoX',
     chainId: ChainId.NEOX_MAINNET,
     icon: neoIcon
+  },
+  [ChainId.SCROLL_TESTNET]: {
+    name: 'Scroll',
+    chainId: ChainId.SCROLL_TESTNET,
+    icon: scrollIcon
   }
 }
 
@@ -194,6 +201,7 @@ export default function SelectChain() {
   const toggle = useToggleModal(ApplicationModal.SELECT_CHAIN)
   useOnClickOutside(node, open ? toggle : undefined)
   const { account, chainId, activate, connector } = useActiveWeb3React()
+  console.log(chainId)
 
   const handleSelectChain = async (chain: ChainId) => {
     if (account) {
@@ -237,7 +245,9 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.NEOX_MAINNET
+        chain === ChainId.SCROLL_TESTNET
+          ? networkScrollTestnet
+          : chain === ChainId.NEOX_MAINNET
           ? networkNeoMainnet
           : chain === ChainId.BOBA_TESTNET
           ? networkBobaTestnet

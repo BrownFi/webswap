@@ -79,6 +79,12 @@ export function getEtherscanLink(
     case ChainId.BOBA_TESTNET:
       prefix = 'https://testnet.bobascan.com/'
       break
+    case ChainId.U2U_MAINNET:
+      prefix = 'https://u2uscan.xyz/'
+      break
+    case ChainId.SCROLL_TESTNET:
+      prefix = 'https://sepolia.scrollscan.com/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -281,6 +287,10 @@ export function getScanText(chainId: ChainId) {
       return 'Bobascan'
     case ChainId.NEOX_MAINNET:
       return 'Neoxscan'
+    case ChainId.U2U_MAINNET:
+      return 'U2Uscan'
+    case ChainId.SCROLL_TESTNET:
+      return 'ScrollScan'
     default:
       return 'Etherscan'
   }
