@@ -51,7 +51,7 @@ import { getTokenSymbol } from 'utils'
 
 export default function Swap({ history }: RouteComponentProps) {
   const loadedUrlParams = useDefaultsFromURLSearch()
-
+  const { account, chainId } = useActiveWeb3React()
   // token warning stuff
   const [loadedInputCurrency, loadedOutputCurrency] = [
     useCurrency('WETH'),
@@ -74,7 +74,6 @@ export default function Swap({ history }: RouteComponentProps) {
       return !Boolean(token.address in defaultTokens)
     })
 
-  const { account, chainId } = useActiveWeb3React()
   const theme = useContext(ThemeContext)
 
   // toggle wallet when disconnected

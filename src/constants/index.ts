@@ -62,7 +62,11 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]],
   [ChainId.BOBA_TESTNET]: [WETH[ChainId.BOBA_TESTNET]],
   [ChainId.NEOX_MAINNET]: [WETH[ChainId.NEOX_MAINNET]],
-  [ChainId.U2U_MAINNET]: [WETH[ChainId.U2U_MAINNET]]
+  [ChainId.U2U_MAINNET]: [WETH[ChainId.U2U_MAINNET]],
+  [ChainId.SCROLL_TESTNET]: [WETH[ChainId.SCROLL_TESTNET]],
+  [ChainId.ARBITRUM_MAINNET]: [WETH[ChainId.ARBITRUM_MAINNET]],
+  [ChainId.OP_MAINNET]: [WETH[ChainId.OP_MAINNET]],
+  [ChainId.BOBA_MAINNET]: [WETH[ChainId.BOBA_MAINNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -345,5 +349,38 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'U2U'
     },
     rpcUrls: [process.env.REACT_APP_U2U_MAINNET_URL]
+  },
+  [ChainId.ARBITRUM_MAINNET]: {
+    chainId: ChainIdHex[ChainId.ARBITRUM_MAINNET],
+    blockExplorerUrls: ['https://arbiscan.io/'],
+    chainName: 'Arbitrum',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_ARBITRUM_MAINNET_URL]
+  },
+  [ChainId.OP_MAINNET]: {
+    chainId: ChainIdHex[ChainId.OP_MAINNET],
+    blockExplorerUrls: ['https://optimistic.etherscan.io/'],
+    chainName: 'Optimism',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_OP_MAINNET_URL]
+  },
+  [ChainId.BOBA_MAINNET]: {
+    chainId: ChainIdHex[ChainId.BOBA_MAINNET],
+    blockExplorerUrls: ['https://bobascan.com/'],
+    chainName: 'Boba',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_BOBA_MAINNET_URL]
   }
 }

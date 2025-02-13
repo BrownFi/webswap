@@ -11,6 +11,7 @@ import { WrappedTokenInfo } from '../../state/lists/hooks'
 import Logo from '../Logo'
 import { useActiveWeb3React } from 'hooks'
 import metisLogo from '../../assets/images/metis.png'
+import bobaLogo from '../../assets/images/boba.svg'
 
 export const getTokenLogoURL = (address: string) =>
   `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${address}/logo.png`
@@ -75,6 +76,12 @@ export default function CurrencyLogo({
   }
   if ((currency as any)?.symbol === 'WU2U') {
     return <StyledEthereumLogo src={u2uLogo} size={size} style={style} />
+  }
+  if ((currency as any)?.symbol === 'WBOBA') {
+    return <StyledEthereumLogo src={bobaLogo} size={size} style={style} />
+  }
+  if ((currency as any)?.symbol === 'BOBA') {
+    return <StyledEthereumLogo src={bobaLogo} size={size} style={style} />
   }
 
   if (currency === ETHER) {

@@ -8,6 +8,7 @@ const V1_FACTORY_ADDRESSES: { [chainId in ChainId]: string } = {
   [ChainId.SEPOLIA]: '',
   [ChainId.SN_MAIN]: '',
   [ChainId.SN_SEPOLIA]: '',
+  [ChainId.SCROLL_TESTNET]: '',
   [ChainId.BSC_TESTNET]: '',
   [ChainId.VICTION_TESTNET]: '',
   [ChainId.VICTION_MAINNET]: '',
@@ -20,7 +21,10 @@ const V1_FACTORY_ADDRESSES: { [chainId in ChainId]: string } = {
   [ChainId.TAIKO_TESTNET]: '',
   [ChainId.BOBA_TESTNET]: '',
   [ChainId.NEOX_MAINNET]: '',
-  [ChainId.U2U_MAINNET]: ''
+  [ChainId.U2U_MAINNET]: '',
+  [ChainId.ARBITRUM_MAINNET]: '',
+  [ChainId.OP_MAINNET]: '',
+  [ChainId.BOBA_MAINNET]: ''
 }
 
 const V1_FACTORY_INTERFACE = new Interface(V1_FACTORY_ABI)

@@ -1,4 +1,4 @@
-import { ChainId, JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
+import { ChainId, Currency, JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import React, { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'react-feather'
@@ -95,7 +95,8 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
               <RowFixed>
                 <DoubleCurrencyLogo currency0={currency0} currency1={currency1} margin={true} size={20} />
                 <Text fontWeight={500} fontSize={20} color={'white'}>
-                  {getTokenSymbol(currency0, chainId)}/{getTokenSymbol(currency1, chainId)}
+                  {getTokenSymbol(currency0, chainId)}/
+                  {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : getTokenSymbol(currency1, chainId)}
                 </Text>
               </RowFixed>
               <RowFixed>
@@ -129,7 +130,7 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
               </FixedHeightRow>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {getTokenSymbol(currency1, chainId)}:
+                  {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : getTokenSymbol(currency1, chainId)}:
                 </Text>
                 {token1Deposited ? (
                   <RowFixed>
@@ -191,6 +192,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
       : [undefined, undefined]
 
   const backgroundColor = useColor(pair?.token0)
+  const BOBA: Currency = {
+    decimals: 18,
+    symbol: 'BOBA',
+    name: 'Boba Token'
+  }
 
   return (
     <StyledPositionCard border={border} bgColor={backgroundColor}>
@@ -198,14 +204,20 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
       <AutoColumn gap="12px">
         <FixedHeightRow>
           <AutoRow gap="8px">
-            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={20} />
+            <DoubleCurrencyLogo
+              currency0={currency0}
+              currency1={chainId === ChainId.BOBA_MAINNET ? BOBA : currency1}
+              size={20}
+            />
             <div className="flex items-center">
               <Text fontWeight={600} fontSize={20} className="text-white">
-                {!currency0 || !currency1 ? (
-                  <Dots>Loading</Dots>
-                ) : (
-                  `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
-                )}
+                {chainId !== ChainId.BOBA_MAINNET ? (
+                  !currency0 || !currency1 ? (
+                    <Dots>Loading</Dots>
+                  ) : (
+                    `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
+                  )
+                ) : null}
                 {chainId === ChainId.SONIC_TESTNET &&
                 getTokenSymbol(currency0, chainId) === 'DIAM' &&
                 getTokenSymbol(currency1, chainId) === 'S'
@@ -213,6 +225,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   : getTokenSymbol(currency0, chainId) === 'S' && getTokenSymbol(currency1, chainId) === 'CORAL'
                   ? ' (FTM/ETH)'
                   : ''}
+                {chainId === ChainId.BOBA_MAINNET && 'USD/BOBA'}
               </Text>
               &nbsp;<Text className="text-[#27E3AB]">(APR/1D: 95%)</Text>
             </div>
@@ -251,7 +264,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <div className="flex items-center">
                   <CurrencyLogo currency={pair.token0} />
                   <Text fontSize={16} fontWeight={500} color={'white'} marginLeft={'8px'}>
-                    {pair.token0.symbol}:
+                    {pair.token0.symbol}
                   </Text>
                 </div>
 
@@ -261,9 +274,9 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               </FixedHeightRow>
               <FixedHeightRow>
                 <div className="flex items-center">
-                  <CurrencyLogo currency={pair.token1} />
+                  <CurrencyLogo currency={chainId === ChainId.BOBA_MAINNET ? BOBA : pair.token1} />
                   <Text fontSize={16} fontWeight={500} color={'white'} marginLeft={'8px'}>
-                    {pair.token1.symbol}:
+                    {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : pair.token1.symbol}:
                   </Text>
                 </div>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
@@ -307,7 +320,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <FixedHeightRow>
                   <RowFixed>
                     <Text fontSize={16} fontWeight={500} color={'white'}>
-                      Pooled {getTokenSymbol(currency0, chainId)}:
+                      Pooled {getTokenSymbol(currency0, chainId)}
                     </Text>
                   </RowFixed>
                   {token0Deposited ? (
@@ -325,7 +338,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <FixedHeightRow>
                   <RowFixed>
                     <Text fontSize={16} fontWeight={500} color={'white'}>
-                      Pooled {getTokenSymbol(currency1, chainId)}:
+                      Pooled {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : getTokenSymbol(currency1, chainId)}:
                     </Text>
                   </RowFixed>
                   {token1Deposited ? (
@@ -333,7 +346,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
                         {token1Deposited?.toSignificant(6)}
                       </Text>
-                      <CurrencyLogo size="20px" style={{ marginLeft: '8px' }} currency={currency1} />
+                      <CurrencyLogo
+                        size="20px"
+                        style={{ marginLeft: '8px' }}
+                        currency={chainId === ChainId.BOBA_MAINNET ? BOBA : currency1}
+                      />
                     </RowFixed>
                   ) : (
                     '-'
@@ -368,7 +385,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   padding="8px"
                   borderRadius="8px"
                   as={Link}
-                  to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+                  to={`/add/${currencyId(currency0)}/${
+                    chainId === ChainId.BOBA_MAINNET
+                      ? '0xa18bF3994C0Cc6E3b63ac420308E5383f53120D7'
+                      : currencyId(currency1)
+                  }`}
                   width="48%"
                 >
                   Add
@@ -378,7 +399,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   borderRadius="8px"
                   as={Link}
                   width="48%"
-                  to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
+                  to={`/remove/${currencyId(currency0)}/${
+                    chainId === ChainId.BOBA_MAINNET
+                      ? '0xa18bF3994C0Cc6E3b63ac420308E5383f53120D7'
+                      : currencyId(currency1)
+                  }`}
                 >
                   Remove
                 </ButtonPrimary>

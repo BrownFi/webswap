@@ -79,6 +79,15 @@ export function getEtherscanLink(
     case ChainId.U2U_MAINNET:
       prefix = 'https://u2uscan.xyz/'
       break
+    case ChainId.ARBITRUM_MAINNET:
+      prefix = 'https://arbiscan.io/'
+      break
+    case ChainId.OP_MAINNET:
+      prefix = 'https://optimistic.etherscan.io/'
+      break
+    case ChainId.BOBA_MAINNET:
+      prefix = 'https://bobascan.com/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -292,6 +301,12 @@ export function getScanText(chainId: ChainId) {
       return 'Taikoscan'
     case ChainId.U2U_MAINNET:
       return 'U2Uscan'
+    case ChainId.ARBITRUM_MAINNET:
+      return 'ARBscan'
+    case ChainId.OP_MAINNET:
+      return 'OPscan'
+    case ChainId.BOBA_MAINNET:
+      return 'BOBAscan'
     default:
       return 'Etherscan'
   }

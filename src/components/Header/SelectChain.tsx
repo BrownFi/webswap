@@ -15,6 +15,9 @@ import Web3 from 'web3'
 // import auroraIcon from '../../assets/images/aurora.png'
 import metisIcon from '../../assets/images/metis.png'
 import u2uIcon from '../../assets/images/u2u.jpg'
+import arbIcon from '../../assets/images/arb.png'
+import opIcon from '../../assets/images/op.png'
+import bobaIcon from '../../assets/images/boba.svg'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -28,7 +31,10 @@ import {
   networkVictionMainnet,
   networkAuroraTestnet,
   networkMetisMainnet,
-  networkU2UMainnet
+  networkU2UMainnet,
+  networkArbitrumMainnet,
+  networkOPMainnet,
+  networkBobaMainnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
@@ -136,6 +142,21 @@ const CHAINS: any = {
     name: 'U2U Mainnet',
     chainId: ChainId.U2U_MAINNET,
     icon: u2uIcon
+  },
+  [ChainId.ARBITRUM_MAINNET]: {
+    name: 'Arbitrum',
+    chainId: ChainId.ARBITRUM_MAINNET,
+    icon: arbIcon
+  },
+  [ChainId.OP_MAINNET]: {
+    name: 'Optimism',
+    chainId: ChainId.OP_MAINNET,
+    icon: opIcon
+  },
+  [ChainId.BOBA_MAINNET]: {
+    name: 'Boba',
+    chainId: ChainId.BOBA_MAINNET,
+    icon: bobaIcon
   }
 }
 
@@ -196,7 +217,13 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.U2U_MAINNET
+        chain === ChainId.BOBA_MAINNET
+          ? networkBobaMainnet
+          : chain === ChainId.OP_MAINNET
+          ? networkOPMainnet
+          : chain === ChainId.ARBITRUM_MAINNET
+          ? networkArbitrumMainnet
+          : chain === ChainId.U2U_MAINNET
           ? networkU2UMainnet
           : chain === ChainId.METIS_MAINNET
           ? networkMetisMainnet

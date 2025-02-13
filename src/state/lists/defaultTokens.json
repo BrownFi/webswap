@@ -93,8 +93,8 @@
     {
       "chainId": 1088,
       "address": "0xEA32A96608495e54156Ae48931A7c20f0dcc1a21",
-      "name": "USD",
-      "symbol": "USD",
+      "name": "USDC",
+      "symbol": "m.USDC",
       "decimals": 6,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     },
@@ -113,6 +113,38 @@
       "symbol": "pUSDT",
       "decimals": 6,
       "logoURI": "https://raw.githubusercontent.com/unicornultrafoundation/token-assets/master/tokens/0x0820957B320E901622385Cc6C4fca196b20b939F/logo.png"
+    },
+    {
+      "chainId": 42161,
+      "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 10,
+      "address": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 288,
+      "address": "0x66a2A913e447d6b4BF33EFbec43aAeF87890FBbc",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 288,
+      "address": "0xa18bF3994C0Cc6E3b63ac420308E5383f53120D7",
+      "name": "Boba Token",
+      "symbol": "BOBA",
+      "decimals": 18,
+      "logoURI": "https://cdn.testnet.routescan.io/cdn/chains/boba/boba_32.avif"
     }
   ]
 }
