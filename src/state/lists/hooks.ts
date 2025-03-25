@@ -58,7 +58,8 @@ const EMPTY_LIST: TokenAddressMap = {
   [ChainId.U2U_MAINNET]: {},
   [ChainId.ARBITRUM_MAINNET]: {},
   [ChainId.OP_MAINNET]: {},
-  [ChainId.BOBA_MAINNET]: {}
+  [ChainId.BOBA_MAINNET]: {},
+  [ChainId.BERA_MAINNET]: {}
 }
 
 const listCache: WeakMap<TokenList, TokenAddressMap> | null =
@@ -132,7 +133,8 @@ function combineMaps(map1: TokenAddressMap, map2: TokenAddressMap): TokenAddress
     [ChainId.SCROLL_TESTNET]: { ...map1[ChainId.SCROLL_TESTNET], ...map2[ChainId.SCROLL_TESTNET] },
     [ChainId.ARBITRUM_MAINNET]: { ...map1[ChainId.ARBITRUM_MAINNET], ...map2[ChainId.ARBITRUM_MAINNET] },
     [ChainId.OP_MAINNET]: { ...map1[ChainId.OP_MAINNET], ...map2[ChainId.OP_MAINNET] },
-    [ChainId.BOBA_MAINNET]: { ...map1[ChainId.BOBA_MAINNET], ...map2[ChainId.BOBA_MAINNET] }
+    [ChainId.BOBA_MAINNET]: { ...map1[ChainId.BOBA_MAINNET], ...map2[ChainId.BOBA_MAINNET] },
+    [ChainId.BERA_MAINNET]: { ...map1[ChainId.BERA_MAINNET], ...map2[ChainId.BERA_MAINNET] }
   }
 }
 

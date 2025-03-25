@@ -121,7 +121,8 @@ export default function RemoveLiquidity({
       chainId === ChainId.OP_MAINNET ||
       chainId === ChainId.BOBA_MAINNET ||
       chainId === ChainId.ARBITRUM_MAINNET ||
-      chainId === ChainId.METIS_MAINNET
+      chainId === ChainId.METIS_MAINNET ||
+      chainId === ChainId.BERA_MAINNET
     ) {
       return approveCallback()
     }

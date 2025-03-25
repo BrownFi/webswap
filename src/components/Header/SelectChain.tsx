@@ -18,6 +18,7 @@ import u2uIcon from '../../assets/images/u2u.jpg'
 import arbIcon from '../../assets/images/arb.png'
 import opIcon from '../../assets/images/op.png'
 import bobaIcon from '../../assets/images/boba.svg'
+import beraIcon from '../../assets/images/bera.png'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -34,7 +35,8 @@ import {
   networkU2UMainnet,
   networkArbitrumMainnet,
   networkOPMainnet,
-  networkBobaMainnet
+  networkBobaMainnet,
+  networkBeraMainnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
@@ -157,6 +159,11 @@ const CHAINS: any = {
     name: 'Boba',
     chainId: ChainId.BOBA_MAINNET,
     icon: bobaIcon
+  },
+  [ChainId.BERA_MAINNET]: {
+    name: 'Bera',
+    chainId: ChainId.BERA_MAINNET,
+    icon: beraIcon
   }
 }
 
@@ -217,7 +224,9 @@ export default function SelectChain() {
       }
     } else {
       activate(
-        chain === ChainId.BOBA_MAINNET
+        chain === ChainId.BERA_MAINNET
+          ? networkBeraMainnet
+          : chain === ChainId.BOBA_MAINNET
           ? networkBobaMainnet
           : chain === ChainId.OP_MAINNET
           ? networkOPMainnet

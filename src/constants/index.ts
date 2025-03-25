@@ -66,7 +66,8 @@ const WETH_ONLY: ChainTokenList = {
   [ChainId.SCROLL_TESTNET]: [WETH[ChainId.SCROLL_TESTNET]],
   [ChainId.ARBITRUM_MAINNET]: [WETH[ChainId.ARBITRUM_MAINNET]],
   [ChainId.OP_MAINNET]: [WETH[ChainId.OP_MAINNET]],
-  [ChainId.BOBA_MAINNET]: [WETH[ChainId.BOBA_MAINNET]]
+  [ChainId.BOBA_MAINNET]: [WETH[ChainId.BOBA_MAINNET]],
+  [ChainId.BERA_MAINNET]: [WETH[ChainId.BERA_MAINNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -382,5 +383,16 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'ETH'
     },
     rpcUrls: [process.env.REACT_APP_BOBA_MAINNET_URL]
+  },
+  [ChainId.BERA_MAINNET]: {
+    chainId: ChainIdHex[ChainId.BERA_MAINNET],
+    blockExplorerUrls: ['https://berascan.com/'],
+    chainName: 'Bera',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Wrapped Bera',
+      symbol: 'WBERA'
+    },
+    rpcUrls: [process.env.REACT_APP_BERA_MAINNET_URL]
   }
 }

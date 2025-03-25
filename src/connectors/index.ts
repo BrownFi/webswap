@@ -26,6 +26,7 @@ const U2U_MAINNET_URL = process.env.REACT_APP_U2U_MAINNET_URL
 const ARBITRUM_MAINNET_URL = process.env.REACT_APP_ARBITRUM_MAINNET_URL
 const OP_MAINNET_URL = process.env.REACT_APP_OP_MAINNET_URL
 const BOBA_MAINNET_URL = process.env.REACT_APP_BOBA_MAINNET_URL
+const BERA_MAINNET_URL = process.env.REACT_APP_BERA_MAINNET_URL
 
 // export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '88')
 export const NETWORK_CHAIN_ID: number = ChainId.VICTION_MAINNET
@@ -90,6 +91,10 @@ export const networkBobaMainnet = new NetworkConnector({
   urls: { [ChainId.BOBA_MAINNET]: BOBA_MAINNET_URL as string }
 })
 
+export const networkBeraMainnet = new NetworkConnector({
+  urls: { [ChainId.BERA_MAINNET]: BERA_MAINNET_URL as string }
+})
+
 let networkLibrary: Web3Provider | undefined
 export function getNetworkLibrary(): Web3Provider {
   return (networkLibrary = networkLibrary ?? new Web3Provider(network.provider as any))
@@ -102,7 +107,8 @@ export const injected = new InjectedConnector({
     ChainId.U2U_MAINNET,
     ChainId.ARBITRUM_MAINNET,
     ChainId.OP_MAINNET,
-    ChainId.BOBA_MAINNET
+    ChainId.BOBA_MAINNET,
+    ChainId.BERA_MAINNET
   ]
 })
 

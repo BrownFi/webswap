@@ -145,6 +145,14 @@
       "symbol": "BOBA",
       "decimals": 18,
       "logoURI": "https://cdn.testnet.routescan.io/cdn/chains/boba/boba_32.avif"
+    },
+    {
+      "chainId": 80094,
+      "address": "0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce",
+      "name": "Honey",
+      "symbol": "HONEY",
+      "decimals": 18,
+      "logoURI": "https://berascan.com/token/images/honeybera_32.png"
     }
   ]
 }

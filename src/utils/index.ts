@@ -88,6 +88,9 @@ export function getEtherscanLink(
     case ChainId.BOBA_MAINNET:
       prefix = 'https://bobascan.com/'
       break
+    case ChainId.BERA_MAINNET:
+      prefix = 'https://berascan.com/'
+      break
     default:
       prefix = 'https://etherscan.io'
       break
@@ -191,6 +194,9 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.U2U_MAINNET) {
     return 'U2U'
   }
+  if (chainId === ChainId.BERA_MAINNET) {
+    return 'BERA'
+  }
   return 'ETH'
 }
 
@@ -209,6 +215,9 @@ export function getWrappedNativeToken(chainId: ChainId) {
   }
   if (chainId === ChainId.U2U_MAINNET) {
     return 'WU2U'
+  }
+  if (chainId === ChainId.BERA_MAINNET) {
+    return 'WBERA'
   }
   return 'WETH'
 }
@@ -229,6 +238,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     }
     if (chainId === ChainId.U2U_MAINNET) {
       return 'U2U'
+    }
+    if (chainId === ChainId.BERA_MAINNET) {
+      return 'BERA'
     }
     return 'ETH'
   }
@@ -253,6 +265,10 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     return 'WU2U'
   }
 
+  if (currency?.symbol === 'WETH' && chainId === ChainId.BERA_MAINNET) {
+    return 'WBERA'
+  }
+
   return currency?.symbol
 }
 
@@ -272,6 +288,9 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     }
     if (chainId === ChainId.U2U_MAINNET) {
       return 'U2U'
+    }
+    if (chainId === ChainId.BERA_MAINNET) {
+      return 'Bera'
     }
     return 'Ethereum'
   }
@@ -307,6 +326,8 @@ export function getScanText(chainId: ChainId) {
       return 'OPscan'
     case ChainId.BOBA_MAINNET:
       return 'BOBAscan'
+    case ChainId.BERA_MAINNET:
+      return 'Berascan'
     default:
       return 'Etherscan'
   }
@@ -320,6 +341,7 @@ export function isNativeCurrency(symbol: string | undefined) {
     symbol === 'WS' ||
     symbol === 'USDC' ||
     symbol === 'WMETIS' ||
-    symbol === 'WU2U'
+    symbol === 'WU2U' ||
+    symbol === 'WBERA'
   )
 }
