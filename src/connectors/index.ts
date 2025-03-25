@@ -29,7 +29,7 @@ const BOBA_MAINNET_URL = process.env.REACT_APP_BOBA_MAINNET_URL
 const BERA_MAINNET_URL = process.env.REACT_APP_BERA_MAINNET_URL
 
 // export const NETWORK_CHAIN_ID: number = parseInt(process.env.REACT_APP_CHAIN_ID ?? '88')
-export const NETWORK_CHAIN_ID: number = ChainId.VICTION_MAINNET
+export const NETWORK_CHAIN_ID: number = ChainId.BERA_MAINNET
 
 if (typeof NETWORK_URL === 'undefined') {
   throw new Error(`REACT_APP_NETWORK_URL must be a defined environment variable`)
@@ -101,15 +101,7 @@ export function getNetworkLibrary(): Web3Provider {
 }
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [
-    ChainId.VICTION_MAINNET,
-    ChainId.METIS_MAINNET,
-    ChainId.U2U_MAINNET,
-    ChainId.ARBITRUM_MAINNET,
-    ChainId.OP_MAINNET,
-    ChainId.BOBA_MAINNET,
-    ChainId.BERA_MAINNET
-  ]
+  supportedChainIds: [ChainId.BERA_MAINNET]
 })
 
 // mainnet only

@@ -5,19 +5,7 @@ import { ApplicationModal } from '../../state/application/actions'
 import { useModalOpen, useToggleModal } from '../../state/application/hooks'
 import down from '../../assets/svg/arrow_drop_down.svg'
 import check from '../../assets/svg/check.svg'
-// import ethereum from '../../assets/images/ethereum-logo.png'
-// import bnb from '../../assets/images/bnb.svg'
-import viction from '../../assets/images/viction.png'
-// import sonicIcon from '../../assets/images/sonic.png'
-// import soneiumIcon from '../../assets/images/soneium.svg'
-// import baseIcon from '../../assets/svg/base.svg'
 import Web3 from 'web3'
-// import auroraIcon from '../../assets/images/aurora.png'
-import metisIcon from '../../assets/images/metis.png'
-import u2uIcon from '../../assets/images/u2u.jpg'
-import arbIcon from '../../assets/images/arb.png'
-import opIcon from '../../assets/images/op.png'
-import bobaIcon from '../../assets/images/boba.svg'
 import beraIcon from '../../assets/images/bera.png'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
@@ -130,36 +118,6 @@ const MenuItem = styled.div`
 `
 
 const CHAINS: any = {
-  [ChainId.VICTION_MAINNET]: {
-    name: 'Viction Mainnet',
-    chainId: ChainId.VICTION_MAINNET,
-    icon: viction
-  },
-  [ChainId.METIS_MAINNET]: {
-    name: 'Metis',
-    chainId: ChainId.METIS_MAINNET,
-    icon: metisIcon
-  },
-  [ChainId.U2U_MAINNET]: {
-    name: 'U2U Mainnet',
-    chainId: ChainId.U2U_MAINNET,
-    icon: u2uIcon
-  },
-  [ChainId.ARBITRUM_MAINNET]: {
-    name: 'Arbitrum',
-    chainId: ChainId.ARBITRUM_MAINNET,
-    icon: arbIcon
-  },
-  [ChainId.OP_MAINNET]: {
-    name: 'Optimism',
-    chainId: ChainId.OP_MAINNET,
-    icon: opIcon
-  },
-  [ChainId.BOBA_MAINNET]: {
-    name: 'Boba',
-    chainId: ChainId.BOBA_MAINNET,
-    icon: bobaIcon
-  },
   [ChainId.BERA_MAINNET]: {
     name: 'Bera',
     chainId: ChainId.BERA_MAINNET,
@@ -263,22 +221,25 @@ export default function SelectChain() {
       handleSelectChain(Number(savedChain))
       return
     }
-    handleSelectChain(ChainId.VICTION_MAINNET)
+    handleSelectChain(ChainId.BERA_MAINNET)
   }, [savedChain])
 
   return (
     // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30451
     <StyledMenu ref={node as any}>
-      <StyledMenuButton onClick={toggle}>
+      <StyledMenuButton
+        className={CHAINS.length >= 2 ? '' : '!cursor-default'}
+        onClick={CHAINS.length >= 2 ? toggle : () => null}
+      >
         <div className="flex items-center flex-1">
           <img
             alt="icon"
             className="w-[28px] mr-[8px] rounded-full"
-            src={CHAINS[chainId || ChainId.VICTION_MAINNET]?.icon}
+            src={CHAINS[chainId || ChainId.BERA_MAINNET]?.icon}
           />
-          {CHAINS[chainId || ChainId.VICTION_MAINNET]?.name}
+          {CHAINS[chainId || ChainId.BERA_MAINNET]?.name}
         </div>
-        <img src={down} alt="down" className="w-[24px] ml-[8px]" />
+        {CHAINS.length >= 2 && <img src={down} alt="down" className="w-[24px] ml-[8px]" />}
       </StyledMenuButton>
       {open && (
         <MenuFlyout>
