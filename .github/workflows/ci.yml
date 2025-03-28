@@ -21,6 +21,8 @@ jobs:
 
     - name: Build static site
       run: npm run build
+      env:
+        CI: false
 
     - name: Set project name
       id: set-project
