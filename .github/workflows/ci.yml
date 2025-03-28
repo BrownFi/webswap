@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ mainnet, bera, testnet ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm i --force
+
+    - name: Build static site
+      run: npm run build
+
+    - name: Set project name
+      id: set-project
+      run: |
+        if [[ ${{ github.ref }} == 'refs/heads/mainnet' ]]; then
+          echo "project_name=browndex-webswap-mainnet" >> $GITHUB_OUTPUT
+        elif [[ ${{ github.ref }} == 'refs/heads/bera' ]]; then
+          echo "project_name=browndex-webswap-bera" >> $GITHUB_OUTPUT
+        elif [[ ${{ github.ref }} == 'refs/heads/testnet' ]]; then
+          echo "project_name=browndex-webswap-testnet" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Deploy to Cloudflare Pages
+      uses: cloudflare/wrangler-action@v3
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        command: pages deploy build/ --project-name=${{ steps.set-project.outputs.project_name }}
