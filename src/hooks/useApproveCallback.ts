@@ -117,7 +117,8 @@ export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) 
         chainId === ChainId.SONIC_TESTNET ||
         chainId === ChainId.AURORA_TESTNET ||
         chainId === ChainId.TAIKO_TESTNET ||
-        chainId === ChainId.BOBA_MAINNET
+        chainId === ChainId.BOBA_MAINNET ||
+        chainId === ChainId.BERA_MAINNET
         ? ROUTER_ADDRESS_WITH_PRICE[chainId]
         : ROUTER_ADDRESS[chainId]
       : ''
