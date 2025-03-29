@@ -89,7 +89,7 @@ export function getEtherscanLink(
       prefix = 'https://bobascan.com/'
       break
     case ChainId.BERA_MAINNET:
-      prefix = 'https://berascan.com/'
+      prefix = 'https://beratrail.io/'
       break
     default:
       prefix = 'https://etherscan.io'
@@ -327,7 +327,7 @@ export function getScanText(chainId: ChainId) {
     case ChainId.BOBA_MAINNET:
       return 'BOBAscan'
     case ChainId.BERA_MAINNET:
-      return 'Berascan'
+      return 'Beratrail'
     default:
       return 'Etherscan'
   }
