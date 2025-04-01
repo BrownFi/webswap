@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
 
@@ -17,7 +17,7 @@ jobs:
         node-version: '20'
 
     - name: Install dependencies
-      run: npm i --force
+      run: npm ci
 
     - name: Build static site
       run: npm run build
