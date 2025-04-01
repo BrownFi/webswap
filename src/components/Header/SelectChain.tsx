@@ -135,26 +135,26 @@ const CHAINS: any = {
     chainId: ChainId.VICTION_MAINNET,
     icon: viction
   },
-  [ChainId.METIS_MAINNET]: {
-    name: 'Metis',
-    chainId: ChainId.METIS_MAINNET,
-    icon: metisIcon
-  },
+  // [ChainId.METIS_MAINNET]: {
+  //   name: 'Metis',
+  //   chainId: ChainId.METIS_MAINNET,
+  //   icon: metisIcon
+  // },
   [ChainId.U2U_MAINNET]: {
     name: 'U2U Mainnet',
     chainId: ChainId.U2U_MAINNET,
     icon: u2uIcon
   },
-  [ChainId.ARBITRUM_MAINNET]: {
-    name: 'Arbitrum',
-    chainId: ChainId.ARBITRUM_MAINNET,
-    icon: arbIcon
-  },
-  [ChainId.OP_MAINNET]: {
-    name: 'Optimism',
-    chainId: ChainId.OP_MAINNET,
-    icon: opIcon
-  },
+  // [ChainId.ARBITRUM_MAINNET]: {
+  //   name: 'Arbitrum',
+  //   chainId: ChainId.ARBITRUM_MAINNET,
+  //   icon: arbIcon
+  // },
+  // [ChainId.OP_MAINNET]: {
+  //   name: 'Optimism',
+  //   chainId: ChainId.OP_MAINNET,
+  //   icon: opIcon
+  // },
   [ChainId.BOBA_MAINNET]: {
     name: 'Boba',
     chainId: ChainId.BOBA_MAINNET,
