@@ -13,10 +13,10 @@ import viction from '../../assets/images/viction.png'
 // import baseIcon from '../../assets/svg/base.svg'
 import Web3 from 'web3'
 // import auroraIcon from '../../assets/images/aurora.png'
-import metisIcon from '../../assets/images/metis.png'
+// import metisIcon from '../../assets/images/metis.png'
 import u2uIcon from '../../assets/images/u2u.jpg'
-import arbIcon from '../../assets/images/arb.png'
-import opIcon from '../../assets/images/op.png'
+// import arbIcon from '../../assets/images/arb.png'
+// import opIcon from '../../assets/images/op.png'
 import bobaIcon from '../../assets/images/boba.svg'
 import beraIcon from '../../assets/images/bera.png'
 
@@ -274,9 +274,9 @@ export default function SelectChain() {
           <img
             alt="icon"
             className="w-[28px] mr-[8px] rounded-full"
-            src={CHAINS[chainId || ChainId.VICTION_MAINNET]?.icon}
+            src={CHAINS[chainId || ChainId.BERA_MAINNET]?.icon}
           />
-          {CHAINS[chainId || ChainId.VICTION_MAINNET]?.name}
+          {CHAINS[chainId || ChainId.BERA_MAINNET]?.name}
         </div>
         <img src={down} alt="down" className="w-[24px] ml-[8px]" />
       </StyledMenuButton>
