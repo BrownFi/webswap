@@ -173,14 +173,14 @@ export default function WalletModal({
         try {
           await (window.ethereum as any)?.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: ChainIdHex[chainId || ChainId.VICTION_MAINNET] }] // chainId must be in hexadecimal numbers
+            params: [{ chainId: ChainIdHex[chainId || ChainId.BERA_MAINNET] }] // chainId must be in hexadecimal numbers
           })
         } catch (e) {
-          if ((e as any)?.code === 4902 && CHAIN_TO_METAMASK[chainId || ChainId.VICTION_MAINNET]) {
+          if ((e as any)?.code === 4902 && CHAIN_TO_METAMASK[chainId || ChainId.BERA_MAINNET]) {
             // console.log(CHAIN_TO_METAMASK[chain])\
             await (window.ethereum as any)?.request({
               method: 'wallet_addEthereumChain',
-              params: [CHAIN_TO_METAMASK[chainId || ChainId.VICTION_MAINNET]] // chainId must be in hexadecimal numbers
+              params: [CHAIN_TO_METAMASK[chainId || ChainId.BERA_MAINNET]] // chainId must be in hexadecimal numbers
             })
           }
         }
