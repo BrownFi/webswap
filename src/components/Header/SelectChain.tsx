@@ -8,6 +8,7 @@ import check from '../../assets/svg/check.svg'
 import Web3 from 'web3'
 // import auroraIcon from '../../assets/images/aurora.png'
 // import metisIcon from '../../assets/images/metis.png'
+import viction from '../../assets/images/viction.png'
 import u2uIcon from '../../assets/images/u2u.jpg'
 // import arbIcon from '../../assets/images/arb.png'
 // import opIcon from '../../assets/images/op.png'
@@ -161,6 +162,8 @@ const CHAINS: any = {
   }
 }
 
+const supportChains = Object.values(CHAINS)
+
 export default function SelectChain() {
   const node = useRef<HTMLDivElement>()
   const open = useModalOpen(ApplicationModal.SELECT_CHAIN)
@@ -264,8 +267,8 @@ export default function SelectChain() {
     // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30451
     <StyledMenu ref={node as any}>
       <StyledMenuButton
-        className={CHAINS.length >= 2 ? '' : '!cursor-default'}
-        onClick={CHAINS.length >= 2 ? toggle : () => null}
+        className={supportChains.length > 1 ? '' : '!cursor-default'}
+        onClick={supportChains.length > 1 ? toggle : () => null}
       >
         <div className="flex items-center flex-1">
           <img
@@ -275,11 +278,11 @@ export default function SelectChain() {
           />
           {CHAINS[chainId || ChainId.BERA_MAINNET]?.name}
         </div>
-        {CHAINS.length >= 2 && <img src={down} alt="down" className="w-[24px] ml-[8px]" />}
+        {supportChains.length > 1 && <img src={down} alt="down" className="w-[24px] ml-[8px]" />}
       </StyledMenuButton>
       {open && (
         <MenuFlyout>
-          {Object.values(CHAINS).map((item: any) => (
+          {supportChains.map((item: any) => (
             <MenuItem
               id="link"
               onClick={() => {
