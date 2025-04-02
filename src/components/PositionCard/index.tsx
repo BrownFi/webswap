@@ -12,7 +12,7 @@ import { useTokenBalance } from '../../state/wallet/hooks'
 import { TYPE } from '../../theme'
 import { currencyId } from '../../utils/currencyId'
 import { unwrappedToken } from '../../utils/wrappedCurrency'
-import { ButtonPrimary, ButtonEmpty } from '../Button'
+import { ButtonPrimary, ButtonEmpty, ButtonSecondary } from '../Button'
 // import { CardNoise } from '../earn/styled'
 
 import { useColor } from '../../hooks/useColor'
@@ -230,8 +230,12 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   {chainId === ChainId.BOBA_MAINNET && 'USD/BOBA'}
                 </Text>
               </div>
-              <div>
-                <Text className="text-[#27E3AB]">(0.3% | Pool APR: 95%)</Text>
+              <div className="flex items-center gap-2">
+                <ButtonSecondary className="!w-fit !px-1">
+                  {/* Trading Fee */}
+                  0.3%
+                </ButtonSecondary>
+                <Text className="whitespace-nowrap text-[#27E3AB]">(Pool APR: 95%)</Text>
               </div>
             </div>
           </AutoRow>
