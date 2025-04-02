@@ -27,7 +27,8 @@ import { BIG_INT_ZERO } from '../../constants'
 import { getTokenSymbol } from 'utils'
 
 export const FixedHeightRow = styled(RowBetween)`
-  height: 24px;
+  min-height: 24px;
+  flex-wrap: wrap;
 `
 
 export const HoverCard = styled(Card)`
@@ -203,40 +204,39 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
       {/* <CardNoise /> */}
       <AutoColumn gap="12px">
         <FixedHeightRow>
-          <AutoRow gap="8px">
-            <DoubleCurrencyLogo
-              currency0={currency0}
-              currency1={chainId === ChainId.BOBA_MAINNET ? BOBA : currency1}
-              size={20}
-            />
-            <div className="flex items-center">
-              <Text fontWeight={600} fontSize={20} className="text-white">
-                {chainId !== ChainId.BOBA_MAINNET ? (
-                  !currency0 || !currency1 ? (
-                    <Dots>Loading</Dots>
-                  ) : (
-                    `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
-                  )
-                ) : null}
-                {chainId === ChainId.SONIC_TESTNET &&
-                getTokenSymbol(currency0, chainId) === 'DIAM' &&
-                getTokenSymbol(currency1, chainId) === 'S'
-                  ? ' (FTM/USD)'
-                  : getTokenSymbol(currency0, chainId) === 'S' && getTokenSymbol(currency1, chainId) === 'CORAL'
-                  ? ' (FTM/ETH)'
-                  : ''}
-                {chainId === ChainId.BOBA_MAINNET && 'USD/BOBA'}
-              </Text>
-              &nbsp;<Text className="text-[#27E3AB]">(APR/1D: 95%)</Text>
+          <AutoRow className="!w-fit" gap="8px">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <DoubleCurrencyLogo
+                  currency0={currency0}
+                  currency1={chainId === ChainId.BOBA_MAINNET ? BOBA : currency1}
+                  size={20}
+                />
+                <Text fontWeight={600} fontSize={20} className="text-white">
+                  {chainId !== ChainId.BOBA_MAINNET ? (
+                    !currency0 || !currency1 ? (
+                      <Dots>Loading</Dots>
+                    ) : (
+                      `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`
+                    )
+                  ) : null}
+                  {chainId === ChainId.SONIC_TESTNET &&
+                  getTokenSymbol(currency0, chainId) === 'DIAM' &&
+                  getTokenSymbol(currency1, chainId) === 'S'
+                    ? ' (FTM/USD)'
+                    : getTokenSymbol(currency0, chainId) === 'S' && getTokenSymbol(currency1, chainId) === 'CORAL'
+                    ? ' (FTM/ETH)'
+                    : ''}
+                  {chainId === ChainId.BOBA_MAINNET && 'USD/BOBA'}
+                </Text>
+              </div>
+              <div>
+                <Text className="text-[#27E3AB]">(0.3% | Pool APR: 95%)</Text>
+              </div>
             </div>
           </AutoRow>
-          <RowFixed gap="8px">
-            <ButtonEmpty
-              padding="6px 8px"
-              borderRadius="12px"
-              width="fit-content"
-              onClick={() => setShowMore(!showMore)}
-            >
+          <div className="flex-1 flex justify-end">
+            <ButtonEmpty padding="0px" borderRadius="12px" width="fit-content" onClick={() => setShowMore(!showMore)}>
               <div className="text-[#27E3AB] flex items-center">
                 {showMore ? (
                   <>
@@ -251,36 +251,77 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 )}
               </div>
             </ButtonEmpty>
-          </RowFixed>
+          </div>
         </FixedHeightRow>
 
         {showMore && (
           <AutoColumn gap="8px">
             <>
               <h2 className="text-[20px] font-bold text-white" style={{ fontFamily: 'Russo One' }}>
-                Liquidity
+                Pool stats
               </h2>
               <FixedHeightRow>
-                <div className="flex items-center">
-                  <CurrencyLogo currency={pair.token0} />
-                  <Text fontSize={16} fontWeight={500} color={'white'} marginLeft={'8px'}>
-                    {pair.token0.symbol}
-                  </Text>
-                </div>
-
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {pair.reserve0.toSignificant(4)}
+                  TVL
+                </Text>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  $1,250,000
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
-                <div className="flex items-center">
-                  <CurrencyLogo currency={chainId === ChainId.BOBA_MAINNET ? BOBA : pair.token1} />
-                  <Text fontSize={16} fontWeight={500} color={'white'} marginLeft={'8px'}>
-                    {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : pair.token1.symbol}:
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  Volume (24h)
+                </Text>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  $54,000,000
+                </Text>
+              </FixedHeightRow>
+              <FixedHeightRow>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  Volume (7d)
+                </Text>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  $350,000,000
+                </Text>
+              </FixedHeightRow>
+
+              <FixedHeightRow>
+                <div className="flex items-center gap-2">
+                  <CurrencyLogo currency={pair.token0} />
+                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                    {pair.token0.symbol}
                   </Text>
                 </div>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {pair.reserve1.toSignificant(4)}
+                  {pair.reserve0.toSignificant(4)} ($750,000)
+                </Text>
+              </FixedHeightRow>
+              <FixedHeightRow>
+                <div className="flex items-center gap-2">
+                  <CurrencyLogo currency={chainId === ChainId.BOBA_MAINNET ? BOBA : pair.token1} />
+                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                    {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : pair.token1.symbol}
+                  </Text>
+                </div>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  {pair.reserve1.toSignificant(4)} ($500,000)
+                </Text>
+              </FixedHeightRow>
+
+              <FixedHeightRow>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  Revenue (Incremental)
+                </Text>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  $2,500,000
+                </Text>
+              </FixedHeightRow>
+              <FixedHeightRow>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  Pool ARP
+                </Text>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  95%
                 </Text>
               </FixedHeightRow>
 
@@ -299,15 +340,20 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
             {account && (
               <>
                 <div className="w-full h-[1px] my-[8px] bg-white opacity-[0.1]" />
+                <h2 className="text-[20px] font-bold text-white" style={{ fontFamily: 'Russo One' }}>
+                  Your position
+                </h2>
+
                 <FixedHeightRow>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
-                    Your total pool tokens:
+                    LP tokens
                   </Text>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
                     {userPoolBalance ? userPoolBalance.toSignificant(4) : '-'}
                   </Text>
                 </FixedHeightRow>
-                {stakedBalance && (
+
+                {/* {stakedBalance && (
                   <FixedHeightRow>
                     <Text fontSize={16} fontWeight={500} color={'white'}>
                       Pool tokens in rewards pool:
@@ -316,7 +362,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       {stakedBalance.toSignificant(4)}
                     </Text>
                   </FixedHeightRow>
-                )}
+                )} */}
                 <FixedHeightRow>
                   <RowFixed>
                     <Text fontSize={16} fontWeight={500} color={'white'}>
@@ -324,11 +370,14 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                     </Text>
                   </RowFixed>
                   {token0Deposited ? (
-                    <RowFixed>
-                      <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
+                    <RowFixed className="gap-2">
+                      <CurrencyLogo size="20px" currency={currency0} />
+                      <Text fontSize={16} fontWeight={500} color={'white'}>
                         {token0Deposited?.toSignificant(6)}
                       </Text>
-                      <CurrencyLogo size="20px" style={{ marginLeft: '8px' }} currency={currency0} />
+                      <Text fontSize={16} fontWeight={500} color={'white'}>
+                        ($750)
+                      </Text>
                     </RowFixed>
                   ) : (
                     '-'
@@ -338,19 +387,18 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <FixedHeightRow>
                   <RowFixed>
                     <Text fontSize={16} fontWeight={500} color={'white'}>
-                      Pooled {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : getTokenSymbol(currency1, chainId)}:
+                      Pooled {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : getTokenSymbol(currency1, chainId)}
                     </Text>
                   </RowFixed>
                   {token1Deposited ? (
-                    <RowFixed>
-                      <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
+                    <RowFixed className="gap-2">
+                      <CurrencyLogo size="20px" currency={chainId === ChainId.BOBA_MAINNET ? BOBA : currency1} />
+                      <Text fontSize={16} fontWeight={500} color={'white'}>
                         {token1Deposited?.toSignificant(6)}
                       </Text>
-                      <CurrencyLogo
-                        size="20px"
-                        style={{ marginLeft: '8px' }}
-                        currency={chainId === ChainId.BOBA_MAINNET ? BOBA : currency1}
-                      />
+                      <Text fontSize={16} fontWeight={500} color={'white'}>
+                        ($750)
+                      </Text>
                     </RowFixed>
                   ) : (
                     '-'
@@ -359,7 +407,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
 
                 <FixedHeightRow>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
-                    Your pool share:
+                    Your pool share
                   </Text>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
                     {poolTokenPercentage
@@ -368,14 +416,14 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   </Text>
                 </FixedHeightRow>
 
-                <FixedHeightRow>
+                {/* <FixedHeightRow>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
                     Your gains:
                   </Text>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
                     +$100
                   </Text>
-                </FixedHeightRow>
+                </FixedHeightRow> */}
               </>
             )}
 

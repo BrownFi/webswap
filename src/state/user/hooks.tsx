@@ -215,29 +215,26 @@ export function useGetListPairs(
   const pinnedPairs = useMemo(() => (chainId ? PINNED_PAIRS[chainId] ?? [] : []), [chainId])
 
   // pairs for every token against every base
-  const generatedPairs: [Token, Token][] = useMemo(
-    () =>
-      chainId
-        ? flatMap(Object.keys(tokens), tokenAddress => {
-            const token = tokens[tokenAddress]
-            // for each token on the current chain,
-            return (
-              // loop though all bases on the current chain
-              (BASES_TO_TRACK_LIQUIDITY_FOR[chainId] ?? [])
-                // to construct pairs of the given token with each base
-                .map(base => {
-                  if (base.address === token.address) {
-                    return null
-                  } else {
-                    return [base, token]
-                  }
-                })
-                .filter((p): p is [Token, Token] => p !== null)
-            )
+  const generatedPairs: [Token, Token][] = useMemo(() => {
+    if (!chainId) return []
+    return flatMap(Object.keys(tokens), tokenAddress => {
+      const token = tokens[tokenAddress]
+      // for each token on the current chain,
+      return (
+        // loop though all bases on the current chain
+        (BASES_TO_TRACK_LIQUIDITY_FOR[chainId] ?? [])
+          // to construct pairs of the given token with each base
+          .map(base => {
+            if (base.address === token.address) {
+              return null
+            } else {
+              return [base, token]
+            }
           })
-        : [],
-    [tokens, chainId]
-  )
+          .filter((p): p is [Token, Token] => p !== null)
+      )
+    })
+  }, [tokens, chainId])
 
   const userPairs: [Token, Token][] = useMemo(() => {
     if (!chainId || !savedSerializedPairs) return []
@@ -275,6 +272,7 @@ export function useGetListPairs(
 export function useTrackedTokenPairs(): [Token, Token][] {
   const { chainId } = useActiveWeb3React()
   const tokens = useAllTokens()
+
   // pairs saved by users
   const savedSerializedPairs = useSelector<AppState, AppState['user']['pairs']>(({ user: { pairs } }) => pairs)
 

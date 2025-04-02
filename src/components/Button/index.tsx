@@ -203,7 +203,7 @@ export const ButtonEmpty = styled(Base)`
   align-items: center;
 
   &:focus {
-    text-decoration: underline;
+    text-decoration: none;
   }
   &:hover {
     text-decoration: none;
