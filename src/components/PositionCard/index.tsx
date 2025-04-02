@@ -261,7 +261,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
         {showMore && (
           <AutoColumn gap="8px">
             <>
-              <h2 className="text-[20px] font-bold text-white" style={{ fontFamily: 'Russo One' }}>
+              <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
                 Pool stats
               </h2>
               <FixedHeightRow>
@@ -293,7 +293,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <div className="flex items-center gap-2">
                   <CurrencyLogo currency={pair.token0} />
                   <Text fontSize={16} fontWeight={500} color={'white'}>
-                    {pair.token0.symbol}
+                    {getTokenSymbol(currency0, chainId)}
                   </Text>
                 </div>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
@@ -304,7 +304,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <div className="flex items-center gap-2">
                   <CurrencyLogo currency={chainId === ChainId.BOBA_MAINNET ? BOBA : pair.token1} />
                   <Text fontSize={16} fontWeight={500} color={'white'}>
-                    {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : pair.token1.symbol}
+                    {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : getTokenSymbol(currency1, chainId)}
                   </Text>
                 </div>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
@@ -344,7 +344,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
             {account && (
               <>
                 <div className="w-full h-[1px] my-[8px] bg-white opacity-[0.1]" />
-                <h2 className="text-[20px] font-bold text-white" style={{ fontFamily: 'Russo One' }}>
+                <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
                   Your position
                 </h2>
 
