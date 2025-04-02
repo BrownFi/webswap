@@ -297,7 +297,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   </Text>
                 </div>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {pair.reserve0.toSignificant(4)} ($750,000)
+                  {pair.reserve0.toSignificant(4)} <span className="text-[#949494]">($750,000)</span>
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -308,7 +308,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   </Text>
                 </div>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {pair.reserve1.toSignificant(4)} ($500,000)
+                  {pair.reserve1.toSignificant(4)} <span className="text-[#949494]">($500,000)</span>
                 </Text>
               </FixedHeightRow>
 
@@ -379,7 +379,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       <Text fontSize={16} fontWeight={500} color={'white'}>
                         {token0Deposited?.toSignificant(6)}
                       </Text>
-                      <Text fontSize={16} fontWeight={500} color={'white'}>
+                      <Text fontSize={16} fontWeight={500} color={'#949494'}>
                         ($750)
                       </Text>
                     </RowFixed>
@@ -400,7 +400,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       <Text fontSize={16} fontWeight={500} color={'white'}>
                         {token1Deposited?.toSignificant(6)}
                       </Text>
-                      <Text fontSize={16} fontWeight={500} color={'white'}>
+                      <Text fontSize={16} fontWeight={500} color={'#949494'}>
                         ($750)
                       </Text>
                     </RowFixed>
