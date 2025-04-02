@@ -52,7 +52,7 @@ const StyledMenuButton = styled.button`
 
   display: flex;
   align-items: center;
-  justify: flex-start;
+  justify-items: flex-start;
 
   :hover,
   :focus {

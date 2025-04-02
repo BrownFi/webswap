@@ -123,6 +123,7 @@
     "@react-spring/web": "^9.7.4",
     "@starknet-react/chains": "^0.1.7",
     "@starknet-react/core": "^2.3.0",
+    "@tanstack/react-query": "^5.71.3",
     "@uniswap/default-token-list": "^2.0.0",
     "@uniswap/sdk": "^3.0.3",
     "@walletconnect/ethereum-provider": "2.8.1",

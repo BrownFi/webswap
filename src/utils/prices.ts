@@ -84,3 +84,11 @@ export function formatExecutionPrice(trade?: Trade, inverted?: boolean): string 
         trade.route.chainId
       )} / ${getTokenSymbol(trade.inputAmount?.currency, trade.route.chainId)}`
 }
+
+export function formatPrice(price: number) {
+  const formattedNumber = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(price)
+  return formattedNumber
+}

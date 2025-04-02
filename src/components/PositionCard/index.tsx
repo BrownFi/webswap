@@ -25,6 +25,9 @@ import { RowBetween, RowFixed, AutoRow } from '../Row'
 import { Dots } from '../swap/styleds'
 import { BIG_INT_ZERO } from '../../constants'
 import { getTokenSymbol } from 'utils'
+import { useQuery } from '@tanstack/react-query'
+import { dexscreenerService } from 'services'
+import { formatPrice } from 'utils/prices'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -167,6 +170,22 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
 
+  const { data: token0Price = 0 } = useQuery({
+    queryKey: ['getTokenPrice', pair.token0.address],
+    queryFn: () => {
+      return dexscreenerService.getTokenPrice(pair.token0.address)
+    }
+  })
+  const { data: token1Price = 0 } = useQuery({
+    queryKey: ['getTokenPrice', pair.token1.address],
+    queryFn: () => {
+      return dexscreenerService.getTokenPrice(pair.token1.address)
+    }
+  })
+
+  const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
+  const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
+
   const [showMore, setShowMore] = useState(false)
 
   const userDefaultPoolBalance = useTokenBalance(account ?? undefined, pair.liquidityToken)
@@ -269,7 +288,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   TVL
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  $1,250,000
+                  {formatPrice(pool0Price + pool1Price)}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -297,7 +316,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   </Text>
                 </div>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {pair.reserve0.toSignificant(4)} <span className="text-[#949494]">($750,000)</span>
+                  {pair.reserve0.toSignificant(4)} <span className="text-[#949494]">({formatPrice(pool0Price)})</span>
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -308,7 +327,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   </Text>
                 </div>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {pair.reserve1.toSignificant(4)} <span className="text-[#949494]">($500,000)</span>
+                  {pair.reserve1.toSignificant(4)} <span className="text-[#949494]">({formatPrice(pool1Price)})</span>
                 </Text>
               </FixedHeightRow>
 
@@ -368,19 +387,19 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   </FixedHeightRow>
                 )} */}
                 <FixedHeightRow>
-                  <RowFixed>
+                  <RowFixed className="gap-2">
+                    <CurrencyLogo currency={currency0} />
                     <Text fontSize={16} fontWeight={500} color={'white'}>
                       Pooled {getTokenSymbol(currency0, chainId)}
                     </Text>
                   </RowFixed>
                   {token0Deposited ? (
                     <RowFixed className="gap-2">
-                      <CurrencyLogo size="20px" currency={currency0} />
                       <Text fontSize={16} fontWeight={500} color={'white'}>
                         {token0Deposited?.toSignificant(6)}
                       </Text>
                       <Text fontSize={16} fontWeight={500} color={'#949494'}>
-                        ($750)
+                        {formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))}
                       </Text>
                     </RowFixed>
                   ) : (
@@ -389,19 +408,19 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 </FixedHeightRow>
 
                 <FixedHeightRow>
-                  <RowFixed>
+                  <RowFixed className="gap-2">
+                    <CurrencyLogo currency={chainId === ChainId.BOBA_MAINNET ? BOBA : currency1} />
                     <Text fontSize={16} fontWeight={500} color={'white'}>
                       Pooled {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : getTokenSymbol(currency1, chainId)}
                     </Text>
                   </RowFixed>
                   {token1Deposited ? (
                     <RowFixed className="gap-2">
-                      <CurrencyLogo size="20px" currency={chainId === ChainId.BOBA_MAINNET ? BOBA : currency1} />
                       <Text fontSize={16} fontWeight={500} color={'white'}>
                         {token1Deposited?.toSignificant(6)}
                       </Text>
                       <Text fontSize={16} fontWeight={500} color={'#949494'}>
-                        ($750)
+                        {formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))}
                       </Text>
                     </RowFixed>
                   ) : (

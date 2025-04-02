@@ -18,6 +18,8 @@ import UserUpdater from './state/user/updater'
 import ThemeProvider, { FixedGlobalStyle, ThemedGlobalStyle } from './theme'
 import getLibrary from './utils/getLibrary'
 import { StarknetProvider } from './starknet-provider'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from 'services/queryClient'
 
 const Web3ProviderNetwork = createWeb3ReactRoot(NetworkContextName)
 
@@ -46,13 +48,15 @@ root.render(
         <StarknetProvider>
           <Blocklist>
             <Provider store={store}>
-              <Updaters />
-              <ThemeProvider>
-                <ThemedGlobalStyle />
-                <HashRouter>
-                  <App />
-                </HashRouter>
-              </ThemeProvider>
+              <QueryClientProvider client={queryClient}>
+                <Updaters />
+                <ThemeProvider>
+                  <ThemedGlobalStyle />
+                  <HashRouter>
+                    <App />
+                  </HashRouter>
+                </ThemeProvider>
+              </QueryClientProvider>
             </Provider>
           </Blocklist>
         </StarknetProvider>
