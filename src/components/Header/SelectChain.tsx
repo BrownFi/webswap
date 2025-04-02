@@ -263,7 +263,7 @@ export default function SelectChain() {
       handleSelectChain(Number(savedChain))
       return
     }
-    handleSelectChain(ChainId.VICTION_MAINNET)
+    handleSelectChain(ChainId.BERA_MAINNET)
   }, [savedChain])
 
   return (
