@@ -5,13 +5,19 @@ import { Link } from 'react-router-dom'
 // import { SwapPoolTabs } from '../../components/NavigationTabs'
 
 import FullPositionCard from '../../components/PositionCard'
-import { useUserHasLiquidityInAllTokens } from '../../data/V1'
+// import { useUserHasLiquidityInAllTokens } from '../../data/V1'
 import { useTokenBalancesWithLoadingIndicator } from '../../state/wallet/hooks'
-import { StyledInternalLink, TYPE, HideSmall } from '../../theme'
+import {
+  // StyledInternalLink,
+  TYPE,
+  HideSmall
+} from '../../theme'
 import { Text } from 'rebass'
-import Card from '../../components/Card'
 import { RowBetween } from '../../components/Row'
-import { ButtonPrimary, ButtonSecondary } from '../../components/Button'
+import {
+  ButtonPrimary
+  //  ButtonSecondary
+} from '../../components/Button'
 import { AutoColumn } from '../../components/Column'
 
 import { useActiveWeb3React } from '../../hooks'
@@ -43,12 +49,12 @@ const ResponsiveButtonPrimary = styled(ButtonPrimary)`
   `};
 `
 
-const ResponsiveButtonSecondary = styled(ButtonSecondary)`
-  width: fit-content;
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    width: 48%;
-  `};
-`
+// const ResponsiveButtonSecondary = styled(ButtonSecondary)`
+//   width: fit-content;
+//   ${({ theme }) => theme.mediaWidth.upToSmall`
+//     width: 48%;
+//   `};
+// `
 
 const EmptyProposals = styled.div`
   border: 1px solid ${({ theme }) => theme.text4};
@@ -70,6 +76,7 @@ export default function Pool() {
     () => trackedTokenPairs.map(tokens => ({ liquidityToken: toV2LiquidityToken(tokens), tokens })),
     [trackedTokenPairs]
   )
+
   const liquidityTokens = useMemo(() => tokenPairsWithLiquidityTokens.map(tpwlt => tpwlt.liquidityToken), [
     tokenPairsWithLiquidityTokens
   ])
@@ -93,7 +100,7 @@ export default function Pool() {
 
   const allV2PairsWithLiquidity = v2Pairs.map(([, pair]) => pair).filter((v2Pair): v2Pair is Pair => Boolean(v2Pair))
 
-  const hasV1Liquidity = useUserHasLiquidityInAllTokens()
+  // const hasV1Liquidity = useUserHasLiquidityInAllTokens()
 
   // show liquidity even if its deposited in rewards contract
   const stakingInfo = useStakingInfo()
@@ -123,11 +130,11 @@ export default function Pool() {
                 </TYPE.mediumHeader>
               </HideSmall>
               <div className="flex items-center justify-end flex-1 w-full lg:w-auto">
-                <ResponsiveButtonSecondary as={Link} to="/create/ETH" className="!h-[40px] mr-[16px] !px-[18px] !py-0">
+                {/* <ResponsiveButtonSecondary as={Link} to="/create/ETH" className="!h-[40px] mr-[16px] !px-[18px] !py-0">
                   <Text fontWeight={700} fontSize={14} color={'white'}>
                     Create a pair
                   </Text>
-                </ResponsiveButtonSecondary>
+                </ResponsiveButtonSecondary> */}
                 <ResponsiveButtonPrimary id="join-pool-button" as={Link} to="/add/ETH" className="!h-[40px]">
                   <Text fontWeight={700} fontSize={14} color={'white'}>
                     Add Liquidity
@@ -136,13 +143,7 @@ export default function Pool() {
               </div>
             </TitleRow>
 
-            {false ? (
-              <Card padding="40px">
-                <TYPE.body color={theme.text3} textAlign="center">
-                  Connect to a wallet to view your liquidity.
-                </TYPE.body>
-              </Card>
-            ) : v2IsLoading ? (
+            {v2IsLoading ? (
               <EmptyProposals>
                 <TYPE.body color={theme.text3} textAlign="center">
                   <Dots>Loading</Dots>
@@ -150,14 +151,6 @@ export default function Pool() {
               </EmptyProposals>
             ) : allV2PairsWithLiquidity?.length > 0 || stakingPairs?.length > 0 ? (
               <>
-                {/* <ButtonSecondary>
-                  <RowBetween>
-                    <ExternalLink href={'https://uniswap.info/account/' + account}>
-                      Account analytics and accrued fees
-                    </ExternalLink>
-                    <span> ↗</span>
-                  </RowBetween>
-                </ButtonSecondary> */}
                 {v2PairsWithoutStakedAmount.map(v2Pair => (
                   <FullPositionCard key={v2Pair.liquidityToken.address} pair={v2Pair} />
                 ))}
@@ -180,14 +173,14 @@ export default function Pool() {
               </EmptyProposals>
             )}
 
-            <AutoColumn justify={'center'} gap="md">
+            {/* <AutoColumn justify={'center'} gap="md">
               <Text textAlign="center" fontSize={14} style={{ padding: '.5rem 0 .5rem 0' }} color={'white'}>
                 {hasV1Liquidity ? 'Uniswap V1 liquidity found!' : "Don't see a pool you joined?"}{' '}
                 <StyledInternalLink id="import-pool-link" to={hasV1Liquidity ? '/migrate/v1' : '/find'}>
                   {hasV1Liquidity ? 'Migrate now.' : 'Import it.'}
                 </StyledInternalLink>
               </Text>
-            </AutoColumn>
+            </AutoColumn> */}
           </AutoColumn>
         </AutoColumn>
       </PageWrapper>

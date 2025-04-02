@@ -195,7 +195,7 @@ export default function SettingsTab() {
             <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
               Interface Settings
             </Text>
-            <RowBetween>
+            {/* <RowBetween>
               <RowFixed>
                 <TYPE.black fontWeight={500} fontSize={16} color={theme.white}>
                   Toggle Expert Mode
@@ -217,7 +217,7 @@ export default function SettingsTab() {
                       }
                 }
               />
-            </RowBetween>
+            </RowBetween> */}
             <RowBetween>
               <RowFixed>
                 <TYPE.black fontWeight={500} fontSize={16} color={theme.white}>

@@ -6,6 +6,12 @@ import { useModalOpen, useToggleModal } from '../../state/application/hooks'
 import down from '../../assets/svg/arrow_drop_down.svg'
 import check from '../../assets/svg/check.svg'
 import Web3 from 'web3'
+// import auroraIcon from '../../assets/images/aurora.png'
+// import metisIcon from '../../assets/images/metis.png'
+import u2uIcon from '../../assets/images/u2u.jpg'
+// import arbIcon from '../../assets/images/arb.png'
+// import opIcon from '../../assets/images/op.png'
+import bobaIcon from '../../assets/images/boba.svg'
 import beraIcon from '../../assets/images/bera.png'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
@@ -118,6 +124,36 @@ const MenuItem = styled.div`
 `
 
 const CHAINS: any = {
+  [ChainId.VICTION_MAINNET]: {
+    name: 'Viction Mainnet',
+    chainId: ChainId.VICTION_MAINNET,
+    icon: viction
+  },
+  // [ChainId.METIS_MAINNET]: {
+  //   name: 'Metis',
+  //   chainId: ChainId.METIS_MAINNET,
+  //   icon: metisIcon
+  // },
+  [ChainId.U2U_MAINNET]: {
+    name: 'U2U Mainnet',
+    chainId: ChainId.U2U_MAINNET,
+    icon: u2uIcon
+  },
+  // [ChainId.ARBITRUM_MAINNET]: {
+  //   name: 'Arbitrum',
+  //   chainId: ChainId.ARBITRUM_MAINNET,
+  //   icon: arbIcon
+  // },
+  // [ChainId.OP_MAINNET]: {
+  //   name: 'Optimism',
+  //   chainId: ChainId.OP_MAINNET,
+  //   icon: opIcon
+  // },
+  [ChainId.BOBA_MAINNET]: {
+    name: 'Boba',
+    chainId: ChainId.BOBA_MAINNET,
+    icon: bobaIcon
+  },
   [ChainId.BERA_MAINNET]: {
     name: 'Bera',
     chainId: ChainId.BERA_MAINNET,

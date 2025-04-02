@@ -7,17 +7,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
     - uses: actions/checkout@v3
 
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '20'
+        node-version: '18'
 
     - name: Install dependencies
-      run: npm ci -f
+      run: npm i --force
 
     - name: Build static site
       run: npm run build
@@ -36,8 +36,8 @@ jobs:
         fi
 
     - name: Deploy to Cloudflare Pages
-      uses: cloudflare/wrangler-action@v3
-      with:
-        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        command: pages deploy build/ --project-name=${{ steps.set-project.outputs.project_name }}
+      run: |
+        npx --yes wrangler pages publish build/ --project-name=${{ steps.set-project.outputs.project_name }}
+      env:
+        CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
