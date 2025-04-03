@@ -450,21 +450,21 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               </>
             )}
 
-            {userDefaultPoolBalance && JSBI.greaterThan(userDefaultPoolBalance.raw, BIG_INT_ZERO) && (
-              <RowBetween marginTop="10px">
-                <ButtonPrimary
-                  padding="8px"
-                  borderRadius="8px"
-                  as={Link}
-                  to={`/add/${currencyId(currency0)}/${
-                    chainId === ChainId.BOBA_MAINNET
-                      ? '0xa18bF3994C0Cc6E3b63ac420308E5383f53120D7'
-                      : currencyId(currency1)
-                  }`}
-                  width="48%"
-                >
-                  Add
-                </ButtonPrimary>
+            <RowBetween marginTop="10px">
+              <ButtonPrimary
+                padding="8px"
+                borderRadius="8px"
+                as={Link}
+                to={`/add/${currencyId(currency0)}/${
+                  chainId === ChainId.BOBA_MAINNET
+                    ? '0xa18bF3994C0Cc6E3b63ac420308E5383f53120D7'
+                    : currencyId(currency1)
+                }`}
+                width="48%"
+              >
+                Add
+              </ButtonPrimary>
+              {userDefaultPoolBalance && JSBI.greaterThan(userDefaultPoolBalance.raw, BIG_INT_ZERO) ? (
                 <ButtonPrimary
                   padding="8px"
                   borderRadius="8px"
@@ -478,8 +478,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 >
                   Remove
                 </ButtonPrimary>
-              </RowBetween>
-            )}
+              ) : (
+                <ButtonPrimary disabled padding="8px" borderRadius="8px" width="48%">
+                  Remove
+                </ButtonPrimary>
+              )}
+            </RowBetween>
+
             {stakedBalance && JSBI.greaterThan(stakedBalance.raw, BIG_INT_ZERO) && (
               <ButtonPrimary
                 padding="8px"
