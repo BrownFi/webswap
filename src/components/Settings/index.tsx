@@ -221,13 +221,13 @@ export default function SettingsTab() {
             <RowBetween>
               <RowFixed>
                 <TYPE.black fontWeight={500} fontSize={16} color={theme.white}>
-                  Disable Multihops
+                  Multihops
                 </TYPE.black>
-                <QuestionHelper text="Restricts swaps to direct pairs only." />
+                <QuestionHelper text="Enable swaps through multiple token pairs." />
               </RowFixed>
               <Toggle
                 id="toggle-disable-multihop-button"
-                isActive={singleHopOnly}
+                isActive={!singleHopOnly}
                 toggle={() => {
                   setSingleHopOnly(!singleHopOnly)
                 }}
