@@ -10,7 +10,7 @@ import { useActiveWeb3React } from '../../hooks'
 import { useCurrency } from '../../hooks/Tokens'
 import { useTradeExactIn, useTradeExactOut } from '../../hooks/Trades'
 import useParsedQueryString from '../../hooks/useParsedQueryString'
-import { isAddress, isNativeCurrency } from '../../utils'
+import { getNativeToken, isAddress, isNativeCurrency } from '../../utils'
 import { AppDispatch, AppState } from '../index'
 import { useCurrencyBalances } from '../wallet/hooks'
 import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies, typeInput } from './actions'
@@ -117,7 +117,7 @@ export function useDerivedSwapInfo(): {
   loadingExactIn: boolean
   loadingExactOut: boolean
 } {
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
 
   const toggledVersion = useToggledVersion()
 
@@ -219,7 +219,11 @@ export function useDerivedSwapInfo(): {
   ]
 
   if (balanceIn && amountIn && balanceIn.lessThan(amountIn)) {
-    inputError = 'Insufficient ' + amountIn.currency.symbol + ' balance'
+    let symbol = amountIn.currency.symbol
+    if (chainId && symbol === ETHER.symbol) {
+      symbol = getNativeToken(chainId)
+    }
+    inputError = 'Insufficient ' + symbol + ' balance'
   }
 
   const compareOut =
