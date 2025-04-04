@@ -211,7 +211,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
         ]
       : [undefined, undefined]
 
-  const backgroundColor = useColor(pair?.token0)
+  const backgroundColor = useColor(pair.token0)
   const BOBA: Currency = {
     decimals: 18,
     symbol: 'BOBA',

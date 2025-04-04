@@ -35,11 +35,11 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
                 ? `${slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4)} ${getTokenSymbol(
                     trade.outputAmount?.currency,
                     chainId
-                  )}` ?? '-'
+                  )}` || '-'
                 : `${slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4)} ${getTokenSymbol(
                     trade.inputAmount?.currency,
                     chainId
-                  )}` ?? '-'}
+                  )}` || '-'}
             </TYPE.black>
           </RowFixed>
         </RowBetween>

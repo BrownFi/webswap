@@ -337,7 +337,6 @@ export default function Swap({ history }: RouteComponentProps) {
                   </a>
                   {/* <ArrowDown
                     size="16"
-                    
                     color={currencies[Field.INPUT] && currencies[Field.OUTPUT] ? theme.primary1 : theme.text2}
                   /> */}
                 </ArrowWrapper>
