@@ -261,7 +261,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   {/* Trading Fee */}
                   0.3%
                 </ButtonSecondary>
-                <Text className="whitespace-nowrap text-[#27E3AB]">(Pool APR: 95%)</Text>
+                <Text className="whitespace-nowrap text-[#27E3AB]">Pool APR: {Number(poolStats?.apr || 0) * 100}%</Text>
               </div>
             </div>
           </AutoRow>
