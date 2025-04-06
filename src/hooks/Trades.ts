@@ -90,7 +90,7 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
   )
 }
 
-const MAX_HOPS = 1
+const MAX_HOPS = 3
 
 type TradeExactIn = {
   trade: Trade | null
