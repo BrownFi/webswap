@@ -26,7 +26,7 @@ import { Dots } from '../swap/styleds'
 import { BIG_INT_ZERO } from '../../constants'
 import { getTokenSymbol } from 'utils'
 import { useQuery } from '@tanstack/react-query'
-import { dexscreenerService } from 'services'
+import { dexscreenerService, internalService } from 'services'
 import { formatPrice } from 'utils/prices'
 
 export const FixedHeightRow = styled(RowBetween)`
@@ -183,6 +183,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
     }
   })
 
+  const { data: poolStats } = useQuery({
+    queryKey: ['getPoolStats', pair.liquidityToken.address],
+    queryFn: () => {
+      return internalService.getPoolStats(pair.liquidityToken.address)
+    }
+  })
+
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
 
@@ -296,7 +303,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Volume (24h)
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  $54,000,000
+                  {formatPrice(Number(poolStats?.volume24h || 0))}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -304,7 +311,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Volume (7d)
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  $350,000,000
+                  {formatPrice(Number(poolStats?.volume7d || 0))}
                 </Text>
               </FixedHeightRow>
 
@@ -336,7 +343,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Revenue (Incremental)
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  $2,500,000
+                  {formatPrice(Number(poolStats?.revenue || 0))}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -344,7 +351,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Pool ARP
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  95%
+                  {Number(poolStats?.apr || 0) * 100}%
                 </Text>
               </FixedHeightRow>
 
