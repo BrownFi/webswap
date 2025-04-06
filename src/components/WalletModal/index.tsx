@@ -273,7 +273,7 @@ export default function WalletModal({
       const option = SUPPORTED_WALLETS[key]
       // check for mobile options
       if (isMobile) {
-        //disable portis on mobile for now
+        // disable portis on mobile for now
         if (option.connector === portis) {
           return null
         }
@@ -315,7 +315,7 @@ export default function WalletModal({
               />
             )
           } else {
-            return null //dont want to return install twice
+            return null // dont want to return install twice
           }
         }
         // don't return metamask if injected provider isn't metamask
@@ -344,7 +344,7 @@ export default function WalletModal({
             color={option.color}
             link={option.href}
             header={option.name}
-            subheader={null} //use option.descriptio to bring back multi-line
+            subheader={null} //use option.description to bring back multi-line
             icon={require('../../assets/images/' + option.iconName)}
           />
         )
@@ -397,9 +397,9 @@ export default function WalletModal({
             Back
           </HoverText>
         ) : (
-          <HoverText className="text-[24px] text-white mb-[20px]" style={{ fontFamily: 'Russo One' }}>
+          <div className="text-[24px] text-white mb-[20px]" style={{ fontFamily: 'Russo One' }}>
             Connect to a wallet
-          </HoverText>
+          </div>
         )}
         <ContentWrapper>
           {walletView === WALLET_VIEWS.PENDING ? (

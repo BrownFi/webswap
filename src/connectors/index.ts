@@ -4,10 +4,14 @@ import { WalletConnectConnector } from './WalletConnector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 import { PortisConnector } from '@web3-react/portis-connector'
 
+import { berachain, boba, viction } from 'wagmi/chains'
+
 import { FortmaticConnector } from './Fortmatic'
 import { NetworkConnector } from './NetworkConnector'
 import UNISWAP_LOGO_URL from '../assets/svg/logo.svg'
 import { ChainId } from '@brownfi/sdk'
+import { getDefaultConfig } from '@rainbow-me/rainbowkit'
+import { Chain, defineChain } from 'viem'
 
 // const NETWORK_URL = process.env.REACT_APP_NETWORK_URL
 const NETWORK_URL = 'https://rpc.viction.xyz'
@@ -134,4 +138,32 @@ export const walletlink = new WalletLinkConnector({
   url: NETWORK_URL,
   appName: 'Brownfi',
   appLogoUrl: UNISWAP_LOGO_URL
+})
+
+// @ts-ignore
+const u2uMainnet: Chain = defineChain({
+  id: 39,
+  name: 'U2U Network',
+  nativeCurrency: { decimals: 18, name: 'U2U', symbol: 'U2U' },
+  rpcUrls: {
+    default: {
+      http: ['https://rpc-mainnet.u2u.xyz']
+    }
+  },
+  blockExplorers: {
+    default: { name: 'U2U Scan', url: 'https://u2uscan.xyz' }
+  },
+  iconUrl: require('assets/images/u2u.jpg')
+})
+
+// @ts-ignore
+boba.iconUrl = require('assets/images/boba.svg').default
+// @ts-ignore
+viction.iconUrl = require('assets/images/viction.png')
+
+export const wagmiConfig = getDefaultConfig({
+  appName: 'Brownfi',
+  chains: [berachain, boba, viction, u2uMainnet],
+  projectId: '3441811a50334d46eef9f2435cadee36',
+  ssr: false
 })

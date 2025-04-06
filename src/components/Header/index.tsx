@@ -27,10 +27,11 @@ import Web3Status from '../Web3Status'
 // import { Dots } from '../swap/styleds'
 // import usePrevious from '../../hooks/usePrevious'
 import SelectChain from './SelectChain'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 
 const HeaderFrame = styled.div`
   display: grid;
-  grid-template-columns: 1fr 120px;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   justify-content: space-between;
   align-items: center;
@@ -309,18 +310,24 @@ export default function Header() {
           </StyledNavLink>
         </HeaderLinks>
       </HeaderRow>
-      <HeaderControls>
-        <div className="flex-1">
-          <SelectChain />
-        </div>
 
-        <HeaderElement className="flex-1">
-          {/* <HideSmall>
+      {true ? (
+        <HeaderControls>
+          <ConnectButton />
+        </HeaderControls>
+      ) : (
+        <HeaderControls>
+          <div className="flex-1">
+            <SelectChain />
+          </div>
+
+          <HeaderElement className="flex-1">
+            {/* <HideSmall>
             {chainId && NETWORK_LABELS[chainId] && (
               <NetworkCard title={NETWORK_LABELS[chainId]}>{NETWORK_LABELS[chainId]}</NetworkCard>
-            )} 
+            )}
           </HideSmall>*/}
-          {/* {availableClaim && !showClaimPopup && (
+            {/* {availableClaim && !showClaimPopup && (
             <UNIWrapper onClick={toggleClaimModal}>
               <UNIAmount active={!!account && !availableClaim} style={{ pointerEvents: 'auto' }}>
                 <TYPE.white padding="0 2px">
@@ -356,22 +363,23 @@ export default function Header() {
               <CardNoise />
             </UNIWrapper>
           )} */}
-          <AccountElement active={!!account} style={{ pointerEvents: 'auto' }}>
-            {/* {account && userEthBalance ? (
+            <AccountElement active={!!account} style={{ pointerEvents: 'auto' }}>
+              {/* {account && userEthBalance ? (
               <BalanceText style={{ flexShrink: 0 }} pl="0.75rem" pr="0.5rem" fontWeight={500}>
                 {userEthBalance?.toSignificant(4)} ETH
               </BalanceText>
             ) : null} */}
-            <Web3Status />
-          </AccountElement>
-        </HeaderElement>
-        {/* <HeaderElementWrap>
+              <Web3Status />
+            </AccountElement>
+          </HeaderElement>
+          {/* <HeaderElementWrap>
           <StyledMenuButton onClick={() => toggleDarkMode()}>
             {darkMode ? <Moon size={20} /> : <Sun size={20} />}
           </StyledMenuButton>
           <Menu />
         </HeaderElementWrap> */}
-      </HeaderControls>
+        </HeaderControls>
+      )}
     </HeaderFrame>
   )
 }
