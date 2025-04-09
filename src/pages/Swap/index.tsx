@@ -79,6 +79,11 @@ export default function Swap({ history }: RouteComponentProps) {
   // toggle wallet when disconnected
   const toggleWalletModal = useWalletModalToggle()
 
+  const openConnectWallet = () => {
+    // @ts-ignore
+    document.querySelector('[data-testid="rk-connect-button"]')?.click()
+  }
+
   // for expert mode
   const toggleSettings = useToggleSettingsMenu()
   const [isExpertMode] = useExpertModeManager()
@@ -418,7 +423,7 @@ export default function Swap({ history }: RouteComponentProps) {
                 <TYPE.main mb="4px">Unsupported Asset</TYPE.main>
               </ButtonPrimary>
             ) : !account ? (
-              <ButtonPrimary onClick={toggleWalletModal}>
+              <ButtonPrimary onClick={openConnectWallet}>
                 <img src={connectWalletIcon} alt="icon" className="w-[24px] mr-[8px]" />
                 Connect Wallet
               </ButtonPrimary>
