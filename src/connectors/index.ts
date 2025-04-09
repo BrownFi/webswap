@@ -13,8 +13,6 @@ import { ChainId } from '@brownfi/sdk'
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { Chain, defineChain } from 'viem'
 
-// const NETWORK_URL = process.env.REACT_APP_NETWORK_URL
-const NETWORK_URL = 'https://rpc.viction.xyz'
 const SEPOLIA_URL = process.env.REACT_APP_SEPOLIA_URL
 const FORMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY
 const PORTIS_ID = process.env.REACT_APP_PORTIS_ID
@@ -32,7 +30,8 @@ const OP_MAINNET_URL = process.env.REACT_APP_OP_MAINNET_URL
 const BOBA_MAINNET_URL = process.env.REACT_APP_BOBA_MAINNET_URL
 const BERA_MAINNET_URL = process.env.REACT_APP_BERA_MAINNET_URL
 
-export const NETWORK_CHAIN_ID: number = ChainId.VICTION_MAINNET
+export const NETWORK_CHAIN_ID: number = ChainId.BERA_MAINNET
+export const NETWORK_URL = process.env.REACT_APP_BERA_MAINNET_URL
 
 if (typeof NETWORK_URL === 'undefined') {
   throw new Error(`REACT_APP_NETWORK_URL must be a defined environment variable`)
