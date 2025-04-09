@@ -96,8 +96,8 @@ export default function SwapModalFooter({
             </TYPE.black>
             <QuestionHelper text="Price impact is the difference between your trading price and oracle price." />
           </RowFixed>
-          <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.slippage || 0)}>
-            {trade ? formatStringToNumber(trade?.slippage) : '-'}%
+          <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
+            {trade ? formatStringToNumber(trade?.priceImpactK, 4) : '-'}%
           </ErrorText>
         </RowBetween>
         <RowBetween>

@@ -51,10 +51,18 @@ export declare class Trade {
     /**
      * The mid price after the trade executes assuming no slippage.
      */
+    nextMidPrice: Price | undefined;
     /**
      * The percent difference between the mid price before the trade and the trade execution price.
      */
     priceImpact: Percent | undefined;
+    /**
+     * Custom price impact by K
+     */
+    priceImpactK: number | undefined;
+    /**
+     * Custom price impact / slippage
+     */
     slippage: number | undefined;
     priceUpdate: string[];
     updateFee: number;
@@ -83,7 +91,7 @@ export declare class Trade {
      */
     maximumAmountIn(slippageTolerance: Percent): CurrencyAmount;
     static sleep(timeout: number): Promise<unknown>;
-    static getPath(input: Currency, pairs: Pair[]): Token[] | null;
+    static getPath(input: Currency, pairs: Pair[]): Token[];
     /**
      * Given a list of pairs, and a fixed amount in, returns the top `maxNumResults` trades that go from an input token
      * amount to an output token, making at most `maxHops` hops.
