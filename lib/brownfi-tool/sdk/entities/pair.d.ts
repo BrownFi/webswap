@@ -5,7 +5,7 @@ import { Token } from './token';
 export declare const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000000";
 export declare class Pair {
     readonly liquidityToken: Token;
-    private readonly tokenAmounts;
+    readonly tokenAmounts: [TokenAmount, TokenAmount];
     static getAddress(tokenA: Token, tokenB: Token): string;
     constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount);
     /**
@@ -36,7 +36,7 @@ export declare class Pair {
     get reserve1(): TokenAmount;
     reserveOf(token: Token): TokenAmount;
     getOutputAmount(inputAmount: TokenAmount): [TokenAmount, Pair];
-    getOutputAmountAsync(inputAmount: TokenAmount, path: Token[], chainId: ChainId, pairAddress: string, account: string): Promise<[TokenAmount, Pair, number, number, string[], number]>;
+    getOutputAmountAsync(inputAmount: TokenAmount, path: Token[], chainId: ChainId, pairs: Pair[], account: string): Promise<[TokenAmount, Pair, string[], number]>;
     getInputAmount(outputAmount: TokenAmount): [TokenAmount, Pair];
     getInputAmountAsync(outputAmount: TokenAmount, path: Token[], chainId: ChainId, pairAddress: string, account: string): Promise<[TokenAmount, Pair, number, number, string[], number]>;
     getLiquidityMinted(totalSupply: TokenAmount, tokenAmountA: TokenAmount, tokenAmountB: TokenAmount): TokenAmount;
