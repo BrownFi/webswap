@@ -139,13 +139,15 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
 type TradeExactOut = {
   trade: Trade | null
   loadingExactOut: boolean
+  isInsufficient?: boolean
 }
 /**
  * Returns the best trade for the token in to the exact amount of token out
  */
 export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: CurrencyAmount): TradeExactOut {
-  const [loading, setLoading] = useState(false)
   const [trade, setTrade] = useState<Trade | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [isInsufficient, setInsufficient] = useState(false)
 
   const allowedPairs = useAllCommonPairs(currencyIn, currencyAmountOut?.currency)
   const { account } = useActiveWeb3React()
@@ -154,7 +156,9 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
 
   useEffect(() => {
     const getTrade = async () => {
+      setTrade(null)
       setLoading(true)
+      setInsufficient(false)
       if (currencyIn && currencyAmountOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeOut = await Trade.bestTradeExactOut(
@@ -166,17 +170,25 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
               maxHops: 1,
               maxNumResults: 1
             }
-          )
+          ).catch(error => {
+            setInsufficient(error.message.includes('INSUFFICIENT'))
+          })
           setTrade(bestTradeOut?.[0] ?? null)
           return
         }
 
-        const bestTradeOut = await Trade.bestTradeExactOut(account ?? '', allowedPairs, currencyIn, currencyAmountOut)
+        const bestTradeOut = await Trade.bestTradeExactOut(
+          account ?? '',
+          allowedPairs,
+          currencyIn,
+          currencyAmountOut
+        ).catch(error => {
+          setInsufficient(error.message.includes('INSUFFICIENT'))
+        })
         setTrade(bestTradeOut?.[0] ?? null)
         setLoading(false)
         return
       }
-      setTrade(null)
       setLoading(false)
     }
 
@@ -191,7 +203,8 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
 
   return {
     trade: trade,
-    loadingExactOut: loading
+    loadingExactOut: loading,
+    isInsufficient: isInsufficient && !trade
   }
 }
 

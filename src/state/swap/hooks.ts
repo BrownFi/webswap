@@ -236,6 +236,10 @@ export function useDerivedSwapInfo(): {
     inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
   }
 
+  if (tradeOut.isInsufficient) {
+    inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
+  }
+
   return {
     currencies,
     currencyBalances,
