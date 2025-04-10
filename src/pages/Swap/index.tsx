@@ -39,7 +39,7 @@ import { LinkStyledButton, TYPE } from '../../theme'
 import { maxAmountSpend } from '../../utils/maxAmountSpend'
 import { computeTradePriceBreakdown, warningSeverity } from '../../utils/prices'
 import AppBody from '../AppBody'
-import { ClickableText } from '../Pool/styleds'
+import { ClickableText, Dots } from '../Pool/styleds'
 import Loader from '../../components/Loader'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
@@ -432,15 +432,12 @@ export default function Swap({ history }: RouteComponentProps) {
                 {wrapInputError ??
                   (wrapType === WrapType.WRAP ? 'Wrap' : wrapType === WrapType.UNWRAP ? 'Unwrap' : null)}
               </ButtonPrimary>
-            ) : noRoute && userHasSpecifiedInputOutput ? (
-              <GreyCard style={{ textAlign: 'center' }}>
-                <p className="mb-[4px] text-white font-bold opacity-[0.5]">Insufficient liquidity for this trade.</p>
-                {singleHopOnly && (
-                  <TYPE.main className="mb-[4px] !text-white font-bold opacity-[0.5]">
-                    Try enabling multi-hop trades.
-                  </TYPE.main>
-                )}
-              </GreyCard>
+            ) : noRoute && userHasSpecifiedInputOutput && !swapInputError ? (
+              <ButtonError disabled className="!mt-[38px]">
+                <Text fontSize={20} fontWeight={500}>
+                  <Dots>Loading</Dots>
+                </Text>
+              </ButtonError>
             ) : showApproveFlow ? (
               <RowBetween>
                 <ButtonConfirmed
@@ -506,7 +503,7 @@ export default function Swap({ history }: RouteComponentProps) {
                 id="swap-button"
                 disabled={!isValid || (priceImpactSeverity > 3 && !isExpertMode) || !!swapCallbackError}
                 error={isValid && priceImpactSeverity > 2 && !swapCallbackError}
-                className={swapInputError && '!h-auto min-h-[56px]'}
+                className={swapInputError && '!h-auto'}
               >
                 <Text fontSize={20} fontWeight={500}>
                   {swapInputError

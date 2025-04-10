@@ -40,7 +40,7 @@ const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: s
 const Loader = styled.div`
   border-width: 0.3rem;
   border-style: solid;
-  border-color: grey grey grey grey;
+  border-color: silver silver silver transparent;
   width: 1rem;
   height: 1rem;
   border-radius: 50%;
