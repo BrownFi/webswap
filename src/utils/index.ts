@@ -62,34 +62,34 @@ export function getEtherscanLink(
       prefix = 'https://explorer-testnet.soneium.org'
       break
     case ChainId.BASE_SEPOLIA:
-      prefix = 'https://sepolia.basescan.org/'
+      prefix = 'https://sepolia.basescan.org'
       break
     case ChainId.UNICHAIN_SEPOLIA:
-      prefix = 'https://unichain-sepolia.blockscout.com/'
+      prefix = 'https://unichain-sepolia.blockscout.com'
       break
     case ChainId.AURORA_TESTNET:
-      prefix = 'https://explorer.testnet.aurora.dev/'
+      prefix = 'https://explorer.testnet.aurora.dev'
       break
     case ChainId.METIS_MAINNET:
-      prefix = 'https://explorer.metis.io/'
+      prefix = 'https://explorer.metis.io'
       break
     case ChainId.TAIKO_TESTNET:
-      prefix = 'https://hekla.taikoexplorer.com/'
+      prefix = 'https://hekla.taikoexplorer.com'
       break
     case ChainId.U2U_MAINNET:
-      prefix = 'https://u2uscan.xyz/'
+      prefix = 'https://u2uscan.xyz'
       break
     case ChainId.ARBITRUM_MAINNET:
-      prefix = 'https://arbiscan.io/'
+      prefix = 'https://arbiscan.io'
       break
     case ChainId.OP_MAINNET:
-      prefix = 'https://optimistic.etherscan.io/'
+      prefix = 'https://optimistic.etherscan.io'
       break
     case ChainId.BOBA_MAINNET:
-      prefix = 'https://bobascan.com/'
+      prefix = 'https://bobascan.com'
       break
     case ChainId.BERA_MAINNET:
-      prefix = 'https://beratrail.io/'
+      prefix = 'https://beratrail.io'
       break
     default:
       prefix = 'https://etherscan.io'

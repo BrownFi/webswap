@@ -6,12 +6,6 @@ import { Price } from './fractions/price';
 import { Pair } from './pair';
 import { Route } from './route';
 import { Token } from './token';
-/**
- * Returns the percent difference between the mid price and the execution price, i.e. price impact.
- * @param midPrice mid price before the trade
- * @param inputAmount the input amount of the trade
- * @param outputAmount the output amount of the trade
- */
 interface InputOutput {
     readonly inputAmount: CurrencyAmount;
     readonly outputAmount: CurrencyAmount;
@@ -35,7 +29,6 @@ export declare class Trade {
      * The type of the trade, either exact in or exact out.
      */
     tradeType: TradeType;
-    amount: CurrencyAmount;
     /**
      * The input amount for the trade assuming no slippage.
      */
@@ -79,7 +72,10 @@ export declare class Trade {
      */
     static exactOut(route: Route, amountOut: CurrencyAmount): Trade;
     constructor(route: Route, amount: CurrencyAmount, tradeType: TradeType);
-    init: (route: Route, amount: CurrencyAmount, tradeType: TradeType, account: string) => Promise<void>;
+    computeAmount: ({ value: amount, from: account }: {
+        value: CurrencyAmount;
+        from: string;
+    }) => Promise<void>;
     /**
      * Get the minimum amount that must be received from this trade for the given slippage tolerance
      * @param slippageTolerance tolerance of unfavorable slippage from the execution price of this trade
