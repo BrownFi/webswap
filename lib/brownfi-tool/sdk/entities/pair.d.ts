@@ -36,9 +36,9 @@ export declare class Pair {
     get reserve1(): TokenAmount;
     reserveOf(token: Token): TokenAmount;
     getOutputAmount(inputAmount: TokenAmount): [TokenAmount, Pair];
-    getOutputAmountAsync(inputAmount: TokenAmount, pairs: Pair[], path: Token[], chainId: ChainId, account: string): Promise<[TokenAmount, Pair, string[], number]>;
+    getOutputAmountAsync(inputAmount: TokenAmount, pairs: Pair[], path: Token[], chainId: ChainId, account: string): Promise<[TokenAmount, Pair, string[], number, number]>;
     getInputAmount(outputAmount: TokenAmount): [TokenAmount, Pair];
-    getInputAmountAsync(outputAmount: TokenAmount, pairs: Pair[], path: Token[], chainId: ChainId, account: string): Promise<[TokenAmount, Pair, string[], number]>;
+    getInputAmountAsync(outputAmount: TokenAmount, pairs: Pair[], path: Token[], chainId: ChainId, account: string): Promise<[TokenAmount, Pair, string[], number, number]>;
     getLiquidityMinted(totalSupply: TokenAmount, tokenAmountA: TokenAmount, tokenAmountB: TokenAmount): TokenAmount;
     getLiquidityValue(token: Token, totalSupply: TokenAmount, liquidity: TokenAmount, feeOn?: boolean, kLast?: BigintIsh): TokenAmount;
 }
