@@ -1,3 +1,4 @@
+import { Pair } from '@brownfi/sdk'
 import axios, { AxiosResponse } from 'axios'
 
 const client = axios.create({
@@ -7,7 +8,7 @@ const client = axios.create({
 type PoolStat = {
   amountToken0: string
   amountToken1: string
-  apr: string
+  apy: string
   revenue: string
   tvlAll: string
   volume24h: string
@@ -16,11 +17,11 @@ type PoolStat = {
   volumeAll: string
 }
 
-const getPoolStats = (poolAddress: string) =>
-  client.get(`/pool-stats/${poolAddress}`).then((data: AxiosResponse<PoolStat>) => {
+const getPoolStats = (pair: Pair) =>
+  client.get(`/pool-stats/${pair.token0.address}-${pair.token1.address}`).then((data: AxiosResponse<PoolStat>) => {
     return data.data
   })
 
-export default {
+export const internalService = {
   getPoolStats
 }

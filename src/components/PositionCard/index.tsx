@@ -105,17 +105,17 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
               </RowFixed>
               <RowFixed>
                 <Text fontWeight={500} fontSize={20} color={'white'}>
-                  {userPoolBalance ? userPoolBalance.toSignificant(4) : '-'}
+                  {userPoolBalance.toSignificant(4)}
                 </Text>
               </RowFixed>
             </FixedHeightRow>
             <AutoColumn gap="8px">
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  Your pool share:
+                  Your share:
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {poolTokenPercentage ? poolTokenPercentage.toFixed(6) + '%' : '-'}
+                  {poolTokenPercentage ? poolTokenPercentage.toSignificant(4) + '%' : '-'}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -186,20 +186,23 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const { data: poolStats } = useQuery({
     queryKey: ['getPoolStats', pair.liquidityToken.address],
     queryFn: () => {
-      return internalService.getPoolStats(pair.liquidityToken.address)
+      return internalService.getPoolStats(pair)
     }
   })
 
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
+  const tvl = pool0Price + pool1Price
 
   const [showMore, setShowMore] = useState(false)
 
-  const userDefaultPoolBalance = useTokenBalance(account ?? undefined, pair.liquidityToken)
+  const userPoolTokens = useTokenBalance(account ?? undefined, pair.liquidityToken)
   const totalPoolTokens = useTotalSupply(pair.liquidityToken)
 
+  const lpPrice = tvl / Number(totalPoolTokens?.toSignificant(4))
+
   // if staked balance balance provided, add to standard liquidity amount
-  const userPoolBalance = stakedBalance ? userDefaultPoolBalance?.add(stakedBalance) : userDefaultPoolBalance
+  const userPoolBalance = stakedBalance ? userPoolTokens?.add(stakedBalance) : userPoolTokens
 
   const poolTokenPercentage =
     !!userPoolBalance && !!totalPoolTokens && JSBI.greaterThanOrEqual(totalPoolTokens.raw, userPoolBalance.raw)
@@ -256,12 +259,15 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   {chainId === ChainId.BOBA_MAINNET && 'USD/BOBA'}
                 </Text>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <ButtonSecondary className="!w-fit !px-1">
                   {/* Trading Fee */}
                   0.3%
                 </ButtonSecondary>
-                <Text className="whitespace-nowrap text-[#27E3AB]">Pool APR: {Number(poolStats?.apr || 0) * 100}%</Text>
+                <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
+                <Text className="whitespace-nowrap text-[#27E3AB]">
+                  Pool APY: {+Number(poolStats?.apy).toFixed(2)}%
+                </Text>
               </div>
             </div>
           </AutoRow>
@@ -295,7 +301,23 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   TVL
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {formatPrice(pool0Price + pool1Price)}
+                  {formatPrice(tvl)}
+                </Text>
+              </FixedHeightRow>
+              <FixedHeightRow>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  Total LP Tokens
+                </Text>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  {totalPoolTokens?.toSignificant(4)}
+                </Text>
+              </FixedHeightRow>
+              <FixedHeightRow>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  Price per LP
+                </Text>
+                <Text fontSize={16} fontWeight={500} color={'white'}>
+                  {formatPrice(lpPrice)}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -338,23 +360,6 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 </Text>
               </FixedHeightRow>
 
-              <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
-                  Revenue (Incremental)
-                </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {formatPrice(Number(poolStats?.revenue || 0))}
-                </Text>
-              </FixedHeightRow>
-              <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
-                  Pool ARP
-                </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {Number(poolStats?.apr || 0) * 100}%
-                </Text>
-              </FixedHeightRow>
-
               {chainId === ChainId.SONIC_TESTNET && pair.token0.symbol === 'DIAM' && pair.token1.symbol === 'WS' && (
                 <Text fontWeight={500} fontSize={14} color={'#ffffff'} marginTop={'8px'}>
                   Pair S/Diamond = FTM/USD
@@ -378,21 +383,18 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   <Text fontSize={16} fontWeight={500} color={'white'}>
                     LP tokens
                   </Text>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
-                    {userPoolBalance ? userPoolBalance.toSignificant(4) : '-'}
-                  </Text>
+                  {userPoolBalance ? (
+                    <Text fontSize={16} fontWeight={500} color={'white'}>
+                      {userPoolBalance.toSignificant(4)}{' '}
+                      <span className="text-[#949494]">
+                        ({formatPrice(lpPrice * Number(userPoolBalance.toSignificant(4)))})
+                      </span>
+                    </Text>
+                  ) : (
+                    '-'
+                  )}
                 </FixedHeightRow>
 
-                {/* {stakedBalance && (
-                  <FixedHeightRow>
-                    <Text fontSize={16} fontWeight={500} color={'white'}>
-                      Pool tokens in rewards pool:
-                    </Text>
-                    <Text fontSize={16} fontWeight={500} color={'white'}>
-                      {stakedBalance.toSignificant(4)}
-                    </Text>
-                  </FixedHeightRow>
-                )} */}
                 <FixedHeightRow>
                   <RowFixed className="gap-2">
                     <CurrencyLogo currency={currency0} />
@@ -403,10 +405,10 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   {token0Deposited ? (
                     <RowFixed className="gap-2">
                       <Text fontSize={16} fontWeight={500} color={'white'}>
-                        {token0Deposited?.toSignificant(6)}
+                        {token0Deposited?.toSignificant(4)}
                       </Text>
                       <Text fontSize={16} fontWeight={500} color={'#949494'}>
-                        {formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))}
+                        ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})
                       </Text>
                     </RowFixed>
                   ) : (
@@ -424,10 +426,10 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   {token1Deposited ? (
                     <RowFixed className="gap-2">
                       <Text fontSize={16} fontWeight={500} color={'white'}>
-                        {token1Deposited?.toSignificant(6)}
+                        {token1Deposited?.toSignificant(4)}
                       </Text>
                       <Text fontSize={16} fontWeight={500} color={'#949494'}>
-                        {formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))}
+                        ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})
                       </Text>
                     </RowFixed>
                   ) : (
@@ -437,7 +439,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
 
                 <FixedHeightRow>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
-                    Your pool share
+                    Your share
                   </Text>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
                     {poolTokenPercentage
@@ -445,15 +447,6 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       : '-'}
                   </Text>
                 </FixedHeightRow>
-
-                {/* <FixedHeightRow>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
-                    Your gains:
-                  </Text>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
-                    +$100
-                  </Text>
-                </FixedHeightRow> */}
               </>
             )}
 
@@ -471,7 +464,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               >
                 Add
               </ButtonPrimary>
-              {userDefaultPoolBalance && JSBI.greaterThan(userDefaultPoolBalance.raw, BIG_INT_ZERO) ? (
+              {userPoolTokens && JSBI.greaterThan(userPoolTokens.raw, BIG_INT_ZERO) ? (
                 <ButtonPrimary
                   padding="8px"
                   borderRadius="8px"

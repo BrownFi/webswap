@@ -12,6 +12,6 @@ const getTokenPrice = (address: string) =>
     return Number(pair?.priceUsd) || 0
   })
 
-export default {
+export const dexscreenerService = {
   getTokenPrice
 }
