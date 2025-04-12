@@ -173,13 +173,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const { data: token0Price = 0 } = useQuery({
     queryKey: ['getTokenPrice', pair.token0.address],
     queryFn: () => {
-      return dexscreenerService.getTokenPrice(pair.token0.address)
+      return dexscreenerService.getTokenPrice(pair.token0.address, pair.token0.symbol)
     }
   })
   const { data: token1Price = 0 } = useQuery({
     queryKey: ['getTokenPrice', pair.token1.address],
     queryFn: () => {
-      return dexscreenerService.getTokenPrice(pair.token1.address)
+      return dexscreenerService.getTokenPrice(pair.token1.address, pair.token1.symbol)
     }
   })
 
