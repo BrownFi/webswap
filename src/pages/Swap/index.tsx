@@ -5,7 +5,7 @@ import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
 import AddressInputPanel from '../../components/AddressInputPanel'
 import { ButtonError, ButtonPrimary, ButtonConfirmed } from '../../components/Button'
-import Card, { GreyCard } from '../../components/Card'
+import Card from '../../components/Card'
 import Column, { AutoColumn } from '../../components/Column'
 import ConfirmSwapModal from '../../components/swap/ConfirmSwapModal'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
@@ -26,7 +26,7 @@ import useENSAddress from '../../hooks/useENSAddress'
 import { useSwapCallback } from '../../hooks/useSwapCallback'
 import useToggledVersion, { DEFAULT_VERSION, Version } from '../../hooks/useToggledVersion'
 import useWrapCallback, { WrapType } from '../../hooks/useWrapCallback'
-import { useToggleSettingsMenu, useWalletModalToggle } from '../../state/application/hooks'
+import { useToggleSettingsMenu } from '../../state/application/hooks'
 import { Field } from '../../state/swap/actions'
 import {
   useDefaultsFromURLSearch,
@@ -46,8 +46,8 @@ import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter
 import { isTradeBetter } from 'utils/trades'
 import { RouteComponentProps } from 'react-router-dom'
 import switchIcon from '../../assets/svg/switch.svg'
-import connectWalletIcon from '../../assets/svg/account_balance_wallet.svg'
 import { getTokenSymbol } from 'utils'
+import ConnectWallet from 'components/ConnectWallet'
 
 export default function Swap({ history }: RouteComponentProps) {
   const loadedUrlParams = useDefaultsFromURLSearch()
@@ -75,14 +75,6 @@ export default function Swap({ history }: RouteComponentProps) {
     })
 
   const theme = useContext(ThemeContext)
-
-  // toggle wallet when disconnected
-  const toggleWalletModal = useWalletModalToggle()
-
-  const openConnectWallet = () => {
-    // @ts-ignore
-    document.querySelector('[data-testid="rk-connect-button"]')?.click()
-  }
 
   // for expert mode
   const toggleSettings = useToggleSettingsMenu()
@@ -423,10 +415,7 @@ export default function Swap({ history }: RouteComponentProps) {
                 <TYPE.main mb="4px">Unsupported Asset</TYPE.main>
               </ButtonPrimary>
             ) : !account ? (
-              <ButtonPrimary onClick={openConnectWallet}>
-                <img src={connectWalletIcon} alt="icon" className="w-[24px] mr-[8px]" />
-                Connect Wallet
-              </ButtonPrimary>
+              <ConnectWallet />
             ) : showWrap ? (
               <ButtonPrimary disabled={Boolean(wrapInputError)} onClick={onWrap}>
                 {wrapInputError ??

@@ -6,7 +6,7 @@ import { ArrowDown, Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
-import { ButtonPrimary, ButtonLight, ButtonError, ButtonConfirmed } from '../../components/Button'
+import { ButtonPrimary, ButtonError, ButtonConfirmed } from '../../components/Button'
 import { BlueCard, RemoveLiqudityCard } from '../../components/Card'
 import { AutoColumn, ColumnCenter } from '../../components/Column'
 import TransactionConfirmationModal, { ConfirmationModalContent } from '../../components/TransactionConfirmationModal'
@@ -35,10 +35,10 @@ import { Dots } from '../../components/swap/styleds'
 import { useBurnActionHandlers } from '../../state/burn/hooks'
 import { useDerivedBurnInfo, useBurnState } from '../../state/burn/hooks'
 import { Field } from '../../state/burn/actions'
-import { useWalletModalToggle } from '../../state/application/hooks'
 import { useUserSlippageTolerance } from '../../state/user/hooks'
 import { ROUTER_ADDRESS } from '@brownfi/sdk'
 import { getNativeToken, getTokenSymbol, getWrappedNativeToken } from 'utils'
+import ConnectWallet from 'components/ConnectWallet'
 
 export const BOBA: Currency = {
   decimals: 18,
@@ -61,9 +61,6 @@ export default function RemoveLiquidity({
   ])
 
   const theme = useContext(ThemeContext)
-
-  // toggle wallet when disconnected
-  const toggleWalletModal = useWalletModalToggle()
 
   // burn state
   const { independentField, typedValue } = useBurnState()
@@ -584,7 +581,7 @@ export default function RemoveLiquidity({
             )}
             <div style={{ position: 'relative' }}>
               {!account ? (
-                <ButtonLight onClick={toggleWalletModal}>Connect Wallet</ButtonLight>
+                <ConnectWallet />
               ) : (
                 <RowBetween>
                   <ButtonConfirmed
