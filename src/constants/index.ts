@@ -250,7 +250,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'BNB',
       symbol: 'BNB'
     },
-    rpcUrls: [process.env.REACT_APP_NETWORK_URL]
+    rpcUrls: [process.env.REACT_APP_BSC_TESTNET_URL]
   },
   [ChainId.VICTION_TESTNET]: {
     chainId: ChainIdHex[ChainId.VICTION_TESTNET],

@@ -199,7 +199,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const userPoolTokens = useTokenBalance(account ?? undefined, pair.liquidityToken)
   const totalPoolTokens = useTotalSupply(pair.liquidityToken)
 
-  const lpPrice = tvl / Number(totalPoolTokens?.toSignificant(4))
+  const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(4)) || 1)
 
   // if staked balance balance provided, add to standard liquidity amount
   const userPoolBalance = stakedBalance ? userPoolTokens?.add(stakedBalance) : userPoolTokens
@@ -266,7 +266,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 </ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
                 <Text className="whitespace-nowrap text-[#27E3AB]">
-                  Pool APY: {+Number(poolStats?.apy).toFixed(2)}%
+                  Pool APY: {+Number(poolStats?.apy ?? 0).toFixed(2)}%
                 </Text>
               </div>
             </div>
