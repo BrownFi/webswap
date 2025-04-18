@@ -89,7 +89,7 @@ export function getEtherscanLink(
       prefix = 'https://bobascan.com'
       break
     case ChainId.BERA_MAINNET:
-      prefix = 'https://beratrail.io'
+      prefix = 'https://berascan.com'
       break
     default:
       prefix = 'https://etherscan.io'
