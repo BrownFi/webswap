@@ -242,6 +242,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     if (chainId === ChainId.BERA_MAINNET) {
       return 'BERA'
     }
+    if (chainId === ChainId.BOBA_MAINNET) {
+      return 'BOBA'
+    }
     return 'ETH'
   }
 
