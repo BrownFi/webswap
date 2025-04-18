@@ -22,11 +22,19 @@
     },
     {
       "chainId": 97,
-      "address": "0x349aD76798A7Bd5e04C9DD4dEfBEEa211dd665F6",
-      "name": "BUSD",
-      "symbol": "BUSD",
+      "address": "0xF0BBEF37c76F085f75FC7972A447a11B3077f952",
+      "name": "USDT",
+      "symbol": "USDT",
       "decimals": 18,
-      "logoURI": "https://s3.coinmarketcap.com/static/img/portraits/62da512ff192d82df80012bb.png"
+      "logoURI": "https://bscscan.com/token/images/usdtether_ofc_32.png"
+    },
+    {
+      "chainId": 97,
+      "address": "0x2e98fD282C6A5c57F4508586d2147051C2D4921D",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/centre-usdc_28.png"
     },
     {
       "chainId": 89,

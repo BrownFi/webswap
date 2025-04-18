@@ -6,14 +6,6 @@ import { useModalOpen, useToggleModal } from '../../state/application/hooks'
 import down from '../../assets/svg/arrow_drop_down.svg'
 import check from '../../assets/svg/check.svg'
 import Web3 from 'web3'
-// import auroraIcon from '../../assets/images/aurora.png'
-// import metisIcon from '../../assets/images/metis.png'
-import viction from '../../assets/images/viction.png'
-import u2uIcon from '../../assets/images/u2u.jpg'
-// import arbIcon from '../../assets/images/arb.png'
-// import opIcon from '../../assets/images/op.png'
-import bobaIcon from '../../assets/images/boba.svg'
-import beraIcon from '../../assets/images/bera.png'
 
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
@@ -31,7 +23,8 @@ import {
   networkArbitrumMainnet,
   networkOPMainnet,
   networkBobaMainnet,
-  networkBeraMainnet
+  networkBeraMainnet,
+  networkBscTestnet
 } from 'connectors'
 import { WalletConnectConnector } from 'connectors/WalletConnector'
 import { CHAIN_TO_METAMASK } from '../../constants'
@@ -125,42 +118,13 @@ const MenuItem = styled.div`
 `
 
 const CHAINS: any = {
-  [ChainId.VICTION_MAINNET]: {
-    name: 'Viction Mainnet',
-    chainId: ChainId.VICTION_MAINNET,
-    icon: viction
-  },
-  // [ChainId.METIS_MAINNET]: {
-  //   name: 'Metis',
-  //   chainId: ChainId.METIS_MAINNET,
-  //   icon: metisIcon
-  // },
-  [ChainId.U2U_MAINNET]: {
-    name: 'U2U Mainnet',
-    chainId: ChainId.U2U_MAINNET,
-    icon: u2uIcon
-  },
-  // [ChainId.ARBITRUM_MAINNET]: {
-  //   name: 'Arbitrum',
-  //   chainId: ChainId.ARBITRUM_MAINNET,
-  //   icon: arbIcon
-  // },
-  // [ChainId.OP_MAINNET]: {
-  //   name: 'Optimism',
-  //   chainId: ChainId.OP_MAINNET,
-  //   icon: opIcon
-  // },
-  [ChainId.BOBA_MAINNET]: {
-    name: 'Boba',
-    chainId: ChainId.BOBA_MAINNET,
-    icon: bobaIcon
-  },
-  [ChainId.BERA_MAINNET]: {
-    name: 'Bera',
-    chainId: ChainId.BERA_MAINNET,
-    icon: beraIcon
+  [ChainId.BSC_TESTNET]: {
+    name: 'BSC Testnet',
+    chainId: ChainId.BSC_TESTNET
   }
 }
+
+const defaultChain = ChainId.BSC_TESTNET
 
 const supportChains = Object.values(CHAINS)
 
@@ -249,7 +213,7 @@ export default function SelectChain() {
           ? networkSonic
           : chain === ChainId.MINATO_SONEIUM
           ? networkMinato
-          : networkVictionMainnet
+          : networkBscTestnet
       )
       saveChainDefault(chain)
     }
@@ -260,7 +224,7 @@ export default function SelectChain() {
       handleSelectChain(Number(savedChain))
       return
     }
-    handleSelectChain(ChainId.BERA_MAINNET)
+    handleSelectChain(defaultChain)
   }, [savedChain])
 
   return (
@@ -271,12 +235,8 @@ export default function SelectChain() {
         onClick={supportChains.length > 1 ? toggle : () => null}
       >
         <div className="flex items-center flex-1">
-          <img
-            alt="icon"
-            className="w-[28px] mr-[8px] rounded-full"
-            src={CHAINS[chainId || ChainId.BERA_MAINNET]?.icon}
-          />
-          {CHAINS[chainId || ChainId.BERA_MAINNET]?.name}
+          <img alt="icon" className="w-[28px] mr-[8px] rounded-full" src={CHAINS[chainId || defaultChain]?.icon} />
+          {CHAINS[chainId || defaultChain]?.name}
         </div>
         {supportChains.length > 1 && <img src={down} alt="down" className="w-[24px] ml-[8px]" />}
       </StyledMenuButton>
