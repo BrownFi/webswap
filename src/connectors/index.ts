@@ -4,7 +4,7 @@ import { WalletConnectConnector } from './WalletConnector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 import { PortisConnector } from '@web3-react/portis-connector'
 
-import { berachain, boba, viction } from 'wagmi/chains'
+import { boba, bscTestnet, viction } from 'wagmi/chains'
 
 import { FortmaticConnector } from './Fortmatic'
 import { NetworkConnector } from './NetworkConnector'
@@ -16,6 +16,7 @@ import { Chain, defineChain } from 'viem'
 const SEPOLIA_URL = process.env.REACT_APP_SEPOLIA_URL
 const FORMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY
 const PORTIS_ID = process.env.REACT_APP_PORTIS_ID
+const BSC_TESTNET_URL = process.env.REACT_APP_BSC_TESTNET_URL
 const VICTION_TESTNET_URL = process.env.REACT_APP_VICTION_TESTNET_URL
 const VICTION_MAINNET_URL = process.env.REACT_APP_VICTION_MAINNET_URL
 const SONIC_TESTNET_URL = process.env.REACT_APP_SONIC_TESTNET_URL
@@ -30,12 +31,8 @@ const OP_MAINNET_URL = process.env.REACT_APP_OP_MAINNET_URL
 const BOBA_MAINNET_URL = process.env.REACT_APP_BOBA_MAINNET_URL
 const BERA_MAINNET_URL = process.env.REACT_APP_BERA_MAINNET_URL
 
-export const NETWORK_CHAIN_ID: number = ChainId.BERA_MAINNET
-export const NETWORK_URL = process.env.REACT_APP_BERA_MAINNET_URL
-
-if (typeof NETWORK_URL === 'undefined') {
-  throw new Error(`REACT_APP_NETWORK_URL must be a defined environment variable`)
-}
+export const NETWORK_CHAIN_ID: number = ChainId.BSC_TESTNET
+export const NETWORK_URL = process.env.REACT_APP_BSC_TESTNET_URL!
 
 export const network = new NetworkConnector({
   urls: { [NETWORK_CHAIN_ID]: NETWORK_URL }
@@ -43,6 +40,10 @@ export const network = new NetworkConnector({
 
 export const networkSepolia = new NetworkConnector({
   urls: { [ChainId.SEPOLIA]: SEPOLIA_URL as string }
+})
+
+export const networkBscTestnet = new NetworkConnector({
+  urls: { [ChainId.BSC_TESTNET]: BSC_TESTNET_URL as string }
 })
 
 export const networkViction = new NetworkConnector({
@@ -103,15 +104,7 @@ export function getNetworkLibrary(): Web3Provider {
 }
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [
-    ChainId.VICTION_MAINNET,
-    // ChainId.METIS_MAINNET,
-    ChainId.U2U_MAINNET,
-    // ChainId.ARBITRUM_MAINNET,
-    // ChainId.OP_MAINNET,
-    ChainId.BOBA_MAINNET,
-    ChainId.BERA_MAINNET
-  ]
+  supportedChainIds: [ChainId.BSC_TESTNET]
 })
 
 // mainnet only
@@ -162,7 +155,7 @@ viction.iconUrl = require('assets/images/viction.png')
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
-  chains: [berachain, boba, viction, u2uMainnet],
+  chains: [bscTestnet],
   projectId: '3441811a50334d46eef9f2435cadee36',
   ssr: false
 })
