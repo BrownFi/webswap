@@ -25,7 +25,7 @@ export const RowBetween = styled(Row)`
 
 export const RowFlat = styled.div`
   display: flex;
-  align-items: flex-end;
+  align-items: center;
 `
 
 export const AutoRow = styled(Row)<{ gap?: string; justify?: string }>`
