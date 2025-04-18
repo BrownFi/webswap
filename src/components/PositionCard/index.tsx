@@ -1,6 +1,6 @@
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
@@ -27,6 +27,7 @@ import { useQuery } from '@tanstack/react-query'
 import { dexscreenerService, internalService } from 'services'
 import { formatPrice } from 'utils/prices'
 import { shouldReversePair } from 'utils/pair'
+import { useTradingFee } from 'hooks/useTradingFee'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -56,14 +57,7 @@ interface PositionCardProps {
 
 export function MinimalPositionCard({ pair, showUnwrapped = false, border }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
-  const [tradingFee, setTradingFee] = useState(0)
-
-  useEffect(() => {
-    const getTradingFee = async () => {
-      setTradingFee(await pair.getTradingFee())
-    }
-    getTradingFee()
-  }, [pair.liquidityToken.address])
+  const tradingFee = useTradingFee({ pair })
 
   const currency0 = showUnwrapped ? pair.token0 : unwrappedToken(pair.token0)
   const currency1 = showUnwrapped ? pair.token1 : unwrappedToken(pair.token1)
@@ -173,6 +167,7 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
 
 export default function FullPositionCard({ pair, border, stakedBalance }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
+  const tradingFee = useTradingFee({ pair })
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -243,11 +238,8 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                 </Text>
               </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <ButtonSecondary className="!w-fit !px-1">
-                  {/* Trading Fee */}
-                  0.3%
-                </ButtonSecondary>
+              <div className="flex items-center gap-4">
+                <ButtonSecondary className="!w-fit !px-1">{tradingFee * 2}%</ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
                 <Text className="whitespace-nowrap text-[#27E3AB]">
                   Pool APY: {+Number(poolStats?.apy ?? 0).toFixed(2)}%
