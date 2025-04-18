@@ -53,10 +53,7 @@ export declare class Trade {
      * Custom price impact by K
      */
     priceImpactK: number | undefined;
-    /**
-     * Custom price impact / slippage
-     */
-    slippage: number | undefined;
+    tradingFee: number | undefined;
     priceUpdate: string[];
     updateFee: number;
     /**

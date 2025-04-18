@@ -1,6 +1,6 @@
 import { ChainId, Currency, JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Text } from 'rebass'
@@ -57,6 +57,14 @@ interface PositionCardProps {
 
 export function MinimalPositionCard({ pair, showUnwrapped = false, border }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
+  const [tradingFee, setTradingFee] = useState(0)
+
+  useEffect(() => {
+    const getTradingFee = async () => {
+      setTradingFee(await pair.getTradingFee())
+    }
+    getTradingFee()
+  }, [pair.liquidityToken.address])
 
   const currency0 = showUnwrapped ? pair.token0 : unwrappedToken(pair.token0)
   const currency1 = showUnwrapped ? pair.token1 : unwrappedToken(pair.token1)
@@ -155,8 +163,9 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
             <span role="img" aria-label="wizard-icon">
               ⭐️
             </span>{' '}
-            By adding liquidity you&apos;ll earn 0.3% of all trades on this pair proportional to your share of the pool.
-            Fees are added to the pool, accrue in real time and can be claimed by withdrawing your liquidity.
+            By adding liquidity you&apos;ll earn {tradingFee * 2}% of all trades on this pair proportional to your share
+            of the pool. Fees are added to the pool, accrue in real time and can be claimed by withdrawing your
+            liquidity.
           </TYPE.subHeader>
         </LightCard>
       )}
@@ -272,7 +281,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
             </div>
           </AutoRow>
           <div className="flex-1 flex justify-end">
-            <ButtonEmpty padding="0px" borderRadius="12px" width="fit-content" onClick={() => setShowMore(!showMore)}>
+            <ButtonEmpty padding="0px" width="fit-content" onClick={() => setShowMore(!showMore)}>
               <div className="text-[#27E3AB] flex items-center">
                 {showMore ? (
                   <>
@@ -453,7 +462,6 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
             <RowBetween marginTop="10px">
               <ButtonPrimary
                 padding="8px"
-                borderRadius="8px"
                 as={Link}
                 to={`/add/${currencyId(currency0)}/${
                   chainId === ChainId.BOBA_MAINNET
@@ -467,7 +475,6 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               {userPoolTokens && JSBI.greaterThan(userPoolTokens.raw, BIG_INT_ZERO) ? (
                 <ButtonPrimary
                   padding="8px"
-                  borderRadius="8px"
                   as={Link}
                   width="48%"
                   to={`/remove/${currencyId(currency0)}/${
@@ -479,7 +486,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Remove
                 </ButtonPrimary>
               ) : (
-                <ButtonPrimary disabled padding="8px" borderRadius="8px" width="48%">
+                <ButtonPrimary disabled padding="8px" width="48%">
                   Remove
                 </ButtonPrimary>
               )}
@@ -488,7 +495,6 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
             {stakedBalance && JSBI.greaterThan(stakedBalance.raw, BIG_INT_ZERO) && (
               <ButtonPrimary
                 padding="8px"
-                borderRadius="8px"
                 as={Link}
                 to={`/uni/${currencyId(currency0)}/${currencyId(currency1)}`}
                 width="100%"

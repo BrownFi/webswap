@@ -35,6 +35,7 @@ export declare class Pair {
     get reserve0(): TokenAmount;
     get reserve1(): TokenAmount;
     reserveOf(token: Token): TokenAmount;
+    getTradingFee(): Promise<number>;
     getOutputAmount(inputAmount: TokenAmount): [TokenAmount, Pair];
     getOutputAmountAsync(inputAmount: TokenAmount, pairs: Pair[], path: Token[], chainId: ChainId, account: string): Promise<[TokenAmount, Pair, string[], number, number]>;
     getInputAmount(outputAmount: TokenAmount): [TokenAmount, Pair];

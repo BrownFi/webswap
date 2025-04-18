@@ -4,7 +4,7 @@ import { ThemeContext } from 'styled-components'
 import { Field } from '../../state/swap/actions'
 import { useUserSlippageTolerance } from '../../state/user/hooks'
 import { TYPE } from '../../theme'
-import { computeSlippageAdjustedAmounts, computeTradePriceBreakdown, warningSeveritySlippage } from '../../utils/prices'
+import { computeSlippageAdjustedAmounts, warningSeveritySlippage } from '../../utils/prices'
 import { AutoColumn } from '../Column'
 import QuestionHelper from '../QuestionHelper'
 import { RowBetween, RowFixed } from '../Row'
@@ -15,7 +15,6 @@ import { ErrorText } from './styleds'
 
 function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippage: number }) {
   const theme = useContext(ThemeContext)
-  const { realizedLPFee } = computeTradePriceBreakdown(trade)
   const isExactIn = trade.tradeType === TradeType.EXACT_INPUT
   const slippageAdjustedAmounts = computeSlippageAdjustedAmounts(trade, allowedSlippage)
   const { chainId } = useActiveWeb3React()
@@ -57,18 +56,17 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
 
         <RowBetween>
           <RowFixed>
-            <TYPE.black fontSize={14} fontWeight={400} color={theme.white}>
+            <TYPE.black fontSize={14} fontWeight={500} color={theme.white}>
               Liquidity Provider Fee
             </TYPE.black>
-            <QuestionHelper text="A portion of each trade (0.3%) goes to liquidity providers as a protocol incentive." />
+            <QuestionHelper
+              text={
+                `A portion of each trade (${(trade.tradingFee || 0) * 2}%)` +
+                ` goes to liquidity providers as a protocol incentive.`
+              }
+            />
           </RowFixed>
-          <TYPE.black fontSize={14} color={theme.white}>
-            {false
-              ? realizedLPFee
-                ? `${realizedLPFee?.toSignificant(4)} ${getTokenSymbol(trade?.inputAmount?.currency, chainId)}`
-                : '-'
-              : '0.3%'}
-          </TYPE.black>
+          <TYPE.black fontSize={14}>{(trade.tradingFee || 0) * 2}%</TYPE.black>
         </RowBetween>
       </AutoColumn>
     </>
