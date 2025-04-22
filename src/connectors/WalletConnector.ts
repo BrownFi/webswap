@@ -74,7 +74,7 @@ export class WalletConnectConnector extends AbstractConnector {
       })
     }
 
-    this.walletConnectProvider.on('display_uri', (uri: string) => {
+    this.walletConnectProvider.on('display_uri', () => {
       // console.log('uri =====>', uri)
     })
     this.walletConnectProvider.on('disconnect', this.handleDisconnect)

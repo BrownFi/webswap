@@ -179,6 +179,9 @@ export default function Header() {
           >
             Pool
           </StyledNavLink>
+          <StyledNavLink id={`leaderboard-nav-link`} to={'/leaderboard'}>
+            Leaderboard
+          </StyledNavLink>
         </HeaderLinks>
       </HeaderRow>
 

@@ -29,7 +29,7 @@ const CurrencySelect = styled.button<{ selected: boolean }>`
   min-width: 150px;
   font-size: 20px;
   font-weight: 500;
-  background-color: ${({ selected, theme }) => (selected ? '#1D1C21' : '#1D1C21')};
+  background-color: ${({ selected }) => (selected ? '#1D1C21' : '#1D1C21')};
   color: ${({ selected, theme }) => (selected ? theme.white : theme.white)};
   border-radius: 0;
   box-shadow: ${({ selected }) => (selected ? 'none' : '0px 6px 10px rgba(0, 0, 0, 0.075)')};
@@ -41,7 +41,7 @@ const CurrencySelect = styled.button<{ selected: boolean }>`
 
   :focus,
   :hover {
-    background-color: ${({ selected, theme }) => (selected ? '#1D1C21' : '#1D1C21')};
+    background-color: ${({ selected }) => (selected ? '#1D1C21' : '#1D1C21')};
   }
 `
 

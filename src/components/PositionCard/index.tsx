@@ -259,7 +259,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   {chainId === ChainId.BOBA_MAINNET && 'USD/BOBA'}
                 </Text>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <ButtonSecondary className="!w-fit !px-1">
                   {/* Trading Fee */}
                   0.3%
