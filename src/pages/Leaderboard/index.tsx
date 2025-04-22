@@ -11,6 +11,7 @@ import Rank from './Rank'
 
 const Leaderboard = () => {
   const { address } = useAccount()
+  // const address = '0x13e11503bc7a051540865835292b46e02ca3ba31'
 
   const { data: leaderboard } = useQuery({
     queryKey: ['fetchLeaderboard'],
@@ -44,6 +45,17 @@ const Leaderboard = () => {
             </tr>
           </thead>
           <tbody>
+            {address && !includeUser && (
+              <>
+                <tr className="bg-[#4d4b49]">
+                  <td>
+                    <Rank rank={userRank?.rank || 0} />
+                  </td>
+                  <td>{shortenAddress(address)} (You)</td>
+                  <td className="text-center">{Number(userRank?.volume || 0).toFixed(1)}</td>
+                </tr>
+              </>
+            )}
             {leaderboard?.items.map((row, index) => {
               const isUser = row.address === address
               return (
@@ -58,24 +70,6 @@ const Leaderboard = () => {
                 </tr>
               )
             })}
-            {address && !includeUser && (
-              <>
-                {userRank?.rank !== 11 && (
-                  <tr>
-                    <td colSpan={3}>
-                      <div className="px-3">...</div>
-                    </td>
-                  </tr>
-                )}
-                <tr className="bg-[#4d4b49]">
-                  <td>
-                    <Rank rank={userRank?.rank || 0} />
-                  </td>
-                  <td>{shortenAddress(address)} (You)</td>
-                  <td className="text-center">{Number(userRank?.volume || 0).toFixed(1)}</td>
-                </tr>
-              </>
-            )}
           </tbody>
         </Table>
       </Column>
