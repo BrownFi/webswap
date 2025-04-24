@@ -101,6 +101,16 @@ export default function Swap({ history }: RouteComponentProps) {
     currencies[Field.OUTPUT],
     typedValue
   )
+  const [isLoadingWrap, setLoadingWrap] = useState(false)
+  const handleWrap = async () => {
+    setLoadingWrap(true)
+    await onWrap?.()
+      .catch(console.warn)
+      .finally(() => {
+        setLoadingWrap(false)
+      })
+  }
+
   const showWrap: boolean = wrapType !== WrapType.NOT_APPLICABLE
   const { address: recipientAddress } = useENSAddress(recipient)
   const toggledVersion = useToggledVersion()
@@ -416,12 +426,12 @@ export default function Swap({ history }: RouteComponentProps) {
               </ButtonPrimary>
             ) : !account ? (
               <ConnectWallet />
-            ) : showWrap ? (
-              <ButtonPrimary disabled={Boolean(wrapInputError)} onClick={onWrap}>
+            ) : showWrap && !isLoadingWrap ? (
+              <ButtonPrimary className="!mt-[38px]" disabled={Boolean(wrapInputError)} onClick={handleWrap}>
                 {wrapInputError ??
                   (wrapType === WrapType.WRAP ? 'Wrap' : wrapType === WrapType.UNWRAP ? 'Unwrap' : null)}
               </ButtonPrimary>
-            ) : noRoute && userHasSpecifiedInputOutput && !swapInputError ? (
+            ) : isLoadingWrap || (noRoute && userHasSpecifiedInputOutput && !swapInputError) ? (
               <ButtonError disabled className="!mt-[38px]">
                 <Text fontSize={20} fontWeight={500}>
                   <Dots>Loading</Dots>
