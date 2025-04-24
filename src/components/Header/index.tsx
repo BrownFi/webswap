@@ -9,6 +9,7 @@ import Logo from '../../assets/svg/logo.svg'
 import Row, { RowFixed } from '../Row'
 import Web3Status from '../Web3Status'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import HamburgerMenu from './HamburgerMenu'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -67,8 +68,7 @@ const HeaderRow = styled(RowFixed)`
 const HeaderLinks = styled(Row)`
   justify-content: center;
   ${({ theme }) => theme.mediaWidth.upToMedium`
-    padding: 1rem 0 1rem 1rem;
-    justify-content: flex-end;
+    flex-direction: column;
 `};
 `
 
@@ -159,30 +159,33 @@ export default function Header() {
       <HeaderRow>
         <Title href="." className="mr-[44px]">
           <UniIcon>
-            <img width={'206px'} src={Logo} alt="logo" />
+            <img className="min-w-[142px] w-[142px]" src={Logo} alt="logo" />
           </UniIcon>
         </Title>
-        <HeaderLinks>
-          <StyledNavLink id={`swap-nav-link`} to={'/swap'}>
-            Swap
-          </StyledNavLink>
-          <StyledNavLink
-            id={`pool-nav-link`}
-            to={'/pool'}
-            isActive={(match, { pathname }) =>
-              Boolean(match) ||
-              pathname.startsWith('/add') ||
-              pathname.startsWith('/remove') ||
-              pathname.startsWith('/create') ||
-              pathname.startsWith('/find')
-            }
-          >
-            Pool
-          </StyledNavLink>
-          <StyledNavLink id={`leaderboard-nav-link`} to={'/campaign/contest-1'}>
-            Campaign
-          </StyledNavLink>
-        </HeaderLinks>
+
+        <HamburgerMenu>
+          <HeaderLinks>
+            <StyledNavLink id={`swap-nav-link`} to={'/swap'}>
+              Swap
+            </StyledNavLink>
+            <StyledNavLink
+              id={`pool-nav-link`}
+              to={'/pool'}
+              isActive={(match, { pathname }) =>
+                Boolean(match) ||
+                pathname.startsWith('/add') ||
+                pathname.startsWith('/remove') ||
+                pathname.startsWith('/create') ||
+                pathname.startsWith('/find')
+              }
+            >
+              Pool
+            </StyledNavLink>
+            <StyledNavLink id={`leaderboard-nav-link`} to={'/campaign/contest-1'}>
+              Campaign
+            </StyledNavLink>
+          </HeaderLinks>
+        </HamburgerMenu>
       </HeaderRow>
 
       <HeaderControls>
