@@ -11,7 +11,6 @@ import Rank from './Rank'
 
 const Leaderboard = () => {
   const { address } = useAccount()
-  // const address = '0x13e11503bc7a051540865835292b46e02ca3ba31'
 
   const { data: leaderboard } = useQuery({
     queryKey: ['fetchLeaderboard'],
@@ -72,6 +71,8 @@ const Leaderboard = () => {
             })}
           </tbody>
         </Table>
+
+        <TYPE.darkGray className="italic text-sm">* This leaderboard displays top 10 participants only</TYPE.darkGray>
       </Column>
     </AppBody>
   )
