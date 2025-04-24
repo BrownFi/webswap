@@ -327,7 +327,7 @@ export function getScanText(chainId: ChainId) {
     case ChainId.BOBA_MAINNET:
       return 'BOBAscan'
     case ChainId.BERA_MAINNET:
-      return 'Beratrail'
+      return 'Berascan'
     default:
       return 'Etherscan'
   }
