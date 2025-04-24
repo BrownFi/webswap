@@ -1,11 +1,10 @@
-import { ChainId, CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
+import { CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ArrowDown } from 'react-feather'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
 import AddressInputPanel from '../../components/AddressInputPanel'
 import { ButtonError, ButtonPrimary, ButtonConfirmed } from '../../components/Button'
-import Card from '../../components/Card'
 import Column, { AutoColumn } from '../../components/Column'
 import ConfirmSwapModal from '../../components/swap/ConfirmSwapModal'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
@@ -35,12 +34,11 @@ import {
   useSwapState
 } from '../../state/swap/hooks'
 import { useExpertModeManager, useUserSlippageTolerance, useUserSingleHopOnly } from '../../state/user/hooks'
-import { LinkStyledButton, TYPE } from '../../theme'
+import { LinkStyledButton } from '../../theme'
 import { maxAmountSpend } from '../../utils/maxAmountSpend'
 import { computeTradePriceBreakdown, warningSeverity } from '../../utils/prices'
 import AppBody from '../AppBody'
 import { ClickableText, Dots } from '../Pool/styleds'
-import Loader from '../../components/Loader'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
 import { isTradeBetter } from 'utils/trades'
@@ -381,61 +379,46 @@ export default function Swap({ history }: RouteComponentProps) {
               </>
             ) : null}
 
-            {showWrap ? null : (
-              <Card padding={showWrap ? '.25rem 1rem 0 1rem' : '0px'} borderRadius={'20px'}>
-                <AutoColumn gap="8px" style={{ padding: '0 16px' }}>
-                  {Boolean(trade) && (
-                    <RowBetween align="center">
-                      <Text fontWeight={500} fontSize={14} color={theme.text2}>
-                        Price
-                      </Text>
-                      <TradePrice
-                        price={trade?.executionPrice}
-                        showInverted={showInverted}
-                        setShowInverted={setShowInverted}
-                      />
-                    </RowBetween>
-                  )}
-                  {allowedSlippage !== INITIAL_ALLOWED_SLIPPAGE && (
-                    <RowBetween align="center">
-                      <ClickableText fontWeight={500} fontSize={14} color={theme.text2} onClick={toggleSettings}>
-                        Slippage Tolerance
-                      </ClickableText>
-                      <ClickableText fontWeight={500} fontSize={14} color={theme.text2} onClick={toggleSettings}>
-                        {allowedSlippage / 100}%
-                      </ClickableText>
-                    </RowBetween>
-                  )}
-                  {chainId === ChainId.SONIC_TESTNET && (
-                    <Text fontWeight={500} fontSize={14} color={theme.gray}>
-                      {currencies[Field.INPUT]?.symbol === 'DIAM' || currencies[Field.OUTPUT]?.symbol === 'DIAM'
-                        ? 'Pair S/Diamond = FTM/USD'
-                        : currencies[Field.INPUT]?.symbol === 'CORAL' || currencies[Field.OUTPUT]?.symbol === 'CORAL'
-                        ? 'Pair S/CORAL = FTM/ETH'
-                        : ''}
-                    </Text>
-                  )}
-                </AutoColumn>
-              </Card>
-            )}
+            <AutoColumn gap="8px" style={{ padding: '0 16px' }}>
+              {allowedSlippage !== INITIAL_ALLOWED_SLIPPAGE && (
+                <RowBetween align="center">
+                  <ClickableText fontWeight={500} fontSize={14} color={theme.text2} onClick={toggleSettings}>
+                    Slippage Tolerance
+                  </ClickableText>
+                  <ClickableText fontWeight={500} fontSize={14} color={theme.text2} onClick={toggleSettings}>
+                    {allowedSlippage / 100}%
+                  </ClickableText>
+                </RowBetween>
+              )}
+              {trade ? (
+                <RowBetween align="center">
+                  <Text fontWeight={500} fontSize={14} color={theme.text2}>
+                    Price
+                  </Text>
+                  <TradePrice
+                    price={trade.executionPrice}
+                    showInverted={showInverted}
+                    setShowInverted={setShowInverted}
+                  />
+                </RowBetween>
+              ) : (
+                <div className="h-[22px]"></div>
+              )}
+            </AutoColumn>
           </AutoColumn>
           <BottomGrouping>
             {swapIsUnsupported ? (
-              <ButtonPrimary disabled={true}>
-                <TYPE.main mb="4px">Unsupported Asset</TYPE.main>
-              </ButtonPrimary>
+              <ButtonError disabled>Unsupported Asset</ButtonError>
             ) : !account ? (
               <ConnectWallet />
             ) : showWrap && !isLoadingWrap ? (
-              <ButtonPrimary className="!mt-[38px]" disabled={Boolean(wrapInputError)} onClick={handleWrap}>
+              <ButtonPrimary disabled={Boolean(wrapInputError)} onClick={handleWrap}>
                 {wrapInputError ??
                   (wrapType === WrapType.WRAP ? 'Wrap' : wrapType === WrapType.UNWRAP ? 'Unwrap' : null)}
               </ButtonPrimary>
             ) : isLoadingWrap || (noRoute && userHasSpecifiedInputOutput && !swapInputError) ? (
-              <ButtonError disabled className="!mt-[38px]">
-                <Text fontSize={20} fontWeight={500}>
-                  <Dots>Loading</Dots>
-                </Text>
+              <ButtonError disabled>
+                <Dots>Loading</Dots>
               </ButtonError>
             ) : showApproveFlow ? (
               <RowBetween>
@@ -447,9 +430,7 @@ export default function Swap({ history }: RouteComponentProps) {
                   confirmed={approval === ApprovalState.APPROVED}
                 >
                   {approval === ApprovalState.PENDING ? (
-                    <AutoRow gap="6px" justify="center">
-                      Approving <Loader stroke="white" />
-                    </AutoRow>
+                    <Dots>Approving</Dots>
                   ) : approvalSubmitted && approval === ApprovalState.APPROVED ? (
                     'Approved'
                   ) : (
@@ -477,11 +458,9 @@ export default function Swap({ history }: RouteComponentProps) {
                   }
                   error={isValid && priceImpactSeverity > 2}
                 >
-                  <Text fontSize={16} fontWeight={500}>
-                    {priceImpactSeverity > 3 && !isExpertMode
-                      ? `Price Impact High`
-                      : `Swap${priceImpactSeverity > 2 ? ' Anyway' : ''}`}
-                  </Text>
+                  {priceImpactSeverity > 3 && !isExpertMode
+                    ? `Price Impact High`
+                    : `Swap${priceImpactSeverity > 2 ? ' Anyway' : ''}`}
                 </ButtonError>
               </RowBetween>
             ) : (
@@ -502,15 +481,12 @@ export default function Swap({ history }: RouteComponentProps) {
                 id="swap-button"
                 disabled={!isValid || (priceImpactSeverity > 3 && !isExpertMode) || !!swapCallbackError}
                 error={isValid && priceImpactSeverity > 2 && !swapCallbackError}
-                className={swapInputError && '!h-auto'}
               >
-                <Text fontSize={20} fontWeight={500}>
-                  {swapInputError
-                    ? swapInputError
-                    : priceImpactSeverity > 3 && !isExpertMode
-                    ? `Price Impact Too High`
-                    : `Swap${priceImpactSeverity > 2 ? ' Anyway' : ''}`}
-                </Text>
+                {swapInputError
+                  ? swapInputError
+                  : priceImpactSeverity > 3 && !isExpertMode
+                  ? `Price Impact Too High`
+                  : `Swap${priceImpactSeverity > 2 ? ' Anyway' : ''}`}
               </ButtonError>
             )}
             {showApproveFlow && (
