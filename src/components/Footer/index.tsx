@@ -1,7 +1,7 @@
 import React from 'react'
 import telegramIcon from '../../assets/svg/telegram.svg'
 import logoWhite from '../../assets/svg/logo_white.svg'
-import mediumIcon from '../../assets/svg/medium.svg'
+import mirrorIcon from '../../assets/images/mirror.png'
 import xIcon from '../../assets/svg/x.svg'
 
 const Footer = () => {
@@ -11,25 +11,38 @@ const Footer = () => {
         <img src={logoWhite} alt="logo" className="w-[199px] mb-[24px]" />
         <p className="text-[12px] font-medium text-white">© 2024 BrownFi. All rights reserved.</p>
       </div>
-      <div className="flex items-center">
+      <div className="flex items-center gap-6">
         <a
-          href="https://twitter.com/BrownFidex"
+          href="https://x.com/BrownFidex"
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-[40px] cursor-pointer"
+          className="cursor-pointer hover:brightness-90"
         >
           <img src={xIcon} alt="ico" className="w-[40px]" />
         </a>
-        <a href="https://mirror.xyz/" target="_blank" rel="noopener noreferrer" className="ml-[40px] cursor-pointer">
-          <img src={mediumIcon} alt="ico" className="w-[40px]" />
-        </a>
         <a
-          href="https://t.me/brownfiamm"
+          href="https://t.me/+X13wPOv_ZtQ3M2U9"
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-[40px] cursor-pointer"
+          className="cursor-pointer hover:brightness-90"
         >
-          <img src={telegramIcon} alt="ico" className="w-[40px]" />
+          <img src={telegramIcon} alt="ico" className="w-[40px]" title="BrownFi Announcement" />
+        </a>
+        <a
+          href="https://t.me/brownfiammcommunity"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="cursor-pointer hover:brightness-90"
+        >
+          <img src={telegramIcon} alt="ico" className="w-[40px]" title="BrownFi Community" />
+        </a>
+        <a
+          href="https://mirror.xyz/0x64f4Fbd29b0AE2C8e18E7940CF823df5CB639bBa"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="cursor-pointer hover:brightness-90"
+        >
+          <img src={mirrorIcon} alt="ico" className="w-[40px] rounded-full border-white/70 border" title="Mirror" />
         </a>
       </div>
     </div>

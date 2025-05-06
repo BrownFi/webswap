@@ -123,7 +123,7 @@ export default function Pool() {
 
         <AutoColumn gap="lg" justify="center" className="p-[20px] lg:p-[32px]">
           <AutoColumn gap="lg" style={{ width: '100%' }}>
-            <TitleRow style={{ marginTop: '1rem' }} padding={'0'}>
+            <TitleRow padding={'0'}>
               <HideSmall>
                 <TYPE.mediumHeader style={{ fontFamily: 'Russo One', fontSize: '24px' }} color={'white'}>
                   All Pools

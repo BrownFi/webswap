@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { ExternalLink } from '../../theme'
 
 const InfoCard = styled.button<{ active?: boolean }>`
-  background-color: ${({ theme, active }) => (active ? '#131216' : '#323038')};
+  background-color: ${({ active }) => (active ? '#131216' : '#323038')};
   padding: 1rem;
   outline: none;
   border-radius: 0;
@@ -88,7 +88,6 @@ export default function Option({
   clickable = true,
   size,
   onClick = null,
-  color,
   header,
   subheader = null,
   icon,

@@ -32,6 +32,7 @@ import Footer from 'components/Footer'
 import mathImage from '../assets/svg/math-image.svg'
 import csm from '../assets/svg/csm.svg'
 import Referral from 'components/Referral'
+import Leaderboard from './Leaderboard'
 
 const AppWrapper = styled.div`
   display: flex;
@@ -46,6 +47,7 @@ const HeaderWrapper = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
   width: 100%;
   justify-content: space-between;
+  min-height: 78px;
 `
 
 const BodyWrapper = styled.div`
@@ -101,6 +103,7 @@ export default function App() {
               <Route exact strict path="/send" component={RedirectPathToSwapOnly} />
               <Route exact strict path="/find" component={PoolFinder} />
               <Route exact strict path="/pool" component={Pool} />
+              <Route exact strict path="/campaign/contest-1" component={Leaderboard} />
               <Route exact strict path="/uni" component={Earn} />
               <Route exact strict path="/vote" component={Vote} />
               <Route exact strict path="/create" component={RedirectToAddLiquidity} />

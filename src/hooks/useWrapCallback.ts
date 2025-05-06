@@ -5,6 +5,7 @@ import { useTransactionAdder } from '../state/transactions/hooks'
 import { useCurrencyBalance } from '../state/wallet/hooks'
 import { useActiveWeb3React } from './index'
 import { useWETHContract } from './useContract'
+import { getNativeToken, getWrappedNativeToken } from 'utils'
 
 export enum WrapType {
   NOT_APPLICABLE,
@@ -44,13 +45,17 @@ export default function useWrapCallback(
             ? async () => {
                 try {
                   const txReceipt = await wethContract.deposit({ value: `0x${inputAmount.raw.toString(16)}` })
-                  addTransaction(txReceipt, { summary: `Wrap ${inputAmount.toSignificant(6)} ETH to WETH` })
+                  addTransaction(txReceipt, {
+                    summary:
+                      `Wrap ${inputAmount.toSignificant(6)}` +
+                      ` ${getNativeToken(chainId)} to ${getWrappedNativeToken(chainId)}`
+                  })
                 } catch (error) {
                   console.error('Could not deposit', error)
                 }
               }
             : undefined,
-        inputError: sufficientBalance ? undefined : 'Insufficient ETH balance'
+        inputError: sufficientBalance ? undefined : `Insufficient ${getNativeToken(chainId)} balance`
       }
     } else if (currencyEquals(WETH[chainId], inputCurrency) && outputCurrency === ETHER) {
       return {
@@ -60,13 +65,17 @@ export default function useWrapCallback(
             ? async () => {
                 try {
                   const txReceipt = await wethContract.withdraw(`0x${inputAmount.raw.toString(16)}`)
-                  addTransaction(txReceipt, { summary: `Unwrap ${inputAmount.toSignificant(6)} WETH to ETH` })
+                  addTransaction(txReceipt, {
+                    summary:
+                      `Unwrap ${inputAmount.toSignificant(6)}` +
+                      ` ${getWrappedNativeToken(chainId)} to ${getNativeToken(chainId)}`
+                  })
                 } catch (error) {
                   console.error('Could not withdraw', error)
                 }
               }
             : undefined,
-        inputError: sufficientBalance ? undefined : 'Insufficient WETH balance'
+        inputError: sufficientBalance ? undefined : `Insufficient ${getWrappedNativeToken(chainId)} balance`
       }
     } else {
       return NOT_APPLICABLE
