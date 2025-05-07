@@ -121,10 +121,14 @@ const CHAINS: any = {
   [ChainId.BSC_TESTNET]: {
     name: 'BSC Testnet',
     chainId: ChainId.BSC_TESTNET
+  },
+  [ChainId.SEPOLIA]: {
+    name: 'Sepolia',
+    chainId: ChainId.SEPOLIA
   }
 }
 
-const defaultChain = ChainId.BSC_TESTNET
+const defaultChain = ChainId.SEPOLIA
 
 const supportChains = Object.values(CHAINS)
 

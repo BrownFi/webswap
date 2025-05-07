@@ -416,21 +416,8 @@ export default function AddLiquidity({
                   disabled={!isValid || approvalA !== ApprovalState.APPROVED || approvalB !== ApprovalState.APPROVED}
                   error={!isValid && !!parsedAmounts[Field.CURRENCY_A] && !!parsedAmounts[Field.CURRENCY_B]}
                 >
-                  <Text fontSize={20} fontWeight={500}>
-                    {error ?? 'Supply'}
-                  </Text>
+                  {error ?? 'Supply'}
                 </ButtonError>
-
-                {chainId === ChainId.SONIC_TESTNET && (
-                  <Text fontWeight={500} fontSize={14} color={theme.gray} textAlign={'center'}>
-                    {currencies[Field.CURRENCY_A]?.symbol === 'DIAM' || currencies[Field.CURRENCY_B]?.symbol === 'DIAM'
-                      ? 'Pair S/Diamond = FTM/USD'
-                      : currencies[Field.CURRENCY_A]?.symbol === 'CORAL' ||
-                        currencies[Field.CURRENCY_B]?.symbol === 'CORAL'
-                      ? 'Pair S/CORAL = FTM/ETH'
-                      : ''}
-                  </Text>
-                )}
               </AutoColumn>
             )}
           </AutoColumn>
