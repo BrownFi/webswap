@@ -4,7 +4,7 @@ import { WalletConnectConnector } from './WalletConnector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 import { PortisConnector } from '@web3-react/portis-connector'
 
-import { boba, bscTestnet, viction } from 'wagmi/chains'
+import { boba, bscTestnet, sepolia, viction } from 'wagmi/chains'
 
 import { FortmaticConnector } from './Fortmatic'
 import { NetworkConnector } from './NetworkConnector'
@@ -31,8 +31,8 @@ const OP_MAINNET_URL = process.env.REACT_APP_OP_MAINNET_URL
 const BOBA_MAINNET_URL = process.env.REACT_APP_BOBA_MAINNET_URL
 const BERA_MAINNET_URL = process.env.REACT_APP_BERA_MAINNET_URL
 
-export const NETWORK_CHAIN_ID: number = ChainId.BSC_TESTNET
-export const NETWORK_URL = process.env.REACT_APP_BSC_TESTNET_URL!
+export const NETWORK_CHAIN_ID: number = ChainId.SEPOLIA
+export const NETWORK_URL = SEPOLIA_URL!
 
 export const network = new NetworkConnector({
   urls: { [NETWORK_CHAIN_ID]: NETWORK_URL }
@@ -104,7 +104,7 @@ export function getNetworkLibrary(): Web3Provider {
 }
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [ChainId.BSC_TESTNET]
+  supportedChainIds: [ChainId.BSC_TESTNET, ChainId.SEPOLIA]
 })
 
 // mainnet only
@@ -155,7 +155,7 @@ viction.iconUrl = require('assets/images/viction.png')
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
-  chains: [bscTestnet],
+  chains: [bscTestnet, sepolia],
   projectId: '3441811a50334d46eef9f2435cadee36',
   ssr: false
 })
