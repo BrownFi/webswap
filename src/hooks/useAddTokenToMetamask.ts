@@ -3,20 +3,22 @@ import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { Currency, Token } from '@brownfi/sdk'
 import { useCallback, useState } from 'react'
 import { useActiveWeb3React } from 'hooks'
+import { useWalletClient } from 'wagmi'
 
 export default function useAddTokenToMetamask(
   currencyToAdd: Currency | undefined
 ): { addToken: () => void; success: boolean | undefined } {
   const { library, chainId } = useActiveWeb3React()
+  const { data: walletClient } = useWalletClient()
 
   const token: Token | undefined = wrappedCurrency(currencyToAdd, chainId)
 
   const [success, setSuccess] = useState<boolean | undefined>()
 
   const addToken = useCallback(() => {
-    if (library && library.provider.isMetaMask && library.provider.request && token) {
-      library.provider
-        .request({
+    if (token) {
+      ;(walletClient || library?.provider)
+        ?.request?.({
           method: 'wallet_watchAsset',
           params: {
             type: 'ERC20',
@@ -26,12 +28,15 @@ export default function useAddTokenToMetamask(
               decimals: token.decimals,
               image: getTokenLogoURL(token.address)
             }
-          }
-        } as any)
+          } as any
+        })
         .then(success => {
           setSuccess(success)
         })
-        .catch(() => setSuccess(false))
+        .catch(error => {
+          console.warn(error)
+          setSuccess(false)
+        })
     } else {
       setSuccess(false)
     }
