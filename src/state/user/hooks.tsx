@@ -312,7 +312,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
     }
   }
 
-  const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs)
+  const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
 
   return pairs
 }
