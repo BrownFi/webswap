@@ -29,6 +29,14 @@
       "logoURI": "https://bscscan.com/token/images/usdtether_ofc_32.png"
     },
     {
+      "chainId": 11155111,
+      "address": "0x1dD4588d2f0B7a4BB9Ca49349b62114610F68973",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/centre-usdc_28.png"
+    },
+    {
       "chainId": 97,
       "address": "0xF0BBEF37c76F085f75FC7972A447a11B3077f952",
       "name": "USDT",
