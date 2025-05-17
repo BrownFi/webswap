@@ -210,7 +210,7 @@ export function useGetListPairs(
       [key: string]: SerializedPair
     }
   },
-  additionalSerializedPairs: {
+  additionalSerializedPairs?: {
     [chainId: number]: {
       [key: string]: SerializedPair
     }
@@ -243,7 +243,7 @@ export function useGetListPairs(
 
   const userPairs: [Token, Token][] = useMemo(() => {
     if (!chainId || !savedSerializedPairs) return []
-    const forChain = savedSerializedPairs[chainId] || additionalSerializedPairs[chainId]
+    const forChain = savedSerializedPairs[chainId] || additionalSerializedPairs?.[chainId]
     if (!forChain) return []
 
     return Object.keys(forChain).map(pairId => {
@@ -312,9 +312,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
     }
   }
 
-  const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
-
-  console.log('======= pairs', pairs)
+  const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs)
 
   return pairs
 }
