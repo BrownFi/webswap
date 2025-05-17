@@ -8,7 +8,9 @@
   },
   "tags": {},
   "logoURI": "ipfs://QmNa8mQkrNKp1WEEeGjFezDmDeodkWRevGFN8JCV7b4Xir",
-  "keywords": ["default"],
+  "keywords": [
+    "default"
+  ],
   "tokens": [
     {
       "chainId": 1,
