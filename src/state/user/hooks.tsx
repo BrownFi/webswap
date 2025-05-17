@@ -209,6 +209,11 @@ export function useGetListPairs(
     [chainId: number]: {
       [key: string]: SerializedPair
     }
+  },
+  additionalSerializedPairs: {
+    [chainId: number]: {
+      [key: string]: SerializedPair
+    }
   }
 ): [Token, Token][] {
   // pinned pairs
@@ -238,13 +243,21 @@ export function useGetListPairs(
 
   const userPairs: [Token, Token][] = useMemo(() => {
     if (!chainId || !savedSerializedPairs) return []
-    const forChain = savedSerializedPairs[chainId]
+    const forChain = savedSerializedPairs[chainId] || additionalSerializedPairs[chainId]
     if (!forChain) return []
 
     return Object.keys(forChain).map(pairId => {
-      return [deserializeToken(forChain[pairId].token0), deserializeToken(forChain[pairId].token1)]
+      let token0 = deserializeToken(forChain[pairId].token0)
+      if (tokens[token0.address]) {
+        token0 = tokens[token0.address]
+      }
+      let token1 = deserializeToken(forChain[pairId].token1)
+      if (tokens[token1.address]) {
+        token1 = tokens[token1.address]
+      }
+      return [token0, token1]
     })
-  }, [savedSerializedPairs, chainId])
+  }, [tokens, savedSerializedPairs, chainId])
 
   const combinedList = useMemo(() => userPairs.concat(generatedPairs).concat(pinnedPairs), [
     userPairs,
@@ -276,7 +289,32 @@ export function useTrackedTokenPairs(): [Token, Token][] {
   // pairs saved by users
   const savedSerializedPairs = useSelector<AppState, AppState['user']['pairs']>(({ user: { pairs } }) => pairs)
 
-  const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs)
+  const additionalSerializedPairs = {
+    [ChainId.BERA_MAINNET]: {
+      '0x549943e04f40284185054145c6E4e9568C1D3241:0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce': {
+        token0: {
+          chainId: 80094,
+          address: '0x549943e04f40284185054145c6E4e9568C1D3241',
+          name: 'Bridged USDC',
+          symbol: 'USDC.e',
+          decimals: 6,
+          logoURI: 'https://berascan.com/token/images/usdc_32.svg'
+        },
+        token1: {
+          chainId: 80094,
+          address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce',
+          name: 'Honey',
+          symbol: 'HONEY',
+          decimals: 18,
+          logoURI: 'https://berascan.com/token/images/honeybera_32.png'
+        }
+      }
+    }
+  }
+
+  const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
+
+  console.log('======= pairs', pairs)
 
   return pairs
 }
