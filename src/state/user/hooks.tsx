@@ -259,7 +259,7 @@ export function useGetListPairs(
     })
   }, [tokens, savedSerializedPairs, chainId])
 
-  const combinedList = useMemo(() => userPairs.concat(generatedPairs).concat(pinnedPairs), [
+  const combinedList = useMemo(() => generatedPairs.concat(userPairs).concat(pinnedPairs), [
     userPairs,
     generatedPairs,
     pinnedPairs
