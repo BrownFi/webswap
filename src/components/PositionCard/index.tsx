@@ -238,7 +238,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                 </Text>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4 gap-y-1">
                 <ButtonSecondary className="!w-fit !px-1">{tradingFee * 2}%</ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
                 <Text className="whitespace-nowrap text-[#27E3AB]">
