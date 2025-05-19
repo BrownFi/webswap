@@ -92,3 +92,7 @@ export function formatPrice(price: number) {
   }).format(price)
   return formattedNumber
 }
+
+export function formatNumber(number: string | number | undefined | null, options?: Intl.NumberFormatOptions) {
+  return Number(number || 0).toLocaleString('en-US', options)
+}

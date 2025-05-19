@@ -25,7 +25,7 @@ import { BIG_INT_ZERO } from '../../constants'
 import { getTokenSymbol } from 'utils'
 import { useQuery } from '@tanstack/react-query'
 import { dexscreenerService, internalService } from 'services'
-import { formatPrice } from 'utils/prices'
+import { formatNumber, formatPrice } from 'utils/prices'
 import { shouldReversePair } from 'utils/pair'
 import { useTradingFee } from 'hooks/useTradingFee'
 
@@ -242,7 +242,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 <ButtonSecondary className="!w-fit !px-1">{tradingFee * 2}%</ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
                 <Text className="whitespace-nowrap text-[#27E3AB]">
-                  Pool APY: {+Number(poolStats?.apy ?? 0).toFixed(2)}%
+                  Pool APY: {formatNumber(poolStats?.apy, { maximumFractionDigits: 2 })}%
                 </Text>
               </div>
             </div>
@@ -285,7 +285,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Total LP Tokens
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {totalPoolTokens?.toSignificant(4)}
+                  {formatNumber(totalPoolTokens?.toSignificant(4), { minimumFractionDigits: 2 })}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -322,7 +322,8 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                     </Text>
                   </div>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
-                    {pair.reserve0.toSignificant(4)} <span className="text-[#949494]">({formatPrice(pool0Price)})</span>
+                    {formatNumber(pair.reserve0.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
+                    <span className="text-[#949494]">({formatPrice(pool0Price)})</span>
                   </Text>
                 </FixedHeightRow>
 
@@ -334,7 +335,8 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                     </Text>
                   </div>
                   <Text fontSize={16} fontWeight={500} color={'white'}>
-                    {pair.reserve1.toSignificant(4)} <span className="text-[#949494]">({formatPrice(pool1Price)})</span>
+                    {formatNumber(pair.reserve1.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
+                    <span className="text-[#949494]">({formatPrice(pool1Price)})</span>
                   </Text>
                 </FixedHeightRow>
               </Flex>
