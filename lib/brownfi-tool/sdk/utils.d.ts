@@ -8,3 +8,5 @@ export declare function sortedInsert<T>(items: T[], add: T, maxSize: number, com
 export declare function supportContractWithPrice(chainId: ChainId): boolean;
 export declare function isRouterV2(chainId: ChainId): boolean;
 export declare function isTestnetSkipAmountsMin(chainId: ChainId): boolean;
+export declare const getDataBytes: (chainId: ChainId, addresses: Array<string | undefined>) => Promise<string>;
+export declare const solidityPack: (chainId: ChainId, addresses: Array<string | undefined>) => Promise<string>;
