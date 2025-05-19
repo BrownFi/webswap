@@ -21,6 +21,7 @@ import PendingView from './PendingView'
 import Web3 from 'web3'
 import { useActiveWeb3React } from 'hooks'
 import { ChainId, ChainIdHex } from '@brownfi/sdk'
+import { useAccountEffect } from 'wagmi'
 
 const CloseIcon = styled.div`
   position: absolute;
@@ -225,6 +226,12 @@ export default function WalletModal({
       console.log(e)
     }
   }
+
+  useAccountEffect({
+    onConnect: () => {
+      forceConnectAccount()
+    }
+  })
 
   const tryActivation = async (connector: AbstractConnector | undefined) => {
     if (connector === injected && window.ethereum) {
