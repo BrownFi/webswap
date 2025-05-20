@@ -47,7 +47,8 @@ export function useMintActionHandlers(
 
 export function useDerivedMintInfo(
   currencyA: Currency | undefined,
-  currencyB: Currency | undefined
+  currencyB: Currency | undefined,
+  pythPrices: { [field in Field]?: number }
 ): {
   dependentField: Field
   currencies: { [field in Field]?: Currency }
@@ -107,17 +108,41 @@ export function useDerivedMintInfo(
       const [tokenA, tokenB] = [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)]
       if (tokenA && tokenB && wrappedIndependentAmount && pair) {
         const dependentCurrency = dependentField === Field.CURRENCY_B ? currencyB : currencyA
-        const dependentTokenAmount =
+        let dependentTokenAmount =
           dependentField === Field.CURRENCY_B
             ? pair.priceOf(tokenA).quote(wrappedIndependentAmount)
             : pair.priceOf(tokenB).quote(wrappedIndependentAmount)
+
+        const independentPrice = pythPrices[independentField]
+        const dependentPrice = pythPrices[dependentField]
+        if (independentPrice && dependentPrice) {
+          const dependentAmount = parseFloat(independentAmount.toExact()) * (independentPrice / dependentPrice)
+
+          dependentTokenAmount = new TokenAmount(
+            wrappedCurrency(dependentTokenAmount.currency, chainId)!,
+            JSBI.BigInt(Math.round(dependentAmount * 10 ** dependentTokenAmount.currency.decimals))
+          )
+        }
+
         return dependentCurrency === ETHER ? CurrencyAmount.ether(dependentTokenAmount.raw) : dependentTokenAmount
       }
       return undefined
     } else {
       return undefined
     }
-  }, [noLiquidity, otherTypedValue, currencies, dependentField, independentAmount, currencyA, chainId, currencyB, pair])
+  }, [
+    noLiquidity,
+    otherTypedValue,
+    currencies,
+    dependentField,
+    independentAmount,
+    currencyA,
+    chainId,
+    currencyB,
+    pair,
+    pythPrices
+  ])
+
   const parsedAmounts: { [field in Field]: CurrencyAmount | undefined } = {
     [Field.CURRENCY_A]: independentField === Field.CURRENCY_A ? independentAmount : dependentAmount,
     [Field.CURRENCY_B]: independentField === Field.CURRENCY_A ? dependentAmount : independentAmount
@@ -131,8 +156,10 @@ export function useDerivedMintInfo(
       }
       return undefined
     } else {
-      const wrappedCurrencyA = wrappedCurrency(currencyA, chainId)
-      return pair && wrappedCurrencyA ? pair.priceOf(wrappedCurrencyA) : undefined
+      const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
+      if (!parsedAmountA || !parsedAmountB) return undefined
+
+      return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
     }
   }, [chainId, currencyA, noLiquidity, pair, parsedAmounts])
 

@@ -1,4 +1,4 @@
-import { addLiquidity, ChainId, Currency, currencyEquals, TokenAmount, WETH } from '@brownfi/sdk'
+import { addLiquidity, Currency, currencyEquals, TokenAmount, WETH } from '@brownfi/sdk'
 import React, { useCallback, useContext, useState } from 'react'
 import { Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
@@ -36,6 +36,7 @@ import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter
 import { ROUTER_ADDRESS } from '@brownfi/sdk'
 import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
+import { usePythPrices } from 'hooks/usePythPrices'
 
 export default function AddLiquidity({
   match: {
@@ -48,6 +49,8 @@ export default function AddLiquidity({
 
   const currencyA = useCurrency(currencyIdA)
   const currencyB = useCurrency(currencyIdB)
+
+  const pythPrices = usePythPrices({ currencyA, currencyB, chainId })
 
   const oneCurrencyIsWETH = Boolean(
     chainId &&
@@ -71,7 +74,14 @@ export default function AddLiquidity({
     liquidityMinted,
     poolTokenPercentage,
     error
-  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined)
+  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, pythPrices)
+
+  const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
+
+  const formattedPythAmounts = {
+    [independentField]: typedValue,
+    [dependentField]: noLiquidity ? otherTypedValue : dependentAmount === 0 ? '' : dependentAmount.toPrecision(6)
+  }
 
   const { onFieldAInput, onFieldBInput } = useMintActionHandlers(noLiquidity)
 
@@ -89,7 +99,7 @@ export default function AddLiquidity({
   // get formatted amounts
   const formattedAmounts = {
     [independentField]: typedValue,
-    [dependentField]: noLiquidity ? otherTypedValue : parsedAmounts[dependentField]?.toSignificant(6) ?? ''
+    [dependentField]: noLiquidity ? otherTypedValue : formattedPythAmounts[dependentField] ?? ''
   }
 
   // get the max amounts user can add
