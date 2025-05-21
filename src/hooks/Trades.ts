@@ -87,13 +87,16 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
 type TradeExactIn = {
   trade: Trade | null
   loadingExactIn: boolean
+  isInsufficient?: boolean
 }
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
  */
 export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?: Currency): TradeExactIn {
-  const [loading, setLoading] = useState(false)
   const [trade, setTrade] = useState<Trade | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [isInsufficient, setInsufficient] = useState(false)
+
   const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut)
   const { account } = useActiveWeb3React()
 
@@ -107,11 +110,24 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           const bestTradeIn = await Trade.bestTradeExactIn(account ?? '', allowedPairs, currencyAmountIn, currencyOut, {
             maxHops: 1,
             maxNumResults: 1
+          }).catch(error => {
+            console.log('bestTradeExactIn', error)
+            setInsufficient(
+              error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE')
+            )
           })
           setTrade(bestTradeIn?.[0] ?? null)
           return
         }
-        const bestTradeIn = await Trade.bestTradeExactIn(account ?? '', allowedPairs, currencyAmountIn, currencyOut)
+        const bestTradeIn = await Trade.bestTradeExactIn(
+          account ?? '',
+          allowedPairs,
+          currencyAmountIn,
+          currencyOut
+        ).catch(error => {
+          console.log('bestTradeExactIn', error)
+          setInsufficient(error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE'))
+        })
         setTrade(bestTradeIn?.[0] ?? null)
         setLoading(false)
         return
@@ -132,7 +148,8 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
 
   return {
     trade: trade,
-    loadingExactIn: loading
+    loadingExactIn: loading,
+    isInsufficient: isInsufficient && !trade
   }
 }
 
@@ -171,7 +188,10 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
               maxNumResults: 1
             }
           ).catch(error => {
-            setInsufficient(error.message.includes('INSUFFICIENT'))
+            console.log('bestTradeExactOut', error)
+            setInsufficient(
+              error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE')
+            )
           })
           setTrade(bestTradeOut?.[0] ?? null)
           return
@@ -183,7 +203,8 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           currencyIn,
           currencyAmountOut
         ).catch(error => {
-          setInsufficient(error.message.includes('INSUFFICIENT'))
+          console.log('bestTradeExactOut', error)
+          setInsufficient(error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE'))
         })
         setTrade(bestTradeOut?.[0] ?? null)
         setLoading(false)

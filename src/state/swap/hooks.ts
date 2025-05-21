@@ -141,6 +141,7 @@ export function useDerivedSwapInfo(): {
 
   const isExactIn: boolean = independentField === Field.INPUT
   const parsedAmount = tryParseAmount(typedValue, (isExactIn ? inputCurrency : outputCurrency) ?? undefined)
+  const isInputEmpty = !(+typedValue > 0)
 
   const tradeIn = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined)
   const tradeOut = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined)
@@ -236,8 +237,10 @@ export function useDerivedSwapInfo(): {
     inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
   }
 
-  if (tradeOut.isInsufficient) {
-    inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
+  if (tradeOut.isInsufficient || tradeIn.isInsufficient) {
+    if (!isInputEmpty && !tradeIn.loadingExactIn && !tradeOut.loadingExactOut) {
+      inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
+    }
   }
 
   return {
