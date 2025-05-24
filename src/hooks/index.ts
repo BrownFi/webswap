@@ -28,8 +28,8 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
 
   return {
     ...ctx,
-    account: address,
-    chainId,
+    account: address || ctx.account,
+    chainId: chainId || ctx.chainId,
     library: library || ctx.library
   }
 }
