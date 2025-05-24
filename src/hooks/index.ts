@@ -6,11 +6,32 @@ import { useEffect, useState } from 'react'
 import { isMobile } from 'react-device-detect'
 import { injected } from '../connectors'
 import { NetworkContextName } from '../constants'
+import { useAccount } from 'wagmi'
 
 export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & { chainId?: ChainId } {
   const context = useWeb3ReactCore<Web3Provider>()
   const contextNetwork = useWeb3ReactCore<Web3Provider>(NetworkContextName)
-  return context.active ? context : contextNetwork
+  const ctx = context.active ? context : contextNetwork
+
+  const { address, chainId, isConnected, connector } = useAccount()
+  const [library, setLibrary] = useState<Web3Provider>()
+
+  useEffect(() => {
+    if (isConnected && connector) {
+      if ('getProvider' in connector) {
+        connector.getProvider({ chainId }).then((a: any) => {
+          setLibrary(new Web3Provider(a))
+        })
+      }
+    }
+  }, [isConnected])
+
+  return {
+    ...ctx,
+    account: address,
+    chainId,
+    library: library || ctx.library
+  }
 }
 
 export function useEagerConnect() {
