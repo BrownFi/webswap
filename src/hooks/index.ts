@@ -14,13 +14,12 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
   const ctx = context.active ? context : contextNetwork
 
   const { address, chainId, isConnected, connector } = useAccount()
-  const [library, setLibrary] = useState<Web3Provider>()
 
   useEffect(() => {
     if (isConnected && connector) {
       if ('getProvider' in connector) {
         connector.getProvider({ chainId }).then((a: any) => {
-          setLibrary(new Web3Provider(a))
+          ctx.library = new Web3Provider(a)
         })
       }
     }
@@ -29,8 +28,7 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
   return {
     ...ctx,
     account: address || ctx.account,
-    chainId: chainId || ctx.chainId,
-    library: library || ctx.library
+    chainId: chainId || ctx.chainId
   }
 }
 
