@@ -229,9 +229,7 @@ export default function WalletModal({
 
   useAccountEffect({
     onConnect: () => {
-      if (!account) {
-        forceConnectAccount()
-      }
+      forceConnectAccount()
     }
   })
 
