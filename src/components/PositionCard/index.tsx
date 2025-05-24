@@ -155,9 +155,8 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
             <span role="img" aria-label="wizard-icon">
               ⭐️
             </span>{' '}
-            By adding liquidity you&apos;ll earn {tradingFee * 2}% of all trades on this pair proportional to your share
-            of the pool. Fees are added to the pool, accrue in real time and can be claimed by withdrawing your
-            liquidity.
+            By adding liquidity you&apos;ll earn {tradingFee}% of all trades on this pair proportional to your share of
+            the pool. Fees are added to the pool, accrue in real time and can be claimed by withdrawing your liquidity.
           </TYPE.subHeader>
         </LightCard>
       )}
@@ -196,6 +195,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
   const tvl = pool0Price + pool1Price
+  const feeAPR = tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / tvl)
 
   const [showMore, setShowMore] = useState(false)
 
@@ -239,10 +239,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                 </Text>
               </div>
               <div className="flex flex-wrap items-center gap-4 gap-y-1">
-                <ButtonSecondary className="!w-fit !px-1">{tradingFee * 2}%</ButtonSecondary>
+                <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
-                <Text className="whitespace-nowrap text-[#27E3AB]">
+                {/* <Text className="whitespace-nowrap text-[#27E3AB]">
                   Pool APY: {formatNumber(poolStats?.apy, { maximumFractionDigits: 2 })}%
+                </Text> */}
+                <Text className="whitespace-nowrap text-[#27E3AB]">
+                  Fee APR: {formatNumber(feeAPR, { maximumFractionDigits: 2 })}%
                 </Text>
               </div>
             </div>
@@ -285,7 +288,9 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Total LP Tokens
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {formatNumber(totalPoolTokens?.toSignificant(4), { minimumFractionDigits: 2 })}
+                  {formatNumber(totalPoolTokens?.toSignificant(6), {
+                    minimumFractionDigits: Number(totalPoolTokens?.toFixed(2)) > 1 ? 2 : 6
+                  })}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
