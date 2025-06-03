@@ -84,6 +84,7 @@ export default function AddLiquidity({
   }
 
   const { onFieldAInput, onFieldBInput } = useMintActionHandlers(noLiquidity)
+  const [exactFieldInput, setExactFieldInput] = useState<Field | undefined>(undefined)
 
   const isValid = !error
 
@@ -145,6 +146,7 @@ export default function AddLiquidity({
         account,
         parsedAmountA,
         parsedAmountB,
+        exactFieldInput,
         deadline as any,
         noLiquidity,
         allowedSlippage
@@ -334,9 +336,13 @@ export default function AddLiquidity({
               ))}
             <CurrencyInputPanel
               value={formattedAmounts[Field.CURRENCY_A]}
-              onUserInput={onFieldAInput}
+              onUserInput={value => {
+                onFieldAInput(value)
+                setExactFieldInput(Field.CURRENCY_A)
+              }}
               onMax={() => {
                 onFieldAInput(maxAmounts[Field.CURRENCY_A]?.toExact() ?? '')
+                setExactFieldInput(Field.CURRENCY_A)
               }}
               onCurrencySelect={handleCurrencyASelect}
               showMaxButton={!atMaxAmounts[Field.CURRENCY_A]}
@@ -349,10 +355,14 @@ export default function AddLiquidity({
             </ColumnCenter>
             <CurrencyInputPanel
               value={formattedAmounts[Field.CURRENCY_B]}
-              onUserInput={onFieldBInput}
+              onUserInput={value => {
+                onFieldBInput(value)
+                setExactFieldInput(Field.CURRENCY_B)
+              }}
               onCurrencySelect={handleCurrencyBSelect}
               onMax={() => {
                 onFieldBInput(maxAmounts[Field.CURRENCY_B]?.toExact() ?? '')
+                setExactFieldInput(Field.CURRENCY_B)
               }}
               showMaxButton={!atMaxAmounts[Field.CURRENCY_B]}
               currency={currencies[Field.CURRENCY_B]}

@@ -1,10 +1,10 @@
 import { TransactionResponse, Web3Provider } from '@ethersproject/providers';
 import { BigNumber } from '@ethersproject/bignumber';
 import { ChainId, Currency, CurrencyAmount, Percent, Token, TokenAmount } from '../sdk';
-import { ApprovalState } from '../constants/constants';
+import { ApprovalState, Field } from '../constants/constants';
 import { AccountInterface } from 'starknet';
 export declare const addLiquidityStarket: (chainId: ChainId, library: AccountInterface | null | undefined, account: string | null | undefined, parsedAmountA: CurrencyAmount | undefined, parsedAmountB: CurrencyAmount | undefined, deadline: BigNumber | undefined) => Promise<TransactionResponse | undefined>;
-export declare function addLiquidity(chainId: ChainId | undefined, library: Web3Provider | AccountInterface | undefined, account: string | null | undefined, parsedAmountA: CurrencyAmount | undefined, parsedAmountB: CurrencyAmount | undefined, deadline: BigNumber | undefined, noLiquidity: boolean | undefined, allowedSlippage: number): Promise<TransactionResponse | undefined>;
+export declare function addLiquidity(chainId: ChainId | undefined, library: Web3Provider | AccountInterface | undefined, account: string | null | undefined, parsedAmountA: CurrencyAmount | undefined, parsedAmountB: CurrencyAmount | undefined, exactFieldInput: Field | undefined, deadline: BigNumber | undefined, noLiquidity: boolean | undefined, allowedSlippage: number): Promise<TransactionResponse | undefined>;
 export declare type ParsedAmounts = {
     LIQUIDITY_PERCENT: Percent;
     LIQUIDITY?: TokenAmount;
