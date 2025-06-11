@@ -1,6 +1,6 @@
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
@@ -175,13 +175,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const { data: token0Price = 0 } = useQuery({
     queryKey: ['getTokenPrice', pair.token0.address],
     queryFn: () => {
-      return dexscreenerService.getTokenPrice(pair.token0.address, pair.token0.symbol)
+      return dexscreenerService.getTokenPrice(pair.token0.address, pair.token0.symbol, chainId)
     }
   })
   const { data: token1Price = 0 } = useQuery({
     queryKey: ['getTokenPrice', pair.token1.address],
     queryFn: () => {
-      return dexscreenerService.getTokenPrice(pair.token1.address, pair.token1.symbol)
+      return dexscreenerService.getTokenPrice(pair.token1.address, pair.token1.symbol, chainId)
     }
   })
 
@@ -201,6 +201,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
 
   const userPoolTokens = useTokenBalance(account ?? undefined, pair.liquidityToken)
   const totalPoolTokens = useTotalSupply(pair.liquidityToken)
+
+  useEffect(() => {
+    console.log('======== Pair', `${pair.token0.symbol}/${pair.token1.symbol}`)
+    console.log(pair.token0.symbol, token0Price, pair.token0.address)
+    console.log(pair.token1.symbol, token1Price, pair.token1.address)
+    console.log(pair.liquidityToken.symbol, pair.liquidityToken.address)
+  }, [pair, token0Price, token1Price])
 
   const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(4)) || 1)
 
@@ -245,7 +252,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Pool APY: {formatNumber(poolStats?.apy, { maximumFractionDigits: 2 })}%
                 </Text> */}
                 <Text className="whitespace-nowrap text-[#27E3AB]">
-                  Fee APR: {formatNumber(feeAPR, { maximumFractionDigits: 2 })}%
+                  Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
                 </Text>
               </div>
             </div>
@@ -326,7 +333,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       {getTokenSymbol(currency0, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                  <Text fontSize={16} fontWeight={500} color={'white'} title={token0Price}>
                     {formatNumber(pair.reserve0.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
                     <span className="text-[#949494]">({formatPrice(pool0Price)})</span>
                   </Text>
@@ -339,7 +346,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       {getTokenSymbol(currency1, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                  <Text fontSize={16} fontWeight={500} color={'white'} title={token1Price}>
                     {formatNumber(pair.reserve1.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
                     <span className="text-[#949494]">({formatPrice(pool1Price)})</span>
                   </Text>
