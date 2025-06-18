@@ -295,9 +295,9 @@ export function ButtonError({ error, ...rest }: { error?: boolean } & ButtonProp
 export function ButtonDropdown({ disabled = false, children, ...rest }: { disabled?: boolean } & ButtonProps) {
   return (
     <ButtonPrimary {...rest} disabled={disabled}>
-      <RowBetween>
+      <RowBetween className="gap-1">
         <div style={{ display: 'flex', alignItems: 'center' }}>{children}</div>
-        <ChevronDown size={24} />
+        <ChevronDown size={20} />
       </RowBetween>
     </ButtonPrimary>
   )

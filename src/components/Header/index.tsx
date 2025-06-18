@@ -10,6 +10,7 @@ import Row, { RowFixed } from '../Row'
 import Web3Status from '../Web3Status'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import HamburgerMenu from './HamburgerMenu'
+import CustomChainSelect from './CustomChainSelect'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -40,6 +41,7 @@ const HeaderControls = styled.div`
   flex-direction: row;
   align-items: center;
   justify-self: flex-end;
+  gap: 8px;
 
   ${({ theme }) => theme.mediaWidth.upToMedium`
     flex-direction: row;
@@ -189,6 +191,7 @@ export default function Header() {
       </HeaderRow>
 
       <HeaderControls>
+        <CustomChainSelect />
         <ConnectButton />
 
         {/* Legacy */}

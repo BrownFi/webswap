@@ -164,6 +164,7 @@ const CHAINS: any = {
 
 const supportChains = Object.values(CHAINS)
 
+/** @deprecated */
 export default function SelectChain() {
   const node = useRef<HTMLDivElement>()
   const open = useModalOpen(ApplicationModal.SELECT_CHAIN)
@@ -260,7 +261,6 @@ export default function SelectChain() {
       handleSelectChain(Number(savedChain))
       return
     }
-    handleSelectChain(ChainId.BERA_MAINNET)
   }, [savedChain])
 
   return (

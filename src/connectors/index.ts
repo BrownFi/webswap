@@ -10,8 +10,8 @@ import { FortmaticConnector } from './Fortmatic'
 import { NetworkConnector } from './NetworkConnector'
 import UNISWAP_LOGO_URL from '../assets/svg/logo.svg'
 import { ChainId } from '@brownfi/sdk'
-import { getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { Chain, defineChain } from 'viem'
+import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
+import { defineChain } from 'viem'
 
 const SEPOLIA_URL = process.env.REACT_APP_SEPOLIA_URL
 const FORMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY
@@ -30,13 +30,17 @@ const OP_MAINNET_URL = process.env.REACT_APP_OP_MAINNET_URL
 const BOBA_MAINNET_URL = process.env.REACT_APP_BOBA_MAINNET_URL
 const BERA_MAINNET_URL = process.env.REACT_APP_BERA_MAINNET_URL
 
+/** @deprecated */
 export const NETWORK_CHAIN_ID: number = ChainId.BERA_MAINNET
-export const NETWORK_URL = process.env.REACT_APP_BERA_MAINNET_URL
+
+/** @deprecated */
+export const NETWORK_URL = BERA_MAINNET_URL
 
 if (typeof NETWORK_URL === 'undefined') {
   throw new Error(`REACT_APP_NETWORK_URL must be a defined environment variable`)
 }
 
+/** @deprecated */
 export const network = new NetworkConnector({
   urls: { [NETWORK_CHAIN_ID]: NETWORK_URL }
 })
@@ -105,10 +109,10 @@ export function getNetworkLibrary(): Web3Provider {
 export const injected = new InjectedConnector({
   supportedChainIds: [
     ChainId.VICTION_MAINNET,
-    // ChainId.METIS_MAINNET,
+    ChainId.METIS_MAINNET,
     ChainId.U2U_MAINNET,
-    // ChainId.ARBITRUM_MAINNET,
-    // ChainId.OP_MAINNET,
+    ChainId.ARBITRUM_MAINNET,
+    ChainId.OP_MAINNET,
     ChainId.BOBA_MAINNET,
     ChainId.BERA_MAINNET
   ]
@@ -156,13 +160,17 @@ const u2uMainnet: Chain = defineChain({
 })
 
 // @ts-ignore
+berachain.iconUrl = require('assets/images/w-bera.png')
+// @ts-ignore
 boba.iconUrl = require('assets/images/boba.svg').default
 // @ts-ignore
 viction.iconUrl = require('assets/images/viction.png')
 
+export const availableChains: Chain[] = [berachain, viction, u2uMainnet]
+
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
-  chains: [berachain, boba, viction, u2uMainnet],
+  chains: availableChains as any,
   projectId: '3441811a50334d46eef9f2435cadee36',
   ssr: false
 })

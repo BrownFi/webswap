@@ -3,10 +3,14 @@ import { useWeb3React } from '@web3-react/core'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 
-import { network } from '../../connectors'
 import { useEagerConnect, useInactiveListener } from '../../hooks'
 import { NetworkContextName } from '../../constants'
 import Loader from '../Loader'
+import { NetworkConnector } from 'connectors/NetworkConnector'
+import { useSelector } from 'react-redux'
+import { chainSelector } from 'state/chainSlice'
+import { useAccount } from 'wagmi'
+import { availableChains } from 'connectors'
 
 const MessageWrapper = styled.div`
   display: flex;
@@ -23,16 +27,28 @@ export default function Web3ReactManager({ children }: { children: JSX.Element }
   const { t } = useTranslation()
   const { active } = useWeb3React()
   const { active: networkActive, error: networkError, activate: activateNetwork } = useWeb3React(NetworkContextName)
+  const { isConnected, chainId: networkChainId } = useAccount()
+  const isWrongNetwork = availableChains.every(chain => chain.id !== networkChainId)
+
+  const chain = useSelector(chainSelector)
 
   // try to eagerly connect to an injected provider, if it exists and has granted access already
   const triedEager = useEagerConnect()
 
   // after eagerly trying injected, if the network connect ever isn't active or in an error state, activate itd
   useEffect(() => {
+    const network = new NetworkConnector({
+      urls: { [chain.id]: chain.rpcUrls.default.http[0] }
+    })
     if (triedEager && !networkActive && !networkError && !active) {
       activateNetwork(network)
+      return
     }
-  }, [triedEager, networkActive, networkError, activateNetwork, active])
+    if (!isConnected || isWrongNetwork) {
+      activateNetwork(network)
+      return
+    }
+  }, [activateNetwork, triedEager, networkActive, networkError, active, chain])
 
   // when there's no account connected, react to logins (broadly speaking) on the injected provider, if it exists
   useInactiveListener(!triedEager)

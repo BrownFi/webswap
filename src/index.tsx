@@ -47,14 +47,14 @@ const root = ReactDOM.createRoot(document.getElementById('root') as any)
 root.render(
   <StrictMode>
     <FixedGlobalStyle />
-    <Web3ReactProvider getLibrary={getLibrary}>
-      <Web3ProviderNetwork getLibrary={getLibrary}>
-        <WagmiProvider config={wagmiConfig}>
-          <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider theme={darkTheme()}>
-              <StarknetProvider>
-                <Blocklist>
-                  <Provider store={store}>
+    <Provider store={store}>
+      <Web3ReactProvider getLibrary={getLibrary}>
+        <Web3ProviderNetwork getLibrary={getLibrary}>
+          <WagmiProvider config={wagmiConfig}>
+            <QueryClientProvider client={queryClient}>
+              <RainbowKitProvider theme={darkTheme()}>
+                <StarknetProvider>
+                  <Blocklist>
                     <Updaters />
                     <ThemeProvider>
                       <ThemedGlobalStyle />
@@ -62,14 +62,14 @@ root.render(
                         <App />
                       </HashRouter>
                     </ThemeProvider>
-                  </Provider>
-                </Blocklist>
-              </StarknetProvider>
-            </RainbowKitProvider>
-          </QueryClientProvider>
-        </WagmiProvider>
-      </Web3ProviderNetwork>
-    </Web3ReactProvider>
+                  </Blocklist>
+                </StarknetProvider>
+              </RainbowKitProvider>
+            </QueryClientProvider>
+          </WagmiProvider>
+        </Web3ProviderNetwork>
+      </Web3ReactProvider>
+    </Provider>
   </StrictMode>
 )
 

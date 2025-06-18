@@ -19,8 +19,8 @@ import Modal from '../Modal'
 import Option from './Option'
 import PendingView from './PendingView'
 import Web3 from 'web3'
-import { useActiveWeb3React } from 'hooks'
-import { ChainId, ChainIdHex } from '@brownfi/sdk'
+import { useActiveWeb3React, useCustomChainId } from 'hooks'
+import { ChainIdHex } from '@brownfi/sdk'
 
 const CloseIcon = styled.div`
   position: absolute;
@@ -130,6 +130,7 @@ export default function WalletModal({
   // important that these are destructed from the account-specific web3-react context
   const { active, account, connector, activate, error } = useWeb3React()
   const { chainId } = useActiveWeb3React()
+  const { chainId: customChainId } = useCustomChainId()
 
   const [walletView, setWalletView] = useState(WALLET_VIEWS.ACCOUNT)
 
@@ -173,14 +174,14 @@ export default function WalletModal({
         try {
           await (window.ethereum as any)?.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: ChainIdHex[chainId || ChainId.BERA_MAINNET] }] // chainId must be in hexadecimal numbers
+            params: [{ chainId: ChainIdHex[chainId || customChainId] }] // chainId must be in hexadecimal numbers
           })
         } catch (e) {
-          if ((e as any)?.code === 4902 && CHAIN_TO_METAMASK[chainId || ChainId.BERA_MAINNET]) {
+          if ((e as any)?.code === 4902 && CHAIN_TO_METAMASK[chainId || customChainId]) {
             // console.log(CHAIN_TO_METAMASK[chain])\
             await (window.ethereum as any)?.request({
               method: 'wallet_addEthereumChain',
-              params: [CHAIN_TO_METAMASK[chainId || ChainId.BERA_MAINNET]] // chainId must be in hexadecimal numbers
+              params: [CHAIN_TO_METAMASK[chainId || customChainId]] // chainId must be in hexadecimal numbers
             })
           }
         }
