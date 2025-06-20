@@ -1,7 +1,7 @@
 import { ChainId, ChainIdHex, JSBI, Percent, Token, WETH } from '@brownfi/sdk'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 
-import { fortmatic, injected, portis, walletconnect, walletlink } from '../connectors'
+import { injected, walletconnect, walletlink } from '../connectors'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -169,24 +169,6 @@ export const SUPPORTED_WALLETS: { [key: string]: WalletInfo } = {
     color: '#315CF5',
     mobile: true,
     mobileOnly: true
-  },
-  FORTMATIC: {
-    connector: fortmatic,
-    name: 'Fortmatic',
-    iconName: 'fortmaticIcon.png',
-    description: 'Login using Fortmatic hosted wallet',
-    href: null,
-    color: '#6748FF',
-    mobile: true
-  },
-  Portis: {
-    connector: portis,
-    name: 'Portis',
-    iconName: 'portisIcon.png',
-    description: 'Login using Portis hosted wallet',
-    href: null,
-    color: '#4A6C9B',
-    mobile: true
   }
 }
 
@@ -351,6 +333,17 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'U2U'
     },
     rpcUrls: [process.env.REACT_APP_U2U_MAINNET_URL]
+  },
+  [ChainId.ARBITRUM_SEPOLIA]: {
+    chainId: ChainIdHex[ChainId.ARBITRUM_SEPOLIA],
+    blockExplorerUrls: ['https://sepolia.arbiscan.io/'],
+    chainName: 'Arbitrum Sepolia',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'ETH',
+      symbol: 'ETH'
+    },
+    rpcUrls: [process.env.REACT_APP_ARBITRUM_SEPOLIA_URL]
   },
   [ChainId.ARBITRUM_MAINNET]: {
     chainId: ChainIdHex[ChainId.ARBITRUM_MAINNET],

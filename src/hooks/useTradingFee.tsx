@@ -10,7 +10,7 @@ export const useTradingFee = ({ pair }: Props) => {
 
   useEffect(() => {
     const getTradingFee = async () => {
-      setTradingFee(await pair.getTradingFee())
+      setTradingFee((await pair.getTradingFee()) * 2)
     }
     getTradingFee()
   }, [pair.liquidityToken.address])

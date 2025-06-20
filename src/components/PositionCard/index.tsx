@@ -1,6 +1,6 @@
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
@@ -25,7 +25,7 @@ import { BIG_INT_ZERO } from '../../constants'
 import { getTokenSymbol } from 'utils'
 import { useQuery } from '@tanstack/react-query'
 import { dexscreenerService, internalService } from 'services'
-import { formatPrice } from 'utils/prices'
+import { formatNumber, formatPrice } from 'utils/prices'
 import { shouldReversePair } from 'utils/pair'
 import { useTradingFee } from 'hooks/useTradingFee'
 
@@ -155,9 +155,8 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
             <span role="img" aria-label="wizard-icon">
               ⭐️
             </span>{' '}
-            By adding liquidity you&apos;ll earn {tradingFee * 2}% of all trades on this pair proportional to your share
-            of the pool. Fees are added to the pool, accrue in real time and can be claimed by withdrawing your
-            liquidity.
+            By adding liquidity you&apos;ll earn {tradingFee}% of all trades on this pair proportional to your share of
+            the pool. Fees are added to the pool, accrue in real time and can be claimed by withdrawing your liquidity.
           </TYPE.subHeader>
         </LightCard>
       )}
@@ -176,13 +175,13 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const { data: token0Price = 0 } = useQuery({
     queryKey: ['getTokenPrice', pair.token0.address],
     queryFn: () => {
-      return dexscreenerService.getTokenPrice(pair.token0.address, pair.token0.symbol)
+      return dexscreenerService.getTokenPrice(pair.token0.address, pair.token0.symbol, chainId)
     }
   })
   const { data: token1Price = 0 } = useQuery({
     queryKey: ['getTokenPrice', pair.token1.address],
     queryFn: () => {
-      return dexscreenerService.getTokenPrice(pair.token1.address, pair.token1.symbol)
+      return dexscreenerService.getTokenPrice(pair.token1.address, pair.token1.symbol, chainId)
     }
   })
 
@@ -196,11 +195,19 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
   const tvl = pool0Price + pool1Price
+  const feeAPR = tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / tvl)
 
   const [showMore, setShowMore] = useState(false)
 
   const userPoolTokens = useTokenBalance(account ?? undefined, pair.liquidityToken)
   const totalPoolTokens = useTotalSupply(pair.liquidityToken)
+
+  useEffect(() => {
+    console.log('======== Pair', `${pair.token0.symbol}/${pair.token1.symbol}`)
+    console.log(pair.token0.symbol, token0Price, pair.token0.address)
+    console.log(pair.token1.symbol, token1Price, pair.token1.address)
+    console.log(pair.liquidityToken.symbol, pair.liquidityToken.address)
+  }, [pair, token0Price, token1Price])
 
   const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(4)) || 1)
 
@@ -238,11 +245,14 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                 </Text>
               </div>
-              <div className="flex items-center gap-4">
-                <ButtonSecondary className="!w-fit !px-1">{tradingFee * 2}%</ButtonSecondary>
+              <div className="flex flex-wrap items-center gap-4 gap-y-1">
+                <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
+                {/* <Text className="whitespace-nowrap text-[#27E3AB]">
+                  Pool APY: {formatNumber(poolStats?.apy, { maximumFractionDigits: 2 })}%
+                </Text> */}
                 <Text className="whitespace-nowrap text-[#27E3AB]">
-                  Pool APY: {+Number(poolStats?.apy ?? 0).toFixed(2)}%
+                  Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
                 </Text>
               </div>
             </div>
@@ -285,7 +295,9 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Total LP Tokens
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {totalPoolTokens?.toSignificant(4)}
+                  {formatNumber(totalPoolTokens?.toSignificant(6), {
+                    minimumFractionDigits: Number(totalPoolTokens?.toFixed(2)) > 1 ? 2 : 6
+                  })}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -321,8 +333,9 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       {getTokenSymbol(currency0, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
-                    {pair.reserve0.toSignificant(4)} <span className="text-[#949494]">({formatPrice(pool0Price)})</span>
+                  <Text fontSize={16} fontWeight={500} color={'white'} title={token0Price}>
+                    {formatNumber(pair.reserve0.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
+                    <span className="text-[#949494]">({formatPrice(pool0Price)})</span>
                   </Text>
                 </FixedHeightRow>
 
@@ -333,8 +346,9 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       {getTokenSymbol(currency1, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
-                    {pair.reserve1.toSignificant(4)} <span className="text-[#949494]">({formatPrice(pool1Price)})</span>
+                  <Text fontSize={16} fontWeight={500} color={'white'} title={token1Price}>
+                    {formatNumber(pair.reserve1.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
+                    <span className="text-[#949494]">({formatPrice(pool1Price)})</span>
                   </Text>
                 </FixedHeightRow>
               </Flex>

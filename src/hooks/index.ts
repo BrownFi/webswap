@@ -4,13 +4,38 @@ import { useWeb3React as useWeb3ReactCore } from '@web3-react/core'
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types'
 import { useEffect, useState } from 'react'
 import { isMobile } from 'react-device-detect'
-import { injected } from '../connectors'
+import { availableChains, injected } from '../connectors'
 import { NetworkContextName } from '../constants'
+import { useAccount } from 'wagmi'
+import { useSelector } from 'react-redux'
+import { chainSelector } from 'state/chainSlice'
 
 export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & { chainId?: ChainId } {
   const context = useWeb3ReactCore<Web3Provider>()
   const contextNetwork = useWeb3ReactCore<Web3Provider>(NetworkContextName)
-  return context.active ? context : contextNetwork
+  const ctx = context.active ? context : contextNetwork
+
+  const { address, chainId: networkChainId, isConnected, connector } = useAccount()
+
+  const currentChain = useSelector(chainSelector)
+  const isWrongNetwork = availableChains.every(chain => chain.id !== networkChainId)
+  const chainId = (isConnected && !isWrongNetwork ? networkChainId : currentChain.id) as ChainId
+
+  useEffect(() => {
+    if (isConnected && connector) {
+      if ('getProvider' in connector) {
+        connector.getProvider({ chainId }).then((a: any) => {
+          ctx.library = new Web3Provider(a)
+        })
+      }
+    }
+  }, [isConnected])
+
+  return {
+    ...ctx,
+    account: address || ctx.account,
+    chainId: chainId || ctx.chainId
+  }
 }
 
 export function useEagerConnect() {

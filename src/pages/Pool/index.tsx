@@ -118,6 +118,20 @@ export default function Pool() {
 
   return (
     <>
+      <TYPE.main mb={3} color="#bb9981" className="max-w-[894px]">
+        BrownFi is a novel primitive AMM currently in mainnet beta testing. While audited by{' '}
+        <a
+          href="https://x.com/BrownFidex/status/1869978104988656104?t=WFaQP-iJcn09tcMXmxfCzw"
+          target="_blank"
+          className="cursor-pointer hover:underline"
+          rel="noreferrer"
+        >
+          Verichain
+        </a>
+        , the protocol may exhibit instability during this phase - please use with caution and awareness of potential
+        risks.
+      </TYPE.main>
+
       <PageWrapper>
         {/* <SwapPoolTabs active={'pool'} /> */}
 
