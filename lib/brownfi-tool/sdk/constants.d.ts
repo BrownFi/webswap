@@ -20,6 +20,7 @@ export declare enum ChainId {
     NEOX_MAINNET = 47763,
     U2U_MAINNET = 39,
     SCROLL_TESTNET = 534351,
+    ARBITRUM_SEPOLIA = 421614,
     ARBITRUM_MAINNET = 42161,
     OP_MAINNET = 10,
     BOBA_MAINNET = 288,
@@ -54,6 +55,7 @@ export declare const FACTORY_ADDRESS: {
     47763: string;
     39: string;
     534351: string;
+    421614: string;
     42161: string;
     10: string;
     288: string;
@@ -76,6 +78,7 @@ export declare const INIT_CODE_HASH: {
     47763: string;
     39: string;
     534351: string;
+    421614: string;
     42161: string;
     10: string;
     288: string;

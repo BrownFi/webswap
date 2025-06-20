@@ -22,6 +22,7 @@ const V1_FACTORY_ADDRESSES: { [chainId in ChainId]: string } = {
   [ChainId.BOBA_TESTNET]: '',
   [ChainId.NEOX_MAINNET]: '',
   [ChainId.U2U_MAINNET]: '',
+  [ChainId.ARBITRUM_SEPOLIA]: '',
   [ChainId.ARBITRUM_MAINNET]: '',
   [ChainId.OP_MAINNET]: '',
   [ChainId.BOBA_MAINNET]: '',
