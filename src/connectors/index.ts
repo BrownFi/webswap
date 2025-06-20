@@ -69,6 +69,10 @@ boba.iconUrl = require('assets/images/boba.svg').default
 viction.iconUrl = require('assets/images/viction.png')
 // @ts-ignore
 u2uMainnet.iconUrl = require('assets/images/u2u.jpg')
+// @ts-ignore
+arbitrumSepolia.iconUrl = require('assets/images/arb.png')
+// @ts-ignore
+sepolia.iconUrl = require('assets/images/ethereum-logo.png')
 
 export const availableChains: Chain[] = [arbitrumSepolia, sepolia]
 
