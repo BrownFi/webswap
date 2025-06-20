@@ -141,6 +141,22 @@
       "logoURI": "https://raw.githubusercontent.com/unicornultrafoundation/token-assets/master/tokens/0x0820957B320E901622385Cc6C4fca196b20b939F/logo.png"
     },
     {
+      "chainId": 421614,
+      "address": "0xD3F729D909a7E84669A35c3F25b37b4AC3487784",
+      "name": "ETH",
+      "symbol": "ETH",
+      "decimals": 18,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
+    },
+    {
+      "chainId": 421614,
+      "address": "0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
       "chainId": 42161,
       "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
       "name": "USDC",

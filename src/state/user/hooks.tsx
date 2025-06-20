@@ -309,6 +309,26 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           logoURI: 'https://berascan.com/token/images/honeybera_32.png'
         }
       }
+    },
+    [ChainId.ARBITRUM_SEPOLIA]: {
+      '0xD3F729D909a7E84669A35c3F25b37b4AC3487784:0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA': {
+        token0: {
+          chainId: 421614,
+          address: '0xD3F729D909a7E84669A35c3F25b37b4AC3487784',
+          name: 'ETH',
+          symbol: 'ETH',
+          decimals: 18,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png'
+        },
+        token1: {
+          chainId: 421614,
+          address: '0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA',
+          name: 'USDC',
+          symbol: 'USDC',
+          decimals: 6,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png'
+        }
+      }
     }
   }
 

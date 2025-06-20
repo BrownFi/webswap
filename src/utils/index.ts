@@ -79,6 +79,9 @@ export function getEtherscanLink(
     case ChainId.U2U_MAINNET:
       prefix = 'https://u2uscan.xyz'
       break
+    case ChainId.ARBITRUM_SEPOLIA:
+      prefix = 'https://sepolia.arbiscan.io'
+      break
     case ChainId.ARBITRUM_MAINNET:
       prefix = 'https://arbiscan.io'
       break

@@ -4,7 +4,7 @@ import { WalletConnectConnector } from './WalletConnector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 import { PortisConnector } from '@web3-react/portis-connector'
 
-import { boba, bscTestnet, sepolia, viction } from 'wagmi/chains'
+import { arbitrumSepolia, boba, bscTestnet, sepolia, viction } from 'wagmi/chains'
 
 import { FortmaticConnector } from './Fortmatic'
 import { NetworkConnector } from './NetworkConnector'
@@ -26,13 +26,14 @@ const UNICHAIN_TESTNET_URL = process.env.REACT_APP_UNICHAIN_SEPOLIA_URL
 const AURORA_TESTNET_URL = process.env.REACT_APP_AURORA_TESTNET_URL
 const METIS_MAINNET_URL = process.env.REACT_APP_METIS_MAINNET_URL
 const U2U_MAINNET_URL = process.env.REACT_APP_U2U_MAINNET_URL
+const ARBITRUM_SEPOLIA_URL = process.env.REACT_APP_ARBITRUM_SEPOLIA_URL
 const ARBITRUM_MAINNET_URL = process.env.REACT_APP_ARBITRUM_MAINNET_URL
 const OP_MAINNET_URL = process.env.REACT_APP_OP_MAINNET_URL
 const BOBA_MAINNET_URL = process.env.REACT_APP_BOBA_MAINNET_URL
 const BERA_MAINNET_URL = process.env.REACT_APP_BERA_MAINNET_URL
 
-export const NETWORK_CHAIN_ID: number = ChainId.SEPOLIA
-export const NETWORK_URL = SEPOLIA_URL!
+export const NETWORK_CHAIN_ID: number = ChainId.ARBITRUM_SEPOLIA
+export const NETWORK_URL = ARBITRUM_SEPOLIA_URL!
 
 export const network = new NetworkConnector({
   urls: { [NETWORK_CHAIN_ID]: NETWORK_URL }
@@ -80,6 +81,10 @@ export const networkMetisMainnet = new NetworkConnector({
 
 export const networkU2UMainnet = new NetworkConnector({
   urls: { [ChainId.U2U_MAINNET]: U2U_MAINNET_URL as string }
+})
+
+export const networkArbitrumSepolia = new NetworkConnector({
+  urls: { [ChainId.ARBITRUM_SEPOLIA]: ARBITRUM_SEPOLIA_URL as string }
 })
 
 export const networkArbitrumMainnet = new NetworkConnector({
@@ -155,7 +160,7 @@ viction.iconUrl = require('assets/images/viction.png')
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
-  chains: [bscTestnet, sepolia],
+  chains: [bscTestnet, sepolia, arbitrumSepolia],
   projectId: '3441811a50334d46eef9f2435cadee36',
   ssr: false
 })
