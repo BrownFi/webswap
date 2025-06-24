@@ -157,6 +157,14 @@
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     },
     {
+      "chainId": 421614,
+      "address": "0x0bEd3f471beF0E03f09ae954aA32F24a7E20A0e9",
+      "name": "USDT",
+      "symbol": "USDT",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/usdtether_ofc_32.png"
+    },
+    {
       "chainId": 42161,
       "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
       "name": "USDC",
