@@ -2,7 +2,7 @@ import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from './WalletConnector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 
-import { arbitrum, arbitrumSepolia, berachain, mainnet, sepolia, viction } from 'wagmi/chains'
+import { arbitrum, arbitrumSepolia, base, berachain, bsc, mainnet, sepolia, viction } from 'wagmi/chains'
 
 import UNISWAP_LOGO_URL from '../assets/svg/logo.svg'
 import { ChainId } from '@brownfi/sdk'
@@ -48,15 +48,20 @@ arbitrumSepolia.iconUrl = require('assets/images/arb.png')
 // @ts-ignore
 arbitrum.iconUrl = require('assets/images/arb.png')
 // @ts-ignore
+base.iconUrl = require('assets/images/base.png')
+// @ts-ignore
+bsc.iconUrl = require('assets/images/bsc.png')
+// @ts-ignore
 sepolia.iconUrl = require('assets/images/ethereum-logo.png')
 
 const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
 console.log(`======== ENV: "${env}" =========`)
 
-const testnetChains: Chain[] = [arbitrumSepolia, arbitrum, sepolia]
-const mainnetChains: Chain[] = [berachain, arbitrum, viction, u2uMainnet]
+const beraChains: Chain[] = [berachain, viction, u2uMainnet]
+const mainnetChains: Chain[] = [arbitrum, base, bsc]
+const testnetChains: Chain[] = [arbitrum, base, bsc, arbitrumSepolia, sepolia]
 
-export const availableChains = env === 'bera' ? mainnetChains : testnetChains
+export const availableChains = env === 'bera' ? beraChains : env === 'mainnet' ? mainnetChains : testnetChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
 export const injected = new InjectedConnector({

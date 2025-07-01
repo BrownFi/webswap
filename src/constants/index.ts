@@ -1,4 +1,4 @@
-import { ChainId, ChainIdHex, JSBI, Percent, Token, WETH } from '@brownfi/sdk'
+import { ChainId, ChainIdHex, JSBI, Percent, Token, WETH, WETH_ONLY } from '@brownfi/sdk'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 
 import { injected, u2uMainnet, walletconnect, walletlink } from '../connectors'
@@ -60,32 +60,6 @@ export const COMMON_CONTRACT_NAMES: { [address: string]: string } = {
 // TODO: specify merkle distributor for mainnet
 export const MERKLE_DISTRIBUTOR_ADDRESS: { [chainId in ChainId]?: string } = {
   [ChainId.MAINNET]: '0x090D4613473dEE047c3f2706764f49E0821D256e'
-}
-
-const WETH_ONLY: ChainTokenList = {
-  [ChainId.MAINNET]: [WETH[ChainId.MAINNET]],
-  [ChainId.SEPOLIA]: [WETH[ChainId.SEPOLIA]],
-  [ChainId.SN_SEPOLIA]: [WETH[ChainId.SN_SEPOLIA]],
-  [ChainId.SN_MAIN]: [WETH[ChainId.SN_MAIN]],
-  [ChainId.BSC_TESTNET]: [WETH[ChainId.BSC_TESTNET]],
-  [ChainId.VICTION_TESTNET]: [WETH[ChainId.VICTION_TESTNET]],
-  [ChainId.VICTION_MAINNET]: [WETH[ChainId.VICTION_MAINNET]],
-  [ChainId.SONIC_TESTNET]: [WETH[ChainId.SONIC_TESTNET]],
-  [ChainId.MINATO_SONEIUM]: [WETH[ChainId.MINATO_SONEIUM]],
-  [ChainId.BASE_SEPOLIA]: [WETH[ChainId.BASE_SEPOLIA]],
-  [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]],
-  [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]],
-  [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]],
-  [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]],
-  [ChainId.BOBA_TESTNET]: [WETH[ChainId.BOBA_TESTNET]],
-  [ChainId.NEOX_MAINNET]: [WETH[ChainId.NEOX_MAINNET]],
-  [ChainId.U2U_MAINNET]: [WETH[ChainId.U2U_MAINNET]],
-  [ChainId.SCROLL_TESTNET]: [WETH[ChainId.SCROLL_TESTNET]],
-  [ChainId.ARBITRUM_SEPOLIA]: [WETH[ChainId.ARBITRUM_SEPOLIA]],
-  [ChainId.ARBITRUM_MAINNET]: [WETH[ChainId.ARBITRUM_MAINNET]],
-  [ChainId.OP_MAINNET]: [WETH[ChainId.OP_MAINNET]],
-  [ChainId.BOBA_MAINNET]: [WETH[ChainId.BOBA_MAINNET]],
-  [ChainId.BERA_MAINNET]: [WETH[ChainId.BERA_MAINNET]]
 }
 
 // used to construct intermediary pairs for trading

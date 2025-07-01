@@ -21,7 +21,6 @@ export declare const DAI: Token;
 export declare const USDC: Token;
 export declare const USDT: Token;
 export declare const WBTC: Token;
-export declare const BASE_USDC: Token;
 export declare const UNICHAIN_USDC: Token;
 export declare const METIS_USDC: Token;
 export declare const PINNED_PAIRS: {
@@ -30,6 +29,7 @@ export declare const PINNED_PAIRS: {
 declare type ChainTokenList = {
     readonly [chainId in ChainId]: Token[];
 };
+export declare const WETH_ONLY: ChainTokenList;
 export declare const BASES_TO_TRACK_LIQUIDITY_FOR: ChainTokenList;
 export interface SerializedToken {
     chainId: number;

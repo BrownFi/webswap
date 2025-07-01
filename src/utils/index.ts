@@ -64,6 +64,9 @@ export function getEtherscanLink(
     case ChainId.BASE_SEPOLIA:
       prefix = 'https://sepolia.basescan.org'
       break
+    case ChainId.BASE_MAINNET:
+      prefix = 'https://basescan.org'
+      break
     case ChainId.UNICHAIN_SEPOLIA:
       prefix = 'https://unichain-sepolia.blockscout.com'
       break
