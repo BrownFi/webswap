@@ -1,7 +1,24 @@
 import { ChainId, ChainIdHex, JSBI, Percent, Token, WETH } from '@brownfi/sdk'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 
-import { injected, walletconnect, walletlink } from '../connectors'
+import { injected, u2uMainnet, walletconnect, walletlink } from '../connectors'
+import {
+  arbitrum,
+  arbitrumSepolia,
+  auroraTestnet,
+  baseSepolia,
+  bscTestnet,
+  metis,
+  soneiumMinato,
+  sonicTestnet,
+  taikoHekla,
+  unichainSepolia,
+  viction,
+  victionTestnet,
+  optimism,
+  boba,
+  berachain
+} from 'viem/chains'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -222,7 +239,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'Viction',
       symbol: 'VIC'
     },
-    rpcUrls: [process.env.REACT_APP_VICTION_MAINNET_URL]
+    rpcUrls: viction.rpcUrls.default.http
   },
   [ChainId.BSC_TESTNET]: {
     chainId: ChainIdHex[ChainId.BSC_TESTNET],
@@ -233,7 +250,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'BNB',
       symbol: 'BNB'
     },
-    rpcUrls: [process.env.REACT_APP_BSC_TESTNET_URL]
+    rpcUrls: bscTestnet.rpcUrls.default.http
   },
   [ChainId.VICTION_TESTNET]: {
     chainId: ChainIdHex[ChainId.VICTION_TESTNET],
@@ -244,7 +261,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'Viction',
       symbol: 'VIC'
     },
-    rpcUrls: [process.env.REACT_APP_VICTION_TESTNET_URL]
+    rpcUrls: victionTestnet.rpcUrls.default.http
   },
   [ChainId.SONIC_TESTNET]: {
     chainId: ChainIdHex[ChainId.SONIC_TESTNET],
@@ -255,7 +272,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'Sonic',
       symbol: 'S'
     },
-    rpcUrls: [process.env.REACT_APP_SONIC_TESTNET_URL]
+    rpcUrls: sonicTestnet.rpcUrls.default.http
   },
   [ChainId.MINATO_SONEIUM]: {
     chainId: ChainIdHex[ChainId.MINATO_SONEIUM],
@@ -266,7 +283,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'ETH',
       symbol: 'ETH'
     },
-    rpcUrls: [process.env.REACT_APP_MINATO_SONEIUM_URL]
+    rpcUrls: soneiumMinato.rpcUrls.default.http
   },
   [ChainId.BASE_SEPOLIA]: {
     chainId: ChainIdHex[ChainId.BASE_SEPOLIA],
@@ -277,7 +294,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'USDC',
       symbol: 'USDC'
     },
-    rpcUrls: [process.env.REACT_APP_BASE_SEPOLIA_URL]
+    rpcUrls: baseSepolia.rpcUrls.default.http
   },
   [ChainId.UNICHAIN_SEPOLIA]: {
     chainId: ChainIdHex[ChainId.UNICHAIN_SEPOLIA],
@@ -288,7 +305,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'ETH',
       symbol: 'ETH'
     },
-    rpcUrls: [process.env.REACT_APP_UNICHAIN_SEPOLIA_URL]
+    rpcUrls: unichainSepolia.rpcUrls.default.http
   },
   [ChainId.AURORA_TESTNET]: {
     chainId: ChainIdHex[ChainId.AURORA_TESTNET],
@@ -299,7 +316,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'ETH',
       symbol: 'ETH'
     },
-    rpcUrls: [process.env.REACT_APP_AURORA_TESTNET_URL]
+    rpcUrls: auroraTestnet.rpcUrls.default.http
   },
   [ChainId.METIS_MAINNET]: {
     chainId: ChainIdHex[ChainId.METIS_MAINNET],
@@ -310,7 +327,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'Metis',
       symbol: 'METIS'
     },
-    rpcUrls: [process.env.REACT_APP_METIS_MAINNET_URL]
+    rpcUrls: metis.rpcUrls.default.http
   },
   [ChainId.TAIKO_TESTNET]: {
     chainId: ChainIdHex[ChainId.TAIKO_TESTNET],
@@ -321,7 +338,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'ETH',
       symbol: 'ETH'
     },
-    rpcUrls: [process.env.REACT_APP_TAIKO_TESTNET_URL]
+    rpcUrls: taikoHekla.rpcUrls.default.http
   },
   [ChainId.U2U_MAINNET]: {
     chainId: ChainIdHex[ChainId.U2U_MAINNET],
@@ -332,7 +349,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'U2U',
       symbol: 'U2U'
     },
-    rpcUrls: [process.env.REACT_APP_U2U_MAINNET_URL]
+    rpcUrls: u2uMainnet.rpcUrls.default.http
   },
   [ChainId.ARBITRUM_SEPOLIA]: {
     chainId: ChainIdHex[ChainId.ARBITRUM_SEPOLIA],
@@ -343,7 +360,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'ETH',
       symbol: 'ETH'
     },
-    rpcUrls: [process.env.REACT_APP_ARBITRUM_SEPOLIA_URL]
+    rpcUrls: arbitrumSepolia.rpcUrls.default.http
   },
   [ChainId.ARBITRUM_MAINNET]: {
     chainId: ChainIdHex[ChainId.ARBITRUM_MAINNET],
@@ -354,7 +371,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'ETH',
       symbol: 'ETH'
     },
-    rpcUrls: [process.env.REACT_APP_ARBITRUM_MAINNET_URL]
+    rpcUrls: arbitrum.rpcUrls.default.http
   },
   [ChainId.OP_MAINNET]: {
     chainId: ChainIdHex[ChainId.OP_MAINNET],
@@ -365,7 +382,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'ETH',
       symbol: 'ETH'
     },
-    rpcUrls: [process.env.REACT_APP_OP_MAINNET_URL]
+    rpcUrls: optimism.rpcUrls.default.http
   },
   [ChainId.BOBA_MAINNET]: {
     chainId: ChainIdHex[ChainId.BOBA_MAINNET],
@@ -376,7 +393,7 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'ETH',
       symbol: 'ETH'
     },
-    rpcUrls: [process.env.REACT_APP_BOBA_MAINNET_URL]
+    rpcUrls: boba.rpcUrls.default.http
   },
   [ChainId.BERA_MAINNET]: {
     chainId: ChainIdHex[ChainId.BERA_MAINNET],
@@ -387,6 +404,6 @@ export const CHAIN_TO_METAMASK: any = {
       name: 'Wrapped Bera',
       symbol: 'WBERA'
     },
-    rpcUrls: [process.env.REACT_APP_BERA_MAINNET_URL]
+    rpcUrls: berachain.rpcUrls.default.http
   }
 }
