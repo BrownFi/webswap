@@ -50,10 +50,13 @@ arbitrum.iconUrl = require('assets/images/arb.png')
 // @ts-ignore
 sepolia.iconUrl = require('assets/images/ethereum-logo.png')
 
-console.log('======== ENV:', process.env.REACT_APP_ENV)
-// const availableChains =
-export const availableChains: Chain[] = [arbitrumSepolia, arbitrum, sepolia]
-// export const availableChains: Chain[] = [berachain, arbitrum, viction, u2uMainnet]
+const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
+console.log(`======== ENV: "${env}" =========`)
+
+const testnetChains: Chain[] = [arbitrumSepolia, arbitrum, sepolia]
+const mainnetChains: Chain[] = [berachain, arbitrum, viction, u2uMainnet]
+
+export const availableChains = env === 'bera' ? mainnetChains : testnetChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
 export const injected = new InjectedConnector({
