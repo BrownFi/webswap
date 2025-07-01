@@ -93,8 +93,8 @@
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     },
     {
-      "chainId": 84532,
-      "address": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "chainId": 8453,
+      "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "name": "USDC",
       "symbol": "USDC",
       "decimals": 6,
