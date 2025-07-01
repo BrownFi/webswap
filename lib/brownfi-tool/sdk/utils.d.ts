@@ -8,6 +8,9 @@ export declare function sortedInsert<T>(items: T[], add: T, maxSize: number, com
 export declare function supportContractWithPrice(chainId: ChainId): boolean;
 export declare function isRouterV2(chainId: ChainId): boolean;
 export declare function isTestnetSkipAmountsMin(chainId: ChainId): boolean;
+/**
+ * Use when AddLiquidity v2 - Arbitrum Sepolia, Arbitrum One
+ */
 export declare const getPythPrice: (address?: string | undefined, chainId?: ChainId | undefined) => Promise<number>;
 export declare const getDataBytes: (chainId: ChainId, addresses: Array<string | undefined>) => Promise<string[]>;
 export declare const solidityPack: (chainId: ChainId, addresses: Array<string | undefined>) => Promise<string>;
