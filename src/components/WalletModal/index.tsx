@@ -6,8 +6,7 @@ import { isMobile } from 'react-device-detect'
 import styled from 'styled-components'
 import MetamaskIcon from '../../assets/images/metamask.png'
 import { ReactComponent as Close } from '../../assets/images/x.svg'
-import { fortmatic, injected, portis } from '../../connectors'
-import { OVERLAY_READY } from '../../connectors/Fortmatic'
+import { injected } from '../../connectors'
 import { CHAIN_TO_METAMASK, SUPPORTED_WALLETS } from '../../constants'
 import usePrevious from '../../hooks/usePrevious'
 import { ApplicationModal } from '../../state/application/actions'
@@ -19,7 +18,7 @@ import Modal from '../Modal'
 import Option from './Option'
 import PendingView from './PendingView'
 import Web3 from 'web3'
-import { useActiveWeb3React, useCustomChainId } from 'hooks'
+import { useActiveWeb3React } from 'hooks'
 import { ChainIdHex } from '@brownfi/sdk'
 
 const CloseIcon = styled.div`
@@ -130,7 +129,6 @@ export default function WalletModal({
   // important that these are destructed from the account-specific web3-react context
   const { active, account, connector, activate, error } = useWeb3React()
   const { chainId } = useActiveWeb3React()
-  const { chainId: customChainId } = useCustomChainId()
 
   const [walletView, setWalletView] = useState(WALLET_VIEWS.ACCOUNT)
 
@@ -169,19 +167,19 @@ export default function WalletModal({
 
   const forceConnectAccount = async () => {
     try {
-      if (window.ethereum) {
+      if (window.ethereum && chainId) {
         const web3 = new Web3(window.ethereum as any)
         try {
           await (window.ethereum as any)?.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: ChainIdHex[chainId || customChainId] }] // chainId must be in hexadecimal numbers
+            params: [{ chainId: ChainIdHex[chainId] }] // chainId must be in hexadecimal numbers
           })
         } catch (e) {
-          if ((e as any)?.code === 4902 && CHAIN_TO_METAMASK[chainId || customChainId]) {
+          if ((e as any)?.code === 4902 && CHAIN_TO_METAMASK[chainId]) {
             // console.log(CHAIN_TO_METAMASK[chain])\
             await (window.ethereum as any)?.request({
               method: 'wallet_addEthereumChain',
-              params: [CHAIN_TO_METAMASK[chainId || customChainId]] // chainId must be in hexadecimal numbers
+              params: [CHAIN_TO_METAMASK[chainId]] // chainId must be in hexadecimal numbers
             })
           }
         }
@@ -260,13 +258,6 @@ export default function WalletModal({
       })
   }
 
-  // close wallet modal if fortmatic modal is active
-  useEffect(() => {
-    fortmatic.on(OVERLAY_READY, () => {
-      toggleWalletModal()
-    })
-  }, [toggleWalletModal])
-
   // get wallets user can switch too, depending on device/browser
   function getOptions() {
     const isMetamask = window.ethereum && window.ethereum.isMetaMask
@@ -274,11 +265,6 @@ export default function WalletModal({
       const option = SUPPORTED_WALLETS[key]
       // check for mobile options
       if (isMobile) {
-        // disable portis on mobile for now
-        if (option.connector === portis) {
-          return null
-        }
-
         if (!window.web3 && !window.ethereum && option.mobile) {
           return (
             <Option

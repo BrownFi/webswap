@@ -38,15 +38,6 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
   }
 }
 
-export function useCustomChainId() {
-  const { chainId: networkChainId } = useActiveWeb3React()
-  const { isConnected } = useAccount()
-  const currentChain = useSelector(chainSelector)
-  const isWrongNetwork = availableChains.every(chain => chain.id !== networkChainId)
-  const chainId = (isConnected && !isWrongNetwork ? networkChainId : currentChain.id) as ChainId
-  return { chainId }
-}
-
 export function useEagerConnect() {
   const { activate, active } = useWeb3ReactCore() // specifically using useWeb3ReactCore because of what this hook does
   const [tried, setTried] = useState(false)

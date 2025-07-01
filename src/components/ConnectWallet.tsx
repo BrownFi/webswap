@@ -18,7 +18,7 @@ const ConnectWallet = () => {
 
   return (
     <ButtonPrimary onClick={openConnectWallet}>
-      <img src={connectWalletIcon} alt="icon" className="w-[24px] mr-[8px]" />
+      <img src={connectWalletIcon} alt="icon" className="w-[24px] mr-2" />
       Connect Wallet
     </ButtonPrimary>
   )

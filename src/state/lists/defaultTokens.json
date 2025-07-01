@@ -21,12 +21,36 @@
       "logoURI": "https://assets.coingecko.com/coins/images/12645/thumb/AAVE.png?1601374110"
     },
     {
-      "chainId": 97,
-      "address": "0x349aD76798A7Bd5e04C9DD4dEfBEEa211dd665F6",
-      "name": "BUSD",
-      "symbol": "BUSD",
+      "chainId": 11155111,
+      "address": "0x0EFA77B7f9B3c25A7334B24010345B5d483b4F06",
+      "name": "USDT",
+      "symbol": "USDT",
       "decimals": 18,
-      "logoURI": "https://s3.coinmarketcap.com/static/img/portraits/62da512ff192d82df80012bb.png"
+      "logoURI": "https://bscscan.com/token/images/usdtether_ofc_32.png"
+    },
+    {
+      "chainId": 11155111,
+      "address": "0x1dD4588d2f0B7a4BB9Ca49349b62114610F68973",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/centre-usdc_28.png"
+    },
+    {
+      "chainId": 97,
+      "address": "0xF0BBEF37c76F085f75FC7972A447a11B3077f952",
+      "name": "USDT",
+      "symbol": "USDT",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/usdtether_ofc_32.png"
+    },
+    {
+      "chainId": 97,
+      "address": "0x2e98fD282C6A5c57F4508586d2147051C2D4921D",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/centre-usdc_28.png"
     },
     {
       "chainId": 89,
@@ -115,6 +139,30 @@
       "symbol": "pUSDT",
       "decimals": 6,
       "logoURI": "https://raw.githubusercontent.com/unicornultrafoundation/token-assets/master/tokens/0x0820957B320E901622385Cc6C4fca196b20b939F/logo.png"
+    },
+    {
+      "chainId": 421614,
+      "address": "0xD3F729D909a7E84669A35c3F25b37b4AC3487784",
+      "name": "ETH",
+      "symbol": "ETH",
+      "decimals": 18,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
+    },
+    {
+      "chainId": 421614,
+      "address": "0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 421614,
+      "address": "0x0bEd3f471beF0E03f09ae954aA32F24a7E20A0e9",
+      "name": "USDT",
+      "symbol": "USDT",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/usdtether_ofc_32.png"
     },
     {
       "chainId": 42161,

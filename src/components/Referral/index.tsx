@@ -4,6 +4,10 @@ import { useActiveWeb3React } from 'hooks'
 import useParsedQueryString from 'hooks/useParsedQueryString'
 import axios from 'axios'
 
+const client = axios.create({
+  baseURL: process.env.REACT_APP_SERVER_URL
+})
+
 const Referral = () => {
   const { account } = useActiveWeb3React()
   const params = useParsedQueryString()
@@ -12,7 +16,7 @@ const Referral = () => {
   useEffect(() => {
     const addReferral = async () => {
       try {
-        await axios.post(`${process.env.REACT_APP_SERVER_URL}/api/user/add-referral`, {
+        await client.post(`/api/user/add-referral`, {
           owner: params.ref,
           walletAddress: account
         })
@@ -30,7 +34,7 @@ const Referral = () => {
   useEffect(() => {
     const getReferrals = async () => {
       try {
-        const result = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/user/count-referral`, {
+        const result = await client.get(`/api/user/count-referral`, {
           params: {
             owner: account
           }

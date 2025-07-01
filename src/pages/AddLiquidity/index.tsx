@@ -1,4 +1,4 @@
-import { addLiquidity, ChainId, Currency, currencyEquals, TokenAmount, WETH } from '@brownfi/sdk'
+import { addLiquidity, Currency, currencyEquals, TokenAmount, WETH } from '@brownfi/sdk'
 import React, { useCallback, useContext, useState } from 'react'
 import { Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
@@ -36,6 +36,7 @@ import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter
 import { ROUTER_ADDRESS } from '@brownfi/sdk'
 import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
+import { usePythPrices } from 'hooks/usePythPrices'
 
 export default function AddLiquidity({
   match: {
@@ -48,6 +49,8 @@ export default function AddLiquidity({
 
   const currencyA = useCurrency(currencyIdA)
   const currencyB = useCurrency(currencyIdB)
+
+  const pythPrices = usePythPrices({ currencyA, currencyB, chainId })
 
   const oneCurrencyIsWETH = Boolean(
     chainId &&
@@ -71,9 +74,17 @@ export default function AddLiquidity({
     liquidityMinted,
     poolTokenPercentage,
     error
-  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined)
+  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, pythPrices)
+
+  const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
+
+  const formattedPythAmounts = {
+    [independentField]: typedValue,
+    [dependentField]: noLiquidity ? otherTypedValue : dependentAmount === 0 ? '' : dependentAmount.toPrecision(6)
+  }
 
   const { onFieldAInput, onFieldBInput } = useMintActionHandlers(noLiquidity)
+  const [exactFieldInput, setExactFieldInput] = useState<Field | undefined>(undefined)
 
   const isValid = !error
 
@@ -89,7 +100,7 @@ export default function AddLiquidity({
   // get formatted amounts
   const formattedAmounts = {
     [independentField]: typedValue,
-    [dependentField]: noLiquidity ? otherTypedValue : parsedAmounts[dependentField]?.toSignificant(6) ?? ''
+    [dependentField]: noLiquidity ? otherTypedValue : formattedPythAmounts[dependentField] ?? ''
   }
 
   // get the max amounts user can add
@@ -135,6 +146,7 @@ export default function AddLiquidity({
         account,
         parsedAmountA,
         parsedAmountB,
+        exactFieldInput,
         deadline as any,
         noLiquidity,
         allowedSlippage
@@ -324,9 +336,13 @@ export default function AddLiquidity({
               ))}
             <CurrencyInputPanel
               value={formattedAmounts[Field.CURRENCY_A]}
-              onUserInput={onFieldAInput}
+              onUserInput={value => {
+                onFieldAInput(value)
+                setExactFieldInput(Field.CURRENCY_A)
+              }}
               onMax={() => {
                 onFieldAInput(maxAmounts[Field.CURRENCY_A]?.toExact() ?? '')
+                setExactFieldInput(Field.CURRENCY_A)
               }}
               onCurrencySelect={handleCurrencyASelect}
               showMaxButton={!atMaxAmounts[Field.CURRENCY_A]}
@@ -339,10 +355,14 @@ export default function AddLiquidity({
             </ColumnCenter>
             <CurrencyInputPanel
               value={formattedAmounts[Field.CURRENCY_B]}
-              onUserInput={onFieldBInput}
+              onUserInput={value => {
+                onFieldBInput(value)
+                setExactFieldInput(Field.CURRENCY_B)
+              }}
               onCurrencySelect={handleCurrencyBSelect}
               onMax={() => {
                 onFieldBInput(maxAmounts[Field.CURRENCY_B]?.toExact() ?? '')
+                setExactFieldInput(Field.CURRENCY_B)
               }}
               showMaxButton={!atMaxAmounts[Field.CURRENCY_B]}
               currency={currencies[Field.CURRENCY_B]}
@@ -416,21 +436,8 @@ export default function AddLiquidity({
                   disabled={!isValid || approvalA !== ApprovalState.APPROVED || approvalB !== ApprovalState.APPROVED}
                   error={!isValid && !!parsedAmounts[Field.CURRENCY_A] && !!parsedAmounts[Field.CURRENCY_B]}
                 >
-                  <Text fontSize={20} fontWeight={500}>
-                    {error ?? 'Supply'}
-                  </Text>
+                  {error ?? 'Supply'}
                 </ButtonError>
-
-                {chainId === ChainId.SONIC_TESTNET && (
-                  <Text fontWeight={500} fontSize={14} color={theme.gray} textAlign={'center'}>
-                    {currencies[Field.CURRENCY_A]?.symbol === 'DIAM' || currencies[Field.CURRENCY_B]?.symbol === 'DIAM'
-                      ? 'Pair S/Diamond = FTM/USD'
-                      : currencies[Field.CURRENCY_A]?.symbol === 'CORAL' ||
-                        currencies[Field.CURRENCY_B]?.symbol === 'CORAL'
-                      ? 'Pair S/CORAL = FTM/ETH'
-                      : ''}
-                  </Text>
-                )}
               </AutoColumn>
             )}
           </AutoColumn>

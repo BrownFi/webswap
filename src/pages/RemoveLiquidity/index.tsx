@@ -111,12 +111,14 @@ export default function RemoveLiquidity({
     if (
       isArgentWallet ||
       chainId === ChainId.VICTION_MAINNET ||
+      chainId === ChainId.SEPOLIA ||
       chainId === ChainId.SONIC_TESTNET ||
       chainId === ChainId.AURORA_TESTNET ||
       chainId === ChainId.TAIKO_TESTNET ||
       chainId === ChainId.U2U_MAINNET ||
       chainId === ChainId.OP_MAINNET ||
       chainId === ChainId.BOBA_MAINNET ||
+      chainId === ChainId.ARBITRUM_SEPOLIA ||
       chainId === ChainId.ARBITRUM_MAINNET ||
       chainId === ChainId.METIS_MAINNET ||
       chainId === ChainId.BERA_MAINNET
