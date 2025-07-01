@@ -19,21 +19,27 @@ jobs:
     - name: Install dependencies
       run: npm i --force
 
-    - name: Build static site
-      run: npm run build
-      env:
-        CI: false
-
-    - name: Set project name
+    - name: Set project name and environment
       id: set-project
       run: |
         if [[ ${{ github.ref }} == 'refs/heads/mainnet' ]]; then
           echo "project_name=browndex-webswap-mainnet" >> $GITHUB_OUTPUT
+          echo "ENV=mainnet" >> $GITHUB_ENV
         elif [[ ${{ github.ref }} == 'refs/heads/bera' ]]; then
           echo "project_name=browndex-webswap-bera" >> $GITHUB_OUTPUT
+          echo "ENV=bera" >> $GITHUB_ENV
         elif [[ ${{ github.ref }} == 'refs/heads/testnet' ]]; then
           echo "project_name=browndex-webswap-testnet" >> $GITHUB_OUTPUT
+          echo "ENV=testnet" >> $GITHUB_ENV
         fi
+
+    - name: Build static site
+      run: npm run build
+      env:
+        CI: false
+        # Your build script can now access the ENV variable
+        # For example, if using Create React App, you might name it REACT_APP_ENV
+        REACT_APP_ENV: ${{ env.ENV }}
 
     - name: Deploy to Cloudflare Pages
       run: |
