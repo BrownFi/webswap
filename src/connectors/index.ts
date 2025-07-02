@@ -2,7 +2,7 @@ import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from './WalletConnector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 
-import { arbitrum, arbitrumSepolia, base, berachain, bsc, mainnet, sepolia, viction } from 'wagmi/chains'
+import { arbitrum, arbitrumSepolia, base as ibase, berachain, bsc, mainnet, sepolia, viction } from 'wagmi/chains'
 
 import UNISWAP_LOGO_URL from '../assets/svg/logo.svg'
 import { ChainId } from '@brownfi/sdk'
@@ -37,6 +37,16 @@ export const u2uMainnet: Chain = defineChain({
   },
   iconUrl: require('assets/images/u2u.jpg')
 })
+// @ts-ignore
+export const base: Chain = defineChain({
+  ...ibase,
+  rpcUrls: {
+    default: {
+      http: ['https://base.llamarpc.com']
+    }
+  },
+  iconUrl: require('assets/images/base.png')
+})
 
 // @ts-ignore
 berachain.iconUrl = require('assets/images/w-bera.png')
@@ -47,8 +57,6 @@ viction.iconUrl = require('assets/images/viction.png')
 arbitrumSepolia.iconUrl = require('assets/images/arb.png')
 // @ts-ignore
 arbitrum.iconUrl = require('assets/images/arb.png')
-// @ts-ignore
-base.iconUrl = require('assets/images/base.png')
 // @ts-ignore
 bsc.iconUrl = require('assets/images/bsc.png')
 // @ts-ignore
