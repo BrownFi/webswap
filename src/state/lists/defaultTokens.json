@@ -53,6 +53,14 @@
       "logoURI": "https://bscscan.com/token/images/centre-usdc_28.png"
     },
     {
+      "chainId": 56,
+      "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/centre-usdc_28.png"
+    },
+    {
       "chainId": 89,
       "address": "0x7cb2CF3dde3d518b408ea0B83738C067EEdb571D",
       "name": "USD",

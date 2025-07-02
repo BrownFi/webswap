@@ -8,6 +8,8 @@ const client = axios.create({
   baseURL: process.env.REACT_APP_SERVER_URL
 })
 
+const ENABLED_REFERRAL = false
+
 const Referral = () => {
   const { account } = useActiveWeb3React()
   const params = useParsedQueryString()
@@ -26,7 +28,7 @@ const Referral = () => {
     }
     if (account && params.ref) {
       if (account.toLowerCase() !== (params.ref as string)?.toLowerCase()) {
-        addReferral()
+        if (ENABLED_REFERRAL) addReferral()
       }
     }
   }, [account, params])
@@ -46,7 +48,7 @@ const Referral = () => {
       }
     }
     if (account) {
-      getReferrals()
+      if (ENABLED_REFERRAL) getReferrals()
     }
   }, [account])
 

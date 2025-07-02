@@ -49,6 +49,9 @@ export function getEtherscanLink(
     case ChainId.BSC_TESTNET:
       prefix = 'https://testnet.bscscan.com'
       break
+    case ChainId.BSC_MAINNET:
+      prefix = 'https://bscscan.com'
+      break
     case ChainId.VICTION_TESTNET:
       prefix = 'https://testnet.vicscan.xyz'
       break
@@ -185,7 +188,7 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
     return 'VIC'
   }
-  if (chainId === ChainId.BSC_TESTNET) {
+  if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
     return 'BNB'
   }
   if (chainId === ChainId.BASE_SEPOLIA) {
@@ -210,7 +213,7 @@ export function getWrappedNativeToken(chainId: ChainId) {
   if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
     return 'WVIC'
   }
-  if (chainId === ChainId.BSC_TESTNET) {
+  if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
     return 'WBNB'
   }
   if (chainId === ChainId.SONIC_TESTNET) {
@@ -233,7 +236,7 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'VIC'
     }
-    if (chainId === ChainId.BSC_TESTNET) {
+    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
       return 'BNB'
     }
     if (chainId === ChainId.SONIC_TESTNET) {
@@ -254,7 +257,7 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     return 'ETH'
   }
 
-  if (currency?.symbol === 'WETH' && chainId === ChainId.BSC_TESTNET) {
+  if (currency?.symbol === 'WETH' && (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET)) {
     return 'WBNB'
   }
 
@@ -286,7 +289,7 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'Viction'
     }
-    if (chainId === ChainId.BSC_TESTNET) {
+    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
       return 'BNB'
     }
     if (chainId === ChainId.SONIC_TESTNET) {
@@ -309,6 +312,7 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
 export function getScanText(chainId: ChainId) {
   switch (chainId) {
     case ChainId.BSC_TESTNET:
+    case ChainId.BSC_MAINNET:
       return 'Bscscan'
     case ChainId.VICTION_MAINNET:
     case ChainId.VICTION_TESTNET:
