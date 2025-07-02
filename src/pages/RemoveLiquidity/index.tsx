@@ -603,10 +603,10 @@ export default function RemoveLiquidity({
                     }}
                     disabled={!isValid || (signatureData === null && approval !== ApprovalState.APPROVED)}
                     error={!isValid && !!parsedAmounts[Field.CURRENCY_A] && !!parsedAmounts[Field.CURRENCY_B]}
+                    fontWeight={500}
+                    fontSize={16}
                   >
-                    <Text fontSize={16} fontWeight={500}>
-                      {error || 'Remove'}
-                    </Text>
+                    {error || 'Remove'}
                   </ButtonError>
                 </RowBetween>
               )}
