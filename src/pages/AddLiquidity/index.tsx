@@ -1,4 +1,4 @@
-import { addLiquidity, Currency, currencyEquals, TokenAmount, WETH } from '@brownfi/sdk'
+import { addLiquidity, Currency, currencyEquals, isRouterV2, TokenAmount, WETH } from '@brownfi/sdk'
 import React, { useCallback, useContext, useState } from 'react'
 import { Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
@@ -50,6 +50,7 @@ export default function AddLiquidity({
   const currencyA = useCurrency(currencyIdA)
   const currencyB = useCurrency(currencyIdB)
 
+  const isV2 = isRouterV2(chainId!)
   const pythPrices = usePythPrices({ currencyA, currencyB, chainId })
 
   const oneCurrencyIsWETH = Boolean(
@@ -74,7 +75,7 @@ export default function AddLiquidity({
     liquidityMinted,
     poolTokenPercentage,
     error
-  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, pythPrices)
+  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, isV2 ? pythPrices : undefined)
 
   const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
 
@@ -100,7 +101,11 @@ export default function AddLiquidity({
   // get formatted amounts
   const formattedAmounts = {
     [independentField]: typedValue,
-    [dependentField]: noLiquidity ? otherTypedValue : formattedPythAmounts[dependentField] ?? ''
+    [dependentField]: noLiquidity
+      ? otherTypedValue
+      : isV2
+      ? formattedPythAmounts[dependentField]
+      : parsedAmounts[dependentField]?.toSignificant(6) ?? ''
   }
 
   // get the max amounts user can add

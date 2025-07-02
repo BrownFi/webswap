@@ -173,7 +173,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const currency1 = unwrappedToken(pair.token1)
   const shouldReverse = shouldReversePair(pair)
 
-  const pythPrices = usePythPrices({ currencyA: pair.token0, currencyB: pair.token1, chainId })
+  const pythPrices = usePythPrices({ pair, currencyA: pair.token0, currencyB: pair.token1, chainId })
   const token0Price = pythPrices.CURRENCY_A
   const token1Price = pythPrices.CURRENCY_B
 
@@ -187,7 +187,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
   const tvl = pool0Price + pool1Price
-  const feeAPR = tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / tvl)
+  const feeAPR = tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / (tvl || 1))
 
   const [showMore, setShowMore] = useState(false)
 

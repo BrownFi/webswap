@@ -6,4 +6,4 @@ export * from './errors';
 export * from './entities';
 export * from './router';
 export * from './fetcher';
-export { getPythPrice, supportContractWithPrice, isRouterV2 } from './utils';
+export { getPythPrice, getPythPricePair, supportContractWithPrice, isRouterV2 } from './utils';
