@@ -169,7 +169,7 @@ export default function CurrencyInputPanel({
               <TYPE.body color={'white'} fontWeight={500} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
                 {label}
               </TYPE.body>
-              <div className="flex items-center">
+              <div className="flex items-center text-right">
                 {account && (
                   <TYPE.body
                     onClick={onMax}

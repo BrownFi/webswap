@@ -89,7 +89,7 @@ export default function CurrencyLogo({
   }
 
   if (currency === ETHER) {
-    if (chainId === ChainId.BSC_TESTNET) {
+    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
       return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
     }
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {

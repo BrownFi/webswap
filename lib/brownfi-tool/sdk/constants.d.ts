@@ -7,11 +7,13 @@ export declare enum ChainId {
     SN_MAIN = -1,
     SN_SEPOLIA = -11155111,
     BSC_TESTNET = 97,
+    BSC_MAINNET = 56,
     VICTION_TESTNET = 89,
     VICTION_MAINNET = 88,
     SONIC_TESTNET = 64165,
     MINATO_SONEIUM = 1946,
     BASE_SEPOLIA = 84532,
+    BASE_MAINNET = 8453,
     UNICHAIN_SEPOLIA = 1301,
     AURORA_TESTNET = 1313161555,
     METIS_MAINNET = 1088,
@@ -42,11 +44,13 @@ export declare const FACTORY_ADDRESS: {
     [-1]: string;
     [-11155111]: string;
     97: string;
+    56: string;
     89: string;
     88: string;
     64165: string;
     1946: string;
     84532: string;
+    8453: string;
     1301: string;
     1313161555: string;
     1088: string;
@@ -65,11 +69,13 @@ export declare const INIT_CODE_HASH: {
     1: string;
     11155111: string;
     97: string;
+    56: string;
     89: string;
     88: string;
     64165: string;
     1946: string;
     84532: string;
+    8453: string;
     1301: string;
     1313161555: string;
     1088: string;

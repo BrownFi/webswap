@@ -48,7 +48,7 @@ export function useMintActionHandlers(
 export function useDerivedMintInfo(
   currencyA: Currency | undefined,
   currencyB: Currency | undefined,
-  pythPrices: { [field in Field]?: number }
+  pythPrices?: { [field in Field]?: number }
 ): {
   dependentField: Field
   currencies: { [field in Field]?: Currency }
@@ -113,15 +113,17 @@ export function useDerivedMintInfo(
             ? pair.priceOf(tokenA).quote(wrappedIndependentAmount)
             : pair.priceOf(tokenB).quote(wrappedIndependentAmount)
 
-        const independentPrice = pythPrices[independentField]
-        const dependentPrice = pythPrices[dependentField]
-        if (independentPrice && dependentPrice) {
-          const dependentAmount = parseFloat(independentAmount.toExact()) * (independentPrice / dependentPrice)
+        if (pythPrices) {
+          const independentPrice = pythPrices[independentField]
+          const dependentPrice = pythPrices[dependentField]
+          if (independentPrice && dependentPrice) {
+            const dependentAmount = parseFloat(independentAmount.toExact()) * (independentPrice / dependentPrice)
 
-          dependentTokenAmount = new TokenAmount(
-            wrappedCurrency(dependentTokenAmount.currency, chainId)!,
-            JSBI.BigInt(Math.round(dependentAmount * 10 ** dependentTokenAmount.currency.decimals))
-          )
+            dependentTokenAmount = new TokenAmount(
+              wrappedCurrency(dependentTokenAmount.currency, chainId)!,
+              JSBI.BigInt(Math.round(dependentAmount * 10 ** dependentTokenAmount.currency.decimals))
+            )
+          }
         }
 
         return dependentCurrency === ETHER ? CurrencyAmount.ether(dependentTokenAmount.raw) : dependentTokenAmount
@@ -156,12 +158,17 @@ export function useDerivedMintInfo(
       }
       return undefined
     } else {
-      const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
-      if (!parsedAmountA || !parsedAmountB) return undefined
+      if (pythPrices) {
+        const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
+        if (!parsedAmountA || !parsedAmountB) return undefined
 
-      return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+        return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+      } else {
+        const wrappedCurrencyA = wrappedCurrency(currencyA, chainId)
+        return pair && wrappedCurrencyA ? pair.priceOf(wrappedCurrencyA) : undefined
+      }
     }
-  }, [chainId, currencyA, noLiquidity, pair, parsedAmounts])
+  }, [chainId, currencyA, noLiquidity, pair, parsedAmounts, pythPrices])
 
   // liquidity minted
   const liquidityMinted = useMemo(() => {

@@ -53,6 +53,14 @@
       "logoURI": "https://bscscan.com/token/images/centre-usdc_28.png"
     },
     {
+      "chainId": 56,
+      "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/centre-usdc_28.png"
+    },
+    {
       "chainId": 89,
       "address": "0x7cb2CF3dde3d518b408ea0B83738C067EEdb571D",
       "name": "USD",
@@ -93,8 +101,8 @@
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
     },
     {
-      "chainId": 84532,
-      "address": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "chainId": 8453,
+      "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "name": "USDC",
       "symbol": "USDC",
       "decimals": 6,

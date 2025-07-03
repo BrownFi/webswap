@@ -24,10 +24,11 @@ import { RowBetween, RowFixed, AutoRow } from '../Row'
 import { BIG_INT_ZERO } from '../../constants'
 import { getTokenSymbol } from 'utils'
 import { useQuery } from '@tanstack/react-query'
-import { dexscreenerService, internalService } from 'services'
+import { internalService } from 'services'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { shouldReversePair } from 'utils/pair'
 import { useTradingFee } from 'hooks/useTradingFee'
+import { usePythPrices } from 'hooks/usePythPrices'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -172,18 +173,9 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const currency1 = unwrappedToken(pair.token1)
   const shouldReverse = shouldReversePair(pair)
 
-  const { data: token0Price = 0 } = useQuery({
-    queryKey: ['getTokenPrice', pair.token0.address],
-    queryFn: () => {
-      return dexscreenerService.getTokenPrice(pair.token0.address, pair.token0.symbol, chainId)
-    }
-  })
-  const { data: token1Price = 0 } = useQuery({
-    queryKey: ['getTokenPrice', pair.token1.address],
-    queryFn: () => {
-      return dexscreenerService.getTokenPrice(pair.token1.address, pair.token1.symbol, chainId)
-    }
-  })
+  const pythPrices = usePythPrices({ pair, currencyA: pair.token0, currencyB: pair.token1, chainId })
+  const token0Price = pythPrices.CURRENCY_A
+  const token1Price = pythPrices.CURRENCY_B
 
   const { data: poolStats } = useQuery({
     queryKey: ['getPoolStats', pair.liquidityToken.address],
@@ -195,7 +187,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
   const tvl = pool0Price + pool1Price
-  const feeAPR = tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / tvl)
+  const feeAPR = tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / (tvl || 1))
 
   const [showMore, setShowMore] = useState(false)
 
@@ -333,7 +325,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       {getTokenSymbol(currency0, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color={'white'} title={token0Price}>
+                  <Text fontSize={16} fontWeight={500} color={'white'} title={'' + token0Price}>
                     {formatNumber(pair.reserve0.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
                     <span className="text-[#949494]">({formatPrice(pool0Price)})</span>
                   </Text>
@@ -346,7 +338,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                       {getTokenSymbol(currency1, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color={'white'} title={token1Price}>
+                  <Text fontSize={16} fontWeight={500} color={'white'} title={'' + token1Price}>
                     {formatNumber(pair.reserve1.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
                     <span className="text-[#949494]">({formatPrice(pool1Price)})</span>
                   </Text>

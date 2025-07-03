@@ -1,6 +1,15 @@
 import { splitSignature } from '@ethersproject/bytes'
 import { Contract } from '@ethersproject/contracts'
-import { ChainId, Currency, currencyEquals, ETHER, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
+import {
+  ChainId,
+  Currency,
+  currencyEquals,
+  ETHER,
+  Percent,
+  removeLiquidity,
+  supportContractWithPrice,
+  WETH
+} from '@brownfi/sdk'
 import React, { useCallback, useContext, useMemo, useState } from 'react'
 import { ArrowDown, Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
@@ -108,21 +117,7 @@ export default function RemoveLiquidity({
     const liquidityAmount = parsedAmounts[Field.LIQUIDITY]
     if (!liquidityAmount) throw new Error('missing liquidity amount')
 
-    if (
-      isArgentWallet ||
-      chainId === ChainId.VICTION_MAINNET ||
-      chainId === ChainId.SEPOLIA ||
-      chainId === ChainId.SONIC_TESTNET ||
-      chainId === ChainId.AURORA_TESTNET ||
-      chainId === ChainId.TAIKO_TESTNET ||
-      chainId === ChainId.U2U_MAINNET ||
-      chainId === ChainId.OP_MAINNET ||
-      chainId === ChainId.BOBA_MAINNET ||
-      chainId === ChainId.ARBITRUM_SEPOLIA ||
-      chainId === ChainId.ARBITRUM_MAINNET ||
-      chainId === ChainId.METIS_MAINNET ||
-      chainId === ChainId.BERA_MAINNET
-    ) {
+    if (isArgentWallet || supportContractWithPrice(chainId!)) {
       return approveCallback()
     }
 
@@ -136,7 +131,7 @@ export default function RemoveLiquidity({
       { name: 'verifyingContract', type: 'address' }
     ]
     const domain = {
-      name: 'Uniswap V2',
+      name: 'BrownFi V2',
       version: '1',
       chainId: chainId,
       verifyingContract: pair.liquidityToken.address
@@ -608,10 +603,10 @@ export default function RemoveLiquidity({
                     }}
                     disabled={!isValid || (signatureData === null && approval !== ApprovalState.APPROVED)}
                     error={!isValid && !!parsedAmounts[Field.CURRENCY_A] && !!parsedAmounts[Field.CURRENCY_B]}
+                    fontWeight={500}
+                    fontSize={16}
                   >
-                    <Text fontSize={16} fontWeight={500}>
-                      {error || 'Remove'}
-                    </Text>
+                    {error || 'Remove'}
                   </ButtonError>
                 </RowBetween>
               )}

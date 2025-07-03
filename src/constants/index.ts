@@ -1,4 +1,4 @@
-import { ChainId, ChainIdHex, JSBI, Percent, Token, WETH } from '@brownfi/sdk'
+import { ChainId, ChainIdHex, JSBI, Percent, Token, WETH, WETH_ONLY } from '@brownfi/sdk'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 
 import { injected, u2uMainnet, walletconnect, walletlink } from '../connectors'
@@ -17,7 +17,8 @@ import {
   victionTestnet,
   optimism,
   boba,
-  berachain
+  berachain,
+  bsc
 } from 'viem/chains'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -60,32 +61,6 @@ export const COMMON_CONTRACT_NAMES: { [address: string]: string } = {
 // TODO: specify merkle distributor for mainnet
 export const MERKLE_DISTRIBUTOR_ADDRESS: { [chainId in ChainId]?: string } = {
   [ChainId.MAINNET]: '0x090D4613473dEE047c3f2706764f49E0821D256e'
-}
-
-const WETH_ONLY: ChainTokenList = {
-  [ChainId.MAINNET]: [WETH[ChainId.MAINNET]],
-  [ChainId.SEPOLIA]: [WETH[ChainId.SEPOLIA]],
-  [ChainId.SN_SEPOLIA]: [WETH[ChainId.SN_SEPOLIA]],
-  [ChainId.SN_MAIN]: [WETH[ChainId.SN_MAIN]],
-  [ChainId.BSC_TESTNET]: [WETH[ChainId.BSC_TESTNET]],
-  [ChainId.VICTION_TESTNET]: [WETH[ChainId.VICTION_TESTNET]],
-  [ChainId.VICTION_MAINNET]: [WETH[ChainId.VICTION_MAINNET]],
-  [ChainId.SONIC_TESTNET]: [WETH[ChainId.SONIC_TESTNET]],
-  [ChainId.MINATO_SONEIUM]: [WETH[ChainId.MINATO_SONEIUM]],
-  [ChainId.BASE_SEPOLIA]: [WETH[ChainId.BASE_SEPOLIA]],
-  [ChainId.UNICHAIN_SEPOLIA]: [WETH[ChainId.UNICHAIN_SEPOLIA]],
-  [ChainId.AURORA_TESTNET]: [WETH[ChainId.AURORA_TESTNET]],
-  [ChainId.METIS_MAINNET]: [WETH[ChainId.METIS_MAINNET]],
-  [ChainId.TAIKO_TESTNET]: [WETH[ChainId.TAIKO_TESTNET]],
-  [ChainId.BOBA_TESTNET]: [WETH[ChainId.BOBA_TESTNET]],
-  [ChainId.NEOX_MAINNET]: [WETH[ChainId.NEOX_MAINNET]],
-  [ChainId.U2U_MAINNET]: [WETH[ChainId.U2U_MAINNET]],
-  [ChainId.SCROLL_TESTNET]: [WETH[ChainId.SCROLL_TESTNET]],
-  [ChainId.ARBITRUM_SEPOLIA]: [WETH[ChainId.ARBITRUM_SEPOLIA]],
-  [ChainId.ARBITRUM_MAINNET]: [WETH[ChainId.ARBITRUM_MAINNET]],
-  [ChainId.OP_MAINNET]: [WETH[ChainId.OP_MAINNET]],
-  [ChainId.BOBA_MAINNET]: [WETH[ChainId.BOBA_MAINNET]],
-  [ChainId.BERA_MAINNET]: [WETH[ChainId.BERA_MAINNET]]
 }
 
 // used to construct intermediary pairs for trading
@@ -232,7 +207,7 @@ export const BLOCKED_ADDRESSES: string[] = [
 export const CHAIN_TO_METAMASK: any = {
   [ChainId.VICTION_MAINNET]: {
     chainId: ChainIdHex[ChainId.VICTION_MAINNET],
-    blockExplorerUrls: ['https://vicscan.xyz/'],
+    blockExplorerUrls: ['https://vicscan.xyz'],
     chainName: 'Viction Mainnet',
     nativeCurrency: {
       decimals: 18,
@@ -243,7 +218,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.BSC_TESTNET]: {
     chainId: ChainIdHex[ChainId.BSC_TESTNET],
-    blockExplorerUrls: ['https://testnet.bscscan.com/'],
+    blockExplorerUrls: ['https://testnet.bscscan.com'],
     chainName: 'BSC Testnet',
     nativeCurrency: {
       decimals: 18,
@@ -252,9 +227,20 @@ export const CHAIN_TO_METAMASK: any = {
     },
     rpcUrls: bscTestnet.rpcUrls.default.http
   },
+  [ChainId.BSC_MAINNET]: {
+    chainId: ChainIdHex[ChainId.BSC_MAINNET],
+    blockExplorerUrls: ['https://bscscan.com'],
+    chainName: 'BSC',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'BNB',
+      symbol: 'BNB'
+    },
+    rpcUrls: bsc.rpcUrls.default.http
+  },
   [ChainId.VICTION_TESTNET]: {
     chainId: ChainIdHex[ChainId.VICTION_TESTNET],
-    blockExplorerUrls: ['https://testnet.vicscan.xyz/'],
+    blockExplorerUrls: ['https://testnet.vicscan.xyz'],
     chainName: 'Viction Testnet',
     nativeCurrency: {
       decimals: 18,
@@ -265,7 +251,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.SONIC_TESTNET]: {
     chainId: ChainIdHex[ChainId.SONIC_TESTNET],
-    blockExplorerUrls: ['https://testnet.soniclabs.com/'],
+    blockExplorerUrls: ['https://testnet.soniclabs.com'],
     chainName: 'Sonic Testnet',
     nativeCurrency: {
       decimals: 18,
@@ -276,7 +262,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.MINATO_SONEIUM]: {
     chainId: ChainIdHex[ChainId.MINATO_SONEIUM],
-    blockExplorerUrls: ['https://explorer-testnet.soneium.org/'],
+    blockExplorerUrls: ['https://explorer-testnet.soneium.org'],
     chainName: 'Minato',
     nativeCurrency: {
       decimals: 18,
@@ -287,7 +273,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.BASE_SEPOLIA]: {
     chainId: ChainIdHex[ChainId.BASE_SEPOLIA],
-    blockExplorerUrls: ['https://sepolia.basescan.org/'],
+    blockExplorerUrls: ['https://sepolia.basescan.org'],
     chainName: 'Base Sepolia Testnet',
     nativeCurrency: {
       decimals: 6,
@@ -298,7 +284,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.UNICHAIN_SEPOLIA]: {
     chainId: ChainIdHex[ChainId.UNICHAIN_SEPOLIA],
-    blockExplorerUrls: ['https://unichain-sepolia.blockscout.com/'],
+    blockExplorerUrls: ['https://unichain-sepolia.blockscout.com'],
     chainName: 'Unichain Sepolia Testnet',
     nativeCurrency: {
       decimals: 18,
@@ -309,7 +295,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.AURORA_TESTNET]: {
     chainId: ChainIdHex[ChainId.AURORA_TESTNET],
-    blockExplorerUrls: ['https://explorer.testnet.aurora.dev/'],
+    blockExplorerUrls: ['https://explorer.testnet.aurora.dev'],
     chainName: 'Aurora Testnet',
     nativeCurrency: {
       decimals: 18,
@@ -331,7 +317,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.TAIKO_TESTNET]: {
     chainId: ChainIdHex[ChainId.TAIKO_TESTNET],
-    blockExplorerUrls: ['https://hekla.taikoscan.network/'],
+    blockExplorerUrls: ['https://hekla.taikoscan.network'],
     chainName: 'Taiko Testnet',
     nativeCurrency: {
       decimals: 18,
@@ -342,7 +328,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.U2U_MAINNET]: {
     chainId: ChainIdHex[ChainId.U2U_MAINNET],
-    blockExplorerUrls: ['https://u2uscan.xyz/'],
+    blockExplorerUrls: ['https://u2uscan.xyz'],
     chainName: 'U2U Mainnet',
     nativeCurrency: {
       decimals: 18,
@@ -353,7 +339,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.ARBITRUM_SEPOLIA]: {
     chainId: ChainIdHex[ChainId.ARBITRUM_SEPOLIA],
-    blockExplorerUrls: ['https://sepolia.arbiscan.io/'],
+    blockExplorerUrls: ['https://sepolia.arbiscan.io'],
     chainName: 'Arbitrum Sepolia',
     nativeCurrency: {
       decimals: 18,
@@ -364,7 +350,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.ARBITRUM_MAINNET]: {
     chainId: ChainIdHex[ChainId.ARBITRUM_MAINNET],
-    blockExplorerUrls: ['https://arbiscan.io/'],
+    blockExplorerUrls: ['https://arbiscan.io'],
     chainName: 'Arbitrum',
     nativeCurrency: {
       decimals: 18,
@@ -375,7 +361,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.OP_MAINNET]: {
     chainId: ChainIdHex[ChainId.OP_MAINNET],
-    blockExplorerUrls: ['https://optimistic.etherscan.io/'],
+    blockExplorerUrls: ['https://optimistic.etherscan.io'],
     chainName: 'Optimism',
     nativeCurrency: {
       decimals: 18,
@@ -386,7 +372,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.BOBA_MAINNET]: {
     chainId: ChainIdHex[ChainId.BOBA_MAINNET],
-    blockExplorerUrls: ['https://bobascan.com/'],
+    blockExplorerUrls: ['https://bobascan.com'],
     chainName: 'Boba',
     nativeCurrency: {
       decimals: 18,
@@ -397,7 +383,7 @@ export const CHAIN_TO_METAMASK: any = {
   },
   [ChainId.BERA_MAINNET]: {
     chainId: ChainIdHex[ChainId.BERA_MAINNET],
-    blockExplorerUrls: ['https://berascan.com/'],
+    blockExplorerUrls: ['https://berascan.com'],
     chainName: 'Bera',
     nativeCurrency: {
       decimals: 18,
