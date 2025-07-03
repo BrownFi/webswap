@@ -57,7 +57,7 @@ sepolia.iconUrl = require('assets/images/ethereum-logo.png')
 const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
 console.log(`======== ENV: "${env}" =========`)
 
-const beraChains: Chain[] = [berachain, viction, u2uMainnet]
+const beraChains: Chain[] = [berachain, arbitrum, base, bsc, viction, u2uMainnet]
 const mainnetChains: Chain[] = [arbitrum, base, bsc]
 const testnetChains: Chain[] = [arbitrum, base, bsc, berachain, arbitrumSepolia]
 
