@@ -14,7 +14,7 @@ export declare function getSigner(library: Web3Provider, account: string): JsonR
 export declare function getProviderOrSigner(library: Web3Provider, account?: string): Web3Provider | JsonRpcSigner;
 export declare function getContract(address: string, ABI: any, library: Web3Provider, account?: string): Contract;
 export declare function getRouterContract(chainId: number, library: Web3Provider, account?: string): Contract;
-export declare function getRouterContractWithPrice(_: number, library: Web3Provider, account?: string): Contract;
+export declare function getRouterContractWithPrice(chainId: number, library: Web3Provider, account?: string): Contract;
 export declare function calculateSlippageAmount(value: CurrencyAmount, slippage: number): [JSBI, JSBI];
 export declare function applySlippageNumber(value: BigNumber, slippage: number): BigNumber;
 export declare function applySlippageCurrency(value: CurrencyAmount, slippage: number): CurrencyAmount;
