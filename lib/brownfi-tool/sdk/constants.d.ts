@@ -61,9 +61,9 @@ export declare const FACTORY_ADDRESS: {
     534351: string;
     421614: string;
     42161: string;
+    80094: string;
     10: string;
     288: string;
-    80094: string;
 };
 export declare const INIT_CODE_HASH: {
     1: string;
@@ -86,9 +86,9 @@ export declare const INIT_CODE_HASH: {
     534351: string;
     421614: string;
     42161: string;
+    80094: string;
     10: string;
     288: string;
-    80094: string;
 };
 export declare const MINIMUM_LIQUIDITY: JSBI;
 export declare const ZERO: JSBI;
