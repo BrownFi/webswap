@@ -5,9 +5,9 @@ import {
   Currency,
   currencyEquals,
   ETHER,
+  getRouterAddress,
   Percent,
   removeLiquidity,
-  supportContractWithPrice,
   WETH
 } from '@brownfi/sdk'
 import React, { useCallback, useContext, useMemo, useState } from 'react'
@@ -45,9 +45,9 @@ import { useBurnActionHandlers } from '../../state/burn/hooks'
 import { useDerivedBurnInfo, useBurnState } from '../../state/burn/hooks'
 import { Field } from '../../state/burn/actions'
 import { useUserSlippageTolerance } from '../../state/user/hooks'
-import { ROUTER_ADDRESS } from '@brownfi/sdk'
 import { getNativeToken, getTokenSymbol, getWrappedNativeToken } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
+import { useVersion } from 'hooks/useVersion'
 
 export const BOBA: Currency = {
   decimals: 18,
@@ -61,15 +61,16 @@ export default function RemoveLiquidity({
     params: { currencyIdA, currencyIdB }
   }
 }: RouteComponentProps<{ currencyIdA: string; currencyIdB: string }>) {
-  const [currencyA, currencyB] = [useCurrency(currencyIdA) ?? undefined, useCurrency(currencyIdB) ?? undefined]
+  const theme = useContext(ThemeContext)
   const { account, chainId, library } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
+
+  const [currencyA, currencyB] = [useCurrency(currencyIdA) ?? undefined, useCurrency(currencyIdB) ?? undefined]
   const [tokenA, tokenB] = useMemo(() => [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)], [
     currencyA,
     currencyB,
     chainId
   ])
-
-  const theme = useContext(ThemeContext)
 
   // burn state
   const { independentField, typedValue } = useBurnState()
@@ -108,7 +109,10 @@ export default function RemoveLiquidity({
 
   // allowance handling
   const [signatureData, setSignatureData] = useState<{ v: number; r: string; s: string; deadline: number } | null>(null)
-  const [approval, approveCallback] = useApproveCallback(parsedAmounts[Field.LIQUIDITY], ROUTER_ADDRESS[chainId || 0])
+  const [approval, approveCallback] = useApproveCallback(
+    parsedAmounts[Field.LIQUIDITY],
+    getRouterAddress(chainId || 0, version)
+  )
 
   const isArgentWallet = useIsArgentWallet()
 
@@ -117,7 +121,7 @@ export default function RemoveLiquidity({
     const liquidityAmount = parsedAmounts[Field.LIQUIDITY]
     if (!liquidityAmount) throw new Error('missing liquidity amount')
 
-    if (isArgentWallet || supportContractWithPrice(chainId!)) {
+    if (isArgentWallet || version === 1) {
       return approveCallback()
     }
 
@@ -145,7 +149,7 @@ export default function RemoveLiquidity({
     ]
     const message = {
       owner: account,
-      spender: ROUTER_ADDRESS[chainId || 0],
+      spender: getRouterAddress(chainId || 0, version),
       value: liquidityAmount.raw.toString(),
       nonce: nonce.toHexString(),
       deadline: deadline.toNumber()
@@ -211,7 +215,8 @@ export default function RemoveLiquidity({
         deadline as any,
         allowedSlippage,
         approval,
-        signatureData
+        signatureData,
+        version
       )
 
       setAttemptingTxn(false)

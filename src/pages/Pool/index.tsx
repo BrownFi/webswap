@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from 'react'
 import styled, { ThemeContext } from 'styled-components'
-import { Pair, JSBI, toV2LiquidityToken } from '@brownfi/sdk'
+import { Pair, JSBI } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
 // import { SwapPoolTabs } from '../../components/NavigationTabs'
 
@@ -22,10 +22,11 @@ import { AutoColumn } from '../../components/Column'
 
 import { useActiveWeb3React } from '../../hooks'
 import { usePairs } from '../../data/Reserves'
-import { useTrackedTokenPairs } from '../../state/user/hooks'
+import { toV2LiquidityToken, useTrackedTokenPairs } from '../../state/user/hooks'
 import { Dots } from '../../components/swap/styleds'
 import { useStakingInfo } from '../../state/stake/hooks'
 import { BIG_INT_ZERO } from '../../constants'
+import { useVersion } from 'hooks/useVersion'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
@@ -68,12 +69,13 @@ const EmptyProposals = styled.div`
 
 export default function Pool() {
   const theme = useContext(ThemeContext)
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
 
   // fetch the user's balances of all tracked V2 LP tokens
   const trackedTokenPairs = useTrackedTokenPairs()
   const tokenPairsWithLiquidityTokens = useMemo(
-    () => trackedTokenPairs.map(tokens => ({ liquidityToken: toV2LiquidityToken(tokens), tokens })),
+    () => trackedTokenPairs.map(tokens => ({ liquidityToken: toV2LiquidityToken(tokens, version), tokens })),
     [trackedTokenPairs]
   )
 

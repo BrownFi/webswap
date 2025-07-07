@@ -38,58 +38,13 @@ export declare enum Rounding {
     ROUND_HALF_UP = 1,
     ROUND_UP = 2
 }
-export declare const FACTORY_ADDRESS: {
-    1: string;
-    11155111: string;
-    [-1]: string;
-    [-11155111]: string;
-    97: string;
-    56: string;
-    89: string;
-    88: string;
-    64165: string;
-    1946: string;
-    84532: string;
-    8453: string;
-    1301: string;
-    1313161555: string;
-    1088: string;
-    167009: string;
-    28882: string;
-    47763: string;
-    39: string;
-    534351: string;
-    421614: string;
-    42161: string;
-    80094: string;
-    10: string;
-    288: string;
-};
-export declare const INIT_CODE_HASH: {
-    1: string;
-    11155111: string;
-    97: string;
-    56: string;
-    89: string;
-    88: string;
-    64165: string;
-    1946: string;
-    84532: string;
-    8453: string;
-    1301: string;
-    1313161555: string;
-    1088: string;
-    167009: string;
-    28882: string;
-    47763: string;
-    39: string;
-    534351: string;
-    421614: string;
-    42161: string;
-    80094: string;
-    10: string;
-    288: string;
-};
+export declare const ROUTER_ADDRESS: any;
+export declare const ROUTER_ADDRESS_V1: any;
+export declare const ROUTER_ADDRESS_WITH_PRICE: any;
+export declare const FACTORY_ADDRESS: any;
+export declare const FACTORY_ADDRESS_V1: any;
+export declare const INIT_CODE_HASH: any;
+export declare const INIT_CODE_HASH_V1: any;
 export declare const MINIMUM_LIQUIDITY: JSBI;
 export declare const ZERO: JSBI;
 export declare const ONE: JSBI;

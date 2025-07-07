@@ -6,6 +6,7 @@ import { useActiveWeb3React } from '../../hooks'
 import { NEVER_RELOAD, useMultipleContractSingleData } from '../multicall/hooks'
 import { tryParseAmount } from '../swap/hooks'
 import useCurrentBlockTimestamp from 'hooks/useCurrentBlockTimestamp'
+import { useVersion } from 'hooks/useVersion'
 
 export const STAKING_GENESIS = 1600387200
 
@@ -69,6 +70,7 @@ export interface StakingInfo {
 // gets the staking info from the network for the active chain id
 export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
   const { chainId, account } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
 
   // detect if staking is ended
   const currentBlockTimestamp = useCurrentBlockTimestamp()
@@ -153,7 +155,7 @@ export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
 
         // get the LP token
         const tokens = info[index].tokens
-        const dummyPair = new Pair(new TokenAmount(tokens[0], '0'), new TokenAmount(tokens[1], '0'))
+        const dummyPair = new Pair(new TokenAmount(tokens[0], '0'), new TokenAmount(tokens[1], '0'), version)
 
         // check for account, if no account set to 0
 

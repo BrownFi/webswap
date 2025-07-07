@@ -193,8 +193,10 @@ export function useURLWarningToggle(): () => void {
  * @param tokenA one of the two tokens
  * @param tokenB the other token
  */
-export function toV2LiquidityToken([tokenA, tokenB]: [Token, Token]): Token {
-  return new Token(tokenA.chainId, Pair.getAddress(tokenA, tokenB), 18, 'BF-V2', 'BrownFi V2')
+export function toV2LiquidityToken([tokenA, tokenB]: [Token, Token], version: number): Token {
+  const symbol = version === 2 ? `BF-V2` : `BRF-V1`
+  const name = version === 2 ? `BrownFi V2` : `BrownFi V1`
+  return new Token(tokenA.chainId, Pair.getAddress(tokenA, tokenB, version), 18, symbol, name)
 }
 
 /**

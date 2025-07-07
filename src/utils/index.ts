@@ -3,10 +3,8 @@ import { getAddress } from '@ethersproject/address'
 import { AddressZero } from '@ethersproject/constants'
 import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers'
 import { BigNumber } from '@ethersproject/bignumber'
-import IRouter from '../constants/abis/IRouter.json'
 import { ChainId, JSBI, Percent, Token, CurrencyAmount, Currency, ETHER } from '@brownfi/sdk'
 import { TokenAddressMap } from '../state/lists/hooks'
-import { ROUTER_ADDRESS } from '@brownfi/sdk'
 
 // returns the checksummed address if the address is valid, otherwise returns false
 export function isAddress(value: any): string | false {
@@ -168,11 +166,6 @@ export function getContract(address: string, ABI: any, library: Web3Provider, ac
   }
 
   return new Contract(address, ABI, getProviderOrSigner(library, account) as any)
-}
-
-// account is optional
-export function getRouterContract(_: number, library: Web3Provider, account?: string): Contract {
-  return getContract(ROUTER_ADDRESS[_], IRouter, library, account)
 }
 
 export function escapeRegExp(string: string): string {

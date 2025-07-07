@@ -1,8 +1,6 @@
 import { ChainId, JSBI, Token } from '../sdk';
 export declare const BIPS_BASE: JSBI;
 export declare const AddressZero = "0x0000000000000000000000000000000000000000";
-export declare const ROUTER_ADDRESS: any;
-export declare const ROUTER_ADDRESS_WITH_PRICE: any;
 export declare const PYTH_ADDRESS: any;
 export declare const RPC_URLS: any;
 export declare enum Field {

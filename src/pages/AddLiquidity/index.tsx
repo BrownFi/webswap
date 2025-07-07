@@ -1,4 +1,4 @@
-import { addLiquidity, Currency, currencyEquals, isRouterV2, TokenAmount, WETH } from '@brownfi/sdk'
+import { addLiquidity, Currency, currencyEquals, getRouterAddress, TokenAmount, WETH } from '@brownfi/sdk'
 import React, { useCallback, useContext, useState } from 'react'
 import { Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
@@ -33,10 +33,10 @@ import { currencyId } from '../../utils/currencyId'
 import { PoolPriceBar } from './PoolPriceBar'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
-import { ROUTER_ADDRESS } from '@brownfi/sdk'
 import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
 import { usePythPrices } from 'hooks/usePythPrices'
+import { useVersion } from 'hooks/useVersion'
 
 export default function AddLiquidity({
   match: {
@@ -44,13 +44,13 @@ export default function AddLiquidity({
   },
   history
 }: RouteComponentProps<{ currencyIdA?: string; currencyIdB?: string }>) {
-  const { account, chainId, library } = useActiveWeb3React()
   const theme = useContext(ThemeContext)
+  const { account, chainId, library } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
 
   const currencyA = useCurrency(currencyIdA)
   const currencyB = useCurrency(currencyIdB)
 
-  const isV2 = isRouterV2(chainId!)
   const pythPrices = usePythPrices({ currencyA, currencyB, chainId })
 
   const oneCurrencyIsWETH = Boolean(
@@ -75,7 +75,7 @@ export default function AddLiquidity({
     liquidityMinted,
     poolTokenPercentage,
     error
-  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, isV2 ? pythPrices : undefined)
+  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, version === 2 ? pythPrices : undefined)
 
   const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
 
@@ -103,7 +103,7 @@ export default function AddLiquidity({
     [independentField]: typedValue,
     [dependentField]: noLiquidity
       ? otherTypedValue
-      : isV2
+      : version === 2
       ? formattedPythAmounts[dependentField]
       : parsedAmounts[dependentField]?.toSignificant(6) ?? ''
   }
@@ -132,11 +132,11 @@ export default function AddLiquidity({
   // check whether the user has approved the router on the tokens
   const [approvalA, approveACallback] = useApproveCallback(
     parsedAmounts[Field.CURRENCY_A],
-    ROUTER_ADDRESS[chainId || 0]
+    getRouterAddress(chainId || 0, version)
   )
   const [approvalB, approveBCallback] = useApproveCallback(
     parsedAmounts[Field.CURRENCY_B],
-    ROUTER_ADDRESS[chainId || 0]
+    getRouterAddress(chainId || 0, version)
   )
 
   const addTransaction = useTransactionAdder()
@@ -154,7 +154,8 @@ export default function AddLiquidity({
         exactFieldInput,
         deadline as any,
         noLiquidity,
-        allowedSlippage
+        allowedSlippage,
+        version
       )
 
       if (response) {

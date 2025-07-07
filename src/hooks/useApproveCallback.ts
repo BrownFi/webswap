@@ -1,13 +1,6 @@
 import { MaxUint256 } from '@ethersproject/constants'
 import { TransactionResponse } from '@ethersproject/providers'
-import {
-  Trade,
-  TokenAmount,
-  CurrencyAmount,
-  ETHER,
-  ROUTER_ADDRESS_WITH_PRICE,
-  supportContractWithPrice
-} from '@brownfi/sdk'
+import { Trade, TokenAmount, CurrencyAmount, ETHER, ROUTER_ADDRESS_WITH_PRICE, getRouterAddress } from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
 import { useTokenAllowance } from '../data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from '../data/V1'
@@ -18,7 +11,7 @@ import { calculateGasMargin, getTokenSymbol } from '../utils'
 import { useTokenContract } from './useContract'
 import { useActiveWeb3React } from './index'
 import { Version } from './useToggledVersion'
-import { ROUTER_ADDRESS } from '@brownfi/sdk'
+import { useVersion } from './useVersion'
 
 export enum ApprovalState {
   UNKNOWN,
@@ -109,20 +102,23 @@ export function useApproveCallback(
 // wraps useApproveCallback in the context of a swap
 export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) {
   const { chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
+
   const amountToApprove = useMemo(
     () => (trade ? computeSlippageAdjustedAmounts(trade, allowedSlippage)[Field.INPUT] : undefined),
     [trade, allowedSlippage]
   )
   const tradeIsV1 = getTradeVersion(trade) === Version.v1
   const v1ExchangeAddress = useV1TradeExchangeAddress(trade)
+
   return useApproveCallback(
     amountToApprove,
     tradeIsV1
       ? v1ExchangeAddress
       : chainId
-      ? supportContractWithPrice(chainId)
+      ? version === 1
         ? ROUTER_ADDRESS_WITH_PRICE[chainId]
-        : ROUTER_ADDRESS[chainId]
+        : getRouterAddress(chainId, version)
       : ''
   )
 }

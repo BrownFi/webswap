@@ -6,8 +6,9 @@ export declare const ZERO_ADDRESS = "0x00000000000000000000000000000000000000000
 export declare class Pair {
     readonly liquidityToken: Token;
     readonly tokenAmounts: [TokenAmount, TokenAmount];
-    static getAddress(tokenA: Token, tokenB: Token): string;
-    constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount);
+    readonly version: number;
+    static getAddress(tokenA: Token, tokenB: Token, version: number): string;
+    constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount, version: number);
     /**
      * Returns true if the token is either token0 or token1
      * @param token to check

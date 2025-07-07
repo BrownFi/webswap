@@ -20,6 +20,7 @@ import { wrappedCurrencyAmount } from '../../utils/wrappedCurrency'
 import { TransactionResponse } from '@ethersproject/providers'
 import { useTransactionAdder } from '../../state/transactions/hooks'
 import { LoadingView, SubmittedView } from '../ModalViews'
+import { useVersion } from 'hooks/useVersion'
 
 const HypotheticalRewardRate = styled.div<{ dim: boolean }>`
   display: flex;
@@ -44,6 +45,7 @@ interface StakingModalProps {
 
 export default function StakingModal({ isOpen, onDismiss, stakingInfo, userLiquidityUnstaked }: StakingModalProps) {
   const { account, chainId, library } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
 
   // track and parse user input
   const [typedValue, setTypedValue] = useState('')
@@ -70,7 +72,11 @@ export default function StakingModal({ isOpen, onDismiss, stakingInfo, userLiqui
   }, [onDismiss])
 
   // pair contract for this token to be staked
-  const dummyPair = new Pair(new TokenAmount(stakingInfo.tokens[0], '0'), new TokenAmount(stakingInfo.tokens[1], '0'))
+  const dummyPair = new Pair(
+    new TokenAmount(stakingInfo.tokens[0], '0'),
+    new TokenAmount(stakingInfo.tokens[1], '0'),
+    version
+  )
   const pairContract = usePairContract(dummyPair.liquidityToken.address)
 
   // approval data for stake
