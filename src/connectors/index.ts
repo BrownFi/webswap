@@ -59,7 +59,7 @@ console.log(`======== ENV: "${env}" =========`)
 
 const beraChains: Chain[] = [berachain, arbitrum, base, bsc, viction, u2uMainnet]
 const mainnetChains: Chain[] = [arbitrum, base, bsc]
-const testnetChains: Chain[] = [arbitrum, base, bsc, berachain, arbitrumSepolia]
+const testnetChains: Chain[] = [berachain, arbitrum, base, bsc, arbitrumSepolia]
 
 export const availableChains = env === 'bera' ? beraChains : env === 'mainnet' ? mainnetChains : testnetChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
