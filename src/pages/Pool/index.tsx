@@ -12,7 +12,7 @@ import {
   TYPE,
   HideSmall
 } from '../../theme'
-import { Text } from 'rebass'
+import { Flex, Text } from 'rebass'
 import { RowBetween } from '../../components/Row'
 import {
   ButtonPrimary
@@ -27,6 +27,7 @@ import { Dots } from '../../components/swap/styleds'
 import { useStakingInfo } from '../../state/stake/hooks'
 import { BIG_INT_ZERO } from '../../constants'
 import { useVersion } from 'hooks/useVersion'
+import SwitchVersion from 'components/SwitchVersion'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
@@ -120,7 +121,7 @@ export default function Pool() {
 
   return (
     <>
-      <TYPE.main mb={3} color="#bb9981" className="max-w-[894px]">
+      <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] max-md:hidden">
         BrownFi is a novel primitive AMM currently in mainnet beta testing. While audited by{' '}
         <a
           href="https://x.com/BrownFidex/status/1869978104988656104?t=WFaQP-iJcn09tcMXmxfCzw"
@@ -135,16 +136,15 @@ export default function Pool() {
       </TYPE.main>
 
       <PageWrapper>
-        {/* <SwapPoolTabs active={'pool'} /> */}
-
         <AutoColumn gap="lg" justify="center" className="p-[20px] lg:p-[32px]">
           <AutoColumn gap="lg" style={{ width: '100%' }}>
             <TitleRow padding={'0'}>
-              <HideSmall>
+              <Flex alignItems="center" className="gap-6">
                 <TYPE.mediumHeader style={{ fontFamily: 'Russo One', fontSize: '24px' }} color={'white'}>
                   All Pools
                 </TYPE.mediumHeader>
-              </HideSmall>
+                <SwitchVersion />
+              </Flex>
               <div className="flex items-center justify-end flex-1 w-full lg:w-auto">
                 {/* <ResponsiveButtonSecondary as={Link} to="/create/ETH" className="!h-[40px] mr-[16px] !px-[18px] !py-0">
                   <Text fontWeight={700} fontSize={14} color={'white'}>

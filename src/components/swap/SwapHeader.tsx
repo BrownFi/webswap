@@ -2,6 +2,8 @@ import React from 'react'
 import styled from 'styled-components'
 import Settings from '../Settings'
 import { RowBetween } from '../Row'
+import { Flex } from 'rebass'
+import SwitchVersion from 'components/SwitchVersion'
 
 const StyledSwapHeader = styled.div`
   padding: 32px 24px 28px 32px;
@@ -25,7 +27,10 @@ export default function SwapHeader() {
   return (
     <StyledSwapHeader>
       <RowBetween>
-        <StyledSwaptitle>Swap Token</StyledSwaptitle>
+        <Flex alignItems="center" className="gap-6">
+          <StyledSwaptitle>Swap Token</StyledSwaptitle>
+          <SwitchVersion />
+        </Flex>
         <Settings />
       </RowBetween>
     </StyledSwapHeader>

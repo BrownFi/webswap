@@ -11,8 +11,9 @@ import lists from './lists/reducer'
 import burn from './burn/reducer'
 import multicall from './multicall/reducer'
 import { chainSlice } from './chainSlice'
+import { versionSlice } from './versionSlice'
 
-const PERSISTED_KEYS: string[] = ['user', 'transactions', 'lists', chainSlice.name]
+const PERSISTED_KEYS: string[] = ['user', 'transactions', 'lists', chainSlice.name, versionSlice.name]
 
 const store = configureStore({
   reducer: {
@@ -24,7 +25,8 @@ const store = configureStore({
     burn,
     multicall,
     lists,
-    [chainSlice.name]: chainSlice.reducer
+    [chainSlice.name]: chainSlice.reducer,
+    [versionSlice.name]: versionSlice.reducer
   },
   middleware: [...getDefaultMiddleware({ thunk: false }), save({ states: PERSISTED_KEYS })],
   preloadedState: load({ states: PERSISTED_KEYS })

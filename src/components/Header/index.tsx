@@ -1,5 +1,5 @@
 import React from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { darken } from 'polished'
 
 import styled from 'styled-components'
@@ -11,6 +11,7 @@ import Web3Status from '../Web3Status'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import HamburgerMenu from './HamburgerMenu'
 import CustomChainSelect from './CustomChainSelect'
+import SwitchVersion from 'components/SwitchVersion'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -74,12 +75,12 @@ const HeaderLinks = styled(Row)`
 `};
 `
 
-const Title = styled.a`
+const Title = styled.div`
   display: flex;
   align-items: center;
   pointer-events: auto;
   justify-self: flex-start;
-  margin-right: 44px;
+  gap: 16px;
   ${({ theme }) => theme.mediaWidth.upToSmall`
     justify-self: center;
   `};
@@ -159,10 +160,14 @@ export default function Header() {
   return (
     <HeaderFrame>
       <HeaderRow>
-        <Title href="." className="mr-[44px]">
-          <UniIcon>
-            <img className="min-w-[142px] w-[142px]" src={Logo} alt="logo" />
-          </UniIcon>
+        <Title className="mr-[40px]">
+          <Link to="/">
+            <UniIcon>
+              <img className="min-w-[142px] w-[142px]" src={Logo} alt="logo" />
+            </UniIcon>
+          </Link>
+
+          <SwitchVersion isMobile />
         </Title>
 
         <HamburgerMenu>

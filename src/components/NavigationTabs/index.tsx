@@ -12,6 +12,8 @@ import { useDispatch } from 'react-redux'
 import { AppDispatch } from 'state'
 import { resetMintState } from 'state/mint/actions'
 import { isMobile } from 'react-device-detect'
+import { Flex } from 'rebass'
+import SwitchVersion from 'components/SwitchVersion'
 
 const Tabs = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
@@ -103,9 +105,13 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
           >
             <StyledArrowLeft color="white" />
           </HistoryLink>
-          <ActiveText className="text-white !text-[24px]" style={{ fontFamily: 'Russo One' }}>
-            {creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}
-          </ActiveText>
+
+          <Flex alignItems="center" className="gap-6">
+            <ActiveText className="text-white !text-[24px]" style={{ fontFamily: 'Russo One' }}>
+              {creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}
+            </ActiveText>
+            <SwitchVersion />
+          </Flex>
         </div>
 
         <Settings />

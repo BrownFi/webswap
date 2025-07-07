@@ -1,35 +1,37 @@
-import { useLocation, useHistory } from 'react-router-dom'
 import { useMemo } from 'react'
-import queryString from 'query-string'
 import { ChainId } from '@brownfi/sdk'
+import { useDispatch, useSelector } from 'react-redux'
+import { switchVersion, versionSelector } from 'state/versionSlice'
 
 export function useVersion({ chainId }: { chainId: number | undefined | null }) {
-  const location = useLocation()
-  const history = useHistory()
+  const dispatch = useDispatch()
+  const { version: appVersion } = useSelector(versionSelector)
 
-  // Parse version from URL query string
-  const version = useMemo(() => {
+  const [version, isDisabled] = useMemo(() => {
     if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
-      return 1
+      return [1, true]
     }
-    if ([ChainId.ARBITRUM_MAINNET, ChainId.BASE_MAINNET, ChainId.BSC_MAINNET].includes(chainId as number)) {
-      return 2
+    if (
+      [
+        ChainId.ARBITRUM_MAINNET,
+        ChainId.BASE_MAINNET,
+        ChainId.BSC_MAINNET,
+        ChainId.ARBITRUM_SEPOLIA,
+        ChainId.SEPOLIA
+      ].includes(chainId as number)
+    ) {
+      return [2, true]
     }
-    const params = queryString.parse(location.search)
-    const versionParam = params.version || params.v
-    return versionParam ? Number(versionParam) : Number(process.env.REACT_APP_DEFAULT_VERSION || '2')
-  }, [chainId, location.search])
+    return [appVersion, false]
+  }, [chainId, appVersion])
 
-  // Update version in URL
-  const switchVersion = (newVersion: number) => {
-    const params = queryString.parse(location.search)
-    params.version = String(newVersion)
-    const newSearch = queryString.stringify(params)
-    history.push({
-      pathname: location.pathname,
-      search: newSearch
-    })
+  const dispatchSwitchVersion = (version: number) => {
+    dispatch(switchVersion(version))
   }
 
-  return { version, switchVersion }
+  return {
+    version,
+    isDisabled,
+    switchVersion: dispatchSwitchVersion
+  }
 }
