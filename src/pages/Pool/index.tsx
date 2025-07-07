@@ -2,22 +2,13 @@ import React, { useContext, useMemo } from 'react'
 import styled, { ThemeContext } from 'styled-components'
 import { Pair, JSBI } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
-// import { SwapPoolTabs } from '../../components/NavigationTabs'
 
 import FullPositionCard from '../../components/PositionCard'
-// import { useUserHasLiquidityInAllTokens } from '../../data/V1'
 import { useTokenBalancesWithLoadingIndicator } from '../../state/wallet/hooks'
-import {
-  // StyledInternalLink,
-  TYPE,
-  HideSmall
-} from '../../theme'
+import { TYPE } from '../../theme'
 import { Flex, Text } from 'rebass'
 import { RowBetween } from '../../components/Row'
-import {
-  ButtonPrimary
-  //  ButtonSecondary
-} from '../../components/Button'
+import { ButtonPrimary } from '../../components/Button'
 import { AutoColumn } from '../../components/Column'
 
 import { useActiveWeb3React } from '../../hooks'
