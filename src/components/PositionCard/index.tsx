@@ -181,7 +181,8 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
     queryKey: ['getPoolStats', pair.liquidityToken.address],
     queryFn: () => {
       return internalService.getPoolStats(pair)
-    }
+    },
+    enabled: pair.version === 1
   })
 
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
@@ -195,7 +196,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const totalPoolTokens = useTotalSupply(pair.liquidityToken)
 
   useEffect(() => {
-    console.log('======== Pair', `${pair.token0.symbol}/${pair.token1.symbol}`)
+    console.log('======== Pair', `V${pair.version} === ${pair.token0.symbol}/${pair.token1.symbol}`)
     console.log(pair.token0.symbol, token0Price, pair.token0.address)
     console.log(pair.token1.symbol, token1Price, pair.token1.address)
     console.log(pair.liquidityToken.symbol, pair.liquidityToken.address)
