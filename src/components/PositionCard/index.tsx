@@ -1,7 +1,7 @@
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import React, { useEffect, useState } from 'react'
-import { ChevronDown, ChevronUp } from 'react-feather'
+import { ChevronDown, ChevronUp, Info } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
@@ -22,7 +22,7 @@ import CurrencyLogo from '../CurrencyLogo'
 import DoubleCurrencyLogo, { DoubleCurrencySymbol } from '../DoubleLogo'
 import { RowBetween, RowFixed, AutoRow } from '../Row'
 import { BIG_INT_ZERO } from '../../constants'
-import { getTokenSymbol } from 'utils'
+import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { useQuery } from '@tanstack/react-query'
 import { internalService } from 'services'
 import { formatNumber, formatPrice } from 'utils/prices'
@@ -272,9 +272,20 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
         {showMore && (
           <AutoColumn gap="8px">
             <>
-              <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
-                Pool stats
-              </h2>
+              <Flex alignItems="center">
+                <h2 className="text-[20px] mr-3 font-medium text-white" style={{ fontFamily: 'Russo One' }}>
+                  Pool stats
+                </h2>
+                <a
+                  href={`${getEtherscanLink(chainId!, pair.liquidityToken.address, 'address')}`}
+                  target="_blank"
+                  className="cursor-pointer hover:underline"
+                  rel="noreferrer"
+                  title={`View on ${getScanText(chainId!)}`}
+                >
+                  <Info size="20" style={{ color: '#27E3AB' }} />
+                </a>
+              </Flex>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
                   TVL

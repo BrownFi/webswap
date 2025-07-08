@@ -304,8 +304,8 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
 
 export function getScanText(chainId: ChainId) {
   switch (chainId) {
-    case ChainId.BSC_TESTNET:
     case ChainId.BSC_MAINNET:
+    case ChainId.BSC_TESTNET:
       return 'Bscscan'
     case ChainId.VICTION_MAINNET:
     case ChainId.VICTION_TESTNET:
@@ -314,6 +314,7 @@ export function getScanText(chainId: ChainId) {
       return 'Soniclabs'
     case ChainId.MINATO_SONEIUM:
       return 'Soneium'
+    case ChainId.BASE_MAINNET:
     case ChainId.BASE_SEPOLIA:
       return 'Basescan'
     case ChainId.UNICHAIN_SEPOLIA:
