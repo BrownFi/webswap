@@ -181,8 +181,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
     queryKey: ['getPoolStats', pair.liquidityToken.address],
     queryFn: () => {
       return internalService.getPoolStats(pair)
-    },
-    enabled: pair.version === 1
+    }
   })
 
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))

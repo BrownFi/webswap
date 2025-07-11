@@ -28,7 +28,7 @@ type UserRank = {
 }
 
 const getPoolStats = (pair: Pair) =>
-  client.get(`/pool-stats/${pair.token0.address}-${pair.token1.address}`).then((data: AxiosResponse<PoolStat>) => {
+  client.get(`/pool-stats/v2/${pair.liquidityToken.address.toLowerCase()}`).then((data: AxiosResponse<PoolStat>) => {
     return data.data
   })
 
