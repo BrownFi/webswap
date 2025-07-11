@@ -112,19 +112,20 @@ export default function Pool() {
 
   return (
     <>
-      <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] max-md:hidden">
-        BrownFi is a novel primitive AMM currently in mainnet beta testing. While audited by{' '}
-        <a
-          href="https://x.com/BrownFidex/status/1869978104988656104?t=WFaQP-iJcn09tcMXmxfCzw"
-          target="_blank"
-          className="cursor-pointer hover:underline"
-          rel="noreferrer"
-        >
-          Verichain
-        </a>
-        , the protocol may exhibit instability during this phase - please use with caution and awareness of potential
-        risks.
-      </TYPE.main>
+      {version === 2 && (
+        <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] max-md:hidden">
+          With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and
+          redeposit to V2 now to keep earning fees.{' '}
+          <a
+            href="https://mirror.xyz/0x64f4Fbd29b0AE2C8e18E7940CF823df5CB639bBa/QhlhP7rD3eN8COu8wEk-Co4oyk0vXyAM3XGiLVQgI3E"
+            target="_blank"
+            className="cursor-pointer hover:underline"
+            rel="noreferrer"
+          >
+            Learn More
+          </a>
+        </TYPE.main>
+      )}
 
       <PageWrapper>
         <AutoColumn gap="lg" justify="center" className="p-[20px] lg:p-[32px]">
