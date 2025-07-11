@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from 'react'
 import styled, { ThemeContext } from 'styled-components'
-import { Pair, JSBI } from '@brownfi/sdk'
+import { Pair, JSBI, ChainId } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
 
 import FullPositionCard from '../../components/PositionCard'
@@ -112,7 +112,7 @@ export default function Pool() {
 
   return (
     <>
-      {version === 2 && (
+      {(chainId === ChainId.BERA_MAINNET || version === 2) && (
         <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] max-md:hidden">
           With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and
           redeposit to V2 now to keep earning fees.{' '}
