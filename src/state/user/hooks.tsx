@@ -291,6 +291,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
   // pairs saved by users
   const savedSerializedPairs = useSelector<AppState, AppState['user']['pairs']>(({ user: { pairs } }) => pairs)
 
+  // defaultPools
   const additionalSerializedPairs = {
     [ChainId.BERA_MAINNET]: {
       '0x549943e04f40284185054145c6E4e9568C1D3241:0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce': {
@@ -329,6 +330,46 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           symbol: 'USDC',
           decimals: 6,
           logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png'
+        }
+      }
+    },
+    [ChainId.BASE_MAINNET]: {
+      '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913:0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf': {
+        token0: {
+          chainId: 8453,
+          address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          name: 'USDC',
+          symbol: 'USDC',
+          decimals: 6,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png'
+        },
+        token1: {
+          chainId: 8453,
+          address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf',
+          name: 'Coinbase Wrapped BTC',
+          symbol: 'cbBTC',
+          decimals: 8,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/32994.png'
+        }
+      }
+    },
+    [ChainId.BSC_MAINNET]: {
+      '0x55d398326f99059fF775485246999027B3197955:0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c': {
+        token0: {
+          chainId: 56,
+          address: '0x55d398326f99059fF775485246999027B3197955',
+          name: 'Tether USD',
+          symbol: 'USDT',
+          decimals: 18,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/825.png'
+        },
+        token1: {
+          chainId: 56,
+          address: '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c',
+          name: 'BTCB Token',
+          symbol: 'BTCB',
+          decimals: 18,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/4023.png'
         }
       }
     }
