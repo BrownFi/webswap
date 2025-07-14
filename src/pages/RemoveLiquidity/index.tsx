@@ -403,7 +403,7 @@ export default function RemoveLiquidity({
             )}
             pendingText={pendingText}
           />
-          <AutoColumn gap="md">
+          <AutoColumn gap="20px">
             <BlueCard>
               <AutoColumn gap="10px">
                 <TYPE.link fontWeight={400} color={'#27E3AB'}>
@@ -564,7 +564,7 @@ export default function RemoveLiquidity({
               </>
             )}
             {pair && (
-              <div style={{ padding: '10px 20px', color: 'white' }}>
+              <div style={{ display: 'none', padding: '10px 20px', color: 'white' }}>
                 <RowBetween>
                   Price:
                   <div>
