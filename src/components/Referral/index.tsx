@@ -78,7 +78,7 @@ const Referral = () => {
       )}
 
       <p className="text-[14px] font-medium text-white italic mt-[8px]">
-        Invite your friends to get inventive rewards, airdrops and retros
+        Invite your friends to get incentive rewards, airdrops and retros
       </p>
     </div>
   )
