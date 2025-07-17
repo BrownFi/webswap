@@ -31,7 +31,6 @@ async function fetchChunk(
   chunk: Call[],
   minBlockNumber: number
 ): Promise<{ results: string[]; blockNumber: number }> {
-  console.debug('Fetching chunk', multicallContract, chunk, minBlockNumber)
   let resultsBlockNumber, returnData
   try {
     ;[resultsBlockNumber, returnData] = await multicallContract.aggregate(chunk.map(obj => [obj.address, obj.callData]))
@@ -39,9 +38,21 @@ async function fetchChunk(
     console.debug('Failed to fetch chunk inside retry', error)
     throw error
   }
+  const [fetched, min, newly] = [
+    resultsBlockNumber.toNumber(),
+    minBlockNumber,
+    resultsBlockNumber.toNumber() - minBlockNumber
+  ]
   if (resultsBlockNumber.toNumber() < minBlockNumber) {
-    console.debug(`Fetched results for old block number: ${resultsBlockNumber.toString()} vs. ${minBlockNumber}`)
+    console.debug('4. Fetched results for OLD block number', { fetched, min, newly })
+    if (newly < -100) {
+      setTimeout(() => {
+        location.reload()
+      }, 200)
+    }
     throw new RetryableError('Fetched for old block number')
+  } else {
+    console.debug('4. Fetched results for NEW block number', { fetched, min, newly })
   }
   return { results: returnData, blockNumber: resultsBlockNumber.toNumber() }
 }
@@ -159,8 +170,8 @@ export default function Updater(): null {
       cancellations: chunkedCalls.map((chunk, index) => {
         const { cancel, promise } = retry(() => fetchChunk(multicallContract, chunk, latestBlockNumber), {
           n: Infinity,
-          minWait: 2500,
-          maxWait: 3500
+          minWait: 3000,
+          maxWait: 5000
         })
         promise
           .then(({ results: returnData, blockNumber: fetchBlockNumber }) => {

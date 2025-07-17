@@ -4,6 +4,8 @@ import useDebounce from '../../hooks/useDebounce'
 import useIsWindowVisible from '../../hooks/useIsWindowVisible'
 import { updateBlockNumber } from './actions'
 import { useDispatch } from 'react-redux'
+import { createPublicClient, http } from 'viem'
+import { availableChains } from 'connectors'
 
 export default function Updater(): null {
   const { library, chainId } = useActiveWeb3React()
@@ -46,11 +48,35 @@ export default function Updater(): null {
     }
   }, [dispatch, chainId, library, blockNumberCallback, windowVisible])
 
+  useEffect(() => {
+    if (1) return undefined // Apply later
+    if (!chainId) return undefined
+
+    setState({ chainId, blockNumber: null })
+
+    const publicClient = createPublicClient({
+      chain: availableChains.find(c => c.id === chainId),
+      transport: http()
+    })
+    const unwatch = (publicClient as any).watchBlockNumber({
+      onBlockNumber: (blockNumber: any) => blockNumberCallback(+blockNumber.toString())
+    })
+
+    return () => {
+      unwatch?.()
+    }
+  }, [dispatch, chainId, blockNumberCallback])
+
   const debouncedState = useDebounce(state, 100)
 
   useEffect(() => {
     if (!debouncedState.chainId || !debouncedState.blockNumber || !windowVisible) return
-    dispatch(updateBlockNumber({ chainId: debouncedState.chainId, blockNumber: debouncedState.blockNumber }))
+    dispatch(
+      updateBlockNumber({
+        chainId: debouncedState.chainId,
+        blockNumber: debouncedState.blockNumber - 3
+      })
+    )
   }, [windowVisible, dispatch, debouncedState.blockNumber, debouncedState.chainId])
 
   return null
