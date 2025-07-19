@@ -187,7 +187,8 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
   const tvl = pool0Price + pool1Price
-  const feeAPR = tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / (tvl || 1))
+  const feeAPR =
+    token0Price && token1Price ? tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / (tvl || 1)) : 0
 
   const [showMore, setShowMore] = useState(false)
 
