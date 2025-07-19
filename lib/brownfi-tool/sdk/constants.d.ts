@@ -24,9 +24,10 @@ export declare enum ChainId {
     SCROLL_TESTNET = 534351,
     ARBITRUM_SEPOLIA = 421614,
     ARBITRUM_MAINNET = 42161,
+    BERA_MAINNET = 80094,
+    HYPER_EVM = 999,
     OP_MAINNET = 10,
-    BOBA_MAINNET = 288,
-    BERA_MAINNET = 80094
+    BOBA_MAINNET = 288
 }
 export declare const ChainIdHex: any;
 export declare enum TradeType {

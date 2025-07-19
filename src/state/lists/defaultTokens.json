@@ -128,7 +128,7 @@
       "chainId": 8453,
       "address": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
       "name": "Coinbase Wrapped BTC",
-      "symbol": "cbBTC",
+      "symbol": "WBTC",
       "decimals": 8,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/32994.png"
     },
@@ -219,6 +219,14 @@
       "symbol": "WBTC",
       "decimals": 6,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3717.png"
+    },
+    {
+      "chainId": 999,
+      "address": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+      "name": "USD₮0",
+      "symbol": "USDT",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/825.png"
     },
     {
       "chainId": 10,

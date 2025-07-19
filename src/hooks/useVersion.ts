@@ -16,6 +16,7 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
         ChainId.ARBITRUM_MAINNET,
         ChainId.BASE_MAINNET,
         ChainId.BSC_MAINNET,
+        ChainId.HYPER_EVM,
         ChainId.ARBITRUM_SEPOLIA,
         ChainId.SEPOLIA
       ].includes(chainId as number)

@@ -359,6 +359,17 @@ export const CHAIN_TO_METAMASK: any = {
     },
     rpcUrls: arbitrum.rpcUrls.default.http
   },
+  [ChainId.BERA_MAINNET]: {
+    chainId: ChainIdHex[ChainId.BERA_MAINNET],
+    blockExplorerUrls: ['https://berascan.com'],
+    chainName: 'Bera',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Wrapped Bera',
+      symbol: 'WBERA'
+    },
+    rpcUrls: berachain.rpcUrls.default.http
+  },
   [ChainId.OP_MAINNET]: {
     chainId: ChainIdHex[ChainId.OP_MAINNET],
     blockExplorerUrls: ['https://optimistic.etherscan.io'],
@@ -380,16 +391,5 @@ export const CHAIN_TO_METAMASK: any = {
       symbol: 'ETH'
     },
     rpcUrls: boba.rpcUrls.default.http
-  },
-  [ChainId.BERA_MAINNET]: {
-    chainId: ChainIdHex[ChainId.BERA_MAINNET],
-    blockExplorerUrls: ['https://berascan.com'],
-    chainName: 'Bera',
-    nativeCurrency: {
-      decimals: 18,
-      name: 'Wrapped Bera',
-      symbol: 'WBERA'
-    },
-    rpcUrls: berachain.rpcUrls.default.http
   }
 }

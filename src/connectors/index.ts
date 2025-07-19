@@ -39,6 +39,22 @@ export const u2uMainnet: Chain = defineChain({
 })
 
 // @ts-ignore
+export const hyperEVM: Chain = defineChain({
+  id: 999,
+  name: 'HyperEVM',
+  nativeCurrency: { decimals: 18, name: 'HYPE', symbol: 'HYPE' },
+  rpcUrls: {
+    default: {
+      http: ['https://hyperliquid.drpc.org']
+    }
+  },
+  blockExplorers: {
+    default: { name: 'HyperEVM Scan', url: 'https://hyperevmscan.io' }
+  },
+  iconUrl: require('assets/images/hyperevm.png')
+})
+
+// @ts-ignore
 berachain.iconUrl = require('assets/images/w-bera.png')
 // @ts-ignore
 viction.iconUrl = require('assets/images/viction.png')
@@ -57,9 +73,9 @@ sepolia.iconUrl = require('assets/images/ethereum-logo.png')
 const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
 console.log(`======== ENV: "${env}" =========`)
 
-const beraChains: Chain[] = [berachain, arbitrum, base, bsc, viction, u2uMainnet]
+const beraChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet]
 const mainnetChains: Chain[] = [arbitrum, base, bsc]
-const testnetChains: Chain[] = [berachain, arbitrum, base, bsc, arbitrumSepolia]
+const testnetChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, arbitrumSepolia]
 
 export const availableChains = env === 'bera' ? beraChains : env === 'mainnet' ? mainnetChains : testnetChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]

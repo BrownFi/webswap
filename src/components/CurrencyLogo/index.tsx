@@ -13,6 +13,7 @@ import { useActiveWeb3React } from 'hooks'
 import metisLogo from '../../assets/images/metis.png'
 import bobaLogo from '../../assets/images/boba.svg'
 import beraLogo from '../../assets/images/w-bera.png'
+import hyperevmLogo from '../../assets/images/hyperevm.png'
 
 export const getTokenLogoURL = (address: string) =>
   `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${address}/logo.png`
@@ -84,6 +85,9 @@ export default function CurrencyLogo({
   if ((currency as any)?.symbol === 'WBERA') {
     return <StyledEthereumLogo src={beraLogo} size={size} style={style} />
   }
+  if ((currency as any)?.symbol === 'WHYPE') {
+    return <StyledEthereumLogo src={hyperevmLogo} size={size} style={style} />
+  }
   if ((currency as any)?.symbol === 'BOBA') {
     return <StyledEthereumLogo src={bobaLogo} size={size} style={style} />
   }
@@ -106,6 +110,9 @@ export default function CurrencyLogo({
     }
     if (chainId === ChainId.BERA_MAINNET) {
       return <StyledEthereumLogo src={beraLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.HYPER_EVM) {
+      return <StyledEthereumLogo src={hyperevmLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }

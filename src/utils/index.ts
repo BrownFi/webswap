@@ -89,14 +89,17 @@ export function getEtherscanLink(
     case ChainId.ARBITRUM_MAINNET:
       prefix = 'https://arbiscan.io'
       break
+    case ChainId.BERA_MAINNET:
+      prefix = 'https://berascan.com'
+      break
+    case ChainId.HYPER_EVM:
+      prefix = 'https://hyperevmscan.io'
+      break
     case ChainId.OP_MAINNET:
       prefix = 'https://optimistic.etherscan.io'
       break
     case ChainId.BOBA_MAINNET:
       prefix = 'https://bobascan.com'
-      break
-    case ChainId.BERA_MAINNET:
-      prefix = 'https://berascan.com'
       break
     default:
       prefix = 'https://etherscan.io'
@@ -199,6 +202,9 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.BERA_MAINNET) {
     return 'BERA'
   }
+  if (chainId === ChainId.HYPER_EVM) {
+    return 'HYPE'
+  }
   return 'ETH'
 }
 
@@ -221,6 +227,9 @@ export function getWrappedNativeToken(chainId: ChainId) {
   if (chainId === ChainId.BERA_MAINNET) {
     return 'WBERA'
   }
+  if (chainId === ChainId.HYPER_EVM) {
+    return 'WHYPE'
+  }
   return 'WETH'
 }
 
@@ -241,11 +250,14 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     if (chainId === ChainId.U2U_MAINNET) {
       return 'U2U'
     }
+    if (chainId === ChainId.BOBA_MAINNET) {
+      return 'BOBA'
+    }
     if (chainId === ChainId.BERA_MAINNET) {
       return 'BERA'
     }
-    if (chainId === ChainId.BOBA_MAINNET) {
-      return 'BOBA'
+    if (chainId === ChainId.HYPER_EVM) {
+      return 'HYPE'
     }
     return 'ETH'
   }
@@ -273,6 +285,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
   if (currency?.symbol === 'WETH' && chainId === ChainId.BERA_MAINNET) {
     return 'WBERA'
   }
+  if (currency?.symbol === 'WETH' && chainId === ChainId.HYPER_EVM) {
+    return 'WHYPE'
+  }
 
   return currency?.symbol
 }
@@ -296,6 +311,9 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     }
     if (chainId === ChainId.BERA_MAINNET) {
       return 'Bera'
+    }
+    if (chainId === ChainId.HYPER_EVM) {
+      return 'HYPE'
     }
     return 'Ethereum'
   }
@@ -329,12 +347,14 @@ export function getScanText(chainId: ChainId) {
       return 'U2Uscan'
     case ChainId.ARBITRUM_MAINNET:
       return 'ARBscan'
+    case ChainId.BERA_MAINNET:
+      return 'Berascan'
+    case ChainId.HYPER_EVM:
+      return 'Hyperscan'
     case ChainId.OP_MAINNET:
       return 'OPscan'
     case ChainId.BOBA_MAINNET:
       return 'BOBAscan'
-    case ChainId.BERA_MAINNET:
-      return 'Berascan'
     default:
       return 'Etherscan'
   }
