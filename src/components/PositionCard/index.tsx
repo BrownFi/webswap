@@ -241,9 +241,6 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               <div className="flex flex-wrap items-center gap-4 gap-y-1">
                 <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
-                {/* <Text className="whitespace-nowrap text-[#27E3AB]">
-                  Pool APY: {formatNumber(poolStats?.apy, { maximumFractionDigits: 2 })}%
-                </Text> */}
                 <Text className="whitespace-nowrap text-[#27E3AB]">
                   Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
                 </Text>
@@ -299,9 +296,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Total LP Tokens
                 </Text>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {formatNumber(totalPoolTokens?.toSignificant(6), {
-                    minimumFractionDigits: Number(totalPoolTokens?.toFixed(2)) > 1 ? 2 : 6
-                  })}
+                  {formatNumber(totalPoolTokens?.toSignificant(6))}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
@@ -338,7 +333,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                     </Text>
                   </div>
                   <Text fontSize={16} fontWeight={500} color={'white'} title={'' + token0Price}>
-                    {formatNumber(pair.reserve0.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
+                    {formatNumber(pair.reserve0.toSignificant(4))}{' '}
                     <span className="text-[#949494]">({formatPrice(pool0Price)})</span>
                   </Text>
                 </FixedHeightRow>
@@ -351,7 +346,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                     </Text>
                   </div>
                   <Text fontSize={16} fontWeight={500} color={'white'} title={'' + token1Price}>
-                    {formatNumber(pair.reserve1.toSignificant(4), { minimumFractionDigits: 2 })}{' '}
+                    {formatNumber(pair.reserve1.toSignificant(4))}{' '}
                     <span className="text-[#949494]">({formatPrice(pool1Price)})</span>
                   </Text>
                 </FixedHeightRow>

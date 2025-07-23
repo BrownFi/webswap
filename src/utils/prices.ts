@@ -85,14 +85,22 @@ export function formatExecutionPrice(trade?: Trade, inverted?: boolean): string 
       )} / ${getTokenSymbol(trade.inputAmount?.currency, trade.route.chainId)}`
 }
 
+const formatNumberString = (value: string) => value.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0$/, '')
+
 export function formatPrice(price: number) {
   const formattedNumber = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'USD',
+    maximumFractionDigits: price > 1000 ? 0 : 2
   }).format(price)
-  return formattedNumber
+  return formatNumberString(formattedNumber)
 }
 
-export function formatNumber(number: string | number | undefined | null, options?: Intl.NumberFormatOptions) {
-  return Number(number || 0).toLocaleString('en-US', options)
+export function formatNumber(value: string | number | undefined | null, options?: Intl.NumberFormatOptions) {
+  const number = Number(value || 0)
+  const formattedNumber = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: number > 1000 ? 1 : number > 1 ? 2 : 6,
+    ...options
+  }).format(number)
+  return formatNumberString(formattedNumber)
 }
