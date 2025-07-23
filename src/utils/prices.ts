@@ -85,7 +85,7 @@ export function formatExecutionPrice(trade?: Trade, inverted?: boolean): string 
       )} / ${getTokenSymbol(trade.inputAmount?.currency, trade.route.chainId)}`
 }
 
-const formatNumberString = (value: string) => value.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0$/, '')
+const formatNumberString = (value: string) => value.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '')
 
 export function formatPrice(price: number) {
   const formattedNumber = new Intl.NumberFormat('en-US', {
