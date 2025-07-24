@@ -241,8 +241,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               <div className="flex flex-wrap items-center gap-4 gap-y-1">
                 <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
-                <Text className="whitespace-nowrap text-[#27E3AB]">
+                <Text className="whitespace-nowrap text-[#27E3AB] hidden">
                   Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
+                </Text>
+                <Text className="whitespace-nowrap text-[#27E3AB]">
+                  Pool APY: {poolStats?.apy ? `${formatNumber(poolStats.apy, { maximumFractionDigits: 2 })}%` : '...'}
                 </Text>
               </div>
             </div>
