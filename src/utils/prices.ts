@@ -98,8 +98,12 @@ export function formatPrice(price: number) {
 
 export function formatNumber(value: string | number | undefined | null, options?: Intl.NumberFormatOptions) {
   const number = Number(value || 0)
+  const min = number > 1000 ? 1 : number > 1 ? 2 : 6
+  if (options?.maximumFractionDigits && options.maximumFractionDigits < min) {
+    options.maximumFractionDigits = min
+  }
   const formattedNumber = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: number > 1000 ? 1 : number > 1 ? 2 : 6,
+    minimumFractionDigits: min,
     ...options
   }).format(number)
   return formatNumberString(formattedNumber)
