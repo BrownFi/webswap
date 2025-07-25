@@ -245,7 +245,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
                 </Text>
                 <Text className="whitespace-nowrap text-[#27E3AB]">
-                  Fee APY: {poolStats?.apy ? `${formatNumber(poolStats.apy, { maximumFractionDigits: 2 })}%` : '...'}
+                  Fee APR: {poolStats?.apy ? `${formatNumber(poolStats.apy, { maximumFractionDigits: 2 })}%` : '...'}
                 </Text>
               </div>
             </div>
