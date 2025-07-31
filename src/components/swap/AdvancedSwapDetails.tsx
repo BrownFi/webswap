@@ -12,12 +12,16 @@ import SwapRoute from './SwapRoute'
 import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 import { ErrorText } from './styleds'
+import { useVersion } from 'hooks/useVersion'
 
 function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippage: number }) {
   const theme = useContext(ThemeContext)
+  const { chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
+
   const isExactIn = trade.tradeType === TradeType.EXACT_INPUT
   const slippageAdjustedAmounts = computeSlippageAdjustedAmounts(trade, allowedSlippage)
-  const { chainId } = useActiveWeb3React()
+
   return (
     <>
       <AutoColumn style={{ padding: '0 16px' }}>
@@ -59,14 +63,9 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
             <TYPE.black fontSize={14} fontWeight={500} color={theme.white}>
               Liquidity Provider Fee
             </TYPE.black>
-            <QuestionHelper
-              text={
-                `A portion of each trade (${(trade.tradingFee || 0) * 2}%)` +
-                ` goes to liquidity providers as a protocol incentive.`
-              }
-            />
+            <QuestionHelper text="A portion of each trade goes to liquidity providers as a protocol incentive." />
           </RowFixed>
-          <TYPE.black fontSize={14}>{(trade.tradingFee || 0) * 2}%</TYPE.black>
+          <TYPE.black fontSize={14}>{(trade.tradingFee || 0) * (version === 1 ? 2 : 1)}%</TYPE.black>
         </RowBetween>
       </AutoColumn>
     </>

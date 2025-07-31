@@ -19,6 +19,7 @@ import { AutoRow, RowBetween, RowFixed } from '../Row'
 import { ErrorText, StyledBalanceMaxMini, SwapCallbackError } from './styleds'
 import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
+import { useVersion } from 'hooks/useVersion'
 
 export default function SwapModalFooter({
   trade,
@@ -33,16 +34,18 @@ export default function SwapModalFooter({
   swapErrorMessage: string | undefined
   disabledConfirm: boolean
 }) {
-  const [showInverted, setShowInverted] = useState<boolean>(false)
   const theme = useContext(ThemeContext)
+  const { chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
+
   const slippageAdjustedAmounts = useMemo(() => computeSlippageAdjustedAmounts(trade, allowedSlippage), [
     allowedSlippage,
     trade
   ])
-
   const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
   const severity = warningSeverity(priceImpactWithoutFee)
-  const { chainId } = useActiveWeb3React()
+
+  const [showInverted, setShowInverted] = useState<boolean>(false)
 
   return (
     <>
@@ -106,14 +109,9 @@ export default function SwapModalFooter({
             <TYPE.black fontSize={14} fontWeight={500} color={theme.white}>
               Liquidity Provider Fee
             </TYPE.black>
-            <QuestionHelper
-              text={
-                `A portion of each trade (${(trade.tradingFee || 0) * 2}%)` +
-                ` goes to liquidity providers as a protocol incentive.`
-              }
-            />
+            <QuestionHelper text="A portion of each trade goes to liquidity providers as a protocol incentive." />
           </RowFixed>
-          <TYPE.black fontSize={14}>{(trade.tradingFee || 0) * 2}%</TYPE.black>
+          <TYPE.black fontSize={14}>{(trade.tradingFee || 0) * (version === 1 ? 2 : 1)}%</TYPE.black>
         </RowBetween>
       </AutoColumn>
 
