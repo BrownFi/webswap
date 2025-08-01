@@ -282,9 +282,10 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     return 'WU2U'
   }
 
-  if (currency?.symbol === 'WETH' && chainId === ChainId.BERA_MAINNET) {
-    return 'WBERA'
-  }
+  // if (currency?.symbol === 'WETH' && chainId === ChainId.BERA_MAINNET) {
+  //   return 'WBERA'
+  // }
+
   if (currency?.symbol === 'WETH' && chainId === ChainId.HYPER_EVM) {
     return 'WHYPE'
   }

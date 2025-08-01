@@ -233,7 +233,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
           <AutoRow className="!w-fit" gap="8px">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-2">
-                <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={20} />
+                <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
                 <Text fontWeight={600} fontSize={20} className="text-white">
                   <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                 </Text>

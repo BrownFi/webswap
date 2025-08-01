@@ -267,6 +267,22 @@
       "symbol": "USDC.e",
       "decimals": 6,
       "logoURI": "https://berascan.com/token/images/usdc_32.svg"
+    },
+    {
+      "chainId": 80094,
+      "address": "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590",
+      "name": "WETH",
+      "symbol": "WETH",
+      "decimals": 18,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/2396.png"
+    },
+    {
+      "chainId": 80094,
+      "address": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+      "name": "Wrapped BTC",
+      "symbol": "WBTC",
+      "decimals": 8,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png"
     }
   ]
 }

@@ -311,6 +311,60 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           decimals: 18,
           logoURI: 'https://berascan.com/token/images/honeybera_32.png'
         }
+      },
+      '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590:0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce': {
+        token0: {
+          chainId: 80094,
+          address: '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590',
+          name: 'WETH',
+          symbol: 'WETH',
+          decimals: 18,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2396.png'
+        },
+        token1: {
+          chainId: 80094,
+          address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce',
+          name: 'Honey',
+          symbol: 'HONEY',
+          decimals: 18,
+          logoURI: 'https://berascan.com/token/images/honeybera_32.png'
+        }
+      },
+      '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c:0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce': {
+        token0: {
+          chainId: 80094,
+          address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c',
+          name: 'Wrapped BTC',
+          symbol: 'WBTC',
+          decimals: 8,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png'
+        },
+        token1: {
+          chainId: 80094,
+          address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce',
+          name: 'Honey',
+          symbol: 'HONEY',
+          decimals: 18,
+          logoURI: 'https://berascan.com/token/images/honeybera_32.png'
+        }
+      },
+      '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c:0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590': {
+        token0: {
+          chainId: 80094,
+          address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c',
+          name: 'Wrapped BTC',
+          symbol: 'WBTC',
+          decimals: 8,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png'
+        },
+        token1: {
+          chainId: 80094,
+          address: '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590',
+          name: 'WETH',
+          symbol: 'WETH',
+          decimals: 18,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2396.png'
+        }
       }
     },
     [ChainId.ARBITRUM_SEPOLIA]: {
