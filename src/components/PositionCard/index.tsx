@@ -167,13 +167,21 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
 
 export default function FullPositionCard({ pair, border, stakedBalance }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
-  const tradingFee = useTradingFee({ pair })
 
+  const [showMore, setShowMore] = useState(false)
+
+  const shouldReverse = shouldReversePair(pair)
+  const tradingFee = useTradingFee({ pair })
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
-  const shouldReverse = shouldReversePair(pair)
 
-  const pythPrices = usePythPrices({ pair, currencyA: pair.token0, currencyB: pair.token1, chainId })
+  const pythPrices = usePythPrices({
+    pair,
+    currencyA: pair.token0,
+    currencyB: pair.token1,
+    chainId,
+    enabled: showMore
+  })
   const token0Price = pythPrices.CURRENCY_A
   const token1Price = pythPrices.CURRENCY_B
 
@@ -186,14 +194,12 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
 
   const pool0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const pool1Price = token1Price * Number(pair.reserve1.toSignificant(4))
-  const tvl = pool0Price + pool1Price
-  const feeAPR =
-    token0Price && token1Price ? tradingFee * (((Number(poolStats?.volume24h) || 0) * 360) / (tvl || 1)) : 0
-
-  const [showMore, setShowMore] = useState(false)
 
   const userPoolTokens = useTokenBalance(account ?? undefined, pair.liquidityToken)
   const totalPoolTokens = useTotalSupply(pair.liquidityToken)
+
+  const tvl = Number(poolStats?.tvlAll) || 0
+  const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(4)) || 1)
 
   useEffect(() => {
     console.log('======== Pair', `V${pair.version} === ${pair.token0.symbol}/${pair.token1.symbol}`)
@@ -201,8 +207,6 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
     console.log(pair.token1.symbol, token1Price, pair.token1.address)
     console.log(pair.liquidityToken.symbol, pair.liquidityToken.address)
   }, [pair, token0Price, token1Price])
-
-  const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(4)) || 1)
 
   // if staked balance balance provided, add to standard liquidity amount
   const userPoolBalance = stakedBalance ? userPoolTokens?.add(stakedBalance) : userPoolTokens
@@ -241,9 +245,6 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
               <div className="flex flex-wrap items-center gap-4 gap-y-1">
                 <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
                 <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
-                <Text className="whitespace-nowrap text-[#27E3AB] hidden">
-                  Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
-                </Text>
                 <Text className="whitespace-nowrap text-[#27E3AB]">
                   Fee APR: {poolStats?.apy ? `${formatNumber(poolStats.apy, { maximumFractionDigits: 2 })}%` : '...'}
                 </Text>
