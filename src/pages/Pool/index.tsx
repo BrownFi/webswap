@@ -112,7 +112,7 @@ export default function Pool() {
 
   return (
     <>
-      {(chainId === ChainId.BERA_MAINNET || version === 2) && (
+      {chainId === ChainId.BERA_MAINNET && version === 1 && (
         <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] px-2">
           With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and
           redeposit to V2 now to keep earning fees.{' '}
