@@ -369,7 +369,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                   </Text>
                   {userPoolBalance ? (
                     <Text fontSize={16} fontWeight={500} color={'white'}>
-                      {userPoolBalance.toSignificant(4)}{' '}
+                      {formatNumber(userPoolBalance.toSignificant(4))}{' '}
                       <span className="text-[#949494]">
                         ({formatPrice(lpPrice * Number(userPoolBalance.toSignificant(4)))})
                       </span>
@@ -390,7 +390,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                     {token0Deposited ? (
                       <RowFixed className="gap-2">
                         <Text fontSize={16} fontWeight={500} color={'white'}>
-                          {token0Deposited?.toSignificant(4)}
+                          {formatNumber(token0Deposited?.toSignificant(4))}
                         </Text>
                         <Text fontSize={16} fontWeight={500} color={'#949494'}>
                           ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})
@@ -411,7 +411,7 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
                     {token1Deposited ? (
                       <RowFixed className="gap-2">
                         <Text fontSize={16} fontWeight={500} color={'white'}>
-                          {token1Deposited?.toSignificant(4)}
+                          {formatNumber(token1Deposited?.toSignificant(4))}
                         </Text>
                         <Text fontSize={16} fontWeight={500} color={'#949494'}>
                           ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})
