@@ -1,6 +1,9 @@
-import { ChainId, Currency, Field, getPythPrice, getPythPricePair, Pair } from '@brownfi/sdk'
+import { ChainId, Currency, Field, getPriceFromUnsafe, getPythPricePair, Pair } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { useSingleContractMultipleData } from 'state/multicall/hooks'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { useFactoryContract, usePythContract } from './useContract'
 import { useVersion } from './useVersion'
 
 type Props = {
@@ -16,23 +19,32 @@ export const usePythPrices = ({ pair, currencyA, currencyB, chainId }: Props) =>
   const tokenA = wrappedCurrency(currencyA ?? undefined, chainId)
   const tokenB = wrappedCurrency(currencyB ?? undefined, chainId)
 
-  if (!tokenA || !tokenB || !chainId)
+  const factoryContract = useFactoryContract()
+  const pythContract = usePythContract()
+
+  if (!tokenA || !tokenB || !chainId) {
     return {
       [Field.CURRENCY_A]: 0,
       [Field.CURRENCY_B]: 0
     }
+  }
 
-  const { data: tokenAPrice = 0 } = useQuery({
-    queryFn: () => getPythPrice(tokenA.address, chainId, version),
-    queryKey: ['getPythPrice', tokenA?.address],
-    enabled: !!tokenA && version === 2
-  })
+  const priceFeedIds = useSingleContractMultipleData(
+    factoryContract,
+    'priceFeedIds',
+    tokenA && tokenB && version === 2 ? [[tokenA?.address], [tokenB?.address]] : []
+  )
 
-  const { data: tokenBPrice = 0 } = useQuery({
-    queryFn: () => getPythPrice(tokenB.address, chainId, version),
-    queryKey: ['getPythPrice', tokenB?.address],
-    enabled: !!tokenB && version === 2
-  })
+  const priceUnsafes = useSingleContractMultipleData(
+    pythContract,
+    'getPriceUnsafe',
+    priceFeedIds.every(a => a.result) ? priceFeedIds.map(a => a.result?.flat()) : []
+  )
+
+  const [tokenAPrice, tokenBPrice] = useMemo(() => {
+    if (priceUnsafes.some(priceUnsafe => !priceUnsafe.result)) return [0, 0]
+    return priceUnsafes.map(priceUnsafe => getPriceFromUnsafe(priceUnsafe.result?.[0]))
+  }, [priceUnsafes])
 
   const { data: tokenPrices = [0, 0] } = useQuery({
     queryFn: () => getPythPricePair(pair, chainId),
@@ -41,8 +53,8 @@ export const usePythPrices = ({ pair, currencyA, currencyB, chainId }: Props) =>
   })
 
   const pythPrices = {
-    [Field.CURRENCY_A]: version === 2 ? tokenAPrice : tokenPrices[0],
-    [Field.CURRENCY_B]: version === 2 ? tokenBPrice : tokenPrices[1]
+    [Field.CURRENCY_A]: (version === 2 ? tokenAPrice : tokenPrices[0]) || 0,
+    [Field.CURRENCY_B]: (version === 2 ? tokenBPrice : tokenPrices[1]) || 0
   }
   return pythPrices
 }

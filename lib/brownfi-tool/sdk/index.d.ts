@@ -5,4 +5,4 @@ export type { BigintIsh } from './constants';
 export * from './errors';
 export * from './entities';
 export * from './router';
-export { getPythPrice, getPythPricePair, getRouterAddress, getFactoryAddress, getInitCodeHash } from './utils';
+export { getPythPrice, getPythPricePair, getPriceFromUnsafe, getRouterAddress, getFactoryAddress, getInitCodeHash } from './utils';

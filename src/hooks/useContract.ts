@@ -3,7 +3,7 @@ import GOVERNANCE_ABI from '@uniswap/governance/build/GovernorAlpha.json'
 import UNI_ABI from '@uniswap/governance/build/Uni.json'
 import STAKING_REWARDS_ABI from '@uniswap/liquidity-staker/build/StakingRewards.json'
 import MERKLE_DISTRIBUTOR_ABI from '@uniswap/merkle-distributor/build/MerkleDistributor.json'
-import { ChainId, WETH } from '@brownfi/sdk'
+import { ChainId, getFactoryAddress, PYTH_ADDRESS, WETH } from '@brownfi/sdk'
 import IUniswapV2PairABI from '@uniswap/v2-core/build/IUniswapV2Pair.json'
 import { useMemo } from 'react'
 import { GOVERNANCE_ADDRESS, MERKLE_DISTRIBUTOR_ADDRESS } from '../constants'
@@ -22,6 +22,12 @@ import { MULTICALL_ABI, MULTICALL_NETWORKS } from '../constants/multicall'
 import { V1_EXCHANGE_ABI, V1_FACTORY_ABI, V1_FACTORY_ADDRESSES } from '../constants/v1'
 import { getContract } from '../utils'
 import { useActiveWeb3React } from './index'
+import { useVersion } from './useVersion'
+//
+import IFactoryV2 from '../constants/abis/IBrownFiV2Factory.json'
+import IPythUpgradable from '../constants/abis/IPythUpgradable.json'
+import IPair from '../constants/abis/IPair.json'
+import IPairV2 from '../constants/abis/IPairV2.json'
 
 // returns null on errors
 function useContract(address: string | undefined, ABI: any, withSignerIfPossible = true): Contract | null {
@@ -124,4 +130,22 @@ export function useSocksController(): Contract | null {
     UNISOCKS_ABI,
     false
   )
+}
+
+export function useFactoryContract(): Contract | null {
+  const { chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
+  const factoryAddress = getFactoryAddress(chainId!, version)
+  return useContract(factoryAddress, IFactoryV2, false)
+}
+
+export function usePythContract(): Contract | null {
+  const { chainId } = useActiveWeb3React()
+  return useContract(PYTH_ADDRESS[chainId!], IPythUpgradable, false)
+}
+
+export function usePairV2Contract(pairAddress: string): Contract | null {
+  const { chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
+  return useContract(pairAddress, version === 2 ? IPairV2 : IPair)
 }

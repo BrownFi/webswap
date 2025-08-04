@@ -15,5 +15,6 @@ export declare function getInitCodeHash(chainId: number, version: number): any;
  */
 export declare const getPythPrice: (address: string, chainId: ChainId, version: number) => Promise<number>;
 export declare const getPythPricePair: (pair?: Pair | undefined, chainId?: ChainId | undefined) => Promise<number[]>;
+export declare const getPriceFromUnsafe: (priceUnsafe: string[]) => number;
 export declare const getDataBytes: (addresses: Array<string | undefined>, chainId: ChainId) => Promise<string[]>;
 export declare const solidityPack: (addresses: Array<string | undefined>, chainId: ChainId) => Promise<string>;
