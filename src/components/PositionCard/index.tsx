@@ -202,10 +202,10 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
   const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(4)) || 1)
 
   useEffect(() => {
-    console.log('======== Pair', `V${pair.version} === ${pair.token0.symbol}/${pair.token1.symbol}`)
-    console.log(pair.token0.symbol, token0Price, pair.token0.address)
-    console.log(pair.token1.symbol, token1Price, pair.token1.address)
-    console.log(pair.liquidityToken.symbol, pair.liquidityToken.address)
+    // console.log('======== Pair', `V${pair.version} === ${pair.token0.symbol}/${pair.token1.symbol}`)
+    // console.log(pair.token0.symbol, token0Price, pair.token0.address)
+    // console.log(pair.token1.symbol, token1Price, pair.token1.address)
+    // console.log(pair.liquidityToken.symbol, pair.liquidityToken.address)
   }, [pair, token0Price, token1Price])
 
   // if staked balance balance provided, add to standard liquidity amount

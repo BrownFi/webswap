@@ -19,7 +19,6 @@ import { AutoRow, RowBetween, RowFixed } from '../Row'
 import { ErrorText, StyledBalanceMaxMini, SwapCallbackError } from './styleds'
 import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
-import { useVersion } from 'hooks/useVersion'
 
 export default function SwapModalFooter({
   trade,
@@ -36,7 +35,6 @@ export default function SwapModalFooter({
 }) {
   const theme = useContext(ThemeContext)
   const { chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
 
   const slippageAdjustedAmounts = useMemo(() => computeSlippageAdjustedAmounts(trade, allowedSlippage), [
     allowedSlippage,
@@ -103,15 +101,6 @@ export default function SwapModalFooter({
           <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
             {trade ? formatStringToNumber(trade?.priceImpactK, 4) : '-'}%
           </ErrorText>
-        </RowBetween>
-        <RowBetween>
-          <RowFixed>
-            <TYPE.black fontSize={14} fontWeight={500} color={theme.white}>
-              Liquidity Provider Fee
-            </TYPE.black>
-            <QuestionHelper text="A portion of each trade goes to liquidity providers as a protocol incentive." />
-          </RowFixed>
-          <TYPE.black fontSize={14}>{(trade.tradingFee || 0) * (version === 1 ? 2 : 1)}%</TYPE.black>
         </RowBetween>
       </AutoColumn>
 
