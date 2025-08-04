@@ -86,7 +86,6 @@ export class WalletConnectConnector extends AbstractConnector {
       .then((accounts: string[]): string => accounts[0])
       .catch((error: Error): void => {
         console.log('errror =====>', error)
-        // TODO ideally this would be a better check
         if (error.message === 'User closed modal') {
           throw new UserRejectedRequestError()
         }
