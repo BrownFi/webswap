@@ -24,6 +24,7 @@ import { WagmiProvider } from 'wagmi'
 import { wagmiConfig } from 'connectors'
 import { darkTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
+import { ToastProvider } from 'containers/ToastProvider'
 
 const Web3ProviderNetwork = createWeb3ReactRoot(NetworkContextName)
 
@@ -57,10 +58,12 @@ root.render(
                   <Blocklist>
                     <Updaters />
                     <ThemeProvider>
-                      <ThemedGlobalStyle />
-                      <HashRouter>
-                        <App />
-                      </HashRouter>
+                      <ToastProvider>
+                        <ThemedGlobalStyle />
+                        <HashRouter>
+                          <App />
+                        </HashRouter>
+                      </ToastProvider>
                     </ThemeProvider>
                   </Blocklist>
                 </StarknetProvider>

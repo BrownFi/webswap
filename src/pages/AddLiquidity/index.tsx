@@ -37,6 +37,7 @@ import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
+import { useToast } from 'containers/ToastProvider'
 
 export default function AddLiquidity({
   match: {
@@ -47,6 +48,7 @@ export default function AddLiquidity({
   const theme = useContext(ThemeContext)
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
+  const { createToast } = useToast()
 
   const currencyA = useCurrency(currencyIdA)
   const currencyB = useCurrency(currencyIdB)
@@ -180,6 +182,10 @@ export default function AddLiquidity({
       // we only care if the error is something _other_ than the user rejected the tx
       if ((e as any)?.code !== 4001) {
         console.error(error)
+      }
+
+      if (typeof (e as any)?.reason === 'string') {
+        createToast((e as any)?.reason, 'error')
       }
     }
   }
