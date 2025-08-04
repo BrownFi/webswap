@@ -52,7 +52,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 }`}
             >
               {toast.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-              <span>{toast.message}</span>
+              <span className="[&::first-letter]:uppercase">{toast.message}</span>
             </motion.div>
           ))}
         </AnimatePresence>
