@@ -74,7 +74,7 @@ export default function Updater(): null {
     dispatch(
       updateBlockNumber({
         chainId: debouncedState.chainId,
-        blockNumber: debouncedState.blockNumber - 5
+        blockNumber: debouncedState.blockNumber - 2 // TODO: blockNumber
       })
     )
   }, [windowVisible, dispatch, debouncedState.blockNumber, debouncedState.chainId])
