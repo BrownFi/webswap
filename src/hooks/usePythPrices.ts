@@ -32,13 +32,15 @@ export const usePythPrices = ({ pair, currencyA, currencyB, chainId }: Props) =>
   const priceFeedIds = useSingleContractMultipleData(
     factoryContract,
     'priceFeedIds',
-    tokenA && tokenB && version === 2 ? [[tokenA?.address], [tokenB?.address]] : []
+    tokenA && tokenB && version === 2 ? [[tokenA?.address], [tokenB?.address]] : [],
+    { blocksPerFetch: 10 }
   )
 
   const priceUnsafes = useSingleContractMultipleData(
     pythContract,
     'getPriceUnsafe',
-    priceFeedIds.every(a => a.result) ? priceFeedIds.map(a => a.result?.flat()) : []
+    priceFeedIds.every(a => a.result) ? priceFeedIds.map(a => a.result?.flat()) : [],
+    { blocksPerFetch: 10 }
   )
 
   const [tokenAPrice, tokenBPrice] = useMemo(() => {
