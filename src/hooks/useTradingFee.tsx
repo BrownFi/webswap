@@ -14,27 +14,30 @@ export const useTradingFee = ({ pair }: Props) => {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
 
-  const { get, save } = useStorageCache({
+  const { get, save, isExpired } = useStorageCache({
     key: ['tradingFee', pair.liquidityToken.address].join('-'),
     initValue: 0,
     cacheTime: 1 * 60 * 60
   })
-  const isExpired = () => true
 
-  // const [tradingFee, setTradingFee] = useState(() => get())
+  const [tradingFee, setTradingFee] = useState(() => (isExpired() ? 0 : get()))
 
   const pairContract = usePairV2Contract(pair.liquidityToken.address)
-  const fee = (useSingleCallResult(pairContract, 'fee', undefined).result?.[0] || 0) * (version === 2 ? 1 : 2)
+  const fee =
+    (useSingleCallResult(pairContract, 'fee', undefined, { disabled: !isExpired() }).result?.[0] || 0) *
+    (version === 2 ? 1 : 2)
   const precision =
-    version === 2 ? useSingleCallResult(pairContract, 'PRECISION', undefined).result?.[0] || 100000000 : 10000
+    version === 2
+      ? useSingleCallResult(pairContract, 'PRECISION', undefined, { disabled: !isExpired() }).result?.[0] || 100000000
+      : 10000
   const newFee = (Number(fee) * 100) / precision
 
-  // useEffect(() => {
-  //   if (newFee) {
-  //     setTradingFee(newFee)
-  //     save(newFee)
-  //   }
-  // }, [newFee])
+  useEffect(() => {
+    if (newFee) {
+      setTradingFee(newFee)
+      save(newFee)
+    }
+  }, [newFee])
 
-  return newFee
+  return tradingFee
 }
