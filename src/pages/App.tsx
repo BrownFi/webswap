@@ -5,7 +5,6 @@ import '../theme/index.css'
 import styled from 'styled-components'
 import classNames from 'classnames'
 import GoogleAnalyticsReporter from '../components/analytics/GoogleAnalyticsReporter'
-import Header from '../components/Header'
 import Popups from '../components/Popups'
 import Web3ReactManager from '../components/Web3ReactManager'
 import DarkModeQueryParamReader from '../theme/DarkModeQueryParamReader'
@@ -28,27 +27,9 @@ import Swap from './Swap'
 import { OpenClaimAddressModalAndRedirectToSwap, RedirectPathToSwapOnly, RedirectToSwap } from './Swap/redirects'
 import Vote from './Vote'
 import VotePage from './Vote/VotePage'
-import Footer from 'components/Footer'
-import mathImage from '../assets/svg/math-image.svg'
-import csm from '../assets/svg/csm.svg'
 import Referral from 'components/Referral'
 import Leaderboard from './Leaderboard'
-
-const AppWrapper = styled.div`
-  display: flex;
-  flex-flow: column;
-  align-items: flex-start;
-  overflow-x: hidden;
-  background-color: #131216;
-  min-height: 100vh;
-`
-
-const HeaderWrapper = styled.div`
-  ${({ theme }) => theme.flexRowNoWrap}
-  width: 100%;
-  justify-content: space-between;
-  min-height: 78px;
-`
+import StaticScreen from 'containers/StaticScreen'
 
 const BodyWrapper = styled.div`
   display: flex;
@@ -84,13 +65,7 @@ export default function App() {
     <Suspense fallback={null}>
       <Route component={GoogleAnalyticsReporter} />
       <Route component={DarkModeQueryParamReader} />
-      <AppWrapper className="relative">
-        <img src={csm} alt="csm" className="absolute  right-[40px] top-[100px]" />
-        <img src={mathImage} alt="math" className="absolute left-[40px] right-[40px] math-image bottom-[120px]" />
-        {/* <URLWarning /> */}
-        <HeaderWrapper>
-          <Header />
-        </HeaderWrapper>
+      <StaticScreen>
         <BodyWrapper>
           <Popups />
           {/* <Polling /> */}
@@ -134,9 +109,7 @@ export default function App() {
           </div>
           <Marginer />
         </BodyWrapper>
-
-        <Footer />
-      </AppWrapper>
+      </StaticScreen>
     </Suspense>
   )
 }

@@ -166,18 +166,17 @@ export function useSingleContractMultipleData(
 ): CallState[] {
   const fragment = useMemo(() => contract?.interface?.getFunction(methodName), [contract, methodName])
 
-  const calls = useMemo(
-    () =>
-      contract && fragment && callInputs && callInputs.length > 0
-        ? callInputs.map<Call>(inputs => {
-            return {
-              address: contract.address,
-              callData: contract.interface.encodeFunctionData(fragment, inputs)
-            }
-          })
-        : [],
-    [callInputs, contract, fragment]
-  )
+  const calls = useMemo(() => {
+    if (options?.disabled) return []
+    return contract && fragment && callInputs && callInputs.length > 0
+      ? callInputs.map<Call>(inputs => {
+          return {
+            address: contract.address,
+            callData: contract.interface.encodeFunctionData(fragment, inputs)
+          }
+        })
+      : []
+  }, [callInputs, contract, fragment, options])
 
   const results = useCallsData(calls, options)
 
@@ -204,20 +203,19 @@ export function useMultipleContractSingleData(
     [callInputs, contractInterface, fragment]
   )
 
-  const calls = useMemo(
-    () =>
-      fragment && addresses && addresses.length > 0 && callData
-        ? addresses.map<Call | undefined>(address => {
-            return address && callData
-              ? {
-                  address,
-                  callData
-                }
-              : undefined
-          })
-        : [],
-    [addresses, callData, fragment]
-  )
+  const calls = useMemo(() => {
+    if (options?.disabled) return []
+    return fragment && addresses && addresses.length > 0 && callData
+      ? addresses.map<Call | undefined>(address => {
+          return address && callData
+            ? {
+                address,
+                callData
+              }
+            : undefined
+        })
+      : []
+  }, [addresses, callData, fragment])
 
   const results = useCallsData(calls, options)
 

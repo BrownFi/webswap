@@ -25,6 +25,7 @@ import { wagmiConfig } from 'connectors'
 import { darkTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { ToastProvider } from 'containers/ToastProvider'
+import { ErrorBoundary } from 'containers/ErrorBoundary'
 
 const Web3ProviderNetwork = createWeb3ReactRoot(NetworkContextName)
 
@@ -61,7 +62,9 @@ root.render(
                       <ToastProvider>
                         <ThemedGlobalStyle />
                         <HashRouter>
-                          <App />
+                          <ErrorBoundary>
+                            <App />
+                          </ErrorBoundary>
                         </HashRouter>
                       </ToastProvider>
                     </ThemeProvider>
