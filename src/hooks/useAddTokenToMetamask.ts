@@ -1,4 +1,3 @@
-import { getTokenLogoURL } from './../components/CurrencyLogo/index'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { Currency, Token } from '@brownfi/sdk'
 import { useCallback, useState } from 'react'
@@ -25,8 +24,7 @@ export default function useAddTokenToMetamask(
             options: {
               address: token.address,
               symbol: token.symbol,
-              decimals: token.decimals,
-              image: getTokenLogoURL(token.address)
+              decimals: token.decimals
             }
           } as any
         })

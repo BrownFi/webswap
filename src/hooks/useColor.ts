@@ -6,7 +6,7 @@ import { Token } from '@brownfi/sdk'
 import uriToHttp from 'utils/uriToHttp'
 
 async function getColorFromToken(token: Token): Promise<string | null> {
-  const path = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${token.address}/logo.png`
+  const path = ''
 
   return Vibrant.from(path)
     .getPalette()
@@ -45,13 +45,13 @@ export function useColor(token?: Token) {
   useLayoutEffect(() => {
     let stale = false
 
-    if (token) {
-      getColorFromToken(token).then(tokenColor => {
-        if (!stale && tokenColor !== null) {
-          setColor(tokenColor)
-        }
-      })
-    }
+    // if (token) {
+    //   getColorFromToken(token).then(tokenColor => {
+    //     if (!stale && tokenColor !== null) {
+    //       setColor(tokenColor)
+    //     }
+    //   })
+    // }
 
     return () => {
       stale = true

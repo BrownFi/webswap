@@ -4,14 +4,8 @@
   "homepage_url": "https://app.brownfi.org",
   "icons": [
     {
-      "src": "./images/192x192_App_Icon.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "./images/512x512_App_Icon.png",
-      "sizes": "512x512",
+      "src": "./images/50x50_App_Icon.png",
+      "sizes": "50x50",
       "type": "image/png",
       "purpose": "any maskable"
     }

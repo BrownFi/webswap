@@ -15,9 +15,6 @@ import bobaLogo from '../../assets/images/boba.svg'
 import beraLogo from '../../assets/images/w-bera.png'
 import hyperevmLogo from '../../assets/images/hyperevm.png'
 
-export const getTokenLogoURL = (address: string) =>
-  `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${address}/logo.png`
-
 const StyledEthereumLogo = styled.img<{ size: string }>`
   width: ${({ size }) => size};
   height: ${({ size }) => size};
@@ -50,9 +47,9 @@ export default function CurrencyLogo({
 
     if (currency instanceof Token) {
       if (currency instanceof WrappedTokenInfo) {
-        return [...uriLocations, getTokenLogoURL(currency.address)]
+        return [...uriLocations]
       }
-      return [getTokenLogoURL(currency.address)]
+      return []
     }
     return []
   }, [currency, uriLocations])
