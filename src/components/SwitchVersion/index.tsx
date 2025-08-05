@@ -8,7 +8,7 @@ type Props = {
 
 const SwitchVersion = ({ isMobile }: Props) => {
   const { chainId } = useActiveWeb3React()
-  const { version, isDisabled, switchVersion } = useVersion({ chainId })
+  const { appVersion: version, isDisabled, switchVersion } = useVersion({ chainId })
 
   const isOn = version === 2
 

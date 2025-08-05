@@ -19,6 +19,7 @@ export const useStorageCache = ({ key, initValue, cacheTime }: Props) => {
       data,
       expireTime: Date.now() + cache * 1000
     })
+    return data
   }
 
   const isExpired = () => {

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ChainId } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
@@ -6,6 +6,7 @@ import { switchVersion, versionSelector } from 'state/versionSlice'
 export function useVersion({ chainId }: { chainId: number | undefined | null }) {
   const dispatch = useDispatch()
   const { version: appVersion } = useSelector(versionSelector)
+  const [stableVersion] = useState(() => appVersion)
 
   const [version, isDisabled] = useMemo(() => {
     if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
@@ -23,8 +24,8 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
     ) {
       return [2, true]
     }
-    return [appVersion, false]
-  }, [chainId, appVersion])
+    return [stableVersion, false]
+  }, [chainId])
 
   const dispatchSwitchVersion = (version: number) => {
     dispatch(switchVersion(version))
@@ -32,6 +33,7 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
 
   return {
     version,
+    appVersion,
     isDisabled,
     switchVersion: dispatchSwitchVersion
   }

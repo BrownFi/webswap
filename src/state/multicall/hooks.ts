@@ -237,6 +237,7 @@ export function useSingleCallResult(
   const fragment = useMemo(() => contract?.interface?.getFunction(methodName), [contract, methodName])
 
   const calls = useMemo<Call[]>(() => {
+    if (options?.disabled) return []
     return contract && fragment && isValidMethodArgs(inputs)
       ? [
           {
@@ -245,7 +246,7 @@ export function useSingleCallResult(
           }
         ]
       : []
-  }, [contract, fragment, inputs])
+  }, [contract, fragment, inputs, options])
 
   const result = useCallsData(calls, options)[0]
   const latestBlockNumber = useBlockNumber()

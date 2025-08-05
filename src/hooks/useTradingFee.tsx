@@ -1,7 +1,9 @@
 import { Pair } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
+import { useEffect, useState } from 'react'
 import { useSingleCallResult } from 'state/multicall/hooks'
 import { usePairV2Contract } from './useContract'
+import { useStorageCache } from './useStorageCache'
 import { useVersion } from './useVersion'
 
 type Props = {
@@ -12,15 +14,30 @@ export const useTradingFee = ({ pair }: Props) => {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
 
-  const pairContract = usePairV2Contract(pair.liquidityToken.address)
+  const { get, save, isExpired } = useStorageCache({
+    key: ['tradingFee', pair.liquidityToken.address].join('-'),
+    initValue: 0,
+    cacheTime: 1 * 60 * 60
+  })
 
+  const [tradingFee, setTradingFee] = useState(() => get())
+
+  const pairContract = usePairV2Contract(pair.liquidityToken.address)
   const fee =
-    (useSingleCallResult(pairContract, 'fee', undefined, { blocksPerFetch: 100 }).result?.[0] || 0) *
+    (useSingleCallResult(pairContract, 'fee', undefined, { disabled: !isExpired() }).result?.[0] || 0) *
     (version === 2 ? 1 : 2)
   const precision =
     version === 2
-      ? useSingleCallResult(pairContract, 'PRECISION', undefined, { blocksPerFetch: 100 }).result?.[0] || 100000000
+      ? useSingleCallResult(pairContract, 'PRECISION', undefined, { disabled: !isExpired() }).result?.[0] || 100000000
       : 10000
+  const newFee = (Number(fee) * 100) / precision
 
-  return (Number(fee) * 100) / precision
+  useEffect(() => {
+    if (newFee) {
+      setTradingFee(newFee)
+      save(newFee)
+    }
+  }, [newFee])
+
+  return tradingFee
 }
