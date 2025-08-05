@@ -52,9 +52,7 @@ async function fetchChunk(
     }
     throw new RetryableError('Fetched for old block number')
   } else {
-    console.debug('4. Fetched results for NEW block number', { fetched, min, newly })
-
-    console.debug('FETCH CHUNK', resultsBlockNumber.toNumber(), chunk, returnData)
+    console.debug('4. Fetched results for NEW block number', { fetched, min, newly, size: chunk.length })
   }
   return { results: returnData, blockNumber: resultsBlockNumber.toNumber() }
 }
