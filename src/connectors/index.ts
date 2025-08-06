@@ -2,7 +2,7 @@ import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from './WalletConnector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 
-import { arbitrum, arbitrumSepolia, base, berachain, bsc, mainnet, sepolia, viction } from 'wagmi/chains'
+import * as defaultChains from 'viem/chains'
 
 import UNISWAP_LOGO_URL from '../assets/svg/logo.svg'
 import { ChainId } from '@brownfi/sdk'
@@ -15,15 +15,35 @@ export const walletconnect = new WalletConnectConnector({
   chains: [ChainId.MAINNET]
 })
 
-// mainnet only
 export const walletlink = new WalletLinkConnector({
-  url: mainnet.rpcUrls.default.http[0],
+  url: defaultChains.mainnet.rpcUrls.default.http[0],
   appName: 'Brownfi',
   appLogoUrl: UNISWAP_LOGO_URL
 })
 
+const overrideChain = ({
+  chain,
+  iconUrl,
+  fallbackRpcs
+}: {
+  chain: Chain
+  iconUrl: any
+  fallbackRpcs: string[]
+}): Chain => {
+  // @ts-ignore
+  return defineChain({
+    ...chain,
+    rpcUrls: {
+      default: {
+        http: fallbackRpcs.concat(chain.rpcUrls.default.http)
+      }
+    },
+    iconUrl
+  })
+}
+
 // @ts-ignore
-export const u2uMainnet: Chain = defineChain({
+const u2uMainnet: Chain = defineChain({
   id: 39,
   name: 'U2U Network',
   nativeCurrency: { decimals: 18, name: 'U2U', symbol: 'U2U' },
@@ -38,14 +58,20 @@ export const u2uMainnet: Chain = defineChain({
   iconUrl: require('assets/images/u2u.jpg')
 })
 
+const viction: Chain = overrideChain({
+  chain: defaultChains.viction,
+  iconUrl: require('assets/images/viction.png'),
+  fallbackRpcs: ['https://viction.drpc.org']
+})
+
 // @ts-ignore
-export const hyperEVM: Chain = defineChain({
+const hyperEVM: Chain = defineChain({
   id: 999,
   name: 'HyperEVM',
   nativeCurrency: { decimals: 18, name: 'HYPE', symbol: 'HYPE' },
   rpcUrls: {
     default: {
-      http: ['https://hyperliquid.drpc.org']
+      http: ['https://rpc.hyperliquid.xyz/evm', 'https://hyperliquid.drpc.org']
     }
   },
   blockExplorers: {
@@ -55,20 +81,41 @@ export const hyperEVM: Chain = defineChain({
 })
 
 // @ts-ignore
-berachain.iconUrl = require('assets/images/w-bera.png')
-// @ts-ignore
-viction.iconUrl = require('assets/images/viction.png')
+const arbitrumSepolia = defineChain({
+  ...defaultChains.arbitrumSepolia,
+  iconUrl: require('assets/images/arb.png')
+})
 
 // @ts-ignore
-arbitrumSepolia.iconUrl = require('assets/images/arb.png')
-// @ts-ignore
-arbitrum.iconUrl = require('assets/images/arb.png')
-// @ts-ignore
-base.iconUrl = require('assets/images/base.png')
-// @ts-ignore
-bsc.iconUrl = require('assets/images/bsc.png')
-// @ts-ignore
-sepolia.iconUrl = require('assets/images/ethereum-logo.png')
+// eslint-disable-next-line
+const sepolia = defineChain({
+  ...defaultChains.sepolia,
+  iconUrl: require('assets/images/ethereum-logo.png')
+})
+
+const berachain = overrideChain({
+  chain: defaultChains.berachain,
+  iconUrl: require('assets/images/w-bera.png'),
+  fallbackRpcs: ['https://berachain.drpc.org', 'https://rpc.berachain-apis.com']
+})
+
+const arbitrum = overrideChain({
+  chain: defaultChains.arbitrum,
+  iconUrl: require('assets/images/arb.png'),
+  fallbackRpcs: ['https://arbitrum.drpc.org', 'https://arbitrum.therpc.io']
+})
+
+const base = overrideChain({
+  chain: defaultChains.base,
+  iconUrl: require('assets/images/base.png'),
+  fallbackRpcs: ['https://base.drpc.org', 'https://base.llamarpc.com']
+})
+
+const bsc = overrideChain({
+  chain: defaultChains.bsc,
+  iconUrl: require('assets/images/bsc.png'),
+  fallbackRpcs: ['https://bsc.drpc.org', 'https://binance.llamarpc.com']
+})
 
 const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
 console.log(`======== ENV: "${env}" =========`)
