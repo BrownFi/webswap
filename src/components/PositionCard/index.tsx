@@ -231,16 +231,18 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
       <AutoColumn gap="12px">
         <FixedHeightRow>
           <AutoRow className="!w-fit" gap="8px">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 flex-wrap">
               <div className="flex items-center gap-2">
                 <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
-                <Text fontWeight={600} fontSize={20} className="text-white">
+                <Text fontWeight={600} fontSize={20} className="text-white !min-w-[160px]">
                   <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                 </Text>
               </div>
-              <div className="flex flex-wrap items-center gap-4 gap-y-1">
-                <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
-                <Text className="whitespace-nowrap text-[aqua]">TVL: {formatPrice(tvl)}</Text>
+              <div className="flex flex-wrap items-center gap-1 gap-y-1">
+                <div className="min-w-[60px]">
+                  <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
+                </div>
+                <Text className="whitespace-nowrap text-[aqua] !min-w-[120px]">TVL: {formatPrice(tvl)}</Text>
                 <Text className="whitespace-nowrap text-[#27E3AB] hidden">
                   Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
                 </Text>
