@@ -20,6 +20,7 @@ import {
   toggleURLWarning,
   updateUserSingleHopOnly
 } from './actions'
+import { useVersion } from 'hooks/useVersion'
 
 function serializeToken(token: Token): SerializedToken {
   return {
@@ -286,6 +287,7 @@ export function useGetListPairs(
  */
 export function useTrackedTokenPairs(): [Token, Token][] {
   const { chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
   const tokens = useAllTokens()
 
   // pairs saved by users
@@ -430,6 +432,10 @@ export function useTrackedTokenPairs(): [Token, Token][] {
   }
 
   const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
+
+  if (version === 1) {
+    return pairs.filter(pair => `${pair[0].symbol}/${pair[1].symbol}` !== 'USDC.e/WBERA')
+  }
 
   return pairs
 }
