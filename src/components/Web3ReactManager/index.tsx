@@ -38,7 +38,8 @@ export default function Web3ReactManager({ children }: { children: JSX.Element }
   // after eagerly trying injected, if the network connect ever isn't active or in an error state, activate itd
   useEffect(() => {
     const network = new NetworkConnector({
-      urls: { [chain.id]: chain.rpcUrls.default.http[0] }
+      urls: { [chain.id]: chain.rpcUrls.default.http as string[] },
+      defaultChainId: chain.id
     })
     if (triedEager && !networkActive && !networkError && !active) {
       activateNetwork(network)

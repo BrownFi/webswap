@@ -3,7 +3,7 @@ import { AbstractConnector } from '@web3-react/abstract-connector'
 import invariant from 'tiny-invariant'
 
 interface NetworkConnectorArguments {
-  urls: { [chainId: number]: string }
+  urls: { [chainId: number]: string | string[] }
   defaultChainId?: number
 }
 
@@ -30,70 +30,73 @@ interface BatchItem {
 
 class MiniRpcProvider implements AsyncSendable {
   public readonly chainId: number
-  public readonly url: string
-  public readonly host: string
-  public readonly path: string
+  public readonly urls: string[]
   public readonly batchWaitTimeMs: number
 
+  private urlIndex = 0
   private nextId = 1
   private batchTimeoutId: ReturnType<typeof setTimeout> | null = null
   private batch: BatchItem[] = []
 
-  constructor(chainId: number, url: string, batchWaitTimeMs?: number) {
+  constructor(chainId: number, urls: string[] | string, batchWaitTimeMs?: number) {
     this.chainId = chainId
-    this.url = url
-    const parsed = new URL(url)
-    this.host = parsed.host
-    this.path = parsed.pathname
-    // how long to wait to batch calls
+    this.urls = Array.isArray(urls) ? urls : [urls]
     this.batchWaitTimeMs = batchWaitTimeMs ?? 50
+  }
+
+  private get currentUrl() {
+    return this.urls[this.urlIndex]
+  }
+
+  private nextUrl() {
+    this.urlIndex = (this.urlIndex + 1) % this.urls.length
   }
 
   public readonly clearBatch = async () => {
     const batch = this.batch
     this.batch = []
     this.batchTimeoutId = null
-    let response: Response
-    try {
-      response = await fetch(this.url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify(batch.map(item => item.request))
-      })
-    } catch (error) {
-      batch.forEach(({ reject }) => reject(new Error('Failed to send batch call')))
-      return
-    }
 
-    if (!response.ok) {
-      batch.forEach(({ reject }) => reject(new RequestError(`${response.status}: ${response.statusText}`, -32000)))
-      return
-    }
+    for (let attempt = 0; attempt < this.urls.length; attempt++) {
+      try {
+        const response = await fetch(this.currentUrl, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify(batch.map(item => item.request))
+        })
 
-    let json
-    try {
-      json = await response.json()
-    } catch (error) {
-      batch.forEach(({ reject }) => reject(new Error('Failed to parse JSON response')))
-      return
-    }
-    const byKey = batch.reduce<{ [id: number]: BatchItem }>((memo, current) => {
-      memo[current.request.id] = current
-      return memo
-    }, {})
-    for (const result of json) {
-      const {
-        resolve,
-        reject,
-        request: { method }
-      } = byKey[result.id]
-      if (resolve && reject) {
-        if ('error' in result) {
-          reject(new RequestError(result?.error?.message, result?.error?.code, result?.error?.data))
-        } else if ('result' in result) {
-          resolve(result.result)
-        } else {
-          reject(new RequestError(`Received unexpected JSON-RPC response to ${method} request.`, -32000, result))
+        if (!response.ok) {
+          throw new RequestError(`${response.status}: ${response.statusText}`, -32000)
+        }
+
+        const json = await response.json()
+        const byKey = batch.reduce<{ [id: number]: BatchItem }>((memo, current) => {
+          memo[current.request.id] = current
+          return memo
+        }, {})
+
+        for (const result of json) {
+          const {
+            resolve,
+            reject,
+            request: { method }
+          } = byKey[result.id]
+          if ('error' in result) {
+            reject(new RequestError(result.error.message, result.error.code, result.error.data))
+          } else if ('result' in result) {
+            resolve(result.result)
+          } else {
+            reject(new RequestError(`Unexpected response to ${method}`, -32000, result))
+          }
+        }
+
+        return // success, break loop
+      } catch (error) {
+        // fallback to next URL
+        this.nextUrl()
+        if (attempt === this.urls.length - 1) {
+          // All URLs failed
+          batch.forEach(({ reject }) => reject(new Error(`All RPC URLs failed for chain ${this.chainId}`)))
         }
       }
     }
@@ -115,9 +118,11 @@ class MiniRpcProvider implements AsyncSendable {
     if (typeof method !== 'string') {
       return this.request(method.method, method.params)
     }
+
     if (method === 'eth_chainId') {
       return `0x${this.chainId.toString(16)}`
     }
+
     const promise = new Promise((resolve, reject) => {
       this.batch.push({
         request: {
@@ -130,6 +135,7 @@ class MiniRpcProvider implements AsyncSendable {
         reject
       })
     })
+
     this.batchTimeoutId = this.batchTimeoutId ?? setTimeout(this.clearBatch, this.batchWaitTimeMs)
     return promise
   }
