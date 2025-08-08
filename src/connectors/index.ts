@@ -120,7 +120,7 @@ const bsc = overrideChain({
 const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
 console.log(`======== ENV: "${env}" =========`)
 
-const beraChains: Chain[] = [berachain, arbitrum, base, bsc, viction, u2uMainnet]
+const beraChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet]
 const mainnetChains: Chain[] = [arbitrum, base, bsc]
 const testnetChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, arbitrumSepolia]
 
