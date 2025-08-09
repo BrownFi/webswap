@@ -44,15 +44,13 @@ export const usePythPrices = ({ pair, currencyA, currencyB, chainId }: Props) =>
   const priceFeedIds = useSingleContractMultipleData(
     factoryContract,
     'priceFeedIds',
-    tokenA && tokenB && version === 2 ? [[tokenA?.address], [tokenB?.address]] : [],
-    { disabled: isAvailableTokenA() && isAvailableTokenB() }
+    tokenA && tokenB && version === 2 ? [[tokenA?.address], [tokenB?.address]] : []
   )
 
   const priceUnsafes = useSingleContractMultipleData(
     pythContract,
     'getPriceUnsafe',
-    priceFeedIds.every(a => a.result) ? priceFeedIds.map(a => a.result?.flat()) : [],
-    { disabled: isAvailableTokenA() && isAvailableTokenB() }
+    priceFeedIds.every(a => a.result) ? priceFeedIds.map(a => a.result?.flat()) : []
   )
 
   const [tokenAPrice, tokenBPrice] = useMemo(() => {
@@ -77,8 +75,8 @@ export const usePythPrices = ({ pair, currencyA, currencyB, chainId }: Props) =>
   })
 
   const pythPrices = {
-    [Field.CURRENCY_A]: (version === 2 ? getTokenA() : tokenPrices[0]) || 0,
-    [Field.CURRENCY_B]: (version === 2 ? getTokenB() : tokenPrices[1]) || 0
+    [Field.CURRENCY_A]: (version === 2 ? tokenAPrice : tokenPrices[0]) || 0,
+    [Field.CURRENCY_B]: (version === 2 ? tokenBPrice : tokenPrices[1]) || 0
   }
   return pythPrices
 }
