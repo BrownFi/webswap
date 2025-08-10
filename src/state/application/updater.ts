@@ -24,7 +24,8 @@ export default function Updater(): null {
 
     const currentChainId = parseInt((library.provider as any).chainId) || chainId
 
-    const updateBlockNumber = (chainId: number, blockNumber: number) => {
+    const updateBlockNumber = (blockNumber: number) => {
+      const chainId = currentChainId
       setState(state => {
         if (chainId === state.chainId) {
           if (typeof state.blockNumber !== 'number') {
@@ -38,12 +39,12 @@ export default function Updater(): null {
 
     library
       .getBlockNumber()
-      .then(blockNumber => updateBlockNumber(currentChainId, blockNumber))
+      .then(updateBlockNumber)
       .catch(error => console.error(`Failed to get block number for chainId: ${currentChainId}`, error))
 
-    library.on('block', blockNumber => updateBlockNumber(currentChainId, blockNumber))
+    library.on('block', updateBlockNumber)
     return () => {
-      library.removeListener('block', blockNumber => updateBlockNumber(currentChainId, blockNumber))
+      library.removeListener('block', updateBlockNumber)
     }
   }, [dispatch, chainId, library, windowVisible])
 
