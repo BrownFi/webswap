@@ -1,10 +1,11 @@
+import { ChainId, getFactoryAddress, PYTH_ADDRESS, WETH } from '@brownfi/sdk'
 import { Contract } from '@ethersproject/contracts'
 import GOVERNANCE_ABI from '@uniswap/governance/build/GovernorAlpha.json'
 import UNI_ABI from '@uniswap/governance/build/Uni.json'
 import STAKING_REWARDS_ABI from '@uniswap/liquidity-staker/build/StakingRewards.json'
 import MERKLE_DISTRIBUTOR_ABI from '@uniswap/merkle-distributor/build/MerkleDistributor.json'
-import { ChainId, getFactoryAddress, PYTH_ADDRESS, WETH } from '@brownfi/sdk'
 import IUniswapV2PairABI from '@uniswap/v2-core/build/IUniswapV2Pair.json'
+import { availableChains } from 'connectors'
 import { useMemo } from 'react'
 import { GOVERNANCE_ADDRESS, MERKLE_DISTRIBUTOR_ADDRESS } from '../constants'
 import {
@@ -15,6 +16,10 @@ import ENS_PUBLIC_RESOLVER_ABI from '../constants/abis/ens-public-resolver.json'
 import ENS_ABI from '../constants/abis/ens-registrar.json'
 import { ERC20_BYTES32_ABI } from '../constants/abis/erc20'
 import ERC20_ABI from '../constants/abis/erc20.json'
+import IFactoryV2 from '../constants/abis/IBrownFiV2Factory.json'
+import IPair from '../constants/abis/IPair.json'
+import IPairV2 from '../constants/abis/IPairV2.json'
+import IPythUpgradable from '../constants/abis/IPythUpgradable.json'
 import { MIGRATOR_ABI, MIGRATOR_ADDRESS } from '../constants/abis/migrator'
 import UNISOCKS_ABI from '../constants/abis/unisocks.json'
 import WETH_ABI from '../constants/abis/weth.json'
@@ -23,11 +28,6 @@ import { V1_EXCHANGE_ABI, V1_FACTORY_ABI, V1_FACTORY_ADDRESSES } from '../consta
 import { getContract } from '../utils'
 import { useActiveWeb3React } from './index'
 import { useVersion } from './useVersion'
-//
-import IFactoryV2 from '../constants/abis/IBrownFiV2Factory.json'
-import IPythUpgradable from '../constants/abis/IPythUpgradable.json'
-import IPair from '../constants/abis/IPair.json'
-import IPairV2 from '../constants/abis/IPairV2.json'
 
 // returns null on errors
 function useContract(address: string | undefined, ABI: any, withSignerIfPossible = true): Contract | null {
@@ -103,7 +103,12 @@ export function usePairContract(pairAddress?: string, withSignerIfPossible?: boo
 
 export function useMulticallContract(): Contract | null {
   const { chainId } = useActiveWeb3React()
-  return useContract(chainId && MULTICALL_NETWORKS[chainId], MULTICALL_ABI, false)
+  let multicallAddress = chainId && MULTICALL_NETWORKS[chainId]
+  if (!multicallAddress) {
+    const chain = availableChains.find(chain => chain.id === chainId)
+    multicallAddress = chain?.contracts?.multicall3?.address
+  }
+  return useContract(multicallAddress, MULTICALL_ABI, false)
 }
 
 export function useMerkleDistributorContract(): Contract | null {
