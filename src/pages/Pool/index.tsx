@@ -55,8 +55,9 @@ const EmptyProposals = styled.div`
 `
 
 const LIST_ALL_PAIRS = gql(`
-  query MyQuery {
-    pairs(where: {chainId: 80094}) {
+  query MyQuery($chainId: Int) {
+    pairs(where: {chainId: $chainId}) {
+      totalCount
       items {
         address
         apr
@@ -110,9 +111,11 @@ export default function Pool() {
   const { version } = useVersion({ chainId })
 
   const { data } = useQuery(LIST_ALL_PAIRS, {
-    variables: {}
+    variables: { chainId }
   })
-  console.log(data)
+  const { items = [], totalCount } = data?.pairs ?? {}
+  const x = items.slice().sort((pairA, pairB) => pairB.tvl - pairA.tvl)
+  console.log(x)
 
   // fetch the user's balances of all tracked V2 LP tokens
   const trackedTokenPairs = useTrackedTokenPairs()
@@ -220,6 +223,7 @@ export default function Pool() {
                 {v2PairsWithoutStakedAmount.map(v2Pair => (
                   <FullPositionCard key={v2Pair.liquidityToken.address} pair={v2Pair} />
                 ))}
+
                 {stakingPairs.map(
                   (stakingPair, i) =>
                     stakingPair[1] && ( // skip pairs that arent loaded
