@@ -50,6 +50,7 @@ class MiniRpcProvider implements AsyncSendable {
 
   private nextUrl() {
     this.urlIndex = (this.urlIndex + 1) % this.urls.length
+    console.warn('4. Rotate to the next RPC', this.chainId, this.currentUrl)
   }
 
   public readonly clearBatch = async () => {
@@ -70,32 +71,45 @@ class MiniRpcProvider implements AsyncSendable {
         }
 
         const json = await response.json()
+        const results = Array.isArray(json) ? json : [json]
+
         const byKey = batch.reduce<{ [id: number]: BatchItem }>((memo, current) => {
           memo[current.request.id] = current
           return memo
         }, {})
 
-        for (const result of json) {
+        let hasError = false
+
+        for (const result of results) {
           const {
             resolve,
             reject,
             request: { method }
           } = byKey[result.id]
+
           if ('error' in result) {
+            hasError = true
             reject(new RequestError(result.error.message, result.error.code, result.error.data))
           } else if ('result' in result) {
             resolve(result.result)
           } else {
+            hasError = true
             reject(new RequestError(`Unexpected response to ${method}`, -32000, result))
           }
         }
 
-        return // success, break loop
+        if (hasError) {
+          // rotate và thử lại batch với URL khác
+          this.nextUrl()
+          continue
+        }
+
+        // Thành công toàn bộ => return
+        return
       } catch (error) {
-        // fallback to next URL
+        console.warn(`[RPC] Failed ${this.currentUrl}:`, error)
         this.nextUrl()
         if (attempt === this.urls.length - 1) {
-          // All URLs failed
           batch.forEach(({ reject }) => reject(new Error(`All RPC URLs failed for chain ${this.chainId}`)))
         }
       }
