@@ -73,7 +73,8 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                 key={c.id}
                 onClick={() => {
                   onClose()
-                  dispatch(switchChain(c))
+                  const parsed = JSON.parse(JSON.stringify(c, null, 2))
+                  dispatch(switchChain(parsed))
                 }}
                 className={`flex items-center justify-between w-full px-2 py-1.5 rounded-xl transition
                   ${isActive ? 'bg-[#3b82f6] text-white' : 'hover:bg-white/5 text-white/80'}
