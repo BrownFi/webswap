@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useActiveWeb3React } from '../../hooks'
 import useDebounce from '../../hooks/useDebounce'
 import useIsWindowVisible from '../../hooks/useIsWindowVisible'
 import { updateBlockNumber } from './actions'
 import { useDispatch } from 'react-redux'
-import { createPublicClient, http } from 'viem'
-import { availableChains } from 'connectors'
 
 export default function Updater(): null {
   const { library, chainId } = useActiveWeb3React()
@@ -18,54 +16,36 @@ export default function Updater(): null {
     blockNumber: null
   })
 
-  const blockNumberCallback = useCallback(
-    (blockNumber: number) => {
-      setState(state => {
-        if (chainId === state.chainId) {
-          if (typeof state.blockNumber !== 'number') return { chainId, blockNumber }
-          return { chainId, blockNumber: Math.max(blockNumber, state.blockNumber) }
-        }
-        return state
-      })
-    },
-    [chainId, setState]
-  )
-
-  // attach/detach listeners
+  // Attach / Detach listeners
   useEffect(() => {
     if (!library || !chainId || !windowVisible) return undefined
 
     setState({ chainId, blockNumber: null })
 
+    const currentChainId = parseInt((library.provider as any).chainId) || chainId
+
+    const updateBlockNumber = (chainId: number, blockNumber: number) => {
+      setState(state => {
+        if (chainId === state.chainId) {
+          if (typeof state.blockNumber !== 'number') {
+            return { chainId, blockNumber }
+          }
+          return { chainId, blockNumber: Math.max(blockNumber, state.blockNumber) }
+        }
+        return state
+      })
+    }
+
     library
       .getBlockNumber()
-      .then(blockNumberCallback)
-      .catch(error => console.error(`Failed to get block number for chainId: ${chainId}`, error))
+      .then(blockNumber => updateBlockNumber(currentChainId, blockNumber))
+      .catch(error => console.error(`Failed to get block number for chainId: ${currentChainId}`, error))
 
-    library.on('block', blockNumberCallback)
+    library.on('block', blockNumber => updateBlockNumber(currentChainId, blockNumber))
     return () => {
-      library.removeListener('block', blockNumberCallback)
+      library.removeListener('block', blockNumber => updateBlockNumber(currentChainId, blockNumber))
     }
-  }, [dispatch, chainId, library, blockNumberCallback, windowVisible])
-
-  useEffect(() => {
-    if (1) return undefined // Apply later
-    if (!chainId) return undefined
-
-    setState({ chainId, blockNumber: null })
-
-    const publicClient = createPublicClient({
-      chain: availableChains.find(c => c.id === chainId),
-      transport: http()
-    })
-    const unwatch = (publicClient as any).watchBlockNumber({
-      onBlockNumber: (blockNumber: any) => blockNumberCallback(+blockNumber.toString())
-    })
-
-    return () => {
-      unwatch?.()
-    }
-  }, [dispatch, chainId, blockNumberCallback])
+  }, [dispatch, chainId, library, windowVisible])
 
   const debouncedState = useDebounce(state, 100)
 

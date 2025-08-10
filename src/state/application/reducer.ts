@@ -18,6 +18,7 @@ const initialState: ApplicationState = {
 export default createReducer(initialState, builder =>
   builder
     .addCase(updateBlockNumber, (state, action) => {
+      console.debug('3. Update block number', action.payload)
       const { chainId, blockNumber } = action.payload
       if (typeof state.blockNumber[chainId] !== 'number') {
         state.blockNumber[chainId] = blockNumber

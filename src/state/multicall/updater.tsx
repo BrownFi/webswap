@@ -27,6 +27,7 @@ const CALL_CHUNK_SIZE = 500
  * @param minBlockNumber minimum block number of the result set
  */
 async function fetchChunk(
+  chainId: number,
   multicallContract: Contract,
   chunk: Call[],
   minBlockNumber: number
@@ -44,15 +45,16 @@ async function fetchChunk(
     resultsBlockNumber.toNumber() - minBlockNumber
   ]
   if (resultsBlockNumber.toNumber() < minBlockNumber) {
-    console.debug('4. Fetched results for OLD block number', { fetched, min, newly })
+    console.debug('4. Fetched results for OLD block number', { chainId, fetched, min, newly })
     if (newly < -100) {
-      setTimeout(() => {
-        location.reload()
-      }, 200)
+      console.error(`MISMATCH CHAIN_ID ${chainId} - BLOCK NUMBER ${min}`)
+      // setTimeout(() => {
+      //   location.reload()
+      // }, 200)
     }
     throw new RetryableError('Fetched for old block number')
   } else {
-    console.debug('4. Fetched results for NEW block number', { fetched, min, newly, size: chunk.length })
+    console.debug('4. Fetched results for NEW block number', { chainId, fetched, min, newly, size: chunk.length })
   }
   return { results: returnData, blockNumber: resultsBlockNumber.toNumber() }
 }
@@ -168,7 +170,7 @@ export default function Updater(): null {
     cancellations.current = {
       blockNumber: latestBlockNumber,
       cancellations: chunkedCalls.map((chunk, index) => {
-        const { cancel, promise } = retry(() => fetchChunk(multicallContract, chunk, latestBlockNumber), {
+        const { cancel, promise } = retry(() => fetchChunk(chainId, multicallContract, chunk, latestBlockNumber), {
           n: Infinity,
           minWait: 3000,
           maxWait: 5000

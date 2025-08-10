@@ -8,6 +8,7 @@ export const chainSlice = createSlice({
   name: 'selectedChain',
   reducers: {
     switchChain: (state, { payload: chain }: PayloadAction<Chain>) => {
+      console.debug('2. Switch chain', { chainId: chain.id, name: chain.name })
       return chain
     }
   }
