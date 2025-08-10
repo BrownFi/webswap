@@ -19,6 +19,8 @@ import { useStakingInfo } from '../../state/stake/hooks'
 import { BIG_INT_ZERO } from '../../constants'
 import { useVersion } from 'hooks/useVersion'
 import SwitchVersion from 'components/SwitchVersion'
+import { useQuery } from '@apollo/client'
+import { gql } from '__generated__'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
@@ -42,13 +44,6 @@ const ResponsiveButtonPrimary = styled(ButtonPrimary)`
   `};
 `
 
-// const ResponsiveButtonSecondary = styled(ButtonSecondary)`
-//   width: fit-content;
-//   ${({ theme }) => theme.mediaWidth.upToSmall`
-//     width: 48%;
-//   `};
-// `
-
 const EmptyProposals = styled.div`
   border: 1px solid ${({ theme }) => theme.text4};
   padding: 16px 12px;
@@ -59,10 +54,65 @@ const EmptyProposals = styled.div`
   align-items: center;
 `
 
+const LIST_ALL_PAIRS = gql(`
+  query MyQuery {
+    pairs(where: {chainId: 80094}) {
+      items {
+        address
+        apr
+        bnhPrice
+        bnhReserve0
+        bnhReserve1
+        bnhTotalSupply
+        chainId
+        fee
+        feeDay
+        k
+        lambda
+        lpPrice
+        netPnL
+        protocolFee
+        reserve0
+        reserve0USD
+        reserve1
+        reserve1USD
+        token0 {
+          address
+          chainId
+          decimals
+          name
+          price
+          priceFeedId
+          symbol
+          totalSupply
+        }
+        token1 {
+          address
+          chainId
+          decimals
+          name
+          price
+          priceFeedId
+          symbol
+          totalSupply
+        }
+        totalSupply
+        totalTxn
+        tvl
+      }
+    }
+  }
+`)
+
 export default function Pool() {
   const theme = useContext(ThemeContext)
   const { account, chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
+
+  const { data } = useQuery(LIST_ALL_PAIRS, {
+    variables: {}
+  })
+  console.log(data)
 
   // fetch the user's balances of all tracked V2 LP tokens
   const trackedTokenPairs = useTrackedTokenPairs()
@@ -76,15 +126,6 @@ export default function Pool() {
   ])
   const [, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(account ?? undefined, liquidityTokens)
 
-  // fetch the reserves for all V2 pools in which the user has a balance
-  // const liquidityTokensWithBalances = useMemo(
-  //   () =>
-  //     tokenPairsWithLiquidityTokens.filter(({ liquidityToken }) =>
-  //       v2PairsBalances[liquidityToken.address]?.greaterThan('0')
-  //     ),
-  //   [tokenPairsWithLiquidityTokens, v2PairsBalances]
-  // )
-
   const liquidityTokensWithBalances = tokenPairsWithLiquidityTokens
 
   const v2Pairs = usePairs(liquidityTokensWithBalances.map(({ tokens }) => tokens))
@@ -93,8 +134,6 @@ export default function Pool() {
     fetchingV2PairBalances || v2Pairs?.length < liquidityTokensWithBalances.length || v2Pairs?.some(V2Pair => !V2Pair)
 
   const allV2PairsWithLiquidity = v2Pairs.map(([, pair]) => pair).filter((v2Pair): v2Pair is Pair => Boolean(v2Pair))
-
-  // const hasV1Liquidity = useUserHasLiquidityInAllTokens()
 
   // show liquidity even if its deposited in rewards contract
   const stakingInfo = useStakingInfo()
@@ -162,11 +201,6 @@ export default function Pool() {
                 <SwitchVersion />
               </Flex>
               <div className="flex items-center justify-end flex-1 w-full lg:w-auto">
-                {/* <ResponsiveButtonSecondary as={Link} to="/create/ETH" className="!h-[40px] mr-[16px] !px-[18px] !py-0">
-                  <Text fontWeight={700} fontSize={14} color={'white'}>
-                    Create a pair
-                  </Text>
-                </ResponsiveButtonSecondary> */}
                 <ResponsiveButtonPrimary id="join-pool-button" as={Link} to="/add/ETH" className="!h-[40px]">
                   <Text fontWeight={700} fontSize={14} color={'white'}>
                     Add Liquidity
@@ -204,15 +238,6 @@ export default function Pool() {
                 </TYPE.body>
               </EmptyProposals>
             )}
-
-            {/* <AutoColumn justify={'center'} gap="md">
-              <Text textAlign="center" fontSize={14} style={{ padding: '.5rem 0 .5rem 0' }} color={'white'}>
-                {hasV1Liquidity ? 'Uniswap V1 liquidity found!' : "Don't see a pool you joined?"}{' '}
-                <StyledInternalLink id="import-pool-link" to={hasV1Liquidity ? '/migrate/v1' : '/find'}>
-                  {hasV1Liquidity ? 'Migrate now.' : 'Import it.'}
-                </StyledInternalLink>
-              </Text>
-            </AutoColumn> */}
           </AutoColumn>
         </AutoColumn>
       </PageWrapper>
