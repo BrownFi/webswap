@@ -1,13 +1,14 @@
 import { Currency, CurrencyAmount, Fraction, Percent } from '@brownfi/sdk'
-import React from 'react'
+import React, { useState } from 'react'
 import { Text } from 'rebass'
 import { ButtonPrimary } from '../../components/Button'
-import { RowBetween, RowFixed } from '../../components/Row'
+import { AutoRow, RowBetween, RowFixed } from '../../components/Row'
 import CurrencyLogo from '../../components/CurrencyLogo'
 import { Field } from '../../state/mint/actions'
 import { TYPE } from '../../theme'
 import { useActiveWeb3React } from 'hooks'
 import { getTokenSymbol } from 'utils'
+import { Checkbox } from 'components/SearchModal/styleds'
 
 export function ConfirmAddModalBottom({
   noLiquidity,
@@ -25,6 +26,8 @@ export function ConfirmAddModalBottom({
   onAdd: () => void
 }) {
   const { chainId } = useActiveWeb3React()
+  const [confirmed, setConfirmed] = useState(false)
+
   return (
     <>
       <RowBetween>
@@ -61,7 +64,23 @@ export function ConfirmAddModalBottom({
         <TYPE.body className="!text-white">Share of Pool:</TYPE.body>
         <TYPE.body className="!text-white">{noLiquidity ? '100' : poolTokenPercentage?.toSignificant(4)}%</TYPE.body>
       </RowBetween>
-      <ButtonPrimary style={{ margin: '20px 0 0 0' }} onClick={onAdd}>
+      <AutoRow
+        className="gap-2 cursor-pointer"
+        style={{ alignItems: 'flex-start' }}
+        onClick={() => setConfirmed(!confirmed)}
+      >
+        <Checkbox
+          className=".understand-checkbox"
+          name="confirmed"
+          type="checkbox"
+          checked={confirmed}
+          onChange={() => setConfirmed(!confirmed)}
+        />
+        <TYPE.body className="!text-white flex-1 italic !text-orange-300/60" fontSize={14} lineHeight={1.4}>
+          I am aware of the risks of liquidity provision and it will be my own responsibility.
+        </TYPE.body>
+      </AutoRow>
+      <ButtonPrimary style={{ margin: '20px 0 0 0' }} disabled={!confirmed} onClick={onAdd}>
         <Text fontWeight={500} fontSize={20} className="!text-white">
           {noLiquidity ? 'Create Pool & Supply' : 'Confirm Supply'}
         </Text>
