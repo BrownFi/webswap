@@ -235,13 +235,15 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
           <AutoRow className="!w-fit" gap="8px">
             <div className="flex items-center gap-1 flex-wrap">
               <div className="flex items-center gap-2">
-                <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
-                <Text fontWeight={600} fontSize={20} className="text-white !min-w-[140px]">
-                  <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
-                </Text>
+                <div className="flex items-center gap-2">
+                  <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
+                  <Text fontWeight={600} fontSize={20} className="text-white !min-w-[140px]">
+                    <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
+                  </Text>
+                </div>
+                {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1">Beta</ButtonSecondary>}
               </div>
               <div className="flex flex-wrap items-center gap-1 gap-y-1">
-                {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1">Beta</ButtonSecondary>}
                 <div className="min-w-[60px]">
                   <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
                 </div>
