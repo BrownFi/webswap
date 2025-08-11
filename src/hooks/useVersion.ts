@@ -31,7 +31,14 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
     dispatch(switchVersion(version))
   }
 
+  const isBeta = useMemo(() => {
+    return [ChainId.ARBITRUM_MAINNET, ChainId.BASE_MAINNET, ChainId.HYPER_EVM, ChainId.BSC_MAINNET].includes(
+      chainId as ChainId
+    )
+  }, [chainId])
+
   return {
+    isBeta,
     version,
     appVersion,
     isDisabled,

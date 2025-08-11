@@ -1,4 +1,4 @@
-import { ChainId, JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
+import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import React, { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'react-feather'
@@ -168,11 +168,8 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
 
 export default function FullPositionCard({ pair, border, stakedBalance }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
+  const { isBeta } = useVersion({ chainId })
   const tradingFee = useTradingFee({ pair })
-  const isBeta = [ChainId.ARBITRUM_MAINNET, ChainId.BASE_MAINNET, ChainId.HYPER_EVM, ChainId.BSC_MAINNET].includes(
-    chainId as ChainId
-  )
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -233,22 +230,18 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
 
   return (
     <StyledPositionCard border={border} bgColor={backgroundColor}>
-      {isBeta && (
-        <div className="px-1 rounded-lg font-semibold text-[#e37f27] absolute left-[-16px] top-[-4px] -rotate-45">
-          BETA
-        </div>
-      )}
       <AutoColumn gap="12px">
         <FixedHeightRow>
           <AutoRow className="!w-fit" gap="8px">
             <div className="flex items-center gap-1 flex-wrap">
               <div className="flex items-center gap-2">
                 <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
-                <Text fontWeight={600} fontSize={20} className="text-white !min-w-[160px]">
+                <Text fontWeight={600} fontSize={20} className="text-white !min-w-[140px]">
                   <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                 </Text>
               </div>
               <div className="flex flex-wrap items-center gap-1 gap-y-1">
+                {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1">Beta</ButtonSecondary>}
                 <div className="min-w-[60px]">
                   <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
                 </div>
