@@ -1,4 +1,4 @@
-import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
+import { ChainId, JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import React, { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'react-feather'
@@ -29,6 +29,7 @@ import { formatNumber, formatPrice } from 'utils/prices'
 import { shouldReversePair } from 'utils/pair'
 import { useTradingFee } from 'hooks/useTradingFee'
 import { usePythPrices } from 'hooks/usePythPrices'
+import { useVersion } from 'hooks/useVersion'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -45,7 +46,7 @@ const StyledPositionCard = styled(LightCard)<{ bgColor: any }>`
   border: none;
   background: #323038;
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden; */
   padding: 16px 24px;
 `
 
@@ -167,7 +168,11 @@ export function MinimalPositionCard({ pair, showUnwrapped = false, border }: Pos
 
 export default function FullPositionCard({ pair, border, stakedBalance }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
   const tradingFee = useTradingFee({ pair })
+  const isBeta = [ChainId.ARBITRUM_MAINNET, ChainId.BASE_MAINNET, ChainId.HYPER_EVM, ChainId.BSC_MAINNET].includes(
+    chainId as ChainId
+  )
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -228,6 +233,11 @@ export default function FullPositionCard({ pair, border, stakedBalance }: Positi
 
   return (
     <StyledPositionCard border={border} bgColor={backgroundColor}>
+      {isBeta && (
+        <div className="px-1 rounded-lg font-semibold text-[#e37f27] absolute left-[-16px] top-[-4px] -rotate-45">
+          BETA
+        </div>
+      )}
       <AutoColumn gap="12px">
         <FixedHeightRow>
           <AutoRow className="!w-fit" gap="8px">

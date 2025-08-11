@@ -99,14 +99,14 @@ export default function App() {
             </Switch>
           </Web3ReactManager>
 
-          <div
+          {/* <div
             className={classNames(
               'max-w-[500px] bg-[#1d1c21] w-full p-[32px] mt-[20px]',
               location.pathname?.indexOf('/pool') !== -1 && '!max-w-[894px]'
             )}
           >
             <Referral />
-          </div>
+          </div> */}
           <Marginer />
         </BodyWrapper>
       </StaticScreen>
