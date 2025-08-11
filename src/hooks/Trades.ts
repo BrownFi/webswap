@@ -1,5 +1,5 @@
 import { Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
-import flatMap from 'lodash.flatmap'
+import { flatMap } from 'lodash'
 import { useEffect, useMemo, useState } from 'react'
 
 import { BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES, ADDITIONAL_BASES } from '../constants'

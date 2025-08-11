@@ -203,6 +203,12 @@ export function useDefaultTokenList(): TokenAddressMap {
   return listToTokenMap(DEFAULT_TOKEN_LIST)
 }
 
+export const findLogoURI = (token: Token): string | undefined => {
+  return DEFAULT_TOKEN_LIST.tokens.find(
+    item => item.chainId === token.chainId && token.address.toLowerCase() === item.address.toLowerCase()
+  )?.logoURI
+}
+
 // list of tokens not supported on interface, used to show warnings and prevent swaps and adds
 export function useUnsupportedTokenList(): TokenAddressMap {
   // get hard coded unsupported tokens
