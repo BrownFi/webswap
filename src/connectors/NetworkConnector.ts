@@ -1,3 +1,4 @@
+import { ExternalProvider, Web3Provider } from '@ethersproject/providers'
 import { ConnectorUpdate } from '@web3-react/types'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 import invariant from 'tiny-invariant'
@@ -33,7 +34,7 @@ class MiniRpcProvider implements AsyncSendable {
   public readonly urls: string[]
   public readonly batchWaitTimeMs: number
 
-  private urlIndex = 0
+  private urlIndex = 1
   private nextId = 1
   private batchTimeoutId: ReturnType<typeof setTimeout> | null = null
   private batch: BatchItem[] = []
@@ -45,7 +46,7 @@ class MiniRpcProvider implements AsyncSendable {
   }
 
   private get currentUrl() {
-    return this.urls[this.urlIndex]
+    return this.urls[this.urlIndex] ?? this.urls[0]
   }
 
   private nextUrl() {
@@ -172,6 +173,10 @@ export class NetworkConnector extends AbstractConnector {
 
   public get provider(): MiniRpcProvider {
     return this.providers[this.currentChainId]
+  }
+
+  public getEthersProvider(): Web3Provider {
+    return new Web3Provider((this.provider as unknown) as ExternalProvider, 'any')
   }
 
   public async activate(): Promise<ConnectorUpdate> {

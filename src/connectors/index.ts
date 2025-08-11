@@ -35,7 +35,7 @@ const overrideChain = ({
     ...chain,
     rpcUrls: {
       default: {
-        http: fallbackRpcs.concat(chain.rpcUrls.default.http)
+        http: chain.rpcUrls.default.http.concat(fallbackRpcs)
       }
     },
     iconUrl
@@ -61,7 +61,10 @@ const u2uMainnet: Chain = defineChain({
 const viction: Chain = overrideChain({
   chain: defaultChains.viction,
   iconUrl: require('assets/images/viction.png'),
-  fallbackRpcs: ['https://viction.drpc.org']
+  fallbackRpcs: [
+    //
+    'https://viction.drpc.org'
+  ]
 })
 
 // @ts-ignore
@@ -96,25 +99,41 @@ const sepolia = defineChain({
 const berachain = overrideChain({
   chain: defaultChains.berachain,
   iconUrl: require('assets/images/w-bera.png'),
-  fallbackRpcs: ['https://berachain.drpc.org', 'https://rpc.berachain-apis.com']
+  fallbackRpcs: [
+    //
+    'https://berachain.drpc.org',
+    'https://rpc.berachain-apis.com'
+  ]
 })
 
 const arbitrum = overrideChain({
   chain: defaultChains.arbitrum,
   iconUrl: require('assets/images/arb.png'),
-  fallbackRpcs: ['https://arbitrum.drpc.org', 'https://arbitrum.therpc.io']
+  fallbackRpcs: [
+    //
+    'https://arbitrum.drpc.org',
+    'https://arbitrum.therpc.io'
+  ]
 })
 
 const base = overrideChain({
   chain: defaultChains.base,
   iconUrl: require('assets/images/base.png'),
-  fallbackRpcs: ['https://base.drpc.org', 'https://base.llamarpc.com']
+  fallbackRpcs: [
+    //
+    'https://base.drpc.org',
+    'https://base.llamarpc.com'
+  ]
 })
 
 const bsc = overrideChain({
   chain: defaultChains.bsc,
   iconUrl: require('assets/images/bsc.png'),
-  fallbackRpcs: ['https://bsc.drpc.org', 'https://binance.llamarpc.com']
+  fallbackRpcs: [
+    //
+    'https://bsc.drpc.org',
+    'https://binance.llamarpc.com'
+  ]
 })
 
 const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'

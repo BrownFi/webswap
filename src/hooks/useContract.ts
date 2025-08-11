@@ -6,6 +6,7 @@ import STAKING_REWARDS_ABI from '@uniswap/liquidity-staker/build/StakingRewards.
 import MERKLE_DISTRIBUTOR_ABI from '@uniswap/merkle-distributor/build/MerkleDistributor.json'
 import IUniswapV2PairABI from '@uniswap/v2-core/build/IUniswapV2Pair.json'
 import { availableChains } from 'connectors'
+import { NetworkConnector } from 'connectors/NetworkConnector'
 import { useMemo } from 'react'
 import { GOVERNANCE_ADDRESS, MERKLE_DISTRIBUTOR_ADDRESS } from '../constants'
 import {
@@ -29,9 +30,18 @@ import { getContract } from '../utils'
 import { useActiveWeb3React } from './index'
 import { useVersion } from './useVersion'
 
-// returns null on errors
-function useContract(address: string | undefined, ABI: any, withSignerIfPossible = true): Contract | null {
+function useContract(
+  address: string | undefined,
+  ABI: any,
+  withSignerIfPossible = true,
+  options?: { readonly?: boolean }
+): Contract | null {
   const { library, account } = useActiveWeb3React()
+
+  if (address && options?.readonly) {
+    const contract = useReadContract(address, ABI)
+    if (contract) return contract
+  }
 
   return useMemo(() => {
     if (!address || !ABI || !library) return null
@@ -42,6 +52,27 @@ function useContract(address: string | undefined, ABI: any, withSignerIfPossible
       return null
     }
   }, [address, ABI, library, withSignerIfPossible, account])
+}
+
+function useReadContract(address: string, ABI: any): Contract | null {
+  const { chainId } = useActiveWeb3React()
+
+  return useMemo(() => {
+    const chain = availableChains.find(chain => chain.id === chainId)
+    if (chain) {
+      const network = new NetworkConnector({
+        urls: { [chain.id]: chain.rpcUrls.default.http as string[] },
+        defaultChainId: chain.id
+      })
+      try {
+        return getContract(address, ABI, network.getEthersProvider())
+      } catch (error) {
+        console.error('Failed to get read contract', error)
+        return null
+      }
+    }
+    return null
+  }, [chainId])
 }
 
 export function useV1FactoryContract(): Contract | null {
@@ -108,7 +139,7 @@ export function useMulticallContract(): Contract | null {
     const chain = availableChains.find(chain => chain.id === chainId)
     multicallAddress = chain?.contracts?.multicall3?.address
   }
-  return useContract(multicallAddress, MULTICALL_ABI, false)
+  return useContract(multicallAddress, MULTICALL_ABI, false, { readonly: true })
 }
 
 export function useMerkleDistributorContract(): Contract | null {
@@ -141,16 +172,16 @@ export function useFactoryContract(): Contract | null {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
   const factoryAddress = getFactoryAddress(chainId!, version)
-  return useContract(factoryAddress, IFactoryV2, false)
+  return useContract(factoryAddress, IFactoryV2, false, { readonly: true })
 }
 
 export function usePythContract(): Contract | null {
   const { chainId } = useActiveWeb3React()
-  return useContract(PYTH_ADDRESS[chainId!], IPythUpgradable, false)
+  return useContract(PYTH_ADDRESS[chainId!], IPythUpgradable, false, { readonly: true })
 }
 
 export function usePairV2Contract(pairAddress: string): Contract | null {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
-  return useContract(pairAddress, version === 2 ? IPairV2 : IPair)
+  return useContract(pairAddress, version === 2 ? IPairV2 : IPair, false, { readonly: true })
 }

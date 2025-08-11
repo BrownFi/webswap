@@ -27,11 +27,10 @@ class ErrorBoundaryBase extends Component<Props, State> {
     if (this.state.hasError && !prevState.hasError) {
       if (this.props.location.pathname.includes('/add')) {
         this.props.history.replace('/pool')
-        location.reload()
       } else {
         this.props.history.replace('/')
-        location.reload()
       }
+      location.reload()
     }
   }
 

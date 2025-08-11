@@ -40,7 +40,10 @@ export default function Updater(): null {
     library
       .getBlockNumber()
       .then(updateBlockNumber)
-      .catch(error => console.error(`Failed to get block number for chainId: ${currentChainId}`, error))
+      .catch(error => {
+        console.warn(`1. Failed to get block number for chainId: ${currentChainId}`, error)
+        updateBlockNumber(10) // TODO: blockNumber
+      })
 
     library.on('block', updateBlockNumber)
     return () => {
