@@ -17,7 +17,7 @@ export const useTradingFee = ({ pair }: Props) => {
   const { get: getTradingFee, save: saveTradingFee, isAvailable } = useStorageCache({
     key: ['tradingFee', pair.liquidityToken.address].join('-'),
     initValue: 0,
-    cacheTime: 1 * 60 * 60
+    cacheTime: 1 * 60 * 60,
   })
 
   const pairContract = usePairV2Contract(pair.liquidityToken.address)

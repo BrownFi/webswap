@@ -41,9 +41,9 @@ import { useToast } from 'containers/ToastProvider'
 
 export default function AddLiquidity({
   match: {
-    params: { currencyIdA, currencyIdB }
+    params: { currencyIdA, currencyIdB },
   },
-  history
+  history,
 }: RouteComponentProps<{ currencyIdA?: string; currencyIdB?: string }>) {
   const theme = useContext(ThemeContext)
   const { account, chainId, library } = useActiveWeb3React()
@@ -58,7 +58,7 @@ export default function AddLiquidity({
   const oneCurrencyIsWETH = Boolean(
     chainId &&
       ((currencyA && currencyEquals(currencyA, WETH[chainId])) ||
-        (currencyB && currencyEquals(currencyB, WETH[chainId])))
+        (currencyB && currencyEquals(currencyB, WETH[chainId]))),
   )
 
   const expertMode = useIsExpertMode()
@@ -76,14 +76,14 @@ export default function AddLiquidity({
     noLiquidity,
     liquidityMinted,
     poolTokenPercentage,
-    error
+    error,
   } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, version === 2 ? pythPrices : undefined)
 
   const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
 
   const formattedPythAmounts = {
     [independentField]: typedValue,
-    [dependentField]: noLiquidity ? otherTypedValue : dependentAmount === 0 ? '' : dependentAmount.toPrecision(6)
+    [dependentField]: noLiquidity ? otherTypedValue : dependentAmount === 0 ? '' : dependentAmount.toPrecision(6),
   }
 
   const { onFieldAInput, onFieldBInput } = useMintActionHandlers(noLiquidity)
@@ -107,7 +107,7 @@ export default function AddLiquidity({
       ? otherTypedValue
       : version === 2
       ? formattedPythAmounts[dependentField]
-      : parsedAmounts[dependentField]?.toSignificant(6) ?? ''
+      : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
   }
 
   // get the max amounts user can add
@@ -115,30 +115,30 @@ export default function AddLiquidity({
     (accumulator, field) => {
       return {
         ...accumulator,
-        [field]: maxAmountSpend(currencyBalances[field])
+        [field]: maxAmountSpend(currencyBalances[field]),
       }
     },
-    {}
+    {},
   )
 
   const atMaxAmounts: { [field in Field]?: TokenAmount } = [Field.CURRENCY_A, Field.CURRENCY_B].reduce(
     (accumulator, field) => {
       return {
         ...accumulator,
-        [field]: maxAmounts[field]?.equalTo(parsedAmounts[field] ?? '0')
+        [field]: maxAmounts[field]?.equalTo(parsedAmounts[field] ?? '0'),
       }
     },
-    {}
+    {},
   )
 
   // check whether the user has approved the router on the tokens
   const [approvalA, approveACallback] = useApproveCallback(
     parsedAmounts[Field.CURRENCY_A],
-    getRouterAddress(chainId || 0, version)
+    getRouterAddress(chainId || 0, version),
   )
   const [approvalB, approveBCallback] = useApproveCallback(
     parsedAmounts[Field.CURRENCY_B],
-    getRouterAddress(chainId || 0, version)
+    getRouterAddress(chainId || 0, version),
   )
 
   const addTransaction = useTransactionAdder()
@@ -157,7 +157,7 @@ export default function AddLiquidity({
         deadline as any,
         noLiquidity,
         allowedSlippage,
-        version
+        version,
       )
 
       if (response) {
@@ -172,7 +172,7 @@ export default function AddLiquidity({
             ' and ' +
             parsedAmounts[Field.CURRENCY_B]?.toSignificant(3) +
             ' ' +
-            getTokenSymbol(currencies[Field.CURRENCY_B], chainId)
+            getTokenSymbol(currencies[Field.CURRENCY_B], chainId),
         })
 
         setTxHash(response.hash)
@@ -251,7 +251,7 @@ export default function AddLiquidity({
 
   const pendingText = `Supplying ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)} ${getTokenSymbol(
     currencies[Field.CURRENCY_A],
-    chainId
+    chainId,
   )} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)} ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}`
 
   const handleCurrencyASelect = useCallback(
@@ -263,7 +263,7 @@ export default function AddLiquidity({
         history.push(`/add/${newCurrencyIdA}/${currencyIdB}`)
       }
     },
-    [currencyIdB, history, currencyIdA]
+    [currencyIdB, history, currencyIdA],
   )
   const handleCurrencyBSelect = useCallback(
     (currencyB: Currency) => {
@@ -278,7 +278,7 @@ export default function AddLiquidity({
         history.push(`/add/${currencyIdA ? currencyIdA : 'ETH'}/${newCurrencyIdB}`)
       }
     },
-    [currencyIdA, history, currencyIdB]
+    [currencyIdA, history, currencyIdB],
   )
 
   const handleDismissConfirmation = useCallback(() => {
@@ -348,7 +348,7 @@ export default function AddLiquidity({
               ))}
             <CurrencyInputPanel
               value={formattedAmounts[Field.CURRENCY_A]}
-              onUserInput={value => {
+              onUserInput={(value) => {
                 onFieldAInput(value)
                 setExactFieldInput(Field.CURRENCY_A)
               }}
@@ -367,7 +367,7 @@ export default function AddLiquidity({
             </ColumnCenter>
             <CurrencyInputPanel
               value={formattedAmounts[Field.CURRENCY_B]}
-              onUserInput={value => {
+              onUserInput={(value) => {
                 onFieldBInput(value)
                 setExactFieldInput(Field.CURRENCY_B)
               }}

@@ -221,7 +221,7 @@ export default function Pool() {
                   const pair = new Pair(
                     new TokenAmount(
                       new Token(
-                        chainId!,
+                        chainId,
                         checksumAddress(token0!.address as Address),
                         token0!.decimals,
                         token0?.symbol,
@@ -231,7 +231,7 @@ export default function Pool() {
                     ),
                     new TokenAmount(
                       new Token(
-                        chainId!,
+                        chainId,
                         checksumAddress(token1!.address as Address),
                         token1!.decimals,
                         token1?.symbol,

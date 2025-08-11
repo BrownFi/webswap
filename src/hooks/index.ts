@@ -10,7 +10,7 @@ import { useAccount } from 'wagmi'
 import { useSelector } from 'react-redux'
 import { chainSelector } from 'state/chainSlice'
 
-export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & { chainId?: ChainId } {
+export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & { chainId: ChainId } {
   const context = useWeb3ReactCore<Web3Provider>()
   const contextNetwork = useWeb3ReactCore<Web3Provider>(NetworkContextName)
   const ctx = context.active ? context : contextNetwork
@@ -18,7 +18,7 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
   const { address, chainId: networkChainId, isConnected, connector } = useAccount()
 
   const currentChain = useSelector(chainSelector)
-  const isWrongNetwork = availableChains.every(chain => chain.id !== networkChainId)
+  const isWrongNetwork = availableChains.every((chain) => chain.id !== networkChainId)
   const chainId = (isConnected && !isWrongNetwork ? networkChainId : currentChain.id) as ChainId
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
   return {
     ...ctx,
     account: address || ctx.account,
-    chainId: chainId || ctx.chainId
+    chainId: chainId || ctx.chainId!,
   }
 }
 
@@ -43,7 +43,7 @@ export function useEagerConnect() {
   const [tried, setTried] = useState(false)
 
   useEffect(() => {
-    injected.isAuthorized().then(isAuthorized => {
+    injected.isAuthorized().then((isAuthorized) => {
       if (isAuthorized) {
         activate(injected, undefined, true).catch(() => {
           setTried(true)
@@ -83,7 +83,7 @@ export function useInactiveListener(suppress = false) {
     if (ethereum && ethereum.on && !active && !error && !suppress) {
       const handleChainChanged = () => {
         // eat errors
-        activate(injected, undefined, true).catch(error => {
+        activate(injected, undefined, true).catch((error) => {
           console.error('Failed to activate after chain changed', error)
         })
       }
@@ -91,7 +91,7 @@ export function useInactiveListener(suppress = false) {
       const handleAccountsChanged = (accounts: string[]) => {
         if (accounts.length > 0) {
           // eat errors
-          activate(injected, undefined, true).catch(error => {
+          activate(injected, undefined, true).catch((error) => {
             console.error('Failed to activate after accounts changed', error)
           })
         }

@@ -24,6 +24,7 @@ import CurrencyLogo from '../CurrencyLogo'
 import DoubleCurrencyLogo, { DoubleCurrencySymbol } from '../DoubleLogo'
 import { AutoRow, RowBetween, RowFixed } from '../Row'
 import { PairStats, usePoolStats } from './usePoolStats'
+import Loader from 'components/Loader'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -60,13 +61,13 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
   const { tradingFee, feeAPR, totalSupply: totalPoolTokens, volume24h, volume7d } = usePoolStats({ pair, pairStats })
 
-  const userPoolTokens = useTokenBalance(account ?? undefined, pair.liquidityToken)
+  const userPoolTokens = useTokenBalance(account ?? undefined, showMore ? pair.liquidityToken : undefined)
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
   const shouldReverse = shouldReversePair(pair)
 
-  const pythPrices = usePythPrices({ pair, currencyA: pair.token0, currencyB: pair.token1, chainId })
+  const pythPrices = usePythPrices({ chainId, pair, pairStats, currencyA: pair.token0, currencyB: pair.token1 })
   const token0Price = pythPrices.CURRENCY_A
   const token1Price = pythPrices.CURRENCY_B
 
@@ -149,52 +150,52 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   Pool stats
                 </h2>
                 <a
-                  href={`${getEtherscanLink(chainId!, pair.liquidityToken.address, 'address')}`}
+                  href={`${getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}`}
                   target="_blank"
                   className="cursor-pointer hover:underline"
                   rel="noreferrer"
-                  title={`View on ${getScanText(chainId!)}`}
+                  title={`View on ${getScanText(chainId)}`}
                 >
                   <Info size="20" style={{ color: '#27E3AB' }} />
                 </a>
               </Flex>
               <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   TVL
                 </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   {formatPrice(tvl)}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   Total LP Tokens
                 </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   {formatNumber(totalPoolTokens?.toSignificant(6))}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   Price per LP
                 </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   {formatPrice(lpPrice)}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   Volume (24h)
                 </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   {formatPrice(volume24h)}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   Volume (7d)
                 </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontSize={16} fontWeight={500} color="white">
                   {formatPrice(volume7d)}
                 </Text>
               </FixedHeightRow>
@@ -203,11 +204,11 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                 <FixedHeightRow>
                   <div className="flex items-center gap-2">
                     <CurrencyLogo currency={pair.token0} />
-                    <Text fontSize={16} fontWeight={500} color={'white'}>
+                    <Text fontSize={16} fontWeight={500} color="white">
                       {getTokenSymbol(currency0, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color={'white'} title={'' + token0Price}>
+                  <Text fontSize={16} fontWeight={500} color="white" title={'' + token0Price}>
                     {formatNumber(pair.reserve0.toSignificant(4))}{' '}
                     <span className="text-[#949494]">({formatPrice(reserve0Price)})</span>
                   </Text>
@@ -216,11 +217,11 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                 <FixedHeightRow>
                   <div className="flex items-center gap-2">
                     <CurrencyLogo currency={pair.token1} />
-                    <Text fontSize={16} fontWeight={500} color={'white'}>
+                    <Text fontSize={16} fontWeight={500} color="white">
                       {getTokenSymbol(currency1, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color={'white'} title={'' + token1Price}>
+                  <Text fontSize={16} fontWeight={500} color="white" title={'' + token1Price}>
                     {formatNumber(pair.reserve1.toSignificant(4))}{' '}
                     <span className="text-[#949494]">({formatPrice(reserve1Price)})</span>
                   </Text>
@@ -236,18 +237,18 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                 </h2>
 
                 <FixedHeightRow>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                  <Text fontSize={16} fontWeight={500} color="white">
                     LP tokens
                   </Text>
                   {userPoolBalance ? (
-                    <Text fontSize={16} fontWeight={500} color={'white'}>
+                    <Text fontSize={16} fontWeight={500} color="white">
                       {formatNumber(userPoolBalance.toSignificant(4))}{' '}
                       <span className="text-[#949494]">
                         ({formatPrice(lpPrice * Number(userPoolBalance.toSignificant(4)))})
                       </span>
                     </Text>
                   ) : (
-                    '-'
+                    <Loader stroke="gray" />
                   )}
                 </FixedHeightRow>
 
@@ -255,13 +256,13 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   <FixedHeightRow>
                     <RowFixed className="gap-2">
                       <CurrencyLogo currency={currency0} />
-                      <Text fontSize={16} fontWeight={500} color={'white'}>
+                      <Text fontSize={16} fontWeight={500} color="white">
                         Pooled {getTokenSymbol(currency0, chainId)}
                       </Text>
                     </RowFixed>
                     {token0Deposited ? (
                       <RowFixed className="gap-2">
-                        <Text fontSize={16} fontWeight={500} color={'white'}>
+                        <Text fontSize={16} fontWeight={500} color="white">
                           {formatNumber(token0Deposited?.toSignificant(4))}
                         </Text>
                         <Text fontSize={16} fontWeight={500} color={'#949494'}>
@@ -269,20 +270,20 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                         </Text>
                       </RowFixed>
                     ) : (
-                      '-'
+                      <Loader stroke="gray" />
                     )}
                   </FixedHeightRow>
 
                   <FixedHeightRow>
                     <RowFixed className="gap-2">
                       <CurrencyLogo currency={currency1} />
-                      <Text fontSize={16} fontWeight={500} color={'white'}>
+                      <Text fontSize={16} fontWeight={500} color="white">
                         Pooled {getTokenSymbol(currency1, chainId)}
                       </Text>
                     </RowFixed>
                     {token1Deposited ? (
                       <RowFixed className="gap-2">
-                        <Text fontSize={16} fontWeight={500} color={'white'}>
+                        <Text fontSize={16} fontWeight={500} color="white">
                           {formatNumber(token1Deposited?.toSignificant(4))}
                         </Text>
                         <Text fontSize={16} fontWeight={500} color={'#949494'}>
@@ -290,20 +291,22 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                         </Text>
                       </RowFixed>
                     ) : (
-                      '-'
+                      <Loader stroke="gray" />
                     )}
                   </FixedHeightRow>
                 </Flex>
 
                 <FixedHeightRow>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
+                  <Text fontSize={16} fontWeight={500} color="white">
                     Your share
                   </Text>
-                  <Text fontSize={16} fontWeight={500} color={'white'}>
-                    {poolTokenPercentage
-                      ? (poolTokenPercentage.toFixed(2) === '0.00' ? '<0.01' : poolTokenPercentage.toFixed(2)) + '%'
-                      : '-'}
-                  </Text>
+                  {poolTokenPercentage ? (
+                    <Text fontSize={16} fontWeight={500} color="white">
+                      {(poolTokenPercentage.toFixed(2) === '0.00' ? '<0.01' : poolTokenPercentage.toFixed(2)) + '%'}
+                    </Text>
+                  ) : (
+                    <Loader stroke="gray" />
+                  )}
                 </FixedHeightRow>
               </>
             )}

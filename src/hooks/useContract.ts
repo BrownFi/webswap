@@ -11,7 +11,7 @@ import { useMemo } from 'react'
 import { GOVERNANCE_ADDRESS, MERKLE_DISTRIBUTOR_ADDRESS } from '../constants'
 import {
   ARGENT_WALLET_DETECTOR_ABI,
-  ARGENT_WALLET_DETECTOR_MAINNET_ADDRESS
+  ARGENT_WALLET_DETECTOR_MAINNET_ADDRESS,
 } from '../constants/abis/argent-wallet-detector'
 import ENS_PUBLIC_RESOLVER_ABI from '../constants/abis/ens-public-resolver.json'
 import ENS_ABI from '../constants/abis/ens-registrar.json'
@@ -34,7 +34,7 @@ function useContract(
   address: string | undefined,
   ABI: any,
   withSignerIfPossible = true,
-  options?: { readonly?: boolean }
+  options?: { readonly?: boolean },
 ): Contract | null {
   const { library, account } = useActiveWeb3React()
 
@@ -58,11 +58,11 @@ function useReadContract(address: string, ABI: any): Contract | null {
   const { chainId } = useActiveWeb3React()
 
   return useMemo(() => {
-    const chain = availableChains.find(chain => chain.id === chainId)
+    const chain = availableChains.find((chain) => chain.id === chainId)
     if (chain) {
       const network = new NetworkConnector({
         urls: { [chain.id]: chain.rpcUrls.default.http as string[] },
-        defaultChainId: chain.id
+        defaultChainId: chain.id,
       })
       try {
         return getContract(address, ABI, network.getEthersProvider())
@@ -102,7 +102,7 @@ export function useArgentWalletDetectorContract(): Contract | null {
   return useContract(
     chainId === ChainId.MAINNET ? ARGENT_WALLET_DETECTOR_MAINNET_ADDRESS : undefined,
     ARGENT_WALLET_DETECTOR_ABI,
-    false
+    false,
   )
 }
 
@@ -136,7 +136,7 @@ export function useMulticallContract(): Contract | null {
   const { chainId } = useActiveWeb3React()
   let multicallAddress = chainId && MULTICALL_NETWORKS[chainId]
   if (!multicallAddress) {
-    const chain = availableChains.find(chain => chain.id === chainId)
+    const chain = availableChains.find((chain) => chain.id === chainId)
     multicallAddress = chain?.contracts?.multicall3?.address
   }
   return useContract(multicallAddress, MULTICALL_ABI, false, { readonly: true })
@@ -164,20 +164,20 @@ export function useSocksController(): Contract | null {
   return useContract(
     chainId === ChainId.MAINNET ? '0x65770b5283117639760beA3F867b69b3697a91dd' : undefined,
     UNISOCKS_ABI,
-    false
+    false,
   )
 }
 
 export function useFactoryContract(): Contract | null {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
-  const factoryAddress = getFactoryAddress(chainId!, version)
+  const factoryAddress = getFactoryAddress(chainId, version)
   return useContract(factoryAddress, IFactoryV2, false, { readonly: true })
 }
 
 export function usePythContract(): Contract | null {
   const { chainId } = useActiveWeb3React()
-  return useContract(PYTH_ADDRESS[chainId!], IPythUpgradable, false, { readonly: true })
+  return useContract(PYTH_ADDRESS[chainId], IPythUpgradable, false, { readonly: true })
 }
 
 export function usePairV2Contract(pairAddress: string): Contract | null {
