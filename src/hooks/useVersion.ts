@@ -32,13 +32,32 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
   }
 
   const isBeta = useMemo(() => {
-    return [ChainId.ARBITRUM_MAINNET, ChainId.BASE_MAINNET, ChainId.HYPER_EVM, ChainId.BSC_MAINNET].includes(
-      chainId as ChainId
+    return (
+      [
+        //
+        ChainId.ARBITRUM_MAINNET,
+        ChainId.BASE_MAINNET,
+        ChainId.HYPER_EVM,
+        ChainId.BSC_MAINNET
+      ].includes(chainId as number) && version === 2
     )
-  }, [chainId])
+  }, [chainId, version])
+
+  const enableGraphQL = useMemo(() => {
+    return (
+      [
+        //
+        ChainId.BERA_MAINNET,
+        ChainId.ARBITRUM_MAINNET,
+        ChainId.BASE_MAINNET,
+        ChainId.BSC_MAINNET
+      ].includes(chainId as number) && version === 2
+    )
+  }, [chainId, version])
 
   return {
     isBeta,
+    enableGraphQL,
     version,
     appVersion,
     isDisabled,

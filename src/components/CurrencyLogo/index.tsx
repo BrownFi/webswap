@@ -1,19 +1,19 @@
 import { ChainId, Currency, ETHER, Token } from '@brownfi/sdk'
+import { useActiveWeb3React } from 'hooks'
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
-import EthereumLogo from '../../assets/images/ethereum-logo.png'
 import BNBLogo from '../../assets/images/bnb.svg'
-import VictionLogo from '../../assets/images/viction.png'
+import bobaLogo from '../../assets/images/boba.svg'
+import EthereumLogo from '../../assets/images/ethereum-logo.png'
+import hyperevmLogo from '../../assets/images/hyperevm.png'
+import metisLogo from '../../assets/images/metis.png'
 import sonicLogo from '../../assets/images/sonic.png'
 import u2uLogo from '../../assets/images/u2u.jpg'
-import useHttpLocations from '../../hooks/useHttpLocations'
-import { WrappedTokenInfo } from '../../state/lists/hooks'
-import Logo from '../Logo'
-import { useActiveWeb3React } from 'hooks'
-import metisLogo from '../../assets/images/metis.png'
-import bobaLogo from '../../assets/images/boba.svg'
+import VictionLogo from '../../assets/images/viction.png'
 import beraLogo from '../../assets/images/w-bera.png'
-import hyperevmLogo from '../../assets/images/hyperevm.png'
+import useHttpLocations from '../../hooks/useHttpLocations'
+import { findLogoURI, WrappedTokenInfo } from '../../state/lists/hooks'
+import Logo from '../Logo'
 
 const StyledEthereumLogo = styled.img<{ size: string }>`
   width: ${({ size }) => size};
@@ -42,7 +42,7 @@ export default function CurrencyLogo({
   const { chainId } = useActiveWeb3React()
   const uriLocations = useHttpLocations(currency instanceof WrappedTokenInfo ? currency.logoURI : undefined)
 
-  const srcs: string[] = useMemo(() => {
+  const defaultSrcs: string[] = useMemo(() => {
     if (currency === ETHER) return []
 
     if (currency instanceof Token) {
@@ -54,8 +54,29 @@ export default function CurrencyLogo({
     return []
   }, [currency, uriLocations])
 
+  const srcs: string[] = useMemo(() => {
+    if (defaultSrcs.length === 0) {
+      const logoURI = findLogoURI(currency as Token)
+      if (logoURI) {
+        return [logoURI]
+      }
+    }
+    return defaultSrcs
+  }, [currency, defaultSrcs])
+
   if ((currency as any)?.logoURI) {
     return <StyledEthereumLogo src={(currency as any)?.logoURI} size={size} style={style} />
+  }
+  if (srcs.length > 0) {
+    return (
+      <StyledLogo
+        size={size}
+        srcs={srcs}
+        alt={`${currency?.symbol ?? 'token'} logo`}
+        style={style}
+        className="!bg-transparent"
+      />
+    )
   }
 
   if ((currency as any)?.symbol === 'WBNB') {

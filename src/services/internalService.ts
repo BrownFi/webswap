@@ -2,19 +2,19 @@ import { Pair } from '@brownfi/sdk'
 import axios, { AxiosResponse } from 'axios'
 
 const client = axios.create({
-  baseURL: process.env.REACT_APP_API_URL
+  baseURL: process.env.REACT_APP_API_URL,
 })
 
-type PoolStat = {
-  amountToken0: string
-  amountToken1: string
-  apy: string
-  revenue: string
-  tvlAll: string
-  volume24h: string
-  volume30d: string
-  volume7d: string
-  volumeAll: string
+type PoolStats = {
+  amountToken0: number
+  amountToken1: number
+  apy: number
+  revenue: number
+  tvlAll: number
+  volume24h: number
+  volume30d: number
+  volume7d: number
+  volumeAll: number
 }
 
 type UserRank = {
@@ -28,7 +28,7 @@ type UserRank = {
 }
 
 const getPoolStats = (pair: Pair) =>
-  client.get(`/pool-stats/v2/${pair.liquidityToken.address.toLowerCase()}`).then((data: AxiosResponse<PoolStat>) => {
+  client.get(`/pool-stats/v2/${pair.liquidityToken.address.toLowerCase()}`).then((data: AxiosResponse<PoolStats>) => {
     return data.data
   })
 
@@ -45,5 +45,5 @@ const getUserRank = (address: string) =>
 export const internalService = {
   getPoolStats,
   fetchLeaderboard,
-  getUserRank
+  getUserRank,
 }

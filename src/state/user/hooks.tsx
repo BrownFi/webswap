@@ -2,7 +2,7 @@ import { BASES_TO_TRACK_LIQUIDITY_FOR, ChainId, Pair, PINNED_PAIRS, Token } from
 import { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 
-import flatMap from 'lodash.flatmap'
+import { flatMap } from 'lodash'
 
 import { useActiveWeb3React } from '../../hooks'
 import { useAllTokens } from '../../hooks/Tokens'
@@ -18,7 +18,7 @@ import {
   updateUserExpertMode,
   updateUserSlippageTolerance,
   toggleURLWarning,
-  updateUserSingleHopOnly
+  updateUserSingleHopOnly,
 } from './actions'
 import { useVersion } from 'hooks/useVersion'
 
@@ -28,7 +28,7 @@ function serializeToken(token: Token): SerializedToken {
     address: token.address,
     decimals: token.decimals,
     symbol: token.symbol,
-    name: token.name
+    name: token.name,
   }
 }
 
@@ -38,7 +38,7 @@ function deserializeToken(serializedToken: SerializedToken): Token {
     serializedToken.address,
     serializedToken.decimals,
     serializedToken.symbol,
-    serializedToken.name
+    serializedToken.name,
   )
 }
 
@@ -49,9 +49,9 @@ export function useIsDarkMode(): boolean {
   >(
     ({ user: { matchesDarkMode, userDarkMode } }) => ({
       userDarkMode,
-      matchesDarkMode
+      matchesDarkMode,
     }),
-    shallowEqual
+    shallowEqual,
   )
 
   return userDarkMode === null ? matchesDarkMode : userDarkMode
@@ -69,7 +69,7 @@ export function useDarkModeManager(): [boolean, () => void] {
 }
 
 export function useIsExpertMode(): boolean {
-  return useSelector<AppState, AppState['user']['userExpertMode']>(state => state.user.userExpertMode)
+  return useSelector<AppState, AppState['user']['userExpertMode']>((state) => state.user.userExpertMode)
 }
 
 export function useExpertModeManager(): [boolean, () => void] {
@@ -87,14 +87,14 @@ export function useUserSingleHopOnly(): [boolean, (newSingleHopOnly: boolean) =>
   const dispatch = useDispatch<AppDispatch>()
 
   const singleHopOnly = useSelector<AppState, AppState['user']['userSingleHopOnly']>(
-    state => state.user.userSingleHopOnly
+    (state) => state.user.userSingleHopOnly,
   )
 
   const setSingleHopOnly = useCallback(
     (newSingleHopOnly: boolean) => {
       dispatch(updateUserSingleHopOnly({ userSingleHopOnly: newSingleHopOnly }))
     },
-    [dispatch]
+    [dispatch],
   )
 
   return [singleHopOnly, setSingleHopOnly]
@@ -102,7 +102,7 @@ export function useUserSingleHopOnly(): [boolean, (newSingleHopOnly: boolean) =>
 
 export function useUserSlippageTolerance(): [number, (slippage: number) => void] {
   const dispatch = useDispatch<AppDispatch>()
-  const userSlippageTolerance = useSelector<AppState, AppState['user']['userSlippageTolerance']>(state => {
+  const userSlippageTolerance = useSelector<AppState, AppState['user']['userSlippageTolerance']>((state) => {
     return state.user.userSlippageTolerance
   })
 
@@ -110,7 +110,7 @@ export function useUserSlippageTolerance(): [number, (slippage: number) => void]
     (userSlippageTolerance: number) => {
       dispatch(updateUserSlippageTolerance({ userSlippageTolerance }))
     },
-    [dispatch]
+    [dispatch],
   )
 
   return [userSlippageTolerance, setUserSlippageTolerance]
@@ -118,7 +118,7 @@ export function useUserSlippageTolerance(): [number, (slippage: number) => void]
 
 export function useUserTransactionTTL(): [number, (slippage: number) => void] {
   const dispatch = useDispatch<AppDispatch>()
-  const userDeadline = useSelector<AppState, AppState['user']['userDeadline']>(state => {
+  const userDeadline = useSelector<AppState, AppState['user']['userDeadline']>((state) => {
     return state.user.userDeadline
   })
 
@@ -126,7 +126,7 @@ export function useUserTransactionTTL(): [number, (slippage: number) => void] {
     (userDeadline: number) => {
       dispatch(updateUserDeadline({ userDeadline }))
     },
-    [dispatch]
+    [dispatch],
   )
 
   return [userDeadline, setUserDeadline]
@@ -138,7 +138,7 @@ export function useAddUserToken(): (token: Token) => void {
     (token: Token) => {
       dispatch(addSerializedToken({ serializedToken: serializeToken(token) }))
     },
-    [dispatch]
+    [dispatch],
   )
 }
 
@@ -148,7 +148,7 @@ export function useRemoveUserAddedToken(): (chainId: number, address: string) =>
     (chainId: number, address: string) => {
       dispatch(removeSerializedToken({ chainId, address }))
     },
-    [dispatch]
+    [dispatch],
   )
 }
 
@@ -165,7 +165,7 @@ export function useUserAddedTokens(): Token[] {
 function serializePair(pair: Pair): SerializedPair {
   return {
     token0: serializeToken(pair.token0),
-    token1: serializeToken(pair.token1)
+    token1: serializeToken(pair.token1),
   }
 }
 
@@ -176,7 +176,7 @@ export function usePairAdder(): (pair: Pair) => void {
     (pair: Pair) => {
       dispatch(addSerializedPair({ serializedPair: serializePair(pair) }))
     },
-    [dispatch]
+    [dispatch],
   )
 }
 
@@ -217,7 +217,7 @@ export function useGetListPairs(
     [chainId: number]: {
       [key: string]: SerializedPair
     }
-  }
+  },
 ): [Token, Token][] {
   // pinned pairs
   const pinnedPairs = useMemo(() => (chainId ? PINNED_PAIRS[chainId] ?? [] : []), [chainId])
@@ -225,14 +225,14 @@ export function useGetListPairs(
   // pairs for every token against every base
   const generatedPairs: [Token, Token][] = useMemo(() => {
     if (!chainId) return []
-    return flatMap(Object.keys(tokens), tokenAddress => {
+    return flatMap(Object.keys(tokens), (tokenAddress) => {
       const token = tokens[tokenAddress]
       // for each token on the current chain,
       return (
         // loop though all bases on the current chain
         (BASES_TO_TRACK_LIQUIDITY_FOR[chainId] ?? [])
           // to construct pairs of the given token with each base
-          .map(base => {
+          .map((base) => {
             if (base.address === token.address) {
               return null
             } else {
@@ -249,7 +249,7 @@ export function useGetListPairs(
     const forChain = savedSerializedPairs[chainId] || additionalSerializedPairs?.[chainId]
     if (!forChain) return []
 
-    return Object.keys(forChain).map(pairId => {
+    return Object.keys(forChain).map((pairId) => {
       let token0 = deserializeToken(forChain[pairId].token0)
       if (tokens[token0.address]) {
         token0 = tokens[token0.address]
@@ -265,7 +265,7 @@ export function useGetListPairs(
   const combinedList = useMemo(() => generatedPairs.concat(userPairs).concat(pinnedPairs), [
     userPairs,
     generatedPairs,
-    pinnedPairs
+    pinnedPairs,
   ])
 
   return useMemo(() => {
@@ -278,7 +278,7 @@ export function useGetListPairs(
       return memo
     }, {})
 
-    return Object.keys(keyed).map(key => keyed[key])
+    return Object.keys(keyed).map((key) => keyed[key])
   }, [combinedList])
 }
 
@@ -287,7 +287,7 @@ export function useGetListPairs(
  */
 export function useTrackedTokenPairs(): [Token, Token][] {
   const { chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
+  const { version, enableGraphQL } = useVersion({ chainId })
   const tokens = useAllTokens()
 
   // pairs saved by users
@@ -303,7 +303,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'Bridged USDC',
           symbol: 'USDC.e',
           decimals: 6,
-          logoURI: 'https://berascan.com/token/images/usdc_32.svg'
+          logoURI: 'https://berascan.com/token/images/usdc_32.svg',
         },
         token1: {
           chainId: 80094,
@@ -311,8 +311,8 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'Honey',
           symbol: 'HONEY',
           decimals: 18,
-          logoURI: 'https://berascan.com/token/images/honeybera_32.png'
-        }
+          logoURI: 'https://berascan.com/token/images/honeybera_32.png',
+        },
       },
       '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590:0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce': {
         token0: {
@@ -321,7 +321,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'WETH',
           symbol: 'WETH',
           decimals: 18,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2396.png'
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2396.png',
         },
         token1: {
           chainId: 80094,
@@ -329,8 +329,8 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'Honey',
           symbol: 'HONEY',
           decimals: 18,
-          logoURI: 'https://berascan.com/token/images/honeybera_32.png'
-        }
+          logoURI: 'https://berascan.com/token/images/honeybera_32.png',
+        },
       },
       '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c:0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce': {
         token0: {
@@ -339,7 +339,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'Wrapped BTC',
           symbol: 'WBTC',
           decimals: 8,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png'
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png',
         },
         token1: {
           chainId: 80094,
@@ -347,8 +347,8 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'Honey',
           symbol: 'HONEY',
           decimals: 18,
-          logoURI: 'https://berascan.com/token/images/honeybera_32.png'
-        }
+          logoURI: 'https://berascan.com/token/images/honeybera_32.png',
+        },
       },
       '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c:0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590': {
         token0: {
@@ -357,7 +357,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'Wrapped BTC',
           symbol: 'WBTC',
           decimals: 8,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png'
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png',
         },
         token1: {
           chainId: 80094,
@@ -365,9 +365,9 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'WETH',
           symbol: 'WETH',
           decimals: 18,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2396.png'
-        }
-      }
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2396.png',
+        },
+      },
     },
     [ChainId.ARBITRUM_SEPOLIA]: {
       '0xD3F729D909a7E84669A35c3F25b37b4AC3487784:0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA': {
@@ -377,7 +377,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'ETH',
           symbol: 'ETH',
           decimals: 18,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png'
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
         },
         token1: {
           chainId: 421614,
@@ -385,9 +385,9 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'USDC',
           symbol: 'USDC',
           decimals: 6,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png'
-        }
-      }
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png',
+        },
+      },
     },
     [ChainId.BASE_MAINNET]: {
       '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913:0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf': {
@@ -397,7 +397,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'USDC',
           symbol: 'USDC',
           decimals: 6,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png'
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png',
         },
         token1: {
           chainId: 8453,
@@ -405,9 +405,9 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'Coinbase Wrapped BTC',
           symbol: 'cbBTC',
           decimals: 8,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/32994.png'
-        }
-      }
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/32994.png',
+        },
+      },
     },
     [ChainId.BSC_MAINNET]: {
       '0x55d398326f99059fF775485246999027B3197955:0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c': {
@@ -417,7 +417,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'Tether USD',
           symbol: 'USDT',
           decimals: 18,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/825.png'
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/825.png',
         },
         token1: {
           chainId: 56,
@@ -425,16 +425,20 @@ export function useTrackedTokenPairs(): [Token, Token][] {
           name: 'BTCB Token',
           symbol: 'BTCB',
           decimals: 18,
-          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/4023.png'
-        }
-      }
-    }
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/4023.png',
+        },
+      },
+    },
   }
 
   const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
 
+  if (enableGraphQL) {
+    return []
+  }
+
   if (version === 1) {
-    return pairs.filter(pair => `${pair[0].symbol}/${pair[1].symbol}` !== 'USDC.e/WBERA')
+    return pairs.filter((pair) => `${pair[0].symbol}/${pair[1].symbol}` !== 'USDC.e/WBERA')
   }
 
   return pairs
