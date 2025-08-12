@@ -1,16 +1,19 @@
-import { Currency, CurrencyAmount, ETHER, JSBI, Pair, Percent, Price, TokenAmount } from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
+
+import { Currency, CurrencyAmount, ETHER, JSBI, Pair, Percent, Price, TokenAmount } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
-import { PairState, usePair } from 'data/Reserves'
-import { useTotalSupply } from 'data/TotalSupply'
 
 import { useActiveWeb3React } from 'hooks'
-import { wrappedCurrency, wrappedCurrencyAmount } from 'utils/wrappedCurrency'
 import { AppDispatch, AppState } from 'state'
 import { tryParseAmount } from 'state/swap/hooks'
 import { useCurrencyBalances } from 'state/wallet/hooks'
-import { Field, typeInput } from './actions'
+
+import { PairState, usePair } from 'data/Reserves'
+import { useTotalSupply } from 'data/TotalSupply'
 import { getNativeToken } from 'utils'
+import { wrappedCurrency, wrappedCurrencyAmount } from 'utils/wrappedCurrency'
+
+import { Field, typeInput } from './actions'
 
 const ZERO = JSBI.BigInt(0)
 
@@ -18,9 +21,7 @@ export function useMintState(): AppState['mint'] {
   return useSelector<AppState, AppState['mint']>((state) => state.mint)
 }
 
-export function useMintActionHandlers(
-  noLiquidity: boolean | undefined,
-): {
+export function useMintActionHandlers(noLiquidity: boolean | undefined): {
   onFieldAInput: (typedValue: string) => void
   onFieldBInput: (typedValue: string) => void
 } {

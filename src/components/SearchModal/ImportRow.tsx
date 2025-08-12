@@ -1,17 +1,21 @@
-import React, { CSSProperties } from 'react'
+import { CSSProperties } from 'react'
+
 import { Token } from '@brownfi/sdk'
-import { AutoRow, RowFixed } from 'components/Row'
+import { CheckCircle } from 'react-feather'
+import styled from 'styled-components'
+
+import { ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { TYPE } from 'theme'
 import ListLogo from 'components/ListLogo'
+import { AutoRow, RowFixed } from 'components/Row'
+
 import { useActiveWeb3React } from 'hooks'
-import { useCombinedInactiveList } from 'state/lists/hooks'
+import { useIsTokenActive, useIsUserAddedToken } from 'hooks/Tokens'
 import useTheme from 'hooks/useTheme'
-import { ButtonPrimary } from 'components/Button'
-import styled from 'styled-components'
-import { useIsUserAddedToken, useIsTokenActive } from 'hooks/Tokens'
-import { CheckCircle } from 'react-feather'
+import { useCombinedInactiveList } from 'state/lists/hooks'
+
+import { TYPE } from 'theme'
 
 const TokenSection = styled.div<{ dim?: boolean }>`
   padding: 4px 40px;

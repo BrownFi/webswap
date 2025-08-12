@@ -1,17 +1,22 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+
+import { Currency, Token } from '@brownfi/sdk'
 import styled from 'styled-components'
-import { TYPE, CloseIcon, ExternalLink } from 'theme'
+
 import { ButtonEmpty } from 'components/Button'
-import { Modal } from 'components/Modal'
 import { Card, OutlineCard } from 'components/Card'
-import { RowBetween, AutoRow } from 'components/Row'
 import { AutoColumn } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
+import { Modal } from 'components/Modal'
+import { AutoRow, RowBetween } from 'components/Row'
+
 import { useActiveWeb3React } from 'hooks'
-import { getEtherscanLink } from 'utils'
-import { Currency, Token } from '@brownfi/sdk'
-import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { useUnsupportedTokens } from 'hooks/Tokens'
+
+import { getEtherscanLink } from 'utils'
+import { wrappedCurrency } from 'utils/wrappedCurrency'
+
+import { CloseIcon, ExternalLink, TYPE } from 'theme'
 
 const DetailsFooter = styled.div<{ show: boolean }>`
   padding-top: calc(16px + 2rem);

@@ -1,5 +1,6 @@
-import { parse, ParsedQs } from 'qs'
 import { useMemo } from 'react'
+
+import { ParsedQs, parse } from 'qs'
 import { useLocation } from 'react-router-dom'
 
 export default function useParsedQueryString(): ParsedQs {

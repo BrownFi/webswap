@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
+
 import { ChainId } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
+
 import { switchVersion, versionSelector } from 'state/versionSlice'
 
 export function useVersion({ chainId }: { chainId: number | undefined | null }) {

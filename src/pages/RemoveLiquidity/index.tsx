@@ -1,53 +1,58 @@
-import { splitSignature } from '@ethersproject/bytes'
-import { Contract } from '@ethersproject/contracts'
+import { useCallback, useContext, useMemo, useState } from 'react'
+
 import {
   ChainId,
   Currency,
-  currencyEquals,
   ETHER,
-  getRouterAddress,
   Percent,
-  removeLiquidity,
   WETH,
+  currencyEquals,
+  getRouterAddress,
+  removeLiquidity,
 } from '@brownfi/sdk'
-import React, { useCallback, useContext, useMemo, useState } from 'react'
+import { splitSignature } from '@ethersproject/bytes'
+import { Contract } from '@ethersproject/contracts'
 import { ArrowDown, Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
-import { ButtonPrimary, ButtonError, ButtonConfirmed } from 'components/Button'
+
+import { AppBody } from 'pages/AppBody'
+import { ClickableText, MaxButton, Wrapper } from 'pages/Pool/styleds'
+
+import { ButtonConfirmed, ButtonError, ButtonPrimary } from 'components/Button'
 import { BlueCard, RemoveLiqudityCard } from 'components/Card'
 import { AutoColumn, ColumnCenter } from 'components/Column'
-import { TransactionConfirmationModal, ConfirmationModalContent } from 'components/TransactionConfirmationModal'
+import ConnectWallet from 'components/ConnectWallet'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
+import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import { MinimalPositionCard } from 'components/PositionCard/MinimalPositionCard'
 import Row, { RowBetween, RowFixed } from 'components/Row'
 import Slider from 'components/Slider'
-import { CurrencyLogo } from 'components/CurrencyLogo'
+import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
+import { Dots } from 'components/swap/styleds'
+
 import { useActiveWeb3React } from 'hooks'
 import { useCurrency } from 'hooks/Tokens'
+import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import { usePairContract } from 'hooks/useContract'
 import useIsArgentWallet from 'hooks/useIsArgentWallet'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
-
+import { useVersion } from 'hooks/useVersion'
+import { Field } from 'state/burn/actions'
+import { useBurnActionHandlers } from 'state/burn/hooks'
+import { useBurnState, useDerivedBurnInfo } from 'state/burn/hooks'
 import { useTransactionAdder } from 'state/transactions/hooks'
-import { StyledInternalLink, TYPE } from 'theme'
+import { useUserSlippageTolerance } from 'state/user/hooks'
+
+import { getNativeToken, getTokenSymbol, getWrappedNativeToken } from 'utils'
 import { currencyId } from 'utils/currencyId'
 import useDebouncedChangeHandler from 'utils/useDebouncedChangeHandler'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { AppBody } from 'pages/AppBody'
-import { ClickableText, MaxButton, Wrapper } from 'pages/Pool/styleds'
-import { useApproveCallback, ApprovalState } from 'hooks/useApproveCallback'
-import { Dots } from 'components/swap/styleds'
-import { useBurnActionHandlers } from 'state/burn/hooks'
-import { useDerivedBurnInfo, useBurnState } from 'state/burn/hooks'
-import { Field } from 'state/burn/actions'
-import { useUserSlippageTolerance } from 'state/user/hooks'
-import { getNativeToken, getTokenSymbol, getWrappedNativeToken } from 'utils'
-import ConnectWallet from 'components/ConnectWallet'
-import { useVersion } from 'hooks/useVersion'
+
+import { StyledInternalLink, TYPE } from 'theme'
 
 export const BOBA: Currency = {
   decimals: 18,
@@ -66,11 +71,10 @@ export default function RemoveLiquidity({
   const { version } = useVersion({ chainId })
 
   const [currencyA, currencyB] = [useCurrency(currencyIdA) ?? undefined, useCurrency(currencyIdB) ?? undefined]
-  const [tokenA, tokenB] = useMemo(() => [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)], [
-    currencyA,
-    currencyB,
-    chainId,
-  ])
+  const [tokenA, tokenB] = useMemo(
+    () => [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)],
+    [currencyA, currencyB, chainId],
+  )
 
   // burn state
   const { independentField, typedValue } = useBurnState()
@@ -92,14 +96,14 @@ export default function RemoveLiquidity({
     [Field.LIQUIDITY_PERCENT]: parsedAmounts[Field.LIQUIDITY_PERCENT].equalTo('0')
       ? '0'
       : parsedAmounts[Field.LIQUIDITY_PERCENT].lessThan(new Percent('1', '100'))
-      ? '<1'
-      : parsedAmounts[Field.LIQUIDITY_PERCENT].toFixed(0),
+        ? '<1'
+        : parsedAmounts[Field.LIQUIDITY_PERCENT].toFixed(0),
     [Field.LIQUIDITY]:
-      independentField === Field.LIQUIDITY ? typedValue : parsedAmounts[Field.LIQUIDITY]?.toSignificant(6) ?? '',
+      independentField === Field.LIQUIDITY ? typedValue : (parsedAmounts[Field.LIQUIDITY]?.toSignificant(6) ?? ''),
     [Field.CURRENCY_A]:
-      independentField === Field.CURRENCY_A ? typedValue : parsedAmounts[Field.CURRENCY_A]?.toSignificant(6) ?? '',
+      independentField === Field.CURRENCY_A ? typedValue : (parsedAmounts[Field.CURRENCY_A]?.toSignificant(6) ?? ''),
     [Field.CURRENCY_B]:
-      independentField === Field.CURRENCY_B ? typedValue : parsedAmounts[Field.CURRENCY_B]?.toSignificant(6) ?? '',
+      independentField === Field.CURRENCY_B ? typedValue : (parsedAmounts[Field.CURRENCY_B]?.toSignificant(6) ?? ''),
   }
 
   const atMaxAmount = parsedAmounts[Field.LIQUIDITY_PERCENT]?.equalTo(new Percent('1'))
@@ -192,15 +196,18 @@ export default function RemoveLiquidity({
     [_onUserInput],
   )
 
-  const onLiquidityInput = useCallback((typedValue: string): void => onUserInput(Field.LIQUIDITY, typedValue), [
-    onUserInput,
-  ])
-  const onCurrencyAInput = useCallback((typedValue: string): void => onUserInput(Field.CURRENCY_A, typedValue), [
-    onUserInput,
-  ])
-  const onCurrencyBInput = useCallback((typedValue: string): void => onUserInput(Field.CURRENCY_B, typedValue), [
-    onUserInput,
-  ])
+  const onLiquidityInput = useCallback(
+    (typedValue: string): void => onUserInput(Field.LIQUIDITY, typedValue),
+    [onUserInput],
+  )
+  const onCurrencyAInput = useCallback(
+    (typedValue: string): void => onUserInput(Field.CURRENCY_A, typedValue),
+    [onUserInput],
+  )
+  const onCurrencyBInput = useCallback(
+    (typedValue: string): void => onUserInput(Field.CURRENCY_B, typedValue),
+    [onUserInput],
+  )
 
   // tx sending
   const addTransaction = useTransactionAdder()
@@ -271,8 +278,9 @@ export default function RemoveLiquidity({
         </RowBetween>
 
         <TYPE.italic fontSize={12} color={theme.white} textAlign="left" padding={'12px 0 0 0'} opacity={0.5}>
-          {`Output is estimated. If the price changes by more than ${allowedSlippage /
-            100}% your transaction will revert.`}
+          {`Output is estimated. If the price changes by more than ${
+            allowedSlippage / 100
+          }% your transaction will revert.`}
         </TYPE.italic>
       </AutoColumn>
     )
@@ -620,8 +628,8 @@ export default function RemoveLiquidity({
                   {currencyA?.symbol === 'DIAM' || currencyB?.symbol === 'DIAM'
                     ? 'Pair S/Diamond = FTM/USD'
                     : currencyA?.symbol === 'CORAL' || currencyB?.symbol === 'CORAL'
-                    ? 'Pair S/CORAL = FTM/ETH'
-                    : ''}
+                      ? 'Pair S/CORAL = FTM/ETH'
+                      : ''}
                 </Text>
               )}
             </div>

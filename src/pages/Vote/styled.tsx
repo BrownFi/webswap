@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+
 import { ProposalState } from 'state/governance/hooks'
 
 const handleColorType = (status?: ProposalState, theme?: any) => {

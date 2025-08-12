@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+
 import { RouteComponentProps } from 'react-router-dom'
 
 // fires a GA pageview every time the route changes

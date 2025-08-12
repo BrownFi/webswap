@@ -1,7 +1,14 @@
+import { useMemo } from 'react'
+
 import { ChainId, Currency, ETHER, Token } from '@brownfi/sdk'
-import { useActiveWeb3React } from 'hooks'
-import React, { useMemo } from 'react'
 import styled from 'styled-components'
+
+import { Logo } from 'components/Logo'
+
+import { useActiveWeb3React } from 'hooks'
+import useHttpLocations from 'hooks/useHttpLocations'
+import { WrappedTokenInfo, findLogoURI } from 'state/lists/hooks'
+
 import BNBLogo from 'assets/images/bnb.svg'
 import bobaLogo from 'assets/images/boba.svg'
 import EthereumLogo from 'assets/images/ethereum-logo.png'
@@ -11,9 +18,6 @@ import sonicLogo from 'assets/images/sonic.png'
 import u2uLogo from 'assets/images/u2u.jpg'
 import VictionLogo from 'assets/images/viction.png'
 import beraLogo from 'assets/images/w-bera.png'
-import useHttpLocations from 'hooks/useHttpLocations'
-import { findLogoURI, WrappedTokenInfo } from 'state/lists/hooks'
-import { Logo } from 'components/Logo'
 
 const StyledEthereumLogo = styled.img<{ size: string }>`
   width: ${({ size }) => size};

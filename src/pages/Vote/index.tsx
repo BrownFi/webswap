@@ -1,26 +1,31 @@
 import React from 'react'
-import { AutoColumn } from 'components/Column'
-import styled from 'styled-components'
-import { ExternalLink, TYPE } from 'theme'
-import { RowBetween, RowFixed } from 'components/Row'
-import { Link } from 'react-router-dom'
-import { ProposalStatus } from './styled'
-import { ButtonPrimary } from 'components/Button'
 
-import { Button } from 'rebass/styled-components'
-import { darken } from 'polished'
-import { CardBGImage, CardNoise, CardSection, DataCard } from 'components/earn/styled'
-import { ProposalData, ProposalState, useAllProposalData, useUserDelegatee, useUserVotes } from 'state/governance/hooks'
-import DelegateModal from 'components/vote/DelegateModal'
-import { useTokenBalance } from 'state/wallet/hooks'
-import { useActiveWeb3React } from 'hooks'
-import { ZERO_ADDRESS } from 'constants/common'
 import { ChainId, JSBI, TokenAmount } from '@brownfi/sdk'
-import { getEtherscanLink, shortenAddress } from 'utils'
-import { Loader } from 'components/Loader'
+import { darken } from 'polished'
+import { Link } from 'react-router-dom'
+import { Button } from 'rebass/styled-components'
+import styled from 'styled-components'
+
+import { ButtonPrimary } from 'components/Button'
+import { AutoColumn } from 'components/Column'
 import FormattedCurrencyAmount from 'components/FormattedCurrencyAmount'
-import { useModalOpen, useToggleDelegateModal } from 'state/application/hooks'
+import { Loader } from 'components/Loader'
+import { RowBetween, RowFixed } from 'components/Row'
+import { CardBGImage, CardNoise, CardSection, DataCard } from 'components/earn/styled'
+import DelegateModal from 'components/vote/DelegateModal'
+
+import { useActiveWeb3React } from 'hooks'
 import { ApplicationModal } from 'state/application/actions'
+import { useModalOpen, useToggleDelegateModal } from 'state/application/hooks'
+import { ProposalData, ProposalState, useAllProposalData, useUserDelegatee, useUserVotes } from 'state/governance/hooks'
+import { useTokenBalance } from 'state/wallet/hooks'
+
+import { ZERO_ADDRESS } from 'constants/common'
+import { getEtherscanLink, shortenAddress } from 'utils'
+
+import { ExternalLink, TYPE } from 'theme'
+
+import { ProposalStatus } from './styled'
 
 const PageWrapper = styled(AutoColumn)``
 

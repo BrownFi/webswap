@@ -1,14 +1,18 @@
-import { TransactionResponse } from '@ethersproject/providers'
-import { callSwapContract, SwapCallbackState, Trade } from '@brownfi/sdk'
 import { useMemo } from 'react'
+
+import { SwapCallbackState, Trade, callSwapContract } from '@brownfi/sdk'
+import { TransactionResponse } from '@ethersproject/providers'
+
+import { useTransactionAdder } from 'state/transactions/hooks'
+
 import { INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
 import { getTradeVersion } from 'data/V1'
-import { useTransactionAdder } from 'state/transactions/hooks'
 import { getTokenSymbol, isAddress, shortenAddress } from 'utils'
+
 import { useActiveWeb3React } from './index'
-import useTransactionDeadline from './useTransactionDeadline'
 import useENS from './useENS'
 import { Version } from './useToggledVersion'
+import useTransactionDeadline from './useTransactionDeadline'
 
 // returns a function that will execute a swap, if the parameters are all valid
 // and the user has approved the slippage adjusted input amount for the trade

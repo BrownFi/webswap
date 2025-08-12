@@ -1,8 +1,9 @@
-// components/HamburgerMenu.tsx
-import { useWindowSize } from 'hooks/useWindowSize'
-import React, { useState, useEffect, useRef, PropsWithChildren } from 'react'
+import React, { PropsWithChildren, useEffect, useRef, useState } from 'react'
+
 import { Menu, X } from 'react-feather'
 import { useLocation } from 'react-router-dom'
+
+import { useWindowSize } from 'hooks/useWindowSize'
 
 const HamburgerMenu: React.FC<PropsWithChildren> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false)

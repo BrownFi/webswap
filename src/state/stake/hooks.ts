@@ -1,12 +1,15 @@
-import { ChainId, CurrencyAmount, JSBI, Token, TokenAmount, WETH, Pair } from '@brownfi/sdk'
 import { useMemo } from 'react'
-import { DAI, USDC, USDT, WBTC } from 'constants/common'
-import { STAKING_REWARDS_INTERFACE } from 'constants/abis/staking-rewards'
+
+import { ChainId, CurrencyAmount, JSBI, Pair, Token, TokenAmount, WETH } from '@brownfi/sdk'
+
 import { useActiveWeb3React } from 'hooks'
-import { NEVER_RELOAD, useMultipleContractSingleData } from 'state/multicall/hooks'
-import { tryParseAmount } from 'state/swap/hooks'
 import useCurrentBlockTimestamp from 'hooks/useCurrentBlockTimestamp'
 import { useVersion } from 'hooks/useVersion'
+import { NEVER_RELOAD, useMultipleContractSingleData } from 'state/multicall/hooks'
+import { tryParseAmount } from 'state/swap/hooks'
+
+import { STAKING_REWARDS_INTERFACE } from 'constants/abis/staking-rewards'
+import { DAI, USDC, USDT, WBTC } from 'constants/common'
 
 export const STAKING_GENESIS = 1600387200
 
@@ -77,14 +80,14 @@ export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
   const info = useMemo(
     () =>
       chainId
-        ? STAKING_REWARDS_INFO[chainId]?.filter((stakingRewardInfo) =>
+        ? (STAKING_REWARDS_INFO[chainId]?.filter((stakingRewardInfo) =>
             pairToFilterBy === undefined
               ? true
               : pairToFilterBy === null
-              ? false
-              : pairToFilterBy.involvesToken(stakingRewardInfo.tokens[0]) &&
-                pairToFilterBy.involvesToken(stakingRewardInfo.tokens[1]),
-          ) ?? []
+                ? false
+                : pairToFilterBy.involvesToken(stakingRewardInfo.tokens[0]) &&
+                  pairToFilterBy.involvesToken(stakingRewardInfo.tokens[1]),
+          ) ?? [])
         : [],
     [chainId, pairToFilterBy],
   )

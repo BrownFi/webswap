@@ -1,12 +1,16 @@
+import { Fragment, memo, useContext } from 'react'
+
 import { Trade } from '@brownfi/sdk'
-import React, { Fragment, memo, useContext } from 'react'
 import { ChevronRight } from 'react-feather'
 import { Flex } from 'rebass'
 import { ThemeContext } from 'styled-components'
-import { TYPE } from 'theme'
-import { unwrappedToken } from 'utils/wrappedCurrency'
+
 import { useActiveWeb3React } from 'hooks'
+
 import { getTokenSymbol } from 'utils'
+import { unwrappedToken } from 'utils/wrappedCurrency'
+
+import { TYPE } from 'theme'
 
 export default memo(function SwapRoute({ trade }: { trade: Trade }) {
   const theme = useContext(ThemeContext)

@@ -1,5 +1,6 @@
-import { ZERO_PERCENT, ONE_HUNDRED_PERCENT } from 'constants/common'
-import { Trade, Percent, currencyEquals } from '@brownfi/sdk'
+import { Percent, Trade, currencyEquals } from '@brownfi/sdk'
+
+import { ONE_HUNDRED_PERCENT, ZERO_PERCENT } from 'constants/common'
 
 // returns whether tradeB is better than tradeA by at least a threshold percentage amount
 export function isTradeBetter(

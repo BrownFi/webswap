@@ -1,25 +1,34 @@
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+
 import { CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ArrowDown } from 'react-feather'
+import { RouteComponentProps } from 'react-router-dom'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
+
+import { AppBody } from 'pages/AppBody'
+import { ClickableText, Dots } from 'pages/Pool/styleds'
+
 import { AddressInputPanel } from 'components/AddressInputPanel'
-import { ButtonError, ButtonPrimary, ButtonConfirmed } from 'components/Button'
+import { ButtonConfirmed, ButtonError, ButtonPrimary } from 'components/Button'
 import Column, { AutoColumn } from 'components/Column'
-import ConfirmSwapModal from 'components/swap/ConfirmSwapModal'
+import ConnectWallet from 'components/ConnectWallet'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
+import { ProgressCircles } from 'components/ProgressSteps'
 import { AutoRow, RowBetween } from 'components/Row'
+import TokenWarningModal from 'components/TokenWarningModal'
 import AdvancedSwapDetailsDropdown from 'components/swap/AdvancedSwapDetailsDropdown'
 import BetterTradeLink, { DefaultVersionLink } from 'components/swap/BetterTradeLink'
+import ConfirmSwapModal from 'components/swap/ConfirmSwapModal'
+import SwapHeader from 'components/swap/SwapHeader'
+import TradePrice from 'components/swap/TradePrice'
+import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
 import confirmPriceImpactWithoutFee from 'components/swap/confirmPriceImpactWithoutFee'
 import { ArrowWrapper, BottomGrouping, SwapCallbackError, Wrapper } from 'components/swap/styleds'
-import TradePrice from 'components/swap/TradePrice'
-import TokenWarningModal from 'components/TokenWarningModal'
-import { ProgressCircles } from 'components/ProgressSteps'
-import SwapHeader from 'components/swap/SwapHeader'
-import { INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+
 import { useActiveWeb3React } from 'hooks'
-import { useCurrency, useAllTokens } from 'hooks/Tokens'
+import { useAllTokens, useCurrency } from 'hooks/Tokens'
+import { useIsTransactionUnsupported } from 'hooks/Trades'
 import { ApprovalState, useApproveCallbackFromTrade } from 'hooks/useApproveCallback'
 import useENSAddress from 'hooks/useENSAddress'
 import { useSwapCallback } from 'hooks/useSwapCallback'
@@ -28,19 +37,16 @@ import useWrapCallback, { WrapType } from 'hooks/useWrapCallback'
 import { useToggleSettingsMenu } from 'state/application/hooks'
 import { Field } from 'state/swap/actions'
 import { useDefaultsFromURLSearch, useDerivedSwapInfo, useSwapActionHandlers, useSwapState } from 'state/swap/hooks'
-import { useExpertModeManager, useUserSlippageTolerance, useUserSingleHopOnly } from 'state/user/hooks'
-import { LinkStyledButton } from 'theme'
+import { useExpertModeManager, useUserSingleHopOnly, useUserSlippageTolerance } from 'state/user/hooks'
+
+import { INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { computeTradePriceBreakdown, warningSeverity } from 'utils/prices'
-import { AppBody } from 'pages/AppBody'
-import { ClickableText, Dots } from 'pages/Pool/styleds'
-import { useIsTransactionUnsupported } from 'hooks/Trades'
-import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
 import { isTradeBetter } from 'utils/trades'
-import { RouteComponentProps } from 'react-router-dom'
+
 import switchIcon from 'assets/svg/switch.svg'
-import { getTokenSymbol } from 'utils'
-import ConnectWallet from 'components/ConnectWallet'
+import { LinkStyledButton } from 'theme'
 
 export default function Swap({ history }: RouteComponentProps) {
   const loadedUrlParams = useDefaultsFromURLSearch()
@@ -89,11 +95,11 @@ export default function Swap({ history }: RouteComponentProps) {
     loadingExactOut,
   } = useDerivedSwapInfo()
 
-  const { wrapType, execute: onWrap, inputError: wrapInputError } = useWrapCallback(
-    currencies[Field.INPUT],
-    currencies[Field.OUTPUT],
-    typedValue,
-  )
+  const {
+    wrapType,
+    execute: onWrap,
+    inputError: wrapInputError,
+  } = useWrapCallback(currencies[Field.INPUT], currencies[Field.OUTPUT], typedValue)
   const [isLoadingWrap, setLoadingWrap] = useState(false)
   const handleWrap = async () => {
     setLoadingWrap(true)
@@ -167,8 +173,8 @@ export default function Swap({ history }: RouteComponentProps) {
   const formattedAmounts = {
     [independentField]: typedValue,
     [dependentField]: showWrap
-      ? parsedAmounts[independentField]?.toExact() ?? ''
-      : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
+      ? (parsedAmounts[independentField]?.toExact() ?? '')
+      : (parsedAmounts[dependentField]?.toSignificant(6) ?? ''),
   }
 
   const route = trade?.route
@@ -274,9 +280,10 @@ export default function Swap({ history }: RouteComponentProps) {
     maxAmountInput && onUserInput(Field.INPUT, maxAmountInput.toExact())
   }, [maxAmountInput, onUserInput])
 
-  const handleOutputSelect = useCallback((outputCurrency: any) => onCurrencySelection(Field.OUTPUT, outputCurrency), [
-    onCurrencySelection,
-  ])
+  const handleOutputSelect = useCallback(
+    (outputCurrency: any) => onCurrencySelection(Field.OUTPUT, outputCurrency),
+    [onCurrencySelection],
+  )
 
   const swapIsUnsupported = useIsTransactionUnsupported(currencies?.INPUT, currencies?.OUTPUT)
 
@@ -480,8 +487,8 @@ export default function Swap({ history }: RouteComponentProps) {
                 {swapInputError
                   ? swapInputError
                   : priceImpactSeverity > 3 && !isExpertMode
-                  ? `Price Impact Too High`
-                  : `Swap${priceImpactSeverity > 2 ? ' Anyway' : ''}`}
+                    ? `Price Impact Too High`
+                    : `Swap${priceImpactSeverity > 2 ? ' Anyway' : ''}`}
               </ButtonError>
             )}
             {showApproveFlow && (

@@ -1,9 +1,13 @@
-import { Currency } from '@brownfi/sdk'
 import React from 'react'
+
+import { Currency } from '@brownfi/sdk'
 import styled from 'styled-components'
+
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { getTokenSymbol } from 'utils'
+
 import { useActiveWeb3React } from 'hooks'
+
+import { getTokenSymbol } from 'utils'
 import { shouldReverse } from 'utils/pair'
 
 const Wrapper = styled.div<{ margin: boolean; sizeraw: number }>`

@@ -1,12 +1,16 @@
 import React from 'react'
-import { Price } from '@brownfi/sdk'
 import { useContext } from 'react'
+
+import { Price } from '@brownfi/sdk'
 import { Repeat } from 'react-feather'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
-import { StyledBalanceMaxMini } from './styleds'
+
 import { useActiveWeb3React } from 'hooks'
+
 import { getTokenSymbol } from 'utils'
+
+import { StyledBalanceMaxMini } from './styleds'
 
 interface TradePriceProps {
   price?: Price

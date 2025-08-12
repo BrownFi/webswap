@@ -1,6 +1,8 @@
 import { Chain } from '@rainbow-me/rainbowkit'
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { PayloadAction, createSlice } from '@reduxjs/toolkit'
+
 import { getDefaultChain } from 'connectors'
+
 import { AppState } from 'state'
 
 export const chainSlice = createSlice({

@@ -1,28 +1,32 @@
+import { useMemo } from 'react'
+
 import { AbstractConnector } from '@web3-react/abstract-connector'
 import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core'
 import { darken } from 'polished'
-import React, { useMemo } from 'react'
 import { Activity } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import styled, { css } from 'styled-components'
-import CoinbaseWalletIcon from 'assets/images/coinbaseWalletIcon.svg'
-import connectWalletIcon from 'assets/svg/account_balance_wallet.svg'
-import WalletConnectIcon from 'assets/images/walletConnectIcon.svg'
+
+import { ButtonSecondary } from 'components/Button'
+import { Identicon } from 'components/Identicon'
+import { Loader } from 'components/Loader'
+import { RowBetween } from 'components/Row'
+import { WalletModal } from 'components/WalletModal'
+
 import { injected, walletconnect, walletlink } from 'connectors'
-import { NetworkContextName } from 'constants/common'
+
 import useENSName from 'hooks/useENSName'
 import { useHasSocks } from 'hooks/useSocksBalance'
 import { useWalletModalToggle } from 'state/application/hooks'
 import { isTransactionRecent, useAllTransactions } from 'state/transactions/hooks'
 import { TransactionDetails } from 'state/transactions/reducer'
+
+import { NetworkContextName } from 'constants/common'
 import { shortenAddress } from 'utils'
-import { ButtonSecondary } from 'components/Button'
 
-import { Identicon } from 'components/Identicon'
-import { Loader } from 'components/Loader'
-
-import { RowBetween } from 'components/Row'
-import { WalletModal } from 'components/WalletModal'
+import CoinbaseWalletIcon from 'assets/images/coinbaseWalletIcon.svg'
+import WalletConnectIcon from 'assets/images/walletConnectIcon.svg'
+import connectWalletIcon from 'assets/svg/account_balance_wallet.svg'
 
 const IconWrapper = styled.div<{ size?: number }>`
   ${({ theme }) => theme.flexColumnNoWrap};

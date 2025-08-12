@@ -1,8 +1,12 @@
-import { ChainId, Currency, currencyEquals, JSBI, Price, WETH } from '@brownfi/sdk'
 import { useMemo } from 'react'
+
+import { ChainId, Currency, JSBI, Price, WETH, currencyEquals } from '@brownfi/sdk'
+
+import { useActiveWeb3React } from 'hooks'
+
 import { USDC } from 'constants/common'
 import { PairState, usePairs } from 'data/Reserves'
-import { useActiveWeb3React } from 'hooks'
+
 import { wrappedCurrency } from './wrappedCurrency'
 
 /**

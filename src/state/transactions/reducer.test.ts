@@ -1,7 +1,8 @@
 import { ChainId } from '@brownfi/sdk'
-import { createStore, Store } from 'redux'
+import { Store, createStore } from 'redux'
+
 import { addTransaction, checkedTransaction, clearAllTransactions, finalizeTransaction } from './actions'
-import reducer, { initialState, TransactionState } from './reducer'
+import reducer, { TransactionState, initialState } from './reducer'
 
 describe('transaction reducer', () => {
   let store: Store<TransactionState>

@@ -1,15 +1,19 @@
+import { useCallback, useMemo } from 'react'
+
+import { CurrencyAmount, ETHER, ROUTER_ADDRESS_WITH_PRICE, TokenAmount, Trade, getRouterAddress } from '@brownfi/sdk'
 import { MaxUint256 } from '@ethersproject/constants'
 import { TransactionResponse } from '@ethersproject/providers'
-import { Trade, TokenAmount, CurrencyAmount, ETHER, ROUTER_ADDRESS_WITH_PRICE, getRouterAddress } from '@brownfi/sdk'
-import { useCallback, useMemo } from 'react'
+
+import { Field } from 'state/swap/actions'
+import { useHasPendingApproval, useTransactionAdder } from 'state/transactions/hooks'
+
 import { useTokenAllowance } from 'data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from 'data/V1'
-import { Field } from 'state/swap/actions'
-import { useTransactionAdder, useHasPendingApproval } from 'state/transactions/hooks'
-import { computeSlippageAdjustedAmounts } from 'utils/prices'
 import { calculateGasMargin, getTokenSymbol } from 'utils'
-import { useTokenContract } from './useContract'
+import { computeSlippageAdjustedAmounts } from 'utils/prices'
+
 import { useActiveWeb3React } from './index'
+import { useTokenContract } from './useContract'
 import { Version } from './useToggledVersion'
 import { useVersion } from './useVersion'
 
@@ -116,9 +120,9 @@ export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) 
     tradeIsV1
       ? v1ExchangeAddress
       : chainId
-      ? version === 1
-        ? ROUTER_ADDRESS_WITH_PRICE[chainId]
-        : getRouterAddress(chainId, version)
-      : '',
+        ? version === 1
+          ? ROUTER_ADDRESS_WITH_PRICE[chainId]
+          : getRouterAddress(chainId, version)
+        : '',
   )
 }

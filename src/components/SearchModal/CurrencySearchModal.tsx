@@ -1,13 +1,17 @@
+import { useCallback, useEffect, useState } from 'react'
+
 import { Currency, Token } from '@brownfi/sdk'
-import React, { useCallback, useEffect, useState } from 'react'
-import useLast from 'hooks/useLast'
-import { Modal } from 'components/Modal'
-import { CurrencySearch } from './CurrencySearch'
-import { ImportToken } from './ImportToken'
-import usePrevious from 'hooks/usePrevious'
-import Manage from './Manage'
 import { TokenList } from '@uniswap/token-lists'
+
+import { Modal } from 'components/Modal'
+
+import useLast from 'hooks/useLast'
+import usePrevious from 'hooks/usePrevious'
+
+import { CurrencySearch } from './CurrencySearch'
 import { ImportList } from './ImportList'
+import { ImportToken } from './ImportToken'
+import Manage from './Manage'
 
 interface CurrencySearchModalProps {
   isOpen: boolean

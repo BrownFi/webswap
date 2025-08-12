@@ -1,18 +1,24 @@
+import { useContext } from 'react'
+
 import { Trade, TradeType } from '@brownfi/sdk'
-import React, { useContext } from 'react'
 import { ThemeContext } from 'styled-components'
-import { Field } from 'state/swap/actions'
-import { useUserSlippageTolerance } from 'state/user/hooks'
-import { TYPE } from 'theme'
-import { computeSlippageAdjustedAmounts, warningSeveritySlippage } from 'utils/prices'
+
 import { AutoColumn } from 'components/Column'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween, RowFixed } from 'components/Row'
-import SwapRoute from './SwapRoute'
-import { formatStringToNumber, getTokenSymbol } from 'utils'
+
 import { useActiveWeb3React } from 'hooks'
-import { ErrorText } from './styleds'
 import { useTradingFee } from 'hooks/useTradingFee'
+import { Field } from 'state/swap/actions'
+import { useUserSlippageTolerance } from 'state/user/hooks'
+
+import { formatStringToNumber, getTokenSymbol } from 'utils'
+import { computeSlippageAdjustedAmounts, warningSeveritySlippage } from 'utils/prices'
+
+import { TYPE } from 'theme'
+
+import SwapRoute from './SwapRoute'
+import { ErrorText } from './styleds'
 
 function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippage: number }) {
   const theme = useContext(ThemeContext)

@@ -1,8 +1,10 @@
-import { transparentize } from 'polished'
 import React from 'react'
+
+import { transparentize } from 'polished'
 import { AlertTriangle } from 'react-feather'
-import styled, { css } from 'styled-components'
 import { Text } from 'rebass'
+import styled, { css } from 'styled-components'
+
 import { AutoColumn } from 'components/Column'
 
 export const Wrapper = styled.div`
@@ -42,10 +44,10 @@ export const ErrorText = styled(Text)<{ severity?: 0 | 1 | 2 | 3 | 4 }>`
     severity === 3 || severity === 4
       ? theme.red1
       : severity === 2
-      ? theme.yellow2
-      : severity === 1
-      ? theme.white
-      : theme.green1};
+        ? theme.yellow2
+        : severity === 1
+          ? theme.white
+          : theme.green1};
 `
 
 export const StyledBalanceMaxMini = styled.button`

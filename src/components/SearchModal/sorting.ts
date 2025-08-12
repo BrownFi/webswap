@@ -1,5 +1,7 @@
-import { Token, TokenAmount } from '@brownfi/sdk'
 import { useMemo } from 'react'
+
+import { Token, TokenAmount } from '@brownfi/sdk'
+
 import { useAllTokenBalances } from 'state/wallet/hooks'
 
 // compare two token amounts with highest one coming first

@@ -1,19 +1,22 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
-import { Modal } from 'components/Modal'
-import { AutoColumn } from 'components/Column'
-import styled from 'styled-components'
-import { RowBetween } from 'components/Row'
-import { TYPE } from 'theme'
-import { X } from 'react-feather'
-import { ButtonPrimary } from 'components/Button'
-import { useActiveWeb3React } from 'hooks'
-import { AddressInputPanel } from 'components/AddressInputPanel'
 import { isAddress } from 'ethers/lib/utils'
+import { X } from 'react-feather'
+import styled from 'styled-components'
+
+import { AddressInputPanel } from 'components/AddressInputPanel'
+import { ButtonPrimary } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import { Modal } from 'components/Modal'
+import { LoadingView, SubmittedView } from 'components/ModalViews'
+import { RowBetween } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
 import useENS from 'hooks/useENS'
 import { useDelegateCallback } from 'state/governance/hooks'
 import { useTokenBalance } from 'state/wallet/hooks'
-import { LoadingView, SubmittedView } from 'components/ModalViews'
+
+import { TYPE } from 'theme'
 
 const ContentWrapper = styled(AutoColumn)`
   width: 100%;

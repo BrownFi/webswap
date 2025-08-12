@@ -1,14 +1,17 @@
+import { useContext, useMemo } from 'react'
+
 import { stringify } from 'qs'
-import React, { useContext, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
+
+import { YellowCard } from 'components/Card'
+import { AutoColumn } from 'components/Column'
+
 import useParsedQueryString from 'hooks/useParsedQueryString'
 import useToggledVersion, { DEFAULT_VERSION, Version } from 'hooks/useToggledVersion'
 
 import { StyledInternalLink } from 'theme'
-import { YellowCard } from 'components/Card'
-import { AutoColumn } from 'components/Column'
 
 function VersionLinkContainer({ children }: { children: React.ReactNode }) {
   const theme = useContext(ThemeContext)

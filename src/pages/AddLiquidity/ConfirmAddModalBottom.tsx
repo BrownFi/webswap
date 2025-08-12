@@ -1,13 +1,18 @@
-import { Currency, CurrencyAmount, Fraction, Percent } from '@brownfi/sdk'
 import React from 'react'
+
+import { Currency, CurrencyAmount, Fraction, Percent } from '@brownfi/sdk'
 import { Text } from 'rebass'
+
 import { ButtonPrimary } from 'components/Button'
-import { RowBetween, RowFixed } from 'components/Row'
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { Field } from 'state/mint/actions'
-import { TYPE } from 'theme'
+import { RowBetween, RowFixed } from 'components/Row'
+
 import { useActiveWeb3React } from 'hooks'
+import { Field } from 'state/mint/actions'
+
 import { getTokenSymbol } from 'utils'
+
+import { TYPE } from 'theme'
 
 export function ConfirmAddModalBottom({
   noLiquidity,

@@ -1,14 +1,16 @@
-import { Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
-import { flatMap } from 'lodash'
 import { useEffect, useMemo, useState } from 'react'
 
-import { BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES, ADDITIONAL_BASES } from 'constants/common'
+import { Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
+import { flatMap } from 'lodash'
+
+import { useUserSingleHopOnly } from 'state/user/hooks'
+
+import { ADDITIONAL_BASES, BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES } from 'constants/common'
 import { PairState, usePairs } from 'data/Reserves'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 
-import { useActiveWeb3React } from './index'
 import { useUnsupportedTokens } from './Tokens'
-import { useUserSingleHopOnly } from 'state/user/hooks'
+import { useActiveWeb3React } from './index'
 
 function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
   const { chainId } = useActiveWeb3React()
@@ -21,8 +23,8 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
     if (!chainId) return []
 
     const common = BASES_TO_CHECK_TRADES_AGAINST[chainId] ?? []
-    const additionalA = tokenA ? ADDITIONAL_BASES[chainId]?.[tokenA.address] ?? [] : []
-    const additionalB = tokenB ? ADDITIONAL_BASES[chainId]?.[tokenB.address] ?? [] : []
+    const additionalA = tokenA ? (ADDITIONAL_BASES[chainId]?.[tokenA.address] ?? []) : []
+    const additionalB = tokenB ? (ADDITIONAL_BASES[chainId]?.[tokenB.address] ?? []) : []
 
     return [...common, ...additionalA, ...additionalB]
   }, [chainId, tokenA, tokenB])

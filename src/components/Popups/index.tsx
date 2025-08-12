@@ -1,6 +1,9 @@
 import React from 'react'
+
 import styled from 'styled-components'
+
 import { useActivePopups } from 'state/application/hooks'
+
 import PopupItem from './PopupItem'
 
 const MobilePopupWrapper = styled.div<{ height: string | number }>`

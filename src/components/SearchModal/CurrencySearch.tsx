@@ -1,28 +1,34 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
+import { KeyboardEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
 import { Currency, ETHER, Token } from '@brownfi/sdk'
-import React, { KeyboardEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import AutoSizer from 'react-virtualized-auto-sizer'
 import { FixedSizeList } from 'react-window'
 import { Text } from 'rebass'
-import { useActiveWeb3React } from 'hooks'
-import { useAllTokens, useToken, useIsUserAddedToken, useFoundOnInactiveList } from 'hooks/Tokens'
-import { CloseIcon, TYPE, ButtonText } from 'theme'
-import { isAddress } from 'utils'
+import styled from 'styled-components'
+
 import Column from 'components/Column'
 import Row, { RowBetween, RowFixed } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
+import { useAllTokens, useFoundOnInactiveList, useIsUserAddedToken, useToken } from 'hooks/Tokens'
+import useDebounce from 'hooks/useDebounce'
+import { useOnClickOutside } from 'hooks/useOnClickOutside'
+import useTheme from 'hooks/useTheme'
+import useToggle from 'hooks/useToggle'
+
+import { isAddress } from 'utils'
+
+import searchIcon from 'assets/svg/search.svg'
+import { ButtonText, CloseIcon, TYPE } from 'theme'
+
 import CommonBases from './CommonBases'
 import CurrencyList from './CurrencyList'
+import ImportRow from './ImportRow'
 import { filterTokens, useSortedTokensByQuery } from './filtering'
 import { useTokenComparator } from './sorting'
 import { PaddedColumn, SearchInput } from './styleds'
-import AutoSizer from 'react-virtualized-auto-sizer'
-import styled from 'styled-components'
-import useToggle from 'hooks/useToggle'
-import { useOnClickOutside } from 'hooks/useOnClickOutside'
-import useTheme from 'hooks/useTheme'
-import ImportRow from './ImportRow'
-import useDebounce from 'hooks/useDebounce'
-import searchIcon from 'assets/svg/search.svg'
 
 const ContentWrapper = styled(Column)`
   width: 100%;

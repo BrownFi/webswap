@@ -1,7 +1,8 @@
 import React from 'react'
-import styled from 'styled-components'
+
 import { CardProps, Text } from 'rebass'
 import { Box } from 'rebass/styled-components'
+import styled from 'styled-components'
 
 export const Card = styled(Box)<{ width?: string; padding?: string; border?: string; borderRadius?: string }>`
   width: ${({ width }) => width ?? '100%'};

@@ -1,13 +1,17 @@
 import React from 'react'
-import styled from 'styled-components'
+
 import { CheckCircle, Triangle } from 'react-feather'
+import styled from 'styled-components'
+
+import { Loader } from 'components/Loader'
+import { RowFixed } from 'components/Row'
 
 import { useActiveWeb3React } from 'hooks'
-import { getEtherscanLink } from 'utils'
-import { ExternalLink } from 'theme'
 import { useAllTransactions } from 'state/transactions/hooks'
-import { RowFixed } from 'components/Row'
-import { Loader } from 'components/Loader'
+
+import { getEtherscanLink } from 'utils'
+
+import { ExternalLink } from 'theme'
 
 const TransactionWrapper = styled.div``
 

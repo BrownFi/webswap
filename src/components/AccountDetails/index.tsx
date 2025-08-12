@@ -1,24 +1,30 @@
-import React, { useCallback, useContext } from 'react'
+import { useCallback, useContext } from 'react'
+
+import { ExternalLink as LinkIcon } from 'react-feather'
 import { useDispatch } from 'react-redux'
 import styled, { ThemeContext } from 'styled-components'
+
+import { ButtonSecondary } from 'components/Button'
+import { Identicon } from 'components/Identicon'
+import { AutoRow } from 'components/Row'
+
+import { injected, walletconnect, walletlink } from 'connectors'
+
 import { useActiveWeb3React } from 'hooks'
 import { AppDispatch } from 'state'
 import { clearAllTransactions } from 'state/transactions/actions'
-import { getScanText, shortenAddress } from 'utils'
-import { AutoRow } from 'components/Row'
-import Copy from './Copy'
-import Transaction from './Transaction'
 
 import { SUPPORTED_WALLETS } from 'constants/common'
-import { ReactComponent as Close } from 'assets/images/x.svg'
+import { getScanText, shortenAddress } from 'utils'
 import { getEtherscanLink } from 'utils'
-import { injected, walletconnect, walletlink } from 'connectors'
+
 import CoinbaseWalletIcon from 'assets/images/coinbaseWalletIcon.svg'
 import WalletConnectIcon from 'assets/images/walletConnectIcon.svg'
-import { Identicon } from 'components/Identicon'
-import { ButtonSecondary } from 'components/Button'
-import { ExternalLink as LinkIcon } from 'react-feather'
+import { ReactComponent as Close } from 'assets/images/x.svg'
 import { ExternalLink, LinkStyledButton, TYPE } from 'theme'
+
+import Copy from './Copy'
+import Transaction from './Transaction'
 
 const HeaderRow = styled.div`
   ${({ theme }) => theme.flexRowNoWrap};

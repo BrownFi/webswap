@@ -1,26 +1,32 @@
-import { Currency, CurrencyAmount, currencyEquals, ETHER, Token } from '@brownfi/sdk'
-import React, { CSSProperties, MutableRefObject, useCallback, useMemo } from 'react'
+import { CSSProperties, MutableRefObject, useCallback, useMemo } from 'react'
+
+import { Currency, CurrencyAmount, ETHER, Token, currencyEquals } from '@brownfi/sdk'
 import { FixedSizeList } from 'react-window'
 import { Text } from 'rebass'
 import styled from 'styled-components'
+
+import { LightGreyCard } from 'components/Card'
+import Column from 'components/Column'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import { Loader } from 'components/Loader'
+import QuestionHelper from 'components/QuestionHelper'
+import { RowBetween, RowFixed } from 'components/Row'
+import { MouseoverTooltip } from 'components/Tooltip'
+
 import { useActiveWeb3React } from 'hooks'
+import { useAllInactiveTokens, useIsUserAddedToken } from 'hooks/Tokens'
+import useTheme from 'hooks/useTheme'
 import { WrappedTokenInfo, useCombinedActiveList } from 'state/lists/hooks'
 import { useCurrencyBalance } from 'state/wallet/hooks'
-import { TYPE } from 'theme'
-import { useIsUserAddedToken, useAllInactiveTokens } from 'hooks/Tokens'
-import Column from 'components/Column'
-import { RowFixed, RowBetween } from 'components/Row'
-import { CurrencyLogo } from 'components/CurrencyLogo'
-import { MouseoverTooltip } from 'components/Tooltip'
-import { MenuItem } from './styleds'
-import { Loader } from 'components/Loader'
+
 import { getTokenName, getTokenSymbol, isTokenOnList } from 'utils'
-import ImportRow from './ImportRow'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { LightGreyCard } from 'components/Card'
+
 import TokenListLogo from 'assets/svg/tokenlist.svg'
-import QuestionHelper from 'components/QuestionHelper'
-import useTheme from 'hooks/useTheme'
+import { TYPE } from 'theme'
+
+import ImportRow from './ImportRow'
+import { MenuItem } from './styleds'
 
 function currencyKey(currency: Currency): string {
   return currency instanceof Token ? currency.address : currency === ETHER ? 'ETHER' : ''

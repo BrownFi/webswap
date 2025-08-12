@@ -1,16 +1,20 @@
-import React, { useState } from 'react'
-import { Modal } from 'components/Modal'
-import { AutoColumn } from 'components/Column'
-import styled from 'styled-components'
-import { RowBetween } from 'components/Row'
-import { TYPE, CloseIcon } from 'theme'
-import { ButtonError } from 'components/Button'
-import { StakingInfo } from 'state/stake/hooks'
-import { useStakingContract } from 'hooks/useContract'
-import { SubmittedView, LoadingView } from 'components/ModalViews'
+import { useState } from 'react'
+
 import { TransactionResponse } from '@ethersproject/providers'
-import { useTransactionAdder } from 'state/transactions/hooks'
+import styled from 'styled-components'
+
+import { ButtonError } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import { Modal } from 'components/Modal'
+import { LoadingView, SubmittedView } from 'components/ModalViews'
+import { RowBetween } from 'components/Row'
+
 import { useActiveWeb3React } from 'hooks'
+import { useStakingContract } from 'hooks/useContract'
+import { StakingInfo } from 'state/stake/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
+
+import { CloseIcon, TYPE } from 'theme'
 
 const ContentWrapper = styled(AutoColumn)`
   width: 100%;

@@ -1,14 +1,17 @@
-import React, { useRef } from 'react'
+import { useRef } from 'react'
+
 import { BookOpen, Info, MessageCircle, PieChart } from 'react-feather'
 import styled from 'styled-components'
-import { ReactComponent as MenuIcon } from 'assets/images/menu.svg'
+
+import { ButtonPrimary } from 'components/Button'
+
 import { useActiveWeb3React } from 'hooks'
 import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import { ApplicationModal } from 'state/application/actions'
 import { useModalOpen, useToggleModal } from 'state/application/hooks'
 
+import { ReactComponent as MenuIcon } from 'assets/images/menu.svg'
 import { ExternalLink } from 'theme'
-import { ButtonPrimary } from 'components/Button'
 
 const StyledMenuIcon = styled(MenuIcon)`
   path {
@@ -54,7 +57,10 @@ const StyledMenu = styled.div`
 const MenuFlyout = styled.span`
   min-width: 8.125rem;
   background-color: ${({ theme }) => theme.bg3};
-  box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
+  box-shadow:
+    0px 0px 1px rgba(0, 0, 0, 0.01),
+    0px 4px 8px rgba(0, 0, 0, 0.04),
+    0px 16px 24px rgba(0, 0, 0, 0.04),
     0px 24px 32px rgba(0, 0, 0, 0.01);
   border-radius: 12px;
   padding: 0.5rem;

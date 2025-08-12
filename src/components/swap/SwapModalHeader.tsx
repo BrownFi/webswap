@@ -1,17 +1,23 @@
+import { useContext, useMemo } from 'react'
+
 import { Trade, TradeType } from '@brownfi/sdk'
-import React, { useContext, useMemo } from 'react'
 import { AlertTriangle } from 'react-feather'
 import { ThemeContext } from 'styled-components'
-import { Field } from 'state/swap/actions'
-import { TYPE } from 'theme'
+
 import { ButtonPrimary } from 'components/Button'
-import { getTokenSymbol, isAddress, shortenAddress } from 'utils'
-import { computeSlippageAdjustedAmounts, computeTradePriceBreakdown, warningSeverity } from 'utils/prices'
 import { AutoColumn } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { RowBetween, RowFixed } from 'components/Row'
-import { TruncatedText, SwapShowAcceptChanges } from './styleds'
+
 import { useActiveWeb3React } from 'hooks'
+import { Field } from 'state/swap/actions'
+
+import { getTokenSymbol, isAddress, shortenAddress } from 'utils'
+import { computeSlippageAdjustedAmounts, computeTradePriceBreakdown, warningSeverity } from 'utils/prices'
+
+import { TYPE } from 'theme'
+
+import { SwapShowAcceptChanges, TruncatedText } from './styleds'
 
 export default function SwapModalHeader({
   trade,
@@ -27,10 +33,10 @@ export default function SwapModalHeader({
   onAcceptChanges: () => void
 }) {
   const { chainId } = useActiveWeb3React()
-  const slippageAdjustedAmounts = useMemo(() => computeSlippageAdjustedAmounts(trade, allowedSlippage), [
-    trade,
-    allowedSlippage,
-  ])
+  const slippageAdjustedAmounts = useMemo(
+    () => computeSlippageAdjustedAmounts(trade, allowedSlippage),
+    [trade, allowedSlippage],
+  )
   const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
   const priceImpactSeverity = warningSeverity(priceImpactWithoutFee)
 
@@ -62,8 +68,8 @@ export default function SwapModalHeader({
               priceImpactSeverity > 2
                 ? theme.red1
                 : showAcceptChanges && trade.tradeType === TradeType.EXACT_INPUT
-                ? theme.primary1
-                : 'white'
+                  ? theme.primary1
+                  : 'white'
             }
             className="flex-1"
           >

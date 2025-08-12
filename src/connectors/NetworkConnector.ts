@@ -1,6 +1,6 @@
 import { ExternalProvider, Web3Provider } from '@ethersproject/providers'
-import { ConnectorUpdate } from '@web3-react/types'
 import { AbstractConnector } from '@web3-react/abstract-connector'
+import { ConnectorUpdate } from '@web3-react/types'
 import invariant from 'tiny-invariant'
 
 interface NetworkConnectorArguments {
@@ -18,7 +18,11 @@ type AsyncSendable = {
 }
 
 class RequestError extends Error {
-  constructor(message: string, public code: number, public data?: unknown) {
+  constructor(
+    message: string,
+    public code: number,
+    public data?: unknown,
+  ) {
     super(message)
   }
 }
@@ -176,7 +180,7 @@ export class NetworkConnector extends AbstractConnector {
   }
 
   public getEthersProvider(): Web3Provider {
-    return new Web3Provider((this.provider as unknown) as ExternalProvider, 'any')
+    return new Web3Provider(this.provider as unknown as ExternalProvider, 'any')
   }
 
   public async activate(): Promise<ConnectorUpdate> {

@@ -1,12 +1,16 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
+
 import { Route, Switch } from 'react-router-dom'
-import 'rc-slider/assets/index.css'
-import 'theme/index.css'
 import styled from 'styled-components'
-import GoogleAnalyticsReporter from 'components/analytics/GoogleAnalyticsReporter'
+
 import Popups from 'components/Popups'
 import Web3ReactManager from 'components/Web3ReactManager'
+import GoogleAnalyticsReporter from 'components/analytics/GoogleAnalyticsReporter'
+import StaticScreen from 'containers/StaticScreen'
+
 import DarkModeQueryParamReader from 'theme/DarkModeQueryParamReader'
+import 'theme/index.css'
+
 import AddLiquidity from './AddLiquidity'
 import {
   RedirectDuplicateTokenIds,
@@ -15,6 +19,7 @@ import {
 } from './AddLiquidity/redirects'
 import Earn from './Earn'
 import Manage from './Earn/Manage'
+import Leaderboard from './Leaderboard'
 import MigrateV1 from './MigrateV1'
 import MigrateV1Exchange from './MigrateV1/MigrateV1Exchange'
 import RemoveV1Exchange from './MigrateV1/RemoveV1Exchange'
@@ -26,8 +31,8 @@ import Swap from './Swap'
 import { OpenClaimAddressModalAndRedirectToSwap, RedirectPathToSwapOnly, RedirectToSwap } from './Swap/redirects'
 import Vote from './Vote'
 import VotePage from './Vote/VotePage'
-import Leaderboard from './Leaderboard'
-import StaticScreen from 'containers/StaticScreen'
+
+import 'rc-slider/assets/index.css'
 
 const BodyWrapper = styled.div`
   display: flex;

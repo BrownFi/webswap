@@ -1,30 +1,33 @@
+import { useState } from 'react'
+
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import { useState } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
 
-import { useActiveWeb3React } from 'hooks'
-import { useTokenBalance } from 'state/wallet/hooks'
-import { currencyId } from 'utils/currencyId'
-import { unwrappedToken } from 'utils/wrappedCurrency'
 import { ButtonEmpty, ButtonPrimary, ButtonSecondary } from 'components/Button'
-
-import { usePythPrices } from 'hooks/usePythPrices'
-import { useVersion } from 'hooks/useVersion'
-import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
-import { shouldReversePair } from 'utils/pair'
-import { formatNumber, formatPrice } from 'utils/prices'
-import { BIG_INT_ZERO } from 'constants/common'
 import { Card, LightCard } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
-import { AutoRow, RowBetween, RowFixed } from 'components/Row'
-import { PairStats, usePoolStats } from './usePoolStats'
 import { Loader } from 'components/Loader'
+import { AutoRow, RowBetween, RowFixed } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
+import { usePythPrices } from 'hooks/usePythPrices'
+import { useVersion } from 'hooks/useVersion'
+import { useTokenBalance } from 'state/wallet/hooks'
+
+import { BIG_INT_ZERO } from 'constants/common'
+import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
+import { currencyId } from 'utils/currencyId'
+import { shouldReversePair } from 'utils/pair'
+import { formatNumber, formatPrice } from 'utils/prices'
+import { unwrappedToken } from 'utils/wrappedCurrency'
+
+import { PairStats, usePoolStats } from './usePoolStats'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;

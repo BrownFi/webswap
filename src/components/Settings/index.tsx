@@ -1,17 +1,9 @@
-import React, { useContext, useRef, useState } from 'react'
+import { useContext, useRef, useState } from 'react'
+
 import { X } from 'react-feather'
 import { Text } from 'rebass'
 import styled, { ThemeContext } from 'styled-components'
-import { useOnClickOutside } from 'hooks/useOnClickOutside'
-import { ApplicationModal } from 'state/application/actions'
-import { useModalOpen, useToggleSettingsMenu } from 'state/application/hooks'
-import {
-  useExpertModeManager,
-  useUserTransactionTTL,
-  useUserSlippageTolerance,
-  useUserSingleHopOnly,
-} from 'state/user/hooks'
-import { TYPE } from 'theme'
+
 import { ButtonError } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { Modal } from 'components/Modal'
@@ -19,7 +11,19 @@ import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween, RowFixed } from 'components/Row'
 import Toggle from 'components/Toggle'
 import TransactionSettings from 'components/TransactionSettings'
+
+import { useOnClickOutside } from 'hooks/useOnClickOutside'
+import { ApplicationModal } from 'state/application/actions'
+import { useModalOpen, useToggleSettingsMenu } from 'state/application/hooks'
+import {
+  useExpertModeManager,
+  useUserSingleHopOnly,
+  useUserSlippageTolerance,
+  useUserTransactionTTL,
+} from 'state/user/hooks'
+
 import settings from 'assets/svg/settings.svg'
+import { TYPE } from 'theme'
 
 const StyledCloseIcon = styled(X)`
   height: 20px;
@@ -76,7 +80,10 @@ const StyledMenu = styled.div`
 const MenuFlyout = styled.span`
   min-width: 391px;
   background-color: #3f3d44;
-  box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
+  box-shadow:
+    0px 0px 1px rgba(0, 0, 0, 0.01),
+    0px 4px 8px rgba(0, 0, 0, 0.04),
+    0px 16px 24px rgba(0, 0, 0, 0.04),
     0px 24px 32px rgba(0, 0, 0, 0.01);
   border-radius: 0;
   display: flex;

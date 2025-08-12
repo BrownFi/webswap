@@ -1,14 +1,17 @@
-import React, { useContext } from 'react'
-import { useActiveWeb3React } from 'hooks'
+import { useContext } from 'react'
+
+import { ArrowUpCircle } from 'react-feather'
+import styled, { ThemeContext } from 'styled-components'
 
 import { AutoColumn, ColumnCenter } from 'components/Column'
-import styled, { ThemeContext } from 'styled-components'
 import { RowBetween } from 'components/Row'
-import { TYPE, CloseIcon, CustomLightSpinner } from 'theme'
-import { ArrowUpCircle } from 'react-feather'
+
+import { useActiveWeb3React } from 'hooks'
+
+import { getEtherscanLink } from 'utils'
 
 import Circle from 'assets/images/blue-loader.svg'
-import { getEtherscanLink } from 'utils'
+import { CloseIcon, CustomLightSpinner, TYPE } from 'theme'
 import { ExternalLink } from 'theme/components'
 
 const ConfirmOrLoadingWrapper = styled.div`

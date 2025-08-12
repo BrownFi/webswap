@@ -1,13 +1,16 @@
+import { useMemo } from 'react'
+
 import { transparentize } from 'polished'
-import React, { useMemo } from 'react'
+import { Text, TextProps } from 'rebass'
 import styled, {
+  DefaultTheme,
   ThemeProvider as StyledComponentsThemeProvider,
   createGlobalStyle,
   css,
-  DefaultTheme,
 } from 'styled-components'
+
 import { useIsDarkMode } from 'state/user/hooks'
-import { Text, TextProps } from 'rebass'
+
 import { Colors } from './styled'
 
 export * from './components'

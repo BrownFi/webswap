@@ -1,7 +1,10 @@
-import { Pair } from '@brownfi/sdk'
-import { useActiveWeb3React } from 'hooks'
 import { useEffect } from 'react'
+
+import { Pair } from '@brownfi/sdk'
+
+import { useActiveWeb3React } from 'hooks'
 import { useSingleCallResult } from 'state/multicall/hooks'
+
 import { usePairV2Contract } from './useContract'
 import { useStorageCache } from './useStorageCache'
 import { useVersion } from './useVersion'
@@ -14,7 +17,11 @@ export const useTradingFee = ({ pair }: Props) => {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
 
-  const { get: getTradingFee, save: saveTradingFee, isAvailable } = useStorageCache({
+  const {
+    get: getTradingFee,
+    save: saveTradingFee,
+    isAvailable,
+  } = useStorageCache({
     key: ['tradingFee', pair.liquidityToken.address].join('-'),
     initValue: 0,
     cacheTime: 1 * 60 * 60,

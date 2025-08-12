@@ -1,11 +1,16 @@
-import React, { useContext, useCallback } from 'react'
+import { useCallback, useContext } from 'react'
+
 import styled, { ThemeContext } from 'styled-components'
-import useENS from 'hooks/useENS'
-import { useActiveWeb3React } from 'hooks'
-import { ExternalLink, TYPE } from 'theme'
+
 import { AutoColumn } from 'components/Column'
 import { RowBetween } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
+import useENS from 'hooks/useENS'
+
 import { getEtherscanLink, getScanText } from 'utils'
+
+import { ExternalLink, TYPE } from 'theme'
 
 const InputPanel = styled.div`
   ${({ theme }) => theme.flexColumnNoWrap}
@@ -22,7 +27,8 @@ const ContainerRow = styled.div<{ error: boolean }>`
   align-items: center;
   border-radius: 1.25rem;
   border: 1px solid ${({ error, theme }) => (error ? theme.red1 : theme.bg2)};
-  transition: border-color 300ms ${({ error }) => (error ? 'step-end' : 'step-start')},
+  transition:
+    border-color 300ms ${({ error }) => (error ? 'step-end' : 'step-start')},
     color 500ms ${({ error }) => (error ? 'step-end' : 'step-start')};
   background-color: ${({ theme }) => theme.bg1};
 `

@@ -1,21 +1,24 @@
+import { useState } from 'react'
+
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import { useState } from 'react'
 import { Text } from 'rebass'
 import styled from 'styled-components'
-import { useTotalSupply } from 'data/TotalSupply'
 
-import { useActiveWeb3React } from 'hooks'
-import { useTokenBalance } from 'state/wallet/hooks'
-import { TYPE } from 'theme'
-import { unwrappedToken } from 'utils/wrappedCurrency'
-
-import { useTradingFee } from 'hooks/useTradingFee'
-import { getTokenSymbol } from 'utils'
 import { Card, GreyCard, LightCard } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { RowBetween, RowFixed } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
+import { useTradingFee } from 'hooks/useTradingFee'
+import { useTokenBalance } from 'state/wallet/hooks'
+
+import { useTotalSupply } from 'data/TotalSupply'
+import { getTokenSymbol } from 'utils'
+import { unwrappedToken } from 'utils/wrappedCurrency'
+
+import { TYPE } from 'theme'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;

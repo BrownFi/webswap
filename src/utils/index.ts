@@ -1,9 +1,10 @@
-import { Contract } from '@ethersproject/contracts'
+import { ChainId, Currency, CurrencyAmount, ETHER, JSBI, Percent, Token } from '@brownfi/sdk'
 import { getAddress } from '@ethersproject/address'
-import { AddressZero } from '@ethersproject/constants'
-import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers'
 import { BigNumber } from '@ethersproject/bignumber'
-import { ChainId, JSBI, Percent, Token, CurrencyAmount, Currency, ETHER } from '@brownfi/sdk'
+import { AddressZero } from '@ethersproject/constants'
+import { Contract } from '@ethersproject/contracts'
+import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers'
+
 import { TokenAddressMap } from 'state/lists/hooks'
 
 // returns the checksummed address if the address is valid, otherwise returns false

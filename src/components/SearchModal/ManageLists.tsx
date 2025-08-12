@@ -1,32 +1,36 @@
-import React, { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react'
-import { Settings, CheckCircle } from 'react-feather'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import { TokenList } from '@uniswap/token-lists'
+import { CheckCircle, Settings } from 'react-feather'
 import { usePopper } from 'react-popper'
 import { useDispatch, useSelector } from 'react-redux'
 import styled from 'styled-components'
+
+import { ButtonEmpty, ButtonPrimary } from 'components/Button'
+import { Card } from 'components/Card'
+import Column, { AutoColumn } from 'components/Column'
+import ListLogo from 'components/ListLogo'
+import Row, { RowBetween, RowFixed } from 'components/Row'
+import ListToggle from 'components/Toggle/ListToggle'
+
+import { useListColor } from 'hooks/useColor'
 import { useFetchListCallback } from 'hooks/useFetchListCallback'
 import { useOnClickOutside } from 'hooks/useOnClickOutside'
-import { TokenList } from '@uniswap/token-lists'
-
+import useTheme from 'hooks/useTheme'
 import useToggle from 'hooks/useToggle'
 import { AppDispatch, AppState } from 'state'
-import { acceptListUpdate, removeList, disableList, enableList } from 'state/lists/actions'
-import { useIsListActive, useAllLists, useActiveListUrls } from 'state/lists/hooks'
-import { ExternalLink, LinkStyledButton, TYPE, IconWrapper } from 'theme'
+import { acceptListUpdate, disableList, enableList, removeList } from 'state/lists/actions'
+import { useActiveListUrls, useAllLists, useIsListActive } from 'state/lists/hooks'
+
+import { UNSUPPORTED_LIST_URLS } from 'constants/lists'
 import listVersionLabel from 'utils/listVersionLabel'
 import { parseENSAddress } from 'utils/parseENSAddress'
 import uriToHttp from 'utils/uriToHttp'
-import { ButtonEmpty, ButtonPrimary } from 'components/Button'
 
-import Column, { AutoColumn } from 'components/Column'
-import ListLogo from 'components/ListLogo'
-import Row, { RowFixed, RowBetween } from 'components/Row'
-import { PaddedColumn, SearchInput, Separator, SeparatorDark } from './styleds'
-import { useListColor } from 'hooks/useColor'
-import useTheme from 'hooks/useTheme'
-import ListToggle from 'components/Toggle/ListToggle'
-import {Card} from 'components/Card'
+import { ExternalLink, IconWrapper, LinkStyledButton, TYPE } from 'theme'
+
 import { CurrencyModalView } from './CurrencySearchModal'
-import { UNSUPPORTED_LIST_URLS } from 'constants/lists'
+import { PaddedColumn, SearchInput, Separator, SeparatorDark } from './styleds'
 
 const Wrapper = styled(Column)`
   width: 100%;
@@ -43,10 +47,15 @@ const PopoverContainer = styled.div<{ show: boolean }>`
   z-index: 100;
   visibility: ${(props) => (props.show ? 'visible' : 'hidden')};
   opacity: ${(props) => (props.show ? 1 : 0)};
-  transition: visibility 150ms linear, opacity 150ms linear;
+  transition:
+    visibility 150ms linear,
+    opacity 150ms linear;
   background: ${({ theme }) => theme.bg2};
   border: 1px solid ${({ theme }) => theme.bg3};
-  box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
+  box-shadow:
+    0px 0px 1px rgba(0, 0, 0, 0.01),
+    0px 4px 8px rgba(0, 0, 0, 0.04),
+    0px 16px 24px rgba(0, 0, 0, 0.04),
     0px 24px 32px rgba(0, 0, 0, 0.01);
   color: ${({ theme }) => theme.text2};
   border-radius: 0.5rem;
@@ -80,7 +89,7 @@ const StyledListUrlText = styled(TYPE.main)<{ active: boolean }>`
 `
 
 const RowWrapper = styled(Row)<{ bgColor: string; active: boolean }>`
-  background-color: ${({ bgColor, active, theme }) => (active ? bgColor ?? 'transparent' : theme.bg2)};
+  background-color: ${({ bgColor, active, theme }) => (active ? (bgColor ?? 'transparent') : theme.bg2)};
   transition: 200ms;
   align-items: center;
   padding: 1rem;
@@ -245,8 +254,8 @@ export function ManageLists({
           return l1.name.toLowerCase() < l2.name.toLowerCase()
             ? -1
             : l1.name.toLowerCase() === l2.name.toLowerCase()
-            ? 0
-            : 1
+              ? 0
+              : 1
         }
         if (l1) return -1
         if (l2) return 1

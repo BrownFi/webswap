@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
 import { useWeb3React } from '@web3-react/core'
-import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
+import { useSelector } from 'react-redux'
+import styled from 'styled-components'
+import { useAccount } from 'wagmi'
+
+import { Loader } from 'components/Loader'
+
+import { availableChains } from 'connectors'
+import { NetworkConnector } from 'connectors/NetworkConnector'
 
 import { useEagerConnect, useInactiveListener } from 'hooks'
-import { NetworkContextName } from 'constants/common'
-import { Loader } from 'components/Loader'
-import { NetworkConnector } from 'connectors/NetworkConnector'
-import { useSelector } from 'react-redux'
 import { chainSelector } from 'state/chainSlice'
-import { useAccount } from 'wagmi'
-import { availableChains } from 'connectors'
+
+import { NetworkContextName } from 'constants/common'
 
 const MessageWrapper = styled.div`
   display: flex;

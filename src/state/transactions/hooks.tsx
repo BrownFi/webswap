@@ -1,9 +1,11 @@
-import { TransactionResponse } from '@ethersproject/providers'
 import { useCallback, useMemo } from 'react'
+
+import { TransactionResponse } from '@ethersproject/providers'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { useActiveWeb3React } from 'hooks'
 import { AppDispatch, AppState } from 'state'
+
 import { addTransaction } from './actions'
 import { TransactionDetails } from './reducer'
 
@@ -47,7 +49,7 @@ export function useAllTransactions(): { [txHash: string]: TransactionDetails } {
 
   const state = useSelector<AppState, AppState['transactions']>((state) => state.transactions)
 
-  return chainId ? state[chainId] ?? {} : {}
+  return chainId ? (state[chainId] ?? {}) : {}
 }
 
 export function useIsTransactionPending(transactionHash?: string): boolean {
@@ -90,9 +92,10 @@ export function useHasPendingApproval(tokenAddress: string | undefined, spender:
 
 // watch for submissions to claim
 // return null if not done loading, return undefined if not found
-export function useUserHasSubmittedClaim(
-  account?: string,
-): { claimSubmitted: boolean; claimTxn: TransactionDetails | undefined } {
+export function useUserHasSubmittedClaim(account?: string): {
+  claimSubmitted: boolean
+  claimTxn: TransactionDetails | undefined
+} {
   const allTransactions = useAllTransactions()
 
   // get the txn if it has been submitted

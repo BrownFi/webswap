@@ -1,6 +1,9 @@
-import { DEFAULT_ACTIVE_LIST_URLS, DEFAULT_LIST_OF_LISTS } from 'constants/lists'
-import { createStore, Store } from 'redux'
+import { Store, createStore } from 'redux'
+
 import { updateVersion } from 'state/global/actions'
+
+import { DEFAULT_ACTIVE_LIST_URLS, DEFAULT_LIST_OF_LISTS } from 'constants/lists'
+
 import { acceptListUpdate, addList, enableList, fetchTokenList, removeList } from './actions'
 import reducer, { ListsState } from './reducer'
 

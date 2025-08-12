@@ -1,23 +1,27 @@
-import useENS from 'hooks/useENS'
-import { Version } from 'hooks/useToggledVersion'
-import { parseUnits } from '@ethersproject/units'
-import { Currency, CurrencyAmount, ETHER, JSBI, Token, TokenAmount, Trade } from '@brownfi/sdk'
-import { ParsedQs } from 'qs'
 import { useCallback, useEffect, useState } from 'react'
+
+import { Currency, CurrencyAmount, ETHER, JSBI, Token, TokenAmount, Trade } from '@brownfi/sdk'
+import { parseUnits } from '@ethersproject/units'
+import { ParsedQs } from 'qs'
 import { useDispatch, useSelector } from 'react-redux'
-import { useV1Trade } from 'data/V1'
+
 import { useActiveWeb3React } from 'hooks'
 import { useCurrency } from 'hooks/Tokens'
 import { useTradeExactIn, useTradeExactOut } from 'hooks/Trades'
+import useENS from 'hooks/useENS'
 import useParsedQueryString from 'hooks/useParsedQueryString'
-import { getNativeToken, isAddress, isNativeCurrency } from 'utils'
+import { Version } from 'hooks/useToggledVersion'
+import useToggledVersion from 'hooks/useToggledVersion'
 import { AppDispatch, AppState } from 'state'
+import { useUserSlippageTolerance } from 'state/user/hooks'
 import { useCurrencyBalances } from 'state/wallet/hooks'
+
+import { useV1Trade } from 'data/V1'
+import { getNativeToken, isAddress, isNativeCurrency } from 'utils'
+import { computeSlippageAdjustedAmounts } from 'utils/prices'
+
 import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies, typeInput } from './actions'
 import { SwapState } from './reducer'
-import useToggledVersion from 'hooks/useToggledVersion'
-import { useUserSlippageTolerance } from 'state/user/hooks'
-import { computeSlippageAdjustedAmounts } from 'utils/prices'
 
 export function useSwapState(): AppState['swap'] {
   return useSelector<AppState, AppState['swap']>((state) => state.swap)
@@ -208,15 +212,15 @@ export function useDerivedSwapInfo(): {
         ? slippageAdjustedAmountsV1[Field.INPUT]
         : null
       : slippageAdjustedAmounts
-      ? slippageAdjustedAmounts[Field.INPUT]
-      : null,
+        ? slippageAdjustedAmounts[Field.INPUT]
+        : null,
     toggledVersion === Version.v1
       ? slippageAdjustedAmountsV1
         ? slippageAdjustedAmountsV1[Field.OUTPUT]
         : null
       : slippageAdjustedAmounts
-      ? slippageAdjustedAmounts[Field.OUTPUT]
-      : null,
+        ? slippageAdjustedAmounts[Field.OUTPUT]
+        : null,
   ]
 
   if (balanceIn && amountIn && balanceIn.lessThan(amountIn)) {

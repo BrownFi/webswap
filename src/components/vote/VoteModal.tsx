@@ -1,18 +1,22 @@
-import React, { useState, useContext } from 'react'
-import { useActiveWeb3React } from 'hooks'
+import { useContext, useState } from 'react'
 
-import { Modal } from 'components/Modal'
-import { AutoColumn, ColumnCenter } from 'components/Column'
-import styled, { ThemeContext } from 'styled-components'
-import { RowBetween } from 'components/Row'
-import { TYPE, CustomLightSpinner } from 'theme'
-import { X, ArrowUpCircle } from 'react-feather'
-import { ButtonPrimary } from 'components/Button'
-import Circle from 'assets/images/blue-loader.svg'
-import { useVoteCallback, useUserVotes } from 'state/governance/hooks'
-import { getEtherscanLink } from 'utils'
-import { ExternalLink } from 'theme/components'
 import { TokenAmount } from '@brownfi/sdk'
+import { ArrowUpCircle, X } from 'react-feather'
+import styled, { ThemeContext } from 'styled-components'
+
+import { ButtonPrimary } from 'components/Button'
+import { AutoColumn, ColumnCenter } from 'components/Column'
+import { Modal } from 'components/Modal'
+import { RowBetween } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
+import { useUserVotes, useVoteCallback } from 'state/governance/hooks'
+
+import { getEtherscanLink } from 'utils'
+
+import Circle from 'assets/images/blue-loader.svg'
+import { CustomLightSpinner, TYPE } from 'theme'
+import { ExternalLink } from 'theme/components'
 
 const ContentWrapper = styled(AutoColumn)`
   width: 100%;

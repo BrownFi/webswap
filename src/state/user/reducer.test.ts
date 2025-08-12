@@ -1,7 +1,10 @@
-import { createStore, Store } from 'redux'
-import { DEFAULT_DEADLINE_FROM_NOW, INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+import { Store, createStore } from 'redux'
+
 import { updateVersion } from 'state/global/actions'
-import reducer, { initialState, UserState } from './reducer'
+
+import { DEFAULT_DEADLINE_FROM_NOW, INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+
+import reducer, { UserState, initialState } from './reducer'
 
 describe('swap reducer', () => {
   let store: Store<UserState>

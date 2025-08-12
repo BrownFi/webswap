@@ -1,18 +1,21 @@
-import { Currency, CurrencyAmount, ETHER, JSBI, Token, TokenAmount } from '@brownfi/sdk'
 import { useMemo } from 'react'
-import ERC20_INTERFACE from 'constants/abis/erc20'
-import { useAllTokens } from 'hooks/Tokens'
+
+import { Currency, CurrencyAmount, ETHER, JSBI, Token, TokenAmount } from '@brownfi/sdk'
+
 import { useActiveWeb3React } from 'hooks'
+import { useAllTokens } from 'hooks/Tokens'
 import { useMulticallContract } from 'hooks/useContract'
+import { useMultipleContractSingleData, useSingleContractMultipleData } from 'state/multicall/hooks'
+
+import ERC20_INTERFACE from 'constants/abis/erc20'
 import { isAddress } from 'utils'
-import { useSingleContractMultipleData, useMultipleContractSingleData } from 'state/multicall/hooks'
 
 /**
  * Returns a map of the given addresses to their eventually consistent ETH balances.
  */
-export function useETHBalances(
-  uncheckedAddresses?: (string | undefined)[],
-): { [address: string]: CurrencyAmount | undefined } {
+export function useETHBalances(uncheckedAddresses?: (string | undefined)[]): {
+  [address: string]: CurrencyAmount | undefined
+} {
   const multicallContract = useMulticallContract()
 
   const addresses: string[] = useMemo(
@@ -98,9 +101,10 @@ export function useCurrencyBalances(
   account?: string,
   currencies?: (Currency | undefined)[],
 ): (CurrencyAmount | undefined)[] {
-  const tokens = useMemo(() => currencies?.filter((currency): currency is Token => currency instanceof Token) ?? [], [
-    currencies,
-  ])
+  const tokens = useMemo(
+    () => currencies?.filter((currency): currency is Token => currency instanceof Token) ?? [],
+    [currencies],
+  )
 
   const tokenBalances = useTokenBalances(account, tokens)
   const containsETH: boolean = useMemo(() => currencies?.some((currency) => currency === ETHER) ?? false, [currencies])

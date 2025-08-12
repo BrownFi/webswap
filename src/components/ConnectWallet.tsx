@@ -1,7 +1,10 @@
 import React from 'react'
-import connectWalletIcon from 'assets/svg/account_balance_wallet.svg'
-import { ButtonPrimary } from './Button'
+
 import { useWalletModalToggle } from 'state/application/hooks'
+
+import connectWalletIcon from 'assets/svg/account_balance_wallet.svg'
+
+import { ButtonPrimary } from './Button'
 
 const ConnectWallet = () => {
   const toggleWalletModal = useWalletModalToggle()

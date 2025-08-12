@@ -1,4 +1,5 @@
 import { CurrencyAmount, ETHER, JSBI } from '@brownfi/sdk'
+
 import { MIN_ETH } from 'constants/common'
 
 /**

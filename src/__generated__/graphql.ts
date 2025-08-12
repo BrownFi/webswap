@@ -1,5 +1,6 @@
 /* eslint-disable */
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core'
+
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] }
@@ -1353,7 +1354,7 @@ export type PairListQuery = {
   }
 }
 
-export const PairListDocument = ({
+export const PairListDocument = {
   kind: 'Document',
   definitions: [
     {
@@ -1464,4 +1465,4 @@ export const PairListDocument = ({
       },
     },
   ],
-} as unknown) as DocumentNode<PairListQuery, PairListQueryVariables>
+} as unknown as DocumentNode<PairListQuery, PairListQueryVariables>

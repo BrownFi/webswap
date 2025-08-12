@@ -1,18 +1,20 @@
 import React from 'react'
-import styled from 'styled-components'
-import { darken } from 'polished'
-import { useTranslation } from 'react-i18next'
-import { NavLink, Link as HistoryLink } from 'react-router-dom'
 
+import { darken } from 'polished'
+import { isMobile } from 'react-device-detect'
 import { ChevronLeft } from 'react-feather'
+import { useTranslation } from 'react-i18next'
+import { useDispatch } from 'react-redux'
+import { Link as HistoryLink, NavLink } from 'react-router-dom'
+import { Flex } from 'rebass'
+import styled from 'styled-components'
+
 import { RowBetween } from 'components/Row'
 import { SettingsTab } from 'components/Settings'
-import { useDispatch } from 'react-redux'
+import SwitchVersion from 'components/SwitchVersion'
+
 import { AppDispatch } from 'state'
 import { resetMintState } from 'state/mint/actions'
-import { isMobile } from 'react-device-detect'
-import { Flex } from 'rebass'
-import SwitchVersion from 'components/SwitchVersion'
 
 const Tabs = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}

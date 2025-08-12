@@ -1,11 +1,15 @@
+import { useState } from 'react'
+
 import { useChainModal } from '@rainbow-me/rainbowkit'
-import { ButtonDropdown } from 'components/Button'
-import { availableChains } from 'connectors'
-import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { chainSelector, switchChain } from 'state/chainSlice'
 import { useAccount } from 'wagmi'
+
+import { ButtonDropdown } from 'components/Button'
+
+import { availableChains } from 'connectors'
+
+import { chainSelector, switchChain } from 'state/chainSlice'
 
 const CustomChainSelect = () => {
   const { isConnected, chainId } = useAccount()

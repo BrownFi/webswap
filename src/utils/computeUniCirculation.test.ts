@@ -1,6 +1,8 @@
 import { ChainId, JSBI, Token, TokenAmount } from '@brownfi/sdk'
 import { BigNumber } from 'ethers'
+
 import { ZERO_ADDRESS } from 'constants/common'
+
 import { computeUniCirculation } from './computeUniCirculation'
 
 describe('computeUniCirculation', () => {

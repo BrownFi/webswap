@@ -1,15 +1,18 @@
-import { PRELOADED_PROPOSALS } from 'constants/common'
+import { useCallback, useEffect, useState } from 'react'
+
 import { TokenAmount } from '@brownfi/sdk'
+import { TransactionResponse } from '@ethersproject/providers'
+import GOV_ABI from '@uniswap/governance/build/GovernorAlpha.json'
+import { ethers, utils } from 'ethers'
 import { isAddress } from 'ethers/lib/utils'
+
+import { useActiveWeb3React } from 'hooks'
 import { useGovernanceContract, useUniContract } from 'hooks/useContract'
 import { useSingleCallResult, useSingleContractMultipleData } from 'state/multicall/hooks'
-import { useActiveWeb3React } from 'hooks'
-import { ethers, utils } from 'ethers'
-import { calculateGasMargin } from 'utils'
-import { TransactionResponse } from '@ethersproject/providers'
 import { useTransactionAdder } from 'state/transactions/hooks'
-import { useState, useEffect, useCallback } from 'react'
-import GOV_ABI from '@uniswap/governance/build/GovernorAlpha.json'
+
+import { PRELOADED_PROPOSALS } from 'constants/common'
+import { calculateGasMargin } from 'utils'
 
 interface ProposalDetail {
   target: string

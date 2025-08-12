@@ -1,9 +1,13 @@
+import { useCallback, useMemo, useState } from 'react'
+
+import { Currency, CurrencyAmount, Fraction, JSBI, Percent, Token, TokenAmount, WETH } from '@brownfi/sdk'
 import { TransactionResponse } from '@ethersproject/abstract-provider'
 import { AddressZero } from '@ethersproject/constants'
-import { Currency, CurrencyAmount, Fraction, JSBI, Percent, Token, TokenAmount, WETH } from '@brownfi/sdk'
-import React, { useCallback, useMemo, useState } from 'react'
 import { Redirect, RouteComponentProps } from 'react-router-dom'
 import { Text } from 'rebass'
+
+import { BodyWrapper } from 'pages/AppBody'
+
 import { ButtonConfirmed } from 'components/Button'
 import { LightCard, PinkCard, YellowCard } from 'components/Card'
 import { AutoColumn } from 'components/Column'
@@ -12,10 +16,7 @@ import FormattedCurrencyAmount from 'components/FormattedCurrencyAmount'
 import QuestionHelper from 'components/QuestionHelper'
 import { AutoRow, RowBetween, RowFixed } from 'components/Row'
 import { Dots } from 'components/swap/styleds'
-import { DEFAULT_DEADLINE_FROM_NOW, INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
-import { MIGRATOR_ADDRESS } from 'constants/abis/migrator'
-import { PairState, usePair } from 'data/Reserves'
-import { useTotalSupply } from 'data/TotalSupply'
+
 import { useActiveWeb3React } from 'hooks'
 import { useToken } from 'hooks/Tokens'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
@@ -23,9 +24,15 @@ import { useV1ExchangeContract, useV2MigratorContract } from 'hooks/useContract'
 import { NEVER_RELOAD, useSingleCallResult } from 'state/multicall/hooks'
 import { useIsTransactionPending, useTransactionAdder } from 'state/transactions/hooks'
 import { useETHBalances, useTokenBalance } from 'state/wallet/hooks'
-import { BackArrow, ExternalLink, TYPE } from 'theme'
+
+import { MIGRATOR_ADDRESS } from 'constants/abis/migrator'
+import { DEFAULT_DEADLINE_FROM_NOW, INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+import { PairState, usePair } from 'data/Reserves'
+import { useTotalSupply } from 'data/TotalSupply'
 import { getEtherscanLink, isAddress } from 'utils'
-import { BodyWrapper } from 'pages/AppBody'
+
+import { BackArrow, ExternalLink, TYPE } from 'theme'
+
 import { EmptyState } from './EmptyState'
 
 const WEI_DENOM = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18))
@@ -117,12 +124,7 @@ function V1PairMigration({ liquidityTokenAmount, token }: { liquidityTokenAmount
       : null
 
   const priceDifferenceFraction: Fraction | undefined =
-    v1SpotPrice && v2SpotPrice
-      ? v1SpotPrice
-          .divide(v2SpotPrice)
-          .multiply('100')
-          .subtract('100')
-      : undefined
+    v1SpotPrice && v2SpotPrice ? v1SpotPrice.divide(v2SpotPrice).multiply('100').subtract('100') : undefined
 
   const priceDifferenceAbs: Fraction | undefined = priceDifferenceFraction?.lessThan(ZERO)
     ? priceDifferenceFraction?.multiply('-1')
@@ -130,10 +132,7 @@ function V1PairMigration({ liquidityTokenAmount, token }: { liquidityTokenAmount
 
   const minAmountETH: JSBI | undefined =
     v2SpotPrice && tokenWorth
-      ? tokenWorth
-          .divide(v2SpotPrice)
-          .multiply(WEI_DENOM)
-          .multiply(ALLOWED_OUTPUT_MIN_PERCENT).quotient
+      ? tokenWorth.divide(v2SpotPrice).multiply(WEI_DENOM).multiply(ALLOWED_OUTPUT_MIN_PERCENT).quotient
       : ethWorth?.numerator
 
   const minAmountToken: JSBI | undefined =

@@ -1,5 +1,7 @@
-import { Token } from '@brownfi/sdk'
 import React from 'react'
+
+import { Token } from '@brownfi/sdk'
+
 import { Modal } from 'components/Modal'
 import { ImportToken } from 'components/SearchModal/ImportToken'
 

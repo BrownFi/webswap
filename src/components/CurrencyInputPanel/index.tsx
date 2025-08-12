@@ -1,21 +1,25 @@
+import { useCallback, useState } from 'react'
+
 import { ChainId, Currency, Pair } from '@brownfi/sdk'
-import React, { useState, useCallback } from 'react'
-import styled from 'styled-components'
 import { darken } from 'polished'
-import { useCurrencyBalance } from 'state/wallet/hooks'
-import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
+import { isMobile } from 'react-device-detect'
+import { useTranslation } from 'react-i18next'
+import styled from 'styled-components'
+
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
-import { RowBetween } from 'components/Row'
-import { TYPE } from 'theme'
 import { Input as NumericalInput } from 'components/NumericalInput'
-import downIcon from 'assets/svg/arrow_drop_down.svg'
+import { RowBetween } from 'components/Row'
+import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 
 import { useActiveWeb3React } from 'hooks'
-import { useTranslation } from 'react-i18next'
 import useTheme from 'hooks/useTheme'
-import { isMobile } from 'react-device-detect'
+import { useCurrencyBalance } from 'state/wallet/hooks'
+
 import { getTokenSymbol } from 'utils'
+
+import downIcon from 'assets/svg/arrow_drop_down.svg'
+import { TYPE } from 'theme'
 
 const InputRow = styled.div<{ selected: boolean }>`
   ${({ theme }) => theme.flexRowNoWrap}
@@ -81,7 +85,6 @@ const Container = styled.div<{ hideInput: boolean }>`
 const StyledTokenName = styled.span<{ active?: boolean }>`
   ${({ active }) => (active ? '  margin: 0 0.25rem 0 0.75rem;' : '  margin: 0 0.25rem 0 0.25rem;')}
   font-size:  ${({ active }) => (active ? '14px' : '14px')};
-
 `
 
 const StyledBalanceMax = styled.button`

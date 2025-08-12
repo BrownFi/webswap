@@ -1,26 +1,32 @@
+import { useCallback, useEffect, useState } from 'react'
+
 import { Currency, ETHER, JSBI, TokenAmount } from '@brownfi/sdk'
-import React, { useCallback, useEffect, useState } from 'react'
 import { Plus } from 'react-feather'
 import { Text } from 'rebass'
+
+import { AppBody } from 'pages/AppBody'
+import { Dots } from 'pages/Pool/styleds'
+
 import { ButtonDropdownLight } from 'components/Button'
 import { LightCard } from 'components/Card'
+import { BlueCard } from 'components/Card'
 import { AutoColumn, ColumnCenter } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { FindPoolTabs } from 'components/NavigationTabs'
 import { MinimalPositionCard } from 'components/PositionCard/MinimalPositionCard'
 import Row from 'components/Row'
 import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
-import { PairState, usePair } from 'data/Reserves'
+
 import { useActiveWeb3React } from 'hooks'
 import { usePairAdder } from 'state/user/hooks'
 import { useTokenBalance } from 'state/wallet/hooks'
-import { StyledInternalLink } from 'theme'
-import { currencyId } from 'utils/currencyId'
-import { AppBody } from 'pages/AppBody'
-import { Dots } from 'pages/Pool/styleds'
-import { BlueCard } from 'components/Card'
-import { TYPE } from 'theme'
+
+import { PairState, usePair } from 'data/Reserves'
 import { getTokenSymbol } from 'utils'
+import { currencyId } from 'utils/currencyId'
+
+import { StyledInternalLink } from 'theme'
+import { TYPE } from 'theme'
 
 enum Fields {
   TOKEN0 = 0,

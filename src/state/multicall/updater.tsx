@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { Contract } from '@ethersproject/contracts'
 import { useEffect, useMemo, useRef } from 'react'
+
+import { Contract } from '@ethersproject/contracts'
 import { useDispatch, useSelector } from 'react-redux'
+
 import { useActiveWeb3React } from 'hooks'
 import { useMulticallContract } from 'hooks/useContract'
 import useDebounce from 'hooks/useDebounce'
-import chunkArray from 'utils/chunkArray'
-import { CancelledError, retry, RetryableError } from 'utils/retry'
-import { useBlockNumber } from 'state/application/hooks'
 import { AppDispatch, AppState } from 'state'
+import { useBlockNumber } from 'state/application/hooks'
+
+import chunkArray from 'utils/chunkArray'
+import { CancelledError, RetryableError, retry } from 'utils/retry'
+
 import {
   Call,
   errorFetchingMulticallResults,
@@ -144,9 +148,10 @@ export default function Updater(): null {
     return outdatedListeningKeys(state.callResults, listeningKeys, chainId, latestBlockNumber)
   }, [chainId, state.callResults, listeningKeys, latestBlockNumber])
 
-  const serializedOutdatedCallKeys = useMemo(() => JSON.stringify(unserializedOutdatedCallKeys.sort()), [
-    unserializedOutdatedCallKeys,
-  ])
+  const serializedOutdatedCallKeys = useMemo(
+    () => JSON.stringify(unserializedOutdatedCallKeys.sort()),
+    [unserializedOutdatedCallKeys],
+  )
 
   useEffect(() => {
     if (!latestBlockNumber || !chainId || !multicallContract) return

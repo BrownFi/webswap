@@ -1,23 +1,30 @@
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+
 import { JSBI, Token } from '@brownfi/sdk'
-import React, { useCallback, useContext, useMemo, useState, useEffect } from 'react'
 import { ThemeContext } from 'styled-components'
-import { AutoColumn } from 'components/Column'
-import { AutoRow } from 'components/Row'
-import { SearchInput } from 'components/SearchModal/styleds'
-import { useAllTokenV1Exchanges } from 'data/V1'
-import { useActiveWeb3React } from 'hooks'
-import { useAllTokens, useToken } from 'hooks/Tokens'
-import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
-import { BackArrow, TYPE } from 'theme'
-import { LightCard } from 'components/Card'
+
 import { BodyWrapper } from 'pages/AppBody'
-import { EmptyState } from './EmptyState'
+
+import { LightCard } from 'components/Card'
+import { AutoColumn } from 'components/Column'
 import V1PositionCard from 'components/PositionCard/V1'
 import QuestionHelper from 'components/QuestionHelper'
+import { AutoRow } from 'components/Row'
+import { SearchInput } from 'components/SearchModal/styleds'
 import { Dots } from 'components/swap/styleds'
-import { useAddUserToken } from 'state/user/hooks'
-import { isTokenOnList } from 'utils'
+
+import { useActiveWeb3React } from 'hooks'
+import { useAllTokens, useToken } from 'hooks/Tokens'
 import { useCombinedActiveList } from 'state/lists/hooks'
+import { useAddUserToken } from 'state/user/hooks'
+import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
+
+import { useAllTokenV1Exchanges } from 'data/V1'
+import { isTokenOnList } from 'utils'
+
+import { BackArrow, TYPE } from 'theme'
+
+import { EmptyState } from './EmptyState'
 
 export default function MigrateV1() {
   const theme = useContext(ThemeContext)

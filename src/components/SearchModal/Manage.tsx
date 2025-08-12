@@ -1,15 +1,19 @@
-import React, { useState } from 'react'
-import { PaddedColumn } from './styleds'
-import { RowBetween } from 'components/Row'
+import { useState } from 'react'
+
+import { Token } from '@brownfi/sdk'
+import { TokenList } from '@uniswap/token-lists'
 import { ChevronLeft } from 'react-feather'
 import { Text } from 'rebass'
-import { CloseIcon } from 'theme'
 import styled from 'styled-components'
-import { Token } from '@brownfi/sdk'
+
+import { RowBetween } from 'components/Row'
+
+import { CloseIcon } from 'theme'
+
+import { CurrencyModalView } from './CurrencySearchModal'
 import { ManageLists } from './ManageLists'
 import ManageTokens from './ManageTokens'
-import { TokenList } from '@uniswap/token-lists'
-import { CurrencyModalView } from './CurrencySearchModal'
+import { PaddedColumn } from './styleds'
 
 const Wrapper = styled.div`
   width: 100%;

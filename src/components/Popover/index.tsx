@@ -1,17 +1,21 @@
+import { useCallback, useState } from 'react'
+
 import { Placement } from '@popperjs/core'
+import Portal from '@reach/portal'
 import { transparentize } from 'polished'
-import React, { useCallback, useState } from 'react'
 import { usePopper } from 'react-popper'
 import styled from 'styled-components'
+
 import useInterval from 'hooks/useInterval'
-import Portal from '@reach/portal'
 
 const PopoverContainer = styled.div<{ show: boolean }>`
   z-index: 9999;
 
   visibility: ${(props) => (props.show ? 'visible' : 'hidden')};
   opacity: ${(props) => (props.show ? 1 : 0)};
-  transition: visibility 150ms linear, opacity 150ms linear;
+  transition:
+    visibility 150ms linear,
+    opacity 150ms linear;
 
   background: #323038;
   border: 0;

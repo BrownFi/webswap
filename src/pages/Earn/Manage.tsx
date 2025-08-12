@@ -1,34 +1,36 @@
-import React, { useCallback, useState } from 'react'
-import { AutoColumn } from 'components/Column'
-import styled from 'styled-components'
+import { useCallback, useState } from 'react'
+
+import { ETHER, JSBI, TokenAmount } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
-
-import { JSBI, TokenAmount, ETHER } from '@brownfi/sdk'
 import { RouteComponentProps } from 'react-router-dom'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
-import { useCurrency } from 'hooks/Tokens'
-import { useWalletModalToggle } from 'state/application/hooks'
-import { TYPE } from 'theme'
-
-import { RowBetween } from 'components/Row'
-import { CardSection, DataCard, CardNoise, CardBGImage } from 'components/earn/styled'
-import { ButtonPrimary, ButtonEmpty } from 'components/Button'
-import StakingModal from 'components/earn/StakingModal'
-import { useStakingInfo } from 'state/stake/hooks'
-import UnstakingModal from 'components/earn/UnstakingModal'
-import ClaimRewardModal from 'components/earn/ClaimRewardModal'
-import { useTokenBalance } from 'state/wallet/hooks'
-import { useActiveWeb3React } from 'hooks'
-import { useColor } from 'hooks/useColor'
+import styled from 'styled-components'
 import { CountUp } from 'use-count-up'
 
-import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { currencyId } from 'utils/currencyId'
-import { useTotalSupply } from 'data/TotalSupply'
-import { usePair } from 'data/Reserves'
+import { ButtonEmpty, ButtonPrimary } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { RowBetween } from 'components/Row'
+import ClaimRewardModal from 'components/earn/ClaimRewardModal'
+import StakingModal from 'components/earn/StakingModal'
+import UnstakingModal from 'components/earn/UnstakingModal'
+import { CardBGImage, CardNoise, CardSection, DataCard } from 'components/earn/styled'
+
+import { useActiveWeb3React } from 'hooks'
+import { useCurrency } from 'hooks/Tokens'
+import { useColor } from 'hooks/useColor'
 import usePrevious from 'hooks/usePrevious'
+import { useWalletModalToggle } from 'state/application/hooks'
+import { useStakingInfo } from 'state/stake/hooks'
+import { useTokenBalance } from 'state/wallet/hooks'
+
+import { BIG_INT_SECONDS_IN_WEEK, BIG_INT_ZERO } from 'constants/common'
+import { usePair } from 'data/Reserves'
+import { useTotalSupply } from 'data/TotalSupply'
+import { currencyId } from 'utils/currencyId'
 import useUSDCPrice from 'utils/useUSDCPrice'
-import { BIG_INT_ZERO, BIG_INT_SECONDS_IN_WEEK } from 'constants/common'
+import { wrappedCurrency } from 'utils/wrappedCurrency'
+
+import { TYPE } from 'theme'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 640px;
@@ -178,9 +180,9 @@ export default function Manage({
             <TYPE.body style={{ margin: 0 }}>Pool Rate</TYPE.body>
             <TYPE.body fontSize={24} fontWeight={500}>
               {stakingInfo?.active
-                ? stakingInfo?.totalRewardRate
+                ? (stakingInfo?.totalRewardRate
                     ?.multiply(BIG_INT_SECONDS_IN_WEEK)
-                    ?.toFixed(0, { groupSeparator: ',' }) ?? '-'
+                    ?.toFixed(0, { groupSeparator: ',' }) ?? '-')
                 : '0'}
               {' UNI / week'}
             </TYPE.body>
@@ -296,9 +298,9 @@ export default function Manage({
                     ⚡
                   </span>
                   {stakingInfo?.active
-                    ? stakingInfo?.rewardRate
+                    ? (stakingInfo?.rewardRate
                         ?.multiply(BIG_INT_SECONDS_IN_WEEK)
-                        ?.toSignificant(4, { groupSeparator: ',' }) ?? '-'
+                        ?.toSignificant(4, { groupSeparator: ',' }) ?? '-')
                     : '0'}
                   {' UNI / week'}
                 </TYPE.black>

@@ -1,13 +1,13 @@
+import { ChainId } from '@brownfi/sdk'
+import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { InjectedConnector } from '@web3-react/injected-connector'
-import { WalletConnectConnector } from './WalletConnector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
-
+import { defineChain } from 'viem'
 import * as defaultChains from 'viem/chains'
 
 import UNISWAP_LOGO_URL from 'assets/svg/logo.svg'
-import { ChainId } from '@brownfi/sdk'
-import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { defineChain } from 'viem'
+
+import { WalletConnectConnector } from './WalletConnector'
 
 // mainnet only
 export const walletconnect = new WalletConnectConnector({

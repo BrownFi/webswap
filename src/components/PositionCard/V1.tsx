@@ -1,15 +1,18 @@
-import React, { useContext } from 'react'
-import { Link, RouteComponentProps, withRouter } from 'react-router-dom'
-import { Token, TokenAmount, WETH } from '@brownfi/sdk'
+import { useContext } from 'react'
 
+import { Token, TokenAmount, WETH } from '@brownfi/sdk'
+import { Link, RouteComponentProps, withRouter } from 'react-router-dom'
 import { Text } from 'rebass'
-import { AutoColumn } from 'components/Column'
-import { ButtonSecondary } from 'components/Button'
-import { RowBetween, RowFixed } from 'components/Row'
-import { FixedHeightRow, HoverCard } from './index'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
-import { useActiveWeb3React } from 'hooks'
 import { ThemeContext } from 'styled-components'
+
+import { ButtonSecondary } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { RowBetween, RowFixed } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
+
+import { FixedHeightRow, HoverCard } from './index'
 
 interface PositionCardProps extends RouteComponentProps<any> {
   token: Token

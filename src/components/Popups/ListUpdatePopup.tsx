@@ -1,16 +1,21 @@
-import { diffTokenLists, TokenList } from '@uniswap/token-lists'
 import React, { useCallback, useMemo } from 'react'
+
+import { TokenList, diffTokenLists } from '@uniswap/token-lists'
 import { useDispatch } from 'react-redux'
 import { Text } from 'rebass'
 import styled from 'styled-components'
-import { AppDispatch } from 'state'
-import { useRemovePopup } from 'state/application/hooks'
-import { acceptListUpdate } from 'state/lists/actions'
-import { TYPE } from 'theme'
-import listVersionLabel from 'utils/listVersionLabel'
+
 import { ButtonSecondary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { AutoRow } from 'components/Row'
+
+import { AppDispatch } from 'state'
+import { useRemovePopup } from 'state/application/hooks'
+import { acceptListUpdate } from 'state/lists/actions'
+
+import listVersionLabel from 'utils/listVersionLabel'
+
+import { TYPE } from 'theme'
 
 export const ChangesList = styled.ul`
   max-height: 400px;
@@ -41,7 +46,11 @@ export default function ListUpdatePopup({
     removeThisPopup()
   }, [auto, dispatch, listUrl, removeThisPopup])
 
-  const { added: tokensAdded, changed: tokensChanged, removed: tokensRemoved } = useMemo(() => {
+  const {
+    added: tokensAdded,
+    changed: tokensChanged,
+    removed: tokensRemoved,
+  } = useMemo(() => {
     return diffTokenLists(oldList.tokens, newList.tokens)
   }, [newList.tokens, oldList.tokens])
   const numTokensChanged = useMemo(

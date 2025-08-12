@@ -1,5 +1,7 @@
-import React, { Component, ReactNode } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { Component, ReactNode } from 'react'
+
+import { RouteComponentProps, withRouter } from 'react-router-dom'
+
 import StaticScreen from './StaticScreen'
 
 interface Props extends RouteComponentProps {

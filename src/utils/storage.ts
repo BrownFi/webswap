@@ -5,12 +5,11 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 
 const StorageTypes = ['localStorage', 'sessionStorage', 'none'] as const
 
-export type StorageType = typeof StorageTypes[number]
+export type StorageType = (typeof StorageTypes)[number]
 
 const DefaultStorageType: StorageType = 'localStorage'
 

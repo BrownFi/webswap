@@ -1,43 +1,48 @@
-import { addLiquidity, Currency, currencyEquals, getRouterAddress, TokenAmount, WETH } from '@brownfi/sdk'
-import React, { useCallback, useContext, useState } from 'react'
+import { useCallback, useContext, useState } from 'react'
+
+import { Currency, TokenAmount, WETH, addLiquidity, currencyEquals, getRouterAddress } from '@brownfi/sdk'
 import { Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
+
+import { AppBody } from 'pages/AppBody'
+import { Dots, Wrapper } from 'pages/Pool/styleds'
+
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { BlueCard, LightCard } from 'components/Card'
 import { AutoColumn, ColumnCenter } from 'components/Column'
-import { TransactionConfirmationModal, ConfirmationModalContent } from 'components/TransactionConfirmationModal'
+import ConnectWallet from 'components/ConnectWallet'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import { MinimalPositionCard } from 'components/PositionCard/MinimalPositionCard'
 import Row, { RowBetween, RowFlat } from 'components/Row'
+import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
+import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
+import { useToast } from 'containers/ToastProvider'
 
-import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { useCurrency } from 'hooks/Tokens'
+import { useIsTransactionUnsupported } from 'hooks/Trades'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
+import { usePythPrices } from 'hooks/usePythPrices'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
+import { useVersion } from 'hooks/useVersion'
 import { Field } from 'state/mint/actions'
 import { useDerivedMintInfo, useMintActionHandlers, useMintState } from 'state/mint/hooks'
-
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { useIsExpertMode, useUserSlippageTolerance } from 'state/user/hooks'
-import { TYPE } from 'theme'
-import { maxAmountSpend } from 'utils/maxAmountSpend'
-import { AppBody } from 'pages/AppBody'
-import { Dots, Wrapper } from 'pages/Pool/styleds'
-import { ConfirmAddModalBottom } from './ConfirmAddModalBottom'
-import { currencyId } from 'utils/currencyId'
-import { PoolPriceBar } from './PoolPriceBar'
-import { useIsTransactionUnsupported } from 'hooks/Trades'
-import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
+
+import { PairState } from 'data/Reserves'
 import { getTokenSymbol } from 'utils'
-import ConnectWallet from 'components/ConnectWallet'
-import { usePythPrices } from 'hooks/usePythPrices'
-import { useVersion } from 'hooks/useVersion'
-import { useToast } from 'containers/ToastProvider'
+import { currencyId } from 'utils/currencyId'
+import { maxAmountSpend } from 'utils/maxAmountSpend'
+
+import { TYPE } from 'theme'
+
+import { ConfirmAddModalBottom } from './ConfirmAddModalBottom'
+import { PoolPriceBar } from './PoolPriceBar'
 
 export default function AddLiquidity({
   match: {
@@ -106,8 +111,8 @@ export default function AddLiquidity({
     [dependentField]: noLiquidity
       ? otherTypedValue
       : version === 2
-      ? formattedPythAmounts[dependentField]
-      : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
+        ? formattedPythAmounts[dependentField]
+        : (parsedAmounts[dependentField]?.toSignificant(6) ?? ''),
   }
 
   // get the max amounts user can add
@@ -229,8 +234,9 @@ export default function AddLiquidity({
           </Text>
         </Row>
         <TYPE.italic fontSize={12} textAlign="left" padding={'8px 0 0 0 '} color={'white'} opacity={0.5}>
-          {`Output is estimated. If the price changes by more than ${allowedSlippage /
-            100}% your transaction will revert.`}
+          {`Output is estimated. If the price changes by more than ${
+            allowedSlippage / 100
+          }% your transaction will revert.`}
         </TYPE.italic>
       </AutoColumn>
     )

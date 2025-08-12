@@ -1,10 +1,15 @@
-import { AbstractConnector } from '@web3-react/abstract-connector'
 import React from 'react'
+
+import { AbstractConnector } from '@web3-react/abstract-connector'
 import styled from 'styled-components'
-import Option from './Option'
-import { SUPPORTED_WALLETS } from 'constants/common'
-import { injected } from 'connectors'
+
 import { Loader } from 'components/Loader'
+
+import { injected } from 'connectors'
+
+import { SUPPORTED_WALLETS } from 'constants/common'
+
+import Option from './Option'
 
 const PendingSection = styled.div`
   ${({ theme }) => theme.flexColumnNoWrap};

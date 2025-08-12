@@ -1,11 +1,15 @@
-import React, { PropsWithChildren } from 'react'
-import 'rc-slider/assets/index.css'
-import 'theme/index.css'
+import { PropsWithChildren } from 'react'
+
 import styled from 'styled-components'
+
 import Footer from 'components/Footer'
+import Header from 'components/Header'
+
 import csm from 'assets/svg/csm.svg'
 import mathImage from 'assets/svg/math-image.svg'
-import Header from 'components/Header'
+import 'theme/index.css'
+
+import 'rc-slider/assets/index.css'
 
 const AppWrapper = styled.div`
   display: flex;

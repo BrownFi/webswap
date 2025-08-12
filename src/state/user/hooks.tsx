@@ -1,26 +1,27 @@
-import { BASES_TO_TRACK_LIQUIDITY_FOR, ChainId, Pair, PINNED_PAIRS, Token } from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
-import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 
+import { BASES_TO_TRACK_LIQUIDITY_FOR, ChainId, PINNED_PAIRS, Pair, Token } from '@brownfi/sdk'
 import { flatMap } from 'lodash'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 
 import { useActiveWeb3React } from 'hooks'
 import { useAllTokens } from 'hooks/Tokens'
+import { useVersion } from 'hooks/useVersion'
 import { AppDispatch, AppState } from 'state'
+
 import {
+  SerializedPair,
+  SerializedToken,
   addSerializedPair,
   addSerializedToken,
   removeSerializedToken,
-  SerializedPair,
-  SerializedToken,
+  toggleURLWarning,
   updateUserDarkMode,
   updateUserDeadline,
   updateUserExpertMode,
-  updateUserSlippageTolerance,
-  toggleURLWarning,
   updateUserSingleHopOnly,
+  updateUserSlippageTolerance,
 } from './actions'
-import { useVersion } from 'hooks/useVersion'
 
 function serializeToken(token: Token): SerializedToken {
   return {
@@ -220,7 +221,7 @@ export function useGetListPairs(
   },
 ): [Token, Token][] {
   // pinned pairs
-  const pinnedPairs = useMemo(() => (chainId ? PINNED_PAIRS[chainId] ?? [] : []), [chainId])
+  const pinnedPairs = useMemo(() => (chainId ? (PINNED_PAIRS[chainId] ?? []) : []), [chainId])
 
   // pairs for every token against every base
   const generatedPairs: [Token, Token][] = useMemo(() => {
@@ -262,11 +263,10 @@ export function useGetListPairs(
     })
   }, [tokens, savedSerializedPairs, chainId])
 
-  const combinedList = useMemo(() => generatedPairs.concat(userPairs).concat(pinnedPairs), [
-    userPairs,
-    generatedPairs,
-    pinnedPairs,
-  ])
+  const combinedList = useMemo(
+    () => generatedPairs.concat(userPairs).concat(pinnedPairs),
+    [userPairs, generatedPairs, pinnedPairs],
+  )
 
   return useMemo(() => {
     // dedupes pairs of tokens in the combined list

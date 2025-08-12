@@ -1,4 +1,5 @@
-import { AddressZero } from '@ethersproject/constants'
+import { useMemo } from 'react'
+
 import {
   BigintIsh,
   Currency,
@@ -13,7 +14,8 @@ import {
   TradeType,
   WETH,
 } from '@brownfi/sdk'
-import { useMemo } from 'react'
+import { AddressZero } from '@ethersproject/constants'
+
 import { useActiveWeb3React } from 'hooks'
 import { useAllTokens } from 'hooks/Tokens'
 import { useV1FactoryContract } from 'hooks/useContract'
@@ -150,8 +152,8 @@ export function useV1TradeExchangeAddress(trade: Trade | undefined): string | un
     return trade.inputAmount instanceof TokenAmount
       ? trade.inputAmount.token.address
       : trade.outputAmount instanceof TokenAmount
-      ? trade.outputAmount.token.address
-      : undefined
+        ? trade.outputAmount.token.address
+        : undefined
   }, [trade])
   return useV1ExchangeAddress(tokenAddress)
 }

@@ -1,9 +1,12 @@
-import React, { useCallback, useContext, useEffect } from 'react'
+import { useCallback, useContext, useEffect } from 'react'
+
 import { X } from 'react-feather'
-import { useSpring, animated } from 'react-spring'
+import { animated, useSpring } from 'react-spring'
 import styled, { ThemeContext } from 'styled-components'
+
 import { PopupContent } from 'state/application/actions'
 import { useRemovePopup } from 'state/application/hooks'
+
 import ListUpdatePopup from './ListUpdatePopup'
 import TransactionPopup from './TransactionPopup'
 

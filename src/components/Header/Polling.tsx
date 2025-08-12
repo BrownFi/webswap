@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
 import styled, { keyframes } from 'styled-components'
-import { TYPE, ExternalLink } from 'theme'
-import { useBlockNumber } from 'state/application/hooks'
-import { getEtherscanLink } from 'utils'
+
 import { useActiveWeb3React } from 'hooks'
+import { useBlockNumber } from 'state/application/hooks'
+
+import { getEtherscanLink } from 'utils'
+
+import { ExternalLink, TYPE } from 'theme'
 
 const StyledPolling = styled.div`
   position: fixed;

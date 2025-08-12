@@ -1,17 +1,23 @@
 import React from 'react'
-import { AutoColumn } from 'components/Column'
-import styled from 'styled-components'
-import { STAKING_REWARDS_INFO, useStakingInfo } from 'state/stake/hooks'
-import { TYPE, ExternalLink } from 'theme'
-import PoolCard from 'components/earn/PoolCard'
-import { RowBetween } from 'components/Row'
-import { CardSection, DataCard, CardNoise, CardBGImage } from 'components/earn/styled'
-import { Countdown } from './Countdown'
-import { Loader } from 'components/Loader'
-import { useActiveWeb3React } from 'hooks'
+
 import { JSBI } from '@brownfi/sdk'
-import { BIG_INT_ZERO } from 'constants/common'
+import styled from 'styled-components'
+
 import { OutlineCard } from 'components/Card'
+import { AutoColumn } from 'components/Column'
+import { Loader } from 'components/Loader'
+import { RowBetween } from 'components/Row'
+import PoolCard from 'components/earn/PoolCard'
+import { CardBGImage, CardNoise, CardSection, DataCard } from 'components/earn/styled'
+
+import { useActiveWeb3React } from 'hooks'
+import { STAKING_REWARDS_INFO, useStakingInfo } from 'state/stake/hooks'
+
+import { BIG_INT_ZERO } from 'constants/common'
+
+import { ExternalLink, TYPE } from 'theme'
+
+import { Countdown } from './Countdown'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 640px;

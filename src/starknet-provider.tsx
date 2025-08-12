@@ -1,6 +1,7 @@
 import React from 'react'
-import { StarknetConfig, argent, braavos, publicProvider, useInjectedConnectors } from '@starknet-react/core'
+
 import { mainnet, sepolia } from '@starknet-react/chains'
+import { StarknetConfig, argent, braavos, publicProvider, useInjectedConnectors } from '@starknet-react/core'
 
 export function StarknetProvider({ children }: { children: React.ReactNode }) {
   const chains = [sepolia, mainnet]

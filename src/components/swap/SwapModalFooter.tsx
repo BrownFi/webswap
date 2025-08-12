@@ -1,10 +1,19 @@
+import { useContext, useMemo, useState } from 'react'
+
 import { Trade, TradeType } from '@brownfi/sdk'
-import React, { useContext, useMemo, useState } from 'react'
 import { Repeat } from 'react-feather'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
+
+import { ButtonError } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import QuestionHelper from 'components/QuestionHelper'
+import { AutoRow, RowBetween, RowFixed } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
 import { Field } from 'state/swap/actions'
-import { TYPE } from 'theme'
+
+import { formatStringToNumber, getTokenSymbol } from 'utils'
 import {
   computeSlippageAdjustedAmounts,
   computeTradePriceBreakdown,
@@ -12,13 +21,10 @@ import {
   warningSeverity,
   warningSeveritySlippage,
 } from 'utils/prices'
-import { ButtonError } from 'components/Button'
-import { AutoColumn } from 'components/Column'
-import QuestionHelper from 'components/QuestionHelper'
-import { AutoRow, RowBetween, RowFixed } from 'components/Row'
+
+import { TYPE } from 'theme'
+
 import { ErrorText, StyledBalanceMaxMini, SwapCallbackError } from './styleds'
-import { formatStringToNumber, getTokenSymbol } from 'utils'
-import { useActiveWeb3React } from 'hooks'
 
 export default function SwapModalFooter({
   trade,
@@ -36,10 +42,10 @@ export default function SwapModalFooter({
   const theme = useContext(ThemeContext)
   const { chainId } = useActiveWeb3React()
 
-  const slippageAdjustedAmounts = useMemo(() => computeSlippageAdjustedAmounts(trade, allowedSlippage), [
-    allowedSlippage,
-    trade,
-  ])
+  const slippageAdjustedAmounts = useMemo(
+    () => computeSlippageAdjustedAmounts(trade, allowedSlippage),
+    [allowedSlippage, trade],
+  )
   const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
   const severity = warningSeverity(priceImpactWithoutFee)
 
@@ -81,8 +87,8 @@ export default function SwapModalFooter({
           <RowFixed>
             <TYPE.black fontSize={14}>
               {trade.tradeType === TradeType.EXACT_INPUT
-                ? slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4) ?? '-'
-                : slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4) ?? '-'}
+                ? (slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4) ?? '-')
+                : (slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4) ?? '-')}
             </TYPE.black>
             <TYPE.black fontSize={14} marginLeft={'4px'}>
               {trade.tradeType === TradeType.EXACT_INPUT

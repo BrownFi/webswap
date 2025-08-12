@@ -1,25 +1,31 @@
+import { useEffect, useState } from 'react'
+
+import { ChainIdHex } from '@brownfi/sdk'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core'
-import { WalletConnectConnector } from 'connectors/WalletConnector'
-import React, { useEffect, useState } from 'react'
 import { isMobile } from 'react-device-detect'
 import styled from 'styled-components'
-import MetamaskIcon from 'assets/images/metamask.png'
-import { ReactComponent as Close } from 'assets/images/x.svg'
+import Web3 from 'web3'
+
+import { AccountDetails } from 'components/AccountDetails'
+import { Modal } from 'components/Modal'
+
 import { injected } from 'connectors'
-import { SUPPORTED_WALLETS } from 'constants/common'
+import { WalletConnectConnector } from 'connectors/WalletConnector'
+
+import { useActiveWeb3React } from 'hooks'
 import usePrevious from 'hooks/usePrevious'
 import { ApplicationModal } from 'state/application/actions'
 import { useModalOpen, useWalletModalToggle } from 'state/application/hooks'
-import { ExternalLink } from 'theme'
-import { AccountDetails } from 'components/AccountDetails'
 
-import { Modal } from 'components/Modal'
+import { SUPPORTED_WALLETS } from 'constants/common'
+
+import MetamaskIcon from 'assets/images/metamask.png'
+import { ReactComponent as Close } from 'assets/images/x.svg'
+import { ExternalLink } from 'theme'
+
 import Option from './Option'
 import PendingView from './PendingView'
-import Web3 from 'web3'
-import { useActiveWeb3React } from 'hooks'
-import { ChainIdHex } from '@brownfi/sdk'
 
 const CloseIcon = styled.div`
   position: absolute;

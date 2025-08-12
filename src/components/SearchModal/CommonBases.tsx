@@ -1,11 +1,13 @@
 import React from 'react'
+
+import { ChainId, Currency, ETHER, Token, currencyEquals } from '@brownfi/sdk'
 import { Text } from 'rebass'
-import { ChainId, Currency, currencyEquals, ETHER, Token } from '@brownfi/sdk'
 import styled from 'styled-components'
 
-import { SUGGESTED_BASES } from 'constants/common'
-import { AutoRow } from 'components/Row'
 import { CurrencyLogo } from 'components/CurrencyLogo'
+import { AutoRow } from 'components/Row'
+
+import { SUGGESTED_BASES } from 'constants/common'
 import { getNativeToken, getTokenSymbol } from 'utils'
 
 const BaseWrapper = styled.div<{ disable?: boolean }>`

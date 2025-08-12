@@ -1,11 +1,16 @@
-import { ChainId, Currency, Field, getPriceFromUnsafe, getPythPricePair, Pair } from '@brownfi/sdk'
-import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+
+import { ChainId, Currency, Field, Pair, getPriceFromUnsafe, getPythPricePair } from '@brownfi/sdk'
+import { useQuery } from '@tanstack/react-query'
+
+import { PairStats } from 'components/PositionCard/usePoolStats'
+
 import { useSingleContractMultipleData } from 'state/multicall/hooks'
+
 import { wrappedCurrency } from 'utils/wrappedCurrency'
+
 import { useFactoryContract, usePythContract } from './useContract'
 import { useVersion } from './useVersion'
-import { PairStats } from 'components/PositionCard/usePoolStats'
 
 type Props = {
   chainId: ChainId
@@ -44,8 +49,8 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
     pairStats
       ? [[pairStats.token0!.priceFeedId], [pairStats.token1!.priceFeedId]]
       : priceFeedIds.every((a) => a.result)
-      ? priceFeedIds.map((a) => a.result?.flat())
-      : [],
+        ? priceFeedIds.map((a) => a.result?.flat())
+        : [],
   )
 
   const [tokenAPrice, tokenBPrice] = useMemo(() => {

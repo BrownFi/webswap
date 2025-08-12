@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+
+import axios from 'axios'
+
 import Copy from 'components/AccountDetails/Copy'
+
 import { useActiveWeb3React } from 'hooks'
 import useParsedQueryString from 'hooks/useParsedQueryString'
-import axios from 'axios'
 
 const client = axios.create({
   baseURL: process.env.REACT_APP_SERVER_URL,

@@ -1,6 +1,7 @@
 /* eslint-disable */
-import * as types from './graphql'
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core'
+
+import * as types from './graphql'
 
 /**
  * Map of all GraphQL operations in the project.
@@ -40,15 +41,11 @@ export function gql(source: string): unknown
  */
 export function gql(
   source: '\n  query PairList($chainId: Int) {\n    pairs(where: {chainId: $chainId}) {\n      totalCount\n      items {\n        address\n        apr\n        bnhPrice\n        bnhReserve0\n        bnhReserve1\n        bnhTotalSupply\n        chainId\n        fee\n        feeDay\n        k\n        lambda\n        lpPrice\n        netPnL\n        protocolFee\n        reserve0\n        reserve0USD\n        reserve1\n        reserve1USD\n        token0 {\n          address\n          chainId\n          decimals\n          name\n          price\n          priceFeedId\n          symbol\n          totalSupply\n        }\n        token1 {\n          address\n          chainId\n          decimals\n          name\n          price\n          priceFeedId\n          symbol\n          totalSupply\n        }\n        totalSupply\n        totalTxn\n        tvl\n      }\n    }\n  }\n',
-): typeof documents['\n  query PairList($chainId: Int) {\n    pairs(where: {chainId: $chainId}) {\n      totalCount\n      items {\n        address\n        apr\n        bnhPrice\n        bnhReserve0\n        bnhReserve1\n        bnhTotalSupply\n        chainId\n        fee\n        feeDay\n        k\n        lambda\n        lpPrice\n        netPnL\n        protocolFee\n        reserve0\n        reserve0USD\n        reserve1\n        reserve1USD\n        token0 {\n          address\n          chainId\n          decimals\n          name\n          price\n          priceFeedId\n          symbol\n          totalSupply\n        }\n        token1 {\n          address\n          chainId\n          decimals\n          name\n          price\n          priceFeedId\n          symbol\n          totalSupply\n        }\n        totalSupply\n        totalTxn\n        tvl\n      }\n    }\n  }\n']
+): (typeof documents)['\n  query PairList($chainId: Int) {\n    pairs(where: {chainId: $chainId}) {\n      totalCount\n      items {\n        address\n        apr\n        bnhPrice\n        bnhReserve0\n        bnhReserve1\n        bnhTotalSupply\n        chainId\n        fee\n        feeDay\n        k\n        lambda\n        lpPrice\n        netPnL\n        protocolFee\n        reserve0\n        reserve0USD\n        reserve1\n        reserve1USD\n        token0 {\n          address\n          chainId\n          decimals\n          name\n          price\n          priceFeedId\n          symbol\n          totalSupply\n        }\n        token1 {\n          address\n          chainId\n          decimals\n          name\n          price\n          priceFeedId\n          symbol\n          totalSupply\n        }\n        totalSupply\n        totalTxn\n        tvl\n      }\n    }\n  }\n']
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {}
 }
 
-export type DocumentType<TDocumentNode extends DocumentNode<any, any>> = TDocumentNode extends DocumentNode<
-  infer TType,
-  any
->
-  ? TType
-  : never
+export type DocumentType<TDocumentNode extends DocumentNode<any, any>> =
+  TDocumentNode extends DocumentNode<infer TType, any> ? TType : never

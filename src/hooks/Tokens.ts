@@ -1,16 +1,20 @@
-import { TokenAddressMap, useDefaultTokenList, useUnsupportedTokenList } from 'state/lists/hooks'
-import { parseBytes32String } from '@ethersproject/strings'
-import { Currency, ETHER, Token, currencyEquals } from '@brownfi/sdk'
 import { useMemo } from 'react'
+
+import { Currency, ETHER, Token, currencyEquals } from '@brownfi/sdk'
+import { parseBytes32String } from '@ethersproject/strings'
+import { arrayify } from 'ethers/lib/utils'
+
+import { filterTokens } from 'components/SearchModal/filtering'
+
+import { TokenAddressMap, useDefaultTokenList, useUnsupportedTokenList } from 'state/lists/hooks'
 import { useCombinedActiveList, useCombinedInactiveList } from 'state/lists/hooks'
 import { NEVER_RELOAD, useSingleCallResult } from 'state/multicall/hooks'
 import { useUserAddedTokens } from 'state/user/hooks'
+
 import { isAddress } from 'utils'
 
 import { useActiveWeb3React } from './index'
 import { useBytes32TokenContract, useTokenContract } from './useContract'
-import { filterTokens } from 'components/SearchModal/filtering'
-import { arrayify } from 'ethers/lib/utils'
 
 // reduce token map into standard address <-> Token mapping, optionally include user added tokens
 function useTokensFromMap(tokenMap: TokenAddressMap, includeUserAdded: boolean): { [address: string]: Token } {
@@ -126,9 +130,9 @@ function parseStringOrBytes32(str: string | undefined, bytes32: string | undefin
   return str && str.length > 0
     ? str
     : // need to check for proper bytes string and valid terminator
-    bytes32 && BYTES32_REGEX.test(bytes32) && arrayify(bytes32)[31] === 0
-    ? parseBytes32String(bytes32)
-    : defaultValue
+      bytes32 && BYTES32_REGEX.test(bytes32) && arrayify(bytes32)[31] === 0
+      ? parseBytes32String(bytes32)
+      : defaultValue
 }
 
 // undefined if invalid or does not exist

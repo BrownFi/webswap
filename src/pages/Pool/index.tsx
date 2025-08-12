@@ -1,29 +1,31 @@
-import { ChainId, JSBI, Pair, Token, TokenAmount } from '@brownfi/sdk'
 import { useContext, useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import styled, { ThemeContext } from 'styled-components'
 
 import { useQuery } from '@apollo/client'
+import { ChainId, JSBI, Pair, Token, TokenAmount } from '@brownfi/sdk'
 import { gql } from '__generated__'
-import SwitchVersion from 'components/SwitchVersion'
-import { useVersion } from 'hooks/useVersion'
+import { Link } from 'react-router-dom'
+import { Flex, Text } from 'rebass'
+import styled, { ThemeContext } from 'styled-components'
 import { Address, checksumAddress } from 'viem'
 
-import { Flex, Text } from 'rebass'
 import { ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import FullPositionCard from 'components/PositionCard'
-import { RowBetween } from 'components/Row'
-import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
-import { TYPE } from 'theme'
-
 import { PairStats } from 'components/PositionCard/usePoolStats'
+import { RowBetween } from 'components/Row'
+import SwitchVersion from 'components/SwitchVersion'
 import { Dots } from 'components/swap/styleds'
-import { BIG_INT_ZERO } from 'constants/common'
-import { usePairs } from 'data/Reserves'
+
 import { useActiveWeb3React } from 'hooks'
+import { useVersion } from 'hooks/useVersion'
 import { useStakingInfo } from 'state/stake/hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
+import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
+
+import { BIG_INT_ZERO } from 'constants/common'
+import { usePairs } from 'data/Reserves'
+
+import { TYPE } from 'theme'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
@@ -126,9 +128,10 @@ export default function Pool() {
     [trackedTokenPairs],
   )
 
-  const liquidityTokens = useMemo(() => tokenPairsWithLiquidityTokens.map((tpwlt) => tpwlt.liquidityToken), [
-    tokenPairsWithLiquidityTokens,
-  ])
+  const liquidityTokens = useMemo(
+    () => tokenPairsWithLiquidityTokens.map((tpwlt) => tpwlt.liquidityToken),
+    [tokenPairsWithLiquidityTokens],
+  )
   const [, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(account ?? undefined, liquidityTokens)
 
   const liquidityTokensWithBalances = tokenPairsWithLiquidityTokens

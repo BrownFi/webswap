@@ -1,17 +1,18 @@
 import React from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import { darken } from 'polished'
 
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { darken } from 'polished'
+import { Link, NavLink } from 'react-router-dom'
 import styled from 'styled-components'
+
+import Row, { RowFixed } from 'components/Row'
+import SwitchVersion from 'components/SwitchVersion'
+import Web3Status from 'components/Web3Status'
 
 import Logo from 'assets/svg/logo.svg'
 
-import Row, { RowFixed } from 'components/Row'
-import Web3Status from 'components/Web3Status'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
-import HamburgerMenu from './HamburgerMenu'
 import CustomChainSelect from './CustomChainSelect'
-import SwitchVersion from 'components/SwitchVersion'
+import HamburgerMenu from './HamburgerMenu'
 
 const HeaderFrame = styled.div`
   display: grid;

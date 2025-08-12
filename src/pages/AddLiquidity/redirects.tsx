@@ -1,5 +1,7 @@
 import React from 'react'
+
 import { Redirect, RouteComponentProps } from 'react-router-dom'
+
 import AddLiquidity from './index'
 
 export function RedirectToAddLiquidity() {

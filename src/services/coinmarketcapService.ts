@@ -1,4 +1,5 @@
 import axios from 'axios'
+
 import { dexscreenerService } from './dexscreenerService'
 
 const client = axios.create({

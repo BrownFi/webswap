@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { STAKING_GENESIS, REWARDS_DURATION_DAYS } from 'state/stake/hooks'
+import { useEffect, useMemo, useState } from 'react'
+
+import { REWARDS_DURATION_DAYS, STAKING_GENESIS } from 'state/stake/hooks'
+
 import { TYPE } from 'theme'
 
 const MINUTE = 60
@@ -9,9 +11,10 @@ const REWARDS_DURATION = DAY * REWARDS_DURATION_DAYS
 
 export function Countdown({ exactEnd }: { exactEnd?: Date }) {
   // get end/beginning times
-  const end = useMemo(() => (exactEnd ? Math.floor(exactEnd.getTime() / 1000) : STAKING_GENESIS + REWARDS_DURATION), [
-    exactEnd,
-  ])
+  const end = useMemo(
+    () => (exactEnd ? Math.floor(exactEnd.getTime() / 1000) : STAKING_GENESIS + REWARDS_DURATION),
+    [exactEnd],
+  )
   const begin = useMemo(() => end - REWARDS_DURATION, [end])
 
   // get current time

@@ -1,23 +1,29 @@
-import React, { useState } from 'react'
-import { Token, Currency } from '@brownfi/sdk'
+import { useState } from 'react'
+
+import { Currency, Token } from '@brownfi/sdk'
+import { transparentize } from 'polished'
+import { AlertTriangle, ArrowLeft } from 'react-feather'
 import styled from 'styled-components'
-import { TYPE, CloseIcon } from 'theme'
+
+import { ButtonPrimary } from 'components/Button'
 import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
-import { RowBetween, RowFixed, AutoRow } from 'components/Row'
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { ArrowLeft, AlertTriangle } from 'react-feather'
-import { transparentize } from 'polished'
+import ListLogo from 'components/ListLogo'
+import { AutoRow, RowBetween, RowFixed } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
 import useTheme from 'hooks/useTheme'
-import { ButtonPrimary } from 'components/Button'
+import { useCombinedInactiveList } from 'state/lists/hooks'
 // import { SectionBreak } from 'components/swap/styleds'
 import { useAddUserToken } from 'state/user/hooks'
+
 import { getEtherscanLink } from 'utils'
-import { useActiveWeb3React } from 'hooks'
+
+import { CloseIcon, TYPE } from 'theme'
 import { ExternalLink } from 'theme/components'
-import { useCombinedInactiveList } from 'state/lists/hooks'
-import ListLogo from 'components/ListLogo'
-import { PaddedColumn, Checkbox } from './styleds'
+
+import { Checkbox, PaddedColumn } from './styleds'
 
 const Wrapper = styled.div`
   position: relative;

@@ -1,14 +1,24 @@
-import React, { useState } from 'react'
-import { AutoColumn } from 'components/Column'
+import { useState } from 'react'
+
+import { JSBI, TokenAmount } from '@brownfi/sdk'
+import { BigNumber } from 'ethers'
+import { DateTime } from 'luxon'
+import { ArrowLeft } from 'react-feather'
+import { RouteComponentProps } from 'react-router-dom'
 import styled from 'styled-components'
 
-import { RouteComponentProps } from 'react-router-dom'
-import { ExternalLink, StyledInternalLink, TYPE } from 'theme'
+import { ButtonPrimary } from 'components/Button'
+import { GreyCard } from 'components/Card'
+import { AutoColumn } from 'components/Column'
 import { RowBetween, RowFixed } from 'components/Row'
 import { CardSection, DataCard } from 'components/earn/styled'
-import { ArrowLeft } from 'react-feather'
-import { ButtonPrimary } from 'components/Button'
-import { ProposalStatus } from './styled'
+import DelegateModal from 'components/vote/DelegateModal'
+import VoteModal from 'components/vote/VoteModal'
+
+import { useActiveWeb3React } from 'hooks'
+import useCurrentBlockTimestamp from 'hooks/useCurrentBlockTimestamp'
+import { ApplicationModal } from 'state/application/actions'
+import { useBlockNumber, useModalOpen, useToggleDelegateModal, useToggleVoteModal } from 'state/application/hooks'
 import {
   ProposalData,
   ProposalState,
@@ -16,19 +26,14 @@ import {
   useUserDelegatee,
   useUserVotesAsOfBlock,
 } from 'state/governance/hooks'
-import { DateTime } from 'luxon'
-import VoteModal from 'components/vote/VoteModal'
-import { JSBI, TokenAmount } from '@brownfi/sdk'
-import { useActiveWeb3React } from 'hooks'
+import { useTokenBalance } from 'state/wallet/hooks'
+
 import { AVERAGE_BLOCK_TIME_IN_SECS, COMMON_CONTRACT_NAMES, ZERO_ADDRESS } from 'constants/common'
 import { getEtherscanLink, isAddress } from 'utils'
-import { ApplicationModal } from 'state/application/actions'
-import { useBlockNumber, useModalOpen, useToggleDelegateModal, useToggleVoteModal } from 'state/application/hooks'
-import DelegateModal from 'components/vote/DelegateModal'
-import { useTokenBalance } from 'state/wallet/hooks'
-import useCurrentBlockTimestamp from 'hooks/useCurrentBlockTimestamp'
-import { BigNumber } from 'ethers'
-import { GreyCard } from 'components/Card'
+
+import { ExternalLink, StyledInternalLink, TYPE } from 'theme'
+
+import { ProposalStatus } from './styled'
 
 const PageWrapper = styled(AutoColumn)`
   width: 100%;
@@ -188,8 +193,8 @@ export default function VotePage({
               {endDate && endDate < now
                 ? 'Voting ended ' + (endDate && endDate.toLocaleString(DateTime.DATETIME_FULL as any))
                 : proposalData
-                ? 'Voting ends approximately ' + (endDate && endDate.toLocaleString(DateTime.DATETIME_FULL as any))
-                : ''}
+                  ? 'Voting ends approximately ' + (endDate && endDate.toLocaleString(DateTime.DATETIME_FULL as any))
+                  : ''}
             </TYPE.main>
           </RowBetween>
           {proposalData && proposalData.status === ProposalState.Active && !showVotingButtons && (

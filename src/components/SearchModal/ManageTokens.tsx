@@ -1,19 +1,24 @@
-import React, { useRef, RefObject, useCallback, useState, useMemo } from 'react'
-import Column from 'components/Column'
-import { PaddedColumn, SearchInput } from './styleds'
-import Row, { RowBetween, RowFixed } from 'components/Row'
-import { TYPE, ExternalLinkIcon, TrashIcon, ButtonText, ExternalLink } from 'theme'
-import { useToken } from 'hooks/Tokens'
-import styled from 'styled-components'
-import { useUserAddedTokens, useRemoveUserAddedToken } from 'state/user/hooks'
+import { RefObject, useCallback, useMemo, useRef, useState } from 'react'
+
 import { Token } from '@brownfi/sdk'
-import { CurrencyLogo } from 'components/CurrencyLogo'
-import { getEtherscanLink, isAddress } from 'utils'
-import { useActiveWeb3React } from 'hooks'
+import styled from 'styled-components'
+
 import { Card } from 'components/Card'
-import ImportRow from './ImportRow'
+import Column from 'components/Column'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import Row, { RowBetween, RowFixed } from 'components/Row'
+
+import { useActiveWeb3React } from 'hooks'
+import { useToken } from 'hooks/Tokens'
+import { useRemoveUserAddedToken, useUserAddedTokens } from 'state/user/hooks'
+
+import { getEtherscanLink, isAddress } from 'utils'
+
+import { ButtonText, ExternalLink, ExternalLinkIcon, TYPE, TrashIcon } from 'theme'
 
 import { CurrencyModalView } from './CurrencySearchModal'
+import ImportRow from './ImportRow'
+import { PaddedColumn, SearchInput } from './styleds'
 
 const Wrapper = styled.div`
   width: 100%;

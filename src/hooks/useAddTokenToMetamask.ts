@@ -1,12 +1,16 @@
-import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { Currency, Token } from '@brownfi/sdk'
 import { useCallback, useState } from 'react'
-import { useActiveWeb3React } from 'hooks'
+
+import { Currency, Token } from '@brownfi/sdk'
 import { useWalletClient } from 'wagmi'
 
-export default function useAddTokenToMetamask(
-  currencyToAdd: Currency | undefined,
-): { addToken: () => void; success: boolean | undefined } {
+import { useActiveWeb3React } from 'hooks'
+
+import { wrappedCurrency } from 'utils/wrappedCurrency'
+
+export default function useAddTokenToMetamask(currencyToAdd: Currency | undefined): {
+  addToken: () => void
+  success: boolean | undefined
+} {
   const { library, chainId } = useActiveWeb3React()
   const { data: walletClient } = useWalletClient()
 

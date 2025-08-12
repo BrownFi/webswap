@@ -1,7 +1,10 @@
-import { BigNumber } from 'ethers'
 import { useMemo } from 'react'
+
+import { BigNumber } from 'ethers'
 import { useSelector } from 'react-redux'
+
 import { AppState } from 'state'
+
 import useCurrentBlockTimestamp from './useCurrentBlockTimestamp'
 
 // combines the block timestamp with the user setting to give the deadline that should be used for any submitted transaction

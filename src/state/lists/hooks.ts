@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { UNSUPPORTED_LIST_URLS } from 'constants/lists'
-import DEFAULT_TOKEN_LIST from './defaultTokens.json'
+import { useMemo } from 'react'
+
 import { ChainId, Token } from '@brownfi/sdk'
 import { Tags, TokenInfo, TokenList } from '@uniswap/token-lists'
-import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
+
 import { AppState } from 'state'
-import sortByListPriority from 'utils/listSort'
+
+import { UNSUPPORTED_LIST_URLS } from 'constants/lists'
 import UNSUPPORTED_TOKEN_LIST from 'constants/tokenLists/uniswap-v2-unsupported.tokenlist.json'
+import sortByListPriority from 'utils/listSort'
+
+import DEFAULT_TOKEN_LIST from './defaultTokens.json'
 
 type TagDetails = Tags[keyof Tags]
 export interface TagInfo extends TagDetails {
@@ -30,9 +34,9 @@ export class WrappedTokenInfo extends Token {
   }
 }
 
-export type TokenAddressMap = Readonly<
-  { [chainId in ChainId]: Readonly<{ [tokenAddress: string]: { token: WrappedTokenInfo; list: TokenList } }> }
->
+export type TokenAddressMap = Readonly<{
+  [chainId in ChainId]: Readonly<{ [tokenAddress: string]: { token: WrappedTokenInfo; list: TokenList } }>
+}>
 
 /**
  * An empty result, useful as a default.

@@ -1,13 +1,20 @@
-import { useQuery } from '@tanstack/react-query'
-import Column from 'components/Column'
-import { AppBody } from 'pages/AppBody'
 import React from 'react'
-import { internalService } from 'services'
-import { TYPE } from 'theme'
-import { shortenAddress } from 'utils'
-import { Table } from './styleds'
+
+import { useQuery } from '@tanstack/react-query'
 import { useAccount } from 'wagmi'
+
+import { AppBody } from 'pages/AppBody'
+
+import Column from 'components/Column'
+
+import { internalService } from 'services'
+
+import { shortenAddress } from 'utils'
+
+import { TYPE } from 'theme'
+
 import Rank from './Rank'
+import { Table } from './styleds'
 
 const Leaderboard = () => {
   const { address } = useAccount()

@@ -1,5 +1,7 @@
-import { ChainId } from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
+
+import { ChainId } from '@brownfi/sdk'
+
 import { useStorageSlot } from 'utils/storage'
 
 export const DEFAULT_CHAIN = 'chain'

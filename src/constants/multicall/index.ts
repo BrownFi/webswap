@@ -1,4 +1,5 @@
 import { ChainId } from '@brownfi/sdk'
+
 import MULTICALL_ABI from './abi.json'
 
 const MULTICALL_NETWORKS: any = {

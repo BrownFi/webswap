@@ -1,28 +1,35 @@
+import { useCallback, useMemo, useState } from 'react'
+
+import { CurrencyAmount, Fraction, JSBI, Percent, Token, TokenAmount, WETH } from '@brownfi/sdk'
 import { TransactionResponse } from '@ethersproject/abstract-provider'
-import { JSBI, Token, TokenAmount, WETH, Fraction, Percent, CurrencyAmount } from '@brownfi/sdk'
-import React, { useCallback, useMemo, useState } from 'react'
+import { AddressZero } from '@ethersproject/constants'
+import { Contract } from '@ethersproject/contracts'
 import { Redirect, RouteComponentProps } from 'react-router-dom'
+
+import { BodyWrapper } from 'pages/AppBody'
+
 import { ButtonConfirmed } from 'components/Button'
 import { LightCard } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import QuestionHelper from 'components/QuestionHelper'
 import { AutoRow } from 'components/Row'
-import { DEFAULT_DEADLINE_FROM_NOW } from 'constants/common'
+import { Dots } from 'components/swap/styleds'
+
 import { useActiveWeb3React } from 'hooks'
 import { useToken } from 'hooks/Tokens'
 import { useV1ExchangeContract } from 'hooks/useContract'
 import { NEVER_RELOAD, useSingleCallResult } from 'state/multicall/hooks'
 import { useIsTransactionPending, useTransactionAdder } from 'state/transactions/hooks'
-import { useTokenBalance, useETHBalances } from 'state/wallet/hooks'
-import { BackArrow, TYPE } from 'theme'
+import { useETHBalances, useTokenBalance } from 'state/wallet/hooks'
+
+import { DEFAULT_DEADLINE_FROM_NOW } from 'constants/common'
+import { useTotalSupply } from 'data/TotalSupply'
 import { isAddress } from 'utils'
-import { BodyWrapper } from 'pages/AppBody'
+
+import { BackArrow, TYPE } from 'theme'
+
 import { EmptyState } from './EmptyState'
 import { V1LiquidityInfo } from './MigrateV1Exchange'
-import { AddressZero } from '@ethersproject/constants'
-import { Dots } from 'components/swap/styleds'
-import { Contract } from '@ethersproject/contracts'
-import { useTotalSupply } from 'data/TotalSupply'
 
 const WEI_DENOM = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18))
 const ZERO = JSBI.BigInt(0)

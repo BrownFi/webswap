@@ -1,14 +1,19 @@
-import { currencyEquals, Trade } from '@brownfi/sdk'
-import React, { useCallback, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
+
+import { Trade, currencyEquals } from '@brownfi/sdk'
+
 import {
-  TransactionConfirmationModal,
   ConfirmationModalContent,
+  TransactionConfirmationModal,
   TransactionErrorContent,
 } from 'components/TransactionConfirmationModal'
+
+import { useActiveWeb3React } from 'hooks'
+
+import { getTokenSymbol } from 'utils'
+
 import SwapModalFooter from './SwapModalFooter'
 import SwapModalHeader from './SwapModalHeader'
-import { useActiveWeb3React } from 'hooks'
-import { getTokenSymbol } from 'utils'
 
 /**
  * Returns true if the trade requires a confirmation of details before we can submit it

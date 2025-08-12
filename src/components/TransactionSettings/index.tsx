@@ -1,12 +1,13 @@
-import React, { useState, useRef, useContext } from 'react'
-import styled, { ThemeContext } from 'styled-components'
-
-import QuestionHelper from 'components/QuestionHelper'
-import { TYPE } from 'theme'
-import { AutoColumn } from 'components/Column'
-import { RowBetween, RowFixed } from 'components/Row'
+import { useContext, useRef, useState } from 'react'
 
 import { darken } from 'polished'
+import styled, { ThemeContext } from 'styled-components'
+
+import { AutoColumn } from 'components/Column'
+import QuestionHelper from 'components/QuestionHelper'
+import { RowBetween, RowFixed } from 'components/Row'
+
+import { TYPE } from 'theme'
 
 enum SlippageError {
   InvalidInput = 'InvalidInput',
@@ -221,8 +222,8 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
             {slippageError === SlippageError.InvalidInput
               ? 'Enter a valid slippage percentage'
               : slippageError === SlippageError.RiskyLow
-              ? 'Your transaction may fail'
-              : 'Your transaction may be frontrun'}
+                ? 'Your transaction may fail'
+                : 'Your transaction may be frontrun'}
           </RowBetween>
         )}
       </AutoColumn>

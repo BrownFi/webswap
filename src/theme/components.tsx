@@ -1,8 +1,9 @@
-import React, { HTMLProps, useCallback } from 'react'
+import { HTMLProps, useCallback } from 'react'
+
+import { darken } from 'polished'
+import { ArrowLeft, ExternalLink as LinkIconFeather, Trash, X } from 'react-feather'
 import { Link } from 'react-router-dom'
 import styled, { keyframes } from 'styled-components'
-import { darken } from 'polished'
-import { ArrowLeft, X, ExternalLink as LinkIconFeather, Trash } from 'react-feather'
 
 export const ButtonText = styled.button`
   outline: none;

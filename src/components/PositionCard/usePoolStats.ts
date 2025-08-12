@@ -1,8 +1,11 @@
 import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
-import { useTotalSupply } from 'data/TotalSupply'
-import { useTradingFee } from 'hooks/useTradingFee'
+
 import { internalService } from 'services'
+
+import { useTradingFee } from 'hooks/useTradingFee'
+
+import { useTotalSupply } from 'data/TotalSupply'
 
 type Token = {
   address: string

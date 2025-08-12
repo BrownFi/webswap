@@ -1,11 +1,15 @@
-import { Currency, currencyEquals, ETHER, WETH } from '@brownfi/sdk'
 import { useMemo } from 'react'
+
+import { Currency, ETHER, WETH, currencyEquals } from '@brownfi/sdk'
+
 import { tryParseAmount } from 'state/swap/hooks'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { useCurrencyBalance } from 'state/wallet/hooks'
+
+import { getNativeToken, getWrappedNativeToken } from 'utils'
+
 import { useActiveWeb3React } from './index'
 import { useWETHContract } from './useContract'
-import { getNativeToken, getWrappedNativeToken } from 'utils'
 
 export enum WrapType {
   NOT_APPLICABLE,

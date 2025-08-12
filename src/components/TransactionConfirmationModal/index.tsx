@@ -1,21 +1,26 @@
+import { useContext } from 'react'
+
 import { ChainId, Currency } from '@brownfi/sdk'
-import React, { useContext } from 'react'
-import styled, { ThemeContext } from 'styled-components'
-import { Modal } from 'components/Modal'
-import { ExternalLink } from 'theme'
-import { Text } from 'rebass'
-import { CloseIcon, CustomLightSpinner } from 'theme/components'
-import { RowBetween, RowFixed } from 'components/Row'
 import { CheckCircle } from 'react-feather'
+import { Text } from 'rebass'
+import styled, { ThemeContext } from 'styled-components'
+
 import { ButtonPrimary } from 'components/Button'
 import { AutoColumn, ColumnCenter } from 'components/Column'
-import Circle from 'assets/images/blue-loader.svg'
-import MetaMaskLogo from 'assets/images/metamask.png'
-import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
+import { Modal } from 'components/Modal'
+import { RowBetween, RowFixed } from 'components/Row'
+
 import { useActiveWeb3React } from 'hooks'
 import useAddTokenToMetamask from 'hooks/useAddTokenToMetamask'
-import checkCircle from 'assets/svg/check_circle.svg'
+
+import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
+
+import Circle from 'assets/images/blue-loader.svg'
+import MetaMaskLogo from 'assets/images/metamask.png'
 import cancel from 'assets/svg/cancel.svg'
+import checkCircle from 'assets/svg/check_circle.svg'
+import { ExternalLink } from 'theme'
+import { CloseIcon, CustomLightSpinner } from 'theme/components'
 
 const Wrapper = styled.div`
   width: 100%;
@@ -25,7 +30,7 @@ const Section = styled(AutoColumn)`
 `
 
 const BottomSection = styled(Section)`
-  padding-top: 0
+  padding-top: 0;
   // background-color: ${({ theme }) => theme.bg2};
   // border-bottom-left-radius: 20px;
   // border-bottom-right-radius: 20px;
