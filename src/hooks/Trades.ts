@@ -2,9 +2,9 @@ import { Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
 import { flatMap } from 'lodash'
 import { useEffect, useMemo, useState } from 'react'
 
-import { BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES, ADDITIONAL_BASES } from '../constants'
-import { PairState, usePairs } from '../data/Reserves'
-import { wrappedCurrency } from '../utils/wrappedCurrency'
+import { BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES, ADDITIONAL_BASES } from 'constants/common'
+import { PairState, usePairs } from 'data/Reserves'
+import { wrappedCurrency } from 'utils/wrappedCurrency'
 
 import { useActiveWeb3React } from './index'
 import { useUnsupportedTokens } from './Tokens'
@@ -28,8 +28,8 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
   }, [chainId, tokenA, tokenB])
 
   const basePairs: [Token, Token][] = useMemo(
-    () => flatMap(bases, (base): [Token, Token][] => bases.map(otherBase => [base, otherBase])),
-    [bases]
+    () => flatMap(bases, (base): [Token, Token][] => bases.map((otherBase) => [base, otherBase])),
+    [bases],
   )
 
   const allPairCombinations: [Token, Token][] = useMemo(
@@ -43,7 +43,7 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
             // token B against all bases
             ...bases.map((base): [Token, Token] => [tokenB, base]),
             // each base against all bases
-            ...basePairs
+            ...basePairs,
           ]
             .filter((tokens): tokens is [Token, Token] => Boolean(tokens[0] && tokens[1]))
             .filter(([t0, t1]) => t0.address !== t1.address)
@@ -56,13 +56,13 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
 
               if (!customBasesA && !customBasesB) return true
 
-              if (customBasesA && !customBasesA.find(base => tokenB.equals(base))) return false
-              if (customBasesB && !customBasesB.find(base => tokenA.equals(base))) return false
+              if (customBasesA && !customBasesA.find((base) => tokenB.equals(base))) return false
+              if (customBasesB && !customBasesB.find((base) => tokenA.equals(base))) return false
 
               return true
             })
         : [],
-    [tokenA, tokenB, bases, basePairs, chainId]
+    [tokenA, tokenB, bases, basePairs, chainId],
   )
 
   const allPairs = usePairs(allPairCombinations)
@@ -78,9 +78,9 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
           .reduce<{ [pairAddress: string]: Pair }>((memo, [, curr]) => {
             memo[curr.liquidityToken.address] = memo[curr.liquidityToken.address] ?? curr
             return memo
-          }, {})
+          }, {}),
       ),
-    [allPairs]
+    [allPairs],
   )
 }
 
@@ -109,13 +109,13 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
         if (singleHopOnly) {
           const bestTradeIn = await Trade.bestTradeExactIn(account ?? '', allowedPairs, currencyAmountIn, currencyOut, {
             maxHops: 1,
-            maxNumResults: 1
-          }).catch(error => {
+            maxNumResults: 1,
+          }).catch((error) => {
             console.log('bestTradeExactIn', error)
             setInsufficient(
               error.message.includes('INSUFFICIENT') ||
                 error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
-                error.message.includes('MAX_80_PERCENT_OF_RESERVE')
+                error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
             )
           })
           setTrade(bestTradeIn?.[0] ?? null)
@@ -125,8 +125,8 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           account ?? '',
           allowedPairs,
           currencyAmountIn,
-          currencyOut
-        ).catch(error => {
+          currencyOut,
+        ).catch((error) => {
           console.log('bestTradeExactIn', error)
           setInsufficient(error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE'))
         })
@@ -151,7 +151,7 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
   return {
     trade: trade,
     loadingExactIn: loading,
-    isInsufficient: isInsufficient && !trade
+    isInsufficient: isInsufficient && !trade,
   }
 }
 
@@ -187,12 +187,12 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
             currencyAmountOut,
             {
               maxHops: 1,
-              maxNumResults: 1
-            }
-          ).catch(error => {
+              maxNumResults: 1,
+            },
+          ).catch((error) => {
             console.log('bestTradeExactOut', error)
             setInsufficient(
-              error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE')
+              error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE'),
             )
           })
           setTrade(bestTradeOut?.[0] ?? null)
@@ -203,8 +203,8 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           account ?? '',
           allowedPairs,
           currencyIn,
-          currencyAmountOut
-        ).catch(error => {
+          currencyAmountOut,
+        ).catch((error) => {
           console.log('bestTradeExactOut', error)
           setInsufficient(error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE'))
         })
@@ -227,7 +227,7 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
   return {
     trade: trade,
     loadingExactOut: loading,
-    isInsufficient: isInsufficient && !trade
+    isInsufficient: isInsufficient && !trade,
   }
 }
 

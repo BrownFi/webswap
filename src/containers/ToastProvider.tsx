@@ -27,9 +27,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const createToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Date.now()
-    setToasts(prev => [...prev, { id, message, type }])
+    setToasts((prev) => [...prev, { id, message, type }])
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id))
+      setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 5000)
   }, [])
 
@@ -38,7 +38,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {children}
       <div className="fixed top-20 right-8 space-y-2 z-50">
         <AnimatePresence>
-          {toasts.map(toast => (
+          {toasts.map((toast) => (
             <motion.div
               key={toast.id}
               initial={{ opacity: 0, y: -20 }}

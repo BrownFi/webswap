@@ -3,47 +3,42 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { ArrowDown } from 'react-feather'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
-import AddressInputPanel from '../../components/AddressInputPanel'
-import { ButtonError, ButtonPrimary, ButtonConfirmed } from '../../components/Button'
-import Column, { AutoColumn } from '../../components/Column'
-import ConfirmSwapModal from '../../components/swap/ConfirmSwapModal'
-import CurrencyInputPanel from '../../components/CurrencyInputPanel'
-import { AutoRow, RowBetween } from '../../components/Row'
-import AdvancedSwapDetailsDropdown from '../../components/swap/AdvancedSwapDetailsDropdown'
-import BetterTradeLink, { DefaultVersionLink } from '../../components/swap/BetterTradeLink'
-import confirmPriceImpactWithoutFee from '../../components/swap/confirmPriceImpactWithoutFee'
-import { ArrowWrapper, BottomGrouping, SwapCallbackError, Wrapper } from '../../components/swap/styleds'
-import TradePrice from '../../components/swap/TradePrice'
-import TokenWarningModal from '../../components/TokenWarningModal'
-import ProgressSteps from '../../components/ProgressSteps'
-import SwapHeader from '../../components/swap/SwapHeader'
-import { INITIAL_ALLOWED_SLIPPAGE } from '../../constants'
-import { useActiveWeb3React } from '../../hooks'
-import { useCurrency, useAllTokens } from '../../hooks/Tokens'
-import { ApprovalState, useApproveCallbackFromTrade } from '../../hooks/useApproveCallback'
-import useENSAddress from '../../hooks/useENSAddress'
-import { useSwapCallback } from '../../hooks/useSwapCallback'
-import useToggledVersion, { DEFAULT_VERSION, Version } from '../../hooks/useToggledVersion'
-import useWrapCallback, { WrapType } from '../../hooks/useWrapCallback'
-import { useToggleSettingsMenu } from '../../state/application/hooks'
-import { Field } from '../../state/swap/actions'
-import {
-  useDefaultsFromURLSearch,
-  useDerivedSwapInfo,
-  useSwapActionHandlers,
-  useSwapState
-} from '../../state/swap/hooks'
-import { useExpertModeManager, useUserSlippageTolerance, useUserSingleHopOnly } from '../../state/user/hooks'
-import { LinkStyledButton } from '../../theme'
-import { maxAmountSpend } from '../../utils/maxAmountSpend'
-import { computeTradePriceBreakdown, warningSeverity } from '../../utils/prices'
-import AppBody from '../AppBody'
-import { ClickableText, Dots } from '../Pool/styleds'
+import { AddressInputPanel } from 'components/AddressInputPanel'
+import { ButtonError, ButtonPrimary, ButtonConfirmed } from 'components/Button'
+import Column, { AutoColumn } from 'components/Column'
+import ConfirmSwapModal from 'components/swap/ConfirmSwapModal'
+import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
+import { AutoRow, RowBetween } from 'components/Row'
+import AdvancedSwapDetailsDropdown from 'components/swap/AdvancedSwapDetailsDropdown'
+import BetterTradeLink, { DefaultVersionLink } from 'components/swap/BetterTradeLink'
+import confirmPriceImpactWithoutFee from 'components/swap/confirmPriceImpactWithoutFee'
+import { ArrowWrapper, BottomGrouping, SwapCallbackError, Wrapper } from 'components/swap/styleds'
+import TradePrice from 'components/swap/TradePrice'
+import TokenWarningModal from 'components/TokenWarningModal'
+import { ProgressCircles } from 'components/ProgressSteps'
+import SwapHeader from 'components/swap/SwapHeader'
+import { INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+import { useActiveWeb3React } from 'hooks'
+import { useCurrency, useAllTokens } from 'hooks/Tokens'
+import { ApprovalState, useApproveCallbackFromTrade } from 'hooks/useApproveCallback'
+import useENSAddress from 'hooks/useENSAddress'
+import { useSwapCallback } from 'hooks/useSwapCallback'
+import useToggledVersion, { DEFAULT_VERSION, Version } from 'hooks/useToggledVersion'
+import useWrapCallback, { WrapType } from 'hooks/useWrapCallback'
+import { useToggleSettingsMenu } from 'state/application/hooks'
+import { Field } from 'state/swap/actions'
+import { useDefaultsFromURLSearch, useDerivedSwapInfo, useSwapActionHandlers, useSwapState } from 'state/swap/hooks'
+import { useExpertModeManager, useUserSlippageTolerance, useUserSingleHopOnly } from 'state/user/hooks'
+import { LinkStyledButton } from 'theme'
+import { maxAmountSpend } from 'utils/maxAmountSpend'
+import { computeTradePriceBreakdown, warningSeverity } from 'utils/prices'
+import { AppBody } from 'pages/AppBody'
+import { ClickableText, Dots } from 'pages/Pool/styleds'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
 import { isTradeBetter } from 'utils/trades'
 import { RouteComponentProps } from 'react-router-dom'
-import switchIcon from '../../assets/svg/switch.svg'
+import switchIcon from 'assets/svg/switch.svg'
 import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
 
@@ -53,12 +48,12 @@ export default function Swap({ history }: RouteComponentProps) {
   // token warning stuff
   const [loadedInputCurrency, loadedOutputCurrency] = [
     useCurrency('WETH'),
-    useCurrency(loadedUrlParams?.outputCurrencyId)
+    useCurrency(loadedUrlParams?.outputCurrencyId),
   ]
   const [dismissTokenWarning, setDismissTokenWarning] = useState<boolean>(false)
   const urlLoadedTokens: Token[] = useMemo(
     () => [loadedInputCurrency, loadedOutputCurrency]?.filter((c): c is Token => c instanceof Token) ?? [],
-    [loadedInputCurrency, loadedOutputCurrency]
+    [loadedInputCurrency, loadedOutputCurrency],
   )
   const handleConfirmTokenWarning = useCallback(() => {
     setDismissTokenWarning(true)
@@ -91,13 +86,13 @@ export default function Swap({ history }: RouteComponentProps) {
     currencies,
     inputError: swapInputError,
     loadingExactIn,
-    loadingExactOut
+    loadingExactOut,
   } = useDerivedSwapInfo()
 
   const { wrapType, execute: onWrap, inputError: wrapInputError } = useWrapCallback(
     currencies[Field.INPUT],
     currencies[Field.OUTPUT],
-    typedValue
+    typedValue,
   )
   const [isLoadingWrap, setLoadingWrap] = useState(false)
   const handleWrap = async () => {
@@ -114,7 +109,7 @@ export default function Swap({ history }: RouteComponentProps) {
   const toggledVersion = useToggledVersion()
   const tradesByVersion = {
     [Version.v1]: v1Trade,
-    [Version.v2]: v2Trade
+    [Version.v2]: v2Trade,
   }
   const trade = showWrap ? undefined : tradesByVersion[toggledVersion]
   const defaultTrade = showWrap ? undefined : tradesByVersion[DEFAULT_VERSION]
@@ -125,11 +120,11 @@ export default function Swap({ history }: RouteComponentProps) {
   const parsedAmounts = showWrap
     ? {
         [Field.INPUT]: parsedAmount,
-        [Field.OUTPUT]: parsedAmount
+        [Field.OUTPUT]: parsedAmount,
       }
     : {
         [Field.INPUT]: independentField === Field.INPUT ? parsedAmount : trade?.inputAmount,
-        [Field.OUTPUT]: independentField === Field.OUTPUT ? parsedAmount : trade?.outputAmount
+        [Field.OUTPUT]: independentField === Field.OUTPUT ? parsedAmount : trade?.outputAmount,
       }
 
   const { onSwitchTokens, onCurrencySelection, onUserInput, onChangeRecipient } = useSwapActionHandlers()
@@ -140,13 +135,13 @@ export default function Swap({ history }: RouteComponentProps) {
     (value: string) => {
       onUserInput(Field.INPUT, value)
     },
-    [onUserInput]
+    [onUserInput],
   )
   const handleTypeOutput = useCallback(
     (value: string) => {
       onUserInput(Field.OUTPUT, value)
     },
-    [onUserInput]
+    [onUserInput],
   )
 
   // reset if they close warning without tokens in params
@@ -166,19 +161,19 @@ export default function Swap({ history }: RouteComponentProps) {
     tradeToConfirm: undefined,
     attemptingTxn: false,
     swapErrorMessage: undefined,
-    txHash: undefined
+    txHash: undefined,
   })
 
   const formattedAmounts = {
     [independentField]: typedValue,
     [dependentField]: showWrap
       ? parsedAmounts[independentField]?.toExact() ?? ''
-      : parsedAmounts[dependentField]?.toSignificant(6) ?? ''
+      : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
   }
 
   const route = trade?.route
   const userHasSpecifiedInputOutput = Boolean(
-    currencies[Field.INPUT] && currencies[Field.OUTPUT] && parsedAmounts[independentField]?.greaterThan(JSBI.BigInt(0))
+    currencies[Field.INPUT] && currencies[Field.OUTPUT] && parsedAmounts[independentField]?.greaterThan(JSBI.BigInt(0)),
   )
   const noRoute = !route
 
@@ -214,10 +209,10 @@ export default function Swap({ history }: RouteComponentProps) {
     }
     setSwapState({ attemptingTxn: true, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: undefined })
     swapCallback()
-      .then(hash => {
+      .then((hash) => {
         setSwapState({ attemptingTxn: false, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: hash })
       })
-      .catch(error => {
+      .catch((error) => {
         console.log('error', error.data, error.message, error.status)
         setSwapState({
           attemptingTxn: false,
@@ -225,7 +220,7 @@ export default function Swap({ history }: RouteComponentProps) {
           showConfirm,
           swapErrorMessage:
             error.message?.indexOf('user rejected transaction') !== -1 ? 'User rejected transaction' : error.message,
-          txHash: undefined
+          txHash: undefined,
         })
       })
   }, [
@@ -237,7 +232,7 @@ export default function Swap({ history }: RouteComponentProps) {
     recipientAddress,
     account,
     trade,
-    singleHopOnly
+    singleHopOnly,
   ])
 
   // errors
@@ -272,7 +267,7 @@ export default function Swap({ history }: RouteComponentProps) {
       setApprovalSubmitted(false) // reset 2 step UI for approvals
       onCurrencySelection(Field.INPUT, inputCurrency)
     },
-    [onCurrencySelection]
+    [onCurrencySelection],
   )
 
   const handleMaxInput = useCallback(() => {
@@ -280,7 +275,7 @@ export default function Swap({ history }: RouteComponentProps) {
   }, [maxAmountInput, onUserInput])
 
   const handleOutputSelect = useCallback((outputCurrency: any) => onCurrencySelection(Field.OUTPUT, outputCurrency), [
-    onCurrencySelection
+    onCurrencySelection,
   ])
 
   const swapIsUnsupported = useIsTransactionUnsupported(currencies?.INPUT, currencies?.OUTPUT)
@@ -447,7 +442,7 @@ export default function Swap({ history }: RouteComponentProps) {
                         attemptingTxn: false,
                         swapErrorMessage: undefined,
                         showConfirm: true,
-                        txHash: undefined
+                        txHash: undefined,
                       })
                     }
                   }}
@@ -474,7 +469,7 @@ export default function Swap({ history }: RouteComponentProps) {
                       attemptingTxn: false,
                       swapErrorMessage: undefined,
                       showConfirm: true,
-                      txHash: undefined
+                      txHash: undefined,
                     })
                   }
                 }}
@@ -491,7 +486,7 @@ export default function Swap({ history }: RouteComponentProps) {
             )}
             {showApproveFlow && (
               <Column style={{ marginTop: '1rem' }}>
-                <ProgressSteps steps={[approval === ApprovalState.APPROVED]} />
+                <ProgressCircles steps={[approval === ApprovalState.APPROVED]} />
               </Column>
             )}
             {isExpertMode && swapErrorMessage ? <SwapCallbackError error={swapErrorMessage} /> : null}

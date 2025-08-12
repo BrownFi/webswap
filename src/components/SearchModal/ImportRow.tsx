@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react'
 import { Token } from '@brownfi/sdk'
 import { AutoRow, RowFixed } from 'components/Row'
 import { AutoColumn } from 'components/Column'
-import CurrencyLogo from 'components/CurrencyLogo'
+import { CurrencyLogo } from 'components/CurrencyLogo'
 import { TYPE } from 'theme'
 import ListLogo from 'components/ListLogo'
 import { useActiveWeb3React } from 'hooks'
@@ -45,7 +45,7 @@ export default function ImportRow({
   style,
   dim,
   showImportView,
-  setImportToken
+  setImportToken,
 }: {
   token: Token
   style?: CSSProperties

@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { UNSUPPORTED_LIST_URLS } from './../../constants/lists'
+import { UNSUPPORTED_LIST_URLS } from 'constants/lists'
 import DEFAULT_TOKEN_LIST from './defaultTokens.json'
 import { ChainId, Token } from '@brownfi/sdk'
 import { Tags, TokenInfo, TokenList } from '@uniswap/token-lists'
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { AppState } from '../index'
+import { AppState } from 'state'
 import sortByListPriority from 'utils/listSort'
-import UNSUPPORTED_TOKEN_LIST from '../../constants/tokenLists/uniswap-v2-unsupported.tokenlist.json'
+import UNSUPPORTED_TOKEN_LIST from 'constants/tokenLists/uniswap-v2-unsupported.tokenlist.json'
 
 type TagDetails = Tags[keyof Tags]
 export interface TagInfo extends TagDetails {
@@ -63,7 +63,7 @@ const EMPTY_LIST: TokenAddressMap = {
   [ChainId.BERA_MAINNET]: {},
   [ChainId.HYPER_EVM]: {},
   [ChainId.OP_MAINNET]: {},
-  [ChainId.BOBA_MAINNET]: {}
+  [ChainId.BOBA_MAINNET]: {},
 }
 
 const listCache: WeakMap<TokenList, TokenAddressMap> | null =
@@ -77,7 +77,7 @@ export function listToTokenMap(list: TokenList): TokenAddressMap {
     (tokenMap, tokenInfo) => {
       const tags: TagInfo[] =
         tokenInfo.tags
-          ?.map(tagId => {
+          ?.map((tagId) => {
             if (!list.tags?.[tagId]) return undefined
             return { ...list.tags[tagId], id: tagId }
           })
@@ -93,12 +93,12 @@ export function listToTokenMap(list: TokenList): TokenAddressMap {
           ...tokenMap[token.chainId],
           [token.address]: {
             token,
-            list: list
-          }
-        }
+            list: list,
+          },
+        },
       }
     },
-    { ...EMPTY_LIST }
+    { ...EMPTY_LIST },
   )
   listCache?.set(list, map || {})
   return map || {}
@@ -112,7 +112,7 @@ export function useAllLists(): {
     readonly error: string | null
   }
 } {
-  return useSelector<AppState, AppState['lists']['byUrl']>(state => state.lists.byUrl)
+  return useSelector<AppState, AppState['lists']['byUrl']>((state) => state.lists.byUrl)
 }
 
 function combineMaps(map1: TokenAddressMap, map2: TokenAddressMap): TokenAddressMap {
@@ -142,7 +142,7 @@ function combineMaps(map1: TokenAddressMap, map2: TokenAddressMap): TokenAddress
     [ChainId.BERA_MAINNET]: { ...map1[ChainId.BERA_MAINNET], ...map2[ChainId.BERA_MAINNET] },
     [ChainId.HYPER_EVM]: { ...map1[ChainId.HYPER_EVM], ...map2[ChainId.HYPER_EVM] },
     [ChainId.OP_MAINNET]: { ...map1[ChainId.OP_MAINNET], ...map2[ChainId.OP_MAINNET] },
-    [ChainId.BOBA_MAINNET]: { ...map1[ChainId.BOBA_MAINNET], ...map2[ChainId.BOBA_MAINNET] }
+    [ChainId.BOBA_MAINNET]: { ...map1[ChainId.BOBA_MAINNET], ...map2[ChainId.BOBA_MAINNET] },
   }
 }
 
@@ -173,15 +173,15 @@ function useCombinedTokenMapFromUrls(urls: string[] | undefined): TokenAddressMa
 
 // filter out unsupported lists
 export function useActiveListUrls(): string[] | undefined {
-  return useSelector<AppState, AppState['lists']['activeListUrls']>(state => state.lists.activeListUrls)?.filter(
-    url => !UNSUPPORTED_LIST_URLS.includes(url)
+  return useSelector<AppState, AppState['lists']['activeListUrls']>((state) => state.lists.activeListUrls)?.filter(
+    (url) => !UNSUPPORTED_LIST_URLS.includes(url),
   )
 }
 
 export function useInactiveListUrls(): string[] {
   const lists = useAllLists()
   const allActiveListUrls = useActiveListUrls()
-  return Object.keys(lists).filter(url => !allActiveListUrls?.includes(url) && !UNSUPPORTED_LIST_URLS.includes(url))
+  return Object.keys(lists).filter((url) => !allActiveListUrls?.includes(url) && !UNSUPPORTED_LIST_URLS.includes(url))
 }
 
 // get all the tokens from active lists, combine with local default tokens
@@ -205,7 +205,7 @@ export function useDefaultTokenList(): TokenAddressMap {
 
 export const findLogoURI = (token: Token): string | undefined => {
   return DEFAULT_TOKEN_LIST.tokens.find(
-    item => item.chainId === token.chainId && token.address.toLowerCase() === item.address.toLowerCase()
+    (item) => item.chainId === token.chainId && token.address.toLowerCase() === item.address.toLowerCase(),
   )?.logoURI
 }
 

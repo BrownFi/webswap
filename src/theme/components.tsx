@@ -23,7 +23,7 @@ export const ButtonText = styled.button`
 `
 
 export const Button = styled.button.attrs<{ warning: boolean }, { backgroundColor: string }>(({ warning, theme }) => ({
-  backgroundColor: warning ? theme.red1 : theme.primary1
+  backgroundColor: warning ? theme.red1 : theme.primary1,
 }))`
   padding: 1rem 2rem 1rem 2rem;
   border-radius: 3rem;
@@ -214,7 +214,7 @@ export function ExternalLink({
         // send a ReactGA event and then trigger a location change
       }
     },
-    [href, target]
+    [href, target],
   )
   return <StyledLink target={target} rel={rel} href={href} onClick={handleClick} {...rest} />
 }
@@ -234,7 +234,7 @@ export function ExternalLinkIcon({
         // send a ReactGA event and then trigger a location change
       }
     },
-    [href, target]
+    [href, target],
   )
   return (
     <LinkIconWrapper target={target} rel={rel} href={href} onClick={handleClick} {...rest}>

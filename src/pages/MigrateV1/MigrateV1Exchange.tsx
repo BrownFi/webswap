@@ -4,28 +4,28 @@ import { Currency, CurrencyAmount, Fraction, JSBI, Percent, Token, TokenAmount, 
 import React, { useCallback, useMemo, useState } from 'react'
 import { Redirect, RouteComponentProps } from 'react-router-dom'
 import { Text } from 'rebass'
-import { ButtonConfirmed } from '../../components/Button'
-import { LightCard, PinkCard, YellowCard } from '../../components/Card'
-import { AutoColumn } from '../../components/Column'
-import CurrencyLogo from '../../components/CurrencyLogo'
-import FormattedCurrencyAmount from '../../components/FormattedCurrencyAmount'
-import QuestionHelper from '../../components/QuestionHelper'
-import { AutoRow, RowBetween, RowFixed } from '../../components/Row'
-import { Dots } from '../../components/swap/styleds'
-import { DEFAULT_DEADLINE_FROM_NOW, INITIAL_ALLOWED_SLIPPAGE } from '../../constants'
-import { MIGRATOR_ADDRESS } from '../../constants/abis/migrator'
-import { PairState, usePair } from '../../data/Reserves'
-import { useTotalSupply } from '../../data/TotalSupply'
-import { useActiveWeb3React } from '../../hooks'
-import { useToken } from '../../hooks/Tokens'
-import { ApprovalState, useApproveCallback } from '../../hooks/useApproveCallback'
-import { useV1ExchangeContract, useV2MigratorContract } from '../../hooks/useContract'
-import { NEVER_RELOAD, useSingleCallResult } from '../../state/multicall/hooks'
-import { useIsTransactionPending, useTransactionAdder } from '../../state/transactions/hooks'
-import { useETHBalances, useTokenBalance } from '../../state/wallet/hooks'
-import { BackArrow, ExternalLink, TYPE } from '../../theme'
-import { getEtherscanLink, isAddress } from '../../utils'
-import { BodyWrapper } from '../AppBody'
+import { ButtonConfirmed } from 'components/Button'
+import { LightCard, PinkCard, YellowCard } from 'components/Card'
+import { AutoColumn } from 'components/Column'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import FormattedCurrencyAmount from 'components/FormattedCurrencyAmount'
+import QuestionHelper from 'components/QuestionHelper'
+import { AutoRow, RowBetween, RowFixed } from 'components/Row'
+import { Dots } from 'components/swap/styleds'
+import { DEFAULT_DEADLINE_FROM_NOW, INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+import { MIGRATOR_ADDRESS } from 'constants/abis/migrator'
+import { PairState, usePair } from 'data/Reserves'
+import { useTotalSupply } from 'data/TotalSupply'
+import { useActiveWeb3React } from 'hooks'
+import { useToken } from 'hooks/Tokens'
+import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
+import { useV1ExchangeContract, useV2MigratorContract } from 'hooks/useContract'
+import { NEVER_RELOAD, useSingleCallResult } from 'state/multicall/hooks'
+import { useIsTransactionPending, useTransactionAdder } from 'state/transactions/hooks'
+import { useETHBalances, useTokenBalance } from 'state/wallet/hooks'
+import { BackArrow, ExternalLink, TYPE } from 'theme'
+import { getEtherscanLink, isAddress } from 'utils'
+import { BodyWrapper } from 'pages/AppBody'
 import { EmptyState } from './EmptyState'
 
 const WEI_DENOM = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18))
@@ -38,7 +38,7 @@ export function V1LiquidityInfo({
   token,
   liquidityTokenAmount,
   tokenWorth,
-  ethWorth
+  ethWorth,
 }: {
   token: Token
   liquidityTokenAmount: TokenAmount
@@ -158,11 +158,11 @@ function V1PairMigration({ liquidityTokenAmount, token }: { liquidityTokenAmount
         minAmountToken.toString(),
         minAmountETH.toString(),
         account,
-        Math.floor(new Date().getTime() / 1000) + DEFAULT_DEADLINE_FROM_NOW
+        Math.floor(new Date().getTime() / 1000) + DEFAULT_DEADLINE_FROM_NOW,
       )
       .then((response: TransactionResponse) => {
         addTransaction(response, {
-          summary: `Migrate ${token.symbol} liquidity to V2`
+          summary: `Migrate ${token.symbol} liquidity to V2`,
         })
         setPendingMigrationHash(response.hash)
       })
@@ -306,8 +306,8 @@ function V1PairMigration({ liquidityTokenAmount, token }: { liquidityTokenAmount
 export default function MigrateV1Exchange({
   history,
   match: {
-    params: { address }
-  }
+    params: { address },
+  },
 }: RouteComponentProps<{ address: string }>) {
   const validatedAddress = isAddress(address)
   const { chainId, account } = useActiveWeb3React()
@@ -322,7 +322,7 @@ export default function MigrateV1Exchange({
       validatedAddress && chainId && token
         ? new Token(chainId, validatedAddress, 18, `UNI-V1-${token.symbol}`, 'Uniswap V1')
         : undefined,
-    [chainId, validatedAddress, token]
+    [chainId, validatedAddress, token],
   )
   const userLiquidityBalance = useTokenBalance(account ?? undefined, liquidityToken)
 

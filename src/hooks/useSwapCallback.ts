@@ -1,10 +1,10 @@
 import { TransactionResponse } from '@ethersproject/providers'
 import { callSwapContract, SwapCallbackState, Trade } from '@brownfi/sdk'
 import { useMemo } from 'react'
-import { INITIAL_ALLOWED_SLIPPAGE } from '../constants'
-import { getTradeVersion } from '../data/V1'
-import { useTransactionAdder } from '../state/transactions/hooks'
-import { getTokenSymbol, isAddress, shortenAddress } from '../utils'
+import { INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+import { getTradeVersion } from 'data/V1'
+import { useTransactionAdder } from 'state/transactions/hooks'
+import { getTokenSymbol, isAddress, shortenAddress } from 'utils'
 import { useActiveWeb3React } from './index'
 import useTransactionDeadline from './useTransactionDeadline'
 import useENS from './useENS'
@@ -15,7 +15,7 @@ import { Version } from './useToggledVersion'
 export function useSwapCallback(
   trade: Trade | undefined, // trade to execute, required
   allowedSlippage: number = INITIAL_ALLOWED_SLIPPAGE, // in bips
-  recipientAddressOrName: string | null // the ENS name or address of the recipient of the trade, or null if swap should be returned to sender
+  recipientAddressOrName: string | null, // the ENS name or address of the recipient of the trade, or null if swap should be returned to sender
 ): { state: SwapCallbackState; callback: null | (() => Promise<string>); error: string | null } {
   const { account, chainId, library } = useActiveWeb3React()
 
@@ -50,7 +50,7 @@ export function useSwapCallback(
           recipient,
           chainId,
           library as any,
-          deadline as any
+          deadline as any,
         )
         const inputSymbol = getTokenSymbol(trade.inputAmount?.currency, chainId)
         const outputSymbol = getTokenSymbol(trade.outputAmount?.currency, chainId)
@@ -71,11 +71,11 @@ export function useSwapCallback(
           tradeVersion === Version.v2 ? withRecipient : `${withRecipient} on ${(tradeVersion as any).toUpperCase()}`
 
         addTransaction(response as TransactionResponse, {
-          summary: withVersion
+          summary: withVersion,
         })
         return response.hash
       },
-      error: null
+      error: null,
     }
   }, [trade, library, account, chainId, recipient, recipientAddressOrName, deadline, addTransaction])
 }

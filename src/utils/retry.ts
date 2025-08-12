@@ -1,5 +1,5 @@
 function wait(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 function waitRandom(min: number, max: number): Promise<void> {
@@ -29,7 +29,7 @@ export class RetryableError extends Error {}
  */
 export function retry<T>(
   fn: () => Promise<T>,
-  { n, minWait, maxWait }: { n: number; minWait: number; maxWait: number }
+  { n, minWait, maxWait }: { n: number; minWait: number; maxWait: number },
 ): { promise: Promise<T>; cancel: () => void } {
   let completed = false
   let rejectCancelled: (error: Error) => void
@@ -64,6 +64,6 @@ export function retry<T>(
       if (completed) return
       completed = true
       rejectCancelled(new CancelledError())
-    }
+    },
   }
 }

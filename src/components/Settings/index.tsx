@@ -2,24 +2,24 @@ import React, { useContext, useRef, useState } from 'react'
 import { X } from 'react-feather'
 import { Text } from 'rebass'
 import styled, { ThemeContext } from 'styled-components'
-import { useOnClickOutside } from '../../hooks/useOnClickOutside'
-import { ApplicationModal } from '../../state/application/actions'
-import { useModalOpen, useToggleSettingsMenu } from '../../state/application/hooks'
+import { useOnClickOutside } from 'hooks/useOnClickOutside'
+import { ApplicationModal } from 'state/application/actions'
+import { useModalOpen, useToggleSettingsMenu } from 'state/application/hooks'
 import {
   useExpertModeManager,
   useUserTransactionTTL,
   useUserSlippageTolerance,
-  useUserSingleHopOnly
-} from '../../state/user/hooks'
-import { TYPE } from '../../theme'
-import { ButtonError } from '../Button'
-import { AutoColumn } from '../Column'
-import Modal from '../Modal'
-import QuestionHelper from '../QuestionHelper'
-import { RowBetween, RowFixed } from '../Row'
-import Toggle from '../Toggle'
-import TransactionSettings from '../TransactionSettings'
-import settings from '../../assets/svg/settings.svg'
+  useUserSingleHopOnly,
+} from 'state/user/hooks'
+import { TYPE } from 'theme'
+import { ButtonError } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import { Modal } from 'components/Modal'
+import QuestionHelper from 'components/QuestionHelper'
+import { RowBetween, RowFixed } from 'components/Row'
+import Toggle from 'components/Toggle'
+import TransactionSettings from 'components/TransactionSettings'
+import settings from 'assets/svg/settings.svg'
 
 const StyledCloseIcon = styled(X)`
   height: 20px;
@@ -107,7 +107,7 @@ const ModalContentWrapper = styled.div`
   border-radius: 20px;
 `
 
-export default function SettingsTab() {
+export function SettingsTab() {
   const node = useRef<HTMLDivElement>()
   const open = useModalOpen(ApplicationModal.SETTINGS)
   const toggle = useToggleSettingsMenu()

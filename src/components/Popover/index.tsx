@@ -3,14 +3,14 @@ import { transparentize } from 'polished'
 import React, { useCallback, useState } from 'react'
 import { usePopper } from 'react-popper'
 import styled from 'styled-components'
-import useInterval from '../../hooks/useInterval'
+import useInterval from 'hooks/useInterval'
 import Portal from '@reach/portal'
 
 const PopoverContainer = styled.div<{ show: boolean }>`
   z-index: 9999;
 
-  visibility: ${props => (props.show ? 'visible' : 'hidden')};
-  opacity: ${props => (props.show ? 1 : 0)};
+  visibility: ${(props) => (props.show ? 'visible' : 'hidden')};
+  opacity: ${(props) => (props.show ? 1 : 0)};
   transition: visibility 150ms linear, opacity 150ms linear;
 
   background: #323038;
@@ -91,8 +91,8 @@ export default function Popover({ content, show, children, placement = 'auto' }:
     strategy: 'fixed',
     modifiers: [
       { name: 'offset', options: { offset: [8, 8] } },
-      { name: 'arrow', options: { element: arrowElement } }
-    ]
+      { name: 'arrow', options: { element: arrowElement } },
+    ],
   })
   const updateCallback = useCallback(() => {
     update && update()

@@ -4,9 +4,9 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 
 import { flatMap } from 'lodash'
 
-import { useActiveWeb3React } from '../../hooks'
-import { useAllTokens } from '../../hooks/Tokens'
-import { AppDispatch, AppState } from '../index'
+import { useActiveWeb3React } from 'hooks'
+import { useAllTokens } from 'hooks/Tokens'
+import { AppDispatch, AppState } from 'state'
 import {
   addSerializedPair,
   addSerializedToken,

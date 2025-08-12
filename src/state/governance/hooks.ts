@@ -1,13 +1,13 @@
-import { PRELOADED_PROPOSALS } from './../../constants/index'
+import { PRELOADED_PROPOSALS } from 'constants/common'
 import { TokenAmount } from '@brownfi/sdk'
 import { isAddress } from 'ethers/lib/utils'
-import { useGovernanceContract, useUniContract } from '../../hooks/useContract'
-import { useSingleCallResult, useSingleContractMultipleData } from '../multicall/hooks'
-import { useActiveWeb3React } from '../../hooks'
+import { useGovernanceContract, useUniContract } from 'hooks/useContract'
+import { useSingleCallResult, useSingleContractMultipleData } from 'state/multicall/hooks'
+import { useActiveWeb3React } from 'hooks'
 import { ethers, utils } from 'ethers'
-import { calculateGasMargin } from '../../utils'
+import { calculateGasMargin } from 'utils'
 import { TransactionResponse } from '@ethersproject/providers'
-import { useTransactionAdder } from '../transactions/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 import { useState, useEffect, useCallback } from 'react'
 import GOV_ABI from '@uniswap/governance/build/GovernorAlpha.json'
 
@@ -39,7 +39,7 @@ export enum ProposalState {
   Succeeded,
   Queued,
   Expired,
-  Executed
+  Executed,
 }
 
 // get count of all proposals made
@@ -70,7 +70,7 @@ export function useDataFromEventLogs() {
       const pastEvents = await library?.getLogs(filter)
       // reverse events to get them from newest to odlest
       const formattedEventData = pastEvents
-        ?.map(event => {
+        ?.map((event) => {
           const eventParsed = eventParser.parseLog(event).args
           return {
             description: eventParsed.description,
@@ -84,9 +84,9 @@ export function useDataFromEventLogs() {
               return {
                 target,
                 functionSig: name,
-                callData: decoded.join(', ')
+                callData: decoded.join(', '),
               }
-            })
+            }),
           }
         })
         .reverse()
@@ -139,7 +139,7 @@ export function useAllProposalData() {
           againstCount: parseFloat(ethers.utils.formatUnits(allProposals[i]?.result?.againstVotes.toString(), 18)),
           startBlock: parseInt(allProposals[i]?.result?.startBlock?.toString()),
           endBlock: parseInt(allProposals[i]?.result?.endBlock?.toString()),
-          details: formattedEvents[i].details
+          details: formattedEvents[i].details,
         }
         return formattedProposal
       })
@@ -150,7 +150,7 @@ export function useAllProposalData() {
 
 export function useProposalData(id: string): ProposalData | undefined {
   const allProposalData = useAllProposalData()
-  return allProposalData?.find(p => p.id === id)
+  return allProposalData?.find((p) => p.id === id)
 }
 
 // get the users delegatee if it exists
@@ -195,18 +195,18 @@ export function useDelegateCallback(): (delegatee: string | undefined) => undefi
       if (!library || !chainId || !account || !isAddress(delegatee ?? '')) return undefined
       const args = [delegatee]
       if (!uniContract) throw new Error('No UNI Contract!')
-      return uniContract.estimateGas.delegate(...args, {}).then(estimatedGasLimit => {
+      return uniContract.estimateGas.delegate(...args, {}).then((estimatedGasLimit) => {
         return uniContract
           .delegate(...args, { value: null, gasLimit: calculateGasMargin(estimatedGasLimit) })
           .then((response: TransactionResponse) => {
             addTransaction(response, {
-              summary: `Delegated votes`
+              summary: `Delegated votes`,
             })
             return response.hash
           })
       })
     },
-    [account, addTransaction, chainId, library, uniContract]
+    [account, addTransaction, chainId, library, uniContract],
   )
 }
 
@@ -222,18 +222,18 @@ export function useVoteCallback(): {
     (proposalId: string | undefined, support: boolean) => {
       if (!account || !govContract || !proposalId) return
       const args = [proposalId, support]
-      return govContract.estimateGas.castVote(...args, {}).then(estimatedGasLimit => {
+      return govContract.estimateGas.castVote(...args, {}).then((estimatedGasLimit) => {
         return govContract
           .castVote(...args, { value: null, gasLimit: calculateGasMargin(estimatedGasLimit) })
           .then((response: TransactionResponse) => {
             addTransaction(response, {
-              summary: `Voted ${support ? 'for ' : 'against'} proposal ${proposalId}`
+              summary: `Voted ${support ? 'for ' : 'against'} proposal ${proposalId}`,
             })
             return response.hash
           })
       })
     },
-    [account, addTransaction, govContract]
+    [account, addTransaction, govContract],
   )
   return { voteCallback }
 }

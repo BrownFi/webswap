@@ -1,17 +1,17 @@
 import React, { useState, useContext } from 'react'
-import { useActiveWeb3React } from '../../hooks'
+import { useActiveWeb3React } from 'hooks'
 
-import Modal from '../Modal'
-import { AutoColumn, ColumnCenter } from '../Column'
+import { Modal } from 'components/Modal'
+import { AutoColumn, ColumnCenter } from 'components/Column'
 import styled, { ThemeContext } from 'styled-components'
-import { RowBetween } from '../Row'
-import { TYPE, CustomLightSpinner } from '../../theme'
+import { RowBetween } from 'components/Row'
+import { TYPE, CustomLightSpinner } from 'theme'
 import { X, ArrowUpCircle } from 'react-feather'
-import { ButtonPrimary } from '../Button'
-import Circle from '../../assets/images/blue-loader.svg'
-import { useVoteCallback, useUserVotes } from '../../state/governance/hooks'
-import { getEtherscanLink } from '../../utils'
-import { ExternalLink } from '../../theme/components'
+import { ButtonPrimary } from 'components/Button'
+import Circle from 'assets/images/blue-loader.svg'
+import { useVoteCallback, useUserVotes } from 'state/governance/hooks'
+import { getEtherscanLink } from 'utils'
+import { ExternalLink } from 'theme/components'
 import { TokenAmount } from '@brownfi/sdk'
 
 const ContentWrapper = styled(AutoColumn)`
@@ -44,7 +44,7 @@ interface VoteModalProps {
 export default function VoteModal({ isOpen, onDismiss, proposalId, support }: VoteModalProps) {
   const { chainId } = useActiveWeb3React()
   const {
-    voteCallback
+    voteCallback,
   }: {
     voteCallback: (proposalId: string | undefined, support: boolean) => Promise<string> | undefined
   } = useVoteCallback()
@@ -71,7 +71,7 @@ export default function VoteModal({ isOpen, onDismiss, proposalId, support }: Vo
     if (!voteCallback) return
 
     // try delegation and store hash
-    const hash = await voteCallback(proposalId, support)?.catch(error => {
+    const hash = await voteCallback(proposalId, support)?.catch((error) => {
       setAttempting(false)
       console.log(error)
     })

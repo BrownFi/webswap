@@ -1,10 +1,10 @@
 import React, { PropsWithChildren } from 'react'
 import 'rc-slider/assets/index.css'
-import '../theme/index.css'
+import 'theme/index.css'
 import styled from 'styled-components'
 import Footer from 'components/Footer'
-import csm from '../assets/svg/csm.svg'
-import mathImage from '../assets/svg/math-image.svg'
+import csm from 'assets/svg/csm.svg'
+import mathImage from 'assets/svg/math-image.svg'
 import Header from 'components/Header'
 
 const AppWrapper = styled.div`

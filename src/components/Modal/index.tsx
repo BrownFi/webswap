@@ -29,7 +29,7 @@ const AnimatedDialogContent = animated(DialogContent)
 const StyledDialogContent = styled(({ minHeight, maxHeight, mobile, isOpen, ...rest }) => (
   <AnimatedDialogContent {...rest} />
 )).attrs({
-  'aria-label': 'dialog'
+  'aria-label': 'dialog',
 })`
   overflow-y: ${({ mobile }) => (mobile ? 'scroll' : 'hidden')};
 
@@ -83,31 +83,24 @@ interface ModalProps {
   children?: React.ReactNode
 }
 
-export default function Modal({
-  isOpen,
-  onDismiss,
-  minHeight = false,
-  maxHeight = 90,
-  initialFocusRef,
-  children
-}: ModalProps) {
+export function Modal({ isOpen, onDismiss, minHeight = false, maxHeight = 90, initialFocusRef, children }: ModalProps) {
   const fadeTransition = useTransition(isOpen, {
     config: { duration: 200 },
     from: { opacity: 0 },
     enter: { opacity: 1 },
-    leave: { opacity: 0 }
+    leave: { opacity: 0 },
   })
 
   const [{ y }, set] = useSpring(() => ({ y: 0, config: { mass: 1, tension: 210, friction: 20 } }))
   const bind = useGesture({
-    onDrag: state => {
+    onDrag: (state) => {
       set({
-        y: state.down ? state.movement[1] : 0
+        y: state.down ? state.movement[1] : 0,
       })
       if (state.movement[1] > 300 || (state.velocity > 3 && state.direction[1] > 0)) {
         onDismiss()
       }
-    }
+    },
   })
 
   return (
@@ -126,7 +119,7 @@ export default function Modal({
                 {...(isMobile
                   ? {
                       ...bind(),
-                      style: { transform: y.interpolate((y: any) => `translateY(${y > 0 ? y : 0}px)`) }
+                      style: { transform: y.interpolate((y: any) => `translateY(${y > 0 ? y : 0}px)`) },
                     }
                   : {})}
                 aria-label="dialog content"
@@ -139,7 +132,7 @@ export default function Modal({
                 {children}
               </StyledDialogContent>
             </StyledDialogOverlay>
-          )
+          ),
       )}
     </>
   )

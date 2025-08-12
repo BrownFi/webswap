@@ -1,10 +1,10 @@
 import { ChainId, CurrencyAmount, JSBI, Token, TokenAmount, WETH, Pair } from '@brownfi/sdk'
 import { useMemo } from 'react'
-import { DAI, USDC, USDT, WBTC } from '../../constants'
-import { STAKING_REWARDS_INTERFACE } from '../../constants/abis/staking-rewards'
-import { useActiveWeb3React } from '../../hooks'
-import { NEVER_RELOAD, useMultipleContractSingleData } from '../multicall/hooks'
-import { tryParseAmount } from '../swap/hooks'
+import { DAI, USDC, USDT, WBTC } from 'constants/common'
+import { STAKING_REWARDS_INTERFACE } from 'constants/abis/staking-rewards'
+import { useActiveWeb3React } from 'hooks'
+import { NEVER_RELOAD, useMultipleContractSingleData } from 'state/multicall/hooks'
+import { tryParseAmount } from 'state/swap/hooks'
 import useCurrentBlockTimestamp from 'hooks/useCurrentBlockTimestamp'
 import { useVersion } from 'hooks/useVersion'
 
@@ -21,21 +21,21 @@ export const STAKING_REWARDS_INFO: {
   [ChainId.MAINNET]: [
     {
       tokens: [WETH[ChainId.MAINNET], DAI],
-      stakingRewardAddress: '0xa1484C3aa22a66C62b77E0AE78E15258bd0cB711'
+      stakingRewardAddress: '0xa1484C3aa22a66C62b77E0AE78E15258bd0cB711',
     },
     {
       tokens: [WETH[ChainId.MAINNET], USDC],
-      stakingRewardAddress: '0x7FBa4B8Dc5E7616e59622806932DBea72537A56b'
+      stakingRewardAddress: '0x7FBa4B8Dc5E7616e59622806932DBea72537A56b',
     },
     {
       tokens: [WETH[ChainId.MAINNET], USDT],
-      stakingRewardAddress: '0x6C3e4cb2E96B01F4b866965A91ed4437839A121a'
+      stakingRewardAddress: '0x6C3e4cb2E96B01F4b866965A91ed4437839A121a',
     },
     {
       tokens: [WETH[ChainId.MAINNET], WBTC],
-      stakingRewardAddress: '0xCA35e32e7926b96A9988f61d510E038108d8068e'
-    }
-  ]
+      stakingRewardAddress: '0xCA35e32e7926b96A9988f61d510E038108d8068e',
+    },
+  ],
 }
 
 export interface StakingInfo {
@@ -62,7 +62,7 @@ export interface StakingInfo {
   getHypotheticalRewardRate: (
     stakedAmount: TokenAmount,
     totalStakedAmount: TokenAmount,
-    totalRewardRate: TokenAmount
+    totalRewardRate: TokenAmount,
   ) => TokenAmount
 }
 
@@ -77,16 +77,16 @@ export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
   const info = useMemo(
     () =>
       chainId
-        ? STAKING_REWARDS_INFO[chainId]?.filter(stakingRewardInfo =>
+        ? STAKING_REWARDS_INFO[chainId]?.filter((stakingRewardInfo) =>
             pairToFilterBy === undefined
               ? true
               : pairToFilterBy === null
               ? false
               : pairToFilterBy.involvesToken(stakingRewardInfo.tokens[0]) &&
-                pairToFilterBy.involvesToken(stakingRewardInfo.tokens[1])
+                pairToFilterBy.involvesToken(stakingRewardInfo.tokens[1]),
           ) ?? []
         : [],
-    [chainId, pairToFilterBy]
+    [chainId, pairToFilterBy],
   )
 
   const uni = undefined
@@ -106,14 +106,14 @@ export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
     STAKING_REWARDS_INTERFACE,
     'rewardRate',
     undefined,
-    NEVER_RELOAD
+    NEVER_RELOAD,
   )
   const periodFinishes = useMultipleContractSingleData(
     rewardsAddresses,
     STAKING_REWARDS_INTERFACE,
     'periodFinish',
     undefined,
-    NEVER_RELOAD
+    NEVER_RELOAD,
   )
 
   return useMemo(() => {
@@ -165,13 +165,13 @@ export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
         const getHypotheticalRewardRate = (
           stakedAmount: TokenAmount,
           totalStakedAmount: TokenAmount,
-          totalRewardRate: TokenAmount
+          totalRewardRate: TokenAmount,
         ): TokenAmount => {
           return new TokenAmount(
             uni,
             JSBI.greaterThan(totalStakedAmount.raw, JSBI.BigInt(0))
               ? JSBI.divide(JSBI.multiply(totalRewardRate.raw, stakedAmount.raw), totalStakedAmount.raw)
-              : JSBI.BigInt(0)
+              : JSBI.BigInt(0),
           )
         }
 
@@ -194,7 +194,7 @@ export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
           stakedAmount: stakedAmount,
           totalStakedAmount: totalStakedAmount,
           getHypotheticalRewardRate,
-          active
+          active,
         })
       }
       return memo
@@ -209,7 +209,7 @@ export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
     rewardRates,
     rewardsAddresses,
     totalSupplies,
-    uni
+    uni,
   ])
 }
 
@@ -222,7 +222,7 @@ export function useTotalUniEarned(): TokenAmount | undefined {
     return (
       stakingInfos?.reduce(
         (accumulator, stakingInfo) => accumulator.add(stakingInfo.earnedAmount),
-        new TokenAmount(uni, '0')
+        new TokenAmount(uni, '0'),
       ) ?? new TokenAmount(uni, '0')
     )
   }, [stakingInfos, uni])
@@ -232,7 +232,7 @@ export function useTotalUniEarned(): TokenAmount | undefined {
 export function useDerivedStakeInfo(
   typedValue: string,
   stakingToken: Token,
-  userLiquidityUnstaked: TokenAmount | undefined
+  userLiquidityUnstaked: TokenAmount | undefined,
 ): {
   parsedAmount?: CurrencyAmount
   error?: string
@@ -256,14 +256,14 @@ export function useDerivedStakeInfo(
 
   return {
     parsedAmount,
-    error
+    error,
   }
 }
 
 // based on typed value
 export function useDerivedUnstakeInfo(
   typedValue: string,
-  stakingAmount: TokenAmount
+  stakingAmount: TokenAmount,
 ): {
   parsedAmount?: CurrencyAmount
   error?: string
@@ -284,6 +284,6 @@ export function useDerivedUnstakeInfo(
 
   return {
     parsedAmount,
-    error
+    error,
   }
 }

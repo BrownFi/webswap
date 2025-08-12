@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import Column from 'components/Column'
-import AppBody from 'pages/AppBody'
+import { AppBody } from 'pages/AppBody'
 import React from 'react'
 import { internalService } from 'services'
 import { TYPE } from 'theme'
@@ -16,7 +16,7 @@ const Leaderboard = () => {
     queryKey: ['fetchLeaderboard'],
     queryFn: () => {
       return internalService.fetchLeaderboard({ limit: 10 })
-    }
+    },
   })
 
   const { data: userRank } = useQuery({
@@ -24,10 +24,10 @@ const Leaderboard = () => {
     queryFn: () => {
       return internalService.getUserRank(address ?? '')
     },
-    enabled: !!address
+    enabled: !!address,
   })
 
-  const includeUser = leaderboard?.items.some(item => item.address === address)
+  const includeUser = leaderboard?.items.some((item) => item.address === address)
 
   return (
     <>

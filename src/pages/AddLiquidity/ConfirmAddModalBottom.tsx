@@ -1,11 +1,11 @@
 import { Currency, CurrencyAmount, Fraction, Percent } from '@brownfi/sdk'
 import React from 'react'
 import { Text } from 'rebass'
-import { ButtonPrimary } from '../../components/Button'
-import { RowBetween, RowFixed } from '../../components/Row'
-import CurrencyLogo from '../../components/CurrencyLogo'
-import { Field } from '../../state/mint/actions'
-import { TYPE } from '../../theme'
+import { ButtonPrimary } from 'components/Button'
+import { RowBetween, RowFixed } from 'components/Row'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import { Field } from 'state/mint/actions'
+import { TYPE } from 'theme'
 import { useActiveWeb3React } from 'hooks'
 import { getTokenSymbol } from 'utils'
 
@@ -15,7 +15,7 @@ export function ConfirmAddModalBottom({
   currencies,
   parsedAmounts,
   poolTokenPercentage,
-  onAdd
+  onAdd,
 }: {
   noLiquidity?: boolean
   price?: Fraction
@@ -46,7 +46,7 @@ export function ConfirmAddModalBottom({
         <TYPE.body className="!text-white">
           {`1 ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} = ${price?.toSignificant(4)} ${getTokenSymbol(
             currencies[Field.CURRENCY_B],
-            chainId
+            chainId,
           )}`}
         </TYPE.body>
       </RowBetween>

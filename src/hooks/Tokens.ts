@@ -1,15 +1,15 @@
-import { TokenAddressMap, useDefaultTokenList, useUnsupportedTokenList } from './../state/lists/hooks'
+import { TokenAddressMap, useDefaultTokenList, useUnsupportedTokenList } from 'state/lists/hooks'
 import { parseBytes32String } from '@ethersproject/strings'
 import { Currency, ETHER, Token, currencyEquals } from '@brownfi/sdk'
 import { useMemo } from 'react'
-import { useCombinedActiveList, useCombinedInactiveList } from '../state/lists/hooks'
-import { NEVER_RELOAD, useSingleCallResult } from '../state/multicall/hooks'
-import { useUserAddedTokens } from '../state/user/hooks'
-import { isAddress } from '../utils'
+import { useCombinedActiveList, useCombinedInactiveList } from 'state/lists/hooks'
+import { NEVER_RELOAD, useSingleCallResult } from 'state/multicall/hooks'
+import { useUserAddedTokens } from 'state/user/hooks'
+import { isAddress } from 'utils'
 
 import { useActiveWeb3React } from './index'
 import { useBytes32TokenContract, useTokenContract } from './useContract'
-import { filterTokens } from '../components/SearchModal/filtering'
+import { filterTokens } from 'components/SearchModal/filtering'
 import { arrayify } from 'ethers/lib/utils'
 
 // reduce token map into standard address <-> Token mapping, optionally include user added tokens
@@ -26,7 +26,7 @@ function useTokensFromMap(tokenMap: TokenAddressMap, includeUserAdded: boolean):
         newMap[address] = tokenMap[chainId][address].token
         return newMap
       },
-      {}
+      {},
     )
 
     if (includeUserAdded) {
@@ -40,7 +40,7 @@ function useTokensFromMap(tokenMap: TokenAddressMap, includeUserAdded: boolean):
             },
             // must make a copy because reduce modifies the map, and we do not
             // want to make a copy in every iteration
-            { ...mapWithoutUrls }
+            { ...mapWithoutUrls },
           )
       )
     }
@@ -116,7 +116,7 @@ export function useIsUserAddedToken(currency: Currency | undefined | null): bool
     return false
   }
 
-  return !!userAddedTokens.find(token => currencyEquals(currency, token))
+  return !!userAddedTokens.find((token) => currencyEquals(currency, token))
 }
 
 // parse a name or symbol from a token response
@@ -149,7 +149,7 @@ export function useToken(tokenAddress?: string): Token | undefined | null {
     token ? undefined : tokenContractBytes32,
     'name',
     undefined,
-    NEVER_RELOAD
+    NEVER_RELOAD,
   )
   const symbol = useSingleCallResult(token ? undefined : tokenContract, 'symbol', undefined, NEVER_RELOAD)
   const symbolBytes32 = useSingleCallResult(token ? undefined : tokenContractBytes32, 'symbol', undefined, NEVER_RELOAD)
@@ -165,7 +165,7 @@ export function useToken(tokenAddress?: string): Token | undefined | null {
         address,
         decimals.result[0],
         parseStringOrBytes32(symbol.result?.[0], symbolBytes32.result?.[0], 'UNKNOWN'),
-        parseStringOrBytes32(tokenName.result?.[0], tokenNameBytes32.result?.[0], 'Unknown Token')
+        parseStringOrBytes32(tokenName.result?.[0], tokenNameBytes32.result?.[0], 'Unknown Token'),
       )
     }
     return undefined
@@ -180,7 +180,7 @@ export function useToken(tokenAddress?: string): Token | undefined | null {
     token,
     tokenName.loading,
     tokenName.result,
-    tokenNameBytes32.result
+    tokenNameBytes32.result,
   ])
 }
 

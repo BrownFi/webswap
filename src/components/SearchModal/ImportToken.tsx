@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import { Token, Currency } from '@brownfi/sdk'
 import styled from 'styled-components'
 import { TYPE, CloseIcon } from 'theme'
-import Card from 'components/Card'
+import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { RowBetween, RowFixed, AutoRow } from 'components/Row'
-import CurrencyLogo from 'components/CurrencyLogo'
+import { CurrencyLogo } from 'components/CurrencyLogo'
 import { ArrowLeft, AlertTriangle } from 'react-feather'
 import { transparentize } from 'polished'
 import useTheme from 'hooks/useTheme'
@@ -14,7 +14,7 @@ import { ButtonPrimary } from 'components/Button'
 import { useAddUserToken } from 'state/user/hooks'
 import { getEtherscanLink } from 'utils'
 import { useActiveWeb3React } from 'hooks'
-import { ExternalLink } from '../../theme/components'
+import { ExternalLink } from 'theme/components'
 import { useCombinedInactiveList } from 'state/lists/hooks'
 import ListLogo from 'components/ListLogo'
 import { PaddedColumn, Checkbox } from './styleds'
@@ -76,7 +76,7 @@ export function ImportToken({ tokens, onBack, onDismiss, handleCurrencySelect }:
       </PaddedColumn>
       {/* <SectionBreak /> */}
       <PaddedColumn gap="md">
-        {tokens.map(token => {
+        {tokens.map((token) => {
           const list = chainId && inactiveTokenList?.[chainId]?.[token.address]?.list
           return (
             <Card backgroundColor={'#323038'} key={'import' + token.address} className=".token-warning-container">
@@ -155,7 +155,7 @@ export function ImportToken({ tokens, onBack, onDismiss, handleCurrencySelect }:
           borderRadius="20px"
           padding="10px 1rem"
           onClick={() => {
-            tokens.map(token => addToken(token))
+            tokens.map((token) => addToken(token))
             handleCurrencySelect && handleCurrencySelect(tokens[0])
           }}
           className=".token-dismiss-button"

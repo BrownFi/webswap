@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { TYPE } from '../../theme'
+import { TYPE } from 'theme'
 
 const Wrapper = styled.button<{ isActive?: boolean; activeElement?: boolean }>`
   border-radius: 20px;

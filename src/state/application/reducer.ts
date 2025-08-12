@@ -12,10 +12,10 @@ export interface ApplicationState {
 const initialState: ApplicationState = {
   blockNumber: {},
   popupList: [],
-  openModal: null
+  openModal: null,
 }
 
-export default createReducer(initialState, builder =>
+export default createReducer(initialState, (builder) =>
   builder
     .addCase(updateBlockNumber, (state, action) => {
       console.debug('3. Update block number', action.payload)
@@ -30,20 +30,20 @@ export default createReducer(initialState, builder =>
       state.openModal = action.payload
     })
     .addCase(addPopup, (state, { payload: { content, key, removeAfterMs = 15000 } }) => {
-      state.popupList = (key ? state.popupList.filter(popup => popup.key !== key) : state.popupList).concat([
+      state.popupList = (key ? state.popupList.filter((popup) => popup.key !== key) : state.popupList).concat([
         {
           key: key || nanoid(),
           show: true,
           content,
-          removeAfterMs
-        }
+          removeAfterMs,
+        },
       ])
     })
     .addCase(removePopup, (state, { payload: { key } }) => {
-      state.popupList.forEach(p => {
+      state.popupList.forEach((p) => {
         if (p.key === key) {
           p.show = false
         }
       })
-    })
+    }),
 )

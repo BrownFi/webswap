@@ -2,29 +2,29 @@ import { Currency, ETHER, JSBI, TokenAmount } from '@brownfi/sdk'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Plus } from 'react-feather'
 import { Text } from 'rebass'
-import { ButtonDropdownLight } from '../../components/Button'
-import { LightCard } from '../../components/Card'
-import { AutoColumn, ColumnCenter } from '../../components/Column'
-import CurrencyLogo from '../../components/CurrencyLogo'
-import { FindPoolTabs } from '../../components/NavigationTabs'
-import { MinimalPositionCard } from '../../components/PositionCard/MinimalPositionCard'
-import Row from '../../components/Row'
-import CurrencySearchModal from '../../components/SearchModal/CurrencySearchModal'
-import { PairState, usePair } from '../../data/Reserves'
-import { useActiveWeb3React } from '../../hooks'
-import { usePairAdder } from '../../state/user/hooks'
-import { useTokenBalance } from '../../state/wallet/hooks'
-import { StyledInternalLink } from '../../theme'
-import { currencyId } from '../../utils/currencyId'
-import AppBody from '../AppBody'
-import { Dots } from '../Pool/styleds'
-import { BlueCard } from '../../components/Card'
-import { TYPE } from '../../theme'
+import { ButtonDropdownLight } from 'components/Button'
+import { LightCard } from 'components/Card'
+import { AutoColumn, ColumnCenter } from 'components/Column'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import { FindPoolTabs } from 'components/NavigationTabs'
+import { MinimalPositionCard } from 'components/PositionCard/MinimalPositionCard'
+import Row from 'components/Row'
+import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
+import { PairState, usePair } from 'data/Reserves'
+import { useActiveWeb3React } from 'hooks'
+import { usePairAdder } from 'state/user/hooks'
+import { useTokenBalance } from 'state/wallet/hooks'
+import { StyledInternalLink } from 'theme'
+import { currencyId } from 'utils/currencyId'
+import { AppBody } from 'pages/AppBody'
+import { Dots } from 'pages/Pool/styleds'
+import { BlueCard } from 'components/Card'
+import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
 
 enum Fields {
   TOKEN0 = 0,
-  TOKEN1 = 1
+  TOKEN1 = 1,
 }
 
 export default function PoolFinder() {
@@ -50,7 +50,7 @@ export default function PoolFinder() {
       pairState === PairState.EXISTS &&
         pair &&
         JSBI.equal(pair.reserve0.raw, JSBI.BigInt(0)) &&
-        JSBI.equal(pair.reserve1.raw, JSBI.BigInt(0))
+        JSBI.equal(pair.reserve1.raw, JSBI.BigInt(0)),
     )
 
   const position: TokenAmount | undefined = useTokenBalance(account ?? undefined, pair?.liquidityToken)
@@ -64,7 +64,7 @@ export default function PoolFinder() {
         setCurrency1(currency)
       }
     },
-    [activeField]
+    [activeField],
   )
 
   const handleSearchDismiss = useCallback(() => {

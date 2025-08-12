@@ -19,7 +19,7 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
         ChainId.BSC_MAINNET,
         ChainId.HYPER_EVM,
         ChainId.ARBITRUM_SEPOLIA,
-        ChainId.SEPOLIA
+        ChainId.SEPOLIA,
       ].includes(chainId as number)
     ) {
       return [2, true]
@@ -38,7 +38,7 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
         ChainId.ARBITRUM_MAINNET,
         ChainId.BASE_MAINNET,
         ChainId.HYPER_EVM,
-        ChainId.BSC_MAINNET
+        ChainId.BSC_MAINNET,
       ].includes(chainId as number) && version === 2
     )
   }, [chainId, version])
@@ -50,7 +50,7 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
         ChainId.BERA_MAINNET,
         ChainId.ARBITRUM_MAINNET,
         ChainId.BASE_MAINNET,
-        ChainId.BSC_MAINNET
+        ChainId.BSC_MAINNET,
       ].includes(chainId as number) && version === 2
     )
   }, [chainId, version])
@@ -61,6 +61,6 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
     version,
     appVersion,
     isDisabled,
-    switchVersion: dispatchSwitchVersion
+    switchVersion: dispatchSwitchVersion,
   }
 }

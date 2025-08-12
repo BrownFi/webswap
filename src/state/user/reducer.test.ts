@@ -1,6 +1,6 @@
 import { createStore, Store } from 'redux'
-import { DEFAULT_DEADLINE_FROM_NOW, INITIAL_ALLOWED_SLIPPAGE } from '../../constants'
-import { updateVersion } from '../global/actions'
+import { DEFAULT_DEADLINE_FROM_NOW, INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
+import { updateVersion } from 'state/global/actions'
 import reducer, { initialState, UserState } from './reducer'
 
 describe('swap reducer', () => {
@@ -23,7 +23,7 @@ describe('swap reducer', () => {
       store = createStore(reducer, {
         ...initialState,
         userDeadline: undefined,
-        userSlippageTolerance: undefined
+        userSlippageTolerance: undefined,
       } as any)
       store.dispatch(updateVersion())
       expect(store.getState().userDeadline).toEqual(DEFAULT_DEADLINE_FROM_NOW)

@@ -1,11 +1,11 @@
-import { ZERO_PERCENT, ONE_HUNDRED_PERCENT } from './../constants/index'
+import { ZERO_PERCENT, ONE_HUNDRED_PERCENT } from 'constants/common'
 import { Trade, Percent, currencyEquals } from '@brownfi/sdk'
 
 // returns whether tradeB is better than tradeA by at least a threshold percentage amount
 export function isTradeBetter(
   tradeA: Trade | undefined | null,
   tradeB: Trade | undefined | null,
-  minimumDelta: Percent = ZERO_PERCENT
+  minimumDelta: Percent = ZERO_PERCENT,
 ): boolean | undefined {
   if (tradeA && !tradeB) return false
   if (tradeB && !tradeA) return true

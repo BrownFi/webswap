@@ -3,14 +3,14 @@ import React, { useCallback, useMemo } from 'react'
 import { useDispatch } from 'react-redux'
 import { Text } from 'rebass'
 import styled from 'styled-components'
-import { AppDispatch } from '../../state'
-import { useRemovePopup } from '../../state/application/hooks'
-import { acceptListUpdate } from '../../state/lists/actions'
-import { TYPE } from '../../theme'
-import listVersionLabel from '../../utils/listVersionLabel'
-import { ButtonSecondary } from '../Button'
-import { AutoColumn } from '../Column'
-import { AutoRow } from '../Row'
+import { AppDispatch } from 'state'
+import { useRemovePopup } from 'state/application/hooks'
+import { acceptListUpdate } from 'state/lists/actions'
+import { TYPE } from 'theme'
+import listVersionLabel from 'utils/listVersionLabel'
+import { ButtonSecondary } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import { AutoRow } from 'components/Row'
 
 export const ChangesList = styled.ul`
   max-height: 400px;
@@ -22,7 +22,7 @@ export default function ListUpdatePopup({
   listUrl,
   oldList,
   newList,
-  auto
+  auto,
 }: {
   popKey: string
   listUrl: string
@@ -47,7 +47,7 @@ export default function ListUpdatePopup({
   const numTokensChanged = useMemo(
     () =>
       Object.keys(tokensChanged).reduce((memo, chainId: any) => memo + Object.keys(tokensChanged[chainId]).length, 0),
-    [tokensChanged]
+    [tokensChanged],
   )
 
   return (

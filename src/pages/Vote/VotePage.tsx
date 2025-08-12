@@ -1,34 +1,34 @@
 import React, { useState } from 'react'
-import { AutoColumn } from '../../components/Column'
+import { AutoColumn } from 'components/Column'
 import styled from 'styled-components'
 
 import { RouteComponentProps } from 'react-router-dom'
-import { ExternalLink, StyledInternalLink, TYPE } from '../../theme'
-import { RowBetween, RowFixed } from '../../components/Row'
-import { CardSection, DataCard } from '../../components/earn/styled'
+import { ExternalLink, StyledInternalLink, TYPE } from 'theme'
+import { RowBetween, RowFixed } from 'components/Row'
+import { CardSection, DataCard } from 'components/earn/styled'
 import { ArrowLeft } from 'react-feather'
-import { ButtonPrimary } from '../../components/Button'
+import { ButtonPrimary } from 'components/Button'
 import { ProposalStatus } from './styled'
 import {
   ProposalData,
   ProposalState,
   useProposalData,
   useUserDelegatee,
-  useUserVotesAsOfBlock
-} from '../../state/governance/hooks'
+  useUserVotesAsOfBlock,
+} from 'state/governance/hooks'
 import { DateTime } from 'luxon'
-import VoteModal from '../../components/vote/VoteModal'
+import VoteModal from 'components/vote/VoteModal'
 import { JSBI, TokenAmount } from '@brownfi/sdk'
-import { useActiveWeb3React } from '../../hooks'
-import { AVERAGE_BLOCK_TIME_IN_SECS, COMMON_CONTRACT_NAMES, ZERO_ADDRESS } from '../../constants'
-import { getEtherscanLink, isAddress } from '../../utils'
-import { ApplicationModal } from '../../state/application/actions'
-import { useBlockNumber, useModalOpen, useToggleDelegateModal, useToggleVoteModal } from '../../state/application/hooks'
-import DelegateModal from '../../components/vote/DelegateModal'
-import { useTokenBalance } from '../../state/wallet/hooks'
+import { useActiveWeb3React } from 'hooks'
+import { AVERAGE_BLOCK_TIME_IN_SECS, COMMON_CONTRACT_NAMES, ZERO_ADDRESS } from 'constants/common'
+import { getEtherscanLink, isAddress } from 'utils'
+import { ApplicationModal } from 'state/application/actions'
+import { useBlockNumber, useModalOpen, useToggleDelegateModal, useToggleVoteModal } from 'state/application/hooks'
+import DelegateModal from 'components/vote/DelegateModal'
+import { useTokenBalance } from 'state/wallet/hooks'
 import useCurrentBlockTimestamp from 'hooks/useCurrentBlockTimestamp'
 import { BigNumber } from 'ethers'
-import { GreyCard } from '../../components/Card'
+import { GreyCard } from 'components/Card'
 
 const PageWrapper = styled(AutoColumn)`
   width: 100%;
@@ -101,8 +101,8 @@ const DetailText = styled.div`
 
 export default function VotePage({
   match: {
-    params: { id }
-  }
+    params: { id },
+  },
 }: RouteComponentProps<{ id: string }>) {
   const { chainId, account } = useActiveWeb3React()
 
@@ -128,7 +128,7 @@ export default function VotePage({
       ? DateTime.fromSeconds(
           currentTimestamp
             .add(BigNumber.from(AVERAGE_BLOCK_TIME_IN_SECS).mul(BigNumber.from(proposalData.endBlock - currentBlock)))
-            .toNumber()
+            .toNumber(),
         )
       : undefined
   const now: DateTime = DateTime.local()
@@ -155,7 +155,7 @@ export default function VotePage({
 
   // in blurb link to home page if they are able to unlock
   const showLinkForUnlock = Boolean(
-    uniBalance && JSBI.notEqual(uniBalance.raw, JSBI.BigInt(0)) && userDelegatee === ZERO_ADDRESS
+    uniBalance && JSBI.notEqual(uniBalance.raw, JSBI.BigInt(0)) && userDelegatee === ZERO_ADDRESS,
   )
 
   // show links in propsoal details if content is an address

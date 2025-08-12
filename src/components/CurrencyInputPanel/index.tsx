@@ -2,18 +2,18 @@ import { ChainId, Currency, Pair } from '@brownfi/sdk'
 import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import { darken } from 'polished'
-import { useCurrencyBalance } from '../../state/wallet/hooks'
-import CurrencySearchModal from '../SearchModal/CurrencySearchModal'
-import CurrencyLogo from '../CurrencyLogo'
-import DoubleCurrencyLogo from '../DoubleLogo'
-import { RowBetween } from '../Row'
-import { TYPE } from '../../theme'
-import { Input as NumericalInput } from '../NumericalInput'
-import downIcon from '../../assets/svg/arrow_drop_down.svg'
+import { useCurrencyBalance } from 'state/wallet/hooks'
+import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { RowBetween } from 'components/Row'
+import { TYPE } from 'theme'
+import { Input as NumericalInput } from 'components/NumericalInput'
+import downIcon from 'assets/svg/arrow_drop_down.svg'
 
-import { useActiveWeb3React } from '../../hooks'
+import { useActiveWeb3React } from 'hooks'
 import { useTranslation } from 'react-i18next'
-import useTheme from '../../hooks/useTheme'
+import useTheme from 'hooks/useTheme'
 import { isMobile } from 'react-device-detect'
 import { getTokenSymbol } from 'utils'
 
@@ -131,7 +131,7 @@ interface CurrencyInputPanelProps {
   loading?: boolean
 }
 
-export default function CurrencyInputPanel({
+export function CurrencyInputPanel({
   value,
   onUserInput,
   onMax,
@@ -147,7 +147,7 @@ export default function CurrencyInputPanel({
   id,
   showCommonBases,
   customBalanceText,
-  loading
+  loading,
 }: CurrencyInputPanelProps) {
   const { t } = useTranslation()
 
@@ -197,7 +197,7 @@ export default function CurrencyInputPanel({
                 className="token-amount-input"
                 value={value}
                 loading={loading}
-                onUserInput={val => {
+                onUserInput={(val) => {
                   onUserInput(val)
                 }}
               />

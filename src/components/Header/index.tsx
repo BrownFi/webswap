@@ -4,10 +4,10 @@ import { darken } from 'polished'
 
 import styled from 'styled-components'
 
-import Logo from '../../assets/svg/logo.svg'
+import Logo from 'assets/svg/logo.svg'
 
-import Row, { RowFixed } from '../Row'
-import Web3Status from '../Web3Status'
+import Row, { RowFixed } from 'components/Row'
+import Web3Status from 'components/Web3Status'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import HamburgerMenu from './HamburgerMenu'
 import CustomChainSelect from './CustomChainSelect'
@@ -99,7 +99,7 @@ const UniIcon = styled.div`
 const activeClassName = 'ACTIVE'
 
 const StyledNavLink = styled(NavLink).attrs({
-  activeClassName
+  activeClassName,
 })`
   ${({ theme }) => theme.flexRowNoWrap}
   align-items: left;

@@ -1,8 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
-import useHttpLocations from '../../hooks/useHttpLocations'
+import useHttpLocations from 'hooks/useHttpLocations'
 
-import Logo from '../Logo'
+import { Logo } from 'components/Logo'
 
 const StyledListLogo = styled(Logo)<{ size: string }>`
   width: ${({ size }) => size};
@@ -13,7 +13,7 @@ export default function ListLogo({
   logoURI,
   style,
   size = '24px',
-  alt
+  alt,
 }: {
   logoURI: string
   size?: string

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import Copy from '../AccountDetails/Copy'
+import Copy from 'components/AccountDetails/Copy'
 import { useActiveWeb3React } from 'hooks'
 import useParsedQueryString from 'hooks/useParsedQueryString'
 import axios from 'axios'
 
 const client = axios.create({
-  baseURL: process.env.REACT_APP_SERVER_URL
+  baseURL: process.env.REACT_APP_SERVER_URL,
 })
 
 const ENABLED_REFERRAL = false
@@ -20,7 +20,7 @@ const Referral = () => {
       try {
         await client.post(`/api/user/add-referral`, {
           owner: params.ref,
-          walletAddress: account
+          walletAddress: account,
         })
       } catch (e) {
         console.log(e)
@@ -38,8 +38,8 @@ const Referral = () => {
       try {
         const result = await client.get(`/api/user/count-referral`, {
           params: {
-            owner: account
-          }
+            owner: account,
+          },
         })
 
         setNumberReferrals(result?.data?.data?.numberReferrals)

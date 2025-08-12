@@ -1,12 +1,12 @@
 import React, { useContext } from 'react'
 import { AlertCircle, CheckCircle } from 'react-feather'
 import styled, { ThemeContext } from 'styled-components'
-import { useActiveWeb3React } from '../../hooks'
-import { TYPE } from '../../theme'
-import { ExternalLink } from '../../theme/components'
-import { getEtherscanLink, getScanText } from '../../utils'
-import { AutoColumn } from '../Column'
-import { AutoRow } from '../Row'
+import { useActiveWeb3React } from 'hooks'
+import { TYPE } from 'theme'
+import { ExternalLink } from 'theme/components'
+import { getEtherscanLink, getScanText } from 'utils'
+import { AutoColumn } from 'components/Column'
+import { AutoRow } from 'components/Row'
 
 const RowNoFlex = styled(AutoRow)`
   flex-wrap: nowrap;
@@ -15,7 +15,7 @@ const RowNoFlex = styled(AutoRow)`
 export default function TransactionPopup({
   hash,
   success,
-  summary
+  summary,
 }: {
   hash: string
   success?: boolean

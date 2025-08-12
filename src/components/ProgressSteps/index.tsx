@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { RowBetween } from '../Row'
-import { AutoColumn } from '../Column'
+import { RowBetween } from 'components/Row'
+import { AutoColumn } from 'components/Column'
 import { transparentize } from 'polished'
 
 const Wrapper = styled(AutoColumn)``
@@ -59,7 +59,7 @@ interface ProgressCirclesProps {
  *
  * @param steps  array of booleans where true means step is complete
  */
-export default function ProgressCircles({ steps, disabled = false, ...rest }: ProgressCirclesProps) {
+export function ProgressCircles({ steps, disabled = false, ...rest }: ProgressCirclesProps) {
   return (
     <Wrapper justify={'center'} {...rest}>
       <Grouping>

@@ -25,7 +25,7 @@ function dispatchChangeEvent({
   key,
   oldValue,
   newValue,
-  storage
+  storage,
 }: {
   key: string
   oldValue: string | null
@@ -76,7 +76,7 @@ function logOnceBrowserStorageNotAvailableWarning(error: Error) {
     console.warn(
       `Browser storage is not available.
 Possible reasons: running app in an iframe, in an incognito browser session, or using too strict browser privacy settings.`,
-      error
+      error,
     )
     hasLoggedBrowserStorageNotAvailableWarning = true
   }
@@ -94,7 +94,7 @@ const NoopStorageSlot: StorageSlot = {
   get: () => null,
   set: () => {},
   del: () => {},
-  listen: () => () => {}
+  listen: () => () => {},
 }
 
 // Fail-fast, as storage APIs should not be used during the SSR process
@@ -109,7 +109,7 @@ Please only call storage APIs in effects and event handlers.`)
     get: throwError,
     set: throwError,
     del: throwError,
-    listen: throwError
+    listen: throwError,
   }
 }
 
@@ -141,7 +141,7 @@ export function createStorageSlot(key: string, options?: { persistence?: Storage
         return null
       }
     },
-    set: newValue => {
+    set: (newValue) => {
       try {
         const oldValue = storage.getItem(key)
         storage.setItem(key, newValue)
@@ -149,7 +149,7 @@ export function createStorageSlot(key: string, options?: { persistence?: Storage
           key,
           oldValue,
           newValue,
-          storage
+          storage,
         })
       } catch (err) {
         console.error(`Storage error, can't set ${key}=${newValue}`, err)
@@ -164,7 +164,7 @@ export function createStorageSlot(key: string, options?: { persistence?: Storage
         console.error(`Storage error, can't delete key=${key}`, err)
       }
     },
-    listen: onChange => {
+    listen: (onChange) => {
       try {
         const listener = (event: StorageEvent) => {
           if (event.storageArea === storage && event.key === key) {
@@ -177,13 +177,13 @@ export function createStorageSlot(key: string, options?: { persistence?: Storage
         console.error(`Storage error, can't listen for changes of key=${key}`, err)
         return () => {}
       }
-    }
+    },
   }
 }
 
 export function useStorageSlot(
   key: string | null,
-  options?: { persistence?: StorageType }
+  options?: { persistence?: StorageType },
 ): [string | null, StorageSlot] {
   // Not ideal but good enough: assumes storage slot config is constant
   const storageSlot = useRef(() => {
@@ -194,14 +194,14 @@ export function useStorageSlot(
   }).current()
 
   const listen: StorageSlot['listen'] = useCallback(
-    onChange => {
+    (onChange) => {
       // Do not try to add a listener during SSR
       if (typeof window === 'undefined') {
         return () => {}
       }
       return storageSlot.listen(onChange)
     },
-    [storageSlot]
+    [storageSlot],
   )
 
   const currentValue = useSyncExternalStore(
@@ -212,7 +212,7 @@ export function useStorageSlot(
       }
       return storageSlot.get()
     },
-    () => null
+    () => null,
   )
 
   return [currentValue, storageSlot]

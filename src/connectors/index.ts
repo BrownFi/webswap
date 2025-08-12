@@ -4,7 +4,7 @@ import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 
 import * as defaultChains from 'viem/chains'
 
-import UNISWAP_LOGO_URL from '../assets/svg/logo.svg'
+import UNISWAP_LOGO_URL from 'assets/svg/logo.svg'
 import { ChainId } from '@brownfi/sdk'
 import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { defineChain } from 'viem'
@@ -12,19 +12,19 @@ import { defineChain } from 'viem'
 // mainnet only
 export const walletconnect = new WalletConnectConnector({
   projectId: 'b64df0521d25ed5108cd242cfa8412e5',
-  chains: [ChainId.MAINNET]
+  chains: [ChainId.MAINNET],
 })
 
 export const walletlink = new WalletLinkConnector({
   url: defaultChains.mainnet.rpcUrls.default.http[0],
   appName: 'Brownfi',
-  appLogoUrl: UNISWAP_LOGO_URL
+  appLogoUrl: UNISWAP_LOGO_URL,
 })
 
 const overrideChain = ({
   chain,
   iconUrl,
-  fallbackRpcs
+  fallbackRpcs,
 }: {
   chain: Chain
   iconUrl: any
@@ -35,10 +35,10 @@ const overrideChain = ({
     ...chain,
     rpcUrls: {
       default: {
-        http: chain.rpcUrls.default.http.concat(fallbackRpcs)
-      }
+        http: chain.rpcUrls.default.http.concat(fallbackRpcs),
+      },
     },
-    iconUrl
+    iconUrl,
   })
 }
 
@@ -49,13 +49,13 @@ const u2uMainnet: Chain = defineChain({
   nativeCurrency: { decimals: 18, name: 'U2U', symbol: 'U2U' },
   rpcUrls: {
     default: {
-      http: ['https://rpc-mainnet.u2u.xyz']
-    }
+      http: ['https://rpc-mainnet.u2u.xyz'],
+    },
   },
   blockExplorers: {
-    default: { name: 'U2U Scan', url: 'https://u2uscan.xyz' }
+    default: { name: 'U2U Scan', url: 'https://u2uscan.xyz' },
   },
-  iconUrl: require('assets/images/u2u.jpg')
+  iconUrl: require('assets/images/u2u.jpg'),
 })
 
 const viction: Chain = overrideChain({
@@ -63,8 +63,8 @@ const viction: Chain = overrideChain({
   iconUrl: require('assets/images/viction.png'),
   fallbackRpcs: [
     //
-    'https://viction.drpc.org'
-  ]
+    'https://viction.drpc.org',
+  ],
 })
 
 // @ts-ignore
@@ -74,26 +74,26 @@ const hyperEVM: Chain = defineChain({
   nativeCurrency: { decimals: 18, name: 'HYPE', symbol: 'HYPE' },
   rpcUrls: {
     default: {
-      http: ['https://rpc.hyperliquid.xyz/evm', 'https://hyperliquid.drpc.org']
-    }
+      http: ['https://rpc.hyperliquid.xyz/evm', 'https://hyperliquid.drpc.org'],
+    },
   },
   blockExplorers: {
-    default: { name: 'HyperEVM Scan', url: 'https://hyperevmscan.io' }
+    default: { name: 'HyperEVM Scan', url: 'https://hyperevmscan.io' },
   },
-  iconUrl: require('assets/images/hyperevm.png')
+  iconUrl: require('assets/images/hyperevm.png'),
 })
 
 // @ts-ignore
 const arbitrumSepolia = defineChain({
   ...defaultChains.arbitrumSepolia,
-  iconUrl: require('assets/images/arb.png')
+  iconUrl: require('assets/images/arb.png'),
 })
 
 // @ts-ignore
 // eslint-disable-next-line
 const sepolia = defineChain({
   ...defaultChains.sepolia,
-  iconUrl: require('assets/images/ethereum-logo.png')
+  iconUrl: require('assets/images/ethereum-logo.png'),
 })
 
 const berachain = overrideChain({
@@ -102,8 +102,8 @@ const berachain = overrideChain({
   fallbackRpcs: [
     //
     'https://berachain.drpc.org',
-    'https://rpc.berachain-apis.com'
-  ]
+    'https://rpc.berachain-apis.com',
+  ],
 })
 
 const arbitrum = overrideChain({
@@ -112,8 +112,8 @@ const arbitrum = overrideChain({
   fallbackRpcs: [
     //
     'https://arbitrum.drpc.org',
-    'https://arbitrum.therpc.io'
-  ]
+    'https://arbitrum.therpc.io',
+  ],
 })
 
 const base = overrideChain({
@@ -122,8 +122,8 @@ const base = overrideChain({
   fallbackRpcs: [
     //
     'https://base.drpc.org',
-    'https://base.llamarpc.com'
-  ]
+    'https://base.llamarpc.com',
+  ],
 })
 
 const bsc = overrideChain({
@@ -132,8 +132,8 @@ const bsc = overrideChain({
   fallbackRpcs: [
     //
     'https://bsc.drpc.org',
-    'https://binance.llamarpc.com'
-  ]
+    'https://binance.llamarpc.com',
+  ],
 })
 
 const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
@@ -147,12 +147,12 @@ export const availableChains = env === 'bera' ? beraChains : env === 'mainnet' ?
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
 export const injected = new InjectedConnector({
-  supportedChainIds: availableChains.map(chain => chain.id)
+  supportedChainIds: availableChains.map((chain) => chain.id),
 })
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
   chains: availableChains as any,
   projectId: '3441811a50334d46eef9f2435cadee36',
-  ssr: false
+  ssr: false,
 })

@@ -12,10 +12,11 @@ interface State {
 
 class ErrorBoundaryBase extends Component<Props, State> {
   state: State = {
-    hasError: false
+    hasError: false,
   }
 
-  static getDerivedStateFromError(_: Error): State {
+  static getDerivedStateFromError(error: Error): State {
+    console.error(error)
     return { hasError: true }
   }
 

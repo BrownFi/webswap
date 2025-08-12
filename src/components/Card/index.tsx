@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { CardProps, Text } from 'rebass'
 import { Box } from 'rebass/styled-components'
 
-const Card = styled(Box)<{ width?: string; padding?: string; border?: string; borderRadius?: string }>`
+export const Card = styled(Box)<{ width?: string; padding?: string; border?: string; borderRadius?: string }>`
   width: ${({ width }) => width ?? '100%'};
   border-radius: 0;
   padding: 8px;
@@ -11,8 +11,6 @@ const Card = styled(Box)<{ width?: string; padding?: string; border?: string; bo
   border: ${({ border }) => border};
   border-radius: ${({ borderRadius }) => borderRadius};
 `
-export default Card
-
 export const LightCard = styled(Card)`
   border: 1px solid ${({ theme }) => theme.bg2};
   background-color: ${({ theme }) => theme.bg1};

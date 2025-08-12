@@ -10,9 +10,9 @@ describe('application reducer', () => {
     store = createStore(reducer, {
       popupList: [],
       blockNumber: {
-        [ChainId.MAINNET]: 3
+        [ChainId.MAINNET]: 3,
       },
-      openModal: null
+      openModal: null,
     })
   })
 
@@ -65,7 +65,7 @@ describe('application reducer', () => {
       store.dispatch(updateBlockNumber({ chainId: ChainId.SEPOLIA, blockNumber: 2 }))
       expect(store.getState().blockNumber).toEqual({
         [ChainId.MAINNET]: 3,
-        [ChainId.SEPOLIA]: 2
+        [ChainId.SEPOLIA]: 2,
       })
     })
   })

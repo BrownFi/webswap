@@ -1,8 +1,8 @@
 import { Currency, currencyEquals, ETHER, WETH } from '@brownfi/sdk'
 import { useMemo } from 'react'
-import { tryParseAmount } from '../state/swap/hooks'
-import { useTransactionAdder } from '../state/transactions/hooks'
-import { useCurrencyBalance } from '../state/wallet/hooks'
+import { tryParseAmount } from 'state/swap/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
+import { useCurrencyBalance } from 'state/wallet/hooks'
 import { useActiveWeb3React } from './index'
 import { useWETHContract } from './useContract'
 import { getNativeToken, getWrappedNativeToken } from 'utils'
@@ -10,7 +10,7 @@ import { getNativeToken, getWrappedNativeToken } from 'utils'
 export enum WrapType {
   NOT_APPLICABLE,
   WRAP,
-  UNWRAP
+  UNWRAP,
 }
 
 const NOT_APPLICABLE = { wrapType: WrapType.NOT_APPLICABLE }
@@ -23,7 +23,7 @@ const NOT_APPLICABLE = { wrapType: WrapType.NOT_APPLICABLE }
 export default function useWrapCallback(
   inputCurrency: Currency | undefined,
   outputCurrency: Currency | undefined,
-  typedValue: string | undefined
+  typedValue: string | undefined,
 ): { wrapType: WrapType; execute?: undefined | (() => Promise<void>); inputError?: string } {
   const { chainId, account } = useActiveWeb3React()
   const wethContract = useWETHContract()
@@ -48,14 +48,14 @@ export default function useWrapCallback(
                   addTransaction(txReceipt, {
                     summary:
                       `Wrap ${inputAmount.toSignificant(6)}` +
-                      ` ${getNativeToken(chainId)} to ${getWrappedNativeToken(chainId)}`
+                      ` ${getNativeToken(chainId)} to ${getWrappedNativeToken(chainId)}`,
                   })
                 } catch (error) {
                   console.error('Could not deposit', error)
                 }
               }
             : undefined,
-        inputError: sufficientBalance ? undefined : `Insufficient ${getNativeToken(chainId)} balance`
+        inputError: sufficientBalance ? undefined : `Insufficient ${getNativeToken(chainId)} balance`,
       }
     } else if (currencyEquals(WETH[chainId], inputCurrency) && outputCurrency === ETHER) {
       return {
@@ -68,14 +68,14 @@ export default function useWrapCallback(
                   addTransaction(txReceipt, {
                     summary:
                       `Unwrap ${inputAmount.toSignificant(6)}` +
-                      ` ${getWrappedNativeToken(chainId)} to ${getNativeToken(chainId)}`
+                      ` ${getWrappedNativeToken(chainId)} to ${getNativeToken(chainId)}`,
                   })
                 } catch (error) {
                   console.error('Could not withdraw', error)
                 }
               }
             : undefined,
-        inputError: sufficientBalance ? undefined : `Insufficient ${getWrappedNativeToken(chainId)} balance`
+        inputError: sufficientBalance ? undefined : `Insufficient ${getWrappedNativeToken(chainId)} balance`,
       }
     } else {
       return NOT_APPLICABLE

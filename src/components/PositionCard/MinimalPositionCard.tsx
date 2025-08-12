@@ -3,19 +3,19 @@ import { darken } from 'polished'
 import { useState } from 'react'
 import { Text } from 'rebass'
 import styled from 'styled-components'
-import { useTotalSupply } from '../../data/TotalSupply'
+import { useTotalSupply } from 'data/TotalSupply'
 
-import { useActiveWeb3React } from '../../hooks'
-import { useTokenBalance } from '../../state/wallet/hooks'
-import { TYPE } from '../../theme'
-import { unwrappedToken } from '../../utils/wrappedCurrency'
+import { useActiveWeb3React } from 'hooks'
+import { useTokenBalance } from 'state/wallet/hooks'
+import { TYPE } from 'theme'
+import { unwrappedToken } from 'utils/wrappedCurrency'
 
 import { useTradingFee } from 'hooks/useTradingFee'
 import { getTokenSymbol } from 'utils'
-import Card, { GreyCard, LightCard } from '../Card'
-import { AutoColumn } from '../Column'
-import DoubleCurrencyLogo from '../DoubleLogo'
-import { RowBetween, RowFixed } from '../Row'
+import { Card, GreyCard, LightCard } from 'components/Card'
+import { AutoColumn } from 'components/Column'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { RowBetween, RowFixed } from 'components/Row'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;

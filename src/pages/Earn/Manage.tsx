@@ -1,34 +1,34 @@
 import React, { useCallback, useState } from 'react'
-import { AutoColumn } from '../../components/Column'
+import { AutoColumn } from 'components/Column'
 import styled from 'styled-components'
 import { Link } from 'react-router-dom'
 
 import { JSBI, TokenAmount, ETHER } from '@brownfi/sdk'
 import { RouteComponentProps } from 'react-router-dom'
-import DoubleCurrencyLogo from '../../components/DoubleLogo'
-import { useCurrency } from '../../hooks/Tokens'
-import { useWalletModalToggle } from '../../state/application/hooks'
-import { TYPE } from '../../theme'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { useCurrency } from 'hooks/Tokens'
+import { useWalletModalToggle } from 'state/application/hooks'
+import { TYPE } from 'theme'
 
-import { RowBetween } from '../../components/Row'
-import { CardSection, DataCard, CardNoise, CardBGImage } from '../../components/earn/styled'
-import { ButtonPrimary, ButtonEmpty } from '../../components/Button'
-import StakingModal from '../../components/earn/StakingModal'
-import { useStakingInfo } from '../../state/stake/hooks'
-import UnstakingModal from '../../components/earn/UnstakingModal'
-import ClaimRewardModal from '../../components/earn/ClaimRewardModal'
-import { useTokenBalance } from '../../state/wallet/hooks'
-import { useActiveWeb3React } from '../../hooks'
-import { useColor } from '../../hooks/useColor'
+import { RowBetween } from 'components/Row'
+import { CardSection, DataCard, CardNoise, CardBGImage } from 'components/earn/styled'
+import { ButtonPrimary, ButtonEmpty } from 'components/Button'
+import StakingModal from 'components/earn/StakingModal'
+import { useStakingInfo } from 'state/stake/hooks'
+import UnstakingModal from 'components/earn/UnstakingModal'
+import ClaimRewardModal from 'components/earn/ClaimRewardModal'
+import { useTokenBalance } from 'state/wallet/hooks'
+import { useActiveWeb3React } from 'hooks'
+import { useColor } from 'hooks/useColor'
 import { CountUp } from 'use-count-up'
 
-import { wrappedCurrency } from '../../utils/wrappedCurrency'
-import { currencyId } from '../../utils/currencyId'
-import { useTotalSupply } from '../../data/TotalSupply'
-import { usePair } from '../../data/Reserves'
-import usePrevious from '../../hooks/usePrevious'
-import useUSDCPrice from '../../utils/useUSDCPrice'
-import { BIG_INT_ZERO, BIG_INT_SECONDS_IN_WEEK } from '../../constants'
+import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { currencyId } from 'utils/currencyId'
+import { useTotalSupply } from 'data/TotalSupply'
+import { usePair } from 'data/Reserves'
+import usePrevious from 'hooks/usePrevious'
+import useUSDCPrice from 'utils/useUSDCPrice'
+import { BIG_INT_ZERO, BIG_INT_SECONDS_IN_WEEK } from 'constants/common'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 640px;
@@ -89,8 +89,8 @@ const DataRow = styled(RowBetween)`
 
 export default function Manage({
   match: {
-    params: { currencyIdA, currencyIdB }
-  }
+    params: { currencyIdA, currencyIdB },
+  },
 }: RouteComponentProps<{ currencyIdA: string; currencyIdB: string }>) {
   const { account, chainId } = useActiveWeb3React()
 
@@ -128,10 +128,10 @@ export default function Manage({
       JSBI.divide(
         JSBI.multiply(
           JSBI.multiply(stakingInfo.totalStakedAmount.raw, stakingTokenPair.reserveOf(WETH).raw),
-          JSBI.BigInt(2) // this is b/c the value of LP shares are ~double the value of the WETH they entitle owner to
+          JSBI.BigInt(2), // this is b/c the value of LP shares are ~double the value of the WETH they entitle owner to
         ),
-        totalSupplyOfStakingToken.raw
-      )
+        totalSupplyOfStakingToken.raw,
+      ),
     )
   }
 

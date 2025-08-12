@@ -4,20 +4,20 @@ import React, { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { HashRouter } from 'react-router-dom'
-import Blocklist from './components/Blocklist'
-import { NetworkContextName } from './constants'
+import Blocklist from 'components/Blocklist'
+import { NetworkContextName } from 'constants/common'
 import './i18n'
-import App from './pages/App'
-import store from './state'
-import * as serviceWorkerRegistration from './serviceWorkerRegistration'
-import ApplicationUpdater from './state/application/updater'
-import ListsUpdater from './state/lists/updater'
-import MulticallUpdater from './state/multicall/updater'
-import TransactionUpdater from './state/transactions/updater'
-import UserUpdater from './state/user/updater'
-import ThemeProvider, { FixedGlobalStyle, ThemedGlobalStyle } from './theme'
-import getLibrary from './utils/getLibrary'
-import { StarknetProvider } from './starknet-provider'
+import App from 'pages/App'
+import store from 'state'
+import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
+import ApplicationUpdater from 'state/application/updater'
+import ListsUpdater from 'state/lists/updater'
+import MulticallUpdater from 'state/multicall/updater'
+import TransactionUpdater from 'state/transactions/updater'
+import UserUpdater from 'state/user/updater'
+import ThemeProvider, { FixedGlobalStyle, ThemedGlobalStyle } from 'theme'
+import getLibrary from 'utils/getLibrary'
+import { StarknetProvider } from 'starknet-provider'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from 'services/queryClient'
 import { WagmiProvider } from 'wagmi'
@@ -80,7 +80,7 @@ root.render(
         </Web3ProviderNetwork>
       </Web3ReactProvider>
     </Provider>
-  </StrictMode>
+  </StrictMode>,
 )
 
 serviceWorkerRegistration.unregister()

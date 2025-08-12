@@ -1,20 +1,20 @@
 import React from 'react'
-import { AutoColumn } from '../Column'
-import { RowBetween } from '../Row'
+import { AutoColumn } from 'components/Column'
+import { RowBetween } from 'components/Row'
 import styled from 'styled-components'
-import { TYPE, StyledInternalLink } from '../../theme'
-import DoubleCurrencyLogo from '../DoubleLogo'
+import { TYPE, StyledInternalLink } from 'theme'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { ETHER, JSBI, TokenAmount } from '@brownfi/sdk'
-import { ButtonPrimary } from '../Button'
-import { StakingInfo } from '../../state/stake/hooks'
-import { useColor } from '../../hooks/useColor'
-import { currencyId } from '../../utils/currencyId'
+import { ButtonPrimary } from 'components/Button'
+import { StakingInfo } from 'state/stake/hooks'
+import { useColor } from 'hooks/useColor'
+import { currencyId } from 'utils/currencyId'
 import { Break, CardNoise, CardBGImage } from './styled'
-import { unwrappedToken } from '../../utils/wrappedCurrency'
-import { useTotalSupply } from '../../data/TotalSupply'
-import { usePair } from '../../data/Reserves'
-import useUSDCPrice from '../../utils/useUSDCPrice'
-import { BIG_INT_SECONDS_IN_WEEK } from '../../constants'
+import { unwrappedToken } from 'utils/wrappedCurrency'
+import { useTotalSupply } from 'data/TotalSupply'
+import { usePair } from 'data/Reserves'
+import useUSDCPrice from 'utils/useUSDCPrice'
+import { BIG_INT_SECONDS_IN_WEEK } from 'constants/common'
 import { getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 
@@ -97,10 +97,10 @@ export default function PoolCard({ stakingInfo }: { stakingInfo: StakingInfo }) 
       JSBI.divide(
         JSBI.multiply(
           JSBI.multiply(stakingInfo.totalStakedAmount.raw, stakingTokenPair.reserveOf(WETH).raw),
-          JSBI.BigInt(2) // this is b/c the value of LP shares are ~double the value of the WETH they entitle owner to
+          JSBI.BigInt(2), // this is b/c the value of LP shares are ~double the value of the WETH they entitle owner to
         ),
-        totalSupplyOfStakingToken.raw
-      )
+        totalSupplyOfStakingToken.raw,
+      ),
     )
   }
 

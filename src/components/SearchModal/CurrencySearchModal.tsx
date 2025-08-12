@@ -1,7 +1,7 @@
 import { Currency, Token } from '@brownfi/sdk'
 import React, { useCallback, useEffect, useState } from 'react'
-import useLast from '../../hooks/useLast'
-import Modal from '../Modal'
+import useLast from 'hooks/useLast'
+import { Modal } from 'components/Modal'
 import { CurrencySearch } from './CurrencySearch'
 import { ImportToken } from './ImportToken'
 import usePrevious from 'hooks/usePrevious'
@@ -22,16 +22,16 @@ export enum CurrencyModalView {
   search,
   manage,
   importToken,
-  importList
+  importList,
 }
 
-export default function CurrencySearchModal({
+export function CurrencySearchModal({
   isOpen,
   onDismiss,
   onCurrencySelect,
   selectedCurrency,
   otherSelectedCurrency,
-  showCommonBases = false
+  showCommonBases = false,
 }: CurrencySearchModalProps) {
   const [modalView, setModalView] = useState<CurrencyModalView>(CurrencyModalView.manage)
   const lastOpen = useLast(isOpen)
@@ -47,7 +47,7 @@ export default function CurrencySearchModal({
       onCurrencySelect(currency)
       onDismiss()
     },
-    [onDismiss, onCurrencySelect]
+    [onDismiss, onCurrencySelect],
   )
 
   // for token import view

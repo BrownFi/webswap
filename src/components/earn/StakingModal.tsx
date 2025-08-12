@@ -1,25 +1,25 @@
 import React, { useState, useCallback } from 'react'
-import useIsArgentWallet from '../../hooks/useIsArgentWallet'
-import useTransactionDeadline from '../../hooks/useTransactionDeadline'
-import Modal from '../Modal'
-import { AutoColumn } from '../Column'
+import useIsArgentWallet from 'hooks/useIsArgentWallet'
+import useTransactionDeadline from 'hooks/useTransactionDeadline'
+import { Modal } from 'components/Modal'
+import { AutoColumn } from 'components/Column'
 import styled from 'styled-components'
-import { RowBetween } from '../Row'
-import { TYPE, CloseIcon } from '../../theme'
-import { ButtonConfirmed, ButtonError } from '../Button'
-import ProgressCircles from '../ProgressSteps'
-import CurrencyInputPanel from '../CurrencyInputPanel'
+import { RowBetween } from 'components/Row'
+import { TYPE, CloseIcon } from 'theme'
+import { ButtonConfirmed, ButtonError } from 'components/Button'
+import { ProgressCircles } from 'components/ProgressSteps'
+import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { TokenAmount, Pair } from '@brownfi/sdk'
-import { useActiveWeb3React } from '../../hooks'
-import { maxAmountSpend } from '../../utils/maxAmountSpend'
-import { usePairContract, useStakingContract } from '../../hooks/useContract'
-import { useApproveCallback, ApprovalState } from '../../hooks/useApproveCallback'
+import { useActiveWeb3React } from 'hooks'
+import { maxAmountSpend } from 'utils/maxAmountSpend'
+import { usePairContract, useStakingContract } from 'hooks/useContract'
+import { useApproveCallback, ApprovalState } from 'hooks/useApproveCallback'
 import { splitSignature } from 'ethers/lib/utils'
-import { StakingInfo, useDerivedStakeInfo } from '../../state/stake/hooks'
-import { wrappedCurrencyAmount } from '../../utils/wrappedCurrency'
+import { StakingInfo, useDerivedStakeInfo } from 'state/stake/hooks'
+import { wrappedCurrencyAmount } from 'utils/wrappedCurrency'
 import { TransactionResponse } from '@ethersproject/providers'
-import { useTransactionAdder } from '../../state/transactions/hooks'
-import { LoadingView, SubmittedView } from '../ModalViews'
+import { useTransactionAdder } from 'state/transactions/hooks'
+import { LoadingView, SubmittedView } from 'components/ModalViews'
 import { useVersion } from 'hooks/useVersion'
 
 const HypotheticalRewardRate = styled.div<{ dim: boolean }>`
@@ -57,7 +57,7 @@ export default function StakingModal({ isOpen, onDismiss, stakingInfo, userLiqui
     hypotheticalRewardRate = stakingInfo.getHypotheticalRewardRate(
       stakingInfo.stakedAmount.add(parsedAmountWrapped),
       stakingInfo.totalStakedAmount.add(parsedAmountWrapped),
-      stakingInfo.totalRewardRate
+      stakingInfo.totalRewardRate,
     )
   }
 
@@ -75,7 +75,7 @@ export default function StakingModal({ isOpen, onDismiss, stakingInfo, userLiqui
   const dummyPair = new Pair(
     new TokenAmount(stakingInfo.tokens[0], '0'),
     new TokenAmount(stakingInfo.tokens[1], '0'),
-    version
+    version,
   )
   const pairContract = usePairContract(dummyPair.liquidityToken.address)
 
@@ -99,11 +99,11 @@ export default function StakingModal({ isOpen, onDismiss, stakingInfo, userLiqui
             signatureData.v,
             signatureData.r,
             signatureData.s,
-            { gasLimit: 350000 }
+            { gasLimit: 350000 },
           )
           .then((response: TransactionResponse) => {
             addTransaction(response, {
-              summary: `Deposit liquidity`
+              summary: `Deposit liquidity`,
             })
             setHash(response.hash)
           })
@@ -147,50 +147,50 @@ export default function StakingModal({ isOpen, onDismiss, stakingInfo, userLiqui
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
       { name: 'chainId', type: 'uint256' },
-      { name: 'verifyingContract', type: 'address' }
+      { name: 'verifyingContract', type: 'address' },
     ]
     const domain = {
       name: 'brownfi V2',
       version: '1',
       chainId: chainId,
-      verifyingContract: pairContract.address
+      verifyingContract: pairContract.address,
     }
     const Permit = [
       { name: 'owner', type: 'address' },
       { name: 'spender', type: 'address' },
       { name: 'value', type: 'uint256' },
       { name: 'nonce', type: 'uint256' },
-      { name: 'deadline', type: 'uint256' }
+      { name: 'deadline', type: 'uint256' },
     ]
     const message = {
       owner: account,
       spender: stakingInfo.stakingRewardAddress,
       value: liquidityAmount.raw.toString(),
       nonce: nonce.toHexString(),
-      deadline: deadline.toNumber()
+      deadline: deadline.toNumber(),
     }
     const data = JSON.stringify({
       types: {
         EIP712Domain,
-        Permit
+        Permit,
       },
       domain,
       primaryType: 'Permit',
-      message
+      message,
     })
 
     library
       .send('eth_signTypedData_v4', [account, data])
       .then(splitSignature)
-      .then(signature => {
+      .then((signature) => {
         setSignatureData({
           v: signature.v,
           r: signature.r,
           s: signature.s,
-          deadline: deadline.toNumber()
+          deadline: deadline.toNumber(),
         })
       })
-      .catch(error => {
+      .catch((error) => {
         // for all errors other than 4001 (EIP-1193 user rejected request), fall back to manual approve
         if (error?.code !== 4001) {
           approveCallback()

@@ -1,16 +1,16 @@
 import React, { useState } from 'react'
-import Modal from '../Modal'
-import { AutoColumn } from '../Column'
+import { Modal } from 'components/Modal'
+import { AutoColumn } from 'components/Column'
 import styled from 'styled-components'
-import { RowBetween } from '../Row'
-import { TYPE, CloseIcon } from '../../theme'
-import { ButtonError } from '../Button'
-import { StakingInfo } from '../../state/stake/hooks'
-import { useStakingContract } from '../../hooks/useContract'
-import { SubmittedView, LoadingView } from '../ModalViews'
+import { RowBetween } from 'components/Row'
+import { TYPE, CloseIcon } from 'theme'
+import { ButtonError } from 'components/Button'
+import { StakingInfo } from 'state/stake/hooks'
+import { useStakingContract } from 'hooks/useContract'
+import { SubmittedView, LoadingView } from 'components/ModalViews'
 import { TransactionResponse } from '@ethersproject/providers'
-import { useTransactionAdder } from '../../state/transactions/hooks'
-import { useActiveWeb3React } from '../../hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
+import { useActiveWeb3React } from 'hooks'
 
 const ContentWrapper = styled(AutoColumn)`
   width: 100%;
@@ -46,7 +46,7 @@ export default function ClaimRewardModal({ isOpen, onDismiss, stakingInfo }: Sta
         .getReward({ gasLimit: 350000 })
         .then((response: TransactionResponse) => {
           addTransaction(response, {
-            summary: `Claim accumulated UNI rewards`
+            summary: `Claim accumulated UNI rewards`,
           })
           setHash(response.hash)
         })

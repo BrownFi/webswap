@@ -8,43 +8,43 @@ import {
   getRouterAddress,
   Percent,
   removeLiquidity,
-  WETH
+  WETH,
 } from '@brownfi/sdk'
 import React, { useCallback, useContext, useMemo, useState } from 'react'
 import { ArrowDown, Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
-import { ButtonPrimary, ButtonError, ButtonConfirmed } from '../../components/Button'
-import { BlueCard, RemoveLiqudityCard } from '../../components/Card'
-import { AutoColumn, ColumnCenter } from '../../components/Column'
-import TransactionConfirmationModal, { ConfirmationModalContent } from '../../components/TransactionConfirmationModal'
-import CurrencyInputPanel from '../../components/CurrencyInputPanel'
-import DoubleCurrencyLogo from '../../components/DoubleLogo'
-import { AddRemoveTabs } from '../../components/NavigationTabs'
-import { MinimalPositionCard } from '../../components/PositionCard/MinimalPositionCard'
-import Row, { RowBetween, RowFixed } from '../../components/Row'
-import Slider from '../../components/Slider'
-import CurrencyLogo from '../../components/CurrencyLogo'
-import { useActiveWeb3React } from '../../hooks'
-import { useCurrency } from '../../hooks/Tokens'
-import { usePairContract } from '../../hooks/useContract'
-import useIsArgentWallet from '../../hooks/useIsArgentWallet'
-import useTransactionDeadline from '../../hooks/useTransactionDeadline'
+import { ButtonPrimary, ButtonError, ButtonConfirmed } from 'components/Button'
+import { BlueCard, RemoveLiqudityCard } from 'components/Card'
+import { AutoColumn, ColumnCenter } from 'components/Column'
+import { TransactionConfirmationModal, ConfirmationModalContent } from 'components/TransactionConfirmationModal'
+import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { AddRemoveTabs } from 'components/NavigationTabs'
+import { MinimalPositionCard } from 'components/PositionCard/MinimalPositionCard'
+import Row, { RowBetween, RowFixed } from 'components/Row'
+import Slider from 'components/Slider'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import { useActiveWeb3React } from 'hooks'
+import { useCurrency } from 'hooks/Tokens'
+import { usePairContract } from 'hooks/useContract'
+import useIsArgentWallet from 'hooks/useIsArgentWallet'
+import useTransactionDeadline from 'hooks/useTransactionDeadline'
 
-import { useTransactionAdder } from '../../state/transactions/hooks'
-import { StyledInternalLink, TYPE } from '../../theme'
-import { currencyId } from '../../utils/currencyId'
-import useDebouncedChangeHandler from '../../utils/useDebouncedChangeHandler'
-import { wrappedCurrency } from '../../utils/wrappedCurrency'
-import AppBody from '../AppBody'
-import { ClickableText, MaxButton, Wrapper } from '../Pool/styleds'
-import { useApproveCallback, ApprovalState } from '../../hooks/useApproveCallback'
-import { Dots } from '../../components/swap/styleds'
-import { useBurnActionHandlers } from '../../state/burn/hooks'
-import { useDerivedBurnInfo, useBurnState } from '../../state/burn/hooks'
-import { Field } from '../../state/burn/actions'
-import { useUserSlippageTolerance } from '../../state/user/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
+import { StyledInternalLink, TYPE } from 'theme'
+import { currencyId } from 'utils/currencyId'
+import useDebouncedChangeHandler from 'utils/useDebouncedChangeHandler'
+import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { AppBody } from 'pages/AppBody'
+import { ClickableText, MaxButton, Wrapper } from 'pages/Pool/styleds'
+import { useApproveCallback, ApprovalState } from 'hooks/useApproveCallback'
+import { Dots } from 'components/swap/styleds'
+import { useBurnActionHandlers } from 'state/burn/hooks'
+import { useDerivedBurnInfo, useBurnState } from 'state/burn/hooks'
+import { Field } from 'state/burn/actions'
+import { useUserSlippageTolerance } from 'state/user/hooks'
 import { getNativeToken, getTokenSymbol, getWrappedNativeToken } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
 import { useVersion } from 'hooks/useVersion'
@@ -52,14 +52,14 @@ import { useVersion } from 'hooks/useVersion'
 export const BOBA: Currency = {
   decimals: 18,
   symbol: 'BOBA',
-  name: 'Boba Token'
+  name: 'Boba Token',
 }
 
 export default function RemoveLiquidity({
   history,
   match: {
-    params: { currencyIdA, currencyIdB }
-  }
+    params: { currencyIdA, currencyIdB },
+  },
 }: RouteComponentProps<{ currencyIdA: string; currencyIdB: string }>) {
   const theme = useContext(ThemeContext)
   const { account, chainId, library } = useActiveWeb3React()
@@ -69,7 +69,7 @@ export default function RemoveLiquidity({
   const [tokenA, tokenB] = useMemo(() => [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)], [
     currencyA,
     currencyB,
-    chainId
+    chainId,
   ])
 
   // burn state
@@ -99,7 +99,7 @@ export default function RemoveLiquidity({
     [Field.CURRENCY_A]:
       independentField === Field.CURRENCY_A ? typedValue : parsedAmounts[Field.CURRENCY_A]?.toSignificant(6) ?? '',
     [Field.CURRENCY_B]:
-      independentField === Field.CURRENCY_B ? typedValue : parsedAmounts[Field.CURRENCY_B]?.toSignificant(6) ?? ''
+      independentField === Field.CURRENCY_B ? typedValue : parsedAmounts[Field.CURRENCY_B]?.toSignificant(6) ?? '',
   }
 
   const atMaxAmount = parsedAmounts[Field.LIQUIDITY_PERCENT]?.equalTo(new Percent('1'))
@@ -111,7 +111,7 @@ export default function RemoveLiquidity({
   const [signatureData, setSignatureData] = useState<{ v: number; r: string; s: string; deadline: number } | null>(null)
   const [approval, approveCallback] = useApproveCallback(
     parsedAmounts[Field.LIQUIDITY],
-    getRouterAddress(chainId || 0, version)
+    getRouterAddress(chainId || 0, version),
   )
 
   const isArgentWallet = useIsArgentWallet()
@@ -132,50 +132,50 @@ export default function RemoveLiquidity({
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
       { name: 'chainId', type: 'uint256' },
-      { name: 'verifyingContract', type: 'address' }
+      { name: 'verifyingContract', type: 'address' },
     ]
     const domain = {
       name: 'BrownFi V2',
       version: '1',
       chainId: chainId,
-      verifyingContract: pair.liquidityToken.address
+      verifyingContract: pair.liquidityToken.address,
     }
     const Permit = [
       { name: 'owner', type: 'address' },
       { name: 'spender', type: 'address' },
       { name: 'value', type: 'uint256' },
       { name: 'nonce', type: 'uint256' },
-      { name: 'deadline', type: 'uint256' }
+      { name: 'deadline', type: 'uint256' },
     ]
     const message = {
       owner: account,
       spender: getRouterAddress(chainId || 0, version),
       value: liquidityAmount.raw.toString(),
       nonce: nonce.toHexString(),
-      deadline: deadline.toNumber()
+      deadline: deadline.toNumber(),
     }
     const data = JSON.stringify({
       types: {
         EIP712Domain,
-        Permit
+        Permit,
       },
       domain,
       primaryType: 'Permit',
-      message
+      message,
     })
 
     library
       .send('eth_signTypedData_v4', [account, data])
       .then(splitSignature)
-      .then(signature => {
+      .then((signature) => {
         setSignatureData({
           v: signature.v,
           r: signature.r,
           s: signature.s,
-          deadline: deadline.toNumber()
+          deadline: deadline.toNumber(),
         })
       })
-      .catch(error => {
+      .catch((error) => {
         // for all errors other than 4001 (EIP-1193 user rejected request), fall back to manual approve
         if (error?.code !== 4001) {
           approveCallback()
@@ -189,17 +189,17 @@ export default function RemoveLiquidity({
       setSignatureData(null)
       return _onUserInput(field, typedValue)
     },
-    [_onUserInput]
+    [_onUserInput],
   )
 
   const onLiquidityInput = useCallback((typedValue: string): void => onUserInput(Field.LIQUIDITY, typedValue), [
-    onUserInput
+    onUserInput,
   ])
   const onCurrencyAInput = useCallback((typedValue: string): void => onUserInput(Field.CURRENCY_A, typedValue), [
-    onUserInput
+    onUserInput,
   ])
   const onCurrencyBInput = useCallback((typedValue: string): void => onUserInput(Field.CURRENCY_B, typedValue), [
-    onUserInput
+    onUserInput,
   ])
 
   // tx sending
@@ -216,7 +216,7 @@ export default function RemoveLiquidity({
         allowedSlippage,
         approval,
         signatureData,
-        version
+        version,
       )
 
       setAttemptingTxn(false)
@@ -230,7 +230,7 @@ export default function RemoveLiquidity({
             ' and ' +
             parsedAmounts[Field.CURRENCY_B]?.toSignificant(3) +
             ' ' +
-            getTokenSymbol(currencyB, chainId)
+            getTokenSymbol(currencyB, chainId),
         })
 
         setTxHash(response.hash)
@@ -330,21 +330,21 @@ export default function RemoveLiquidity({
 
   const pendingText = `Removing ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)} ${getTokenSymbol(
     currencyA,
-    chainId
+    chainId,
   )} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)} ${getTokenSymbol(currencyB, chainId)}`
 
   const liquidityPercentChangeCallback = useCallback(
     (value: number) => {
       onUserInput(Field.LIQUIDITY_PERCENT, value.toString())
     },
-    [onUserInput]
+    [onUserInput],
   )
 
   const oneCurrencyIsETH = currencyA === ETHER || currencyB === ETHER
   const oneCurrencyIsWETH = Boolean(
     chainId &&
       ((currencyA && currencyEquals(WETH[chainId], currencyA)) ||
-        (currencyB && currencyEquals(WETH[chainId], currencyB)))
+        (currencyB && currencyEquals(WETH[chainId], currencyB))),
   )
 
   const handleSelectCurrencyA = useCallback(
@@ -355,7 +355,7 @@ export default function RemoveLiquidity({
         history.push(`/remove/${currencyId(currency)}/${currencyIdB}`)
       }
     },
-    [currencyIdA, currencyIdB, history]
+    [currencyIdA, currencyIdB, history],
   )
   const handleSelectCurrencyB = useCallback(
     (currency: Currency) => {
@@ -365,7 +365,7 @@ export default function RemoveLiquidity({
         history.push(`/remove/${currencyIdA}/${currencyId(currency)}`)
       }
     },
-    [currencyIdA, currencyIdB, history]
+    [currencyIdA, currencyIdB, history],
   )
 
   const handleDismissConfirmation = useCallback(() => {
@@ -380,7 +380,7 @@ export default function RemoveLiquidity({
 
   const [innerLiquidityPercentage, setInnerLiquidityPercentage] = useDebouncedChangeHandler(
     Number.parseInt(parsedAmounts[Field.LIQUIDITY_PERCENT].toFixed(0)),
-    liquidityPercentChangeCallback
+    liquidityPercentChangeCallback,
   )
 
   return (

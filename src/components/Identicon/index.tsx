@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 
 import styled from 'styled-components'
 
-import { useActiveWeb3React } from '../../hooks'
+import { useActiveWeb3React } from 'hooks'
 import Jazzicon from 'jazzicon'
 
 const StyledIdenticonContainer = styled.div`
@@ -13,7 +13,7 @@ const StyledIdenticonContainer = styled.div`
   margin-right: 12px;
 `
 
-export default function Identicon() {
+export function Identicon() {
   const ref = useRef<HTMLDivElement>()
 
   const { account } = useActiveWeb3React()

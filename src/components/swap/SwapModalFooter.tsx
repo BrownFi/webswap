@@ -3,19 +3,19 @@ import React, { useContext, useMemo, useState } from 'react'
 import { Repeat } from 'react-feather'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
-import { Field } from '../../state/swap/actions'
-import { TYPE } from '../../theme'
+import { Field } from 'state/swap/actions'
+import { TYPE } from 'theme'
 import {
   computeSlippageAdjustedAmounts,
   computeTradePriceBreakdown,
   formatExecutionPrice,
   warningSeverity,
-  warningSeveritySlippage
-} from '../../utils/prices'
-import { ButtonError } from '../Button'
-import { AutoColumn } from '../Column'
-import QuestionHelper from '../QuestionHelper'
-import { AutoRow, RowBetween, RowFixed } from '../Row'
+  warningSeveritySlippage,
+} from 'utils/prices'
+import { ButtonError } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import QuestionHelper from 'components/QuestionHelper'
+import { AutoRow, RowBetween, RowFixed } from 'components/Row'
 import { ErrorText, StyledBalanceMaxMini, SwapCallbackError } from './styleds'
 import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
@@ -25,7 +25,7 @@ export default function SwapModalFooter({
   onConfirm,
   allowedSlippage,
   swapErrorMessage,
-  disabledConfirm
+  disabledConfirm,
 }: {
   trade: Trade
   allowedSlippage: number
@@ -38,7 +38,7 @@ export default function SwapModalFooter({
 
   const slippageAdjustedAmounts = useMemo(() => computeSlippageAdjustedAmounts(trade, allowedSlippage), [
     allowedSlippage,
-    trade
+    trade,
   ])
   const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
   const severity = warningSeverity(priceImpactWithoutFee)
@@ -61,7 +61,7 @@ export default function SwapModalFooter({
               alignItems: 'center',
               display: 'flex',
               textAlign: 'right',
-              paddingLeft: '10px'
+              paddingLeft: '10px',
             }}
           >
             {formatExecutionPrice(trade, showInverted)}

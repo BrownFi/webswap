@@ -3,9 +3,9 @@ import { useWeb3React } from '@web3-react/core'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 
-import { useEagerConnect, useInactiveListener } from '../../hooks'
-import { NetworkContextName } from '../../constants'
-import Loader from '../Loader'
+import { useEagerConnect, useInactiveListener } from 'hooks'
+import { NetworkContextName } from 'constants/common'
+import { Loader } from 'components/Loader'
 import { NetworkConnector } from 'connectors/NetworkConnector'
 import { useSelector } from 'react-redux'
 import { chainSelector } from 'state/chainSlice'
@@ -28,7 +28,7 @@ export default function Web3ReactManager({ children }: { children: JSX.Element }
   const { active } = useWeb3React()
   const { active: networkActive, error: networkError, activate: activateNetwork } = useWeb3React(NetworkContextName)
   const { isConnected, chainId: networkChainId } = useAccount()
-  const isWrongNetwork = availableChains.every(chain => chain.id !== networkChainId)
+  const isWrongNetwork = availableChains.every((chain) => chain.id !== networkChainId)
 
   const chain = useSelector(chainSelector)
 
@@ -39,7 +39,7 @@ export default function Web3ReactManager({ children }: { children: JSX.Element }
   useEffect(() => {
     const network = new NetworkConnector({
       urls: { [chain.id]: chain.rpcUrls.default.http as string[] },
-      defaultChainId: chain.id
+      defaultChainId: chain.id,
     })
     if (triedEager && !networkActive && !networkError && !active) {
       activateNetwork(network)

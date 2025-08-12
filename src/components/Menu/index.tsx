@@ -1,14 +1,14 @@
 import React, { useRef } from 'react'
 import { BookOpen, Info, MessageCircle, PieChart } from 'react-feather'
 import styled from 'styled-components'
-import { ReactComponent as MenuIcon } from '../../assets/images/menu.svg'
-import { useActiveWeb3React } from '../../hooks'
-import { useOnClickOutside } from '../../hooks/useOnClickOutside'
-import { ApplicationModal } from '../../state/application/actions'
-import { useModalOpen, useToggleModal } from '../../state/application/hooks'
+import { ReactComponent as MenuIcon } from 'assets/images/menu.svg'
+import { useActiveWeb3React } from 'hooks'
+import { useOnClickOutside } from 'hooks/useOnClickOutside'
+import { ApplicationModal } from 'state/application/actions'
+import { useModalOpen, useToggleModal } from 'state/application/hooks'
 
-import { ExternalLink } from '../../theme'
-import { ButtonPrimary } from '../Button'
+import { ExternalLink } from 'theme'
+import { ButtonPrimary } from 'components/Button'
 
 const StyledMenuIcon = styled(MenuIcon)`
   path {

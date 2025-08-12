@@ -69,8 +69,8 @@ export class WalletConnectConnector extends AbstractConnector {
           description: 'brownfi',
           icons: [''],
           name: 'Swap | Brownfi',
-          url: window?.location.origin
-        }
+          url: window?.location.origin,
+        },
       })
     }
 
@@ -135,7 +135,7 @@ export class WalletConnectConnector extends AbstractConnector {
   public request({ method, params }: { method: string; params?: any }) {
     this.walletConnectProvider?.request({
       method,
-      params
+      params,
     })
   }
 }

@@ -1,9 +1,10 @@
 import { currencyEquals, Trade } from '@brownfi/sdk'
 import React, { useCallback, useMemo } from 'react'
-import TransactionConfirmationModal, {
+import {
+  TransactionConfirmationModal,
   ConfirmationModalContent,
-  TransactionErrorContent
-} from '../TransactionConfirmationModal'
+  TransactionErrorContent,
+} from 'components/TransactionConfirmationModal'
 import SwapModalFooter from './SwapModalFooter'
 import SwapModalHeader from './SwapModalHeader'
 import { useActiveWeb3React } from 'hooks'
@@ -35,7 +36,7 @@ export default function ConfirmSwapModal({
   swapErrorMessage,
   isOpen,
   attemptingTxn,
-  txHash
+  txHash,
 }: {
   isOpen: boolean
   trade: Trade | undefined
@@ -52,7 +53,7 @@ export default function ConfirmSwapModal({
   const { chainId } = useActiveWeb3React()
   const showAcceptChanges = useMemo(
     () => Boolean(trade && originalTrade && tradeMeaningfullyDiffers(trade, originalTrade)),
-    [originalTrade, trade]
+    [originalTrade, trade],
   )
 
   const modalHeader = useCallback(() => {
@@ -82,7 +83,7 @@ export default function ConfirmSwapModal({
   // text to show while loading
   const pendingText = `Swapping ${trade?.inputAmount?.toSignificant(6)} ${getTokenSymbol(
     trade?.inputAmount?.currency,
-    chainId
+    chainId,
   )} for ${trade?.outputAmount?.toSignificant(6)} ${getTokenSymbol(trade?.outputAmount?.currency, chainId)}`
 
   const confirmationContent = useCallback(
@@ -97,7 +98,7 @@ export default function ConfirmSwapModal({
           bottomContent={modalBottom}
         />
       ),
-    [onDismiss, modalBottom, modalHeader, swapErrorMessage]
+    [onDismiss, modalBottom, modalHeader, swapErrorMessage],
   )
 
   return (

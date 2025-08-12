@@ -8,7 +8,7 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
   const { connectors } = useInjectedConnectors({
     recommended: [argent(), braavos()],
     includeRecommended: 'onlyIfNoConnectors',
-    order: 'alphabetical'
+    order: 'alphabetical',
   })
   return (
     <StarknetConfig chains={chains} provider={provider} connectors={connectors} autoConnect>

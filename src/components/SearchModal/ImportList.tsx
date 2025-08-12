@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import { TYPE, CloseIcon } from 'theme'
-import Card from 'components/Card'
+import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { RowBetween, RowFixed, AutoRow } from 'components/Row'
 import { ArrowLeft, AlertTriangle } from 'react-feather'
@@ -9,7 +9,7 @@ import useTheme from 'hooks/useTheme'
 import { transparentize } from 'polished'
 import { ButtonPrimary } from 'components/Button'
 import { SectionBreak } from 'components/swap/styleds'
-import { ExternalLink } from '../../theme/components'
+import { ExternalLink } from 'theme/components'
 import ListLogo from 'components/ListLogo'
 import { PaddedColumn, Checkbox, TextDot } from './styleds'
 import { TokenList } from '@uniswap/token-lists'
@@ -57,7 +57,7 @@ export function ImportList({ listURL, list, setModalView, onDismiss }: ImportPro
         // go back to lists
         setModalView(CurrencyModalView.manage)
       })
-      .catch(error => {
+      .catch((error) => {
         setAddError(error.message)
         dispatch(removeList(listURL))
       })

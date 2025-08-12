@@ -2,11 +2,11 @@ import { Currency, Percent, Price } from '@brownfi/sdk'
 import React, { useContext } from 'react'
 import { Text } from 'rebass'
 import { ThemeContext } from 'styled-components'
-import { AutoColumn } from '../../components/Column'
-import { AutoRow } from '../../components/Row'
-import { ONE_BIPS } from '../../constants'
-import { Field } from '../../state/mint/actions'
-import { TYPE } from '../../theme'
+import { AutoColumn } from 'components/Column'
+import { AutoRow } from 'components/Row'
+import { ONE_BIPS } from 'constants/common'
+import { Field } from 'state/mint/actions'
+import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 
@@ -14,7 +14,7 @@ export function PoolPriceBar({
   currencies,
   noLiquidity,
   poolTokenPercentage,
-  price
+  price,
 }: {
   currencies: { [field in Field]?: Currency }
   noLiquidity?: boolean

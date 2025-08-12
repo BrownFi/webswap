@@ -1,11 +1,11 @@
 import React, { useContext, useCallback } from 'react'
 import styled, { ThemeContext } from 'styled-components'
-import useENS from '../../hooks/useENS'
-import { useActiveWeb3React } from '../../hooks'
-import { ExternalLink, TYPE } from '../../theme'
-import { AutoColumn } from '../Column'
-import { RowBetween } from '../Row'
-import { getEtherscanLink, getScanText } from '../../utils'
+import useENS from 'hooks/useENS'
+import { useActiveWeb3React } from 'hooks'
+import { ExternalLink, TYPE } from 'theme'
+import { AutoColumn } from 'components/Column'
+import { RowBetween } from 'components/Row'
+import { getEtherscanLink, getScanText } from 'utils'
 
 const InputPanel = styled.div`
   ${({ theme }) => theme.flexColumnNoWrap}
@@ -65,10 +65,10 @@ const Input = styled.input<{ error?: boolean }>`
   }
 `
 
-export default function AddressInputPanel({
+export function AddressInputPanel({
   id,
   value,
-  onChange
+  onChange,
 }: {
   id?: string
   // the typed string value
@@ -87,7 +87,7 @@ export default function AddressInputPanel({
       const withoutSpaces = input.replace(/\s+/g, '')
       onChange(withoutSpaces)
     },
-    [onChange]
+    [onChange],
   )
 
   const error = Boolean(value.length > 0 && !loading && !address)

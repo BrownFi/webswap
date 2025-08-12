@@ -1,21 +1,21 @@
 import { ChainId, Currency } from '@brownfi/sdk'
 import React, { useContext } from 'react'
 import styled, { ThemeContext } from 'styled-components'
-import Modal from '../Modal'
-import { ExternalLink } from '../../theme'
+import { Modal } from 'components/Modal'
+import { ExternalLink } from 'theme'
 import { Text } from 'rebass'
-import { CloseIcon, CustomLightSpinner } from '../../theme/components'
-import { RowBetween, RowFixed } from '../Row'
+import { CloseIcon, CustomLightSpinner } from 'theme/components'
+import { RowBetween, RowFixed } from 'components/Row'
 import { CheckCircle } from 'react-feather'
-import { ButtonPrimary } from '../Button'
-import { AutoColumn, ColumnCenter } from '../Column'
-import Circle from '../../assets/images/blue-loader.svg'
-import MetaMaskLogo from '../../assets/images/metamask.png'
-import { getEtherscanLink, getScanText, getTokenSymbol } from '../../utils'
-import { useActiveWeb3React } from '../../hooks'
+import { ButtonPrimary } from 'components/Button'
+import { AutoColumn, ColumnCenter } from 'components/Column'
+import Circle from 'assets/images/blue-loader.svg'
+import MetaMaskLogo from 'assets/images/metamask.png'
+import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
+import { useActiveWeb3React } from 'hooks'
 import useAddTokenToMetamask from 'hooks/useAddTokenToMetamask'
-import checkCircle from '../../assets/svg/check_circle.svg'
-import cancel from '../../assets/svg/cancel.svg'
+import checkCircle from 'assets/svg/check_circle.svg'
+import cancel from 'assets/svg/cancel.svg'
 
 const Wrapper = styled.div`
   width: 100%;
@@ -76,7 +76,7 @@ function TransactionSubmittedContent({
   onDismiss,
   chainId,
   hash,
-  currencyToAdd
+  currencyToAdd,
 }: {
   onDismiss: () => void
   hash: string | undefined
@@ -141,7 +141,7 @@ export function ConfirmationModalContent({
   title,
   bottomContent,
   onDismiss,
-  topContent
+  topContent,
 }: {
   title: string
   onDismiss: () => void
@@ -207,14 +207,14 @@ interface ConfirmationModalProps {
   currencyToAdd?: Currency | undefined
 }
 
-export default function TransactionConfirmationModal({
+export function TransactionConfirmationModal({
   isOpen,
   onDismiss,
   attemptingTxn,
   hash,
   pendingText,
   content,
-  currencyToAdd
+  currencyToAdd,
 }: ConfirmationModalProps) {
   const { chainId } = useActiveWeb3React()
 

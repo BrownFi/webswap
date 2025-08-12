@@ -1,7 +1,7 @@
 import { Currency } from '@brownfi/sdk'
 import React from 'react'
 import styled from 'styled-components'
-import CurrencyLogo from '../CurrencyLogo'
+import { CurrencyLogo } from 'components/CurrencyLogo'
 import { getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 import { shouldReverse } from 'utils/pair'
@@ -28,12 +28,7 @@ const CoveredLogo = styled(CurrencyLogo)<{ sizeraw: number }>`
   left: ${({ sizeraw }) => '-' + (sizeraw / 2).toString() + 'px'} !important;
 `
 
-export default function DoubleCurrencyLogo({
-  currency0,
-  currency1,
-  size = 16,
-  margin = false
-}: DoubleCurrencyLogoProps) {
+export function DoubleCurrencyLogo({ currency0, currency1, size = 16, margin = false }: DoubleCurrencyLogoProps) {
   const { chainId } = useActiveWeb3React()
   const symbols = [getTokenSymbol(currency0, chainId), getTokenSymbol(currency1, chainId)]
   const pair = symbols.join('/')

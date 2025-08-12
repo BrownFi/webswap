@@ -4,12 +4,12 @@ import React, { KeyboardEvent, RefObject, useCallback, useEffect, useMemo, useRe
 import { useTranslation } from 'react-i18next'
 import { FixedSizeList } from 'react-window'
 import { Text } from 'rebass'
-import { useActiveWeb3React } from '../../hooks'
-import { useAllTokens, useToken, useIsUserAddedToken, useFoundOnInactiveList } from '../../hooks/Tokens'
-import { CloseIcon, TYPE, ButtonText } from '../../theme'
-import { isAddress } from '../../utils'
-import Column from '../Column'
-import Row, { RowBetween, RowFixed } from '../Row'
+import { useActiveWeb3React } from 'hooks'
+import { useAllTokens, useToken, useIsUserAddedToken, useFoundOnInactiveList } from 'hooks/Tokens'
+import { CloseIcon, TYPE, ButtonText } from 'theme'
+import { isAddress } from 'utils'
+import Column from 'components/Column'
+import Row, { RowBetween, RowFixed } from 'components/Row'
 import CommonBases from './CommonBases'
 import CurrencyList from './CurrencyList'
 import { filterTokens, useSortedTokensByQuery } from './filtering'
@@ -22,7 +22,7 @@ import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import useTheme from 'hooks/useTheme'
 import ImportRow from './ImportRow'
 import useDebounce from 'hooks/useDebounce'
-import searchIcon from '../../assets/svg/search.svg'
+import searchIcon from 'assets/svg/search.svg'
 
 const ContentWrapper = styled(Column)`
   width: 100%;
@@ -61,7 +61,7 @@ export function CurrencySearch({
   isOpen,
   showManageView,
   showImportView,
-  setImportToken
+  setImportToken,
 }: CurrencySearchProps) {
   const { t } = useTranslation()
   const { chainId } = useActiveWeb3React()
@@ -109,7 +109,7 @@ export function CurrencySearch({
       onCurrencySelect(currency)
       onDismiss()
     },
-    [onDismiss, onCurrencySelect]
+    [onDismiss, onCurrencySelect],
   )
 
   // clear the input on open
@@ -142,7 +142,7 @@ export function CurrencySearch({
         }
       }
     },
-    [filteredSortedTokens, handleCurrencySelect, debouncedQuery]
+    [filteredSortedTokens, handleCurrencySelect, debouncedQuery],
   )
 
   // menu ui

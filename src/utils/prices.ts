@@ -1,7 +1,7 @@
-import { BLOCKED_PRICE_IMPACT_NON_EXPERT } from '../constants'
+import { BLOCKED_PRICE_IMPACT_NON_EXPERT } from 'constants/common'
 import { CurrencyAmount, Fraction, JSBI, Percent, TokenAmount, Trade } from '@brownfi/sdk'
-import { ALLOWED_PRICE_IMPACT_HIGH, ALLOWED_PRICE_IMPACT_LOW, ALLOWED_PRICE_IMPACT_MEDIUM } from '../constants'
-import { Field } from '../state/swap/actions'
+import { ALLOWED_PRICE_IMPACT_HIGH, ALLOWED_PRICE_IMPACT_LOW, ALLOWED_PRICE_IMPACT_MEDIUM } from 'constants/common'
+import { Field } from 'state/swap/actions'
 import { basisPointsToPercent, getTokenSymbol } from './index'
 
 const BASE_FEE = new Percent(JSBI.BigInt(30), JSBI.BigInt(10000))
@@ -10,7 +10,7 @@ const INPUT_FRACTION_AFTER_FEE = ONE_HUNDRED_PERCENT.subtract(BASE_FEE)
 
 // computes price breakdown for the trade
 export function computeTradePriceBreakdown(
-  trade?: Trade | null
+  trade?: Trade | null,
 ): { priceImpactWithoutFee: Percent | undefined; realizedLPFee: CurrencyAmount | undefined | null } {
   // for each hop in our trade, take away the x*y=k price impact from 0.3% fees
   // e.g. for 3 tokens/2 hops: 1 - ((1 - .03) * (1-.03))
@@ -19,8 +19,8 @@ export function computeTradePriceBreakdown(
     : ONE_HUNDRED_PERCENT.subtract(
         trade.route.pairs.reduce<Fraction>(
           (currentFee: Fraction): Fraction => currentFee.multiply(INPUT_FRACTION_AFTER_FEE),
-          ONE_HUNDRED_PERCENT
-        )
+          ONE_HUNDRED_PERCENT,
+        ),
       )
 
   // remove lp fees from price impact
@@ -45,12 +45,12 @@ export function computeTradePriceBreakdown(
 // computes the minimum amount out and maximum amount in for a trade given a user specified allowed slippage in bips
 export function computeSlippageAdjustedAmounts(
   trade: Trade | undefined,
-  allowedSlippage: number
+  allowedSlippage: number,
 ): { [field in Field]?: CurrencyAmount } {
   const pct = basisPointsToPercent(allowedSlippage)
   return {
     [Field.INPUT]: trade?.maximumAmountIn(pct),
-    [Field.OUTPUT]: trade?.minimumAmountOut(pct)
+    [Field.OUTPUT]: trade?.minimumAmountOut(pct),
   }
 }
 
@@ -77,11 +77,11 @@ export function formatExecutionPrice(trade?: Trade, inverted?: boolean): string 
   return inverted
     ? `${trade.executionPrice?.invert().toSignificant(6)} ${getTokenSymbol(
         trade.inputAmount?.currency,
-        trade?.route?.chainId
+        trade?.route?.chainId,
       )} / ${getTokenSymbol(trade.outputAmount?.currency, trade?.route?.chainId)}`
     : `${trade.executionPrice?.toSignificant(6)} ${getTokenSymbol(
         trade.outputAmount?.currency,
-        trade.route.chainId
+        trade.route.chainId,
       )} / ${getTokenSymbol(trade.inputAmount?.currency, trade.route.chainId)}`
 }
 
@@ -91,7 +91,7 @@ export function formatPrice(price: number) {
   const formattedNumber = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    maximumFractionDigits: price > 1000 ? 0 : 2
+    maximumFractionDigits: price > 1000 ? 0 : 2,
   }).format(price)
   return formatNumberString(formattedNumber)
 }
@@ -104,7 +104,7 @@ export function formatNumber(value: string | number | undefined | null, options?
   }
   const formattedNumber = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: min,
-    ...options
+    ...options,
   }).format(number)
   return formatNumberString(formattedNumber)
 }

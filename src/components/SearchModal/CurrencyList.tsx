@@ -3,22 +3,22 @@ import React, { CSSProperties, MutableRefObject, useCallback, useMemo } from 're
 import { FixedSizeList } from 'react-window'
 import { Text } from 'rebass'
 import styled from 'styled-components'
-import { useActiveWeb3React } from '../../hooks'
-import { WrappedTokenInfo, useCombinedActiveList } from '../../state/lists/hooks'
-import { useCurrencyBalance } from '../../state/wallet/hooks'
-import { TYPE } from '../../theme'
-import { useIsUserAddedToken, useAllInactiveTokens } from '../../hooks/Tokens'
-import Column from '../Column'
-import { RowFixed, RowBetween } from '../Row'
-import CurrencyLogo from '../CurrencyLogo'
-import { MouseoverTooltip } from '../Tooltip'
+import { useActiveWeb3React } from 'hooks'
+import { WrappedTokenInfo, useCombinedActiveList } from 'state/lists/hooks'
+import { useCurrencyBalance } from 'state/wallet/hooks'
+import { TYPE } from 'theme'
+import { useIsUserAddedToken, useAllInactiveTokens } from 'hooks/Tokens'
+import Column from 'components/Column'
+import { RowFixed, RowBetween } from 'components/Row'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import { MouseoverTooltip } from 'components/Tooltip'
 import { MenuItem } from './styleds'
-import Loader from '../Loader'
-import { getTokenName, getTokenSymbol, isTokenOnList } from '../../utils'
+import { Loader } from 'components/Loader'
+import { getTokenName, getTokenSymbol, isTokenOnList } from 'utils'
 import ImportRow from './ImportRow'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { LightGreyCard } from 'components/Card'
-import TokenListLogo from '../../assets/svg/tokenlist.svg'
+import TokenListLogo from 'assets/svg/tokenlist.svg'
 import QuestionHelper from 'components/QuestionHelper'
 import useTheme from 'hooks/useTheme'
 
@@ -106,7 +106,7 @@ function CurrencyRow({
   onSelect,
   isSelected,
   otherSelected,
-  style
+  style,
 }: {
   currency: Currency
   onSelect: () => void
@@ -157,7 +157,7 @@ export default function CurrencyList({
   showETH,
   showImportView,
   setImportToken,
-  breakIndex
+  breakIndex,
 }: {
   height: number
   currencies: Currency[]
@@ -245,8 +245,8 @@ export default function CurrencyList({
       setImportToken,
       showImportView,
       breakIndex,
-      theme.text1
-    ]
+      theme.text1,
+    ],
   )
 
   const itemKey = useCallback((index: number, data: any) => currencyKey(data[index]), [])

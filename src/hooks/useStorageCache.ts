@@ -12,12 +12,12 @@ type Data = {
 }
 
 export const useStorageCache = ({ key, initValue, cacheTime }: Props) => {
-  const [value, setValue, clear] = useLocalStorage<Data>(key, { data: initValue })
+  const [value, setValue] = useLocalStorage<Data>(key, { data: initValue })
 
   const save = (data: any, cache = cacheTime) => {
     setValue({
       data,
-      expireTime: Date.now() + cache * 1000
+      expireTime: Date.now() + cache * 1000,
     })
     return data
   }

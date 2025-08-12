@@ -1,18 +1,17 @@
 import React, { Suspense } from 'react'
-import { Route, Switch, useLocation } from 'react-router-dom'
+import { Route, Switch } from 'react-router-dom'
 import 'rc-slider/assets/index.css'
-import '../theme/index.css'
+import 'theme/index.css'
 import styled from 'styled-components'
-import classNames from 'classnames'
-import GoogleAnalyticsReporter from '../components/analytics/GoogleAnalyticsReporter'
-import Popups from '../components/Popups'
-import Web3ReactManager from '../components/Web3ReactManager'
-import DarkModeQueryParamReader from '../theme/DarkModeQueryParamReader'
+import GoogleAnalyticsReporter from 'components/analytics/GoogleAnalyticsReporter'
+import Popups from 'components/Popups'
+import Web3ReactManager from 'components/Web3ReactManager'
+import DarkModeQueryParamReader from 'theme/DarkModeQueryParamReader'
 import AddLiquidity from './AddLiquidity'
 import {
   RedirectDuplicateTokenIds,
   RedirectOldAddLiquidityPathStructure,
-  RedirectToAddLiquidity
+  RedirectToAddLiquidity,
 } from './AddLiquidity/redirects'
 import Earn from './Earn'
 import Manage from './Earn/Manage'
@@ -27,7 +26,6 @@ import Swap from './Swap'
 import { OpenClaimAddressModalAndRedirectToSwap, RedirectPathToSwapOnly, RedirectToSwap } from './Swap/redirects'
 import Vote from './Vote'
 import VotePage from './Vote/VotePage'
-import Referral from 'components/Referral'
 import Leaderboard from './Leaderboard'
 import StaticScreen from 'containers/StaticScreen'
 
@@ -59,8 +57,6 @@ function TopLevelModals() {
 }
 
 export default function App() {
-  const location = useLocation()
-
   return (
     <Suspense fallback={null}>
       <Route component={GoogleAnalyticsReporter} />
@@ -68,7 +64,6 @@ export default function App() {
       <StaticScreen>
         <BodyWrapper>
           <Popups />
-          {/* <Polling /> */}
           <TopLevelModals />
           <Web3ReactManager>
             <Switch>

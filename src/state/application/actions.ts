@@ -27,12 +27,12 @@ export enum ApplicationModal {
   MENU,
   DELEGATE,
   VOTE,
-  SELECT_CHAIN
+  SELECT_CHAIN,
 }
 
 export const updateBlockNumber = createAction<{ chainId: number; blockNumber: number }>('application/updateBlockNumber')
 export const setOpenModal = createAction<ApplicationModal | null>('application/setOpenModal')
 export const addPopup = createAction<{ key?: string; removeAfterMs?: number | null; content: PopupContent }>(
-  'application/addPopup'
+  'application/addPopup',
 )
 export const removePopup = createAction<{ key: string }>('application/removePopup')

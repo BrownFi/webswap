@@ -1,23 +1,23 @@
 import { JSBI, Token } from '@brownfi/sdk'
 import React, { useCallback, useContext, useMemo, useState, useEffect } from 'react'
 import { ThemeContext } from 'styled-components'
-import { AutoColumn } from '../../components/Column'
-import { AutoRow } from '../../components/Row'
-import { SearchInput } from '../../components/SearchModal/styleds'
-import { useAllTokenV1Exchanges } from '../../data/V1'
-import { useActiveWeb3React } from '../../hooks'
-import { useAllTokens, useToken } from '../../hooks/Tokens'
-import { useTokenBalancesWithLoadingIndicator } from '../../state/wallet/hooks'
-import { BackArrow, TYPE } from '../../theme'
-import { LightCard } from '../../components/Card'
-import { BodyWrapper } from '../AppBody'
+import { AutoColumn } from 'components/Column'
+import { AutoRow } from 'components/Row'
+import { SearchInput } from 'components/SearchModal/styleds'
+import { useAllTokenV1Exchanges } from 'data/V1'
+import { useActiveWeb3React } from 'hooks'
+import { useAllTokens, useToken } from 'hooks/Tokens'
+import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
+import { BackArrow, TYPE } from 'theme'
+import { LightCard } from 'components/Card'
+import { BodyWrapper } from 'pages/AppBody'
 import { EmptyState } from './EmptyState'
-import V1PositionCard from '../../components/PositionCard/V1'
-import QuestionHelper from '../../components/QuestionHelper'
-import { Dots } from '../../components/swap/styleds'
-import { useAddUserToken } from '../../state/user/hooks'
-import { isTokenOnList } from '../../utils'
-import { useCombinedActiveList } from '../../state/lists/hooks'
+import V1PositionCard from 'components/PositionCard/V1'
+import QuestionHelper from 'components/QuestionHelper'
+import { Dots } from 'components/swap/styleds'
+import { useAddUserToken } from 'state/user/hooks'
+import { isTokenOnList } from 'utils'
+import { useCombinedActiveList } from 'state/lists/hooks'
 
 export default function MigrateV1() {
   const theme = useContext(ThemeContext)
@@ -26,7 +26,7 @@ export default function MigrateV1() {
   const [tokenSearch, setTokenSearch] = useState<string>('')
   const handleTokenSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setTokenSearch(e.target.value),
-    [setTokenSearch]
+    [setTokenSearch],
   )
 
   // automatically add the search token
@@ -45,17 +45,19 @@ export default function MigrateV1() {
   const V1Exchanges = useAllTokenV1Exchanges()
   const V1LiquidityTokens: Token[] = useMemo(() => {
     return chainId
-      ? Object.keys(V1Exchanges).map(exchangeAddress => new Token(chainId, exchangeAddress, 18, 'UNI-V1', 'Uniswap V1'))
+      ? Object.keys(V1Exchanges).map(
+          (exchangeAddress) => new Token(chainId, exchangeAddress, 18, 'UNI-V1', 'Uniswap V1'),
+        )
       : []
   }, [chainId, V1Exchanges])
   const [V1LiquidityBalances, V1LiquidityBalancesLoading] = useTokenBalancesWithLoadingIndicator(
     account ?? undefined,
-    V1LiquidityTokens
+    V1LiquidityTokens,
   )
-  const allV1PairsWithLiquidity = V1LiquidityTokens.filter(V1LiquidityToken => {
+  const allV1PairsWithLiquidity = V1LiquidityTokens.filter((V1LiquidityToken) => {
     const balance = V1LiquidityBalances?.[V1LiquidityToken.address]
     return balance && JSBI.greaterThan(balance.raw, JSBI.BigInt(0))
-  }).map(V1LiquidityToken => {
+  }).map((V1LiquidityToken) => {
     const balance = V1LiquidityBalances[V1LiquidityToken.address]
     return balance ? (
       <V1PositionCard

@@ -37,7 +37,7 @@ export const useDefaultChain = () => {
       storageData[`mainnet`] = c.toString()
       storage.set(JSON.stringify(storageData))
     },
-    [storage, storageData]
+    [storage, storageData],
   )
 
   const getChainDefault = useCallback(() => {
@@ -49,6 +49,6 @@ export const useDefaultChain = () => {
 
   return {
     getChainDefault,
-    saveChainDefault
+    saveChainDefault,
   }
 }

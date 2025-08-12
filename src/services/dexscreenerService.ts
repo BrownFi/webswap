@@ -2,14 +2,14 @@ import { ChainId } from '@brownfi/sdk'
 import axios from 'axios'
 
 const client = axios.create({
-  baseURL: 'https://api.dexscreener.com/latest/dex'
+  baseURL: 'https://api.dexscreener.com/latest/dex',
 })
 
 const getBerascan = async (address: string) => {
   const data = await axios.get(`https://cdn.routescan.io/api/evm/all/erc20/search`, {
     params: {
-      query: address
-    }
+      query: address,
+    },
   })
   return data.data.items[0]?.price
 }
@@ -27,7 +27,7 @@ const getTokenPrice = async (address: string, symbol?: string, chainId?: ChainId
     return getVicscan(address)
   }
 
-  return await client.get(`/tokens/${address}`).then(data => {
+  return await client.get(`/tokens/${address}`).then((data) => {
     const pair = data.data.pairs.find((pair: any) => {
       if (symbol === 'HONEY') {
         return pair.baseToken.symbol.includes('NECT')
@@ -40,5 +40,5 @@ const getTokenPrice = async (address: string, symbol?: string, chainId?: ChainId
 }
 
 export const dexscreenerService = {
-  getTokenPrice
+  getTokenPrice,
 }

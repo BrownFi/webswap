@@ -2,12 +2,12 @@ import { MaxUint256 } from '@ethersproject/constants'
 import { TransactionResponse } from '@ethersproject/providers'
 import { Trade, TokenAmount, CurrencyAmount, ETHER, ROUTER_ADDRESS_WITH_PRICE, getRouterAddress } from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
-import { useTokenAllowance } from '../data/Allowances'
-import { getTradeVersion, useV1TradeExchangeAddress } from '../data/V1'
-import { Field } from '../state/swap/actions'
-import { useTransactionAdder, useHasPendingApproval } from '../state/transactions/hooks'
-import { computeSlippageAdjustedAmounts } from '../utils/prices'
-import { calculateGasMargin, getTokenSymbol } from '../utils'
+import { useTokenAllowance } from 'data/Allowances'
+import { getTradeVersion, useV1TradeExchangeAddress } from 'data/V1'
+import { Field } from 'state/swap/actions'
+import { useTransactionAdder, useHasPendingApproval } from 'state/transactions/hooks'
+import { computeSlippageAdjustedAmounts } from 'utils/prices'
+import { calculateGasMargin, getTokenSymbol } from 'utils'
 import { useTokenContract } from './useContract'
 import { useActiveWeb3React } from './index'
 import { Version } from './useToggledVersion'
@@ -17,13 +17,13 @@ export enum ApprovalState {
   UNKNOWN,
   NOT_APPROVED,
   PENDING,
-  APPROVED
+  APPROVED,
 }
 
 // returns a variable indicating the state of the approval and a function which approves if necessary or early returns
 export function useApproveCallback(
   amountToApprove?: CurrencyAmount,
-  spender?: string
+  spender?: string,
 ): [ApprovalState, () => Promise<void>] {
   const { account, chainId } = useActiveWeb3React()
   const token = amountToApprove instanceof TokenAmount ? amountToApprove.token : undefined
@@ -82,12 +82,12 @@ export function useApproveCallback(
 
     return tokenContract
       .approve(spender, useExact ? amountToApprove.raw.toString() : MaxUint256, {
-        gasLimit: calculateGasMargin(estimatedGas)
+        gasLimit: calculateGasMargin(estimatedGas),
       })
       .then((response: TransactionResponse) => {
         addTransaction(response, {
           summary: 'Approve ' + getTokenSymbol(amountToApprove.currency, chainId),
-          approval: { tokenAddress: token.address, spender: spender }
+          approval: { tokenAddress: token.address, spender: spender },
         })
       })
       .catch((error: Error) => {
@@ -106,7 +106,7 @@ export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) 
 
   const amountToApprove = useMemo(
     () => (trade ? computeSlippageAdjustedAmounts(trade, allowedSlippage)[Field.INPUT] : undefined),
-    [trade, allowedSlippage]
+    [trade, allowedSlippage],
   )
   const tradeIsV1 = getTradeVersion(trade) === Version.v1
   const v1ExchangeAddress = useV1TradeExchangeAddress(trade)
@@ -119,6 +119,6 @@ export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) 
       ? version === 1
         ? ROUTER_ADDRESS_WITH_PRICE[chainId]
         : getRouterAddress(chainId, version)
-      : ''
+      : '',
   )
 }

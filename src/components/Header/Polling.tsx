@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
-import { TYPE, ExternalLink } from '../../theme'
-import { useBlockNumber } from '../../state/application/hooks'
-import { getEtherscanLink } from '../../utils'
-import { useActiveWeb3React } from '../../hooks'
+import { TYPE, ExternalLink } from 'theme'
+import { useBlockNumber } from 'state/application/hooks'
+import { getEtherscanLink } from 'utils'
+import { useActiveWeb3React } from 'hooks'
 
 const StyledPolling = styled.div`
   position: fixed;
@@ -85,7 +85,7 @@ export default function Polling() {
         clearTimeout(mountingTimer)
       }
     },
-    [blockNumber] //useEffect will run only one time
+    [blockNumber], //useEffect will run only one time
     //if you pass a value to array, like this [data] than clearTimeout will run every time this value changes (useEffect re-run)
   )
 

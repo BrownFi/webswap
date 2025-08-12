@@ -1,8 +1,8 @@
 import { Token, TokenAmount } from '@brownfi/sdk'
 import { useMemo } from 'react'
 
-import { useTokenContract } from '../hooks/useContract'
-import { useSingleCallResult } from '../state/multicall/hooks'
+import { useTokenContract } from 'hooks/useContract'
+import { useSingleCallResult } from 'state/multicall/hooks'
 
 export function useTokenAllowance(token?: Token, owner?: string, spender?: string): TokenAmount | undefined {
   const contract = useTokenContract(token?.address, false)
@@ -12,6 +12,6 @@ export function useTokenAllowance(token?: Token, owner?: string, spender?: strin
 
   return useMemo(() => (token && allowance ? new TokenAmount(token, allowance.toString()) : undefined), [
     token,
-    allowance
+    allowance,
   ])
 }

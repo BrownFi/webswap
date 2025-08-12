@@ -1,23 +1,23 @@
 import { Currency, CurrencyAmount, JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { usePair } from '../../data/Reserves'
-import { useTotalSupply } from '../../data/TotalSupply'
+import { usePair } from 'data/Reserves'
+import { useTotalSupply } from 'data/TotalSupply'
 
-import { useActiveWeb3React } from '../../hooks'
-import { wrappedCurrency } from '../../utils/wrappedCurrency'
-import { AppDispatch, AppState } from '../index'
-import { tryParseAmount } from '../swap/hooks'
-import { useTokenBalances } from '../wallet/hooks'
+import { useActiveWeb3React } from 'hooks'
+import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { AppDispatch, AppState } from 'state'
+import { tryParseAmount } from 'state/swap/hooks'
+import { useTokenBalances } from 'state/wallet/hooks'
 import { Field, typeInput } from './actions'
 
 export function useBurnState(): AppState['burn'] {
-  return useSelector<AppState, AppState['burn']>(state => state.burn)
+  return useSelector<AppState, AppState['burn']>((state) => state.burn)
 }
 
 export function useDerivedBurnInfo(
   currencyA: Currency | undefined,
-  currencyB: Currency | undefined
+  currencyB: Currency | undefined,
 ): {
   pair?: Pair | null
   parsedAmounts: {
@@ -45,7 +45,7 @@ export function useDerivedBurnInfo(
   const tokens = {
     [Field.CURRENCY_A]: tokenA,
     [Field.CURRENCY_B]: tokenB,
-    [Field.LIQUIDITY]: pair?.liquidityToken
+    [Field.LIQUIDITY]: pair?.liquidityToken,
   }
 
   // liquidity values
@@ -70,7 +70,7 @@ export function useDerivedBurnInfo(
       : undefined
   const liquidityValues: { [Field.CURRENCY_A]?: TokenAmount; [Field.CURRENCY_B]?: TokenAmount } = {
     [Field.CURRENCY_A]: liquidityValueA,
-    [Field.CURRENCY_B]: liquidityValueB
+    [Field.CURRENCY_B]: liquidityValueB,
   }
 
   let percentToRemove: Percent = new Percent('0', '100')
@@ -120,7 +120,7 @@ export function useDerivedBurnInfo(
         ? new TokenAmount(tokenB, percentToRemove.multiply(liquidityValueB.raw).quotient)
         : undefined,
     currencyA,
-    currencyB
+    currencyB,
   }
 
   let error: string | undefined
@@ -144,10 +144,10 @@ export function useBurnActionHandlers(): {
     (field: Field, typedValue: string) => {
       dispatch(typeInput({ field, typedValue }))
     },
-    [dispatch]
+    [dispatch],
   )
 
   return {
-    onUserInput
+    onUserInput,
   }
 }

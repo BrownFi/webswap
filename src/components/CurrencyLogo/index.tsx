@@ -2,18 +2,18 @@ import { ChainId, Currency, ETHER, Token } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
-import BNBLogo from '../../assets/images/bnb.svg'
-import bobaLogo from '../../assets/images/boba.svg'
-import EthereumLogo from '../../assets/images/ethereum-logo.png'
-import hyperevmLogo from '../../assets/images/hyperevm.png'
-import metisLogo from '../../assets/images/metis.png'
-import sonicLogo from '../../assets/images/sonic.png'
-import u2uLogo from '../../assets/images/u2u.jpg'
-import VictionLogo from '../../assets/images/viction.png'
-import beraLogo from '../../assets/images/w-bera.png'
-import useHttpLocations from '../../hooks/useHttpLocations'
-import { findLogoURI, WrappedTokenInfo } from '../../state/lists/hooks'
-import Logo from '../Logo'
+import BNBLogo from 'assets/images/bnb.svg'
+import bobaLogo from 'assets/images/boba.svg'
+import EthereumLogo from 'assets/images/ethereum-logo.png'
+import hyperevmLogo from 'assets/images/hyperevm.png'
+import metisLogo from 'assets/images/metis.png'
+import sonicLogo from 'assets/images/sonic.png'
+import u2uLogo from 'assets/images/u2u.jpg'
+import VictionLogo from 'assets/images/viction.png'
+import beraLogo from 'assets/images/w-bera.png'
+import useHttpLocations from 'hooks/useHttpLocations'
+import { findLogoURI, WrappedTokenInfo } from 'state/lists/hooks'
+import { Logo } from 'components/Logo'
 
 const StyledEthereumLogo = styled.img<{ size: string }>`
   width: ${({ size }) => size};
@@ -30,10 +30,10 @@ const StyledLogo = styled(Logo)<{ size: string }>`
   background-color: ${({ theme }) => theme.white};
 `
 
-export default function CurrencyLogo({
+export function CurrencyLogo({
   currency,
   size = '24px',
-  style
+  style,
 }: {
   currency?: Currency
   size?: string

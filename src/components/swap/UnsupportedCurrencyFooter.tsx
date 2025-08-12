@@ -2,16 +2,16 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import { TYPE, CloseIcon, ExternalLink } from 'theme'
 import { ButtonEmpty } from 'components/Button'
-import Modal from 'components/Modal'
-import Card, { OutlineCard } from 'components/Card'
+import { Modal } from 'components/Modal'
+import { Card, OutlineCard } from 'components/Card'
 import { RowBetween, AutoRow } from 'components/Row'
 import { AutoColumn } from 'components/Column'
-import CurrencyLogo from 'components/CurrencyLogo'
+import { CurrencyLogo } from 'components/CurrencyLogo'
 import { useActiveWeb3React } from 'hooks'
 import { getEtherscanLink } from 'utils'
 import { Currency, Token } from '@brownfi/sdk'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { useUnsupportedTokens } from '../../hooks/Tokens'
+import { useUnsupportedTokens } from 'hooks/Tokens'
 
 const DetailsFooter = styled.div<{ show: boolean }>`
   padding-top: calc(16px + 2rem);
@@ -40,7 +40,7 @@ const AddressText = styled(TYPE.blue)`
 
 export default function UnsupportedCurrencyFooter({
   show,
-  currencies
+  currencies,
 }: {
   show: boolean
   currencies: (Currency | undefined)[]
@@ -50,7 +50,7 @@ export default function UnsupportedCurrencyFooter({
 
   const tokens =
     chainId && currencies
-      ? currencies.map(currency => {
+      ? currencies.map((currency) => {
           return wrappedCurrency(currency, chainId)
         })
       : []
@@ -66,7 +66,7 @@ export default function UnsupportedCurrencyFooter({
               <TYPE.mediumHeader>Unsupported Assets</TYPE.mediumHeader>
               <CloseIcon onClick={() => setShowDetails(false)} />
             </RowBetween>
-            {tokens.map(token => {
+            {tokens.map((token) => {
               return (
                 token &&
                 unsupportedTokens &&

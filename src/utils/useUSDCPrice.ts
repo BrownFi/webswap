@@ -1,8 +1,8 @@
 import { ChainId, Currency, currencyEquals, JSBI, Price, WETH } from '@brownfi/sdk'
 import { useMemo } from 'react'
-import { USDC } from '../constants'
-import { PairState, usePairs } from '../data/Reserves'
-import { useActiveWeb3React } from '../hooks'
+import { USDC } from 'constants/common'
+import { PairState, usePairs } from 'data/Reserves'
+import { useActiveWeb3React } from 'hooks'
 import { wrappedCurrency } from './wrappedCurrency'
 
 /**
@@ -16,12 +16,12 @@ export default function useUSDCPrice(currency?: Currency): Price | undefined {
     () => [
       [
         chainId && wrapped && currencyEquals(WETH[chainId], wrapped) ? undefined : currency,
-        chainId ? WETH[chainId] : undefined
+        chainId ? WETH[chainId] : undefined,
       ],
       [wrapped?.equals(USDC) ? undefined : wrapped, chainId === ChainId.MAINNET ? USDC : undefined],
-      [chainId ? WETH[chainId] : undefined, chainId === ChainId.MAINNET ? USDC : undefined]
+      [chainId ? WETH[chainId] : undefined, chainId === ChainId.MAINNET ? USDC : undefined],
     ],
-    [chainId, currency, wrapped]
+    [chainId, currency, wrapped],
   )
   const [[ethPairState, ethPair], [usdcPairState, usdcPair], [usdcEthPairState, usdcEthPair]] = usePairs(tokenPairs)
 

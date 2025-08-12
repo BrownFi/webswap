@@ -7,12 +7,11 @@ import { useToken } from 'hooks/Tokens'
 import styled from 'styled-components'
 import { useUserAddedTokens, useRemoveUserAddedToken } from 'state/user/hooks'
 import { Token } from '@brownfi/sdk'
-import CurrencyLogo from 'components/CurrencyLogo'
+import { CurrencyLogo } from 'components/CurrencyLogo'
 import { getEtherscanLink, isAddress } from 'utils'
 import { useActiveWeb3React } from 'hooks'
-import Card from 'components/Card'
+import { Card } from 'components/Card'
 import ImportRow from './ImportRow'
-// import useTheme from '../../hooks/useTheme'
 
 import { CurrencyModalView } from './CurrencySearchModal'
 
@@ -37,7 +36,7 @@ const Footer = styled.div`
 
 export default function ManageTokens({
   setModalView,
-  setImportToken
+  setImportToken,
 }: {
   setModalView: (view: CurrencyModalView) => void
   setImportToken: (token: Token) => void
@@ -65,7 +64,7 @@ export default function ManageTokens({
 
   const handleRemoveAll = useCallback(() => {
     if (chainId && userAddedTokens) {
-      userAddedTokens.map(token => {
+      userAddedTokens.map((token) => {
         return removeToken(chainId, token.address)
       })
     }
@@ -74,7 +73,7 @@ export default function ManageTokens({
   const tokenList = useMemo(() => {
     return (
       chainId &&
-      userAddedTokens.map(token => (
+      userAddedTokens.map((token) => (
         <RowBetween key={token.address} width="100%">
           <RowFixed>
             <CurrencyLogo currency={token} size={'20px'} />

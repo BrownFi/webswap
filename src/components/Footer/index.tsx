@@ -1,8 +1,8 @@
 import React from 'react'
-import telegramIcon from '../../assets/svg/telegram.svg'
-import logoWhite from '../../assets/svg/logo_white.svg'
-import mirrorIcon from '../../assets/images/mirror.png'
-import xIcon from '../../assets/svg/x.svg'
+import telegramIcon from 'assets/svg/telegram.svg'
+import logoWhite from 'assets/svg/logo_white.svg'
+import mirrorIcon from 'assets/images/mirror.png'
+import xIcon from 'assets/svg/x.svg'
 
 const Footer = () => {
   return (

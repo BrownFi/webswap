@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text } from 'rebass'
 import styled from 'styled-components'
-import { RowFixed } from '../Row'
+import { RowFixed } from 'components/Row'
 
 export const FilterWrapper = styled(RowFixed)`
   padding: 8px;
@@ -19,7 +19,7 @@ export const FilterWrapper = styled(RowFixed)`
 
 export default function SortButton({
   toggleSortOrder,
-  ascending
+  ascending,
 }: {
   toggleSortOrder: () => void
   ascending: boolean

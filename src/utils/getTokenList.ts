@@ -10,7 +10,7 @@ import uriToHttp from './uriToHttp'
  */
 export default async function getTokenList(
   listUrl: string,
-  resolveENSContentHash: (ensName: string) => Promise<string>
+  resolveENSContentHash: (ensName: string) => Promise<string>,
 ): Promise<TokenList> {
   const parsedENS = parseENSAddress(listUrl)
   let urls: string[]

@@ -1,13 +1,13 @@
 import { Trade, TradeType } from '@brownfi/sdk'
 import React, { useContext } from 'react'
 import { ThemeContext } from 'styled-components'
-import { Field } from '../../state/swap/actions'
-import { useUserSlippageTolerance } from '../../state/user/hooks'
-import { TYPE } from '../../theme'
-import { computeSlippageAdjustedAmounts, warningSeveritySlippage } from '../../utils/prices'
-import { AutoColumn } from '../Column'
-import QuestionHelper from '../QuestionHelper'
-import { RowBetween, RowFixed } from '../Row'
+import { Field } from 'state/swap/actions'
+import { useUserSlippageTolerance } from 'state/user/hooks'
+import { TYPE } from 'theme'
+import { computeSlippageAdjustedAmounts, warningSeveritySlippage } from 'utils/prices'
+import { AutoColumn } from 'components/Column'
+import QuestionHelper from 'components/QuestionHelper'
+import { RowBetween, RowFixed } from 'components/Row'
 import SwapRoute from './SwapRoute'
 import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
@@ -38,11 +38,11 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
               {isExactIn
                 ? `${slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4)} ${getTokenSymbol(
                     trade.outputAmount?.currency,
-                    chainId
+                    chainId,
                   )}` || '-'
                 : `${slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4)} ${getTokenSymbol(
                     trade.inputAmount?.currency,
-                    chainId
+                    chainId,
                   )}` || '-'}
             </TYPE.black>
           </RowFixed>

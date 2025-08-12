@@ -10,7 +10,7 @@ import { useAccount } from 'wagmi'
 const CustomChainSelect = () => {
   const { isConnected, chainId } = useAccount()
   const chain = useSelector(chainSelector)
-  const isWrongNetwork = availableChains.every(chain => chain.id !== chainId)
+  const isWrongNetwork = availableChains.every((chain) => chain.id !== chainId)
 
   const { openChainModal } = useChainModal()
   const [isOpen, setOpen] = useState(false)
@@ -46,14 +46,14 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
       <div
         className="bg-[#1a1a1a] m-2 rounded-3xl w-full max-w-sm p-4"
         style={{ border: '1px solid #FFFFFF20' }}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2
             className="text-white text-lg font-[800] px-2 pt-1"
             style={{
-              fontFamily: `SFRounded, ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`
+              fontFamily: `SFRounded, ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
             }}
           >
             Switch Networks
@@ -65,7 +65,7 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 
         {/* Chain list */}
         <div className="space-y-2">
-          {availableChains.map(c => {
+          {availableChains.map((c) => {
             const isActive = chain?.id === c.id
 
             return (
@@ -90,7 +90,7 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }
 

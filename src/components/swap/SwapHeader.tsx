@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import Settings from '../Settings'
-import { RowBetween } from '../Row'
+import { SettingsTab } from 'components/Settings'
+import { RowBetween } from 'components/Row'
 import { Flex } from 'rebass'
 import SwitchVersion from 'components/SwitchVersion'
 
@@ -31,7 +31,7 @@ export default function SwapHeader() {
           <StyledSwaptitle>Swap Token</StyledSwaptitle>
           <SwitchVersion />
         </Flex>
-        <Settings />
+        <SettingsTab />
       </RowBetween>
     </StyledSwapHeader>
   )

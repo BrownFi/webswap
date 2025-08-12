@@ -7,8 +7,8 @@ export const versionSlice = createSlice({
   reducers: {
     switchVersion: (state, { payload: version }: PayloadAction<number>) => {
       return { version }
-    }
-  }
+    },
+  },
 })
 
 export const { switchVersion } = versionSlice.actions

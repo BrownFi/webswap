@@ -3,12 +3,12 @@ import { Link, RouteComponentProps, withRouter } from 'react-router-dom'
 import { Token, TokenAmount, WETH } from '@brownfi/sdk'
 
 import { Text } from 'rebass'
-import { AutoColumn } from '../Column'
-import { ButtonSecondary } from '../Button'
-import { RowBetween, RowFixed } from '../Row'
+import { AutoColumn } from 'components/Column'
+import { ButtonSecondary } from 'components/Button'
+import { RowBetween, RowFixed } from 'components/Row'
 import { FixedHeightRow, HoverCard } from './index'
-import DoubleCurrencyLogo from '../DoubleLogo'
-import { useActiveWeb3React } from '../../hooks'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { useActiveWeb3React } from 'hooks'
 import { ThemeContext } from 'styled-components'
 
 interface PositionCardProps extends RouteComponentProps<any> {

@@ -5,9 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { NavLink, Link as HistoryLink } from 'react-router-dom'
 
 import { ChevronLeft } from 'react-feather'
-import { RowBetween } from '../Row'
-// import QuestionHelper from '../QuestionHelper'
-import Settings from '../Settings'
+import { RowBetween } from 'components/Row'
+import { SettingsTab } from 'components/Settings'
 import { useDispatch } from 'react-redux'
 import { AppDispatch } from 'state'
 import { resetMintState } from 'state/mint/actions'
@@ -25,7 +24,7 @@ const Tabs = styled.div`
 const activeClassName = 'ACTIVE'
 
 const StyledNavLink = styled(NavLink).attrs({
-  activeClassName
+  activeClassName,
 })`
   ${({ theme }) => theme.flexRowNoWrap}
   align-items: center;
@@ -83,7 +82,7 @@ export function FindPoolTabs() {
           <StyledArrowLeft color="white" />
         </HistoryLink>
         <ActiveText>Import Pool</ActiveText>
-        <Settings />
+        <SettingsTab />
       </RowBetween>
     </Tabs>
   )
@@ -114,7 +113,7 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
           </Flex>
         </div>
 
-        <Settings />
+        <SettingsTab />
       </RowBetween>
     </Tabs>
   )

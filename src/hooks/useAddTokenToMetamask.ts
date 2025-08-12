@@ -5,7 +5,7 @@ import { useActiveWeb3React } from 'hooks'
 import { useWalletClient } from 'wagmi'
 
 export default function useAddTokenToMetamask(
-  currencyToAdd: Currency | undefined
+  currencyToAdd: Currency | undefined,
 ): { addToken: () => void; success: boolean | undefined } {
   const { library, chainId } = useActiveWeb3React()
   const { data: walletClient } = useWalletClient()
@@ -24,14 +24,14 @@ export default function useAddTokenToMetamask(
             options: {
               address: token.address,
               symbol: token.symbol,
-              decimals: token.decimals
-            }
-          } as any
+              decimals: token.decimals,
+            },
+          } as any,
         })
-        .then(success => {
+        .then((success) => {
           setSuccess(success)
         })
-        .catch(error => {
+        .catch((error) => {
           console.warn(error)
           setSuccess(false)
         })

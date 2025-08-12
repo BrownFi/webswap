@@ -1,7 +1,7 @@
 import { MaxUint256 } from '@ethersproject/constants'
 import { CurrencyAmount, ETHER, SwapParameters, Token, Trade, TradeOptionsDeadline, TradeType } from '@brownfi/sdk'
-import { getTradeVersion } from '../data/V1'
-import { Version } from '../hooks/useToggledVersion'
+import { getTradeVersion } from 'data/V1'
+import { Version } from 'hooks/useToggledVersion'
 
 function toHex(currencyAmount: CurrencyAmount): string {
   return `0x${currencyAmount.raw.toString(16)}`
@@ -14,7 +14,7 @@ function toHex(currencyAmount: CurrencyAmount): string {
  */
 export default function v1SwapArguments(
   trade: Trade,
-  options: Omit<TradeOptionsDeadline, 'feeOnTransfer'>
+  options: Omit<TradeOptionsDeadline, 'feeOnTransfer'>,
 ): SwapParameters {
   if (getTradeVersion(trade) !== Version.v1) {
     throw new Error('invalid trade version')
@@ -34,13 +34,13 @@ export default function v1SwapArguments(
       return {
         methodName: 'ethToTokenTransferInput',
         args: [minimumAmountOut, deadline, options.recipient],
-        value: maximumAmountIn
+        value: maximumAmountIn,
       }
     } else if (outputETH) {
       return {
         methodName: 'tokenToEthTransferInput',
         args: [maximumAmountIn, minimumAmountOut, deadline, options.recipient],
-        value: '0x0'
+        value: '0x0',
       }
     } else {
       const outputToken = trade.outputAmount?.currency
@@ -51,7 +51,7 @@ export default function v1SwapArguments(
       return {
         methodName: 'tokenToTokenTransferInput',
         args: [maximumAmountIn, minimumAmountOut, '0x1', deadline, options.recipient, outputToken.address],
-        value: '0x0'
+        value: '0x0',
       }
     }
   } else {
@@ -59,13 +59,13 @@ export default function v1SwapArguments(
       return {
         methodName: 'ethToTokenTransferOutput',
         args: [minimumAmountOut, deadline, options.recipient],
-        value: maximumAmountIn
+        value: maximumAmountIn,
       }
     } else if (outputETH) {
       return {
         methodName: 'tokenToEthTransferOutput',
         args: [minimumAmountOut, maximumAmountIn, deadline, options.recipient],
-        value: '0x0'
+        value: '0x0',
       }
     } else {
       const output = trade.outputAmount?.currency
@@ -81,9 +81,9 @@ export default function v1SwapArguments(
           MaxUint256.toHexString(),
           deadline,
           options.recipient,
-          output.address
+          output.address,
         ],
-        value: '0x0'
+        value: '0x0',
       }
     }
   }

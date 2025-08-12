@@ -1,21 +1,21 @@
 import React, { useState, useRef, useContext } from 'react'
 import styled, { ThemeContext } from 'styled-components'
 
-import QuestionHelper from '../QuestionHelper'
-import { TYPE } from '../../theme'
-import { AutoColumn } from '../Column'
-import { RowBetween, RowFixed } from '../Row'
+import QuestionHelper from 'components/QuestionHelper'
+import { TYPE } from 'theme'
+import { AutoColumn } from 'components/Column'
+import { RowBetween, RowFixed } from 'components/Row'
 
 import { darken } from 'polished'
 
 enum SlippageError {
   InvalidInput = 'InvalidInput',
   RiskyLow = 'RiskyLow',
-  RiskyHigh = 'RiskyHigh'
+  RiskyHigh = 'RiskyHigh',
 }
 
 enum DeadlineError {
-  InvalidInput = 'InvalidInput'
+  InvalidInput = 'InvalidInput',
 }
 
 const FancyButton = styled.button`
@@ -85,7 +85,7 @@ const OptionCustom = styled(FancyButton)<{ active?: boolean; warning?: boolean }
 const SlippageEmojiContainer = styled.span`
   color: #f3841e;
   ${({ theme }) => theme.mediaWidth.upToSmall`
-    display: none;  
+    display: none;
   `}
 `
 
@@ -203,7 +203,7 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
                 onBlur={() => {
                   parseCustomSlippage((rawSlippage / 100).toFixed(2))
                 }}
-                onChange={e => parseCustomSlippage(e.target.value)}
+                onChange={(e) => parseCustomSlippage(e.target.value)}
                 color={!slippageInputIsValid ? 'red' : ''}
               />
               %
@@ -215,7 +215,7 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
             style={{
               fontSize: '14px',
               paddingTop: '7px',
-              color: slippageError === SlippageError.InvalidInput ? 'red' : '#F3841E'
+              color: slippageError === SlippageError.InvalidInput ? 'red' : '#F3841E',
             }}
           >
             {slippageError === SlippageError.InvalidInput
@@ -243,7 +243,7 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
               }}
               placeholder={(deadline / 60).toString()}
               value={deadlineInput}
-              onChange={e => parseCustomDeadline(e.target.value)}
+              onChange={(e) => parseCustomDeadline(e.target.value)}
             />
           </OptionCustom>
           <TYPE.body style={{ paddingLeft: '8px' }} fontSize={14} fontWeight={500} color="white">

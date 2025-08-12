@@ -2,14 +2,14 @@ import { Trade, TradeType } from '@brownfi/sdk'
 import React, { useContext, useMemo } from 'react'
 import { AlertTriangle } from 'react-feather'
 import { ThemeContext } from 'styled-components'
-import { Field } from '../../state/swap/actions'
-import { TYPE } from '../../theme'
-import { ButtonPrimary } from '../Button'
-import { getTokenSymbol, isAddress, shortenAddress } from '../../utils'
-import { computeSlippageAdjustedAmounts, computeTradePriceBreakdown, warningSeverity } from '../../utils/prices'
-import { AutoColumn } from '../Column'
-import CurrencyLogo from '../CurrencyLogo'
-import { RowBetween, RowFixed } from '../Row'
+import { Field } from 'state/swap/actions'
+import { TYPE } from 'theme'
+import { ButtonPrimary } from 'components/Button'
+import { getTokenSymbol, isAddress, shortenAddress } from 'utils'
+import { computeSlippageAdjustedAmounts, computeTradePriceBreakdown, warningSeverity } from 'utils/prices'
+import { AutoColumn } from 'components/Column'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import { RowBetween, RowFixed } from 'components/Row'
 import { TruncatedText, SwapShowAcceptChanges } from './styleds'
 import { useActiveWeb3React } from 'hooks'
 
@@ -18,7 +18,7 @@ export default function SwapModalHeader({
   allowedSlippage,
   recipient,
   showAcceptChanges,
-  onAcceptChanges
+  onAcceptChanges,
 }: {
   trade: Trade
   allowedSlippage: number
@@ -29,7 +29,7 @@ export default function SwapModalHeader({
   const { chainId } = useActiveWeb3React()
   const slippageAdjustedAmounts = useMemo(() => computeSlippageAdjustedAmounts(trade, allowedSlippage), [
     trade,
-    allowedSlippage
+    allowedSlippage,
   ])
   const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
   const priceImpactSeverity = warningSeverity(priceImpactWithoutFee)

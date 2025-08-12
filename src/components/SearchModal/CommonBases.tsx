@@ -3,9 +3,9 @@ import { Text } from 'rebass'
 import { ChainId, Currency, currencyEquals, ETHER, Token } from '@brownfi/sdk'
 import styled from 'styled-components'
 
-import { SUGGESTED_BASES } from '../../constants'
-import { AutoRow } from '../Row'
-import CurrencyLogo from '../CurrencyLogo'
+import { SUGGESTED_BASES } from 'constants/common'
+import { AutoRow } from 'components/Row'
+import { CurrencyLogo } from 'components/CurrencyLogo'
 import { getNativeToken, getTokenSymbol } from 'utils'
 
 const BaseWrapper = styled.div<{ disable?: boolean }>`
@@ -27,7 +27,7 @@ const BaseWrapper = styled.div<{ disable?: boolean }>`
 export default function CommonBases({
   chainId,
   onSelect,
-  selectedCurrency
+  selectedCurrency,
 }: {
   chainId?: ChainId
   selectedCurrency?: Currency | null

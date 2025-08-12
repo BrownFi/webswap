@@ -2,27 +2,27 @@ import { TransactionResponse } from '@ethersproject/abstract-provider'
 import { JSBI, Token, TokenAmount, WETH, Fraction, Percent, CurrencyAmount } from '@brownfi/sdk'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Redirect, RouteComponentProps } from 'react-router-dom'
-import { ButtonConfirmed } from '../../components/Button'
-import { LightCard } from '../../components/Card'
-import { AutoColumn } from '../../components/Column'
-import QuestionHelper from '../../components/QuestionHelper'
-import { AutoRow } from '../../components/Row'
-import { DEFAULT_DEADLINE_FROM_NOW } from '../../constants'
-import { useActiveWeb3React } from '../../hooks'
-import { useToken } from '../../hooks/Tokens'
-import { useV1ExchangeContract } from '../../hooks/useContract'
-import { NEVER_RELOAD, useSingleCallResult } from '../../state/multicall/hooks'
-import { useIsTransactionPending, useTransactionAdder } from '../../state/transactions/hooks'
-import { useTokenBalance, useETHBalances } from '../../state/wallet/hooks'
-import { BackArrow, TYPE } from '../../theme'
-import { isAddress } from '../../utils'
-import { BodyWrapper } from '../AppBody'
+import { ButtonConfirmed } from 'components/Button'
+import { LightCard } from 'components/Card'
+import { AutoColumn } from 'components/Column'
+import QuestionHelper from 'components/QuestionHelper'
+import { AutoRow } from 'components/Row'
+import { DEFAULT_DEADLINE_FROM_NOW } from 'constants/common'
+import { useActiveWeb3React } from 'hooks'
+import { useToken } from 'hooks/Tokens'
+import { useV1ExchangeContract } from 'hooks/useContract'
+import { NEVER_RELOAD, useSingleCallResult } from 'state/multicall/hooks'
+import { useIsTransactionPending, useTransactionAdder } from 'state/transactions/hooks'
+import { useTokenBalance, useETHBalances } from 'state/wallet/hooks'
+import { BackArrow, TYPE } from 'theme'
+import { isAddress } from 'utils'
+import { BodyWrapper } from 'pages/AppBody'
 import { EmptyState } from './EmptyState'
 import { V1LiquidityInfo } from './MigrateV1Exchange'
 import { AddressZero } from '@ethersproject/constants'
-import { Dots } from '../../components/swap/styleds'
+import { Dots } from 'components/swap/styleds'
 import { Contract } from '@ethersproject/contracts'
-import { useTotalSupply } from '../../data/TotalSupply'
+import { useTotalSupply } from 'data/TotalSupply'
 
 const WEI_DENOM = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18))
 const ZERO = JSBI.BigInt(0)
@@ -32,7 +32,7 @@ const ZERO_FRACTION = new Fraction(ZERO, ONE)
 function V1PairRemoval({
   exchangeContract,
   liquidityTokenAmount,
-  token
+  token,
 }: {
   exchangeContract: Contract
   liquidityTokenAmount: TokenAmount
@@ -68,11 +68,11 @@ function V1PairRemoval({
         liquidityTokenAmount.raw.toString(),
         1, // min_eth, this is safe because we're removing liquidity
         1, // min_tokens, this is safe because we're removing liquidity
-        Math.floor(new Date().getTime() / 1000) + DEFAULT_DEADLINE_FROM_NOW
+        Math.floor(new Date().getTime() / 1000) + DEFAULT_DEADLINE_FROM_NOW,
       )
       .then((response: TransactionResponse) => {
         addTransaction(response, {
-          summary: `Remove ${chainId && token.equals(WETH[chainId]) ? 'WETH' : token.symbol}/ETH V1 liquidity`
+          summary: `Remove ${chainId && token.equals(WETH[chainId]) ? 'WETH' : token.symbol}/ETH V1 liquidity`,
         })
         setPendingRemovalHash(response.hash)
       })
@@ -121,8 +121,8 @@ function V1PairRemoval({
 
 export default function RemoveV1Exchange({
   match: {
-    params: { address }
-  }
+    params: { address },
+  },
 }: RouteComponentProps<{ address: string }>) {
   const validatedAddress = isAddress(address)
   const { chainId, account } = useActiveWeb3React()
@@ -136,7 +136,7 @@ export default function RemoveV1Exchange({
       validatedAddress && chainId && token
         ? new Token(chainId, validatedAddress, 18, `UNI-V1-${token.symbol}`, 'Uniswap V1')
         : undefined,
-    [chainId, validatedAddress, token]
+    [chainId, validatedAddress, token],
   )
   const userLiquidityBalance = useTokenBalance(account ?? undefined, liquidityToken)
 
