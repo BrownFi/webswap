@@ -437,9 +437,21 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
     return []
   }
 
-  if (version === 1) {
-    return pairs.filter((pair) => `${pair[0].symbol}/${pair[1].symbol}` !== 'USDC.e/WBERA')
-  }
+  const filteredPairs = pairs.filter((tokens) => {
+    const symbol = `${tokens[0].symbol}/${tokens[1].symbol}`
+    // console.log('symbol PRC', symbol)
+    if (version === 1) {
+      if (chainId === ChainId.BERA_MAINNET) {
+        return !['USDC.e/WBERA'].includes(symbol)
+      }
+    }
+    if (version === 2) {
+      if (chainId === ChainId.ARBITRUM_MAINNET) {
+        return !['WETH/USDT', 'WBTC/WETH'].includes(symbol)
+      }
+    }
+    return true
+  })
 
-  return pairs
+  return filteredPairs
 }

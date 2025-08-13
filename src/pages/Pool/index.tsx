@@ -109,8 +109,16 @@ export default function Pool() {
     .slice()
     .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
+  const filteredPairs = sortedPairs.filter((pair) => {
+    const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
+    if (pair.chainId === ChainId.ARBITRUM_MAINNET) {
+      return !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
+    }
+    return true
+  })
+
   // fetch the user's balances of all tracked V2 LP tokens
-  const trackedTokenPairs = useTrackedTokenPairs({ disabled: sortedPairs.length > 0 })
+  const trackedTokenPairs = useTrackedTokenPairs({ disabled: filteredPairs.length > 0 })
   const tokenPairsWithLiquidityTokens = useMemo(
     () => trackedTokenPairs.map((tokens) => ({ liquidityToken: toV2LiquidityToken(tokens, version), tokens })),
     [trackedTokenPairs],
@@ -204,9 +212,9 @@ export default function Pool() {
               </div>
             </TitleRow>
 
-            {enableGraphQL && sortedPairs.length > 0 ? (
+            {enableGraphQL && filteredPairs.length > 0 ? (
               <>
-                {sortedPairs.map((item: PairStats) => {
+                {filteredPairs.map((item: PairStats) => {
                   const { token0, token1 } = item
                   const pair = new Pair(
                     new TokenAmount(
