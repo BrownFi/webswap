@@ -285,9 +285,9 @@ export function useGetListPairs(
 /**
  * Returns all the pairs of tokens that are tracked by the user for the current chain ID.
  */
-export function useTrackedTokenPairs(): [Token, Token][] {
+export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, Token][] {
   const { chainId } = useActiveWeb3React()
-  const { version, enableGraphQL } = useVersion({ chainId })
+  const { version } = useVersion({ chainId })
   const tokens = useAllTokens()
 
   // pairs saved by users
@@ -433,7 +433,7 @@ export function useTrackedTokenPairs(): [Token, Token][] {
 
   const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
 
-  if (enableGraphQL) {
+  if (options?.disabled) {
     return []
   }
 

@@ -19,25 +19,14 @@ type Token = {
 export type PairStats = {
   address: string
   apr: number
-  bnhReserve0: number
-  bnhReserve1: number
-  bnhTotalSupply: number
   chainId: number
   fee: number
-  feeDay: number
-  k: number
-  lambda: number
   lpPrice: number
-  netPnL: number
-  protocolFee: number
   reserve0: number
-  reserve0USD: number
   reserve1: number
-  reserve1USD: number
   totalSupply: number
   totalTxn: string
   tvl: number
-  __typename: 'pair'
   token0: Token
   token1: Token
 }

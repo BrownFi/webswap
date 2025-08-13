@@ -436,12 +436,10 @@ export type Pair = {
   __typename?: 'pair';
   address: Scalars['String']['output'];
   apr: Scalars['Float']['output'];
-  bnhInitialized: Scalars['Boolean']['output'];
   bnhPrice: Scalars['Float']['output'];
   bnhReserve0: Scalars['Float']['output'];
   bnhReserve1: Scalars['Float']['output'];
   bnhTotalSupply: Scalars['Float']['output'];
-  bnhTvl: Scalars['Float']['output'];
   chainId: Scalars['Int']['output'];
   fee: Scalars['Float']['output'];
   feeDay: Scalars['Float']['output'];
@@ -594,10 +592,6 @@ export type PairFilter = {
   apr_lte?: InputMaybe<Scalars['Float']['input']>;
   apr_not?: InputMaybe<Scalars['Float']['input']>;
   apr_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
-  bnhInitialized?: InputMaybe<Scalars['Boolean']['input']>;
-  bnhInitialized_in?: InputMaybe<Array<InputMaybe<Scalars['Boolean']['input']>>>;
-  bnhInitialized_not?: InputMaybe<Scalars['Boolean']['input']>;
-  bnhInitialized_not_in?: InputMaybe<Array<InputMaybe<Scalars['Boolean']['input']>>>;
   bnhPrice?: InputMaybe<Scalars['Float']['input']>;
   bnhPrice_gt?: InputMaybe<Scalars['Float']['input']>;
   bnhPrice_gte?: InputMaybe<Scalars['Float']['input']>;
@@ -630,14 +624,6 @@ export type PairFilter = {
   bnhTotalSupply_lte?: InputMaybe<Scalars['Float']['input']>;
   bnhTotalSupply_not?: InputMaybe<Scalars['Float']['input']>;
   bnhTotalSupply_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
-  bnhTvl?: InputMaybe<Scalars['Float']['input']>;
-  bnhTvl_gt?: InputMaybe<Scalars['Float']['input']>;
-  bnhTvl_gte?: InputMaybe<Scalars['Float']['input']>;
-  bnhTvl_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
-  bnhTvl_lt?: InputMaybe<Scalars['Float']['input']>;
-  bnhTvl_lte?: InputMaybe<Scalars['Float']['input']>;
-  bnhTvl_not?: InputMaybe<Scalars['Float']['input']>;
-  bnhTvl_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
   chainId?: InputMaybe<Scalars['Int']['input']>;
   chainId_gt?: InputMaybe<Scalars['Int']['input']>;
   chainId_gte?: InputMaybe<Scalars['Int']['input']>;
@@ -1234,7 +1220,7 @@ export type PairListQueryVariables = Exact<{
 }>;
 
 
-export type PairListQuery = { __typename?: 'Query', pairs: { __typename?: 'pairPage', totalCount: number, items: Array<{ __typename?: 'pair', address: string, apr: number, bnhReserve0: number, bnhReserve1: number, bnhTotalSupply: number, chainId: number, fee: number, feeDay: number, k: number, lambda: number, lpPrice: number, netPnL: number, protocolFee: number, reserve0: number, reserve0USD: number, reserve1: number, reserve1USD: number, totalSupply: number, totalTxn: any, tvl: number, token0?: { __typename?: 'token', address: string, chainId: number, decimals: number, name: string, price: number, priceFeedId?: string | null, symbol: string, totalSupply: number } | null, token1?: { __typename?: 'token', address: string, chainId: number, decimals: number, name: string, price: number, priceFeedId?: string | null, symbol: string, totalSupply: number } | null }> } };
+export type PairListQuery = { __typename?: 'Query', pairs: { __typename?: 'pairPage', totalCount: number, items: Array<{ __typename?: 'pair', address: string, apr: number, chainId: number, fee: number, lpPrice: number, reserve0: number, reserve1: number, totalSupply: number, tvl: number, token0?: { __typename?: 'token', address: string, chainId: number, decimals: number, name: string, price: number, priceFeedId?: string | null, symbol: string, totalSupply: number } | null, token1?: { __typename?: 'token', address: string, chainId: number, decimals: number, name: string, price: number, priceFeedId?: string | null, symbol: string, totalSupply: number } | null }> } };
 
 
-export const PairListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PairList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pairs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"chainId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"apr"}},{"kind":"Field","name":{"kind":"Name","value":"bnhReserve0"}},{"kind":"Field","name":{"kind":"Name","value":"bnhReserve1"}},{"kind":"Field","name":{"kind":"Name","value":"bnhTotalSupply"}},{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"fee"}},{"kind":"Field","name":{"kind":"Name","value":"feeDay"}},{"kind":"Field","name":{"kind":"Name","value":"k"}},{"kind":"Field","name":{"kind":"Name","value":"lambda"}},{"kind":"Field","name":{"kind":"Name","value":"lpPrice"}},{"kind":"Field","name":{"kind":"Name","value":"netPnL"}},{"kind":"Field","name":{"kind":"Name","value":"protocolFee"}},{"kind":"Field","name":{"kind":"Name","value":"reserve0"}},{"kind":"Field","name":{"kind":"Name","value":"reserve0USD"}},{"kind":"Field","name":{"kind":"Name","value":"reserve1"}},{"kind":"Field","name":{"kind":"Name","value":"reserve1USD"}},{"kind":"Field","name":{"kind":"Name","value":"token0"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"decimals"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"price"}},{"kind":"Field","name":{"kind":"Name","value":"priceFeedId"}},{"kind":"Field","name":{"kind":"Name","value":"symbol"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}}]}},{"kind":"Field","name":{"kind":"Name","value":"token1"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"decimals"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"price"}},{"kind":"Field","name":{"kind":"Name","value":"priceFeedId"}},{"kind":"Field","name":{"kind":"Name","value":"symbol"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}},{"kind":"Field","name":{"kind":"Name","value":"totalTxn"}},{"kind":"Field","name":{"kind":"Name","value":"tvl"}}]}}]}}]}}]} as unknown as DocumentNode<PairListQuery, PairListQueryVariables>;
+export const PairListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PairList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pairs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"chainId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"apr"}},{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"fee"}},{"kind":"Field","name":{"kind":"Name","value":"lpPrice"}},{"kind":"Field","name":{"kind":"Name","value":"reserve0"}},{"kind":"Field","name":{"kind":"Name","value":"reserve1"}},{"kind":"Field","name":{"kind":"Name","value":"token0"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"decimals"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"price"}},{"kind":"Field","name":{"kind":"Name","value":"priceFeedId"}},{"kind":"Field","name":{"kind":"Name","value":"symbol"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}}]}},{"kind":"Field","name":{"kind":"Name","value":"token1"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"decimals"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"price"}},{"kind":"Field","name":{"kind":"Name","value":"priceFeedId"}},{"kind":"Field","name":{"kind":"Name","value":"symbol"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}},{"kind":"Field","name":{"kind":"Name","value":"tvl"}}]}}]}}]}}]} as unknown as DocumentNode<PairListQuery, PairListQueryVariables>;

@@ -64,21 +64,11 @@ const LIST_ALL_PAIRS = gql(`
       items {
         address
         apr
-        bnhReserve0
-        bnhReserve1
-        bnhTotalSupply
         chainId
         fee
-        feeDay
-        k
-        lambda
         lpPrice
-        netPnL
-        protocolFee
         reserve0
-        reserve0USD
         reserve1
-        reserve1USD
         token0 {
           address
           chainId
@@ -100,7 +90,6 @@ const LIST_ALL_PAIRS = gql(`
           totalSupply
         }
         totalSupply
-        totalTxn
         tvl
       }
     }
@@ -119,7 +108,7 @@ export default function Pool() {
   const sortedPairs = (data?.pairs.items ?? []).slice().sort((pairA, pairB) => pairB.tvl - pairA.tvl)
 
   // fetch the user's balances of all tracked V2 LP tokens
-  const trackedTokenPairs = useTrackedTokenPairs()
+  const trackedTokenPairs = useTrackedTokenPairs({ disabled: sortedPairs.length > 0 })
   const tokenPairsWithLiquidityTokens = useMemo(
     () => trackedTokenPairs.map((tokens) => ({ liquidityToken: toV2LiquidityToken(tokens, version), tokens })),
     [trackedTokenPairs],
@@ -213,7 +202,7 @@ export default function Pool() {
               </div>
             </TitleRow>
 
-            {enableGraphQL ? (
+            {enableGraphQL && sortedPairs.length > 0 ? (
               <>
                 {sortedPairs.map((item) => {
                   const { token0, token1 } = item
