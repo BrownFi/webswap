@@ -61,7 +61,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
   const { tradingFee, feeAPR, totalSupply: totalPoolTokens, volume24h, volume7d } = usePoolStats({ pair, pairStats })
 
-  const userPoolTokens = useTokenBalance(account ?? undefined, showMore ? pair.liquidityToken : undefined)
+  const userPoolTokens = useTokenBalance(account ?? undefined, pair.liquidityToken)
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)

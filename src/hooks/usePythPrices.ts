@@ -49,10 +49,11 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
   )
 
   const [tokenAPrice, tokenBPrice] = useMemo(() => {
-    if (priceUnsafes.length !== 2) return [0, 0]
-    if (priceUnsafes.some((priceUnsafe) => !priceUnsafe.result)) return [0, 0]
+    const fallbackPrices = [pairStats?.token0.price ?? 0, pairStats?.token1.price]
+    if (priceUnsafes.length !== 2) return fallbackPrices
+    if (priceUnsafes.some((priceUnsafe) => !priceUnsafe.result)) return fallbackPrices
     return priceUnsafes.map((priceUnsafe) => getPriceFromUnsafe(priceUnsafe.result?.[0]))
-  }, [priceUnsafes])
+  }, [priceUnsafes, pairStats])
 
   const { data: tokenPrices = [0, 0] } = useQuery({
     queryFn: () => getPythPricePair(pair, chainId),
