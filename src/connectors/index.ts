@@ -84,7 +84,7 @@ const hyperEVM: Chain = defineChain({
 })
 
 // @ts-ignore
-const arbitrumSepolia = defineChain({
+export const arbitrumSepolia = defineChain({
   ...defaultChains.arbitrumSepolia,
   iconUrl: require('assets/images/arb.png'),
 })
@@ -139,9 +139,9 @@ const bsc = overrideChain({
 const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
 console.log(`======== ENV: "${env}" =========`)
 
-const beraChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet]
+const beraChains: Chain[] = [berachain, arbitrum, base, hyperEVM, viction, u2uMainnet]
 const mainnetChains: Chain[] = [arbitrum, base, bsc]
-const testnetChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, arbitrumSepolia]
+const testnetChains: Chain[] = [berachain, arbitrum, base, hyperEVM]
 
 export const availableChains = env === 'bera' ? beraChains : env === 'mainnet' ? mainnetChains : testnetChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
