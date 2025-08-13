@@ -48,6 +48,8 @@ export type Query = {
   pairDayDatas: PairDayDataPage;
   pairHourData?: Maybe<PairHourData>;
   pairHourDatas: PairHourDataPage;
+  pairMinuteData?: Maybe<PairMinuteData>;
+  pairMinuteDatas: PairMinuteDataPage;
   pairs: PairPage;
   token?: Maybe<Token>;
   tokens: TokenPage;
@@ -157,6 +159,23 @@ export type QueryPairHourDatasArgs = {
   orderBy?: InputMaybe<Scalars['String']['input']>;
   orderDirection?: InputMaybe<Scalars['String']['input']>;
   where?: InputMaybe<PairHourDataFilter>;
+};
+
+
+export type QueryPairMinuteDataArgs = {
+  address: Scalars['String']['input'];
+  chainId: Scalars['Float']['input'];
+  startUnix: Scalars['Float']['input'];
+};
+
+
+export type QueryPairMinuteDatasArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<Scalars['String']['input']>;
+  orderDirection?: InputMaybe<Scalars['String']['input']>;
+  where?: InputMaybe<PairMinuteDataFilter>;
 };
 
 
@@ -459,8 +478,6 @@ export type Pair = {
   totalSupply: Scalars['Float']['output'];
   totalTxn: Scalars['BigInt']['output'];
   tvl: Scalars['Float']['output'];
-  volume7Day: Scalars['Float']['output'];
-  volumeDay: Scalars['Float']['output'];
 };
 
 export type PairDayData = {
@@ -764,22 +781,6 @@ export type PairFilter = {
   tvl_lte?: InputMaybe<Scalars['Float']['input']>;
   tvl_not?: InputMaybe<Scalars['Float']['input']>;
   tvl_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
-  volume7Day?: InputMaybe<Scalars['Float']['input']>;
-  volume7Day_gt?: InputMaybe<Scalars['Float']['input']>;
-  volume7Day_gte?: InputMaybe<Scalars['Float']['input']>;
-  volume7Day_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
-  volume7Day_lt?: InputMaybe<Scalars['Float']['input']>;
-  volume7Day_lte?: InputMaybe<Scalars['Float']['input']>;
-  volume7Day_not?: InputMaybe<Scalars['Float']['input']>;
-  volume7Day_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
-  volumeDay?: InputMaybe<Scalars['Float']['input']>;
-  volumeDay_gt?: InputMaybe<Scalars['Float']['input']>;
-  volumeDay_gte?: InputMaybe<Scalars['Float']['input']>;
-  volumeDay_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
-  volumeDay_lt?: InputMaybe<Scalars['Float']['input']>;
-  volumeDay_lte?: InputMaybe<Scalars['Float']['input']>;
-  volumeDay_not?: InputMaybe<Scalars['Float']['input']>;
-  volumeDay_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
 };
 
 export type PairHourData = {
@@ -886,6 +887,114 @@ export type PairHourDataFilter = {
 export type PairHourDataPage = {
   __typename?: 'pairHourDataPage';
   items: Array<PairHourData>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PairMinuteData = {
+  __typename?: 'pairMinuteData';
+  address: Scalars['String']['output'];
+  apr: Scalars['Float']['output'];
+  bnhPrice: Scalars['Float']['output'];
+  chainId: Scalars['Int']['output'];
+  lpPrice: Scalars['Float']['output'];
+  netPnL: Scalars['Float']['output'];
+  startUnix: Scalars['Int']['output'];
+  totalFee: Scalars['Float']['output'];
+  totalVolume: Scalars['Float']['output'];
+  tvl: Scalars['Float']['output'];
+};
+
+export type PairMinuteDataFilter = {
+  AND?: InputMaybe<Array<InputMaybe<PairMinuteDataFilter>>>;
+  OR?: InputMaybe<Array<InputMaybe<PairMinuteDataFilter>>>;
+  address?: InputMaybe<Scalars['String']['input']>;
+  address_contains?: InputMaybe<Scalars['String']['input']>;
+  address_ends_with?: InputMaybe<Scalars['String']['input']>;
+  address_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  address_not?: InputMaybe<Scalars['String']['input']>;
+  address_not_contains?: InputMaybe<Scalars['String']['input']>;
+  address_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  address_not_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  address_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  address_starts_with?: InputMaybe<Scalars['String']['input']>;
+  apr?: InputMaybe<Scalars['Float']['input']>;
+  apr_gt?: InputMaybe<Scalars['Float']['input']>;
+  apr_gte?: InputMaybe<Scalars['Float']['input']>;
+  apr_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  apr_lt?: InputMaybe<Scalars['Float']['input']>;
+  apr_lte?: InputMaybe<Scalars['Float']['input']>;
+  apr_not?: InputMaybe<Scalars['Float']['input']>;
+  apr_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  bnhPrice?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice_gt?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice_gte?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  bnhPrice_lt?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice_lte?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice_not?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  chainId?: InputMaybe<Scalars['Int']['input']>;
+  chainId_gt?: InputMaybe<Scalars['Int']['input']>;
+  chainId_gte?: InputMaybe<Scalars['Int']['input']>;
+  chainId_in?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  chainId_lt?: InputMaybe<Scalars['Int']['input']>;
+  chainId_lte?: InputMaybe<Scalars['Int']['input']>;
+  chainId_not?: InputMaybe<Scalars['Int']['input']>;
+  chainId_not_in?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  lpPrice?: InputMaybe<Scalars['Float']['input']>;
+  lpPrice_gt?: InputMaybe<Scalars['Float']['input']>;
+  lpPrice_gte?: InputMaybe<Scalars['Float']['input']>;
+  lpPrice_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  lpPrice_lt?: InputMaybe<Scalars['Float']['input']>;
+  lpPrice_lte?: InputMaybe<Scalars['Float']['input']>;
+  lpPrice_not?: InputMaybe<Scalars['Float']['input']>;
+  lpPrice_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  netPnL?: InputMaybe<Scalars['Float']['input']>;
+  netPnL_gt?: InputMaybe<Scalars['Float']['input']>;
+  netPnL_gte?: InputMaybe<Scalars['Float']['input']>;
+  netPnL_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  netPnL_lt?: InputMaybe<Scalars['Float']['input']>;
+  netPnL_lte?: InputMaybe<Scalars['Float']['input']>;
+  netPnL_not?: InputMaybe<Scalars['Float']['input']>;
+  netPnL_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  startUnix?: InputMaybe<Scalars['Int']['input']>;
+  startUnix_gt?: InputMaybe<Scalars['Int']['input']>;
+  startUnix_gte?: InputMaybe<Scalars['Int']['input']>;
+  startUnix_in?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  startUnix_lt?: InputMaybe<Scalars['Int']['input']>;
+  startUnix_lte?: InputMaybe<Scalars['Int']['input']>;
+  startUnix_not?: InputMaybe<Scalars['Int']['input']>;
+  startUnix_not_in?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  totalFee?: InputMaybe<Scalars['Float']['input']>;
+  totalFee_gt?: InputMaybe<Scalars['Float']['input']>;
+  totalFee_gte?: InputMaybe<Scalars['Float']['input']>;
+  totalFee_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  totalFee_lt?: InputMaybe<Scalars['Float']['input']>;
+  totalFee_lte?: InputMaybe<Scalars['Float']['input']>;
+  totalFee_not?: InputMaybe<Scalars['Float']['input']>;
+  totalFee_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  totalVolume?: InputMaybe<Scalars['Float']['input']>;
+  totalVolume_gt?: InputMaybe<Scalars['Float']['input']>;
+  totalVolume_gte?: InputMaybe<Scalars['Float']['input']>;
+  totalVolume_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  totalVolume_lt?: InputMaybe<Scalars['Float']['input']>;
+  totalVolume_lte?: InputMaybe<Scalars['Float']['input']>;
+  totalVolume_not?: InputMaybe<Scalars['Float']['input']>;
+  totalVolume_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  tvl?: InputMaybe<Scalars['Float']['input']>;
+  tvl_gt?: InputMaybe<Scalars['Float']['input']>;
+  tvl_gte?: InputMaybe<Scalars['Float']['input']>;
+  tvl_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  tvl_lt?: InputMaybe<Scalars['Float']['input']>;
+  tvl_lte?: InputMaybe<Scalars['Float']['input']>;
+  tvl_not?: InputMaybe<Scalars['Float']['input']>;
+  tvl_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+};
+
+export type PairMinuteDataPage = {
+  __typename?: 'pairMinuteDataPage';
+  items: Array<PairMinuteData>;
   pageInfo: PageInfo;
   totalCount: Scalars['Int']['output'];
 };

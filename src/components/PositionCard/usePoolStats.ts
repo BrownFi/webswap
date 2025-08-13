@@ -5,15 +5,15 @@ import { useTradingFee } from 'hooks/useTradingFee'
 import { internalService } from 'services'
 
 type Token = {
+  __typename?: 'token'
   address: string
   chainId: number
   decimals: number
   name: string
   price: number
-  priceFeedId: string
+  priceFeedId?: string | null
   symbol: string
   totalSupply: number
-  __typename: 'token'
 }
 
 export type PairStats = {
@@ -25,10 +25,9 @@ export type PairStats = {
   reserve0: number
   reserve1: number
   totalSupply: number
-  totalTxn: string
   tvl: number
-  token0: Token
-  token1: Token
+  token0?: Token | null
+  token1?: Token | null
 }
 
 type Props = {

@@ -105,7 +105,9 @@ export default function Pool() {
     variables: { chainId },
     skip: !enableGraphQL,
   })
-  const sortedPairs = (data?.pairs.items ?? []).slice().sort((pairA, pairB) => pairB.tvl - pairA.tvl)
+  const sortedPairs = (data?.pairs.items ?? [])
+    .slice()
+    .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
   // fetch the user's balances of all tracked V2 LP tokens
   const trackedTokenPairs = useTrackedTokenPairs({ disabled: sortedPairs.length > 0 })
@@ -204,7 +206,7 @@ export default function Pool() {
 
             {enableGraphQL && sortedPairs.length > 0 ? (
               <>
-                {sortedPairs.map((item) => {
+                {sortedPairs.map((item: PairStats) => {
                   const { token0, token1 } = item
                   const pair = new Pair(
                     new TokenAmount(
