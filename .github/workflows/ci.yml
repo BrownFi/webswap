@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ mainnet, bera, testnet ]
+    branches: [ mainnet, bera, testnet, beta ]
 
 jobs:
   build:
@@ -31,6 +31,9 @@ jobs:
         elif [[ ${{ github.ref }} == 'refs/heads/testnet' ]]; then
           echo "project_name=browndex-webswap-testnet" >> $GITHUB_OUTPUT
           echo "ENV=testnet" >> $GITHUB_ENV
+        elif [[ ${{ github.ref }} == 'refs/heads/beta' ]]; then
+          echo "project_name=browndex-webswap-beta" >> $GITHUB_OUTPUT
+          echo "ENV=beta" >> $GITHUB_ENV
         fi
 
     - name: Build static site
