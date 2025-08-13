@@ -64,7 +64,6 @@ const LIST_ALL_PAIRS = gql(`
       items {
         address
         apr
-        bnhPrice
         bnhReserve0
         bnhReserve1
         bnhTotalSupply

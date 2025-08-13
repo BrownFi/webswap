@@ -19,7 +19,6 @@ type Token = {
 export type PairStats = {
   address: string
   apr: number
-  bnhPrice: number
   bnhReserve0: number
   bnhReserve1: number
   bnhTotalSupply: number
