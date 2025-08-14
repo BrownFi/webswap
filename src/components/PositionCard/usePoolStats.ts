@@ -17,15 +17,17 @@ type Token = {
 }
 
 export type PairStats = {
-  address: string
-  apr: number
+  __typename?: 'pair'
   chainId: number
+  address: string
   fee: number
-  lpPrice: number
+  totalSupply: number
   reserve0: number
   reserve1: number
-  totalSupply: number
   tvl: number
+  apr: number
+  volumeDay: number
+  volume7Day: number
   token0?: Token | null
   token1?: Token | null
 }
@@ -41,6 +43,7 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
     queryFn: () => {
       return internalService.getPoolStats(pair)
     },
+    enabled: false,
   })
 
   const tradingFee = pairStats ? pairStats.fee * 100 : useTradingFee({ pair })
@@ -54,9 +57,9 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
 
   return {
     tradingFee,
-    feeAPR: poolStats?.apy || 0,
-    volume24h: poolStats?.volume24h ?? 0,
-    volume7d: poolStats?.volume7d ?? 0,
+    feeAPR: pairStats?.apr || poolStats?.apy || 0,
+    volume24h: (pairStats?.volumeDay || poolStats?.volume24h) ?? 0,
+    volume7d: (pairStats?.volume7Day || poolStats?.volume7d) ?? 0,
     totalSupply,
   }
 }

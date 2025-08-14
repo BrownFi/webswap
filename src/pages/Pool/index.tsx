@@ -62,13 +62,16 @@ const LIST_ALL_PAIRS = gql(`
     pairs(where: {chainId: $chainId}) {
       totalCount
       items {
-        address
-        apr
         chainId
+        address
         fee
-        lpPrice
+        totalSupply
         reserve0
         reserve1
+        tvl
+        apr
+        volumeDay
+        volume7Day
         token0 {
           address
           chainId
@@ -89,8 +92,6 @@ const LIST_ALL_PAIRS = gql(`
           symbol
           totalSupply
         }
-        totalSupply
-        tvl
       }
     }
   }
@@ -103,6 +104,7 @@ export default function Pool() {
 
   const { data } = useQuery(LIST_ALL_PAIRS, {
     variables: { chainId },
+    pollInterval: 1 * 60 * 1000,
     skip: !enableGraphQL,
   })
   const sortedPairs = (data?.pairs.items ?? [])
