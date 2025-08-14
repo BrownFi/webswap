@@ -136,14 +136,17 @@ const bsc = overrideChain({
   ],
 })
 
-const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet'
-console.log(`======== ENV: "${env}" =========`)
+const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet' | 'beta'
+export const isProduction = env === 'bera'
+console.log(`======== ENV: "${env}" =========`, { isProduction })
 
 const beraChains: Chain[] = [berachain, arbitrum, base, hyperEVM, viction, u2uMainnet]
+const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet]
 const mainnetChains: Chain[] = [arbitrum, base, bsc]
 const testnetChains: Chain[] = [berachain, arbitrum, base, hyperEVM]
 
-export const availableChains = env === 'bera' ? beraChains : env === 'mainnet' ? mainnetChains : testnetChains
+export const availableChains =
+  env === 'bera' ? beraChains : env === 'beta' ? betaChains : env === 'mainnet' ? mainnetChains : testnetChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
 export const injected = new InjectedConnector({
