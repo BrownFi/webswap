@@ -43,7 +43,6 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
     queryFn: () => {
       return internalService.getPoolStats(pair)
     },
-    enabled: false,
   })
 
   const tradingFee = pairStats ? pairStats.fee * 100 : useTradingFee({ pair })
