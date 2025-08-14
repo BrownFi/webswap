@@ -57,9 +57,9 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
 
   return {
     tradingFee,
-    feeAPR: pairStats?.apr || poolStats?.apy || 0,
-    volume24h: (pairStats?.volumeDay || poolStats?.volume24h) ?? 0,
-    volume7d: (pairStats?.volume7Day || poolStats?.volume7d) ?? 0,
+    feeAPR: (poolStats?.apy ?? pairStats?.apr) || 0,
+    volume24h: (poolStats?.volume24h ?? pairStats?.volumeDay) || 0,
+    volume7d: (poolStats?.volume7d ?? pairStats?.volume7Day) || 0,
     totalSupply,
   }
 }

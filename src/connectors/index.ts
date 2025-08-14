@@ -136,14 +136,14 @@ const bsc = overrideChain({
   ],
 })
 
-const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet' | 'beta'
-export const isProduction = env === 'bera'
+const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet' | 'beta' | 'development'
+export const isProduction = env === 'bera' || env === 'development'
 console.log(`======== ENV: "${env}" =========`, { isProduction })
 
 const beraChains: Chain[] = [berachain, arbitrum, base, hyperEVM, viction, u2uMainnet]
 const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet]
 const mainnetChains: Chain[] = [arbitrum, base, bsc]
-const testnetChains: Chain[] = [berachain, arbitrum, base, hyperEVM]
+const testnetChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM]
 
 export const availableChains =
   env === 'bera' ? beraChains : env === 'beta' ? betaChains : env === 'mainnet' ? mainnetChains : testnetChains
