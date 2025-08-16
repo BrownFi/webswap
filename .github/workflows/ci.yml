@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, mainnet, beta, testnet ]
+    branches: [ main, bera, mainnet, beta, testnet ]
 
 jobs:
   build:
@@ -23,6 +23,9 @@ jobs:
       id: set-project
       run: |
         if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
+          echo "project_name=browndex-webswap-bera" >> $GITHUB_OUTPUT
+          echo "ENVIROMENT=mainnet" >> $GITHUB_ENV
+        elif [[ ${{ github.ref }} == 'refs/heads/bera' ]]; then
           echo "project_name=browndex-webswap-bera" >> $GITHUB_OUTPUT
           echo "ENVIROMENT=mainnet" >> $GITHUB_ENV
         elif [[ ${{ github.ref }} == 'refs/heads/mainnet' ]]; then
