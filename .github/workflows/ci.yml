@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ mainnet, bera, testnet, beta ]
+    branches: [ bera, beta, mainnet, testnet ]
 
 jobs:
   build:
@@ -22,18 +22,18 @@ jobs:
     - name: Set project name and environment
       id: set-project
       run: |
-        if [[ ${{ github.ref }} == 'refs/heads/mainnet' ]]; then
-          echo "project_name=browndex-webswap-mainnet" >> $GITHUB_OUTPUT
-          echo "ENV=mainnet" >> $GITHUB_ENV
-        elif [[ ${{ github.ref }} == 'refs/heads/bera' ]]; then
+        if [[ ${{ github.ref }} == 'refs/heads/bera' ]]; then
           echo "project_name=browndex-webswap-bera" >> $GITHUB_OUTPUT
           echo "ENV=bera" >> $GITHUB_ENV
-        elif [[ ${{ github.ref }} == 'refs/heads/testnet' ]]; then
-          echo "project_name=browndex-webswap-testnet" >> $GITHUB_OUTPUT
-          echo "ENV=testnet" >> $GITHUB_ENV
         elif [[ ${{ github.ref }} == 'refs/heads/beta' ]]; then
           echo "project_name=browndex-webswap-beta" >> $GITHUB_OUTPUT
           echo "ENV=beta" >> $GITHUB_ENV
+        elif [[ ${{ github.ref }} == 'refs/heads/mainnet' ]]; then
+          echo "project_name=browndex-webswap-mainnet" >> $GITHUB_OUTPUT
+          echo "ENV=mainnet" >> $GITHUB_ENV
+        elif [[ ${{ github.ref }} == 'refs/heads/testnet' ]]; then
+          echo "project_name=browndex-webswap-testnet" >> $GITHUB_OUTPUT
+          echo "ENV=testnet" >> $GITHUB_ENV
         fi
 
     - name: Build static site
