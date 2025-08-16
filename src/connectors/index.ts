@@ -84,12 +84,6 @@ const hyperEVM: Chain = defineChain({
 })
 
 // @ts-ignore
-export const arbitrumSepolia = defineChain({
-  ...defaultChains.arbitrumSepolia,
-  iconUrl: require('assets/images/arb.png'),
-})
-
-// @ts-ignore
 // eslint-disable-next-line
 const sepolia = defineChain({
   ...defaultChains.sepolia,
@@ -136,17 +130,15 @@ const bsc = overrideChain({
   ],
 })
 
-const env = process.env.REACT_APP_ENV as 'testnet' | 'bera' | 'mainnet' | 'beta' | 'development'
-export const isProduction = env === 'bera' || env === 'development'
-console.log(`======== ENV: "${env}" =========`, { isProduction })
+const env = process.env.REACT_APP_ENVIROMENT as 'mainnet' | 'beta' | 'testnet'
+export const isProduction = env === 'mainnet'
+console.log(`======== ENVIROMENT: "${env}" =========`, { isProduction })
 
-const beraChains: Chain[] = [berachain, arbitrum, base, hyperEVM, viction, u2uMainnet]
+const mainChains: Chain[] = [berachain, arbitrum, base, hyperEVM, viction, u2uMainnet]
 const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet]
-const mainnetChains: Chain[] = [arbitrum, base, bsc]
-const testnetChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM]
+const testChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, sepolia]
 
-export const availableChains =
-  env === 'bera' ? beraChains : env === 'beta' ? betaChains : env === 'mainnet' ? mainnetChains : testnetChains
+export const availableChains = env === 'mainnet' ? mainChains : env === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
 export const injected = new InjectedConnector({

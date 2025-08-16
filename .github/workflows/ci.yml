@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, beta, mainnet, testnet ]
+    branches: [ main, mainnet, beta, testnet ]
 
 jobs:
   build:
@@ -24,25 +24,25 @@ jobs:
       run: |
         if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
           echo "project_name=browndex-webswap-bera" >> $GITHUB_OUTPUT
-          echo "ENV=bera" >> $GITHUB_ENV
-        elif [[ ${{ github.ref }} == 'refs/heads/beta' ]]; then
-          echo "project_name=browndex-webswap-beta" >> $GITHUB_OUTPUT
-          echo "ENV=beta" >> $GITHUB_ENV
+          echo "ENVIROMENT=mainnet" >> $GITHUB_ENV
         elif [[ ${{ github.ref }} == 'refs/heads/mainnet' ]]; then
           echo "project_name=browndex-webswap-mainnet" >> $GITHUB_OUTPUT
-          echo "ENV=mainnet" >> $GITHUB_ENV
+          echo "ENVIROMENT=mainnet" >> $GITHUB_ENV
+        elif [[ ${{ github.ref }} == 'refs/heads/beta' ]]; then
+          echo "project_name=browndex-webswap-beta" >> $GITHUB_OUTPUT
+          echo "ENVIROMENT=beta" >> $GITHUB_ENV
         elif [[ ${{ github.ref }} == 'refs/heads/testnet' ]]; then
           echo "project_name=browndex-webswap-testnet" >> $GITHUB_OUTPUT
-          echo "ENV=testnet" >> $GITHUB_ENV
+          echo "ENVIROMENT=testnet" >> $GITHUB_ENV
         fi
 
     - name: Build static site
       run: npm run build
       env:
         CI: false
-        # Your build script can now access the ENV variable
-        # For example, if using Create React App, you might name it REACT_APP_ENV
-        REACT_APP_ENV: ${{ env.ENV }}
+        # Your build script can now access the ENVIROMENT variable
+        # For example, if using Create React App, you might name it REACT_APP_ENVIROMENT
+        REACT_APP_ENVIROMENT: ${{ env.ENVIROMENT }}
 
     - name: Deploy to Cloudflare Pages
       run: |
