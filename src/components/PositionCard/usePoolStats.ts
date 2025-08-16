@@ -2,7 +2,9 @@ import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { useTotalSupply } from 'data/TotalSupply'
 import { useTradingFee } from 'hooks/useTradingFee'
+import { useMemo } from 'react'
 import { internalService } from 'services'
+import moment from 'moment'
 
 type Token = {
   __typename?: 'token'
@@ -28,6 +30,7 @@ export type PairStats = {
   apr: number
   volumeDay: number
   volume7Day: number
+  updatedAt: number
   token0?: Token | null
   token1?: Token | null
 }
@@ -45,9 +48,18 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
     },
   })
 
-  const tradingFee = pairStats ? pairStats.fee * 100 : useTradingFee({ pair })
+  const shouldUseIndexer =
+    useMemo(() => {
+      if (pairStats?.updatedAt) {
+        const diffMinutes = moment().diff(moment.unix(pairStats.updatedAt), 'minutes')
+        return diffMinutes < 60
+      }
+      return false
+    }, [pairStats]) && pairStats
 
-  const totalSupply = pairStats
+  const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : useTradingFee({ pair })
+
+  const totalSupply = shouldUseIndexer
     ? new TokenAmount(
         pair.liquidityToken,
         JSBI.BigInt(Math.round(pairStats.totalSupply * 10 ** pair.liquidityToken.decimals)),
@@ -56,9 +68,9 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
 
   return {
     tradingFee,
-    feeAPR: (poolStats?.apy ?? pairStats?.apr) || 0,
-    volume24h: (poolStats?.volume24h ?? pairStats?.volumeDay) || 0,
-    volume7d: (poolStats?.volume7d ?? pairStats?.volume7Day) || 0,
     totalSupply,
+    feeAPR: (shouldUseIndexer ? pairStats.apr : poolStats?.apy) || 0,
+    volume24h: (shouldUseIndexer ? pairStats.volumeDay : poolStats?.volume24h) || 0,
+    volume7d: (shouldUseIndexer ? pairStats.volume7Day : poolStats?.volume7d) || 0,
   }
 }

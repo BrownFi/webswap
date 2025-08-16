@@ -73,6 +73,7 @@ const LIST_ALL_PAIRS = gql(`
         apr
         volumeDay
         volume7Day
+        updatedAt
         token0 {
           address
           chainId
