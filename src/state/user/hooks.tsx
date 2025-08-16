@@ -21,7 +21,7 @@ import {
   updateUserSingleHopOnly,
 } from './actions'
 import { useVersion } from 'hooks/useVersion'
-import { isProduction } from 'connectors'
+import { isMainnet } from 'connectors'
 
 function serializeToken(token: Token): SerializedToken {
   return {
@@ -440,7 +440,7 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
 
   const filteredPairs = pairs.filter((tokens) => {
     const symbol = `${tokens[0].symbol}/${tokens[1].symbol}`
-    if (isProduction) {
+    if (isMainnet) {
       if (version === 1) {
         if (chainId === ChainId.BERA_MAINNET) {
           return !['USDC.e/WBERA'].includes(symbol)

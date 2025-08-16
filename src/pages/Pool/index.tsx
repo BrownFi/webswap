@@ -24,7 +24,7 @@ import { usePairs } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { useStakingInfo } from 'state/stake/hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
-import { isProduction } from 'connectors'
+import { isMainnet } from 'connectors'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
@@ -115,7 +115,7 @@ export default function Pool() {
 
   const filteredPairs = sortedPairs.filter((pair) => {
     const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
-    if (isProduction) {
+    if (isMainnet) {
       if (pair.chainId === ChainId.ARBITRUM_MAINNET) {
         return !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
       }

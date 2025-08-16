@@ -7,7 +7,7 @@ import { LightCard } from 'components/Card'
 import { AutoColumn, ColumnCenter } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { FindPoolTabs } from 'components/NavigationTabs'
-import { MinimalPositionCard } from 'components/PositionCard/MinimalPositionCard'
+import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row from 'components/Row'
 import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 import { PairState, usePair } from 'data/Reserves'
@@ -150,7 +150,7 @@ export default function PoolFinder() {
         {currency0 && currency1 ? (
           pairState === PairState.EXISTS ? (
             hasPosition && pair ? (
-              <MinimalPositionCard pair={pair} border="1px solid #CED0D9" />
+              <MinimalInfoCard pair={pair} border="1px solid #CED0D9" />
             ) : (
               <LightCard padding="45px 10px">
                 <AutoColumn gap="sm" justify="center">

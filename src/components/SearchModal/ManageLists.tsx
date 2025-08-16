@@ -24,7 +24,7 @@ import { PaddedColumn, SearchInput, Separator, SeparatorDark } from './styleds'
 import { useListColor } from 'hooks/useColor'
 import useTheme from 'hooks/useTheme'
 import ListToggle from 'components/Toggle/ListToggle'
-import {Card} from 'components/Card'
+import { Card } from 'components/Card'
 import { CurrencyModalView } from './CurrencySearchModal'
 import { UNSUPPORTED_LIST_URLS } from 'constants/lists'
 

@@ -131,8 +131,8 @@ const bsc = overrideChain({
 })
 
 const env = process.env.REACT_APP_ENVIROMENT as 'mainnet' | 'beta' | 'testnet'
-export const isProduction = env === 'mainnet'
-console.log(`======== ENVIROMENT: "${env}" =========`, { isProduction })
+export const isMainnet = env === 'mainnet'
+console.log(`======== ENVIROMENT: "${env}" =========`, { isMainnet })
 
 const mainChains: Chain[] = [berachain, arbitrum, base, hyperEVM, viction, u2uMainnet]
 const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet]

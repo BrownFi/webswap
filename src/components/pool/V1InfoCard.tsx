@@ -6,7 +6,7 @@ import { Text } from 'rebass'
 import { AutoColumn } from 'components/Column'
 import { ButtonSecondary } from 'components/Button'
 import { RowBetween, RowFixed } from 'components/Row'
-import { FixedHeightRow, HoverCard } from './index'
+import { FixedHeightRow, HoverCard } from '../PositionCard/index'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { useActiveWeb3React } from 'hooks'
 import { ThemeContext } from 'styled-components'
@@ -16,7 +16,7 @@ interface PositionCardProps extends RouteComponentProps<any> {
   V1LiquidityBalance: TokenAmount
 }
 
-function V1PositionCard({ token, V1LiquidityBalance }: PositionCardProps) {
+function V1InfoCard({ token, V1LiquidityBalance }: PositionCardProps) {
   const theme = useContext(ThemeContext)
 
   const { chainId } = useActiveWeb3React()
@@ -66,4 +66,4 @@ function V1PositionCard({ token, V1LiquidityBalance }: PositionCardProps) {
   )
 }
 
-export default withRouter(V1PositionCard)
+export default withRouter(V1InfoCard)

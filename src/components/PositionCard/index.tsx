@@ -25,6 +25,8 @@ import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { AutoRow, RowBetween, RowFixed } from 'components/Row'
 import { PairStats, usePoolStats } from './usePoolStats'
 import { Loader } from 'components/Loader'
+import { PairChartModal } from 'components/pool/PairChartModal'
+import { isMainnet } from 'connectors'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -145,19 +147,27 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
         {showMore && (
           <AutoColumn gap="8px">
             <>
-              <Flex alignItems="center">
-                <h2 className="text-[20px] mr-3 font-medium text-white" style={{ fontFamily: 'Russo One' }}>
+              <Flex alignItems="center" className="gap-3">
+                <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
                   Pool stats
                 </h2>
-                <a
-                  href={`${getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}`}
-                  target="_blank"
-                  className="cursor-pointer hover:underline"
-                  rel="noreferrer"
-                  title={`View on ${getScanText(chainId)}`}
-                >
-                  <Info size="20" style={{ color: '#27E3AB' }} />
-                </a>
+                <div className="flex gap-2">
+                  <a
+                    href={`${getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}`}
+                    target="_blank"
+                    className="cursor-pointer"
+                    rel="noreferrer"
+                    title={`View on ${getScanText(chainId)}`}
+                  >
+                    <Info size="20" style={{ color: '#27E3AB' }} />
+                  </a>
+                  {!isMainnet && (
+                    <PairChartModal
+                      pair={pair}
+                      name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
+                    />
+                  )}
+                </div>
               </Flex>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color="white">

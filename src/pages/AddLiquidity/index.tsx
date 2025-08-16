@@ -11,7 +11,7 @@ import { TransactionConfirmationModal, ConfirmationModalContent } from 'componen
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { AddRemoveTabs } from 'components/NavigationTabs'
-import { MinimalPositionCard } from 'components/PositionCard/MinimalPositionCard'
+import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row, { RowBetween, RowFlat } from 'components/Row'
 
 import { PairState } from 'data/Reserves'
@@ -458,7 +458,7 @@ export default function AddLiquidity({
       {!addIsUnsupported ? (
         pair && !noLiquidity && pairState !== PairState.INVALID ? (
           <AutoColumn style={{ minWidth: '20rem', width: '100%', maxWidth: '500px', marginTop: '1rem' }}>
-            <MinimalPositionCard showUnwrapped={oneCurrencyIsWETH} pair={pair} />
+            <MinimalInfoCard showUnwrapped={oneCurrencyIsWETH} pair={pair} />
           </AutoColumn>
         ) : null
       ) : (

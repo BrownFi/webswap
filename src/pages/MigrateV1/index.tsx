@@ -12,7 +12,7 @@ import { BackArrow, TYPE } from 'theme'
 import { LightCard } from 'components/Card'
 import { BodyWrapper } from 'pages/AppBody'
 import { EmptyState } from './EmptyState'
-import V1PositionCard from 'components/PositionCard/V1'
+import V1InfoCard from 'components/pool/V1InfoCard'
 import QuestionHelper from 'components/QuestionHelper'
 import { Dots } from 'components/swap/styleds'
 import { useAddUserToken } from 'state/user/hooks'
@@ -60,7 +60,7 @@ export default function MigrateV1() {
   }).map((V1LiquidityToken) => {
     const balance = V1LiquidityBalances[V1LiquidityToken.address]
     return balance ? (
-      <V1PositionCard
+      <V1InfoCard
         key={V1LiquidityToken.address}
         token={V1Exchanges[V1LiquidityToken.address]}
         V1LiquidityBalance={balance}

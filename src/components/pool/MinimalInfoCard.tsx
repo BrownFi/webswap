@@ -38,7 +38,7 @@ interface PositionCardProps {
 }
 
 /** @deprecated */
-export function MinimalPositionCard({ pair, showUnwrapped = false, border }: PositionCardProps) {
+export function MinimalInfoCard({ pair, showUnwrapped = false, border }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
   const tradingFee = useTradingFee({ pair })
 
