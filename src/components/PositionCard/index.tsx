@@ -26,6 +26,7 @@ import { AutoRow, RowBetween, RowFixed } from 'components/Row'
 import { PairStats, usePoolStats } from './usePoolStats'
 import { Loader } from 'components/Loader'
 import { PairChartModal } from 'components/pool/PairChartModal'
+import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -56,9 +57,10 @@ interface PositionCardProps {
 
 export default function FullPositionCard({ pair, pairStats, border, stakedBalance }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
-  const { isBeta } = useVersion({ chainId })
+  const { isTest, isBeta } = useVersion({ chainId })
+  const [{ isFavorite }] = usePairStorage({ pair })
 
-  const [showMore, setShowMore] = useState(false)
+  const [showMore, setShowMore] = useState(isFavorite)
 
   const { tradingFee, totalSupply: totalPoolTokens, feeAPR, volume24h, volume7d } = usePoolStats({ pair, pairStats })
 
@@ -146,25 +148,28 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
         {showMore && (
           <AutoColumn gap="8px">
             <>
-              <Flex alignItems="center" className="gap-3">
-                <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
-                  Pool stats
-                </h2>
-                <div className="flex gap-2">
-                  <a
-                    href={`${getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}`}
-                    target="_blank"
-                    className="cursor-pointer"
-                    rel="noreferrer"
-                    title={`View on ${getScanText(chainId)}`}
-                  >
-                    <Info size="20" style={{ color: '#27E3AB' }} />
-                  </a>
-                  <PairChartModal
-                    pair={pair}
-                    name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
-                  />
+              <Flex alignItems="center" justifyContent="space-between" className="gap-3">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
+                    Pool stats
+                  </h2>
+                  <div className="flex gap-2">
+                    <a
+                      href={`${getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}`}
+                      target="_blank"
+                      className="cursor-pointer"
+                      rel="noreferrer"
+                      title={`View on ${getScanText(chainId)}`}
+                    >
+                      <Info size="20" style={{ color: '#27E3AB' }} />
+                    </a>
+                    <PairChartModal
+                      pair={pair}
+                      name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
+                    />
+                  </div>
                 </div>
+                {isTest && <PairFavorite pair={pair} />}
               </Flex>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color="white">

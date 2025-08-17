@@ -2,11 +2,19 @@ import { useMemo, useState } from 'react'
 import { ChainId } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
+import { useLocation } from 'react-router-dom'
 
 export function useVersion({ chainId }: { chainId: number | undefined | null }) {
+  const location = useLocation()
   const dispatch = useDispatch()
   const { version: appVersion } = useSelector(versionSelector)
+
   const [stableVersion] = useState(() => appVersion)
+
+  const isTest = useMemo(() => {
+    const data: { test?: string } = Object.fromEntries(new URLSearchParams(location.search).entries())
+    return !!data.test
+  }, [location.search])
 
   const [version, isDisabled] = useMemo(() => {
     if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
@@ -56,6 +64,7 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
   }, [chainId, version])
 
   return {
+    isTest,
     isBeta,
     enableGraphQL,
     version,
