@@ -26,7 +26,6 @@ import { AutoRow, RowBetween, RowFixed } from 'components/Row'
 import { PairStats, usePoolStats } from './usePoolStats'
 import { Loader } from 'components/Loader'
 import { PairChartModal } from 'components/pool/PairChartModal'
-import { isMainnet } from 'connectors'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -161,12 +160,10 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   >
                     <Info size="20" style={{ color: '#27E3AB' }} />
                   </a>
-                  {!isMainnet && (
-                    <PairChartModal
-                      pair={pair}
-                      name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
-                    />
-                  )}
+                  <PairChartModal
+                    pair={pair}
+                    name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
+                  />
                 </div>
               </Flex>
               <FixedHeightRow>
