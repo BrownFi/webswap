@@ -46,6 +46,7 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
       : priceFeedIds.every((a) => a.result)
       ? priceFeedIds.map((a) => a.result?.flat())
       : [],
+    { disabled: !!pairStats },
   )
 
   const [tokenAPrice, tokenBPrice] = useMemo(() => {

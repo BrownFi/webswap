@@ -54,7 +54,7 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
         const diffMinutes = moment().diff(moment.unix(pairStats.updatedAt), 'minutes')
         return diffMinutes < 60
       }
-      return false
+      return !!pairStats
     }, [pairStats]) && !!pairStats
 
   const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : useTradingFee({ pair })
