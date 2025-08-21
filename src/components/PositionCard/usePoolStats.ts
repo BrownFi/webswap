@@ -55,7 +55,7 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
         return diffMinutes < 60
       }
       return false
-    }, [pairStats]) && pairStats
+    }, [pairStats]) && !!pairStats
 
   const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : useTradingFee({ pair })
 
