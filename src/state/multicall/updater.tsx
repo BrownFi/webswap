@@ -34,6 +34,7 @@ async function fetchChunk(
 ): Promise<{ results: string[]; blockNumber: number }> {
   let resultsBlockNumber, returnData
   try {
+    console.debug('4. Fetching results', { chainId, blockNumber: minBlockNumber, size: chunk.length })
     ;[resultsBlockNumber, returnData] = await multicallContract.aggregate(
       chunk.map((obj) => [obj.address, obj.callData]),
     )
