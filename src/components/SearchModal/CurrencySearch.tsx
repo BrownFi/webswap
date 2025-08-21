@@ -180,17 +180,9 @@ export function CurrencySearch({
           <CommonBases chainId={chainId} onSelect={handleCurrencySelect} selectedCurrency={selectedCurrency} />
         )}
       </PaddedColumn>
-      {/* <Separator /> */}
-      {searchToken && !searchTokenIsAdded ? (
-        <Column style={{ padding: '20px 0', height: '100%' }}>
-          <ImportRow token={searchToken} showImportView={showImportView} setImportToken={setImportToken} />
-        </Column>
-      ) : filteredSortedTokens?.length > 0 || filteredInactiveTokens?.length > 0 ? (
-        <div style={{ flex: '1' }}>
-          <div className="flex items-center justify-between mt-[20px] mb-[12px] px-[20px] lg:px-[40px]">
-            <p className="text-[14px] font-medium text-white opacity-[0.5]">Asset</p>
-            <p className="text-[14px] font-medium text-white opacity-[0.5]">Balance</p>
-          </div>
+
+      <Column style={{ padding: '20px 0', flex: 1 }}>
+        {filteredSortedTokens?.length > 0 || filteredInactiveTokens?.length > 0 ? (
           <AutoSizer disableWidth>
             {({ height }: { height: number }) => (
               <CurrencyList
@@ -209,15 +201,16 @@ export function CurrencySearch({
               />
             )}
           </AutoSizer>
-        </div>
-      ) : (
-        <Column style={{ padding: '20px', height: '100%' }}>
+        ) : searchToken && !searchTokenIsAdded ? (
+          <ImportRow token={searchToken} showImportView={showImportView} setImportToken={setImportToken} />
+        ) : (
           <TYPE.main color={theme.text3} textAlign="center" mb="20px">
             No results found.
           </TYPE.main>
-        </Column>
-      )}
-      <Footer>
+        )}
+      </Column>
+
+      <Footer className="hidden">
         <Row justify="center">
           <ButtonText onClick={showManageView} color={theme.blue1} className="list-token-manage-button">
             <RowFixed>

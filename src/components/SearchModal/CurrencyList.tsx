@@ -1,26 +1,23 @@
 import { Currency, CurrencyAmount, currencyEquals, ETHER, Token } from '@brownfi/sdk'
-import React, { CSSProperties, MutableRefObject, useCallback, useMemo } from 'react'
+import Column from 'components/Column'
+import { CurrencyLogo } from 'components/CurrencyLogo'
+import { Loader } from 'components/Loader'
+import { RowFixed } from 'components/Row'
+import { MouseoverTooltip } from 'components/Tooltip'
+import { useActiveWeb3React } from 'hooks'
+import { useAllInactiveTokens, useIsUserAddedToken } from 'hooks/Tokens'
+import useTheme from 'hooks/useTheme'
+import { CSSProperties, MutableRefObject, useCallback, useMemo } from 'react'
 import { FixedSizeList } from 'react-window'
 import { Text } from 'rebass'
-import styled from 'styled-components'
-import { useActiveWeb3React } from 'hooks'
-import { WrappedTokenInfo, useCombinedActiveList } from 'state/lists/hooks'
+import { useCombinedActiveList, WrappedTokenInfo } from 'state/lists/hooks'
 import { useCurrencyBalance } from 'state/wallet/hooks'
+import styled from 'styled-components'
 import { TYPE } from 'theme'
-import { useIsUserAddedToken, useAllInactiveTokens } from 'hooks/Tokens'
-import Column from 'components/Column'
-import { RowFixed, RowBetween } from 'components/Row'
-import { CurrencyLogo } from 'components/CurrencyLogo'
-import { MouseoverTooltip } from 'components/Tooltip'
-import { MenuItem } from './styleds'
-import { Loader } from 'components/Loader'
 import { getTokenName, getTokenSymbol, isTokenOnList } from 'utils'
-import ImportRow from './ImportRow'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { LightGreyCard } from 'components/Card'
-import TokenListLogo from 'assets/svg/tokenlist.svg'
-import QuestionHelper from 'components/QuestionHelper'
-import useTheme from 'hooks/useTheme'
+import ImportRow from './ImportRow'
+import { MenuItem } from './styleds'
 
 function currencyKey(currency: Currency): string {
   return currency instanceof Token ? currency.address : currency === ETHER ? 'ETHER' : ''
@@ -47,14 +44,6 @@ const Tag = styled.div`
   margin-right: 4px;
 `
 
-const FixedContentRow = styled.div`
-  padding: 4px 20px;
-  height: 56px;
-  display: grid;
-  grid-gap: 16px;
-  align-items: center;
-`
-
 function Balance({ balance }: { balance: CurrencyAmount }) {
   return (
     <StyledBalanceText title={balance.toExact()} fontSize={'16px'} fontWeight={500} color="white">
@@ -66,10 +55,6 @@ function Balance({ balance }: { balance: CurrencyAmount }) {
 const TagContainer = styled.div`
   display: flex;
   justify-content: flex-end;
-`
-
-const TokenListLogoWrapper = styled.img`
-  height: 20px;
 `
 
 function TokenTags({ currency }: { currency: Currency }) {
@@ -197,21 +182,7 @@ export default function CurrencyList({
       const showImport = inactiveTokens && token && Object.keys(inactiveTokens).includes(token.address)
 
       if (index === breakIndex || !data) {
-        return (
-          <FixedContentRow style={style}>
-            <LightGreyCard padding="8px 12px" borderRadius="8px">
-              <RowBetween>
-                <RowFixed>
-                  <TokenListLogoWrapper src={TokenListLogo} />
-                  <TYPE.main ml="6px" fontSize="12px" color={theme.text1}>
-                    Expanded results from inactive Token Lists
-                  </TYPE.main>
-                </RowFixed>
-                <QuestionHelper text="Tokens from inactive lists. Import specific tokens below or click 'Manage' to activate more lists." />
-              </RowBetween>
-            </LightGreyCard>
-          </FixedContentRow>
-        )
+        return null
       }
 
       if (showImport && token) {
