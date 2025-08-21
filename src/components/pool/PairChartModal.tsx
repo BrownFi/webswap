@@ -89,6 +89,7 @@ const PairChartModal = ({ pair, name }: Props) => {
                     axisLine={{ stroke: '#FFFA' }}
                     tick={{ fill: '#FFFA' }}
                     tickLine={{ stroke: '#FFFA' }}
+                    domain={[0, (dataMax: number) => dataMax * 1.1]}
                   />
                   <YAxis
                     yAxisId="right"
