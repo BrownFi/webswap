@@ -67,9 +67,13 @@ export interface StakingInfo {
 }
 
 // gets the staking info from the network for the active chain id
-export function useStakingInfo(pairToFilterBy?: Pair | null): StakingInfo[] {
+export function useStakingInfo(pairToFilterBy?: Pair | null, options?: { disabled?: boolean }): StakingInfo[] {
   const { chainId, account } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
+
+  if (options?.disabled) {
+    return []
+  }
 
   // detect if staking is ended
   const currentBlockTimestamp = useCurrentBlockTimestamp()
