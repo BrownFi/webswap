@@ -9,7 +9,7 @@ import { ReactNode, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
 import { Text } from 'rebass'
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { formatPrice } from 'utils/prices'
+import { formatNumber, formatPrice } from 'utils/prices'
 
 const GET_PAIR_STATS = gql(`
   query PairStats($chainId: Int, $address: String) {
@@ -88,8 +88,11 @@ const PairChartModal = ({ pair, name }: Props) => {
                     width={40}
                     axisLine={{ stroke: '#FFFA' }}
                     tick={{ fill: '#FFFA' }}
+                    domain={[0, (dataMax: number) => +(dataMax * 1.1).toFixed(1)]}
                     tickLine={{ stroke: '#FFFA' }}
-                    domain={[0, (dataMax: number) => dataMax * 1.1]}
+                    tickFormatter={(value: number) =>
+                      formatNumber(value, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+                    }
                   />
                   <YAxis
                     yAxisId="right"
