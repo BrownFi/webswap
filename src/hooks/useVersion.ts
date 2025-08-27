@@ -3,6 +3,7 @@ import { ChainId } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
+import { isMainnet } from 'connectors'
 
 export function useVersion({ chainId }: { chainId: number | undefined | null }) {
   const location = useLocation()
@@ -67,8 +68,8 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
     isTest,
     isBeta,
     enableGraphQL,
-    version,
-    appVersion,
+    version: isMainnet ? 2 : version,
+    appVersion: isMainnet ? 2 : version,
     isDisabled,
     switchVersion: dispatchSwitchVersion,
   }

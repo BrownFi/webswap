@@ -1,3 +1,4 @@
+import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useVersion } from 'hooks/useVersion'
 import React from 'react'
@@ -21,6 +22,7 @@ const SwitchVersion = ({ isMobile }: Props) => {
   }
 
   if (isDisabled) return null
+  if (isMainnet) return null
 
   return (
     <div
