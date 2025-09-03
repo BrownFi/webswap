@@ -8,16 +8,29 @@ interface Props extends RouteComponentProps {
 
 interface State {
   hasError: boolean
+  error: string
 }
 
 class ErrorBoundaryBase extends Component<Props, State> {
   state: State = {
     hasError: false,
+    error: '',
   }
 
   static getDerivedStateFromError(error: Error): State {
     console.error(error)
-    return { hasError: true }
+    return {
+      hasError: true,
+      error: JSON.stringify(
+        {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        },
+        null,
+        2,
+      ),
+    }
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
@@ -42,7 +55,13 @@ class ErrorBoundaryBase extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return <StaticScreen />
+      return (
+        <StaticScreen>
+          <div className="max-w-[1600px] bg-[##131216] z-10 mx-auto px-6 py-10">
+            <pre className="text-white whitespace-pre-wrap">{this.state.error}</pre>
+          </div>
+        </StaticScreen>
+      )
     }
 
     return this.props.children
