@@ -430,6 +430,26 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
         },
       },
     },
+    [ChainId.HYPER_EVM]: {
+      '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb:0xfD739d4e423301CE9385c1fb8850539D657C296D': {
+        token0: {
+          chainId: 999,
+          address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb',
+          name: 'USD₮0',
+          symbol: 'USDT',
+          decimals: 6,
+          logoURI: 'https://hyperevmscan.io/token/images/usdt0_64.png',
+        },
+        token1: {
+          chainId: 999,
+          address: '0xfD739d4e423301CE9385c1fb8850539D657C296D',
+          name: 'kHYPE',
+          symbol: 'kHYPE',
+          decimals: 18,
+          logoURI: 'https://hyperevmscan.io/token/images/khype.svg',
+        },
+      },
+    },
   }
 
   const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
@@ -449,6 +469,9 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
       if (version === 2) {
         if (chainId === ChainId.ARBITRUM_MAINNET) {
           return !['WETH/USDT', 'WBTC/WETH'].includes(symbol)
+        }
+        if (chainId === ChainId.HYPER_EVM) {
+          return !['USDT/kHYPE'].includes(symbol)
         }
       }
     }

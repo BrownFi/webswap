@@ -226,7 +226,15 @@
       "name": "USD₮0",
       "symbol": "USDT",
       "decimals": 6,
-      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/825.png"
+      "logoURI": "https://hyperevmscan.io/token/images/usdt0_64.png"
+    },
+    {
+      "chainId": 999,
+      "address": "0xfD739d4e423301CE9385c1fb8850539D657C296D",
+      "name": "kHYPE",
+      "symbol": "kHYPE",
+      "decimals": 18,
+      "logoURI": "https://hyperevmscan.io/token/images/khype.svg"
     },
     {
       "chainId": 10,
