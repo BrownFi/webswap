@@ -9,11 +9,13 @@ const Footer = () => {
     <div className="py-[40px] px-[108px] flex items-center justify-between w-full">
       <div>
         <img src={logoWhite} alt="logo" className="w-[199px] mb-[24px]" />
-        <p className="text-[12px] font-medium text-white">© 2024 BrownFi. All rights reserved.</p>
+        <p className="text-[12px] font-medium text-white">
+          © {new Date().getUTCFullYear()} BrownFi. All rights reserved.
+        </p>
       </div>
       <div className="flex items-center gap-6">
         <a
-          href="https://x.com/BrownFidex"
+          href="https://x.com/BrownFiAMM"
           target="_blank"
           rel="noopener noreferrer"
           className="cursor-pointer hover:brightness-90"
