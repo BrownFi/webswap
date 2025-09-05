@@ -108,6 +108,7 @@ export default function Pool() {
     variables: { chainId },
     pollInterval: 1 * 60 * 1000,
     skip: !enableGraphQL,
+    context: { chainId: chainId },
   })
   const sortedPairs = (data?.pairs.items ?? [])
     .slice()

@@ -29,6 +29,7 @@ const GET_PAIR_STATS = gql(`
         apr
         lpPrice
         bnhPrice
+        bnhPrice2
         netPnL
       }
     }
@@ -47,6 +48,7 @@ const PairChartModal = ({ pair, name }: Props) => {
     variables: { chainId: pair.chainId, address: pair.liquidityToken.address },
     pollInterval: 1 * 60 * 1000,
     skip: !isOpen,
+    context: { chainId: pair.chainId },
   })
 
   const chartData = useMemo(() => {
@@ -55,6 +57,10 @@ const PairChartModal = ({ pair, name }: Props) => {
         return {
           ...item,
           date: moment.unix(item.startUnix).format('DD/MM'),
+          bnhPrice:
+            pair.liquidityToken.address === '0x122524E1c403739bd33Ec54d606DDc287117B0A6' // HYPE/USD₮0
+              ? item.bnhPrice2
+              : item.bnhPrice,
         }
       }) ?? []
     )

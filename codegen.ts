@@ -7,12 +7,12 @@ const config: CodegenConfig = {
       plugins: [],
       preset: 'client',
       presetConfig: {
-        gqlTagName: 'gql'
-      }
-    }
+        gqlTagName: 'gql',
+      },
+    },
   },
   ignoreNoDocuments: true,
-  schema: 'https://bf-indexer.vietcha.in/graphql'
+  schema: 'https://hyperliquid-bf-indexer.vietcha.in',
 }
 
 export default config

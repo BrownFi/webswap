@@ -46,8 +46,8 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
         //
         ChainId.ARBITRUM_MAINNET,
         ChainId.BASE_MAINNET,
-        ChainId.HYPER_EVM,
         ChainId.BSC_MAINNET,
+        ChainId.HYPER_EVM,
       ].includes(chainId as number) && version === 2
     )
   }, [chainId, version])
@@ -60,6 +60,7 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
         ChainId.ARBITRUM_MAINNET,
         ChainId.BASE_MAINNET,
         ChainId.BSC_MAINNET,
+        ChainId.HYPER_EVM,
       ].includes(chainId as number) && version === 2
     )
   }, [chainId, version])

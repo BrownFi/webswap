@@ -53,6 +53,8 @@ export type Query = {
   tokens: TokenPage;
   transaction?: Maybe<Transaction>;
   transactions: TransactionPage;
+  updatedPairEvent?: Maybe<UpdatedPairEvent>;
+  updatedPairEvents: UpdatedPairEventPage;
 };
 
 
@@ -200,6 +202,22 @@ export type QueryTransactionsArgs = {
   orderBy?: InputMaybe<Scalars['String']['input']>;
   orderDirection?: InputMaybe<Scalars['String']['input']>;
   where?: InputMaybe<TransactionFilter>;
+};
+
+
+export type QueryUpdatedPairEventArgs = {
+  chainId: Scalars['Float']['input'];
+  hash: Scalars['String']['input'];
+};
+
+
+export type QueryUpdatedPairEventsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<Scalars['String']['input']>;
+  orderDirection?: InputMaybe<Scalars['String']['input']>;
+  where?: InputMaybe<UpdatedPairEventFilter>;
 };
 
 export type AccountData = {
@@ -471,9 +489,11 @@ export type PairDayData = {
   address: Scalars['String']['output'];
   apr: Scalars['Float']['output'];
   bnhPrice: Scalars['Float']['output'];
+  bnhPrice2: Scalars['Float']['output'];
   chainId: Scalars['Int']['output'];
   lpPrice: Scalars['Float']['output'];
   netPnL: Scalars['Float']['output'];
+  pair?: Maybe<Pair>;
   startUnix: Scalars['Int']['output'];
   totalFee: Scalars['Float']['output'];
   totalVolume: Scalars['Float']['output'];
@@ -502,6 +522,14 @@ export type PairDayDataFilter = {
   apr_not?: InputMaybe<Scalars['Float']['input']>;
   apr_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
   bnhPrice?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_gt?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_gte?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  bnhPrice2_lt?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_lte?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_not?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
   bnhPrice_gt?: InputMaybe<Scalars['Float']['input']>;
   bnhPrice_gte?: InputMaybe<Scalars['Float']['input']>;
   bnhPrice_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
@@ -810,9 +838,11 @@ export type PairHourData = {
   address: Scalars['String']['output'];
   apr: Scalars['Float']['output'];
   bnhPrice: Scalars['Float']['output'];
+  bnhPrice2: Scalars['Float']['output'];
   chainId: Scalars['Int']['output'];
   lpPrice: Scalars['Float']['output'];
   netPnL: Scalars['Float']['output'];
+  pair?: Maybe<Pair>;
   startUnix: Scalars['Int']['output'];
   totalFee: Scalars['Float']['output'];
   totalVolume: Scalars['Float']['output'];
@@ -841,6 +871,14 @@ export type PairHourDataFilter = {
   apr_not?: InputMaybe<Scalars['Float']['input']>;
   apr_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
   bnhPrice?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_gt?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_gte?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  bnhPrice2_lt?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_lte?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_not?: InputMaybe<Scalars['Float']['input']>;
+  bnhPrice2_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
   bnhPrice_gt?: InputMaybe<Scalars['Float']['input']>;
   bnhPrice_gte?: InputMaybe<Scalars['Float']['input']>;
   bnhPrice_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
@@ -1035,12 +1073,15 @@ export type Transaction = {
   fee: Scalars['Float']['output'];
   from: Scalars['String']['output'];
   hash: Scalars['String']['output'];
+  k: Scalars['Float']['output'];
+  lambda: Scalars['Float']['output'];
   lpBurn: Scalars['Float']['output'];
   lpMint: Scalars['Float']['output'];
   lpSupply: Scalars['Float']['output'];
   pair: Scalars['String']['output'];
   price0: Scalars['Float']['output'];
   price1: Scalars['Float']['output'];
+  protocolFee: Scalars['Float']['output'];
   reserve0: Scalars['Float']['output'];
   reserve0USD: Scalars['Float']['output'];
   reserve1: Scalars['Float']['output'];
@@ -1122,6 +1163,22 @@ export type TransactionFilter = {
   hash_not_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   hash_not_starts_with?: InputMaybe<Scalars['String']['input']>;
   hash_starts_with?: InputMaybe<Scalars['String']['input']>;
+  k?: InputMaybe<Scalars['Float']['input']>;
+  k_gt?: InputMaybe<Scalars['Float']['input']>;
+  k_gte?: InputMaybe<Scalars['Float']['input']>;
+  k_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  k_lt?: InputMaybe<Scalars['Float']['input']>;
+  k_lte?: InputMaybe<Scalars['Float']['input']>;
+  k_not?: InputMaybe<Scalars['Float']['input']>;
+  k_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  lambda?: InputMaybe<Scalars['Float']['input']>;
+  lambda_gt?: InputMaybe<Scalars['Float']['input']>;
+  lambda_gte?: InputMaybe<Scalars['Float']['input']>;
+  lambda_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  lambda_lt?: InputMaybe<Scalars['Float']['input']>;
+  lambda_lte?: InputMaybe<Scalars['Float']['input']>;
+  lambda_not?: InputMaybe<Scalars['Float']['input']>;
+  lambda_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
   lpBurn?: InputMaybe<Scalars['Float']['input']>;
   lpBurn_gt?: InputMaybe<Scalars['Float']['input']>;
   lpBurn_gte?: InputMaybe<Scalars['Float']['input']>;
@@ -1172,6 +1229,14 @@ export type TransactionFilter = {
   price1_lte?: InputMaybe<Scalars['Float']['input']>;
   price1_not?: InputMaybe<Scalars['Float']['input']>;
   price1_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  protocolFee?: InputMaybe<Scalars['Float']['input']>;
+  protocolFee_gt?: InputMaybe<Scalars['Float']['input']>;
+  protocolFee_gte?: InputMaybe<Scalars['Float']['input']>;
+  protocolFee_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  protocolFee_lt?: InputMaybe<Scalars['Float']['input']>;
+  protocolFee_lte?: InputMaybe<Scalars['Float']['input']>;
+  protocolFee_not?: InputMaybe<Scalars['Float']['input']>;
+  protocolFee_not_in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
   reserve0?: InputMaybe<Scalars['Float']['input']>;
   reserve0USD?: InputMaybe<Scalars['Float']['input']>;
   reserve0USD_gt?: InputMaybe<Scalars['Float']['input']>;
@@ -1247,13 +1312,98 @@ export type TransactionPage = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type UpdatedPairEvent = {
+  __typename?: 'updatedPairEvent';
+  chainId: Scalars['Int']['output'];
+  hash: Scalars['String']['output'];
+  pair: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  updatedAt: Scalars['BigInt']['output'];
+  updatedBlock: Scalars['BigInt']['output'];
+  value: Scalars['BigInt']['output'];
+};
+
+export type UpdatedPairEventFilter = {
+  AND?: InputMaybe<Array<InputMaybe<UpdatedPairEventFilter>>>;
+  OR?: InputMaybe<Array<InputMaybe<UpdatedPairEventFilter>>>;
+  chainId?: InputMaybe<Scalars['Int']['input']>;
+  chainId_gt?: InputMaybe<Scalars['Int']['input']>;
+  chainId_gte?: InputMaybe<Scalars['Int']['input']>;
+  chainId_in?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  chainId_lt?: InputMaybe<Scalars['Int']['input']>;
+  chainId_lte?: InputMaybe<Scalars['Int']['input']>;
+  chainId_not?: InputMaybe<Scalars['Int']['input']>;
+  chainId_not_in?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  hash?: InputMaybe<Scalars['String']['input']>;
+  hash_contains?: InputMaybe<Scalars['String']['input']>;
+  hash_ends_with?: InputMaybe<Scalars['String']['input']>;
+  hash_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  hash_not?: InputMaybe<Scalars['String']['input']>;
+  hash_not_contains?: InputMaybe<Scalars['String']['input']>;
+  hash_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  hash_not_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  hash_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  hash_starts_with?: InputMaybe<Scalars['String']['input']>;
+  pair?: InputMaybe<Scalars['String']['input']>;
+  pair_contains?: InputMaybe<Scalars['String']['input']>;
+  pair_ends_with?: InputMaybe<Scalars['String']['input']>;
+  pair_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  pair_not?: InputMaybe<Scalars['String']['input']>;
+  pair_not_contains?: InputMaybe<Scalars['String']['input']>;
+  pair_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  pair_not_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  pair_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  pair_starts_with?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+  type_contains?: InputMaybe<Scalars['String']['input']>;
+  type_ends_with?: InputMaybe<Scalars['String']['input']>;
+  type_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  type_not?: InputMaybe<Scalars['String']['input']>;
+  type_not_contains?: InputMaybe<Scalars['String']['input']>;
+  type_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  type_not_in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  type_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  type_starts_with?: InputMaybe<Scalars['String']['input']>;
+  updatedAt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_in?: InputMaybe<Array<InputMaybe<Scalars['BigInt']['input']>>>;
+  updatedAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_not_in?: InputMaybe<Array<InputMaybe<Scalars['BigInt']['input']>>>;
+  updatedBlock?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedBlock_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedBlock_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedBlock_in?: InputMaybe<Array<InputMaybe<Scalars['BigInt']['input']>>>;
+  updatedBlock_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedBlock_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedBlock_not?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedBlock_not_in?: InputMaybe<Array<InputMaybe<Scalars['BigInt']['input']>>>;
+  value?: InputMaybe<Scalars['BigInt']['input']>;
+  value_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  value_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  value_in?: InputMaybe<Array<InputMaybe<Scalars['BigInt']['input']>>>;
+  value_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  value_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  value_not?: InputMaybe<Scalars['BigInt']['input']>;
+  value_not_in?: InputMaybe<Array<InputMaybe<Scalars['BigInt']['input']>>>;
+};
+
+export type UpdatedPairEventPage = {
+  __typename?: 'updatedPairEventPage';
+  items: Array<UpdatedPairEvent>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type PairStatsQueryVariables = Exact<{
   chainId?: InputMaybe<Scalars['Int']['input']>;
   address?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type PairStatsQuery = { __typename?: 'Query', pairDayDatas: { __typename?: 'pairDayDataPage', items: Array<{ __typename?: 'pairDayData', chainId: number, address: string, startUnix: number, tvl: number, totalVolume: number, totalFee: number, apr: number, lpPrice: number, bnhPrice: number, netPnL: number }> } };
+export type PairStatsQuery = { __typename?: 'Query', pairDayDatas: { __typename?: 'pairDayDataPage', items: Array<{ __typename?: 'pairDayData', chainId: number, address: string, startUnix: number, tvl: number, totalVolume: number, totalFee: number, apr: number, lpPrice: number, bnhPrice: number, bnhPrice2: number, netPnL: number }> } };
 
 export type PairListQueryVariables = Exact<{
   chainId?: InputMaybe<Scalars['Int']['input']>;
@@ -1263,5 +1413,5 @@ export type PairListQueryVariables = Exact<{
 export type PairListQuery = { __typename?: 'Query', pairs: { __typename?: 'pairPage', totalCount: number, items: Array<{ __typename?: 'pair', chainId: number, address: string, fee: number, totalSupply: number, reserve0: number, reserve1: number, tvl: number, apr: number, volumeDay: number, volume7Day: number, updatedAt: any, token0?: { __typename?: 'token', address: string, chainId: number, decimals: number, name: string, price: number, priceFeedId?: string | null, symbol: string, totalSupply: number } | null, token1?: { __typename?: 'token', address: string, chainId: number, decimals: number, name: string, price: number, priceFeedId?: string | null, symbol: string, totalSupply: number } | null }> } };
 
 
-export const PairStatsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PairStats"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"address"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pairDayDatas"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1000"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"chainId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"address"},"value":{"kind":"Variable","name":{"kind":"Name","value":"address"}}}]}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"StringValue","value":"startUnix","block":false}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"StringValue","value":"asc","block":false}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"startUnix"}},{"kind":"Field","name":{"kind":"Name","value":"tvl"}},{"kind":"Field","name":{"kind":"Name","value":"totalVolume"}},{"kind":"Field","name":{"kind":"Name","value":"totalFee"}},{"kind":"Field","name":{"kind":"Name","value":"apr"}},{"kind":"Field","name":{"kind":"Name","value":"lpPrice"}},{"kind":"Field","name":{"kind":"Name","value":"bnhPrice"}},{"kind":"Field","name":{"kind":"Name","value":"netPnL"}}]}}]}}]}}]} as unknown as DocumentNode<PairStatsQuery, PairStatsQueryVariables>;
+export const PairStatsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PairStats"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"address"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pairDayDatas"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1000"}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"chainId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"address"},"value":{"kind":"Variable","name":{"kind":"Name","value":"address"}}}]}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"StringValue","value":"startUnix","block":false}},{"kind":"Argument","name":{"kind":"Name","value":"orderDirection"},"value":{"kind":"StringValue","value":"asc","block":false}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"startUnix"}},{"kind":"Field","name":{"kind":"Name","value":"tvl"}},{"kind":"Field","name":{"kind":"Name","value":"totalVolume"}},{"kind":"Field","name":{"kind":"Name","value":"totalFee"}},{"kind":"Field","name":{"kind":"Name","value":"apr"}},{"kind":"Field","name":{"kind":"Name","value":"lpPrice"}},{"kind":"Field","name":{"kind":"Name","value":"bnhPrice"}},{"kind":"Field","name":{"kind":"Name","value":"bnhPrice2"}},{"kind":"Field","name":{"kind":"Name","value":"netPnL"}}]}}]}}]}}]} as unknown as DocumentNode<PairStatsQuery, PairStatsQueryVariables>;
 export const PairListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PairList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pairs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"chainId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"chainId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"fee"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}},{"kind":"Field","name":{"kind":"Name","value":"reserve0"}},{"kind":"Field","name":{"kind":"Name","value":"reserve1"}},{"kind":"Field","name":{"kind":"Name","value":"tvl"}},{"kind":"Field","name":{"kind":"Name","value":"apr"}},{"kind":"Field","name":{"kind":"Name","value":"volumeDay"}},{"kind":"Field","name":{"kind":"Name","value":"volume7Day"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"token0"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"decimals"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"price"}},{"kind":"Field","name":{"kind":"Name","value":"priceFeedId"}},{"kind":"Field","name":{"kind":"Name","value":"symbol"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}}]}},{"kind":"Field","name":{"kind":"Name","value":"token1"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"chainId"}},{"kind":"Field","name":{"kind":"Name","value":"decimals"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"price"}},{"kind":"Field","name":{"kind":"Name","value":"priceFeedId"}},{"kind":"Field","name":{"kind":"Name","value":"symbol"}},{"kind":"Field","name":{"kind":"Name","value":"totalSupply"}}]}}]}}]}}]}}]} as unknown as DocumentNode<PairListQuery, PairListQueryVariables>;
