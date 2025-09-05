@@ -95,6 +95,9 @@ export function getEtherscanLink(
     case ChainId.HYPER_EVM:
       prefix = 'https://hyperevmscan.io'
       break
+    case ChainId.LINEA_MAINNET:
+      prefix = 'https://lineascan.build/'
+      break
     case ChainId.OP_MAINNET:
       prefix = 'https://optimistic.etherscan.io'
       break
@@ -282,10 +285,6 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     return 'WU2U'
   }
 
-  // if (currency?.symbol === 'WETH' && chainId === ChainId.BERA_MAINNET) {
-  //   return 'WBERA'
-  // }
-
   if (currency?.symbol === 'WETH' && chainId === ChainId.HYPER_EVM) {
     return 'WHYPE'
   }
@@ -352,6 +351,8 @@ export function getScanText(chainId: ChainId) {
       return 'Berascan'
     case ChainId.HYPER_EVM:
       return 'Hyperscan'
+    case ChainId.LINEA_MAINNET:
+      return 'Lineascan'
     case ChainId.OP_MAINNET:
       return 'OPscan'
     case ChainId.BOBA_MAINNET:

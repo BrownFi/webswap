@@ -6,6 +6,7 @@ import BNBLogo from 'assets/images/bnb.svg'
 import bobaLogo from 'assets/images/boba.svg'
 import EthereumLogo from 'assets/images/ethereum-logo.png'
 import hyperevmLogo from 'assets/images/hyperevm.png'
+import lineaLogo from 'assets/images/linea.webp'
 import metisLogo from 'assets/images/metis.png'
 import sonicLogo from 'assets/images/sonic.png'
 import u2uLogo from 'assets/images/u2u.jpg'
@@ -131,6 +132,9 @@ export function CurrencyLogo({
     }
     if (chainId === ChainId.HYPER_EVM) {
       return <StyledEthereumLogo src={hyperevmLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.LINEA_MAINNET) {
+      return <StyledEthereumLogo src={lineaLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }

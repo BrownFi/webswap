@@ -27,7 +27,7 @@ const overrideChain = ({
   fallbackRpcs,
 }: {
   chain: Chain
-  iconUrl: any
+  iconUrl?: any
   fallbackRpcs: string[]
 }): Chain => {
   // @ts-ignore
@@ -130,12 +130,22 @@ const bsc = overrideChain({
   ],
 })
 
+const linea = overrideChain({
+  chain: defaultChains.linea,
+  iconUrl: require('assets/images/linea.webp'),
+  fallbackRpcs: [
+    //
+    'https://linea.drpc.org',
+    'https://linea.therpc.io',
+  ],
+})
+
 const env = process.env.REACT_APP_ENVIROMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = env === 'mainnet'
 console.log(`======== ENVIROMENT: "${env}" =========`, { isMainnet })
 
 const mainChains: Chain[] = [berachain, arbitrum, base, hyperEVM, viction, u2uMainnet]
-const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet]
+const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, viction, u2uMainnet]
 const testChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, sepolia]
 
 export const availableChains = env === 'mainnet' ? mainChains : env === 'beta' ? betaChains : testChains
