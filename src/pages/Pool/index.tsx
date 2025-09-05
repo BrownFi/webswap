@@ -104,7 +104,7 @@ export default function Pool() {
   const { account, chainId } = useActiveWeb3React()
   const { version, enableGraphQL } = useVersion({ chainId })
 
-  const { data } = useQuery(LIST_ALL_PAIRS, {
+  const { data, loading } = useQuery(LIST_ALL_PAIRS, {
     variables: { chainId },
     pollInterval: 1 * 60 * 1000,
     skip: !enableGraphQL,
@@ -125,7 +125,7 @@ export default function Pool() {
 
   // fetch the user's balances of all tracked V2 LP tokens
   const trackedTokenPairs = useTrackedTokenPairs({
-    disabled: (data === undefined && enableGraphQL) || filteredPairs.length > 0,
+    disabled: !!data || loading || filteredPairs.length > 0,
   })
   const tokenPairsWithLiquidityTokens = useMemo(
     () => trackedTokenPairs.map((tokens) => ({ liquidityToken: toV2LiquidityToken(tokens, version), tokens })),
