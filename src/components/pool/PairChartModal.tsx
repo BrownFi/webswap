@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client'
-import { Pair } from '@brownfi/sdk'
+import { ChainId, Pair } from '@brownfi/sdk'
 import { gql } from '__generated__'
 import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
@@ -13,6 +13,30 @@ import { formatNumber, formatPrice } from 'utils/prices'
 
 const GET_PAIR_STATS = gql(`
   query PairStats($chainId: Int, $address: String) {
+    pairDayDatas(
+      limit: 1000
+      where: {chainId: $chainId, address: $address}
+      orderBy: "startUnix"
+      orderDirection: "asc"
+    ) {
+      items {
+        chainId
+        address
+        startUnix
+        tvl
+        totalVolume
+        totalFee
+        apr
+        lpPrice
+        bnhPrice
+        netPnL
+      }
+    }
+  }
+`)
+
+const GET_PAIR_STATS_2 = gql(`
+  query PairStats2($chainId: Int, $address: String) {
     pairDayDatas(
       limit: 1000
       where: {chainId: $chainId, address: $address}
@@ -44,27 +68,31 @@ type Props = {
 const PairChartModal = ({ pair, name }: Props) => {
   const [isOpen, setOpen] = useState(false)
 
-  const { data } = useQuery(GET_PAIR_STATS, {
+  const { data } = useQuery(pair.chainId === ChainId.HYPER_EVM ? GET_PAIR_STATS_2 : GET_PAIR_STATS, {
     variables: { chainId: pair.chainId, address: pair.liquidityToken.address },
     pollInterval: 1 * 60 * 1000,
     skip: !isOpen,
     context: { chainId: pair.chainId },
   })
 
+  const isHYPEUSDT = pair.liquidityToken.address === '0x122524E1c403739bd33Ec54d606DDc287117B0A6' // HYPE/USD₮0
+
   const chartData = useMemo(() => {
     return (
-      data?.pairDayDatas.items.map((item) => {
-        return {
-          ...item,
-          date: moment.unix(item.startUnix).format('DD/MM'),
-          bnhPrice:
-            pair.liquidityToken.address === '0x122524E1c403739bd33Ec54d606DDc287117B0A6' // HYPE/USD₮0
-              ? item.bnhPrice2
-              : item.bnhPrice,
-        }
-      }) ?? []
+      data?.pairDayDatas.items
+        .map((item) => {
+          return {
+            ...item,
+            date: moment.unix(item.startUnix).format('DD/MM'),
+            bnhPrice: isHYPEUSDT ? (item as any).bnhPrice2 : item.bnhPrice,
+          }
+        })
+        .filter((item) => {
+          if (isHYPEUSDT) return moment.unix(item.startUnix) > moment('2025-08-08')
+          return true
+        }) ?? []
     )
-  }, [data])
+  }, [data, isHYPEUSDT])
 
   return (
     <>
