@@ -7,7 +7,6 @@ import styled from 'styled-components'
 import Logo from 'assets/svg/logo.svg'
 
 import Row, { RowFixed } from 'components/Row'
-import Web3Status from 'components/Web3Status'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import HamburgerMenu from './HamburgerMenu'
 import CustomChainSelect from './CustomChainSelect'
@@ -198,9 +197,6 @@ export default function Header() {
       <HeaderControls>
         <CustomChainSelect />
         <ConnectButton />
-
-        {/* Legacy */}
-        <Web3Status />
       </HeaderControls>
     </HeaderFrame>
   )

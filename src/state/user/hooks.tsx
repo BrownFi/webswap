@@ -20,7 +20,6 @@ import {
   toggleURLWarning,
   updateUserSingleHopOnly,
 } from './actions'
-import { useVersion } from 'hooks/useVersion'
 import { isMainnet } from 'connectors'
 
 function serializeToken(token: Token): SerializedToken {
