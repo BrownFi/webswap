@@ -3,8 +3,6 @@ import { useContext, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import styled, { ThemeContext } from 'styled-components'
 
-import { useQuery } from '@apollo/client'
-import { gql } from '__generated__'
 import SwitchVersion from 'components/SwitchVersion'
 import { useVersion } from 'hooks/useVersion'
 import { Address, checksumAddress } from 'viem'
@@ -25,6 +23,9 @@ import { useActiveWeb3React } from 'hooks'
 import { useStakingInfo } from 'state/stake/hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
 import { isMainnet } from 'connectors'
+import useSWR from 'swr'
+import axios from 'axios'
+import { graphqlFetcher } from 'utils/swr'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
@@ -58,7 +59,7 @@ const EmptyProposals = styled.div`
   align-items: center;
 `
 
-const LIST_ALL_PAIRS = gql(`
+const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
     pairs(where: {chainId: $chainId}) {
       totalCount
@@ -97,23 +98,68 @@ const LIST_ALL_PAIRS = gql(`
       }
     }
   }
-`)
+`
 
 export default function Pool() {
   const theme = useContext(ThemeContext)
   const { account, chainId } = useActiveWeb3React()
   const { version, enableGraphQL } = useVersion({ chainId })
 
-  const { data, loading } = useQuery(LIST_ALL_PAIRS, {
-    variables: { chainId },
-    pollInterval: 1 * 60 * 1000,
-    skip: !enableGraphQL,
-    context: { chainId: chainId },
-  })
+  const { data, isLoading: loading } = useSWR<{
+    pairs: {
+      totalCount: number
+      items: {
+        chainId: number
+        address: string
+        fee: number
+        totalSupply: number
+        reserve0: number
+        reserve1: number
+        tvl: number
+        apr: number
+        volumeDay: number
+        volume7Day: number
+        updatedAt: number
+        token0: {
+          chainId: number
+          address: string
+          decimals: number
+          name: string
+          price: number
+          priceFeedId: string
+          symbol: string
+          totalSupply: number
+        }
+        token1: {
+          chainId: number
+          address: string
+          decimals: number
+          name: string
+          price: number
+          priceFeedId: string
+          symbol: string
+          totalSupply: number
+        }
+      }[]
+    }
+  }>(
+    enableGraphQL ? [chainId] : null,
+    ([chainId]) =>
+      graphqlFetcher({
+        operationName: 'PairList',
+        query: LIST_ALL_PAIRS,
+        variables: { chainId },
+      }),
+    {
+      refreshInterval: 1 * 60 * 1000,
+    },
+  )
+
   const sortedPairs = (data?.pairs.items ?? [])
     .slice()
     .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
+  // @ts-ignore
   const filteredPairs = sortedPairs.filter((pair) => {
     const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
     if (isMainnet) {
