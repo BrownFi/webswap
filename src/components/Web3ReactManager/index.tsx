@@ -26,7 +26,7 @@ const Message = styled.h2`
 export default function Web3ReactManager({ children }: { children: JSX.Element }) {
   const { t } = useTranslation()
   const { active } = useWeb3React()
-  const { active: networkActive, error: networkError, activate: activateNetwork } = useWeb3React(NetworkContextName)
+  const { active: networkActive, error: networkError, activate: activeNetwork } = useWeb3React(NetworkContextName)
   const { isConnected, chainId: networkChainId } = useAccount()
   const isWrongNetwork = availableChains.every((chain) => chain.id !== networkChainId)
 
@@ -42,14 +42,14 @@ export default function Web3ReactManager({ children }: { children: JSX.Element }
       defaultChainId: chain.id,
     })
     if (triedEager && !networkActive && !networkError && !active) {
-      activateNetwork(network)
+      activeNetwork(network)
       return
     }
     if (!isConnected || isWrongNetwork) {
-      // activateNetwork(network)
+      activeNetwork(network)
       return
     }
-  }, [activateNetwork, triedEager, networkActive, networkError, active, chain])
+  }, [activeNetwork, chain, triedEager, networkActive, networkError, active, isConnected, isWrongNetwork])
 
   // when there's no account connected, react to logins (broadly speaking) on the injected provider, if it exists
   useInactiveListener(!triedEager)
