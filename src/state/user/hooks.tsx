@@ -461,13 +461,11 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
   const filteredPairs = pairs.filter((tokens) => {
     const symbol = `${tokens[0].symbol}/${tokens[1].symbol}`
     if (isMainnet) {
-      if (version === 2) {
-        if (chainId === ChainId.ARBITRUM_MAINNET) {
-          return !['WETH/USDT', 'WBTC/WETH'].includes(symbol)
-        }
-        if (chainId === ChainId.HYPER_EVM) {
-          return !['USDT/kHYPE'].includes(symbol)
-        }
+      if (chainId === ChainId.ARBITRUM_MAINNET) {
+        return !['WBTC/WETH', 'WETH/USDT'].includes(symbol)
+      }
+      if (chainId === ChainId.HYPER_EVM) {
+        return !['USDT/kHYPE'].includes(symbol)
       }
     }
     return true
