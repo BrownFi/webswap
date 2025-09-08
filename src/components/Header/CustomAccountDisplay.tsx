@@ -96,7 +96,7 @@ const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
           <div className="text-center">
             <div className="text-white font-bold text-[20px]">{shortenAddress(account!)}</div>
             <div className="text-white/60 font-semibold">
-              {balance?.toSignificant(2)} {getTokenSymbol(balance?.currency, chainId)}
+              {balance?.toSignificant(6)} {getTokenSymbol(balance?.currency, chainId)}
             </div>
           </div>
           <div className="flex gap-2">
