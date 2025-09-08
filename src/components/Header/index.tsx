@@ -13,6 +13,7 @@ import { isMobile } from 'react-device-detect'
 import { useAccount } from 'wagmi'
 import CustomChainSelect from './CustomChainSelect'
 import HamburgerMenu from './HamburgerMenu'
+import CustomAccountDisplay from './CustomAccountDisplay'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -160,7 +161,7 @@ export const StyledMenuButton = styled.button`
 export default function Header() {
   const { account } = useActiveWeb3React()
   const { isConnected } = useAccount()
-  const hideConnect = isMobile && !!account && !isConnected
+  const hideConnect = !!account && !isConnected
 
   return (
     <HeaderFrame>
@@ -202,7 +203,7 @@ export default function Header() {
 
       <HeaderControls>
         <CustomChainSelect />
-        {!hideConnect && <ConnectButton />}
+        {hideConnect ? <CustomAccountDisplay /> : <ConnectButton />}
       </HeaderControls>
     </HeaderFrame>
   )
