@@ -46,7 +46,7 @@ export default function Web3ReactManager({ children }: { children: JSX.Element }
       return
     }
     if (!isConnected || isWrongNetwork) {
-      activateNetwork(network)
+      // activateNetwork(network)
       return
     }
   }, [activateNetwork, triedEager, networkActive, networkError, active, chain])
