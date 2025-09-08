@@ -1,18 +1,18 @@
-import React from 'react'
-import { Link, NavLink } from 'react-router-dom'
 import { darken } from 'polished'
+import { Link, NavLink } from 'react-router-dom'
 
 import styled from 'styled-components'
 
 import Logo from 'assets/svg/logo.svg'
 
-import Row, { RowFixed } from 'components/Row'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import HamburgerMenu from './HamburgerMenu'
-import CustomChainSelect from './CustomChainSelect'
+import Row, { RowFixed } from 'components/Row'
 import SwitchVersion from 'components/SwitchVersion'
 import { useActiveWeb3React } from 'hooks'
+import { isMobile } from 'react-device-detect'
 import { useAccount } from 'wagmi'
+import CustomChainSelect from './CustomChainSelect'
+import HamburgerMenu from './HamburgerMenu'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -160,9 +160,7 @@ export const StyledMenuButton = styled.button`
 export default function Header() {
   const { account } = useActiveWeb3React()
   const { isConnected } = useAccount()
-  if (!!account && !isConnected) {
-    //
-  }
+  const hideConnect = isMobile && !!account && !isConnected
 
   return (
     <HeaderFrame>
@@ -198,14 +196,13 @@ export default function Header() {
             <StyledNavLink id={`leaderboard-nav-link`} to={'/campaign/contest-1'}>
               Campaign
             </StyledNavLink>
-            <div className="text-white">{JSON.stringify({ account: !!account, isConnected })}</div>
           </HeaderLinks>
         </HamburgerMenu>
       </HeaderRow>
 
       <HeaderControls>
         <CustomChainSelect />
-        <ConnectButton />
+        {!hideConnect && <ConnectButton />}
       </HeaderControls>
     </HeaderFrame>
   )
