@@ -34,8 +34,11 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
     ) {
       return [2, true]
     }
+    if (isMainnet) {
+      return [2, false]
+    }
     return [stableVersion, false]
-  }, [chainId])
+  }, [isMainnet, chainId, stableVersion])
 
   const dispatchSwitchVersion = (version: number) => {
     dispatch(switchVersion(version))
@@ -71,8 +74,8 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
     isTest,
     isBeta,
     enableGraphQL,
-    version: isMainnet ? 2 : version,
-    appVersion: isMainnet ? 2 : version,
+    version,
+    appVersion,
     isDisabled,
     switchVersion: dispatchSwitchVersion,
   }
