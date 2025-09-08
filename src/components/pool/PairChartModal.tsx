@@ -1,4 +1,4 @@
-import { ChainId, Pair } from '@brownfi/sdk'
+import { Pair } from '@brownfi/sdk'
 import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { Modal } from 'components/Modal'
@@ -83,11 +83,13 @@ const PairChartModal = ({ pair, name }: Props) => {
           return {
             ...item,
             date: moment.unix(item.startUnix).format('DD/MM'),
-            bnhPrice: isHYPEUSDT ? (item as any).bnhPrice2 : item.bnhPrice,
+            bnhPrice: isHYPEUSDT ? item.bnhPrice2 : item.bnhPrice,
           }
         })
         .filter((item) => {
-          if (isHYPEUSDT) return moment.unix(item.startUnix) > moment('2025-08-12')
+          if (isHYPEUSDT) {
+            return moment.unix(item.startUnix) > moment('2025-08-12')
+          }
           return true
         }) ?? []
     )

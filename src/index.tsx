@@ -53,7 +53,6 @@ root.render(
       <Web3ReactProvider getLibrary={getLibrary}>
         <Web3ProviderNetwork getLibrary={getLibrary}>
           <WagmiProvider config={wagmiConfig}>
-            {/* <ApolloProvider client={apolloClient}> */}
             <QueryClientProvider client={queryClient}>
               <RainbowKitProvider theme={darkTheme()}>
                 <StarknetProvider>
@@ -73,7 +72,6 @@ root.render(
                 </StarknetProvider>
               </RainbowKitProvider>
             </QueryClientProvider>
-            {/* </ApolloProvider> */}
           </WagmiProvider>
         </Web3ProviderNetwork>
       </Web3ReactProvider>

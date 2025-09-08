@@ -7,24 +7,23 @@ import SwitchVersion from 'components/SwitchVersion'
 import { useVersion } from 'hooks/useVersion'
 import { Address, checksumAddress } from 'viem'
 
-import { Flex, Text } from 'rebass'
 import { ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import FullPositionCard from 'components/PositionCard'
 import { RowBetween } from 'components/Row'
+import { Flex, Text } from 'rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
 import { PairStats } from 'components/PositionCard/usePoolStats'
 import { Dots } from 'components/swap/styleds'
+import { isMainnet } from 'connectors'
 import { BIG_INT_ZERO } from 'constants/common'
 import { usePairs } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { useStakingInfo } from 'state/stake/hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
-import { isMainnet } from 'connectors'
 import useSWR from 'swr'
-import axios from 'axios'
 import { graphqlFetcher } from 'utils/swr'
 
 const PageWrapper = styled(AutoColumn)`
@@ -159,7 +158,6 @@ export default function Pool() {
     .slice()
     .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
-  // @ts-ignore
   const filteredPairs = sortedPairs.filter((pair) => {
     const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
     if (isMainnet) {
