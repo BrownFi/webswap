@@ -146,7 +146,7 @@ console.log(`======== ENVIROMENT: "${env}" =========`, { isMainnet })
 
 const mainChains: Chain[] = [berachain, arbitrum, base, hyperEVM, viction, u2uMainnet]
 const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, viction, u2uMainnet]
-const testChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, sepolia]
+const testChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet, sepolia]
 
 export const availableChains = env === 'mainnet' ? mainChains : env === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
