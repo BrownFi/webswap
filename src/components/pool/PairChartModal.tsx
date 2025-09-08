@@ -1,6 +1,4 @@
-import { useQuery } from '@apollo/client'
 import { Pair } from '@brownfi/sdk'
-import { gql } from '__generated__'
 import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { Modal } from 'components/Modal'
@@ -9,9 +7,11 @@ import { ReactNode, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
 import { Text } from 'rebass'
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import useSWR from 'swr'
 import { formatNumber, formatPrice } from 'utils/prices'
+import { graphqlFetcher } from 'utils/swr'
 
-const GET_PAIR_STATS = gql(`
+const GET_PAIR_STATS = `
   query PairStats($chainId: Int, $address: String) {
     pairDayDatas(
       limit: 1000
@@ -29,11 +29,12 @@ const GET_PAIR_STATS = gql(`
         apr
         lpPrice
         bnhPrice
+        bnhPrice2
         netPnL
       }
     }
   }
-`)
+`
 
 type Props = {
   pair: Pair
@@ -43,22 +44,56 @@ type Props = {
 const PairChartModal = ({ pair, name }: Props) => {
   const [isOpen, setOpen] = useState(false)
 
-  const { data } = useQuery(GET_PAIR_STATS, {
-    variables: { chainId: pair.chainId, address: pair.liquidityToken.address },
-    pollInterval: 1 * 60 * 1000,
-    skip: !isOpen,
-  })
+  const { data } = useSWR<{
+    pairDayDatas: {
+      totalCount: number
+      items: {
+        chainId: number
+        address: string
+        startUnix: number
+        tvl: number
+        totalVolume: number
+        totalFee: number
+        apr: number
+        lpPrice: number
+        bnhPrice: number
+        bnhPrice2: number
+        netPnL: number
+      }[]
+    }
+  }>(
+    isOpen ? [pair.chainId, pair.liquidityToken.address] : null,
+    ([chainId, address]) =>
+      graphqlFetcher({
+        operationName: 'PairStats',
+        query: GET_PAIR_STATS,
+        variables: { chainId, address: address },
+      }),
+    {
+      refreshInterval: 1 * 60 * 1000,
+    },
+  )
+
+  const isHYPEUSDT = pair.liquidityToken.address === '0x122524E1c403739bd33Ec54d606DDc287117B0A6' // HYPE/USD₮0
 
   const chartData = useMemo(() => {
     return (
-      data?.pairDayDatas.items.map((item) => {
-        return {
-          ...item,
-          date: moment.unix(item.startUnix).format('DD/MM'),
-        }
-      }) ?? []
+      data?.pairDayDatas.items
+        .map((item) => {
+          return {
+            ...item,
+            date: moment.unix(item.startUnix).format('DD/MM'),
+            bnhPrice: isHYPEUSDT ? item.bnhPrice2 : item.bnhPrice,
+          }
+        })
+        .filter((item) => {
+          if (isHYPEUSDT) {
+            return moment.unix(item.startUnix) > moment('2025-08-12')
+          }
+          return true
+        }) ?? []
     )
-  }, [data])
+  }, [data, isHYPEUSDT])
 
   return (
     <>

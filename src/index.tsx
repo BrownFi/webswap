@@ -26,8 +26,6 @@ import { darkTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { ToastProvider } from 'containers/ToastProvider'
 import { ErrorBoundary } from 'containers/ErrorBoundary'
-import { ApolloProvider } from '@apollo/client'
-import { apolloClient } from 'services/apolloClient'
 
 const Web3ProviderNetwork = createWeb3ReactRoot(NetworkContextName)
 
@@ -55,27 +53,25 @@ root.render(
       <Web3ReactProvider getLibrary={getLibrary}>
         <Web3ProviderNetwork getLibrary={getLibrary}>
           <WagmiProvider config={wagmiConfig}>
-            <ApolloProvider client={apolloClient}>
-              <QueryClientProvider client={queryClient}>
-                <RainbowKitProvider theme={darkTheme()}>
-                  <StarknetProvider>
-                    <Blocklist>
-                      <Updaters />
-                      <ThemeProvider>
-                        <ToastProvider>
-                          <ThemedGlobalStyle />
-                          <HashRouter>
-                            <ErrorBoundary>
-                              <App />
-                            </ErrorBoundary>
-                          </HashRouter>
-                        </ToastProvider>
-                      </ThemeProvider>
-                    </Blocklist>
-                  </StarknetProvider>
-                </RainbowKitProvider>
-              </QueryClientProvider>
-            </ApolloProvider>
+            <QueryClientProvider client={queryClient}>
+              <RainbowKitProvider theme={darkTheme()}>
+                <StarknetProvider>
+                  <Blocklist>
+                    <Updaters />
+                    <ThemeProvider>
+                      <ToastProvider>
+                        <ThemedGlobalStyle />
+                        <HashRouter>
+                          <ErrorBoundary>
+                            <App />
+                          </ErrorBoundary>
+                        </HashRouter>
+                      </ToastProvider>
+                    </ThemeProvider>
+                  </Blocklist>
+                </StarknetProvider>
+              </RainbowKitProvider>
+            </QueryClientProvider>
           </WagmiProvider>
         </Web3ProviderNetwork>
       </Web3ReactProvider>
