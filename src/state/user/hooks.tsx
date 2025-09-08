@@ -288,7 +288,6 @@ export function useGetListPairs(
  */
 export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, Token][] {
   const { chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
   const tokens = useAllTokens()
 
   // pairs saved by users
