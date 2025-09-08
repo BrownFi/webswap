@@ -58,7 +58,10 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           >
             Switch Networks
           </h2>
-          <button onClick={onClose} className="text-white/60 hover:text-white transition p-1 w-8 rounded-full">
+          <button
+            onClick={onClose}
+            className="bg-white/15 text-white/60 font-black hover:text-white  transition p-1 w-8 rounded-full"
+          >
             ✕
           </button>
         </div>

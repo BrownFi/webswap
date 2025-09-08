@@ -164,6 +164,9 @@ export default function Pool() {
       if (pair.chainId === ChainId.ARBITRUM_MAINNET) {
         return !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
       }
+      if (pair.chainId === ChainId.HYPER_EVM) {
+        return !['USD₮0/kHYPE'].includes(symbol)
+      }
     }
     return true
   })

@@ -1,5 +1,6 @@
+import { ButtonConfirmed } from 'components/Button'
 import React, { Component, ReactNode } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { RouteComponentProps, withRouter } from 'react-router-dom'
 import StaticScreen from './StaticScreen'
 
 interface Props extends RouteComponentProps {
@@ -57,8 +58,23 @@ class ErrorBoundaryBase extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <StaticScreen>
-          <div className="max-w-[1600px] bg-[##131216] z-10 mx-auto px-6 py-10">
-            <pre className="text-white whitespace-pre-wrap">{this.state.error}</pre>
+          <div className="w-[1600px] max-w-[100vw] bg-[##131216] text-white z-10 mx-auto px-6 py-10">
+            <div className="max-w-[480px] flex flex-col gap-2 items-center mx-auto text-center">
+              <div>
+                <div>An unexpected error occurred</div>
+                <div>Please refresh the page and try again.</div>
+              </div>
+              <ButtonConfirmed
+                className="!w-[180px] !p-2"
+                onClick={() => {
+                  this.props.history.replace('/')
+                  location.reload()
+                }}
+              >
+                RELOAD
+              </ButtonConfirmed>
+            </div>
+            <pre className="whitespace-pre-wrap text-sm md:text-base">{this.state.error}</pre>
           </div>
         </StaticScreen>
       )

@@ -1,17 +1,19 @@
-import React from 'react'
-import { Link, NavLink } from 'react-router-dom'
 import { darken } from 'polished'
+import { Link, NavLink } from 'react-router-dom'
 
 import styled from 'styled-components'
 
 import Logo from 'assets/svg/logo.svg'
 
-import Row, { RowFixed } from 'components/Row'
-import Web3Status from 'components/Web3Status'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import HamburgerMenu from './HamburgerMenu'
-import CustomChainSelect from './CustomChainSelect'
+import Row, { RowFixed } from 'components/Row'
 import SwitchVersion from 'components/SwitchVersion'
+import { useActiveWeb3React } from 'hooks'
+import { isMobile } from 'react-device-detect'
+import { useAccount } from 'wagmi'
+import CustomChainSelect from './CustomChainSelect'
+import HamburgerMenu from './HamburgerMenu'
+import CustomAccountDisplay from './CustomAccountDisplay'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -157,6 +159,10 @@ export const StyledMenuButton = styled.button`
 `
 
 export default function Header() {
+  const { account } = useActiveWeb3React()
+  const { isConnected } = useAccount()
+  const hideConnect = !!account && !isConnected
+
   return (
     <HeaderFrame>
       <HeaderRow>
@@ -197,10 +203,7 @@ export default function Header() {
 
       <HeaderControls>
         <CustomChainSelect />
-        <ConnectButton />
-
-        {/* Legacy */}
-        <Web3Status />
+        {hideConnect ? <CustomAccountDisplay /> : <ConnectButton />}
       </HeaderControls>
     </HeaderFrame>
   )

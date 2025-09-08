@@ -20,7 +20,6 @@ import {
   toggleURLWarning,
   updateUserSingleHopOnly,
 } from './actions'
-import { useVersion } from 'hooks/useVersion'
 import { isMainnet } from 'connectors'
 
 function serializeToken(token: Token): SerializedToken {
@@ -288,7 +287,6 @@ export function useGetListPairs(
  */
 export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, Token][] {
   const { chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
   const tokens = useAllTokens()
 
   // pairs saved by users
@@ -461,13 +459,11 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
   const filteredPairs = pairs.filter((tokens) => {
     const symbol = `${tokens[0].symbol}/${tokens[1].symbol}`
     if (isMainnet) {
-      if (version === 2) {
-        if (chainId === ChainId.ARBITRUM_MAINNET) {
-          return !['WETH/USDT', 'WBTC/WETH'].includes(symbol)
-        }
-        if (chainId === ChainId.HYPER_EVM) {
-          return !['USDT/kHYPE'].includes(symbol)
-        }
+      if (chainId === ChainId.ARBITRUM_MAINNET) {
+        return !['WBTC/WETH', 'WETH/USDT'].includes(symbol)
+      }
+      if (chainId === ChainId.HYPER_EVM) {
+        return !['USDT/kHYPE'].includes(symbol)
       }
     }
     return true

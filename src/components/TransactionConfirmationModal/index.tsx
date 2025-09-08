@@ -102,7 +102,7 @@ function TransactionSubmittedContent({
           <img src={checkCircle} className="w-[100px]" alt="check" />
         </ConfirmedIcon>
         <AutoColumn gap="12px" justify={'center'}>
-          <Text fontWeight={600} fontSize={32} color="#27E39F">
+          <Text fontWeight={600} fontSize={28} color="#27E39F">
             Transaction Submitted
           </Text>
           {chainId && hash && (
