@@ -11,6 +11,8 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import HamburgerMenu from './HamburgerMenu'
 import CustomChainSelect from './CustomChainSelect'
 import SwitchVersion from 'components/SwitchVersion'
+import { useActiveWeb3React } from 'hooks'
+import { useAccount } from 'wagmi'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -156,6 +158,12 @@ export const StyledMenuButton = styled.button`
 `
 
 export default function Header() {
+  const { account } = useActiveWeb3React()
+  const { isConnected } = useAccount()
+  if (!!account && !isConnected) {
+    //
+  }
+
   return (
     <HeaderFrame>
       <HeaderRow>
@@ -190,6 +198,7 @@ export default function Header() {
             <StyledNavLink id={`leaderboard-nav-link`} to={'/campaign/contest-1'}>
               Campaign
             </StyledNavLink>
+            <div className="text-white">{JSON.stringify({ account: !!account, isConnected })}</div>
           </HeaderLinks>
         </HamburgerMenu>
       </HeaderRow>
