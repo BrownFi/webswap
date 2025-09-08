@@ -8,8 +8,8 @@ import { isMainnet } from 'connectors'
 export function useVersion({ chainId }: { chainId: number | undefined | null }) {
   const location = useLocation()
   const dispatch = useDispatch()
-  const { version: appVersion } = useSelector(versionSelector)
 
+  const { version: appVersion } = useSelector(versionSelector)
   const [stableVersion] = useState(() => appVersion)
 
   const isTest = useMemo(() => {
