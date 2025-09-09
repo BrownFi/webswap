@@ -62,7 +62,17 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
   const [showMore, setShowMore] = useState(isFavorite)
 
-  const { tradingFee, totalSupply: totalPoolTokens, feeAPR, volume24h, volume7d } = usePoolStats({ pair, pairStats })
+  const {
+    tradingFee,
+    totalSupply: totalPoolTokens,
+    feeAPR: feeAPRIndexer,
+    volume24h,
+    volume7d,
+    shouldUseIndexer,
+  } = usePoolStats({
+    pair,
+    pairStats,
+  })
 
   const userPoolTokens = useTokenBalance(account ?? undefined, showMore ? pair.liquidityToken : undefined)
 
@@ -79,6 +89,8 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
   const tvl = reserve0Price + reserve1Price
   const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(4)) || 1)
+  const feeAPRLiem = tradingFee * (((Number(volume24h) || 0) * 360) / (tvl || 1))
+  const feeAPR = shouldUseIndexer ? feeAPRIndexer : feeAPRLiem
 
   // if staked balance balance provided, add to standard liquidity amount
   const userPoolBalance = stakedBalance ? userPoolTokens?.add(stakedBalance) : userPoolTokens
