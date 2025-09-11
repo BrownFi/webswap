@@ -87,11 +87,12 @@ export function formatExecutionPrice(trade?: Trade, inverted?: boolean): string 
 
 const formatNumberString = (value: string) => value.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '')
 
-export function formatPrice(price: number) {
+export function formatPrice(price: number, options?: Intl.NumberFormatOptions) {
   const formattedNumber = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: price > 1000 ? 0 : 2,
+    ...options,
   }).format(price)
   return formatNumberString(formattedNumber)
 }

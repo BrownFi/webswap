@@ -2,6 +2,7 @@ import { Pair } from '@brownfi/sdk'
 import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { Modal } from 'components/Modal'
+import { isMainnet } from 'connectors'
 import moment from 'moment'
 import { ReactNode, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
@@ -188,10 +189,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-white p-2 rounded shadow-md border flex flex-col gap-1">
         <p className="text-sm text-gray-600">{label}</p>
         <p className="text-sm" style={{ color: '#FFB347' }}>
-          LP Price: {formatPrice(payload[0].value)}
+          LP Price: {formatPrice(payload[0].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
         <p className="text-sm" style={{ color: '#4DA3FF' }}>
-          BnH Price: {formatPrice(payload[1].value)}
+          BnH Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
         <p className="text-sm" style={{ color: '#66CC99' }}>
           Volume: {formatPrice(payload[2].value)}
