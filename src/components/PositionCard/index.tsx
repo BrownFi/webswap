@@ -129,7 +129,9 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
               </div>
               <div className="flex flex-wrap items-center gap-1 gap-y-1">
                 <div className="min-w-[60px]">
-                  <ButtonSecondary className="!w-fit !px-1">{tradingFee}%</ButtonSecondary>
+                  <ButtonSecondary className="!w-fit !px-1">
+                    {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 4 })}%
+                  </ButtonSecondary>
                 </div>
                 <Text className="whitespace-nowrap text-[aqua] !min-w-[120px]">TVL: {formatPrice(tvl)}</Text>
                 <Text className="whitespace-nowrap text-[#27E3AB]">
