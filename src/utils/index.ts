@@ -251,9 +251,6 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
       return 'WBNB'
     }
-    if (chainId === ChainId.BERA_MAINNET) {
-      return 'WBERA'
-    }
     if (chainId === ChainId.HYPER_EVM) {
       return 'WHYPE'
     }
