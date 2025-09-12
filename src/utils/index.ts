@@ -187,20 +187,11 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
     return 'VIC'
   }
-  if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
-    return 'BNB'
-  }
-  if (chainId === ChainId.BASE_SEPOLIA) {
-    return 'USDC'
-  }
-  if (chainId === ChainId.SONIC_TESTNET) {
-    return 'S'
-  }
-  if (chainId === ChainId.METIS_MAINNET) {
-    return 'METIS'
-  }
   if (chainId === ChainId.U2U_MAINNET) {
     return 'U2U'
+  }
+  if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
+    return 'BNB'
   }
   if (chainId === ChainId.BERA_MAINNET) {
     return 'BERA'
@@ -215,17 +206,11 @@ export function getWrappedNativeToken(chainId: ChainId) {
   if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
     return 'WVIC'
   }
-  if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
-    return 'WBNB'
-  }
-  if (chainId === ChainId.SONIC_TESTNET) {
-    return 'WS'
-  }
-  if (chainId === ChainId.METIS_MAINNET) {
-    return 'WMETIS'
-  }
   if (chainId === ChainId.U2U_MAINNET) {
     return 'WU2U'
+  }
+  if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
+    return 'WBNB'
   }
   if (chainId === ChainId.BERA_MAINNET) {
     return 'WBERA'
@@ -241,20 +226,11 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'VIC'
     }
-    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
-      return 'BNB'
-    }
-    if (chainId === ChainId.SONIC_TESTNET) {
-      return 'S'
-    }
-    if (chainId === ChainId.METIS_MAINNET) {
-      return 'METIS'
-    }
     if (chainId === ChainId.U2U_MAINNET) {
       return 'U2U'
     }
-    if (chainId === ChainId.BOBA_MAINNET) {
-      return 'BOBA'
+    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
+      return 'BNB'
     }
     if (chainId === ChainId.BERA_MAINNET) {
       return 'BERA'
@@ -265,28 +241,22 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     return 'ETH'
   }
 
-  if (currency?.symbol === 'WETH' && (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET)) {
-    return 'WBNB'
-  }
-
-  if (currency?.symbol === 'WETH' && (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET)) {
-    return 'WVIC'
-  }
-
-  if (currency?.symbol === 'WETH' && chainId === ChainId.METIS_MAINNET) {
-    return 'WMETIS'
-  }
-
-  if (currency?.symbol === 'WETH' && chainId === ChainId.SONIC_TESTNET) {
-    return 'WS'
-  }
-
-  if (currency?.symbol === 'WETH' && chainId === ChainId.U2U_MAINNET) {
-    return 'WU2U'
-  }
-
-  if (currency?.symbol === 'WETH' && chainId === ChainId.HYPER_EVM) {
-    return 'WHYPE'
+  if (currency?.symbol === 'WETH') {
+    if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
+      return 'WVIC'
+    }
+    if (chainId === ChainId.U2U_MAINNET) {
+      return 'WU2U'
+    }
+    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
+      return 'WBNB'
+    }
+    if (chainId === ChainId.BERA_MAINNET) {
+      return 'WBERA'
+    }
+    if (chainId === ChainId.HYPER_EVM) {
+      return 'WHYPE'
+    }
   }
 
   return currency?.symbol
@@ -297,17 +267,11 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'Viction'
     }
-    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
-      return 'BNB'
-    }
-    if (chainId === ChainId.SONIC_TESTNET) {
-      return 'Sonic'
-    }
-    if (chainId === ChainId.METIS_MAINNET) {
-      return 'Metis'
-    }
     if (chainId === ChainId.U2U_MAINNET) {
       return 'U2U'
+    }
+    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
+      return 'BNB'
     }
     if (chainId === ChainId.BERA_MAINNET) {
       return 'Bera'
@@ -322,41 +286,25 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
 
 export function getScanText(chainId: ChainId) {
   switch (chainId) {
-    case ChainId.BSC_MAINNET:
-    case ChainId.BSC_TESTNET:
-      return 'Bscscan'
     case ChainId.VICTION_MAINNET:
     case ChainId.VICTION_TESTNET:
       return 'Vicscan'
-    case ChainId.SONIC_TESTNET:
-      return 'Soniclabs'
-    case ChainId.MINATO_SONEIUM:
-      return 'Soneium'
+    case ChainId.U2U_MAINNET:
+      return 'U2Uscan'
     case ChainId.BASE_MAINNET:
     case ChainId.BASE_SEPOLIA:
       return 'Basescan'
-    case ChainId.UNICHAIN_SEPOLIA:
-      return 'Unichainscan'
-    case ChainId.AURORA_TESTNET:
-      return 'Aurorascan'
-    case ChainId.METIS_MAINNET:
-      return 'Metisscan'
-    case ChainId.TAIKO_TESTNET:
-      return 'Taikoscan'
-    case ChainId.U2U_MAINNET:
-      return 'U2Uscan'
     case ChainId.ARBITRUM_MAINNET:
       return 'ARBscan'
+    case ChainId.BSC_MAINNET:
+    case ChainId.BSC_TESTNET:
+      return 'Bscscan'
     case ChainId.BERA_MAINNET:
       return 'Berascan'
     case ChainId.HYPER_EVM:
       return 'Hyperscan'
     case ChainId.LINEA_MAINNET:
       return 'Lineascan'
-    case ChainId.OP_MAINNET:
-      return 'OPscan'
-    case ChainId.BOBA_MAINNET:
-      return 'BOBAscan'
     default:
       return 'Etherscan'
   }
@@ -364,13 +312,13 @@ export function getScanText(chainId: ChainId) {
 
 export function isNativeCurrency(symbol: string | undefined) {
   return (
-    symbol === 'WBNB' ||
-    symbol === 'WETH' ||
     symbol === 'WVIC' ||
-    symbol === 'WS' ||
-    symbol === 'USDC' ||
-    symbol === 'WMETIS' ||
+    symbol === 'WBNB' ||
     symbol === 'WU2U' ||
-    symbol === 'WBERA'
+    symbol === 'WBERA' ||
+    symbol === 'WHYPE' ||
+    symbol === 'WETH' ||
+    //
+    false
   )
 }

@@ -3,12 +3,8 @@ import { useActiveWeb3React } from 'hooks'
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import BNBLogo from 'assets/images/bnb.svg'
-import bobaLogo from 'assets/images/boba.svg'
 import EthereumLogo from 'assets/images/ethereum-logo.png'
 import hyperevmLogo from 'assets/images/hyperevm.png'
-import lineaLogo from 'assets/images/linea.webp'
-import metisLogo from 'assets/images/metis.png'
-import sonicLogo from 'assets/images/sonic.png'
 import u2uLogo from 'assets/images/u2u.jpg'
 import VictionLogo from 'assets/images/viction.png'
 import beraLogo from 'assets/images/w-bera.png'
@@ -80,26 +76,17 @@ export function CurrencyLogo({
     )
   }
 
-  if ((currency as any)?.symbol === 'WBNB') {
-    return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
+  if ((currency as any)?.symbol === 'WETH') {
+    return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
   if ((currency as any)?.symbol === 'WVIC') {
     return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'WS') {
-    return <StyledEthereumLogo src={sonicLogo} size={size} style={style} />
-  }
-  if ((currency as any)?.symbol === 'WMETIS' || (currency as any)?.symbol === 'METIS') {
-    return <StyledEthereumLogo src={metisLogo} size={size} style={style} />
-  }
-  if ((currency as any)?.symbol === 'WETH') {
-    return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
-  }
   if ((currency as any)?.symbol === 'WU2U') {
     return <StyledEthereumLogo src={u2uLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'WBOBA') {
-    return <StyledEthereumLogo src={bobaLogo} size={size} style={style} />
+  if ((currency as any)?.symbol === 'WBNB') {
+    return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
   }
   if ((currency as any)?.symbol === 'WBERA') {
     return <StyledEthereumLogo src={beraLogo} size={size} style={style} />
@@ -107,34 +94,22 @@ export function CurrencyLogo({
   if ((currency as any)?.symbol === 'WHYPE') {
     return <StyledEthereumLogo src={hyperevmLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'BOBA') {
-    return <StyledEthereumLogo src={bobaLogo} size={size} style={style} />
-  }
 
   if (currency === ETHER) {
-    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
-      return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
-    }
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
     }
-    if (chainId === ChainId.SONIC_TESTNET) {
-      return <StyledEthereumLogo src={sonicLogo} size={size} style={style} />
-    }
-    if (chainId === ChainId.METIS_MAINNET) {
-      return <StyledEthereumLogo src={metisLogo} size={size} style={style} />
-    }
     if (chainId === ChainId.U2U_MAINNET) {
       return <StyledEthereumLogo src={u2uLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
+      return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
     }
     if (chainId === ChainId.BERA_MAINNET) {
       return <StyledEthereumLogo src={beraLogo} size={size} style={style} />
     }
     if (chainId === ChainId.HYPER_EVM) {
       return <StyledEthereumLogo src={hyperevmLogo} size={size} style={style} />
-    }
-    if (chainId === ChainId.LINEA_MAINNET) {
-      return <StyledEthereumLogo src={lineaLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
