@@ -47,8 +47,8 @@ class ErrorBoundaryBase extends Component<Props, State> {
         }
       } else {
         if (!location.host.startsWith('localhost')) {
-          // this.props.history.replace('/')
-          // location.reload()
+          this.props.history.replace('/')
+          location.reload()
         }
       }
     }

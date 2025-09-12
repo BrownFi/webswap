@@ -425,7 +425,7 @@ export default function RemoveLiquidity({
                     }}
                     color={'#27E3AB'}
                   >
-                    {showDetailed ? 'Simple' : 'Detailed'}
+                    {showDetailed ? 'Simple' : 'Enter Amount'}
                   </ClickableText>
                 </RowBetween>
                 <Row style={{ alignItems: 'center' }}>
