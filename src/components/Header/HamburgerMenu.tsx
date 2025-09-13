@@ -50,7 +50,7 @@ const HamburgerMenu: React.FC<PropsWithChildren> = ({ children }) => {
       <div
         ref={menuRef}
         className={`
-          fixed top-0 left-0 right-0 p-6 shadow-xl overflow-auto
+          fixed top-0 left-0 right-0 p-6 shadow-xl overflow-auto z-10
           transform transition-all duration-300 ease-in-out
           bg-[#e0e8ff0d] backdrop-blur-sm
           ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none'}

@@ -6,14 +6,15 @@ import styled from 'styled-components'
 import Logo from 'assets/svg/logo.svg'
 
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { ButtonSecondary } from 'components/Button'
 import Row, { RowFixed } from 'components/Row'
 import SwitchVersion from 'components/SwitchVersion'
+import { appEnv, isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
-import { isMobile } from 'react-device-detect'
 import { useAccount } from 'wagmi'
+import CustomAccountDisplay from './CustomAccountDisplay'
 import CustomChainSelect from './CustomChainSelect'
 import HamburgerMenu from './HamburgerMenu'
-import CustomAccountDisplay from './CustomAccountDisplay'
 
 const HeaderFrame = styled.div`
   display: grid;
@@ -161,12 +162,12 @@ export const StyledMenuButton = styled.button`
 export default function Header() {
   const { account } = useActiveWeb3React()
   const { isConnected } = useAccount()
-  const hideConnect = !!account && !isConnected
+  const showCustomAccountDisplay = !!account && !isConnected
 
   return (
     <HeaderFrame>
       <HeaderRow>
-        <Title className="mr-[40px]">
+        <Title className="mr-[40px] relative">
           <Link to="/">
             <UniIcon>
               <img className="min-w-[142px] w-[142px]" src={Logo} alt="logo" />
@@ -174,6 +175,12 @@ export default function Header() {
           </Link>
 
           <SwitchVersion isMobile />
+
+          {!isMainnet && (
+            <ButtonSecondary className="!w-fit !bg-blue-500/40 !px-1 uppercase !absolute -bottom-6 left-20">
+              {appEnv}
+            </ButtonSecondary>
+          )}
         </Title>
 
         <HamburgerMenu>
@@ -203,7 +210,7 @@ export default function Header() {
 
       <HeaderControls>
         <CustomChainSelect />
-        {hideConnect ? <CustomAccountDisplay /> : <ConnectButton />}
+        {showCustomAccountDisplay ? <CustomAccountDisplay /> : <ConnectButton />}
       </HeaderControls>
     </HeaderFrame>
   )
