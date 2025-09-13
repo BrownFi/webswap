@@ -10,13 +10,17 @@ interface Props extends RouteComponentProps {
 interface State {
   hasError: boolean
   error: string
+  countdown?: number | null
 }
 
 class ErrorBoundaryBase extends Component<Props, State> {
   state: State = {
     hasError: false,
     error: '',
+    countdown: null,
   }
+
+  private countdownInterval?: number
 
   static getDerivedStateFromError(error: Error): State {
     console.error(error)
@@ -41,16 +45,34 @@ class ErrorBoundaryBase extends Component<Props, State> {
   componentDidUpdate(_: Props, prevState: State) {
     if (this.state.hasError && !prevState.hasError) {
       if (this.props.location.pathname.includes('/add') || this.props.location.pathname.includes('/remove')) {
-        if (!location.host.startsWith('localhost')) {
-          this.props.history.replace('/pool')
-          location.reload()
-        }
+        // Keep original behavior for add/remove: reload immediately
+        this.props.history.replace('/pool')
+        location.reload()
       } else {
-        if (!location.host.startsWith('localhost')) {
-          this.props.history.replace('/')
-          location.reload()
+        // Start a 10s countdown before auto-reload
+        if (!this.countdownInterval) {
+          this.setState({ countdown: 10 })
+          this.countdownInterval = window.setInterval(() => {
+            this.setState((prev) => {
+              const next = (prev.countdown ?? 0) - 1
+              if (next <= 0) {
+                if (this.countdownInterval) window.clearInterval(this.countdownInterval)
+                this.countdownInterval = undefined
+                location.reload()
+                return { countdown: 0 }
+              }
+              return { countdown: next }
+            })
+          }, 1000)
         }
       }
+    }
+  }
+
+  componentWillUnmount(): void {
+    if (this.countdownInterval) {
+      window.clearInterval(this.countdownInterval)
+      this.countdownInterval = undefined
     }
   }
 
@@ -71,7 +93,7 @@ class ErrorBoundaryBase extends Component<Props, State> {
                   location.reload()
                 }}
               >
-                RELOAD
+                {this.state.countdown && this.state.countdown > 0 ? `RELOAD (${this.state.countdown})` : 'RELOAD'}
               </ButtonConfirmed>
             </div>
             <pre className="whitespace-pre-wrap text-sm md:text-base">{this.state.error}</pre>
