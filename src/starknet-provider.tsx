@@ -11,6 +11,7 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
     order: 'alphabetical',
   })
   return (
+    // Enable Starknet autoConnect: providers attempt to reconnect previously used wallets
     <StarknetConfig chains={chains} provider={provider} connectors={connectors} autoConnect>
       {children}
     </StarknetConfig>

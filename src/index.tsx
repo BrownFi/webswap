@@ -17,7 +17,6 @@ import TransactionUpdater from 'state/transactions/updater'
 import UserUpdater from 'state/user/updater'
 import ThemeProvider, { FixedGlobalStyle, ThemedGlobalStyle } from 'theme'
 import getLibrary from 'utils/getLibrary'
-import { StarknetProvider } from 'starknet-provider'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from 'services/queryClient'
 import { WagmiProvider } from 'wagmi'
@@ -52,24 +51,24 @@ root.render(
     <Provider store={store}>
       <Web3ReactProvider getLibrary={getLibrary}>
         <Web3ProviderNetwork getLibrary={getLibrary}>
+          {/* Wagmi provider (autoConnect behavior configured via wagmiConfig in connectors/index.ts) */}
           <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
+              {/* RainbowKit UI; relies on Wagmi for connection state (including autoConnect) */}
               <RainbowKitProvider theme={darkTheme()}>
-                <StarknetProvider>
-                  <Blocklist>
-                    <Updaters />
-                    <ThemeProvider>
-                      <ToastProvider>
-                        <ThemedGlobalStyle />
-                        <HashRouter>
-                          <ErrorBoundary>
-                            <App />
-                          </ErrorBoundary>
-                        </HashRouter>
-                      </ToastProvider>
-                    </ThemeProvider>
-                  </Blocklist>
-                </StarknetProvider>
+                <Blocklist>
+                  <Updaters />
+                  <ThemeProvider>
+                    <ToastProvider>
+                      <ThemedGlobalStyle />
+                      <HashRouter>
+                        <ErrorBoundary>
+                          <App />
+                        </ErrorBoundary>
+                      </HashRouter>
+                    </ToastProvider>
+                  </ThemeProvider>
+                </Blocklist>
               </RainbowKitProvider>
             </QueryClientProvider>
           </WagmiProvider>
