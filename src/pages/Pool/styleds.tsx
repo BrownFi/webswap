@@ -26,10 +26,10 @@ export const MaxButton = styled.button<{ width: string }>`
   `};
   font-weight: 700;
   cursor: pointer;
-  margin-left: 20px;
   overflow: hidden;
   color: #1e1e1e;
   :hover {
+    background-color: #27f3ab;
   }
   :focus {
     outline: none;

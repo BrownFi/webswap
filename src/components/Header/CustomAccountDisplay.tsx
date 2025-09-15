@@ -1,4 +1,3 @@
-import { ETHER } from '@brownfi/sdk'
 import { useAccountModal } from '@rainbow-me/rainbowkit'
 import { ButtonDropdown } from 'components/Button'
 import { availableChains } from 'connectors'
