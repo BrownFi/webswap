@@ -32,10 +32,19 @@ export default function Web3ReactManager({ children }: { children: JSX.Element }
 
   const chain = useSelector(chainSelector)
 
-  // try to eagerly connect to an injected provider, if it exists and has granted access already
+  /**
+   * Auto-connect: try to eagerly connect to an injected provider if previously authorized
+   *
+   * Try to eagerly connect to an injected provider, if it exists and has granted access already
+   */
   const triedEager = useEagerConnect()
 
-  // after eagerly trying injected, if the network connect ever isn't active or in an error state, activate itd
+  /**
+   * Network fallback: after eager attempt, ensure a read-only network connection is active
+   * by activating a NetworkConnector (also when no account is connected or wrong network detected).
+   *
+   * After eagerly trying injected, if the network connect ever isn't active or in an error state, activate itd
+   */
   useEffect(() => {
     const network = new NetworkConnector({
       urls: { [chain.id]: chain.rpcUrls.default.http as string[] },
@@ -51,8 +60,12 @@ export default function Web3ReactManager({ children }: { children: JSX.Element }
     }
   }, [activeNetwork, chain, triedEager, networkActive, networkError, active, isConnected, isWrongNetwork])
 
-  // when there's no account connected, react to logins (broadly speaking) on the injected provider, if it exists
-  useInactiveListener(!triedEager)
+  /**
+   * Event-based auto-connect: listen to provider events to re-activate injected connector when needed
+   *
+   * When there's no account connected, react to logins (broadly speaking) on the injected provider, if it exists
+   */
+  // useInactiveListener(!triedEager)
 
   // handle delayed loader state
   const [showLoader, setShowLoader] = useState(false)

@@ -38,10 +38,16 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
   }
 }
 
+/**
+ * Attempts an automatic (silent) connection to the injected provider on mount
+ * if the user has previously authorized the site (or on mobile if provider exists).
+ * Returns a boolean indicating we've tried (to gate UI until the attempt resolves).
+ */
 export function useEagerConnect() {
   const { activate, active } = useWeb3ReactCore() // specifically using useWeb3ReactCore because of what this hook does
   const [tried, setTried] = useState(false)
 
+  // On first mount: check authorization and try to activate the injected connector
   useEffect(() => {
     injected.isAuthorized().then((isAuthorized) => {
       if (isAuthorized) {
@@ -71,6 +77,9 @@ export function useEagerConnect() {
 }
 
 /**
+ * Listens for provider events and (re)activates the injected connector
+ * to keep the app in sync when the user changes chain or accounts externally.
+ *
  * Use for network and injected - logs user in
  * and out after checking what network theyre on
  */
@@ -82,7 +91,7 @@ export function useInactiveListener(suppress = false) {
 
     if (ethereum && ethereum.on && !active && !error && !suppress) {
       const handleChainChanged = () => {
-        // eat errors
+        // Auto-reconnect on chain changes
         activate(injected, undefined, true).catch((error) => {
           console.error('Failed to activate after chain changed', error)
         })
@@ -90,7 +99,7 @@ export function useInactiveListener(suppress = false) {
 
       const handleAccountsChanged = (accounts: string[]) => {
         if (accounts.length > 0) {
-          // eat errors
+          // Auto-reconnect when user connects an account
           activate(injected, undefined, true).catch((error) => {
             console.error('Failed to activate after accounts changed', error)
           })
