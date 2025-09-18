@@ -456,6 +456,7 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
     return []
   }
 
+  // Filter pairs using Liem's api
   const filteredPairs = pairs.filter((tokens) => {
     const symbol = `${tokens[0].symbol}/${tokens[1].symbol}`
     if (isMainnet) {

@@ -158,11 +158,16 @@ export default function Pool() {
     .slice()
     .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
+  // Filter pairs using GraphQL
   const filteredPairs = sortedPairs.filter((pair) => {
     const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
     if (isMainnet) {
       if (pair.chainId === ChainId.ARBITRUM_MAINNET) {
         return !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
+      }
+      if (pair.chainId === ChainId.BASE_MAINNET) {
+        console.log('symbol', symbol)
+        return !['USDC/cbBTC'].includes(symbol)
       }
       if (pair.chainId === ChainId.HYPER_EVM) {
         return !['USD₮0/kHYPE'].includes(symbol)
