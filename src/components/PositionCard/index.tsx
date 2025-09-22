@@ -96,14 +96,18 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   const userPoolBalance = stakedBalance ? userPoolTokens?.add(stakedBalance) : userPoolTokens
 
   const poolTokenPercentage =
-    !!userPoolBalance && !!totalPoolTokens && JSBI.greaterThanOrEqual(totalPoolTokens.raw, userPoolBalance.raw)
+    !!userPoolBalance &&
+    !!totalPoolTokens &&
+    +totalPoolTokens.raw.toString() > 0 &&
+    JSBI.greaterThanOrEqual(totalPoolTokens.raw, userPoolBalance.raw)
       ? new Percent(userPoolBalance.raw, totalPoolTokens.raw)
       : undefined
 
   const [token0Deposited, token1Deposited] =
     !!pair &&
-    !!totalPoolTokens &&
     !!userPoolBalance &&
+    !!totalPoolTokens &&
+    +totalPoolTokens.raw.toString() > 0 &&
     // this condition is a short-circuit in the case where useTokenBalance updates sooner than useTotalSupply
     JSBI.greaterThanOrEqual(totalPoolTokens.raw, userPoolBalance.raw)
       ? [
@@ -296,7 +300,9 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                         </Text>
                       </RowFixed>
                     ) : (
-                      <Loader stroke="gray" />
+                      <Text fontSize={16} fontWeight={500} color="gray">
+                        -
+                      </Text>
                     )}
                   </FixedHeightRow>
 
@@ -317,7 +323,9 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                         </Text>
                       </RowFixed>
                     ) : (
-                      <Loader stroke="gray" />
+                      <Text fontSize={16} fontWeight={500} color="gray">
+                        -
+                      </Text>
                     )}
                   </FixedHeightRow>
                 </Flex>
@@ -331,7 +339,9 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       {(poolTokenPercentage.toFixed(2) === '0.00' ? '<0.01' : poolTokenPercentage.toFixed(2)) + '%'}
                     </Text>
                   ) : (
-                    <Loader stroke="gray" />
+                    <Text fontSize={16} fontWeight={500} color="gray">
+                      -
+                    </Text>
                   )}
                 </FixedHeightRow>
               </>

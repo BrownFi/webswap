@@ -172,6 +172,9 @@ export default function Pool() {
       if (pair.chainId === ChainId.HYPER_EVM) {
         return !['USD₮0/kHYPE'].includes(symbol)
       }
+      if (pair.chainId === ChainId.LINEA_MAINNET) {
+        return !['USDC/LINEA'].includes(symbol)
+      }
     }
     return true
   })

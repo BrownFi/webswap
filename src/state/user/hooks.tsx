@@ -448,6 +448,26 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
         },
       },
     },
+    [ChainId.LINEA_MAINNET]: {
+      '0x176211869cA2b568f2A7D4EE941E073a821EE1ff:0x1789e0043623282D5DCc7F213d703C6D8BAfBB04': {
+        token0: {
+          chainId: 59144,
+          address: '0x176211869cA2b568f2A7D4EE941E073a821EE1ff',
+          name: 'USDC',
+          symbol: 'USDC',
+          decimals: 6,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png',
+        },
+        token1: {
+          chainId: 59144,
+          address: '0x1789e0043623282D5DCc7F213d703C6D8BAfBB04',
+          name: 'Linea',
+          symbol: 'LINEA',
+          decimals: 18,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/27657.png',
+        },
+      },
+    },
   }
 
   const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
@@ -465,6 +485,9 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
       }
       if (chainId === ChainId.HYPER_EVM) {
         return !['USDT/kHYPE'].includes(symbol)
+      }
+      if (chainId === ChainId.LINEA_MAINNET) {
+        return !['USDC/LINEA'].includes(symbol)
       }
     }
     return true
