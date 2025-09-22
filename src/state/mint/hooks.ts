@@ -98,6 +98,31 @@ export function useDerivedMintInfo(
   const independentAmount: CurrencyAmount | undefined = tryParseAmount(typedValue, currencies[independentField])
   const dependentAmount: CurrencyAmount | undefined = useMemo(() => {
     if (noLiquidity) {
+      if (pythPrices && independentAmount) {
+        const wrappedIndependentAmount = wrappedCurrencyAmount(independentAmount, chainId)
+        const [tokenA, tokenB] = [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)]
+        if (tokenA && tokenB && wrappedIndependentAmount && pair) {
+          const dependentCurrency = dependentField === Field.CURRENCY_B ? currencyB : currencyA
+          // TODO: Check quote divided by zero
+          let dependentTokenAmount =
+            dependentField === Field.CURRENCY_B
+              ? pair.priceOf(tokenA).quote(wrappedIndependentAmount)
+              : pair.priceOf(tokenB).quote(wrappedIndependentAmount)
+
+          const independentPrice = pythPrices[independentField]
+          const dependentPrice = pythPrices[dependentField]
+          if (independentPrice && dependentPrice) {
+            const dependentAmount = parseFloat(independentAmount.toExact()) * (independentPrice / dependentPrice)
+
+            dependentTokenAmount = new TokenAmount(
+              wrappedCurrency(dependentTokenAmount.currency, chainId)!,
+              JSBI.BigInt(Math.round(dependentAmount * 10 ** dependentTokenAmount.currency.decimals)),
+            )
+          }
+
+          return dependentCurrency === ETHER ? CurrencyAmount.ether(dependentTokenAmount.raw) : dependentTokenAmount
+        }
+      }
       if (otherTypedValue && currencies[dependentField]) {
         return tryParseAmount(otherTypedValue, currencies[dependentField])
       }
@@ -152,6 +177,12 @@ export function useDerivedMintInfo(
 
   const price = useMemo(() => {
     if (noLiquidity) {
+      if (pythPrices) {
+        const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
+        if (!parsedAmountA || !parsedAmountB) return undefined
+
+        return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+      }
       const { [Field.CURRENCY_A]: currencyAAmount, [Field.CURRENCY_B]: currencyBAmount } = parsedAmounts
       if (currencyAAmount && currencyBAmount) {
         return new Price(currencyAAmount.currency, currencyBAmount.currency, currencyAAmount.raw, currencyBAmount.raw)
