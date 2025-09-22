@@ -486,9 +486,6 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
       if (chainId === ChainId.HYPER_EVM) {
         return !['USDT/kHYPE'].includes(symbol)
       }
-      if (chainId === ChainId.LINEA_MAINNET) {
-        return !['USDC/LINEA'].includes(symbol)
-      }
     }
     return true
   })
