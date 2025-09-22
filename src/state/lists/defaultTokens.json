@@ -307,6 +307,14 @@
       "symbol": "WBTC",
       "decimals": 8,
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png"
+    },
+    {
+      "chainId": 80094,
+      "address": "0xac03CABA51e17c86c921E1f6CBFBdC91F8BB2E6b",
+      "name": "Infrared BGT",
+      "symbol": "iBGT",
+      "decimals": 18,
+      "logoURI": "https://berascan.com/token/images/ibgt_64.svg"
     }
   ]
 }
