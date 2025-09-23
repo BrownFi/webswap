@@ -63,7 +63,7 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
         ChainId.BERA_MAINNET,
         ChainId.ARBITRUM_MAINNET,
         ChainId.BASE_MAINNET,
-        // ChainId.BSC_MAINNET,
+        ChainId.BSC_MAINNET,
         ChainId.HYPER_EVM,
         ChainId.LINEA_MAINNET,
       ].includes(chainId as number) && version === 2
