@@ -168,9 +168,6 @@ export default function Pool() {
       if (pair.chainId === ChainId.BASE_MAINNET) {
         return !['USDC/cbBTC'].includes(symbol)
       }
-      if (pair.chainId === ChainId.LINEA_MAINNET) {
-        return !['LINEA/WETH'].includes(symbol)
-      }
     }
     return true
   })
