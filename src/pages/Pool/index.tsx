@@ -169,9 +169,6 @@ export default function Pool() {
         console.log('symbol', symbol)
         return !['USDC/cbBTC'].includes(symbol)
       }
-      if (pair.chainId === ChainId.HYPER_EVM) {
-        return !['USD₮0/kHYPE'].includes(symbol)
-      }
     }
     return true
   })

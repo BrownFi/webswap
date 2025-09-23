@@ -483,9 +483,6 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
       if (chainId === ChainId.ARBITRUM_MAINNET) {
         return !['WBTC/WETH', 'WETH/USDT'].includes(symbol)
       }
-      if (chainId === ChainId.HYPER_EVM) {
-        return !['USDT/kHYPE'].includes(symbol)
-      }
     }
     return true
   })
