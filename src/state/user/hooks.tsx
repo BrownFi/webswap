@@ -427,6 +427,24 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
           logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/4023.png',
         },
       },
+      '0x000Ae314E2A2172a039B26378814C252734f556A:0x55d398326f99059fF775485246999027B3197955': {
+        token0: {
+          chainId: 56,
+          address: '0x000Ae314E2A2172a039B26378814C252734f556A',
+          name: 'Aster',
+          symbol: 'ASTER',
+          decimals: 18,
+          logoURI: 'https://bscscan.com/token/images/astertoken_64.png',
+        },
+        token1: {
+          chainId: 56,
+          address: '0x55d398326f99059fF775485246999027B3197955',
+          name: 'Tether USD',
+          symbol: 'USDT',
+          decimals: 18,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/825.png',
+        },
+      },
     },
     [ChainId.HYPER_EVM]: {
       '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb:0xfD739d4e423301CE9385c1fb8850539D657C296D': {

@@ -77,6 +77,14 @@
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/4023.png"
     },
     {
+      "chainId": 56,
+      "address": "0x000Ae314E2A2172a039B26378814C252734f556A",
+      "name": "Aster",
+      "symbol": "ASTER",
+      "decimals": 18,
+      "logoURI": "https://bscscan.com/token/images/astertoken_64.png"
+    },
+    {
       "chainId": 89,
       "address": "0x7cb2CF3dde3d518b408ea0B83738C067EEdb571D",
       "name": "USD",
