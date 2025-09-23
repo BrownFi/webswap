@@ -57,7 +57,7 @@ interface PositionCardProps {
 
 export default function FullPositionCard({ pair, pairStats, border, stakedBalance }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
-  const { isTest, isBeta } = useVersion({ chainId })
+  const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
 
   const [showMore, setShowMore] = useState(isFavorite)

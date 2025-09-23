@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { ChainId } from '@brownfi/sdk'
+import { ChainId, Pair } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
 import { isMainnet } from 'connectors'
 
-export function useVersion({ chainId }: { chainId: number | undefined | null }) {
+export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
   const location = useLocation()
   const dispatch = useDispatch()
 
@@ -45,16 +45,21 @@ export function useVersion({ chainId }: { chainId: number | undefined | null }) 
   }
 
   const isBeta = useMemo(() => {
-    return (
-      [
-        //
-        ChainId.ARBITRUM_MAINNET,
-        ChainId.BASE_MAINNET,
-        ChainId.BSC_MAINNET,
-        ChainId.LINEA_MAINNET,
-      ].includes(chainId as number) && version === 2
-    )
-  }, [chainId, version])
+    const isChainBeta = [
+      //
+      ChainId.ARBITRUM_MAINNET,
+      ChainId.BASE_MAINNET,
+      ChainId.BSC_MAINNET,
+      ChainId.LINEA_MAINNET,
+    ].includes(chainId as number)
+
+    const isPairBeta = [
+      //
+      '0x46Ebd96e4a09b97AeFf54c123b9C34433682a238', // WBERA/iBGT
+    ].includes(pair?.liquidityToken.address as string)
+
+    return (isChainBeta || isPairBeta) && version === 2
+  }, [chainId, pair?.liquidityToken.address, version])
 
   const enableGraphQL = useMemo(() => {
     return (
