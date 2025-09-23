@@ -1,7 +1,6 @@
 import { Pair } from '@brownfi/sdk'
 
 export const shouldReverse = (pairSymbols: string) => {
-  console.log('pairSymbols', pairSymbols)
   return [
     //
     'USDC.e/BERA',
