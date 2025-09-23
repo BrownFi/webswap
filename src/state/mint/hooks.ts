@@ -103,24 +103,28 @@ export function useDerivedMintInfo(
         const [tokenA, tokenB] = [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)]
         if (tokenA && tokenB && wrappedIndependentAmount && pair) {
           const dependentCurrency = dependentField === Field.CURRENCY_B ? currencyB : currencyA
-          // TODO: Check quote divided by zero
-          let dependentTokenAmount =
-            dependentField === Field.CURRENCY_B
-              ? pair.priceOf(tokenA).quote(wrappedIndependentAmount)
-              : pair.priceOf(tokenB).quote(wrappedIndependentAmount)
-
           const independentPrice = pythPrices[independentField]
           const dependentPrice = pythPrices[dependentField]
           if (independentPrice && dependentPrice) {
             const dependentAmount = parseFloat(independentAmount.toExact()) * (independentPrice / dependentPrice)
 
-            dependentTokenAmount = new TokenAmount(
-              wrappedCurrency(dependentTokenAmount.currency, chainId)!,
-              JSBI.BigInt(Math.round(dependentAmount * 10 ** dependentTokenAmount.currency.decimals)),
-            )
-          }
+            if (!dependentCurrency) {
+              return undefined
+            }
 
-          return dependentCurrency === ETHER ? CurrencyAmount.ether(dependentTokenAmount.raw) : dependentTokenAmount
+            const dependentToken = wrappedCurrency(dependentCurrency, chainId)
+            if (!dependentToken) {
+              return undefined
+            }
+
+            const dependentTokenAmount = new TokenAmount(
+              dependentToken,
+              JSBI.BigInt(Math.round(dependentAmount * 10 ** dependentToken.decimals)),
+            )
+
+            return dependentCurrency === ETHER ? CurrencyAmount.ether(dependentTokenAmount.raw) : dependentTokenAmount
+          }
+          return undefined
         }
       }
       if (otherTypedValue && currencies[dependentField]) {
@@ -179,21 +183,24 @@ export function useDerivedMintInfo(
     if (noLiquidity) {
       if (pythPrices) {
         const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
-        if (!parsedAmountA || !parsedAmountB) return undefined
-
-        return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+        if (parsedAmountA && parsedAmountB) {
+          return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+        }
+        return undefined
+      } else {
+        const { [Field.CURRENCY_A]: currencyAAmount, [Field.CURRENCY_B]: currencyBAmount } = parsedAmounts
+        if (currencyAAmount && currencyBAmount) {
+          return new Price(currencyAAmount.currency, currencyBAmount.currency, currencyAAmount.raw, currencyBAmount.raw)
+        }
+        return undefined
       }
-      const { [Field.CURRENCY_A]: currencyAAmount, [Field.CURRENCY_B]: currencyBAmount } = parsedAmounts
-      if (currencyAAmount && currencyBAmount) {
-        return new Price(currencyAAmount.currency, currencyBAmount.currency, currencyAAmount.raw, currencyBAmount.raw)
-      }
-      return undefined
     } else {
       if (pythPrices) {
         const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
-        if (!parsedAmountA || !parsedAmountB) return undefined
-
-        return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+        if (parsedAmountA && parsedAmountB) {
+          return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+        }
+        return undefined
       } else {
         const wrappedCurrencyA = wrappedCurrency(currencyA, chainId)
         return pair && wrappedCurrencyA ? pair.priceOf(wrappedCurrencyA) : undefined
