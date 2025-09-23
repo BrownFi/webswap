@@ -1,4 +1,4 @@
-import { Currency, CurrencyAmount, ETHER, JSBI, Pair, Percent, Price, TokenAmount } from '@brownfi/sdk'
+import { Currency, CurrencyAmount, ETHER, JSBI, Pair, Percent, Price, Token, TokenAmount } from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { PairState, usePair } from 'data/Reserves'
@@ -96,42 +96,68 @@ export function useDerivedMintInfo(
 
   // amounts
   const independentAmount: CurrencyAmount | undefined = tryParseAmount(typedValue, currencies[independentField])
+
+  /**
+   * Calculate `dependentAmount`: derive the counterpart amount, optionally overriding with oracle pricing when provided.
+   */
   const dependentAmount: CurrencyAmount | undefined = useMemo(() => {
+    const dependentCurrency = dependentField === Field.CURRENCY_B ? currencyB : currencyA
+
+    const quoteWithOracle = (token: Token): TokenAmount | undefined => {
+      if (!pythPrices || !independentAmount) {
+        return undefined
+      }
+
+      const independentPrice = pythPrices[independentField]
+      const dependentPrice = pythPrices[dependentField]
+      if (!independentPrice || !dependentPrice) {
+        return undefined
+      }
+
+      const convertedAmount = parseFloat(independentAmount.toExact()) * (independentPrice / dependentPrice)
+      return new TokenAmount(token, JSBI.BigInt(Math.round(convertedAmount * 10 ** token.decimals)))
+    }
+
     if (noLiquidity) {
+      if (dependentCurrency) {
+        const dependentToken = wrappedCurrency(dependentCurrency, chainId)
+        const oracleQuote = dependentToken ? quoteWithOracle(dependentToken) : undefined
+        if (oracleQuote) {
+          return dependentCurrency === ETHER ? CurrencyAmount.ether(oracleQuote.raw) : oracleQuote
+        }
+      }
+
       if (otherTypedValue && currencies[dependentField]) {
         return tryParseAmount(otherTypedValue, currencies[dependentField])
       }
-      return undefined
-    } else if (independentAmount) {
-      // we wrap the currencies just to get the price in terms of the other token
-      const wrappedIndependentAmount = wrappedCurrencyAmount(independentAmount, chainId)
-      const [tokenA, tokenB] = [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)]
-      if (tokenA && tokenB && wrappedIndependentAmount && pair) {
-        const dependentCurrency = dependentField === Field.CURRENCY_B ? currencyB : currencyA
-        let dependentTokenAmount =
-          dependentField === Field.CURRENCY_B
-            ? pair.priceOf(tokenA).quote(wrappedIndependentAmount)
-            : pair.priceOf(tokenB).quote(wrappedIndependentAmount)
 
-        if (pythPrices) {
-          const independentPrice = pythPrices[independentField]
-          const dependentPrice = pythPrices[dependentField]
-          if (independentPrice && dependentPrice) {
-            const dependentAmount = parseFloat(independentAmount.toExact()) * (independentPrice / dependentPrice)
-
-            dependentTokenAmount = new TokenAmount(
-              wrappedCurrency(dependentTokenAmount.currency, chainId)!,
-              JSBI.BigInt(Math.round(dependentAmount * 10 ** dependentTokenAmount.currency.decimals)),
-            )
-          }
-        }
-
-        return dependentCurrency === ETHER ? CurrencyAmount.ether(dependentTokenAmount.raw) : dependentTokenAmount
-      }
-      return undefined
-    } else {
       return undefined
     }
+
+    if (!independentAmount) {
+      return undefined
+    }
+
+    const wrappedIndependentAmount = wrappedCurrencyAmount(independentAmount, chainId)
+    const [tokenA, tokenB] = [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)]
+    if (!tokenA || !tokenB || !wrappedIndependentAmount || !pair) {
+      return undefined
+    }
+
+    const baseDependentTokenAmount =
+      dependentField === Field.CURRENCY_B
+        ? pair.priceOf(tokenA).quote(wrappedIndependentAmount)
+        : pair.priceOf(tokenB).quote(wrappedIndependentAmount)
+
+    if (!dependentCurrency) {
+      return undefined
+    }
+
+    const dependentToken = wrappedCurrency(dependentCurrency, chainId)
+    const oracleQuote = dependentToken ? quoteWithOracle(dependentToken) : undefined
+    const resolvedTokenAmount = oracleQuote ?? baseDependentTokenAmount
+
+    return dependentCurrency === ETHER ? CurrencyAmount.ether(resolvedTokenAmount.raw) : resolvedTokenAmount
   }, [
     noLiquidity,
     otherTypedValue,
@@ -150,19 +176,31 @@ export function useDerivedMintInfo(
     [Field.CURRENCY_B]: independentField === Field.CURRENCY_A ? dependentAmount : independentAmount,
   }
 
+  /**
+   * Calculate `price`: surface the price the form should display, preferring oracle prices when available.
+   */
   const price = useMemo(() => {
     if (noLiquidity) {
-      const { [Field.CURRENCY_A]: currencyAAmount, [Field.CURRENCY_B]: currencyBAmount } = parsedAmounts
-      if (currencyAAmount && currencyBAmount) {
-        return new Price(currencyAAmount.currency, currencyBAmount.currency, currencyAAmount.raw, currencyBAmount.raw)
+      if (pythPrices) {
+        const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
+        if (parsedAmountA && parsedAmountB) {
+          return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+        }
+        return undefined
+      } else {
+        const { [Field.CURRENCY_A]: currencyAAmount, [Field.CURRENCY_B]: currencyBAmount } = parsedAmounts
+        if (currencyAAmount && currencyBAmount) {
+          return new Price(currencyAAmount.currency, currencyBAmount.currency, currencyAAmount.raw, currencyBAmount.raw)
+        }
+        return undefined
       }
-      return undefined
     } else {
       if (pythPrices) {
         const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
-        if (!parsedAmountA || !parsedAmountB) return undefined
-
-        return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+        if (parsedAmountA && parsedAmountB) {
+          return new Price(parsedAmountA.currency, parsedAmountB.currency, parsedAmountA.raw, parsedAmountB.raw)
+        }
+        return undefined
       } else {
         const wrappedCurrencyA = wrappedCurrency(currencyA, chainId)
         return pair && wrappedCurrencyA ? pair.priceOf(wrappedCurrencyA) : undefined
