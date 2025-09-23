@@ -54,6 +54,7 @@ export default function AddLiquidity({
   const currencyB = useCurrency(currencyIdB)
 
   const pythPrices = usePythPrices({ currencyA, currencyB, chainId })
+  const hasPythPrices = pythPrices.CURRENCY_A + pythPrices.CURRENCY_B > 0
 
   const oneCurrencyIsWETH = Boolean(
     chainId &&
@@ -79,11 +80,15 @@ export default function AddLiquidity({
     error,
   } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, version === 2 ? pythPrices : undefined)
 
+  console.log('price', price)
+  console.log('parsedAmounts', parsedAmounts)
+
   const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
 
   const formattedPythAmounts = {
     [independentField]: typedValue,
-    [dependentField]: noLiquidity ? otherTypedValue : dependentAmount === 0 ? '' : dependentAmount.toPrecision(6),
+    [dependentField]:
+      noLiquidity && !hasPythPrices ? otherTypedValue : dependentAmount === 0 ? '' : dependentAmount.toPrecision(6),
   }
 
   const { onFieldAInput, onFieldBInput } = useMintActionHandlers(noLiquidity)
@@ -103,11 +108,12 @@ export default function AddLiquidity({
   // get formatted amounts
   const formattedAmounts = {
     [independentField]: typedValue,
-    [dependentField]: noLiquidity
-      ? otherTypedValue
-      : version === 2
-      ? formattedPythAmounts[dependentField]
-      : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
+    [dependentField]:
+      noLiquidity && !hasPythPrices
+        ? otherTypedValue
+        : version === 2
+        ? formattedPythAmounts[dependentField]
+        : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
   }
 
   // get the max amounts user can add
