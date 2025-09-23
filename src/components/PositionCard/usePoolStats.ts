@@ -52,7 +52,7 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
     useMemo(() => {
       if (pairStats?.updatedAt) {
         const diffMinutes = moment().diff(moment.unix(pairStats.updatedAt), 'minutes')
-        return diffMinutes < 60
+        return diffMinutes < 60 * 24 * 30
       }
       return !!pairStats
     }, [pairStats]) && !!pairStats
