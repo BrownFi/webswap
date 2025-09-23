@@ -162,6 +162,9 @@ export default function Pool() {
   const filteredPairs = sortedPairs.filter((pair) => {
     const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
     if (isMainnet) {
+      if (pair.chainId === ChainId.BERA_MAINNET) {
+        return !['WBERA/iBGT'].includes(symbol)
+      }
       if (pair.chainId === ChainId.ARBITRUM_MAINNET) {
         return !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
       }
