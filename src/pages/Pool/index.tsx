@@ -169,8 +169,10 @@ export default function Pool() {
         return !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
       }
       if (pair.chainId === ChainId.BASE_MAINNET) {
-        console.log('symbol', symbol)
         return !['USDC/cbBTC'].includes(symbol)
+      }
+      if (pair.chainId === ChainId.LINEA_MAINNET) {
+        return !['LINEA/WETH'].includes(symbol)
       }
     }
     return true
