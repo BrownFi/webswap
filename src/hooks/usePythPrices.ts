@@ -6,6 +6,7 @@ import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { useFactoryContract, usePythContract } from './useContract'
 import { useVersion } from './useVersion'
 import { PairStats } from 'components/PositionCard/usePoolStats'
+import { apiV2Service } from 'services'
 
 type Props = {
   chainId: ChainId
@@ -31,11 +32,20 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
     }
   }
 
+  const { data: poolPrices } = useQuery({
+    queryKey: ['getPoolPrices', chainId, tokenA.address, tokenB.address],
+    queryFn: () =>
+      apiV2Service.getPoolPrices({ chainId, tokenA: tokenA.address, tokenB: tokenB.address }).then((pool) => {
+        return [+pool.price0 / 2 ** 64, +pool.price1 / 2 ** 64]
+      }),
+    enabled: !pair && version === 2,
+  })
+
   const priceFeedIds = useSingleContractMultipleData(
     factoryContract,
     'priceFeedIds',
     tokenA && tokenB && version === 2 ? [[tokenA?.address], [tokenB?.address]] : [],
-    { disabled: !!pairStats },
+    { disabled: !!pairStats || !pair },
   )
 
   const priceUnsafes = useSingleContractMultipleData(
@@ -63,8 +73,8 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
   })
 
   const pythPrices = {
-    [Field.CURRENCY_A]: (version === 2 ? tokenAPrice : tokenPrices[0]) || 0,
-    [Field.CURRENCY_B]: (version === 2 ? tokenBPrice : tokenPrices[1]) || 0,
+    [Field.CURRENCY_A]: (version === 2 ? poolPrices?.[0] || tokenAPrice : tokenPrices[0]) || 0,
+    [Field.CURRENCY_B]: (version === 2 ? poolPrices?.[1] || tokenBPrice : tokenPrices[1]) || 0,
   }
   return pythPrices
 }

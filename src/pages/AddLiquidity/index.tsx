@@ -80,9 +80,6 @@ export default function AddLiquidity({
     error,
   } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, version === 2 ? pythPrices : undefined)
 
-  console.log('price', price)
-  console.log('parsedAmounts', parsedAmounts)
-
   const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
 
   const formattedPythAmounts = {
