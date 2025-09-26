@@ -137,14 +137,8 @@ export default function AddLiquidity({
 
   const parsedAmountAForApproval = parsedAmounts[Field.CURRENCY_A]
   const parsedAmountBForApproval = parsedAmounts[Field.CURRENCY_B]
-  const approvalAmountA = useMemo(() => getApprovalBuffer(parsedAmountAForApproval, allowedSlippage), [
-    parsedAmountAForApproval,
-    allowedSlippage,
-  ])
-  const approvalAmountB = useMemo(() => getApprovalBuffer(parsedAmountBForApproval, allowedSlippage), [
-    parsedAmountBForApproval,
-    allowedSlippage,
-  ])
+  const approvalAmountA = useMemo(() => getApprovalBuffer(parsedAmountAForApproval), [parsedAmountAForApproval])
+  const approvalAmountB = useMemo(() => getApprovalBuffer(parsedAmountBForApproval), [parsedAmountBForApproval])
 
   // check whether the user has approved the router on the tokens
   const [approvalA, approveACallback] = useApproveCallback(approvalAmountA, getRouterAddress(chainId || 0, version))
