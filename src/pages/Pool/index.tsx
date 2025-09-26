@@ -161,9 +161,13 @@ export default function Pool() {
   // Filter pairs using GraphQL
   const filteredPairs = sortedPairs.filter((pair) => {
     const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
+    // console.log('symbol', symbol)
     if (isMainnet) {
       if (pair.chainId === ChainId.ARBITRUM_MAINNET) {
         return !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
+      }
+      if (pair.chainId === ChainId.BSC_MAINNET) {
+        return !['USDC/WBNB', 'USDT/WBNB', 'USDT/BTCB'].includes(symbol)
       }
       if (pair.chainId === ChainId.BASE_MAINNET) {
         return !['USDC/cbBTC'].includes(symbol)
