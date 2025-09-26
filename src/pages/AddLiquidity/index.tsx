@@ -1,18 +1,18 @@
 import { addLiquidity, Currency, currencyEquals, getRouterAddress, TokenAmount, WETH } from '@brownfi/sdk'
-import React, { useCallback, useContext, useState } from 'react'
-import { Plus } from 'react-feather'
-import { RouteComponentProps } from 'react-router-dom'
-import { Text } from 'rebass'
-import { ThemeContext } from 'styled-components'
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { BlueCard, LightCard } from 'components/Card'
 import { AutoColumn, ColumnCenter } from 'components/Column'
-import { TransactionConfirmationModal, ConfirmationModalContent } from 'components/TransactionConfirmationModal'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row, { RowBetween, RowFlat } from 'components/Row'
+import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
+import { useCallback, useContext, useMemo, useState } from 'react'
+import { Plus } from 'react-feather'
+import { RouteComponentProps } from 'react-router-dom'
+import { Text } from 'rebass'
+import { ThemeContext } from 'styled-components'
 
 import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
@@ -22,22 +22,23 @@ import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { Field } from 'state/mint/actions'
 import { useDerivedMintInfo, useMintActionHandlers, useMintState } from 'state/mint/hooks'
 
+import ConnectWallet from 'components/ConnectWallet'
+import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
+import { useToast } from 'containers/ToastProvider'
+import { useIsTransactionUnsupported } from 'hooks/Trades'
+import { usePythPrices } from 'hooks/usePythPrices'
+import { useVersion } from 'hooks/useVersion'
+import { AppBody } from 'pages/AppBody'
+import { Dots, Wrapper } from 'pages/Pool/styleds'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { useIsExpertMode, useUserSlippageTolerance } from 'state/user/hooks'
 import { TYPE } from 'theme'
-import { maxAmountSpend } from 'utils/maxAmountSpend'
-import { AppBody } from 'pages/AppBody'
-import { Dots, Wrapper } from 'pages/Pool/styleds'
-import { ConfirmAddModalBottom } from './ConfirmAddModalBottom'
-import { currencyId } from 'utils/currencyId'
-import { PoolPriceBar } from './PoolPriceBar'
-import { useIsTransactionUnsupported } from 'hooks/Trades'
-import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
 import { getTokenSymbol } from 'utils'
-import ConnectWallet from 'components/ConnectWallet'
-import { usePythPrices } from 'hooks/usePythPrices'
-import { useVersion } from 'hooks/useVersion'
-import { useToast } from 'containers/ToastProvider'
+import { currencyId } from 'utils/currencyId'
+import { maxAmountSpend } from 'utils/maxAmountSpend'
+import { ConfirmAddModalBottom } from './ConfirmAddModalBottom'
+import { PoolPriceBar } from './PoolPriceBar'
+import { getApprovalBuffer } from './utils'
 
 export default function AddLiquidity({
   match: {
@@ -134,15 +135,20 @@ export default function AddLiquidity({
     {},
   )
 
+  const parsedAmountAForApproval = parsedAmounts[Field.CURRENCY_A]
+  const parsedAmountBForApproval = parsedAmounts[Field.CURRENCY_B]
+  const approvalAmountA = useMemo(() => getApprovalBuffer(parsedAmountAForApproval, allowedSlippage), [
+    parsedAmountAForApproval,
+    allowedSlippage,
+  ])
+  const approvalAmountB = useMemo(() => getApprovalBuffer(parsedAmountBForApproval, allowedSlippage), [
+    parsedAmountBForApproval,
+    allowedSlippage,
+  ])
+
   // check whether the user has approved the router on the tokens
-  const [approvalA, approveACallback] = useApproveCallback(
-    parsedAmounts[Field.CURRENCY_A],
-    getRouterAddress(chainId || 0, version),
-  )
-  const [approvalB, approveBCallback] = useApproveCallback(
-    parsedAmounts[Field.CURRENCY_B],
-    getRouterAddress(chainId || 0, version),
-  )
+  const [approvalA, approveACallback] = useApproveCallback(approvalAmountA, getRouterAddress(chainId || 0, version))
+  const [approvalB, approveBCallback] = useApproveCallback(approvalAmountB, getRouterAddress(chainId || 0, version))
 
   const addTransaction = useTransactionAdder()
 
