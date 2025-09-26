@@ -135,7 +135,7 @@ const linea = overrideChain({
   iconUrl: require('assets/images/linea.webp'),
   fallbackRpcs: [
     //
-    'https://linea.drpc.org',
+    'https://1rpc.io/linea',
     'https://linea.therpc.io',
   ],
 })
