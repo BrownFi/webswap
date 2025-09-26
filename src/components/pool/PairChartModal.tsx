@@ -31,7 +31,6 @@ const GET_PAIR_STATS = `
         lpPrice
         bnhPrice
         bnhPrice2
-        netPnL
       }
     }
   }
@@ -59,7 +58,6 @@ const PairChartModal = ({ pair, name }: Props) => {
         lpPrice: number
         bnhPrice: number
         bnhPrice2: number
-        netPnL: number
       }[]
     }
   }>(
