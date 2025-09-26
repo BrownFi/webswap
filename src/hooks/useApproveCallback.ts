@@ -1,6 +1,14 @@
 import { MaxUint256 } from '@ethersproject/constants'
 import { TransactionResponse } from '@ethersproject/providers'
-import { Trade, TokenAmount, CurrencyAmount, ETHER, ROUTER_ADDRESS_WITH_PRICE, getRouterAddress } from '@brownfi/sdk'
+import {
+  Trade,
+  TokenAmount,
+  CurrencyAmount,
+  ETHER,
+  ROUTER_ADDRESS_WITH_PRICE,
+  ROUTER_ADDRESS_V1,
+  getRouterAddress,
+} from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
 import { useTokenAllowance } from 'data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from 'data/V1'
@@ -117,7 +125,7 @@ export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) 
       ? v1ExchangeAddress
       : chainId
       ? version === 1
-        ? ROUTER_ADDRESS_WITH_PRICE[chainId]
+        ? ROUTER_ADDRESS_WITH_PRICE[chainId] || ROUTER_ADDRESS_V1[chainId]
         : getRouterAddress(chainId, version)
       : '',
   )
