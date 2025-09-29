@@ -137,7 +137,7 @@ const PairChartModal = ({ pair, name }: Props) => {
                   <Tooltip content={<CustomTooltip />} />
                   <Legend content={<CustomLegend />} />
                   <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" />
-                  <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" />
+                  {!isMainnet && <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" />}
                   <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="right" />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -189,11 +189,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="text-sm" style={{ color: '#FFB347' }}>
           LP Price: {formatPrice(payload[0].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
-        <p className="text-sm" style={{ color: '#4DA3FF' }}>
-          BnH Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
-        </p>
+        {!isMainnet && (
+          <p className="text-sm" style={{ color: '#4DA3FF' }}>
+            BnH Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+          </p>
+        )}
         <p className="text-sm" style={{ color: '#66CC99' }}>
-          Volume: {formatPrice(payload[2].value)}
+          Volume: {formatPrice((payload[2] || payload[1]).value)}
         </p>
       </div>
     )
