@@ -1,12 +1,9 @@
-import { ChainId, Currency, Field, getPriceFromUnsafe, getPythPricePair, Pair } from '@brownfi/sdk'
+import { ChainId, Currency, Field, getPythPricePair, Pair } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
-import { useSingleContractMultipleData } from 'state/multicall/hooks'
-import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { useFactoryContract, usePythContract } from './useContract'
-import { useVersion } from './useVersion'
 import { PairStats } from 'components/PositionCard/usePoolStats'
 import { apiV2Service } from 'services'
+import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { useVersion } from './useVersion'
 
 type Props = {
   chainId: ChainId
@@ -22,9 +19,6 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
   const tokenA = wrappedCurrency(currencyA ?? undefined, chainId)
   const tokenB = wrappedCurrency(currencyB ?? undefined, chainId)
 
-  const factoryContract = useFactoryContract()
-  const pythContract = usePythContract()
-
   if (!tokenA || !tokenB || !chainId) {
     return {
       [Field.CURRENCY_A]: 0,
@@ -38,33 +32,8 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
       apiV2Service.getPoolPrices({ chainId, tokenA: tokenA.address, tokenB: tokenB.address }).then((pool) => {
         return [+pool.price0 / 2 ** 64, +pool.price1 / 2 ** 64]
       }),
-    enabled: !pair && version === 2,
+    enabled: version === 2,
   })
-
-  const priceFeedIds = useSingleContractMultipleData(
-    factoryContract,
-    'priceFeedIds',
-    tokenA && tokenB && version === 2 ? [[tokenA?.address], [tokenB?.address]] : [],
-    { disabled: !!pairStats || !pair },
-  )
-
-  const priceUnsafes = useSingleContractMultipleData(
-    pythContract,
-    'getPriceUnsafe',
-    pairStats
-      ? [[pairStats.token0!.priceFeedId], [pairStats.token1!.priceFeedId]]
-      : priceFeedIds.every((a) => a.result)
-      ? priceFeedIds.map((a) => a.result?.flat())
-      : [],
-    { disabled: !!pairStats },
-  )
-
-  const [tokenAPrice, tokenBPrice] = useMemo(() => {
-    const fallbackPrices = [pairStats?.token0?.price ?? 0, pairStats?.token1?.price ?? 0]
-    if (priceUnsafes.length !== 2) return fallbackPrices
-    if (priceUnsafes.some((priceUnsafe) => !priceUnsafe.result)) return fallbackPrices
-    return priceUnsafes.map((priceUnsafe) => getPriceFromUnsafe(priceUnsafe.result?.[0]))
-  }, [priceUnsafes, pairStats])
 
   const { data: tokenPrices = [0, 0] } = useQuery({
     queryFn: () => getPythPricePair(pair, chainId),
@@ -72,9 +41,11 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
     enabled: !!pair && version === 1,
   })
 
+  const fallbackPrices = [pairStats?.token0?.price ?? 0, pairStats?.token1?.price ?? 0]
+
   const pythPrices = {
-    [Field.CURRENCY_A]: (version === 2 ? poolPrices?.[0] || tokenAPrice : tokenPrices[0]) || 0,
-    [Field.CURRENCY_B]: (version === 2 ? poolPrices?.[1] || tokenBPrice : tokenPrices[1]) || 0,
+    [Field.CURRENCY_A]: (version === 2 ? poolPrices?.[0] : tokenPrices[0]) || fallbackPrices[0],
+    [Field.CURRENCY_B]: (version === 2 ? poolPrices?.[1] : tokenPrices[1]) || fallbackPrices[1],
   }
   return pythPrices
 }

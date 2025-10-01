@@ -11,6 +11,7 @@ export declare function getRouterAddress(chainId: number, version: number): any;
 export declare function getFactoryAddress(chainId: number, version: number): any;
 export declare function getInitCodeHash(chainId: number, version: number): any;
 /**
+ * @deprecated
  * Use when AddLiquidity v2 - Arbitrum Sepolia, Arbitrum One
  */
 export declare const getPythPrice: (address: string, chainId: ChainId, version: number) => Promise<number>;
