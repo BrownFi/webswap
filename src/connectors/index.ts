@@ -140,13 +140,23 @@ const linea = overrideChain({
   ],
 })
 
+const sei = overrideChain({
+  chain: defaultChains.sei,
+  iconUrl: require('assets/images/sei.png'),
+  fallbackRpcs: [
+    //
+    'https://sei.drpc.org',
+    'https://sei.therpc.io',
+  ],
+})
+
 export const appEnv = process.env.REACT_APP_ENVIROMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 console.log(`======== ENVIROMENT: "${appEnv}" =========`, { isMainnet })
 
 const mainChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, viction, u2uMainnet]
-const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, viction, u2uMainnet]
-const testChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, viction, u2uMainnet, sepolia]
+const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, viction, u2uMainnet]
+const testChains: Chain[] = [berachain, sepolia]
 
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]

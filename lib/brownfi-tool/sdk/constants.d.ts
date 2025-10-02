@@ -27,6 +27,7 @@ export declare enum ChainId {
     BERA_MAINNET = 80094,
     HYPER_EVM = 999,
     LINEA_MAINNET = 59144,
+    SEI_MAINNET = 1329,
     OP_MAINNET = 10,
     BOBA_MAINNET = 288
 }

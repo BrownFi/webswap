@@ -261,6 +261,22 @@
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/27657.png"
     },
     {
+      "chainId": 1329,
+      "address": "0xe15fC38F6D8c56aF07bbCBe3BAf5708A2Bf42392",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
+    },
+    {
+      "chainId": 1329,
+      "address": "0x160345fC359604fC6e70E3c5fAcbdE5F7A9342d8",
+      "name": "WETH",
+      "symbol": "WETH",
+      "decimals": 18,
+      "logoURI": "https://seiscan.io/token/images/weth_64.png"
+    },
+    {
       "chainId": 10,
       "address": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
       "name": "USDC",

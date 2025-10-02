@@ -28,6 +28,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
         ChainId.BSC_MAINNET,
         ChainId.HYPER_EVM,
         ChainId.LINEA_MAINNET,
+        ChainId.SEI_MAINNET,
         ChainId.ARBITRUM_SEPOLIA,
         ChainId.SEPOLIA,
       ].includes(chainId as number)
@@ -51,6 +52,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       ChainId.BASE_MAINNET,
       ChainId.BSC_MAINNET,
       ChainId.LINEA_MAINNET,
+      ChainId.SEI_MAINNET,
     ].includes(chainId as number)
 
     const isPairBeta = [
@@ -76,6 +78,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
         ChainId.BSC_MAINNET,
         ChainId.HYPER_EVM,
         ChainId.LINEA_MAINNET,
+        ChainId.SEI_MAINNET,
       ].includes(chainId as number) && version === 2
     )
   }, [chainId, version])

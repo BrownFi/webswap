@@ -3,7 +3,7 @@ import { getAddress } from '@ethersproject/address'
 import { AddressZero } from '@ethersproject/constants'
 import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers'
 import { BigNumber } from '@ethersproject/bignumber'
-import { ChainId, JSBI, Percent, Token, CurrencyAmount, Currency, ETHER } from '@brownfi/sdk'
+import { ChainId, JSBI, Percent, Token, CurrencyAmount, Currency, ETHER, WETH } from '@brownfi/sdk'
 import { TokenAddressMap } from 'state/lists/hooks'
 
 // returns the checksummed address if the address is valid, otherwise returns false
@@ -96,7 +96,10 @@ export function getEtherscanLink(
       prefix = 'https://hyperevmscan.io'
       break
     case ChainId.LINEA_MAINNET:
-      prefix = 'https://lineascan.build/'
+      prefix = 'https://lineascan.build'
+      break
+    case ChainId.SEI_MAINNET:
+      prefix = 'https://seiscan.io'
       break
     case ChainId.OP_MAINNET:
       prefix = 'https://optimistic.etherscan.io'
@@ -199,24 +202,26 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.HYPER_EVM) {
     return 'HYPE'
   }
+  if (chainId === ChainId.SEI_MAINNET) {
+    return 'SEI'
+  }
   return 'ETH'
 }
 
 export function getWrappedNativeToken(chainId: ChainId) {
-  if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
-    return 'WVIC'
-  }
-  if (chainId === ChainId.U2U_MAINNET) {
-    return 'WU2U'
-  }
-  if (chainId === ChainId.BSC_TESTNET || chainId === ChainId.BSC_MAINNET) {
-    return 'WBNB'
-  }
-  if (chainId === ChainId.BERA_MAINNET) {
-    return 'WBERA'
-  }
-  if (chainId === ChainId.HYPER_EVM) {
-    return 'WHYPE'
+  if (
+    [
+      ChainId.VICTION_TESTNET,
+      ChainId.VICTION_MAINNET,
+      ChainId.U2U_MAINNET,
+      ChainId.BSC_TESTNET,
+      ChainId.BSC_MAINNET,
+      ChainId.BERA_MAINNET,
+      ChainId.HYPER_EVM,
+      ChainId.SEI_MAINNET,
+    ].includes(chainId)
+  ) {
+    return WETH[chainId].symbol
   }
   return 'WETH'
 }
@@ -237,6 +242,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     }
     if (chainId === ChainId.HYPER_EVM) {
       return 'HYPE'
+    }
+    if (chainId === ChainId.SEI_MAINNET) {
+      return 'SEI'
     }
     return 'ETH'
   }
@@ -271,10 +279,13 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
       return 'BNB'
     }
     if (chainId === ChainId.BERA_MAINNET) {
-      return 'Bera'
+      return 'BERA'
     }
     if (chainId === ChainId.HYPER_EVM) {
       return 'HYPE'
+    }
+    if (chainId === ChainId.SEI_MAINNET) {
+      return 'SEI'
     }
     return 'Ethereum'
   }
@@ -302,6 +313,8 @@ export function getScanText(chainId: ChainId) {
       return 'Hyperscan'
     case ChainId.LINEA_MAINNET:
       return 'Lineascan'
+    case ChainId.SEI_MAINNET:
+      return 'Seiscan'
     default:
       return 'Etherscan'
   }
@@ -310,10 +323,11 @@ export function getScanText(chainId: ChainId) {
 export function isNativeCurrency(symbol: string | undefined) {
   return (
     symbol === 'WVIC' ||
-    symbol === 'WBNB' ||
     symbol === 'WU2U' ||
+    symbol === 'WBNB' ||
     symbol === 'WBERA' ||
     symbol === 'WHYPE' ||
+    symbol === 'WSEI' ||
     symbol === 'WETH' ||
     //
     false

@@ -63,6 +63,7 @@ const EMPTY_LIST: TokenAddressMap = {
   [ChainId.BERA_MAINNET]: {},
   [ChainId.HYPER_EVM]: {},
   [ChainId.LINEA_MAINNET]: {},
+  [ChainId.SEI_MAINNET]: {},
   [ChainId.OP_MAINNET]: {},
   [ChainId.BOBA_MAINNET]: {},
 }
@@ -143,6 +144,7 @@ function combineMaps(map1: TokenAddressMap, map2: TokenAddressMap): TokenAddress
     [ChainId.BERA_MAINNET]: { ...map1[ChainId.BERA_MAINNET], ...map2[ChainId.BERA_MAINNET] },
     [ChainId.HYPER_EVM]: { ...map1[ChainId.HYPER_EVM], ...map2[ChainId.HYPER_EVM] },
     [ChainId.LINEA_MAINNET]: { ...map1[ChainId.LINEA_MAINNET], ...map2[ChainId.LINEA_MAINNET] },
+    [ChainId.SEI_MAINNET]: { ...map1[ChainId.SEI_MAINNET], ...map2[ChainId.SEI_MAINNET] },
     [ChainId.OP_MAINNET]: { ...map1[ChainId.OP_MAINNET], ...map2[ChainId.OP_MAINNET] },
     [ChainId.BOBA_MAINNET]: { ...map1[ChainId.BOBA_MAINNET], ...map2[ChainId.BOBA_MAINNET] },
   }
