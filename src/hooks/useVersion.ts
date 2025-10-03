@@ -51,7 +51,6 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       ChainId.ARBITRUM_MAINNET,
       ChainId.BASE_MAINNET,
       ChainId.BSC_MAINNET,
-      ChainId.LINEA_MAINNET,
       ChainId.SEI_MAINNET,
     ].includes(chainId as number)
 
@@ -60,10 +59,9 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       '0x46Ebd96e4a09b97AeFf54c123b9C34433682a238', // WBERA/iBGT
     ].includes(pair?.liquidityToken.address as string)
 
-    const isNotPairBeta = [
+    const isNotPairBeta = ([
       //
-      '0xA87E2c65F2b79164bab690Ec6808431D8c419598', // ETH/USDC
-    ].includes(pair?.liquidityToken.address as string)
+    ] as string[]).includes(pair?.liquidityToken.address as string)
 
     return (isChainBeta || isPairBeta) && !isNotPairBeta && version === 2
   }, [chainId, pair?.liquidityToken.address, version])
