@@ -27,6 +27,7 @@ import { PairStats, usePoolStats } from './usePoolStats'
 import { Loader } from 'components/Loader'
 import { PairChartModal } from 'components/pool/PairChartModal'
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
+import QuestionHelper from 'components/QuestionHelper'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -69,7 +70,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
     volume24h,
     volume7d,
     unrealizedPnL,
-    unrealizedBnHPnL,
+    simulatedPnL,
     shouldUseIndexer,
   } = usePoolStats({
     pair,
@@ -347,22 +348,32 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   )}
                 </FixedHeightRow>
 
-                {account && (unrealizedPnL !== undefined || unrealizedBnHPnL !== undefined) && (
+                {account && unrealizedPnL !== undefined && (
                   <>
                     <FixedHeightRow>
-                      <Text fontSize={16} fontWeight={500} color="white">
-                        Unrealized LP PnL
-                      </Text>
+                      <div className="flex">
+                        <Text fontSize={16} fontWeight={500} color="white">
+                          Absolute PnL
+                        </Text>
+                        <QuestionHelper
+                          text={`The total profit or loss from your LPing, based on the capital you deployed.\nFormula: Absolute PnL = (Current Position Value) - (Total Deposits) - (Total Withdrawals)`}
+                        />
+                      </div>
                       <Text fontSize={16} fontWeight={500} color={unrealizedPnL! > 0 ? '#35b935' : '#ff6c00'}>
                         {formatPrice(unrealizedPnL || 0)}
                       </Text>
                     </FixedHeightRow>
                     <FixedHeightRow>
-                      <Text fontSize={16} fontWeight={500} color="white">
-                        Simulated BnH PnL
-                      </Text>
-                      <Text fontSize={16} fontWeight={500} color={unrealizedBnHPnL! > 0 ? '#35b935' : '#ff6c00'}>
-                        {formatPrice(unrealizedBnHPnL || 0)}
+                      <div className="flex">
+                        <Text fontSize={16} fontWeight={500} color="white">
+                          Relative PnL
+                        </Text>
+                        <QuestionHelper
+                          text={`How your LPing performed compared to if you had just held the two tokens in your wallet.\nFormula: Relative PnL = (Current Position Value) - (Simulated HODL value)`}
+                        />
+                      </div>
+                      <Text fontSize={16} fontWeight={500} color={simulatedPnL! > 0 ? '#35b935' : '#ff6c00'}>
+                        {formatPrice(simulatedPnL || 0)}
                       </Text>
                     </FixedHeightRow>
                   </>

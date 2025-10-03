@@ -45,6 +45,11 @@ const GET_PAIR_ACCOUNT = `
       pairAddress: $pairAddress
       address: $address
     ) {
+      lpPortfolio
+      basePortfolio
+      bnhPortfolio
+      netPnL
+      netBnHPnL
       unrealizedPnL
       unrealizedBnHPnL
     }
@@ -74,6 +79,11 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
   const { data } = useSWR<
     {
       pairAccount: {
+        lpPortfolio: number
+        basePortfolio: number
+        bnhPortfolio: number
+        netPnL: number
+        netBnHPnL: number
         unrealizedPnL: number
         unrealizedBnHPnL: number
       }
@@ -92,8 +102,6 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
       refreshInterval: 1 * 60 * 1000,
     },
   )
-
-  console.log({ account: !!account, pairStats: !!pairStats, data })
 
   const shouldUseIndexer =
     useMemo(() => {
@@ -120,7 +128,7 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
     volume24h: (shouldUseIndexer ? pairStats.volumeDay : poolStats?.volume24h) || 0,
     volume7d: (shouldUseIndexer ? pairStats.volume7Day : poolStats?.volume7d) || 0,
     unrealizedPnL: data?.pairAccount?.unrealizedPnL,
-    unrealizedBnHPnL: data?.pairAccount?.unrealizedBnHPnL,
+    simulatedPnL: (data?.pairAccount?.bnhPortfolio || 0) - (data?.pairAccount.basePortfolio || 0),
     shouldUseIndexer,
   }
 }
