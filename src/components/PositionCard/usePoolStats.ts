@@ -66,7 +66,9 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
   })
 
   const pairAccountKey =
-    account && pairStats ? (['PairAccount', pair.chainId, pair.liquidityToken.address, account] as const) : null
+    account && pair?.chainId && pairStats
+      ? (['PairAccount', pair.chainId, pair.liquidityToken.address, account] as const)
+      : null
 
   const { data } = useSWR<
     {
