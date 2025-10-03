@@ -254,6 +254,14 @@
     },
     {
       "chainId": 59144,
+      "address": "0xA219439258ca9da29E9Cc4cE5596924745e12B93",
+      "name": "USDT",
+      "symbol": "USDT",
+      "decimals": 6,
+      "logoURI": "https://lineascan.build/token/images/bridgedusdt2_ofc_64.png"
+    },
+    {
+      "chainId": 59144,
       "address": "0x1789e0043623282D5DCc7F213d703C6D8BAfBB04",
       "name": "Linea",
       "symbol": "LINEA",
