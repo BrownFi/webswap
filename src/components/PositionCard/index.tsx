@@ -68,6 +68,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
     feeAPR: feeAPRIndexer,
     volume24h,
     volume7d,
+    unrealizedPnL,
     unrealizedBnHPnL,
     shouldUseIndexer,
   } = usePoolStats({
@@ -346,15 +347,25 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   )}
                 </FixedHeightRow>
 
-                {account && unrealizedBnHPnL !== undefined && (
-                  <FixedHeightRow>
-                    <Text fontSize={16} fontWeight={500} color="white">
-                      Simulated BnH PnL
-                    </Text>
-                    <Text fontSize={16} fontWeight={500} color={unrealizedBnHPnL > 0 ? '#35b935' : '#ff6c00'}>
-                      {formatPrice(unrealizedBnHPnL)}
-                    </Text>
-                  </FixedHeightRow>
+                {account && (unrealizedPnL !== undefined || unrealizedBnHPnL !== undefined) && (
+                  <>
+                    <FixedHeightRow>
+                      <Text fontSize={16} fontWeight={500} color="white">
+                        Unrealized LP PnL
+                      </Text>
+                      <Text fontSize={16} fontWeight={500} color={unrealizedPnL! > 0 ? '#35b935' : '#ff6c00'}>
+                        {formatPrice(unrealizedPnL || 0)}
+                      </Text>
+                    </FixedHeightRow>
+                    <FixedHeightRow>
+                      <Text fontSize={16} fontWeight={500} color="white">
+                        Simulated BnH PnL
+                      </Text>
+                      <Text fontSize={16} fontWeight={500} color={unrealizedBnHPnL! > 0 ? '#35b935' : '#ff6c00'}>
+                        {formatPrice(unrealizedBnHPnL || 0)}
+                      </Text>
+                    </FixedHeightRow>
+                  </>
                 )}
               </>
             )}

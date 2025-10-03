@@ -45,6 +45,7 @@ const GET_PAIR_ACCOUNT = `
       pairAddress: $pairAddress
       address: $address
     ) {
+      unrealizedPnL
       unrealizedBnHPnL
     }
   }
@@ -118,6 +119,7 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
     feeAPR: (shouldUseIndexer ? pairStats.apr : poolStats?.apy) || 0,
     volume24h: (shouldUseIndexer ? pairStats.volumeDay : poolStats?.volume24h) || 0,
     volume7d: (shouldUseIndexer ? pairStats.volume7Day : poolStats?.volume7d) || 0,
+    unrealizedPnL: data?.pairAccount?.unrealizedPnL,
     unrealizedBnHPnL: data?.pairAccount?.unrealizedBnHPnL,
     shouldUseIndexer,
   }
