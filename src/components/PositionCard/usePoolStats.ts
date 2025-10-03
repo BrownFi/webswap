@@ -128,7 +128,7 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
     volume24h: (shouldUseIndexer ? pairStats.volumeDay : poolStats?.volume24h) || 0,
     volume7d: (shouldUseIndexer ? pairStats.volume7Day : poolStats?.volume7d) || 0,
     unrealizedPnL: data?.pairAccount?.unrealizedPnL,
-    simulatedPnL: (data?.pairAccount?.bnhPortfolio || 0) - (data?.pairAccount.basePortfolio || 0),
+    simulatedPnL: (data?.pairAccount?.bnhPortfolio || 0) - (data?.pairAccount?.basePortfolio || 0),
     shouldUseIndexer,
   }
 }
