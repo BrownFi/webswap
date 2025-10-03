@@ -68,6 +68,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
     feeAPR: feeAPRIndexer,
     volume24h,
     volume7d,
+    unrealizedBnHPnL,
     shouldUseIndexer,
   } = usePoolStats({
     pair,
@@ -291,7 +292,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       </Text>
                     </RowFixed>
                     {token0Deposited ? (
-                      <RowFixed className="gap-2">
+                      <RowFixed className="gap-1">
                         <Text fontSize={16} fontWeight={500} color="white">
                           {formatNumber(token0Deposited?.toSignificant(4))}
                         </Text>
@@ -314,7 +315,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       </Text>
                     </RowFixed>
                     {token1Deposited ? (
-                      <RowFixed className="gap-2">
+                      <RowFixed className="gap-1">
                         <Text fontSize={16} fontWeight={500} color="white">
                           {formatNumber(token1Deposited?.toSignificant(4))}
                         </Text>
@@ -336,7 +337,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   </Text>
                   {poolTokenPercentage ? (
                     <Text fontSize={16} fontWeight={500} color="white">
-                      {(poolTokenPercentage.toFixed(2) === '0.00' ? '<0.01' : poolTokenPercentage.toFixed(2)) + '%'}
+                      {(poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2)) + '%'}
                     </Text>
                   ) : (
                     <Text fontSize={16} fontWeight={500} color="gray">
@@ -344,6 +345,17 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     </Text>
                   )}
                 </FixedHeightRow>
+
+                {account && unrealizedBnHPnL !== undefined && (
+                  <FixedHeightRow>
+                    <Text fontSize={16} fontWeight={500} color="white">
+                      Simulated BnH PnL
+                    </Text>
+                    <Text fontSize={16} fontWeight={500} color={unrealizedBnHPnL > 0 ? '#35b935' : '#ff6c00'}>
+                      {formatPrice(unrealizedBnHPnL)}
+                    </Text>
+                  </FixedHeightRow>
+                )}
               </>
             )}
 
