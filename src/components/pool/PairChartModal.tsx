@@ -85,7 +85,7 @@ const PairChartModal = ({ pair, name }: Props) => {
         })
         .filter((item) => {
           if (isHYPEUSDT) {
-            return moment.unix(item.startUnix) > moment('2025-08-12')
+            // return moment.unix(item.startUnix) > moment('2025-08-12')
           }
           return true
         }) ?? []
