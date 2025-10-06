@@ -30,7 +30,6 @@ const GET_PAIR_STATS = `
         apr
         lpPrice
         bnhPrice
-        bnhPrice2
       }
     }
   }
@@ -57,7 +56,6 @@ const PairChartModal = ({ pair, name }: Props) => {
         apr: number
         lpPrice: number
         bnhPrice: number
-        bnhPrice2: number
       }[]
     }
   }>(
@@ -82,7 +80,7 @@ const PairChartModal = ({ pair, name }: Props) => {
           return {
             ...item,
             date: moment.unix(item.startUnix).format('DD/MM'),
-            bnhPrice: isHYPEUSDT ? item.bnhPrice2 : item.bnhPrice,
+            bnhPrice: item.bnhPrice,
           }
         })
         .filter((item) => {
