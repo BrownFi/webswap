@@ -437,7 +437,12 @@ const UserPositionRow = ({
         </Text>
         {description && <QuestionHelper text={description} />}
       </div>
-      <Text fontSize={16} fontWeight={500} color={colored ? (value > 0 ? '#35b935' : '#ff6c00') : 'white'}>
+      <Text
+        fontSize={16}
+        fontWeight={500}
+        color={colored ? (value > 0 ? '#35b935' : '#ff6c00') : 'white'}
+        title={formatPrice(value, { maximumFractionDigits: 2 })}
+      >
         {formatPrice(value)}
       </Text>
     </FixedHeightRow>
