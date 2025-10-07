@@ -161,10 +161,8 @@ const PairChartModal = ({ pair, name }: Props) => {
   const displayedDataLength = displayedData.length
 
   const lineDotConfig = useMemo(() => {
-    if (displayedDataLength >= 90) {
+    if (displayedDataLength > 30) {
       return { dot: false as const, activeDot: { r: 2, strokeWidth: 1 } }
-    } else if (displayedDataLength >= 60) {
-      return { dot: { r: 2, strokeWidth: 1 }, activeDot: { r: 3, strokeWidth: 1 } }
     } else {
       return { dot: { r: 3, strokeWidth: 1 }, activeDot: { r: 4, strokeWidth: 1 } }
     }
