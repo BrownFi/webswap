@@ -5,10 +5,21 @@ import { Modal } from 'components/Modal'
 import QuestionHelper from 'components/QuestionHelper'
 import { isMainnet } from 'connectors'
 import moment from 'moment'
-import { ReactNode, useMemo, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
 import { Flex, Text } from 'rebass'
-import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ReferenceArea,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import useSWR from 'swr'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { graphqlFetcher } from 'utils/swr'
@@ -43,6 +54,9 @@ type Props = {
 
 const PairChartModal = ({ pair, name }: Props) => {
   const [isOpen, setOpen] = useState(false)
+  const [zoomRange, setZoomRange] = useState<{ startIndex: number; endIndex: number } | null>(null)
+  const [selection, setSelection] = useState<{ startIndex: number; endIndex: number } | null>(null)
+  const enableAdvancedZoom = !isMainnet
 
   const { data } = useSWR<{
     pairDayDatas: {
@@ -86,12 +100,261 @@ const PairChartModal = ({ pair, name }: Props) => {
         })
         .filter((item) => {
           if (isHYPEUSDT) {
-            // return moment.unix(item.startUnix) > moment('2025-08-12')
+            return moment.unix(item.startUnix) > moment('2025-08-09')
           }
           return true
         }) ?? []
     )
   }, [data, isHYPEUSDT])
+
+  const defaultRange = useMemo(() => {
+    if (!chartData.length) {
+      return null
+    }
+
+    const endIndex = chartData.length - 1
+    return {
+      startIndex: Math.max(endIndex - 29, 0),
+      endIndex,
+    }
+  }, [chartData])
+
+  useEffect(() => {
+    if (!enableAdvancedZoom) {
+      setSelection(null)
+    }
+  }, [enableAdvancedZoom])
+
+  useEffect(() => {
+    if (!enableAdvancedZoom) {
+      setZoomRange(null)
+      return
+    }
+
+    if (!chartData.length) {
+      setZoomRange(null)
+      return
+    }
+
+    setZoomRange((prev) => {
+      if (prev) {
+        return prev
+      }
+
+      return defaultRange
+    })
+  }, [chartData, defaultRange, enableAdvancedZoom])
+
+  const displayedData = useMemo(() => {
+    if (!zoomRange || !chartData.length) {
+      return chartData
+    }
+
+    const { startIndex, endIndex } = zoomRange
+    if (startIndex <= 0 && endIndex >= chartData.length - 1) {
+      return chartData
+    }
+
+    return chartData.slice(startIndex, endIndex + 1)
+  }, [chartData, zoomRange])
+
+  const displayedDataLength = displayedData.length
+
+  const lineDotConfig = useMemo(() => {
+    if (displayedDataLength >= 90) {
+      return { dot: false as const, activeDot: { r: 2, strokeWidth: 1 } }
+    } else if (displayedDataLength >= 60) {
+      return { dot: { r: 2, strokeWidth: 1 }, activeDot: { r: 3, strokeWidth: 1 } }
+    } else {
+      return { dot: { r: 3, strokeWidth: 1 }, activeDot: { r: 4, strokeWidth: 1 } }
+    }
+  }, [displayedDataLength])
+
+  const displayedOffset = useMemo(() => {
+    if (!zoomRange) {
+      return 0
+    }
+    return zoomRange.startIndex
+  }, [zoomRange])
+
+  const isDefaultRangeActive = useMemo(() => {
+    if (!enableAdvancedZoom || !defaultRange || !zoomRange) {
+      return false
+    }
+
+    return zoomRange.startIndex === defaultRange.startIndex && zoomRange.endIndex === defaultRange.endIndex
+  }, [defaultRange, enableAdvancedZoom, zoomRange])
+
+  const toGlobalIndex = (indexInDisplay: number) => {
+    const candidate = displayedOffset + indexInDisplay
+    if (candidate >= 0 && candidate < chartData.length) {
+      return candidate
+    }
+    const dataPoint = displayedData[indexInDisplay]
+    if (!dataPoint) {
+      return null
+    }
+    const fallback = chartData.indexOf(dataPoint)
+    return fallback === -1 ? null : fallback
+  }
+
+  const getIndexFromState = (chartState: any) => {
+    if (!enableAdvancedZoom) {
+      return null
+    }
+
+    if (!chartState) {
+      return null
+    }
+
+    const { activeTooltipIndex, activeLabel, activePayload, xAxisMap, chartX } = chartState
+
+    if (typeof activeTooltipIndex === 'number' && activeTooltipIndex >= 0) {
+      const idx = toGlobalIndex(activeTooltipIndex)
+      if (idx != null) {
+        return idx
+      }
+    }
+
+    const payload = activePayload?.[0]?.payload
+    if (payload) {
+      const idx = chartData.indexOf(payload)
+      if (idx !== -1) {
+        return idx
+      }
+    }
+
+    if (activeLabel != null) {
+      const idx = chartData.findIndex((item) => item.date === activeLabel)
+      if (idx !== -1) {
+        return idx
+      }
+    }
+
+    const axis = xAxisMap?.date
+    if (axis && typeof chartX === 'number') {
+      const { ticks = [], scale, bandwidth = 0 } = axis
+      if (typeof scale === 'function' && ticks.length) {
+        let closestIdx = 0
+        let minDiff = Infinity
+        ticks.forEach((tick: any, idx: number) => {
+          const center = scale(tick.value) + bandwidth / 2
+          const diff = Math.abs(center - chartX)
+          if (diff < minDiff) {
+            minDiff = diff
+            closestIdx = idx
+          }
+        })
+
+        const tickValue = ticks[closestIdx]?.value
+        if (tickValue != null) {
+          const idx = chartData.findIndex((item) => item.date === tickValue)
+          if (idx !== -1) {
+            return idx
+          }
+        }
+      }
+    }
+
+    return null
+  }
+
+  const handleMouseDown = (state: any) => {
+    if (!enableAdvancedZoom) {
+      return
+    }
+    const idx = getIndexFromState(state)
+    if (idx == null) {
+      return
+    }
+
+    setSelection({ startIndex: idx, endIndex: idx })
+  }
+
+  const handleMouseMove = (state: any) => {
+    if (!enableAdvancedZoom) {
+      return
+    }
+    if (!selection) {
+      return
+    }
+
+    const idx = getIndexFromState(state)
+    if (idx == null) {
+      return
+    }
+
+    setSelection((prev) => (prev ? { ...prev, endIndex: idx } : prev))
+  }
+
+  const applyZoomRange = (startIndex: number, endIndex: number) => {
+    if (!enableAdvancedZoom) {
+      return
+    }
+    const normalizedStart = Math.max(Math.min(startIndex, endIndex), 0)
+    const normalizedEnd = Math.max(startIndex, endIndex, normalizedStart)
+    if (normalizedEnd <= normalizedStart) {
+      return
+    }
+
+    setZoomRange({ startIndex: normalizedStart, endIndex: normalizedEnd })
+  }
+
+  const handleMouseUp = () => {
+    if (!enableAdvancedZoom) {
+      return
+    }
+    if (!selection) {
+      return
+    }
+
+    if (selection.startIndex === selection.endIndex) {
+      setSelection(null)
+      return
+    }
+
+    applyZoomRange(selection.startIndex, selection.endIndex)
+    setSelection(null)
+  }
+
+  const handleMouseLeave = () => {
+    if (!enableAdvancedZoom) {
+      return
+    }
+    setSelection(null)
+  }
+
+  const handleZoomOut = () => {
+    if (!enableAdvancedZoom) {
+      return
+    }
+    setZoomRange(null)
+  }
+
+  const handleResetToDefault = () => {
+    if (!enableAdvancedZoom) {
+      return
+    }
+    if (!defaultRange) {
+      return
+    }
+    setZoomRange(defaultRange)
+  }
+
+  const referenceArea = useMemo(() => {
+    if (!enableAdvancedZoom || !selection) {
+      return null
+    }
+
+    const { startIndex, endIndex } = selection
+    const start = Math.min(startIndex, endIndex)
+    const end = Math.max(startIndex, endIndex)
+
+    return {
+      x1: chartData[start]?.date,
+      x2: chartData[end]?.date,
+    }
+  }, [chartData, selection, enableAdvancedZoom])
 
   return (
     <>
@@ -112,8 +375,33 @@ const PairChartModal = ({ pair, name }: Props) => {
             </Flex>
 
             <div className="w-full h-[400px] relative">
+              {enableAdvancedZoom && (
+                <div className="absolute right-3 top-3 flex gap-2 z-10">
+                  <button
+                    className="text-xs text-white/80 bg-white/10 px-2 py-1 rounded hover:bg-white/20 transition disabled:opacity-40"
+                    onClick={handleZoomOut}
+                    disabled={!zoomRange}
+                  >
+                    Zoom Out
+                  </button>
+                  <button
+                    className="text-xs text-white/80 bg-white/10 px-2 py-1 rounded hover:bg-white/20 transition disabled:opacity-40"
+                    onClick={handleResetToDefault}
+                    disabled={!defaultRange || isDefaultRangeActive}
+                  >
+                    Last 30D
+                  </button>
+                </div>
+              )}
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData}>
+                <ComposedChart
+                  data={displayedData}
+                  onMouseDown={enableAdvancedZoom ? handleMouseDown : undefined}
+                  onMouseMove={enableAdvancedZoom ? handleMouseMove : undefined}
+                  onMouseUp={enableAdvancedZoom ? handleMouseUp : undefined}
+                  onMouseLeave={enableAdvancedZoom ? handleMouseLeave : undefined}
+                  style={{ cursor: enableAdvancedZoom ? (selection ? 'grabbing' : 'crosshair') : 'default' }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="date"
@@ -140,9 +428,24 @@ const PairChartModal = ({ pair, name }: Props) => {
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend content={<CustomLegend />} />
-                  <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" />
-                  {!isMainnet && <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" />}
+                  <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
+                  {!isMainnet && (
+                    <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
+                  )}
                   <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="right" />
+                  {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
+                    <ReferenceArea
+                      x1={referenceArea.x1}
+                      x2={referenceArea.x2}
+                      fill="#27E3AB"
+                      stroke="#27E3AB"
+                      fillOpacity={0.35}
+                      strokeOpacity={0.9}
+                      strokeWidth={2}
+                      strokeDasharray="5 3"
+                      yAxisId="left"
+                    />
+                  )}
                 </ComposedChart>
               </ResponsiveContainer>
 
