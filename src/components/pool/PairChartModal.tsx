@@ -2,11 +2,12 @@ import { Pair } from '@brownfi/sdk'
 import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { Modal } from 'components/Modal'
+import QuestionHelper from 'components/QuestionHelper'
 import { isMainnet } from 'connectors'
 import moment from 'moment'
 import { ReactNode, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
-import { Text } from 'rebass'
+import { Flex, Text } from 'rebass'
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import useSWR from 'swr'
 import { formatNumber, formatPrice } from 'utils/prices'
@@ -101,9 +102,14 @@ const PairChartModal = ({ pair, name }: Props) => {
       <Modal isOpen={isOpen} onDismiss={() => setOpen(false)} maxWidth={800}>
         <Card className="md:!p-6 !p-3">
           <AutoColumn gap="lg">
-            <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
-              {name}
-            </Text>
+            <Flex sx={{ gap: '4px' }} alignItems="flex-end">
+              <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
+                {name}
+              </Text>
+              <QuestionHelper
+                text={`This analysis benchmarks the overall performance of the pool (not individual users). By tokenizing both the liquidity provision (LP) position and the passive holding two tokens (HODL) strategy, the chart tracks the LP token's value relative to a synthetic 'HODL token.`}
+              />
+            </Flex>
 
             <div className="w-full h-[400px] relative">
               <ResponsiveContainer width="100%" height="100%">
@@ -171,7 +177,7 @@ const CustomLegend = ({ payload, onClick }: any) => {
             }}
           />
           <Text color="#FFFA">
-            {it.value === 'lpPrice' ? 'LP Price' : it.value === 'bnhPrice' ? 'BnH Price' : String(it.value)}
+            {it.value === 'lpPrice' ? 'LP Price' : it.value === 'bnhPrice' ? 'HODL Price' : String(it.value)}
           </Text>
         </div>
       ))}
@@ -189,7 +195,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         </p>
         {!isMainnet && (
           <p className="text-sm" style={{ color: '#4DA3FF' }}>
-            BnH Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+            HODL Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
           </p>
         )}
         <p className="text-sm" style={{ color: '#66CC99' }}>
