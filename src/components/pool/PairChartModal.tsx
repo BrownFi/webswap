@@ -382,7 +382,7 @@ const PairChartModal = ({ pair, name }: Props) => {
                     onClick={handleZoomOut}
                     disabled={!zoomRange}
                   >
-                    Zoom Out
+                    All
                   </button>
                   <button
                     className="text-xs text-white/80 bg-white/10 px-2 py-1 rounded hover:bg-white/20 transition disabled:opacity-40"
