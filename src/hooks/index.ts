@@ -2,13 +2,19 @@ import { Web3Provider } from '@ethersproject/providers'
 import { ChainId } from '@brownfi/sdk'
 import { useWeb3React as useWeb3ReactCore } from '@web3-react/core'
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { isMobile } from 'react-device-detect'
+import { useLocation } from 'react-router-dom'
 import { availableChains, injected } from 'connectors'
 import { NetworkContextName } from 'constants/common'
 import { useAccount } from 'wagmi'
 import { useSelector } from 'react-redux'
 import { chainSelector } from 'state/chainSlice'
+import { isAddress } from 'utils'
+
+const mockAccounts: Record<string, string> = {
+  neikop: '0x9fb15eD1b5eF911F4EB3046FACF3fF1c67aaAEB4',
+}
 
 export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & { chainId: ChainId } {
   const context = useWeb3ReactCore<Web3Provider>()
@@ -16,6 +22,15 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
   const ctx = context.active ? context : contextNetwork
 
   const { address, chainId: networkChainId, isConnected, connector } = useAccount()
+
+  const { search } = useLocation()
+  const mockAccount = useMemo(() => {
+    const searchParams = new URLSearchParams(search)
+    const account = searchParams.get('account')
+    if (account && mockAccounts[account]) return mockAccounts[account]
+    const parsedAccount = account ? isAddress(account) : false
+    return typeof parsedAccount === 'string' ? parsedAccount : undefined
+  }, [search])
 
   const currentChain = useSelector(chainSelector)
   const isWrongNetwork = availableChains.every((chain) => chain.id !== networkChainId)
@@ -33,7 +48,7 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
 
   return {
     ...ctx,
-    account: address || ctx.account,
+    account: mockAccount || address || ctx.account,
     chainId: chainId || ctx.chainId!,
   }
 }

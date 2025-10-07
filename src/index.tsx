@@ -49,31 +49,31 @@ root.render(
   <StrictMode>
     <FixedGlobalStyle />
     <Provider store={store}>
-      <Web3ReactProvider getLibrary={getLibrary}>
-        <Web3ProviderNetwork getLibrary={getLibrary}>
-          {/* Wagmi provider (autoConnect behavior configured via wagmiConfig in connectors/index.ts) */}
-          <WagmiProvider config={wagmiConfig}>
-            <QueryClientProvider client={queryClient}>
-              {/* RainbowKit UI; relies on Wagmi for connection state (including autoConnect) */}
-              <RainbowKitProvider theme={darkTheme()}>
-                <Blocklist>
-                  <Updaters />
-                  <ThemeProvider>
-                    <ToastProvider>
-                      <ThemedGlobalStyle />
-                      <HashRouter>
+      <HashRouter>
+        <Web3ReactProvider getLibrary={getLibrary}>
+          <Web3ProviderNetwork getLibrary={getLibrary}>
+            {/* Wagmi provider (autoConnect behavior configured via wagmiConfig in connectors/index.ts) */}
+            <WagmiProvider config={wagmiConfig}>
+              <QueryClientProvider client={queryClient}>
+                {/* RainbowKit UI; relies on Wagmi for connection state (including autoConnect) */}
+                <RainbowKitProvider theme={darkTheme()}>
+                  <Blocklist>
+                    <Updaters />
+                    <ThemeProvider>
+                      <ToastProvider>
+                        <ThemedGlobalStyle />
                         <ErrorBoundary>
                           <App />
                         </ErrorBoundary>
-                      </HashRouter>
-                    </ToastProvider>
-                  </ThemeProvider>
-                </Blocklist>
-              </RainbowKitProvider>
-            </QueryClientProvider>
-          </WagmiProvider>
-        </Web3ProviderNetwork>
-      </Web3ReactProvider>
+                      </ToastProvider>
+                    </ThemeProvider>
+                  </Blocklist>
+                </RainbowKitProvider>
+              </QueryClientProvider>
+            </WagmiProvider>
+          </Web3ProviderNetwork>
+        </Web3ReactProvider>
+      </HashRouter>
     </Provider>
   </StrictMode>,
 )
