@@ -370,7 +370,7 @@ const PairChartModal = ({ pair, name }: Props) => {
                 {name}
               </Text>
               <QuestionHelper
-                text={`This analysis benchmarks the overall performance of the pool (not individual users). By tokenizing both the liquidity provision (LP) position and the passive holding two tokens (HODL) strategy, the chart tracks the LP token's value relative to a synthetic 'HODL token.`}
+                text={`This analysis benchmarks the overall performance of the pool (not individual users). By tokenizing both the liquidity provision (LP) position and the passive holding two tokens (HODL) strategy, the chart tracks the LP token's value relative to a synthetic 'HODL' token.`}
               />
             </Flex>
 
