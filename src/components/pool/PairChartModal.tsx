@@ -50,13 +50,13 @@ const GET_PAIR_STATS = `
 type Props = {
   pair: Pair
   name: ReactNode
+  enableAdvancedZoom?: boolean
 }
 
-const PairChartModal = ({ pair, name }: Props) => {
+const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
   const [isOpen, setOpen] = useState(false)
   const [zoomRange, setZoomRange] = useState<{ startIndex: number; endIndex: number } | null>(null)
   const [selection, setSelection] = useState<{ startIndex: number; endIndex: number } | null>(null)
-  const enableAdvancedZoom = !isMainnet
 
   const { data } = useSWR<{
     pairDayDatas: {
@@ -427,9 +427,7 @@ const PairChartModal = ({ pair, name }: Props) => {
                   <Tooltip content={<CustomTooltip />} />
                   <Legend content={<CustomLegend />} />
                   <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
-                  {!isMainnet && (
-                    <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
-                  )}
+                  <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
                   <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="right" />
                   {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
                     <ReferenceArea
@@ -494,11 +492,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="text-sm" style={{ color: '#FFB347' }}>
           LP Price: {formatPrice(payload[0].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
-        {!isMainnet && (
-          <p className="text-sm" style={{ color: '#4DA3FF' }}>
-            HODL Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
-          </p>
-        )}
+        <p className="text-sm" style={{ color: '#4DA3FF' }}>
+          HODL Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+        </p>
         <p className="text-sm" style={{ color: '#66CC99' }}>
           Volume: {formatPrice((payload[2] || payload[1]).value)}
         </p>

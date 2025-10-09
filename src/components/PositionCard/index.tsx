@@ -21,7 +21,6 @@ import { PairChartModal } from 'components/pool/PairChartModal'
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import QuestionHelper from 'components/QuestionHelper'
 import { AutoRow, RowBetween, RowFixed } from 'components/Row'
-import { isMainnet } from 'connectors'
 import { BIG_INT_ZERO } from 'constants/common'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
@@ -185,6 +184,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       <Info size="20" style={{ color: '#27E3AB' }} />
                     </a>
                     <PairChartModal
+                      enableAdvancedZoom
                       pair={pair}
                       name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
                     />
@@ -290,24 +290,6 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   )}
                 </FixedHeightRow>
 
-                {isMainnet && (
-                  <FixedHeightRow>
-                    <Text fontSize={16} fontWeight={500} color="white">
-                      LP tokens
-                    </Text>
-                    {userPoolBalance ? (
-                      <Text fontSize={16} fontWeight={500} color="white">
-                        {formatNumber(userPoolBalance.toSignificant(4))}{' '}
-                        <span className="text-[#949494]">
-                          ({formatPrice(lpPrice * Number(userPoolBalance.toSignificant(4)))})
-                        </span>
-                      </Text>
-                    ) : (
-                      <Loader stroke="gray" />
-                    )}
-                  </FixedHeightRow>
-                )}
-
                 <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
                   <FixedHeightRow>
                     <RowFixed className="gap-2">
@@ -356,7 +338,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   </FixedHeightRow>
                 </Flex>
 
-                {!isMainnet && account && pairAccount && (
+                {account && pairAccount && (
                   <>
                     <UserPositionRow title="LPing portfolio" value={pairAccount.lpPortfolio} />
                     <UserPositionRow
