@@ -95,8 +95,8 @@ const berachain = overrideChain({
   iconUrl: require('assets/images/w-bera.png'),
   fallbackRpcs: [
     //
-    'https://berachain.drpc.org',
     'https://rpc.berachain-apis.com',
+    'https://berachain.drpc.org',
   ],
 })
 
