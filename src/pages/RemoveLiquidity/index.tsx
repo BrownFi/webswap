@@ -412,6 +412,7 @@ export default function RemoveLiquidity({
             </RemoveLiqudityCard>
 
             <CurrencyInputPanel
+              customBalanceText="LP shares: "
               value={formattedAmounts[Field.LIQUIDITY]}
               onUserInput={onLiquidityInput}
               onMax={() => {

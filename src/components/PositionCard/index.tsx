@@ -353,6 +353,12 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       value={pairAccount.bnhPortfolio - pairAccount.basePortfolio}
                       description="Your profit and loss if if you had just held the two tokens in your wallet."
                     />
+                    <UserPositionRow
+                      colored
+                      title="LPing vs. HODL"
+                      value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio}
+                      description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`}
+                    />
                   </>
                 )}
               </>
