@@ -1,6 +1,6 @@
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import { ReactNode, useState } from 'react'
+import { useState } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
@@ -350,16 +350,13 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       colored
                       title="LPing PnL"
                       value={pairAccount.unrealizedPnL}
-                      affix={` (${(pairAccount.unrealizedPnL / pairAccount.lpPortfolio).toPrecision(2)}%)`}
+                      mauso={pairAccount.lpPortfolio}
                     />
                     <UserPositionRow
                       colored
                       title="HODL PnL"
                       value={pairAccount.bnhPortfolio - pairAccount.basePortfolio}
-                      affix={` (${(
-                        (pairAccount.bnhPortfolio - pairAccount.basePortfolio) /
-                        pairAccount.bnhPortfolio
-                      ).toPrecision(2)}%)`}
+                      mauso={pairAccount.bnhPortfolio}
                       description="Your profit and loss if if you had just held the two tokens in your wallet."
                     />
                     <UserPositionRow
@@ -419,13 +416,13 @@ const UserPositionRow = ({
   title,
   description,
   value,
-  affix,
+  mauso,
   colored,
 }: {
   title: string
   description?: string
   value: number
-  affix?: ReactNode
+  mauso?: number
   colored?: boolean
 }) => {
   return (
@@ -443,7 +440,7 @@ const UserPositionRow = ({
         title={formatPrice(value, { maximumFractionDigits: 2 })}
       >
         {formatPrice(value)}
-        {affix}
+        {mauso && ` (${((value * 100) / mauso).toFixed(2)}%)`}
       </Text>
     </FixedHeightRow>
   )
