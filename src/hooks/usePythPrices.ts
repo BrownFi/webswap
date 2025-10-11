@@ -11,9 +11,10 @@ type Props = {
   pairStats?: PairStats
   currencyA?: Currency | null
   currencyB?: Currency | null
+  enableFetchDetail?: boolean
 }
 
-export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }: Props) => {
+export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, enableFetchDetail = true }: Props) => {
   const { version } = useVersion({ chainId })
 
   const tokenA = wrappedCurrency(currencyA ?? undefined, chainId)
@@ -32,13 +33,13 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB }
       apiV2Service.getPoolPrices({ chainId, tokenA: tokenA.address, tokenB: tokenB.address }).then((pool) => {
         return [+pool.price0 / 2 ** 64, +pool.price1 / 2 ** 64]
       }),
-    enabled: version === 2,
+    enabled: version === 2 && enableFetchDetail,
   })
 
   const { data: tokenPrices = [0, 0] } = useQuery({
     queryFn: () => getPythPricePair(pair, chainId),
     queryKey: ['getPythPricePair', pair?.liquidityToken.address],
-    enabled: !!pair && version === 1,
+    enabled: !!pair && version === 1 && enableFetchDetail,
   })
 
   const fallbackPrices = [pairStats?.token0?.price ?? 0, pairStats?.token1?.price ?? 0]

@@ -59,20 +59,14 @@ const GET_PAIR_ACCOUNT = `
 type Props = {
   pair: Pair
   pairStats?: PairStats
+  enableFetchDetail?: boolean
 }
 
-export const usePoolStats = ({ pair, pairStats }: Props) => {
+export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
   const { account } = useActiveWeb3React()
-  // Api A Lien
-  const { data: poolStats } = useQuery({
-    queryKey: ['getPoolStats', pair.liquidityToken.address],
-    queryFn: () => {
-      return internalService.getPoolStats(pair)
-    },
-  })
 
   const pairAccountKey =
-    account && pair?.chainId && pairStats
+    enableFetchDetail && account && pair?.chainId && pairStats
       ? (['PairAccount', pair.chainId, pair.liquidityToken.address, account] as const)
       : null
 
@@ -111,6 +105,15 @@ export const usePoolStats = ({ pair, pairStats }: Props) => {
       }
       return !!pairStats
     }, [pairStats]) && !!pairStats
+
+  // Api A Lien
+  const { data: poolStats } = useQuery({
+    queryKey: ['getPoolStats', pair.liquidityToken.address],
+    queryFn: () => {
+      return internalService.getPoolStats(pair)
+    },
+    enabled: !shouldUseIndexer,
+  })
 
   const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : useTradingFee({ pair })
 

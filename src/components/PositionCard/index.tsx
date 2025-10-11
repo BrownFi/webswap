@@ -74,6 +74,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   } = usePoolStats({
     pair,
     pairStats,
+    enableFetchDetail: showMore,
   })
 
   const userPoolTokens = useTokenBalance(account ?? undefined, showMore ? pair.liquidityToken : undefined)
@@ -82,7 +83,14 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   const currency1 = unwrappedToken(pair.token1)
   const shouldReverse = shouldReversePair(pair)
 
-  const pythPrices = usePythPrices({ chainId, pair, pairStats, currencyA: pair.token0, currencyB: pair.token1 })
+  const pythPrices = usePythPrices({
+    chainId,
+    pair,
+    pairStats,
+    currencyA: pair.token0,
+    currencyB: pair.token1,
+    enableFetchDetail: showMore,
+  })
   const token0Price = pythPrices.CURRENCY_A
   const token1Price = pythPrices.CURRENCY_B
 
