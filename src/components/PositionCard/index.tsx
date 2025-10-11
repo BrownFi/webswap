@@ -249,7 +249,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
               <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
                 <FixedHeightRow>
-                  <div className="flex items-center gap-2" onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}>
+                  <div className="flex items-center gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
                     <CurrencyLogo currency={pair.token0} />
                     <Text fontSize={16} fontWeight={500} color="white">
                       {getTokenSymbol(currency0, chainId)}
@@ -264,7 +264,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                 </FixedHeightRow>
 
                 <FixedHeightRow>
-                  <div className="flex items-center gap-2" onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}>
+                  <div className="flex items-center gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
                     <CurrencyLogo currency={pair.token1} />
                     <Text fontSize={16} fontWeight={500} color="white">
                       {getTokenSymbol(currency1, chainId)}
@@ -310,7 +310,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
                 <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
                   <FixedHeightRow>
-                    <RowFixed className="gap-2" onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}>
+                    <RowFixed className="gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
                       <CurrencyLogo currency={currency0} />
                       <Text fontSize={16} fontWeight={500} color="white">
                         Pooled {getTokenSymbol(currency0, chainId)}
@@ -333,7 +333,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   </FixedHeightRow>
 
                   <FixedHeightRow>
-                    <RowFixed className="gap-2" onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}>
+                    <RowFixed className="gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
                       <CurrencyLogo currency={currency1} />
                       <Text fontSize={16} fontWeight={500} color="white">
                         Pooled {getTokenSymbol(currency1, chainId)}
