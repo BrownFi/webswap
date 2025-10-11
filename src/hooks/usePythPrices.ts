@@ -35,6 +35,8 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
       }),
     enabled: version === 2 && enableFetchDetail,
     refetchInterval: 1 * 60 * 1000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   })
 
   const { data: tokenPrices = [0, 0] } = useQuery({
