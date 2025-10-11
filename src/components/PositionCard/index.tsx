@@ -436,11 +436,11 @@ const UserPositionRow = ({
       <Text
         fontSize={16}
         fontWeight={500}
-        color={colored ? (value > 0 ? '#35b935' : '#ff6c00') : 'white'}
+        color={colored ? (Math.abs(value) < 0.01 ? '#949494' : value > 0 ? '#35b935' : '#ff6c00') : 'white'}
         title={formatPrice(value, { maximumFractionDigits: 2 })}
       >
-        {formatPrice(value)}
-        {mauso && ` (${((value * 100) / mauso).toFixed(2)}%)`}
+        {Math.abs(value) >= 0.01 ? formatPrice(value) : '~ $0'}
+        {Math.abs(value) >= 0.01 && mauso && ` (${((value * 100) / mauso).toFixed(2)}%)`}
       </Text>
     </FixedHeightRow>
   )
