@@ -350,13 +350,13 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       colored
                       title="LPing PnL"
                       value={pairAccount.unrealizedPnL}
-                      mauso={pairAccount.lpPortfolio}
+                      mauso={pairAccount.basePortfolio}
                     />
                     <UserPositionRow
                       colored
                       title="HODL PnL"
                       value={pairAccount.bnhPortfolio - pairAccount.basePortfolio}
-                      mauso={pairAccount.bnhPortfolio}
+                      mauso={pairAccount.basePortfolio}
                       description="Your profit and loss if if you had just held the two tokens in your wallet."
                     />
                     <UserPositionRow
