@@ -310,7 +310,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
                 <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
                   <FixedHeightRow>
-                    <RowFixed className="gap-2">
+                    <RowFixed className="gap-2" onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}>
                       <CurrencyLogo currency={currency0} />
                       <Text fontSize={16} fontWeight={500} color="white">
                         Pooled {getTokenSymbol(currency0, chainId)}
@@ -318,12 +318,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     </RowFixed>
                     {token0Deposited ? (
                       <RowFixed className="gap-1">
-                        <Text
-                          fontSize={16}
-                          fontWeight={500}
-                          color="white"
-                          onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}
-                        >
+                        <Text fontSize={16} fontWeight={500} color="white">
                           {formatNumber(token0Deposited?.toSignificant(4))}
                         </Text>
                         <Text fontSize={16} fontWeight={500} color={'#949494'}>
@@ -338,7 +333,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   </FixedHeightRow>
 
                   <FixedHeightRow>
-                    <RowFixed className="gap-2">
+                    <RowFixed className="gap-2" onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}>
                       <CurrencyLogo currency={currency1} />
                       <Text fontSize={16} fontWeight={500} color="white">
                         Pooled {getTokenSymbol(currency1, chainId)}
@@ -346,12 +341,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     </RowFixed>
                     {token1Deposited ? (
                       <RowFixed className="gap-1">
-                        <Text
-                          fontSize={16}
-                          fontWeight={500}
-                          color="white"
-                          onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}
-                        >
+                        <Text fontSize={16} fontWeight={500} color="white">
                           {formatNumber(token1Deposited?.toSignificant(4))}
                         </Text>
                         <Text fontSize={16} fontWeight={500} color={'#949494'}>
