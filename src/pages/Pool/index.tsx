@@ -158,7 +158,6 @@ export default function Pool() {
   const sortedPairs = (data?.pairs.items ?? [])
     .slice()
     .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
-    .map((pair) => ({ ...pair, date: new Date().toISOString().slice(11, 19) }))
 
   // Filter pairs using GraphQL
   const filteredPairs = sortedPairs.filter((pair) => {

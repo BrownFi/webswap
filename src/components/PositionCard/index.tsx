@@ -221,12 +221,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                 <Text fontSize={16} fontWeight={500} color="white">
                   Price per LP
                 </Text>
-                <Text
-                  fontSize={16}
-                  fontWeight={500}
-                  color="white"
-                  title={(pairStats as any).date + ` ${formatPrice(lpPrice)}`}
-                >
+                <Text fontSize={16} fontWeight={500} color="white">
                   {formatPrice(lpPrice)}
                 </Text>
               </FixedHeightRow>
