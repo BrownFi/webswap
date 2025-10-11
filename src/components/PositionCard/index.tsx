@@ -221,7 +221,12 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                 <Text fontSize={16} fontWeight={500} color="white">
                   Price per LP
                 </Text>
-                <Text fontSize={16} fontWeight={500} color="white" title={(pairStats as any).date}>
+                <Text
+                  fontSize={16}
+                  fontWeight={500}
+                  color="white"
+                  title={(pairStats as any).date + ` ${formatPrice(lpPrice)}`}
+                >
                   {formatPrice(lpPrice)}
                 </Text>
               </FixedHeightRow>
@@ -244,7 +249,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
               <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
                 <FixedHeightRow>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}>
                     <CurrencyLogo currency={pair.token0} />
                     <Text fontSize={16} fontWeight={500} color="white">
                       {getTokenSymbol(currency0, chainId)}
@@ -252,14 +257,14 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   </div>
                   <Text fontSize={16} fontWeight={500} color="white">
                     {formatNumber(pair.reserve0.toSignificant(4))}{' '}
-                    <span className="text-[#949494]" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                    <span className="text-[#949494]">
                       ({formatPrice(showTokenPrice ? token0Price : reserve0Price)})
                     </span>
                   </Text>
                 </FixedHeightRow>
 
                 <FixedHeightRow>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}>
                     <CurrencyLogo currency={pair.token1} />
                     <Text fontSize={16} fontWeight={500} color="white">
                       {getTokenSymbol(currency1, chainId)}
@@ -267,7 +272,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   </div>
                   <Text fontSize={16} fontWeight={500} color="white">
                     {formatNumber(pair.reserve1.toSignificant(4))}{' '}
-                    <span className="text-[#949494]" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                    <span className="text-[#949494]">
                       ({formatPrice(showTokenPrice ? token1Price : reserve1Price)})
                     </span>
                   </Text>
@@ -313,15 +318,15 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     </RowFixed>
                     {token0Deposited ? (
                       <RowFixed className="gap-1">
-                        <Text fontSize={16} fontWeight={500} color="white">
-                          {formatNumber(token0Deposited?.toSignificant(4))}
-                        </Text>
                         <Text
                           fontSize={16}
                           fontWeight={500}
-                          color={'#949494'}
-                          onClick={() => setShowTokenPrice(!showTokenPrice)}
+                          color="white"
+                          onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}
                         >
+                          {formatNumber(token0Deposited?.toSignificant(4))}
+                        </Text>
+                        <Text fontSize={16} fontWeight={500} color={'#949494'}>
                           ({formatPrice(token0Price * (showTokenPrice ? 1 : Number(token0Deposited.toSignificant(4))))})
                         </Text>
                       </RowFixed>
@@ -341,15 +346,15 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     </RowFixed>
                     {token1Deposited ? (
                       <RowFixed className="gap-1">
-                        <Text fontSize={16} fontWeight={500} color="white">
-                          {formatNumber(token1Deposited?.toSignificant(4))}
-                        </Text>
                         <Text
                           fontSize={16}
                           fontWeight={500}
-                          color={'#949494'}
-                          onClick={() => setShowTokenPrice(!showTokenPrice)}
+                          color="white"
+                          onDoubleClick={() => setShowTokenPrice(!showTokenPrice)}
                         >
+                          {formatNumber(token1Deposited?.toSignificant(4))}
+                        </Text>
+                        <Text fontSize={16} fontWeight={500} color={'#949494'}>
                           ({formatPrice(token1Price * (showTokenPrice ? 1 : Number(token1Deposited.toSignificant(4))))})
                         </Text>
                       </RowFixed>
