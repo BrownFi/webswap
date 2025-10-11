@@ -62,6 +62,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   const [{ isFavorite }] = usePairStorage({ pair })
 
   const [showMore, setShowMore] = useState(isFavorite)
+  const [showTokenPrice, setShowTokenPrice] = useState(false)
 
   const {
     tradingFee,
@@ -249,9 +250,11 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       {getTokenSymbol(currency0, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color="white" title={'' + token0Price}>
+                  <Text fontSize={16} fontWeight={500} color="white">
                     {formatNumber(pair.reserve0.toSignificant(4))}{' '}
-                    <span className="text-[#949494]">({formatPrice(reserve0Price)})</span>
+                    <span className="text-[#949494]" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                      ({formatPrice(showTokenPrice ? token0Price : reserve0Price)})
+                    </span>
                   </Text>
                 </FixedHeightRow>
 
@@ -262,9 +265,11 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       {getTokenSymbol(currency1, chainId)}
                     </Text>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color="white" title={'' + token1Price}>
+                  <Text fontSize={16} fontWeight={500} color="white">
                     {formatNumber(pair.reserve1.toSignificant(4))}{' '}
-                    <span className="text-[#949494]">({formatPrice(reserve1Price)})</span>
+                    <span className="text-[#949494]" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                      ({formatPrice(showTokenPrice ? token1Price : reserve1Price)})
+                    </span>
                   </Text>
                 </FixedHeightRow>
               </Flex>
@@ -307,12 +312,17 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       </Text>
                     </RowFixed>
                     {token0Deposited ? (
-                      <RowFixed className="gap-1" title={'' + token0Price}>
+                      <RowFixed className="gap-1">
                         <Text fontSize={16} fontWeight={500} color="white">
                           {formatNumber(token0Deposited?.toSignificant(4))}
                         </Text>
-                        <Text fontSize={16} fontWeight={500} color={'#949494'}>
-                          ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})
+                        <Text
+                          fontSize={16}
+                          fontWeight={500}
+                          color={'#949494'}
+                          onClick={() => setShowTokenPrice(!showTokenPrice)}
+                        >
+                          ({formatPrice(token0Price * (showTokenPrice ? 1 : Number(token0Deposited.toSignificant(4))))})
                         </Text>
                       </RowFixed>
                     ) : (
@@ -330,12 +340,17 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       </Text>
                     </RowFixed>
                     {token1Deposited ? (
-                      <RowFixed className="gap-1" title={'' + token1Price}>
+                      <RowFixed className="gap-1">
                         <Text fontSize={16} fontWeight={500} color="white">
                           {formatNumber(token1Deposited?.toSignificant(4))}
                         </Text>
-                        <Text fontSize={16} fontWeight={500} color={'#949494'}>
-                          ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})
+                        <Text
+                          fontSize={16}
+                          fontWeight={500}
+                          color={'#949494'}
+                          onClick={() => setShowTokenPrice(!showTokenPrice)}
+                        >
+                          ({formatPrice(token1Price * (showTokenPrice ? 1 : Number(token1Deposited.toSignificant(4))))})
                         </Text>
                       </RowFixed>
                     ) : (
@@ -348,28 +363,28 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 
                 {account && pairAccount && (
                   <>
-                    <UserPositionRow title="LPing portfolio" value={pairAccount.lpPortfolio} />
+                    <UserPositionRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
                     <UserPositionRow
-                      title="HODL portfolio"
+                      label="HODL portfolio"
                       value={pairAccount.bnhPortfolio}
                       description="Your position value if you had just held the two tokens in your wallet."
                     />
                     <UserPositionRow
                       colored
-                      title="LPing PnL"
+                      label="LPing PnL"
                       value={pairAccount.unrealizedPnL}
                       mauso={pairAccount.basePortfolio}
                     />
                     <UserPositionRow
                       colored
-                      title="HODL PnL"
+                      label="HODL PnL"
                       value={pairAccount.bnhPortfolio - pairAccount.basePortfolio}
                       mauso={pairAccount.basePortfolio}
                       description="Your profit and loss if if you had just held the two tokens in your wallet."
                     />
                     <UserPositionRow
                       colored
-                      title="LPing vs. HODL"
+                      label="LPing vs. HODL"
                       value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio}
                       description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`}
                     />
@@ -421,13 +436,13 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
 }
 
 const UserPositionRow = ({
-  title,
+  label,
   description,
   value,
   mauso,
   colored,
 }: {
-  title: string
+  label: string
   description?: string
   value: number
   mauso?: number
@@ -437,7 +452,7 @@ const UserPositionRow = ({
     <FixedHeightRow>
       <div className="flex">
         <Text fontSize={16} fontWeight={500} color="white">
-          {title}
+          {label}
         </Text>
         {description && <QuestionHelper text={description} />}
       </div>
@@ -445,7 +460,6 @@ const UserPositionRow = ({
         fontSize={16}
         fontWeight={500}
         color={colored ? (Math.abs(value) < 0.01 ? '#949494' : value > 0 ? '#35b935' : '#ff6c00') : 'white'}
-        title={formatPrice(value, { maximumFractionDigits: 2 })}
       >
         {Math.abs(value) >= 0.01 ? formatPrice(value) : '~ $0'}
         {Math.abs(value) >= 0.01 && mauso && ` (${((value * 100) / mauso).toFixed(2)}%)`}
