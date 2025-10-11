@@ -151,6 +151,7 @@ export default function Pool() {
       }),
     {
       refreshInterval: 1 * 60 * 1000,
+      refreshWhenHidden: true,
     },
   )
 
