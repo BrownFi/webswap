@@ -50,7 +50,7 @@ async function fetchChunk(
   if (resultsBlockNumber.toNumber() < minBlockNumber) {
     console.debug('4. Fetched results for OLD block number', { chainId, fetched, min, newly })
     if (newly < -100) {
-      console.error(`MISMATCH CHAIN_ID ${chainId} - BLOCK NUMBER ${min}`)
+      console.error(`4. MISMATCH BLOCK NUMBER ${min} > ${fetched}`)
       // setTimeout(() => {
       //   location.reload()
       // }, 200)

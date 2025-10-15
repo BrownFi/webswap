@@ -125,8 +125,8 @@ const bsc = overrideChain({
   iconUrl: require('assets/images/bsc.png'),
   fallbackRpcs: [
     //
-    'https://bsc.drpc.org',
-    'https://binance.llamarpc.com',
+    'https://bsc-dataseed1.defibit.io',
+    'https://bsc-dataseed1.ninicoin.io',
   ],
 })
 
