@@ -27,10 +27,16 @@ type UserRank = {
   updatedAt: string
 }
 
-const getPoolStats = (pair: Pair) =>
-  client.get(`/pool-stats/v2/${pair.liquidityToken.address.toLowerCase()}`).then((data: AxiosResponse<PoolStats>) => {
+const getPoolStats = (pairOrAddress: Pair | string) => {
+  const address = (typeof pairOrAddress === 'string'
+    ? pairOrAddress
+    : pairOrAddress.liquidityToken.address
+  ).toLowerCase()
+
+  return client.get(`/pool-stats/v2/${address}`).then((data: AxiosResponse<PoolStats>) => {
     return data.data
   })
+}
 
 const fetchLeaderboard = (params?: any) =>
   client.get(`/leaderboard-042025`, { params }).then((data: AxiosResponse<{ items: UserRank[]; total: number }>) => {

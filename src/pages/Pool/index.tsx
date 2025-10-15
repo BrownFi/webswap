@@ -100,11 +100,10 @@ const LIST_ALL_PAIRS = `
 `
 
 export default function Pool() {
-  const theme = useContext(ThemeContext)
-  const { account, chainId } = useActiveWeb3React()
+  const { chainId } = useActiveWeb3React()
   const { version, enableGraphQL } = useVersion({ chainId })
 
-  const { data, isLoading: loading } = useSWR<{
+  const { data } = useSWR<{
     pairs: {
       totalCount: number
       items: {
@@ -180,42 +179,7 @@ export default function Pool() {
     return true
   })
 
-  // fetch the user's balances of all tracked V2 LP tokens
-  const trackedTokenPairs = useTrackedTokenPairs({
-    disabled: !!data || loading || filteredPairs.length > 0,
-  })
-  const tokenPairsWithLiquidityTokens = useMemo(
-    () => trackedTokenPairs.map((tokens) => ({ liquidityToken: toV2LiquidityToken(tokens, version), tokens })),
-    [trackedTokenPairs],
-  )
-
-  const liquidityTokens = useMemo(() => tokenPairsWithLiquidityTokens.map((tpwlt) => tpwlt.liquidityToken), [
-    tokenPairsWithLiquidityTokens,
-  ])
-  const [, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(account ?? undefined, liquidityTokens)
-
-  const liquidityTokensWithBalances = tokenPairsWithLiquidityTokens
-
-  const v2Pairs = usePairs(liquidityTokensWithBalances.map(({ tokens }) => tokens))
-
-  const v2IsLoading =
-    fetchingV2PairBalances || v2Pairs?.length < liquidityTokensWithBalances.length || v2Pairs?.some((V2Pair) => !V2Pair)
-
-  const allV2PairsWithLiquidity = v2Pairs.map(([, pair]) => pair).filter((v2Pair): v2Pair is Pair => Boolean(v2Pair))
-
-  // show liquidity even if its deposited in rewards contract
-  const stakingInfo = useStakingInfo(undefined, { disabled: true })
-  const stakingInfosWithBalance = stakingInfo?.filter((pool) => JSBI.greaterThan(pool.stakedAmount.raw, BIG_INT_ZERO))
-  const stakingPairs = usePairs(stakingInfosWithBalance?.map((stakingInfo) => stakingInfo.tokens))
-
-  // remove any pairs that also are included in pairs with stake in mining pool
-  const v2PairsWithoutStakedAmount = allV2PairsWithLiquidity.filter((v2Pair) => {
-    return (
-      stakingPairs
-        ?.map((stakingPair) => stakingPair[1])
-        .filter((stakingPair) => stakingPair?.liquidityToken.address === v2Pair.liquidityToken.address).length === 0
-    )
-  })
+  const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
 
   return (
     <>
@@ -277,7 +241,7 @@ export default function Pool() {
               </div>
             </TitleRow>
 
-            {enableGraphQL && filteredPairs.length > 0 ? (
+            {shouldUseGraphQL ? (
               <>
                 {filteredPairs.map((item: PairStats) => {
                   const { token0, token1 } = item
@@ -314,41 +278,106 @@ export default function Pool() {
                 })}
               </>
             ) : (
-              <>
-                {v2IsLoading ? (
-                  <EmptyProposals>
-                    <TYPE.body color={theme.text3} textAlign="center">
-                      <Dots>Loading</Dots>
-                    </TYPE.body>
-                  </EmptyProposals>
-                ) : allV2PairsWithLiquidity?.length > 0 || stakingPairs?.length > 0 ? (
-                  <>
-                    {v2PairsWithoutStakedAmount.map((v2Pair) => (
-                      <FullPositionCard key={v2Pair.liquidityToken.address} pair={v2Pair} />
-                    ))}
-                    {stakingPairs.map(
-                      (stakingPair, i) =>
-                        stakingPair[1] && ( // skip pairs that arent loaded
-                          <FullPositionCard
-                            key={stakingInfosWithBalance[i].stakingRewardAddress}
-                            pair={stakingPair[1]}
-                            stakedBalance={stakingInfosWithBalance[i].stakedAmount}
-                          />
-                        ),
-                    )}
-                  </>
-                ) : (
-                  <EmptyProposals>
-                    <TYPE.body color={theme.text3} textAlign="center">
-                      No liquidity found.
-                    </TYPE.body>
-                  </EmptyProposals>
-                )}
-              </>
+              <OnChainLiquidityPositions />
             )}
           </AutoColumn>
         </AutoColumn>
       </PageWrapper>
     </>
+  )
+}
+
+function OnChainLiquidityPositions() {
+  const theme = useContext(ThemeContext)
+  const { account, chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
+
+  const trackedTokenPairs = useTrackedTokenPairs()
+
+  const tokenPairsWithLiquidityTokens = useMemo(
+    () => trackedTokenPairs.map((tokens) => ({ liquidityToken: toV2LiquidityToken(tokens, version), tokens })),
+    [trackedTokenPairs, version],
+  )
+
+  const liquidityTokens = useMemo(() => tokenPairsWithLiquidityTokens.map((tpwlt) => tpwlt.liquidityToken), [
+    tokenPairsWithLiquidityTokens,
+  ])
+
+  const [, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(account ?? undefined, liquidityTokens)
+
+  const v2Pairs = usePairs(tokenPairsWithLiquidityTokens.map(({ tokens }) => tokens))
+
+  const v2IsLoading =
+    fetchingV2PairBalances || v2Pairs.length < tokenPairsWithLiquidityTokens.length || v2Pairs.some((V2Pair) => !V2Pair)
+
+  const allV2PairsWithLiquidity = useMemo(
+    () => v2Pairs.map(([, pair]) => pair).filter((v2Pair): v2Pair is Pair => Boolean(v2Pair)),
+    [v2Pairs],
+  )
+
+  const stakingInfo = useStakingInfo(undefined, { disabled: true })
+  const stakingInfosWithBalance = useMemo(
+    () => stakingInfo.filter((pool) => JSBI.greaterThan(pool.stakedAmount.raw, BIG_INT_ZERO)),
+    [stakingInfo],
+  )
+  const stakingTokens = useMemo(() => stakingInfosWithBalance.map((stakingInfo) => stakingInfo.tokens), [
+    stakingInfosWithBalance,
+  ])
+  const stakingPairs = usePairs(stakingTokens)
+
+  const stakingPairsWithInfo = useMemo(
+    () =>
+      stakingPairs
+        .map((stakingPair, index) => {
+          const pair = stakingPair[1]
+          const info = stakingInfosWithBalance[index]
+          if (!pair || !info) {
+            return null
+          }
+          return { pair, info }
+        })
+        .filter((value): value is { pair: Pair; info: typeof stakingInfosWithBalance[number] } => Boolean(value)),
+    [stakingPairs, stakingInfosWithBalance],
+  )
+
+  const v2PairsWithoutStakedAmount = useMemo(
+    () =>
+      allV2PairsWithLiquidity.filter((v2Pair) => {
+        return !stakingPairsWithInfo.some(
+          (stakingPair) => stakingPair.pair.liquidityToken.address === v2Pair.liquidityToken.address,
+        )
+      }),
+    [allV2PairsWithLiquidity, stakingPairsWithInfo],
+  )
+
+  if (v2IsLoading) {
+    return (
+      <EmptyProposals>
+        <TYPE.body color={theme.text3} textAlign="center">
+          <Dots>Loading</Dots>
+        </TYPE.body>
+      </EmptyProposals>
+    )
+  }
+
+  if (v2PairsWithoutStakedAmount.length > 0 || stakingPairsWithInfo.length > 0) {
+    return (
+      <>
+        {v2PairsWithoutStakedAmount.map((v2Pair) => (
+          <FullPositionCard key={v2Pair.liquidityToken.address} pair={v2Pair} />
+        ))}
+        {stakingPairsWithInfo.map(({ pair, info }) => (
+          <FullPositionCard key={info.stakingRewardAddress} pair={pair} stakedBalance={info.stakedAmount} />
+        ))}
+      </>
+    )
+  }
+
+  return (
+    <EmptyProposals>
+      <TYPE.body color={theme.text3} textAlign="center">
+        No liquidity found.
+      </TYPE.body>
+    </EmptyProposals>
   )
 }
