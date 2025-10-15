@@ -3,7 +3,7 @@ import 'inter-ui'
 import React, { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
-import { HashRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import Blocklist from 'components/Blocklist'
 import { NetworkContextName } from 'constants/common'
 import './i18n'
@@ -49,7 +49,7 @@ root.render(
   <StrictMode>
     <FixedGlobalStyle />
     <Provider store={store}>
-      <HashRouter>
+      <BrowserRouter>
         <Web3ReactProvider getLibrary={getLibrary}>
           <Web3ProviderNetwork getLibrary={getLibrary}>
             {/* Wagmi provider (autoConnect behavior configured via wagmiConfig in connectors/index.ts) */}
@@ -73,7 +73,7 @@ root.render(
             </WagmiProvider>
           </Web3ProviderNetwork>
         </Web3ReactProvider>
-      </HashRouter>
+      </BrowserRouter>
     </Provider>
   </StrictMode>,
 )
