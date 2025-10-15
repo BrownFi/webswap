@@ -32,6 +32,9 @@ if (!!window.ethereum) {
   window.ethereum.autoRefreshOnNetworkChange = false
 }
 
+const publicUrl = process.env.PUBLIC_URL
+const routerBasename = !publicUrl || publicUrl === '.' || publicUrl === '/' ? undefined : publicUrl
+
 function Updaters() {
   return (
     <>
@@ -49,7 +52,7 @@ root.render(
   <StrictMode>
     <FixedGlobalStyle />
     <Provider store={store}>
-      <BrowserRouter>
+      <BrowserRouter basename={routerBasename}>
         <Web3ReactProvider getLibrary={getLibrary}>
           <Web3ProviderNetwork getLibrary={getLibrary}>
             {/* Wagmi provider (autoConnect behavior configured via wagmiConfig in connectors/index.ts) */}

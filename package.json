@@ -1,7 +1,7 @@
 {
   "name": "@brownfi/interface",
   "description": "Brownfi Interface",
-  "homepage": ".",
+  "homepage": "/",
   "private": true,
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
