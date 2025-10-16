@@ -165,25 +165,30 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                       <div className="text-sm">
                         <div className="font-bold">APR</div>
                         <div className="flex items-center gap-2">
-                          <div>Fee APR:</div>
-                          <div>{`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}</div>
+                          <div className="text-[#dcdcdc]">Fee APR:</div>
+                          <div className="text-[#27E3AB]">
+                            {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div>BGT APR:</div>
-                          <div>{`${formatNumber(0, { maximumFractionDigits: 2 })}%`}</div>
+                          <div className="text-[#dcdcdc]">BGT APR:</div>
+                          <div className="text-[#b1af56]">
+                            {`${formatNumber(0 + 0, { maximumFractionDigits: 2 })}%`}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div>Total APR:</div>
-                          <div>{`${formatNumber(feeAPR + 0, { maximumFractionDigits: 2 })}%`}</div>
+                          <div className="text-[#dcdcdc]">Total APR:</div>
+                          <div className="text-[#27E3AB]">
+                            {`${formatNumber(feeAPR + 0, { maximumFractionDigits: 2 })}%`}
+                          </div>
                         </div>
                       </div>
                     }
                   >
                     <div className="flex gap-1 items-center">
                       <Text className="whitespace-nowrap text-[#27E3AB]">
-                        APR:{' '}
-                        {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}% + ` +
-                          `${formatNumber(0, { maximumFractionDigits: 2 })}%`}
+                        APR: {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}
+                        <span className="text-[#b1af56]">{` + ${formatNumber(0, { maximumFractionDigits: 2 })}%`}</span>
                       </Text>
                       <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
                     </div>
@@ -320,12 +325,12 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
               <>
                 <div className="w-full h-[1px] my-[8px] bg-white opacity-[0.1]" />
                 <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
-                  LP tokens
+                  Your position
                 </h2>
 
                 <FixedHeightRow>
                   <Text fontSize={16} fontWeight={500} color="white">
-                    Your share
+                    LP tokens
                   </Text>
                   {poolTokenPercentage && userPoolBalance ? (
                     <RowFixed className="gap-1">
