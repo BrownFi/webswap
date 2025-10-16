@@ -69,7 +69,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
-  const enableBgt = isMainnet && !!pairBGT[pair.liquidityToken.address]
+  const enableBgt = !isMainnet && !!pairBGT[pair.liquidityToken.address]
 
   const [showMore, setShowMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
