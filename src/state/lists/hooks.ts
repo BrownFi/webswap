@@ -208,9 +208,15 @@ export function useDefaultTokenList(): TokenAddressMap {
 }
 
 export const findLogoURI = (token: Token): string | undefined => {
-  return DEFAULT_TOKEN_LIST.tokens.find(
+  const foundToken = DEFAULT_TOKEN_LIST.tokens.find(
     (item) => item.chainId === token.chainId && token.address.toLowerCase() === item.address.toLowerCase(),
-  )?.logoURI
+  )
+  return foundToken?.logoURI
+}
+
+export const findLogoBySymbol = (token: Token): string | undefined => {
+  const catchToken = DEFAULT_TOKEN_LIST.tokens.find((item) => item.symbol && token.symbol)
+  return catchToken?.logoURI
 }
 
 // list of tokens not supported on interface, used to show warnings and prevent swaps and adds

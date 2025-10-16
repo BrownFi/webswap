@@ -10,7 +10,7 @@ import u2uLogo from 'assets/images/u2u.jpg'
 import VictionLogo from 'assets/images/viction.png'
 import beraLogo from 'assets/images/w-bera.png'
 import useHttpLocations from 'hooks/useHttpLocations'
-import { findLogoURI, WrappedTokenInfo } from 'state/lists/hooks'
+import { findLogoBySymbol, findLogoURI, WrappedTokenInfo } from 'state/lists/hooks'
 import { Logo } from 'components/Logo'
 
 const StyledEthereumLogo = styled.img<{ size: string }>`
@@ -65,6 +65,7 @@ export function CurrencyLogo({
   if ((currency as any)?.logoURI) {
     return <StyledEthereumLogo src={(currency as any)?.logoURI} size={size} style={style} />
   }
+
   if (srcs.length > 0) {
     return (
       <StyledLogo
@@ -77,9 +78,6 @@ export function CurrencyLogo({
     )
   }
 
-  if ((currency as any)?.symbol === 'WETH') {
-    return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
-  }
   if ((currency as any)?.symbol === 'WVIC') {
     return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
   }
@@ -97,6 +95,9 @@ export function CurrencyLogo({
   }
   if ((currency as any)?.symbol === 'WSEI') {
     return <StyledEthereumLogo src={seiLogo} size={size} style={style} />
+  }
+  if ((currency as any)?.symbol === 'WETH') {
+    return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
 
   if (currency === ETHER) {
@@ -121,5 +122,15 @@ export function CurrencyLogo({
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
 
-  return <StyledLogo size={size} srcs={srcs} alt={`${currency?.symbol ?? 'token'} logo`} style={style} />
+  const srcsSymbol: string[] = useMemo(() => {
+    if (defaultSrcs.length === 0) {
+      const logoURI = findLogoBySymbol(currency as Token)
+      if (logoURI) {
+        return [logoURI]
+      }
+    }
+    return defaultSrcs
+  }, [currency, defaultSrcs])
+
+  return <StyledLogo size={size} srcs={srcsSymbol} alt={`${currency?.symbol ?? 'token'} logo`} style={style} />
 }

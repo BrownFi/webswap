@@ -269,6 +269,14 @@
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/27657.png"
     },
     {
+      "chainId": 59144,
+      "address": "0x3aAB2285ddcDdaD8edf438C1bAB47e1a9D05a9b4",
+      "name": "Wrapped BTC",
+      "symbol": "WBTC",
+      "decimals": 8,
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png"
+    },
+    {
       "chainId": 1329,
       "address": "0xe15fC38F6D8c56aF07bbCBe3BAf5708A2Bf42392",
       "name": "USDC",
