@@ -29,6 +29,7 @@ import { shouldReversePair } from 'utils/pair'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { PairStats, usePoolStats } from './usePoolStats'
 import { MouseoverTooltip } from 'components/Tooltip'
+import { isMainnet } from 'connectors'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -68,7 +69,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
-  const enableBgt = !!pairBGT[pair.liquidityToken.address]
+  const enableBgt = isMainnet && !!pairBGT[pair.liquidityToken.address]
 
   const [showMore, setShowMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
@@ -319,7 +320,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
               <>
                 <div className="w-full h-[1px] my-[8px] bg-white opacity-[0.1]" />
                 <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
-                  Your position
+                  LP tokens
                 </h2>
 
                 <FixedHeightRow>
@@ -450,10 +451,11 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                 <a
                   href={pairBGT[pair.liquidityToken.address]}
                   target="_blank"
-                  className="cursor-pointer hover:underline text-yellow-300 mt-2"
+                  className="cursor-pointer inline-flex items-center gap-2 underline text-[#e9ad6e] mt-2"
                   rel="noreferrer"
                 >
                   Stake your LPs tokens to start earning BGT
+                  <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
                 </a>
               )}
             </div>
