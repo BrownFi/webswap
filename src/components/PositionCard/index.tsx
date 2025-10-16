@@ -28,6 +28,7 @@ import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { shouldReversePair } from 'utils/pair'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { PairStats, usePoolStats } from './usePoolStats'
+import { MouseoverTooltip } from 'components/Tooltip'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -48,6 +49,13 @@ const StyledPositionCard = styled(LightCard)<{ bgColor?: any }>`
   padding: 16px 24px;
 `
 
+const pairBGT: Record<string, string> = {
+  '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C':
+    'https://hub.berachain.com/earn/0x2cb34eeadb1e7ae9cc7bafb84a189e9d921e193a', // BERA/HONEY
+  // '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc':
+  //   'https://hub.berachain.com/earn/0x519cef5cc2913bcefdd03d0a22601c19794c4581', // BERA/USDC.e
+}
+
 interface PositionCardProps {
   pair: Pair
   pairStats?: PairStats
@@ -60,6 +68,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
+  const enableBgt = !!pairBGT[pair.liquidityToken.address]
 
   const [showMore, setShowMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
@@ -149,9 +158,40 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   </ButtonSecondary>
                 </div>
                 <Text className="whitespace-nowrap text-[aqua] !min-w-[120px]">TVL: {formatPrice(tvl)}</Text>
-                <Text className="whitespace-nowrap text-[#27E3AB]">
-                  Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
-                </Text>
+                {enableBgt ? (
+                  <MouseoverTooltip
+                    text={
+                      <div className="text-sm">
+                        <div className="font-bold">APR</div>
+                        <div className="flex items-center gap-2">
+                          <div>Fee APR:</div>
+                          <div>{`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div>BGT APR:</div>
+                          <div>{`${formatNumber(0, { maximumFractionDigits: 2 })}%`}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div>Total APR:</div>
+                          <div>{`${formatNumber(feeAPR + 0, { maximumFractionDigits: 2 })}%`}</div>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <div className="flex gap-1 items-center">
+                      <Text className="whitespace-nowrap text-[#27E3AB]">
+                        APR:{' '}
+                        {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}% + ` +
+                          `${formatNumber(0, { maximumFractionDigits: 2 })}%`}
+                      </Text>
+                      <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
+                    </div>
+                  </MouseoverTooltip>
+                ) : (
+                  <Text className="whitespace-nowrap text-[#27E3AB]">
+                    Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
+                  </Text>
+                )}
               </div>
             </div>
           </AutoRow>
@@ -287,17 +327,14 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     Your share
                   </Text>
                   {poolTokenPercentage && userPoolBalance ? (
-                    <Text
-                      fontSize={16}
-                      fontWeight={500}
-                      color="white"
-                      title={
-                        `${formatNumber(userPoolBalance.toSignificant(4))} ` +
-                        `(${formatPrice(lpPrice * Number(userPoolBalance.toSignificant(4)))})`
-                      }
-                    >
-                      {(poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2)) + '%'}
-                    </Text>
+                    <RowFixed className="gap-1">
+                      <Text fontSize={16} fontWeight={500} color="white">
+                        {formatNumber(userPoolBalance.toSignificant(4))}
+                      </Text>
+                      <Text fontSize={16} fontWeight={500} color={'#949494'}>
+                        ({(poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2)) + '%'})
+                      </Text>
+                    </RowFixed>
                   ) : (
                     <Loader stroke="gray" />
                   )}
@@ -408,16 +445,18 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
               )}
             </RowBetween>
 
-            {stakedBalance && JSBI.greaterThan(stakedBalance.raw, BIG_INT_ZERO) && (
-              <ButtonPrimary
-                padding="8px"
-                as={Link}
-                to={`/uni/${currencyId(currency0)}/${currencyId(currency1)}`}
-                width="100%"
-              >
-                Manage Liquidity in Rewards Pool
-              </ButtonPrimary>
-            )}
+            <div className="flex justify-center">
+              {enableBgt && account && (
+                <a
+                  href={pairBGT[pair.liquidityToken.address]}
+                  target="_blank"
+                  className="cursor-pointer hover:underline text-yellow-300 mt-2"
+                  rel="noreferrer"
+                >
+                  Stake your LPs tokens to start earning BGT
+                </a>
+              )}
+            </div>
           </AutoColumn>
         )}
       </AutoColumn>

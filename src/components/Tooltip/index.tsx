@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { ReactNode, useCallback, useState } from 'react'
 import styled from 'styled-components'
 import Popover, { PopoverProps } from 'components/Popover'
 
@@ -9,10 +9,11 @@ const TooltipContainer = styled.div`
   font-weight: 500;
   font-size: 14px;
   white-space: pre-line;
+  background-color: #444444;
 `
 
 interface TooltipProps extends Omit<PopoverProps, 'content'> {
-  text: string
+  text: ReactNode
 }
 
 export default function Tooltip({ text, ...rest }: TooltipProps) {
