@@ -215,7 +215,7 @@ export const findLogoURI = (token: Token): string | undefined => {
 }
 
 export const findLogoBySymbol = (token: Token): string | undefined => {
-  const catchToken = DEFAULT_TOKEN_LIST.tokens.find((item) => item.symbol && token.symbol)
+  const catchToken = DEFAULT_TOKEN_LIST.tokens.find((item) => item.symbol === token.symbol)
   return catchToken?.logoURI
 }
 

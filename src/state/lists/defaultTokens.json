@@ -355,6 +355,14 @@
       "symbol": "iBGT",
       "decimals": 18,
       "logoURI": "https://berascan.com/token/images/ibgt_64.svg"
+    },
+    {
+      "chainId": 80094,
+      "address": "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+      "name": "USDe",
+      "symbol": "USDe",
+      "decimals": 18,
+      "logoURI": "https://berascan.com/token/images/ethenausde_32.svg"
     }
   ]
 }

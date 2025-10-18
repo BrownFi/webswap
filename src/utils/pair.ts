@@ -8,6 +8,7 @@ export const shouldReverse = (pairSymbols: string) => {
     'USDT/kHYPE',
     'USDC/ETH',
     'USDC/LINEA',
+    'USDe/BERA',
     // BSC
     'USDC/BNB',
     'USDT/BNB',
