@@ -57,10 +57,12 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
     const isPairBeta = [
       //
       '0x46Ebd96e4a09b97AeFf54c123b9C34433682a238', // WBERA/iBGT
+      '0x116e5e74eC5F7332075e96978CF44413f445540C', // WBERA/USDe
     ].includes(pair?.liquidityToken.address as string)
 
     const isNotPairBeta = ([
       //
+      '0xdC46421B43688FdDBB6030aaE761385782e84905', // ETH/USDC
     ] as string[]).includes(pair?.liquidityToken.address as string)
 
     return (isChainBeta || isPairBeta) && !isNotPairBeta && version === 2
