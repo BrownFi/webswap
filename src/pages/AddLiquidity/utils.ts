@@ -4,7 +4,8 @@ import JSBI from 'jsbi'
 const BASIS_POINTS = JSBI.BigInt(10000)
 const BASIS_POINTS_MINUS_ONE = JSBI.subtract(BASIS_POINTS, JSBI.BigInt(1))
 
-export const getApprovalBuffer = (amount?: CurrencyAmount, allowedSlippage = 100): CurrencyAmount | undefined => {
+// We don't need buffer amount anymore, so allowedSlippage = 0
+export const getApprovalBuffer = (amount?: CurrencyAmount, allowedSlippage = 0): CurrencyAmount | undefined => {
   if (!amount) {
     return undefined
   }
