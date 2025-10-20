@@ -22,8 +22,9 @@ import { useActiveWeb3React } from 'hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
 import useSWR from 'swr'
 import { graphqlFetcher } from 'utils/swr'
-import { internalService } from 'services'
-import { parseFixed } from '@ethersproject/bignumber'
+import { usePairs } from 'data/Reserves'
+import { useStakingInfo } from 'state/stake/hooks'
+import { BIG_INT_ZERO } from 'constants/common'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
@@ -292,111 +293,70 @@ function OnChainLiquidityPositions() {
   const { version } = useVersion({ chainId })
 
   const trackedTokenPairs = useTrackedTokenPairs()
-
   const tokenPairsWithLiquidityTokens = useMemo(
     () => trackedTokenPairs.map((tokens) => ({ liquidityToken: toV2LiquidityToken(tokens, version), tokens })),
-    [trackedTokenPairs, version],
+    [trackedTokenPairs],
   )
 
   const liquidityTokens = useMemo(() => tokenPairsWithLiquidityTokens.map((tpwlt) => tpwlt.liquidityToken), [
     tokenPairsWithLiquidityTokens,
   ])
+  const [, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(account ?? undefined, liquidityTokens)
 
-  const [tokenBalances, fetchingV2PairBalances] = useTokenBalancesWithLoadingIndicator(
-    account ?? undefined,
-    liquidityTokens,
-  )
+  const liquidityTokensWithBalances = tokenPairsWithLiquidityTokens
 
-  const liquidityTokenAddresses = useMemo(() => liquidityTokens.map((token) => token.address.toLowerCase()), [
-    liquidityTokens,
-  ])
+  const v2Pairs = usePairs(liquidityTokensWithBalances.map(({ tokens }) => tokens))
 
-  const shouldFetchPoolStats = liquidityTokenAddresses.length > 0 && !!chainId
+  const v2IsLoading =
+    fetchingV2PairBalances || v2Pairs?.length < liquidityTokensWithBalances.length || v2Pairs?.some((V2Pair) => !V2Pair)
 
-  const { data: poolStatsMap, isValidating: poolStatsLoading } = useSWR(
-    shouldFetchPoolStats ? ['pool-stats', chainId, liquidityTokenAddresses.join(',')] : null,
-    async ([, , addressesJoined]) => {
-      const addresses = (addressesJoined as string).split(',').filter(Boolean)
-      const entries = await Promise.all(
-        addresses.map(async (address) => {
-          try {
-            const stats = await internalService.getPoolStats(address)
-            return [address, stats] as const
-          } catch (error) {
-            console.error('Failed to fetch pool stats', address, error)
-            return [address, null] as const
-          }
-        }),
-      )
-      return Object.fromEntries(entries)
-    },
-    {
-      refreshInterval: 60 * 1000,
-      revalidateOnFocus: false,
-    },
-  )
+  const allV2PairsWithLiquidity = v2Pairs.map(([, pair]) => pair).filter((v2Pair): v2Pair is Pair => Boolean(v2Pair))
 
-  const apiPairsWithBalance = useMemo(() => {
-    if (!poolStatsMap) {
-      return []
-    }
+  // show liquidity even if its deposited in rewards contract
+  const stakingInfo = useStakingInfo(undefined, { disabled: true })
+  const stakingInfosWithBalance = stakingInfo?.filter((pool) => JSBI.greaterThan(pool.stakedAmount.raw, BIG_INT_ZERO))
+  const stakingPairs = usePairs(stakingInfosWithBalance?.map((stakingInfo) => stakingInfo.tokens))
 
-    return tokenPairsWithLiquidityTokens
-      .map(({ liquidityToken, tokens }) => {
-        const [tokenA, tokenB] = tokens
-        const stats = poolStatsMap[liquidityToken.address.toLowerCase()]
-        const balance = tokenBalances[liquidityToken.address]
-
-        if (!tokenA || !tokenB || !stats || !balance || !JSBI.greaterThan(balance.raw, JSBI.BigInt(0))) {
-          return null
-        }
-
-        try {
-          const reserve0Raw = parseFixed(stats.amountToken0?.toString() ?? '0', tokenA.decimals)
-          const reserve1Raw = parseFixed(stats.amountToken1?.toString() ?? '0', tokenB.decimals)
-
-          const pair = new Pair(
-            new TokenAmount(tokenA, JSBI.BigInt(reserve0Raw.toString())),
-            new TokenAmount(tokenB, JSBI.BigInt(reserve1Raw.toString())),
-            version,
-          )
-
-          return { pair, liquidityTokenAddress: liquidityToken.address }
-        } catch (error) {
-          console.error('Failed to build pair from stats', liquidityToken.address, error)
-          return null
-        }
-      })
-      .filter((value): value is { pair: Pair; liquidityTokenAddress: string } => Boolean(value))
-  }, [poolStatsMap, tokenPairsWithLiquidityTokens, tokenBalances, version])
-
-  const isLoading = fetchingV2PairBalances || poolStatsLoading || (shouldFetchPoolStats && !poolStatsMap)
-
-  if (isLoading) {
+  // remove any pairs that also are included in pairs with stake in mining pool
+  const v2PairsWithoutStakedAmount = allV2PairsWithLiquidity.filter((v2Pair) => {
     return (
-      <EmptyProposals>
-        <TYPE.body color={theme.text3} textAlign="center">
-          <Dots>Loading</Dots>
-        </TYPE.body>
-      </EmptyProposals>
+      stakingPairs
+        ?.map((stakingPair) => stakingPair[1])
+        .filter((stakingPair) => stakingPair?.liquidityToken.address === v2Pair.liquidityToken.address).length === 0
     )
-  }
-
-  if (apiPairsWithBalance.length > 0) {
-    return (
-      <>
-        {apiPairsWithBalance.map(({ pair, liquidityTokenAddress }) => (
-          <FullPositionCard key={liquidityTokenAddress} pair={pair} />
-        ))}
-      </>
-    )
-  }
+  })
 
   return (
-    <EmptyProposals>
-      <TYPE.body color={theme.text3} textAlign="center">
-        No liquidity found.
-      </TYPE.body>
-    </EmptyProposals>
+    <>
+      {v2IsLoading ? (
+        <EmptyProposals>
+          <TYPE.body color={theme.text3} textAlign="center">
+            <Dots>Loading</Dots>
+          </TYPE.body>
+        </EmptyProposals>
+      ) : allV2PairsWithLiquidity?.length > 0 || stakingPairs?.length > 0 ? (
+        <>
+          {v2PairsWithoutStakedAmount.map((v2Pair) => (
+            <FullPositionCard key={v2Pair.liquidityToken.address} pair={v2Pair} />
+          ))}
+          {stakingPairs.map(
+            (stakingPair, i) =>
+              stakingPair[1] && ( // skip pairs that arent loaded
+                <FullPositionCard
+                  key={stakingInfosWithBalance[i].stakingRewardAddress}
+                  pair={stakingPair[1]}
+                  stakedBalance={stakingInfosWithBalance[i].stakedAmount}
+                />
+              ),
+          )}
+        </>
+      ) : (
+        <EmptyProposals>
+          <TYPE.body color={theme.text3} textAlign="center">
+            No liquidity found.
+          </TYPE.body>
+        </EmptyProposals>
+      )}
+    </>
   )
 }
