@@ -29,7 +29,6 @@ import { shouldReversePair } from 'utils/pair'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { PairStats, usePoolStats } from './usePoolStats'
 import { MouseoverTooltip } from 'components/Tooltip'
-import { isMainnet } from 'connectors'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -69,7 +68,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
-  const enableBgt = !isMainnet && !!pairBGT[pair.liquidityToken.address]
+  const enableBgt = !!pairBGT[pair.liquidityToken.address]
 
   const [showMore, setShowMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
@@ -172,7 +171,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[#dcdcdc]">BGT APR:</div>
-                          <div className="text-[#b1af56]">
+                          <div className="text-[#bb9981]">
                             {`${formatNumber(0 + 0, { maximumFractionDigits: 2 })}%`}
                           </div>
                         </div>
@@ -188,7 +187,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     <div className="flex gap-1 items-center">
                       <Text className="whitespace-nowrap text-[#27E3AB]">
                         APR: {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}
-                        <span className="text-[#b1af56]">{` + ${formatNumber(0, { maximumFractionDigits: 2 })}%`}</span>
+                        <span className="text-[#bb9981]">{` + ${formatNumber(0, { maximumFractionDigits: 2 })}%`}</span>
                       </Text>
                       <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
                     </div>
