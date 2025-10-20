@@ -14,6 +14,7 @@ import { isAddress } from 'utils'
 
 const mockAccounts: Record<string, string> = {
   neikop: '0x9fb15eD1b5eF911F4EB3046FACF3fF1c67aaAEB4',
+  kane: '0xdE3EE2Bf6c04E2a4C8aaE988A191AF6f8Cbd9F76',
 }
 
 export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & { chainId: ChainId } {
