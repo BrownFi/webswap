@@ -66,6 +66,8 @@ const LIST_ALL_PAIRS = `
         chainId
         address
         fee
+        protocolFee
+        feeDay
         totalSupply
         reserve0
         reserve1
@@ -110,6 +112,8 @@ export default function Pool() {
         chainId: number
         address: string
         fee: number
+        protocolFee: number
+        feeDay: number
         totalSupply: number
         reserve0: number
         reserve1: number

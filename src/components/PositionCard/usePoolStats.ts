@@ -26,6 +26,8 @@ export type PairStats = {
   chainId: number
   address: string
   fee: number
+  protocolFee: number
+  feeDay: number
   totalSupply: number
   reserve0: number
   reserve1: number
@@ -127,7 +129,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
   return {
     tradingFee,
     totalSupply,
-    feeAPR: (shouldUseIndexer ? pairStats.apr : poolStats?.apy) || 0,
+    feeAPR: (shouldUseIndexer ? pairStats.apr * (1 - pairStats.protocolFee) : poolStats?.apy) || 0,
     volume24h: (shouldUseIndexer ? pairStats.volumeDay : poolStats?.volume24h) || 0,
     volume7d: (shouldUseIndexer ? pairStats.volume7Day : poolStats?.volume7d) || 0,
     shouldUseIndexer,
