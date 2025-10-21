@@ -77,6 +77,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
     tradingFee,
     totalSupply: totalPoolTokens,
     feeAPR: feeAPRIndexer,
+    bgtAPR,
     volume24h,
     volume7d,
     shouldUseIndexer,
@@ -172,13 +173,13 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                         <div className="flex items-center gap-2">
                           <div className="text-[#dcdcdc]">BGT APR:</div>
                           <div className="text-[#bb9981]">
-                            {`${formatNumber(0 + 0, { maximumFractionDigits: 2 })}%`}
+                            {`${formatNumber(bgtAPR, { maximumFractionDigits: 2 })}%`}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[#dcdcdc]">Total APR:</div>
                           <div className="text-[#27E3AB]">
-                            {`${formatNumber(feeAPR + 0, { maximumFractionDigits: 2 })}%`}
+                            {`${formatNumber(feeAPR + bgtAPR, { maximumFractionDigits: 2 })}%`}
                           </div>
                         </div>
                       </div>
@@ -187,7 +188,9 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     <div className="flex gap-1 items-center">
                       <Text className="whitespace-nowrap text-[#27E3AB]">
                         APR: {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}
-                        <span className="text-[#bb9981]">{` + ${formatNumber(0, { maximumFractionDigits: 2 })}%`}</span>
+                        <span className="text-[#bb9981]">
+                          {` + ${formatNumber(bgtAPR, { maximumFractionDigits: 2 })}%`}
+                        </span>
                       </Text>
                       <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
                     </div>

@@ -1,11 +1,12 @@
-import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
+import { ChainId, JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { useTotalSupply } from 'data/TotalSupply'
 import { useActiveWeb3React } from 'hooks'
 import { useTradingFee } from 'hooks/useTradingFee'
+import _ from 'lodash'
 import moment from 'moment'
 import { useMemo } from 'react'
-import { internalService } from 'services'
+import { internalService, bgtService } from 'services'
 import useSWR from 'swr'
 import { graphqlFetcher } from 'utils/swr'
 
@@ -57,6 +58,11 @@ const GET_PAIR_ACCOUNT = `
     }
   }
 `
+
+const pairBGT: Record<string, string[]> = {
+  '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': ['0x7488174f1f518caf2faae4f30cbba65ea57cf4f9'], // BERA/HONEY
+  // '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': [], // BERA/USDC.e
+}
 
 type Props = {
   pair: Pair
@@ -117,6 +123,22 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
     enabled: !shouldUseIndexer,
   })
 
+  // Apt BGT
+  const { data: bgtAPR = 0 } = useQuery({
+    queryKey: ['getBgtApr', pair.liquidityToken.address],
+    queryFn: () => {
+      return bgtService
+        .getBgtApr({ chainId: pair.chainId, addresses: pairBGT[pair.liquidityToken.address] })
+        .then((data) => {
+          const { infrared, operator } = Object.values(data)[0].aprBreakdown
+          const apr = _.maxBy(Object.values({ ...infrared, operator }), 'apr')?.apr
+          return Number(apr) * 100
+        })
+        .catch(() => 0)
+    },
+    enabled: pair.chainId === ChainId.BERA_MAINNET && !!pairBGT[pair.liquidityToken.address],
+  })
+
   const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : useTradingFee({ pair })
 
   const totalSupply = shouldUseIndexer
@@ -130,6 +152,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
     tradingFee,
     totalSupply,
     feeAPR: (shouldUseIndexer ? pairStats.apr * (1 - pairStats.protocolFee) : poolStats?.apy) || 0,
+    bgtAPR,
     volume24h: (shouldUseIndexer ? pairStats.volumeDay : poolStats?.volume24h) || 0,
     volume7d: (shouldUseIndexer ? pairStats.volume7Day : poolStats?.volume7d) || 0,
     shouldUseIndexer,
