@@ -49,9 +49,11 @@ const StyledPositionCard = styled(LightCard)<{ bgColor?: any }>`
   padding: 16px 24px;
 `
 
-const pairBGT: Record<string, string> = {
-  '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C':
-    'https://hub.berachain.com/earn/0x2cb34eeadb1e7ae9cc7bafb84a189e9d921e193a', // BERA/HONEY
+const pairBGT: Record<string, [string, string]> = {
+  '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': [
+    'https://hub.berachain.com/earn/0x2cb34eeadb1e7ae9cc7bafb84a189e9d921e193a',
+    'https://infrared.finance/pol-vaults/brownfi-wbera-honey',
+  ], // BERA/HONEY
   // '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc':
   //   'https://hub.berachain.com/earn/0x519cef5cc2913bcefdd03d0a22601c19794c4581', // BERA/USDC.e
 }
@@ -453,19 +455,32 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
               )}
             </RowBetween>
 
-            <div className="flex justify-center">
-              {enableBgt && account && (
-                <a
-                  href={pairBGT[pair.liquidityToken.address]}
-                  target="_blank"
-                  className="cursor-pointer inline-flex items-center gap-2 underline text-[#e9ad6e] mt-2"
-                  rel="noreferrer"
-                >
-                  Stake your LPs tokens to start earning BGT
-                  <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
-                </a>
-              )}
-            </div>
+            {enableBgt && account && (
+              <div className="flex gap-2 justify-center items-center mt-2">
+                <div className="text-center text-[#b2ada9]">
+                  Stake your LP tokens on{' '}
+                  <a
+                    href={pairBGT[pair.liquidityToken.address][0]}
+                    target="_blank"
+                    className="cursor-pointer hover:underline text-[#e9ad6e]"
+                    rel="noreferrer"
+                  >
+                    BeraHub
+                  </a>{' '}
+                  (earn BGT), or on{' '}
+                  <a
+                    href={pairBGT[pair.liquidityToken.address][1]}
+                    target="_blank"
+                    className="cursor-pointer hover:underline text-[#e9ad6e]"
+                    rel="noreferrer"
+                  >
+                    Infrared
+                  </a>{' '}
+                  (earn iBGT)
+                </div>
+                <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
+              </div>
+            )}
           </AutoColumn>
         )}
       </AutoColumn>

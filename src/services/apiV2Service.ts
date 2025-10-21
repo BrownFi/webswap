@@ -22,6 +22,16 @@ const getPoolPrices = (options?: { chainId: number; tokenA: string; tokenB: stri
       return data.data
     })
 
+const getPoolBgt = (options: { address: string }) =>
+  client
+    .get(`/igbt-vault-apr`, {
+      params: { pool: options.address },
+    })
+    .then((data: AxiosResponse<{ apr: number }>) => {
+      return data.data
+    })
+
 export const apiV2Service = {
   getPoolPrices,
+  getPoolBgt,
 }
