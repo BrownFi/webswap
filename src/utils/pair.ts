@@ -14,6 +14,8 @@ export const shouldReverse = (pairSymbols: string) => {
     'USDT/BNB',
     'ASTER/BNB',
     'USDT/BTCB',
+    // LINEA
+    'USDT/ETH',
   ].includes(pairSymbols)
 }
 
