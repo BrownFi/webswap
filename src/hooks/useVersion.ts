@@ -57,6 +57,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
     const isPairBeta = [
       //
       '0x46Ebd96e4a09b97AeFf54c123b9C34433682a238', // WBERA/iBGT
+      '0xF943aF974Cb195107C915A0594dC69BfDdD5c712', // iBGT/HONEY
       '0x116e5e74eC5F7332075e96978CF44413f445540C', // WBERA/USDe
       '0x9aBE906bC272CBb317588D9D495bCc12FAf3ff92', // DOLO/BERA
       '0x67FBB8A61D6D6433f3428d1f10cfb09bABC1A4D5', // DOLO/HONEY
