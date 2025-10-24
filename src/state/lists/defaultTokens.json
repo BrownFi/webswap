@@ -363,6 +363,14 @@
       "symbol": "USDe",
       "decimals": 18,
       "logoURI": "https://berascan.com/token/images/ethenausde_32.svg"
+    },
+    {
+      "chainId": 80094,
+      "address": "0x0F81001eF0A83ecCE5ccebf63EB302c70a39a654",
+      "name": "Dolomite",
+      "symbol": "DOLO",
+      "decimals": 18,
+      "logoURI": "https://berascan.com/token/images/dolomite2_32.svg"
     }
   ]
 }
