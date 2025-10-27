@@ -141,6 +141,30 @@
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/32994.png"
     },
     {
+      "chainId": 8453,
+      "address": "0x98d0baa52b2D063E780DE12F615f963Fe8537553",
+      "name": "KAITO",
+      "symbol": "KAITO",
+      "decimals": 18,
+      "logoURI": "https://basescan.org/token/images/kaito_64.png"
+    },
+    {
+      "chainId": 8453,
+      "address": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "name": "VIRTUAL",
+      "symbol": "VIRTUAL",
+      "decimals": 18,
+      "logoURI": "https://basescan.org/token/images/virtualprotocol_32.png"
+    },
+    {
+      "chainId": 8453,
+      "address": "0x1bc0c42215582d5A085795f4baDbaC3ff36d1Bcb",
+      "name": "CLANKER",
+      "symbol": "CLANKER",
+      "decimals": 18,
+      "logoURI": "https://basescan.org/token/images/CLANKER_32.png"
+    },
+    {
       "chainId": 1301,
       "address": "0x8Aca9B80b6752Ec62e06eC48E07a301e97852dAA",
       "name": "USDC",
