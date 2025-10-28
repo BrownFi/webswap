@@ -1,4 +1,4 @@
-import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
+import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'react-feather'
@@ -29,6 +29,7 @@ import { shouldReversePair } from 'utils/pair'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { PairStats, usePoolStats } from './usePoolStats'
 import { MouseoverTooltip } from 'components/Tooltip'
+import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -66,7 +67,7 @@ interface PositionCardProps {
   stakedBalance?: TokenAmount
 }
 
-export default function FullPositionCard({ pair, pairStats, border, stakedBalance }: PositionCardProps) {
+export default function FullPositionCard({ pair, pairStats, border }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
@@ -115,29 +116,24 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
   const feeAPRLiem = tradingFee * (((Number(volume24h) || 0) * 360) / (tvl || 1))
   const feeAPR = shouldUseIndexer ? feeAPRIndexer : feeAPRLiem
 
-  // if staked balance balance provided, add to standard liquidity amount
-  const userPoolBalance = stakedBalance ? userPoolTokens?.add(stakedBalance) : userPoolTokens
+  const stakedLiquidityTokenAmount = parseStakeLpAmount(pairAccount?.stakeLP, pair.liquidityToken)
 
-  const poolTokenPercentage =
-    !!userPoolBalance &&
-    !!totalPoolTokens &&
-    +totalPoolTokens.raw.toString() > 0 &&
-    JSBI.greaterThanOrEqual(totalPoolTokens.raw, userPoolBalance.raw)
-      ? new Percent(userPoolBalance.raw, totalPoolTokens.raw)
-      : undefined
+  const { userPoolBalance, poolTokenPercentage, token0Deposited, token1Deposited } = deriveLiquidityMetrics({
+    pair,
+    totalPoolTokens,
+    walletBalance: userPoolTokens,
+    stakedBalance: stakedLiquidityTokenAmount,
+  })
 
-  const [token0Deposited, token1Deposited] =
-    !!pair &&
-    !!userPoolBalance &&
-    !!totalPoolTokens &&
-    +totalPoolTokens.raw.toString() > 0 &&
-    // this condition is a short-circuit in the case where useTokenBalance updates sooner than useTotalSupply
-    JSBI.greaterThanOrEqual(totalPoolTokens.raw, userPoolBalance.raw)
-      ? [
-          pair.getLiquidityValue(pair.token0, totalPoolTokens, userPoolBalance, false),
-          pair.getLiquidityValue(pair.token1, totalPoolTokens, userPoolBalance, false),
-        ]
-      : [undefined, undefined]
+  const {
+    stakedDisplay: stakedLpDisplay,
+    walletDisplay: walletLpDisplay,
+    totalDisplay: totalLpDisplay,
+  } = formatLiquidityBreakdown({
+    walletBalance: userPoolTokens,
+    stakedBalance: stakedLiquidityTokenAmount,
+    totalBalance: userPoolBalance,
+  })
 
   return (
     <StyledPositionCard border={border}>
@@ -174,7 +170,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[#dcdcdc]">BGT APR:</div>
-                          <div className="text-[#bb9981]">
+                          <div className="text-[#e5b28e]">
                             {`${formatNumber(bgtAPR, { maximumFractionDigits: 2 })}%`}
                           </div>
                         </div>
@@ -190,7 +186,7 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     <div className="flex gap-1 items-center">
                       <Text className="whitespace-nowrap text-[#27E3AB]">
                         APR: {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}
-                        <span className="text-[#bb9981]">
+                        <span className="text-[#e5b28e]">
                           {` + ${formatNumber(bgtAPR, { maximumFractionDigits: 2 })}%`}
                         </span>
                       </Text>
@@ -337,11 +333,35 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     LP tokens
                   </Text>
                   {poolTokenPercentage && userPoolBalance ? (
-                    <RowFixed className="gap-1">
-                      <Text fontSize={16} fontWeight={500} color="white">
-                        {formatNumber(userPoolBalance.toSignificant(4))}
-                      </Text>
-                      <Text fontSize={16} fontWeight={500} color={'#949494'}>
+                    <RowFixed className="gap-1 flex-wrap items-center">
+                      {stakedLpDisplay && (
+                        <>
+                          <Text fontSize={16} fontWeight={500} color="white">
+                            {stakedLpDisplay}
+                          </Text>
+                          <Text fontSize={16} fontWeight={500} color="#e5b28e">
+                            (staked)
+                          </Text>
+                        </>
+                      )}
+                      {walletLpDisplay && (
+                        <>
+                          {stakedLpDisplay && (
+                            <Text fontSize={16} fontWeight={500} color="white">
+                              +
+                            </Text>
+                          )}
+                          <Text fontSize={16} fontWeight={500} color="white">
+                            {walletLpDisplay}
+                          </Text>
+                        </>
+                      )}
+                      {!stakedLpDisplay && !walletLpDisplay && (
+                        <Text fontSize={16} fontWeight={500} color="white">
+                          {totalLpDisplay ?? '0'}
+                        </Text>
+                      )}
+                      <Text fontSize={16} fontWeight={500} color="#949494">
                         ({(poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2)) + '%'})
                       </Text>
                     </RowFixed>
@@ -349,20 +369,6 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                     <Loader stroke="gray" />
                   )}
                 </FixedHeightRow>
-
-                {enableBgt && account && (
-                  <FixedHeightRow>
-                    <Text fontSize={16} fontWeight={500} color="white">
-                      Staked LP tokens
-                    </Text>
-                    <RowFixed className="gap-1">
-                      <Text fontSize={16} fontWeight={500} color="white">
-                        {formatNumber(pairAccount?.stakeLP ?? 0)}
-                      </Text>
-                      <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
-                    </RowFixed>
-                  </FixedHeightRow>
-                )}
 
                 <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
                   <FixedHeightRow>
