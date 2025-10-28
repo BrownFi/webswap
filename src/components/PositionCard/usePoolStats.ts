@@ -50,6 +50,7 @@ const GET_PAIR_ACCOUNT = `
       lpPortfolio
       basePortfolio
       bnhPortfolio
+      stakeLP
       netPnL
       netBnHPnL
       unrealizedPnL
@@ -83,6 +84,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
         lpPortfolio: number
         basePortfolio: number
         bnhPortfolio: number
+        stakeLP: number
         netPnL: number
         netBnHPnL: number
         unrealizedPnL: number

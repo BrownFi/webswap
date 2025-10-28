@@ -350,6 +350,20 @@ export default function FullPositionCard({ pair, pairStats, border, stakedBalanc
                   )}
                 </FixedHeightRow>
 
+                {enableBgt && account && (
+                  <FixedHeightRow>
+                    <Text fontSize={16} fontWeight={500} color="white">
+                      Staked LP tokens
+                    </Text>
+                    <RowFixed className="gap-1">
+                      <Text fontSize={16} fontWeight={500} color="white">
+                        {formatNumber(pairAccount?.stakeLP ?? 0)}
+                      </Text>
+                      <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
+                    </RowFixed>
+                  </FixedHeightRow>
+                )}
+
                 <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
                   <FixedHeightRow>
                     <RowFixed className="gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
