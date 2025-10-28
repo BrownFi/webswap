@@ -335,14 +335,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   {poolTokenPercentage && userPoolBalance ? (
                     <RowFixed className="gap-1 flex-wrap items-center">
                       {stakedLpDisplay && (
-                        <>
-                          <Text fontSize={16} fontWeight={500} color="white">
-                            {stakedLpDisplay}
-                          </Text>
-                          <Text fontSize={16} fontWeight={500} color="#e5b28e">
-                            (staked)
-                          </Text>
-                        </>
+                        <Text fontSize={16} fontWeight={500} color="#e5b28e">
+                          {stakedLpDisplay} staked
+                        </Text>
                       )}
                       {walletLpDisplay && (
                         <>
