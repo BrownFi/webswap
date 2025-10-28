@@ -15,7 +15,7 @@ export const graphqlFetcher = ({
     query = query.replace(/stakeLP/g, '')
   }
   return axios
-    .post(chainId === ChainId.BERA_MAINNET ? 'https://bera-indexer.brownfi.io' : process.env.REACT_APP_GRAPHQL_URL!, {
+    .post(process.env.REACT_APP_GRAPHQL_URL!, {
       operationName,
       query,
       variables,

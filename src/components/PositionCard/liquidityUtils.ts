@@ -6,11 +6,24 @@ import { formatNumber } from 'utils/prices'
 
 type StakeValue = number | string | null | undefined
 
-const sumTokenAmounts = (a?: TokenAmount | null, b?: TokenAmount | null) => {
-  if (a && b) {
-    return a.add(b)
+const sumTokenAmounts = (a?: TokenAmount | null, b?: TokenAmount | null, fallbackToken?: Token) => {
+  const token = a?.token ?? b?.token ?? fallbackToken
+
+  if (!token) {
+    return undefined
   }
-  return a ?? b ?? undefined
+
+  if (a && !a.token.equals(token)) {
+    return undefined
+  }
+
+  if (b && !b.token.equals(token)) {
+    return undefined
+  }
+
+  const rawSum = JSBI.add(a?.raw ?? BIG_INT_ZERO, b?.raw ?? BIG_INT_ZERO)
+
+  return new TokenAmount(token, rawSum)
 }
 
 const canUseBalance = (balance?: TokenAmount | null) => !!balance && JSBI.greaterThan(balance.raw, BIG_INT_ZERO)
@@ -80,7 +93,7 @@ export const deriveLiquidityMetrics = ({
   walletBalance?: TokenAmount | null
   stakedBalance?: TokenAmount | null
 }) => {
-  const userPoolBalance = sumTokenAmounts(walletBalance, stakedBalance)
+  const userPoolBalance = sumTokenAmounts(walletBalance, stakedBalance, pair.liquidityToken)
 
   const poolTokenPercentage =
     userPoolBalance &&
@@ -102,8 +115,8 @@ export const deriveLiquidityMetrics = ({
     liquidityAmount: stakedBalance,
   })
 
-  const token0Deposited = sumTokenAmounts(walletToken0Deposited, stakedToken0Deposited)
-  const token1Deposited = sumTokenAmounts(walletToken1Deposited, stakedToken1Deposited)
+  const token0Deposited = sumTokenAmounts(walletToken0Deposited, stakedToken0Deposited, pair.token0)
+  const token1Deposited = sumTokenAmounts(walletToken1Deposited, stakedToken1Deposited, pair.token1)
 
   return {
     userPoolBalance: userPoolBalance ?? undefined,
