@@ -1,4 +1,4 @@
-import { ChainId, JSBI, Pair, Token, TokenAmount } from '@brownfi/sdk'
+import { ChainId, JSBI, Pair, Token, TokenAmount, WETH } from '@brownfi/sdk'
 import { useContext, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import styled, { ThemeContext } from 'styled-components'
@@ -181,12 +181,17 @@ export default function Pool() {
       if (pair.chainId === ChainId.HYPER_EVM) {
         checkPair = !['USD₮0/kHYPE'].includes(symbol)
       }
-      const checkTokens = allTokens.some(
-        (token) =>
-          token.address.toLowerCase() === pair.token0?.address.toLowerCase() ||
-          token.address.toLowerCase() === pair.token1?.address.toLowerCase(),
-      )
-      return checkPair && checkTokens
+      if (!checkPair) return false
+
+      const [token0Address, token1Address, wethAddress] = [
+        pair.token0?.address.toLowerCase(),
+        pair.token1?.address.toLowerCase(),
+        WETH[pair.chainId as 1]?.address.toLowerCase(),
+      ]
+      const allTokensAddress = allTokens.map((token) => token.address.toLowerCase()).concat(wethAddress)
+      const isValidToken0 = allTokensAddress.includes(token0Address)
+      const isValidToken1 = allTokensAddress.includes(token1Address)
+      return isValidToken0 || isValidToken1
     }
     return true
   })
