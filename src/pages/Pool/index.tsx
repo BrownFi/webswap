@@ -168,7 +168,7 @@ export default function Pool() {
   const filteredPairs = sortedPairs.filter((pair) => {
     const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
     if (isMainnet) {
-      let checkPair = false
+      let checkPair = true
       if (pair.chainId === ChainId.ARBITRUM_MAINNET) {
         checkPair = !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
       }
@@ -183,7 +183,7 @@ export default function Pool() {
       }
       const checkTokens = allTokens.some(
         (token) =>
-          token.address.toLowerCase() === pair.token0?.address.toLowerCase() &&
+          token.address.toLowerCase() === pair.token0?.address.toLowerCase() ||
           token.address.toLowerCase() === pair.token1?.address.toLowerCase(),
       )
       return checkPair && checkTokens
