@@ -22,18 +22,13 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
   const tokenA = wrappedCurrency(currencyA ?? undefined, chainId)
   const tokenB = wrappedCurrency(currencyB ?? undefined, chainId)
 
-  if (!tokenA || !tokenB || !chainId) {
-    return {
-      [Field.CURRENCY_A]: 0,
-      [Field.CURRENCY_B]: 0,
-    }
-  }
+  const disabled = !tokenA || !tokenB || !chainId
 
   const { data: tokenPricesApi } = useQuery({
-    queryKey: ['getPoolPrices', chainId, tokenA.address, tokenB.address],
+    queryKey: ['getPoolPrices', chainId, tokenA?.address, tokenB?.address],
     queryFn: () =>
       apiV2Service
-        .getPoolPrices({ chainId, tokenA: tokenA.address, tokenB: tokenB.address })
+        .getPoolPrices({ chainId, tokenA: tokenA!.address, tokenB: tokenB!.address })
         .then((pool) => {
           return [+pool.price0 / 2 ** 64, +pool.price1 / 2 ** 64]
         })
@@ -41,7 +36,7 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
           setApiFailed(true)
           return [0, 0]
         }),
-    enabled: version === 2 && enableFetchDetail,
+    enabled: version === 2 && enableFetchDetail && !disabled,
     refetchInterval: 1 * 60 * 1000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
@@ -49,16 +44,23 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
 
   const tokenPricesV2 = usePythPricesV2({
     chainId,
-    tokenA,
-    tokenB,
-    enabled: version === 2 && enableFetchDetail && apiFailed,
+    tokenA: tokenA!,
+    tokenB: tokenB!,
+    enabled: version === 2 && enableFetchDetail && apiFailed && !disabled,
   })
 
   const { data: tokenPricesV1 = [0, 0] } = useQuery({
     queryFn: () => getPythPricePair(pair, chainId),
     queryKey: ['getPythPricePair', pair?.liquidityToken.address],
-    enabled: !!pair && version === 1 && enableFetchDetail,
+    enabled: !!pair && version === 1 && enableFetchDetail && !disabled,
   })
+
+  if (!tokenA || !tokenB || !chainId) {
+    return {
+      [Field.CURRENCY_A]: 0,
+      [Field.CURRENCY_B]: 0,
+    }
+  }
 
   const fallbackPrices = [pairStats?.token0?.price ?? 0, pairStats?.token1?.price ?? 0]
 
@@ -68,6 +70,7 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
     [Field.CURRENCY_B]:
       (version === 2 ? tokenPricesApi?.[1] || tokenPricesV2[1] : tokenPricesV1[1]) || fallbackPrices[1],
   }
+
   return pythPrices
 }
 
