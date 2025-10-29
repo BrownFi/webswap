@@ -167,25 +167,26 @@ export default function Pool() {
   // Filter pairs using GraphQL
   const filteredPairs = sortedPairs.filter((pair) => {
     const symbol = `${pair.token0?.symbol}/${pair.token1?.symbol}`
-    // console.log('symbol', symbol)
     if (isMainnet) {
+      let checkPair = false
       if (pair.chainId === ChainId.ARBITRUM_MAINNET) {
-        return !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
+        checkPair = !['WBTC/WETH', 'WETH/USD₮0'].includes(symbol)
       }
       if (pair.chainId === ChainId.BSC_MAINNET) {
         // return !['USDC/WBNB', 'USDT/WBNB', 'USDT/BTCB'].includes(symbol)
       }
       if (pair.chainId === ChainId.BASE_MAINNET) {
-        return !['USDC/cbBTC'].includes(symbol)
+        checkPair = !['USDC/cbBTC'].includes(symbol)
       }
       if (pair.chainId === ChainId.HYPER_EVM) {
-        return !['USD₮0/kHYPE'].includes(symbol)
+        checkPair = !['USD₮0/kHYPE'].includes(symbol)
       }
-      return allTokens.some(
+      const checkTokens = allTokens.some(
         (token) =>
           token.address.toLowerCase() === pair.token0?.address.toLowerCase() &&
           token.address.toLowerCase() === pair.token1?.address.toLowerCase(),
       )
+      return checkPair && checkTokens
     }
     return true
   })
