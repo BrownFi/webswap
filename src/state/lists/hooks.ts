@@ -207,6 +207,11 @@ export function useDefaultTokenList(): TokenAddressMap {
   return listToTokenMap(DEFAULT_TOKEN_LIST)
 }
 
+// used to hide warnings on import for default tokens
+export function useDefaultTokens(chainId: number): TokenInfo[] {
+  return DEFAULT_TOKEN_LIST.tokens.filter((token) => token.chainId === chainId)
+}
+
 export const findLogoURI = (token: Token): string | undefined => {
   const foundToken = DEFAULT_TOKEN_LIST.tokens.find(
     (item) => item.chainId === token.chainId && token.address.toLowerCase() === item.address.toLowerCase(),

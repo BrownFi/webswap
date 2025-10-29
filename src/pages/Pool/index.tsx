@@ -25,6 +25,7 @@ import { graphqlFetcher } from 'utils/swr'
 import { usePairs } from 'data/Reserves'
 import { useStakingInfo } from 'state/stake/hooks'
 import { BIG_INT_ZERO } from 'constants/common'
+import { useDefaultTokens } from 'state/lists/hooks'
 
 const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
@@ -104,6 +105,7 @@ const LIST_ALL_PAIRS = `
 export default function Pool() {
   const { chainId } = useActiveWeb3React()
   const { version, enableGraphQL } = useVersion({ chainId })
+  const allTokens = useDefaultTokens(chainId)
 
   const { data } = useSWR<{
     pairs: {
@@ -179,6 +181,11 @@ export default function Pool() {
       if (pair.chainId === ChainId.HYPER_EVM) {
         return !['USD₮0/kHYPE'].includes(symbol)
       }
+      return allTokens.some(
+        (token) =>
+          token.address.toLowerCase() === pair.token0?.address.toLowerCase() &&
+          token.address.toLowerCase() === pair.token1?.address.toLowerCase(),
+      )
     }
     return true
   })
