@@ -395,6 +395,14 @@
       "symbol": "DOLO",
       "decimals": 18,
       "logoURI": "https://berascan.com/token/images/dolomite2_32.svg"
+    },
+    {
+      "chainId": 80094,
+      "address": "0xBaadCC2962417C01Af99fb2B7C75706B9bd6Babe",
+      "name": "LBGT",
+      "symbol": "LBGT",
+      "decimals": 18,
+      "logoURI": "https://berascan.com/token/images/lbgt_32.svg"
     }
   ]
 }
