@@ -15,10 +15,16 @@ export const graphqlFetcher = ({
     query = query.replace(/stakeLP/g, '')
   }
   return axios
-    .post(process.env.REACT_APP_GRAPHQL_URL!, {
-      operationName,
-      query,
-      variables,
-    })
+    .post(
+      process.env.REACT_APP_GRAPHQL_URL!,
+      {
+        operationName,
+        query,
+        variables,
+      },
+      {
+        withCredentials: true,
+      },
+    )
     .then((res) => res.data.data)
 }

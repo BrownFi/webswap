@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from 'axios'
 
 const client = axios.create({
   baseURL: process.env.REACT_APP_API_V2_URL,
+  withCredentials: true,
 })
 
 type PoolPrices = {
