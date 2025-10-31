@@ -5,7 +5,7 @@ import { useActiveWeb3React } from 'hooks'
 import { useTradingFee } from 'hooks/useTradingFee'
 import moment from 'moment'
 import { useMemo } from 'react'
-import { internalService, apiV2Service } from 'services'
+import { apiV1Service, apiV2Service } from 'services'
 import useSWR from 'swr'
 import { graphqlFetcher } from 'utils/swr'
 
@@ -119,7 +119,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
   const { data: poolStats } = useQuery({
     queryKey: ['getPoolStats', pair.liquidityToken.address],
     queryFn: () => {
-      return internalService.getPoolStats(pair)
+      return apiV1Service.getPoolStats(pair)
     },
     enabled: !shouldUseIndexer,
   })

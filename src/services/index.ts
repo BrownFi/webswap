@@ -1,4 +1,3 @@
-export { dexscreenerService } from './dexscreenerService'
-export { internalService } from './internalService'
+export { apiV1Service } from './apiV1Service'
 export { apiV2Service } from './apiV2Service'
-export { bgtService } from './bgtService'
+export { kyberZapService } from './kyberZapService'
