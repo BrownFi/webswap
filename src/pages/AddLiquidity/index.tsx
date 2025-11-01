@@ -291,11 +291,12 @@ export default function AddLiquidity({
     <>
       <AppBody>
         <AddRemoveTabs creating={isCreate} adding={true} />
-        <div className="flex flex-wrap justify-between mb-8 px-8 gap-3">
+
+        <div className="flex flex-wrap justify-between mb-8 mt-2 px-8 gap-3">
           {pair ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-2">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
-              <Text fontWeight={600} fontSize={20} className="text-white !min-w-[160px]">
+              <Text fontWeight={700} fontSize={20} className="text-white">
                 <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
               </Text>
             </div>

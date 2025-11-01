@@ -344,7 +344,7 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
 
       <ButtonSecondary
         width="fit-content"
-        className="!py-1 !pl-2 !pr-3 hover:bg-black/80 !rounded-full"
+        className="hover:bg-black/80 !rounded-full !py-1 !pl-2 !pr-3"
         onClick={handleAddInput}
       >
         <Plus size={16} color={theme.white} style={{ marginRight: '8px' }} />
