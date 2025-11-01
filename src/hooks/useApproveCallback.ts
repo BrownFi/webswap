@@ -8,12 +8,13 @@ import {
   getRouterAddress,
 } from '@brownfi/sdk'
 import { MaxUint256 } from '@ethersproject/constants'
+import { TransactionResponse } from '@ethersproject/providers'
 import { useTokenAllowance } from 'data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from 'data/V1'
 import { useCallback, useMemo } from 'react'
 import { Field } from 'state/swap/actions'
-import { useHasPendingApproval } from 'state/transactions/hooks'
-import { calculateGasMargin } from 'utils'
+import { useHasPendingApproval, useTransactionAdder } from 'state/transactions/hooks'
+import { calculateGasMargin, getTokenSymbol } from 'utils'
 import { computeSlippageAdjustedAmounts } from 'utils/prices'
 import { useActiveWeb3React } from './index'
 import { useTokenContract } from './useContract'
@@ -32,7 +33,7 @@ export function useApproveCallback(
   amountToApprove?: CurrencyAmount,
   spender?: string,
 ): [ApprovalState, () => Promise<void>] {
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
   const token = amountToApprove instanceof TokenAmount ? amountToApprove.token : undefined
   const currentAllowance = useTokenAllowance(token, account ?? undefined, spender)
   const pendingApproval = useHasPendingApproval(token?.address, spender)
@@ -53,6 +54,7 @@ export function useApproveCallback(
   }, [amountToApprove, currentAllowance, pendingApproval, spender])
 
   const tokenContract = useTokenContract(token?.address)
+  const addTransaction = useTransactionAdder()
 
   const approve = useCallback(async (): Promise<void> => {
     if (approvalState !== ApprovalState.NOT_APPROVED) {
@@ -90,11 +92,17 @@ export function useApproveCallback(
       .approve(spender, useExact ? amountToApprove.raw.toString() : MaxUint256, {
         gasLimit: calculateGasMargin(estimatedGas),
       })
+      .then((response: TransactionResponse) => {
+        addTransaction(response, {
+          summary: 'Approve ' + getTokenSymbol(amountToApprove.currency, chainId),
+          approval: { tokenAddress: token.address, spender: spender },
+        })
+      })
       .catch((error: Error) => {
         console.debug('Failed to approve token', error)
         throw error
       })
-  }, [approvalState, token, tokenContract, amountToApprove, spender])
+  }, [approvalState, token, tokenContract, amountToApprove, spender, addTransaction])
 
   return [approvalState, approve]
 }
