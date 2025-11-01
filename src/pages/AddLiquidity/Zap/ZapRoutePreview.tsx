@@ -42,26 +42,26 @@ export const ZapRoutePreview = ({ routeData }: ZapRoutePreviewProps) => {
   return (
     <AutoColumn gap="8px">
       <RowBetween>
-        <Text className="text-[14px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
+        <Text className="font-medium text-white" style={{ fontFamily: 'Russo One' }}>
           Zap route preview
         </Text>
       </RowBetween>
 
-      <AutoColumn gap="4px">
+      <AutoColumn gap="8px">
         <RowBetween>
-          <Text fontWeight={500} fontSize={14} color={theme.white} pt={1} opacity={0.6}>
+          <Text fontWeight={500} fontSize={14} color={theme.white} opacity={0.6}>
             Initial value (USD)
           </Text>
           <TYPE.black fontSize={14}>{summary ? summary.initialUsd : <Loader stroke="gray" />}</TYPE.black>
         </RowBetween>
         <RowBetween>
-          <Text fontWeight={500} fontSize={14} color={theme.white} pt={1} opacity={0.6}>
+          <Text fontWeight={500} fontSize={14} color={theme.white} opacity={0.6}>
             Estimated value after zap
           </Text>
           <TYPE.black fontSize={14}>{summary ? summary.finalUsd : <Loader stroke="gray" />}</TYPE.black>
         </RowBetween>
         <RowBetween>
-          <Text fontWeight={500} fontSize={14} color={theme.white} pt={1} opacity={0.6}>
+          <Text fontWeight={500} fontSize={14} color={theme.white} opacity={0.6}>
             Price impact
           </Text>
           <TYPE.black fontSize={14}>{summary ? summary.priceImpact : <Loader stroke="gray" />}</TYPE.black>
