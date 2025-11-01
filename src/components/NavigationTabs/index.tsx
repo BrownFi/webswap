@@ -89,7 +89,6 @@ export function FindPoolTabs() {
 }
 
 export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating: boolean }) {
-  // reset states on back
   const dispatch = useDispatch<AppDispatch>()
 
   return (

@@ -4,7 +4,7 @@ import axios from 'axios'
 type OneOrMany<T> = T | T[]
 
 const KYBER_ZAP_CLIENT_ID = 'BrownFi'
-const KYBER_ZAP_DEX_ID = '81'
+const KYBER_ZAP_DEX_ID = 'DEX_BROWNFI'
 
 const chainMap: Partial<Record<ChainId, string>> = {
   [ChainId.BERA_MAINNET]: 'berachain',
@@ -153,10 +153,10 @@ const getKyberZapInRoute = async ({
   poolId,
   poolToken0,
   poolToken1,
+  positionId,
   tokensIn,
   amountsIn,
   slippage,
-  positionId,
 }: KyberZapRouteParams): Promise<KyberZapRouteData> => {
   const chainName = chainMap[chainId]
 
