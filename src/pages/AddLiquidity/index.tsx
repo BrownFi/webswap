@@ -3,7 +3,7 @@ import { ButtonError, ButtonPrimary } from 'components/Button'
 import { LightCard } from 'components/Card'
 import { AutoColumn, ColumnCenter } from 'components/Column'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row, { RowBetween, RowFlat } from 'components/Row'
@@ -38,9 +38,10 @@ import { currencyId } from 'utils/currencyId'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { ConfirmAddModalBottom } from './ConfirmAddModalBottom'
 import { PoolPriceBar } from './PoolPriceBar'
-import { SwitchZap } from './SwitchZap'
+import { SwitchZap } from './Zap/SwitchZap'
 import { getApprovalBuffer } from './utils'
-import { ZapForm } from './ZapForm'
+import { ZapForm } from './Zap/ZapForm'
+import { unwrappedToken } from 'utils/wrappedCurrency'
 
 export default function AddLiquidity({
   match: {
@@ -299,23 +300,34 @@ export default function AddLiquidity({
 
   const addIsUnsupported = useIsTransactionUnsupported(currencies?.CURRENCY_A, currencies?.CURRENCY_B)
 
+  const currency0 = pair ? unwrappedToken(pair.token0) : undefined
+  const currency1 = pair ? unwrappedToken(pair.token1) : undefined
+
   return (
     <>
       <AppBody>
         <AddRemoveTabs creating={isCreate} adding={true} />
-        <div className="flex justify-end mb-4 px-8">
-          <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} />
+        <div className="flex flex-wrap justify-between mb-8 px-8 gap-3">
+          {pair ? (
+            <div className="flex items-center gap-2">
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
+              <Text fontWeight={600} fontSize={20} className="text-white !min-w-[160px]">
+                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
+              </Text>
+            </div>
+          ) : (
+            <Text fontWeight={600} fontSize={20} color={theme.gray}>
+              - Invalid Pool -
+            </Text>
+          )}
+          <div className="ml-auto">
+            <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} />
+          </div>
         </div>
 
-        {useZap ? (
+        {useZap && pair ? (
           <Wrapper>
-            <ZapForm
-              pair={pair!}
-              pairState={pairState}
-              currencies={currencies}
-              currencyBalances={currencyBalances}
-              allowedSlippage={allowedSlippage}
-            />
+            <ZapForm pair={pair} pairState={pairState} currencies={currencies} allowedSlippage={allowedSlippage} />
           </Wrapper>
         ) : (
           <Wrapper>

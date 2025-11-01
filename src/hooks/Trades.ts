@@ -128,7 +128,11 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           currencyOut,
         ).catch((error) => {
           console.log('bestTradeExactIn', error)
-          setInsufficient(error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE'))
+          setInsufficient(
+            error.message.includes('INSUFFICIENT') ||
+              error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
+              error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
+          )
         })
         setTrade(bestTradeIn?.[0] ?? null)
         setLoading(false)
@@ -192,7 +196,9 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           ).catch((error) => {
             console.log('bestTradeExactOut', error)
             setInsufficient(
-              error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE'),
+              error.message.includes('INSUFFICIENT') ||
+                error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
+                error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
             )
           })
           setTrade(bestTradeOut?.[0] ?? null)
@@ -206,7 +212,11 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           currencyAmountOut,
         ).catch((error) => {
           console.log('bestTradeExactOut', error)
-          setInsufficient(error.message.includes('INSUFFICIENT') || error.message.includes('MAX_90_PERCENT_OF_RESERVE'))
+          setInsufficient(
+            error.message.includes('INSUFFICIENT') ||
+              error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
+              error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
+          )
         })
         setTrade(bestTradeOut?.[0] ?? null)
         setLoading(false)

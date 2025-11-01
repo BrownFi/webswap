@@ -1,4 +1,4 @@
-import { ChainId, Currency, Pair } from '@brownfi/sdk'
+import { Currency, Pair } from '@brownfi/sdk'
 import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import { darken } from 'polished'
@@ -221,8 +221,7 @@ export function CurrencyInputPanel({
                 ) : null}
                 {pair ? (
                   <StyledTokenName className="pair-name-container">
-                    {/* {pair?.token0.symbol}:{pair?.token1.symbol} */}
-                    {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : pair?.token0.symbol}:{pair?.token1.symbol}
+                    {pair?.token0.symbol}:{pair?.token1.symbol}
                   </StyledTokenName>
                 ) : (
                   <StyledTokenName className="token-symbol-container" active={Boolean(currency && currency.symbol)}>

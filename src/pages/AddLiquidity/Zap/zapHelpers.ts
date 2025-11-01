@@ -2,7 +2,6 @@ import { ChainId, Currency, CurrencyAmount, Pair } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionResponse, Web3Provider } from '@ethersproject/providers'
 import { kyberZapService } from 'services'
-import { Field } from 'state/mint/actions'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 
 export const SUPPORTED_ZAP_CHAIN_IDS = new Set<ChainId>([ChainId.BERA_MAINNET, ChainId.LINEA_MAINNET])
@@ -16,9 +15,10 @@ type BuildKyberZapRouteParams = {
   chainId: ChainId
   pair: Pair
   account: string
-  userSuppliedFields: Field[]
-  currencies: { [field in Field]?: Currency }
-  parsedAmounts: { [field in Field]?: CurrencyAmount }
+  inputs: Array<{
+    currency: Currency
+    amount: CurrencyAmount
+  }>
   allowedSlippage: number
 }
 
@@ -26,26 +26,18 @@ export const getKyberZapRouteData = async ({
   chainId,
   pair,
   account,
-  userSuppliedFields,
-  currencies,
-  parsedAmounts,
+  inputs,
   allowedSlippage,
 }: BuildKyberZapRouteParams): Promise<KyberZapRouteData> => {
-  const tokensIn = userSuppliedFields.map((field) => {
-    const address = wrappedCurrency(currencies[field], chainId)?.address
+  const tokensIn = inputs.map(({ currency }) => {
+    const address = wrappedCurrency(currency, chainId)?.address
     if (!address) {
       throw new Error('Missing address for zap route')
     }
     return address
   })
 
-  const amountsIn = userSuppliedFields.map((field) => {
-    const amount = parsedAmounts[field]
-    if (!amount) {
-      throw new Error('Missing amount for zap route')
-    }
-    return amount.raw.toString()
-  })
+  const amountsIn = inputs.map(({ amount }) => amount.raw.toString())
 
   return kyberZapService.getKyberZapInRoute({
     chainId,

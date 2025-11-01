@@ -1,4 +1,4 @@
-import { ChainId, Currency, currencyEquals, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
+import { ChainId, currencyEquals, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
 import { splitSignature } from '@ethersproject/bytes'
 import { Contract } from '@ethersproject/contracts'
 import { ButtonConfirmed, ButtonError, ButtonPrimary } from 'components/Button'
@@ -9,6 +9,7 @@ import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { AddRemoveTabs } from 'components/NavigationTabs'
+import NumericInput from 'components/NumericInput'
 import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row, { RowBetween, RowFixed } from 'components/Row'
 import Slider from 'components/Slider'
@@ -34,15 +35,8 @@ import { useTransactionAdder } from 'state/transactions/hooks'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { ThemeContext } from 'styled-components'
 import { TYPE } from 'theme'
-import NumericInput from 'components/NumericInput'
 import { getTokenSymbol } from 'utils'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-
-export const BOBA: Currency = {
-  decimals: 18,
-  symbol: 'BOBA',
-  name: 'Boba Token',
-}
 
 export default function RemoveLiquidity({
   match: {
@@ -250,9 +244,9 @@ export default function RemoveLiquidity({
             {parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}
           </Text>
           <RowFixed gap="4px">
-            <CurrencyLogo currency={chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB} size={'24px'} />
+            <CurrencyLogo currency={currencyB} size={'24px'} />
             <Text fontSize={24} fontWeight={500} style={{ marginLeft: '10px' }} color={'white'}>
-              {getTokenSymbol(chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB, chainId)}
+              {getTokenSymbol(currencyB, chainId)}
             </Text>
           </RowFixed>
         </RowBetween>
@@ -270,17 +264,10 @@ export default function RemoveLiquidity({
       <>
         <RowBetween>
           <Text color={theme.white} fontWeight={500} fontSize={16} opacity={0.5}>
-            {getTokenSymbol(currencyA, chainId) +
-              '/' +
-              getTokenSymbol(chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB, chainId)}{' '}
-            Burned
+            {getTokenSymbol(currencyA, chainId) + '/' + getTokenSymbol(currencyB, chainId)} Burned
           </Text>
           <RowFixed>
-            <DoubleCurrencyLogo
-              currency0={currencyA}
-              currency1={chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB}
-              margin={true}
-            />
+            <DoubleCurrencyLogo currency0={currencyA} currency1={currencyB} margin={true} />
             <Text fontWeight={500} fontSize={16} color={'white'}>
               {parsedAmounts[Field.LIQUIDITY]?.toSignificant(6)}
             </Text>
@@ -294,14 +281,14 @@ export default function RemoveLiquidity({
               </Text>
               <Text fontWeight={500} fontSize={16} color={theme.white}>
                 1 {getTokenSymbol(currencyA, chainId)} = {tokenA ? pair.priceOf(tokenA).toSignificant(6) : '-'}{' '}
-                {getTokenSymbol(chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB, chainId)}
+                {getTokenSymbol(currencyB, chainId)}
               </Text>
             </RowBetween>
             <RowBetween>
               <div />
               <Text fontWeight={500} fontSize={16} color={theme.white}>
-                1 {getTokenSymbol(chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB, chainId)} ={' '}
-                {tokenB ? pair.priceOf(tokenB).toSignificant(6) : '-'} {getTokenSymbol(currencyA, chainId)}
+                1 {getTokenSymbol(currencyB, chainId)} = {tokenB ? pair.priceOf(tokenB).toSignificant(6) : '-'}{' '}
+                {getTokenSymbol(currencyA, chainId)}
               </Text>
             </RowBetween>
           </>
@@ -452,12 +439,9 @@ export default function RemoveLiquidity({
                       {formattedAmounts[Field.CURRENCY_B] || '-'}
                     </Text>
                     <RowFixed>
-                      <CurrencyLogo
-                        currency={chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB}
-                        style={{ marginRight: '12px' }}
-                      />
+                      <CurrencyLogo currency={currencyB} style={{ marginRight: '12px' }} />
                       <Text fontSize={24} fontWeight={500} id="remove-liquidity-tokenb-symbol" color={'white'}>
-                        {getTokenSymbol(chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB, chainId)}
+                        {getTokenSymbol(currencyB, chainId)}
                       </Text>
                     </RowFixed>
                   </RowBetween>
@@ -471,14 +455,14 @@ export default function RemoveLiquidity({
                   Price:
                   <div>
                     1 {getTokenSymbol(currencyA, chainId)} = {tokenA ? pair.priceOf(tokenA).toSignificant(6) : '-'}{' '}
-                    {getTokenSymbol(chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB, chainId)}
+                    {getTokenSymbol(currencyB, chainId)}
                   </div>
                 </RowBetween>
                 <RowBetween>
                   <div />
                   <div>
-                    1 {getTokenSymbol(chainId === ChainId.BOBA_MAINNET ? BOBA : currencyB, chainId)} ={' '}
-                    {tokenB ? pair.priceOf(tokenB).toSignificant(6) : '-'} {getTokenSymbol(currencyA, chainId)}
+                    1 {getTokenSymbol(currencyB, chainId)} = {tokenB ? pair.priceOf(tokenB).toSignificant(6) : '-'}{' '}
+                    {getTokenSymbol(currencyA, chainId)}
                   </div>
                 </RowBetween>
               </div>
