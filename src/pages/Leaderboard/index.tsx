@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Column from 'components/Column'
 import { AppBody } from 'pages/AppBody'
 import React from 'react'
-import { internalService } from 'services'
+import { apiV1Service } from 'services'
 import { TYPE } from 'theme'
 import { shortenAddress } from 'utils'
 import { Table } from './styleds'
@@ -15,14 +15,14 @@ const Leaderboard = () => {
   const { data: leaderboard } = useQuery({
     queryKey: ['fetchLeaderboard'],
     queryFn: () => {
-      return internalService.fetchLeaderboard({ limit: 10 })
+      return apiV1Service.fetchLeaderboard({ limit: 10 })
     },
   })
 
   const { data: userRank } = useQuery({
     queryKey: ['getUserRank', address],
     queryFn: () => {
-      return internalService.getUserRank(address ?? '')
+      return apiV1Service.getUserRank(address ?? '')
     },
     enabled: !!address,
   })
