@@ -1,23 +1,22 @@
-import { MaxUint256 } from '@ethersproject/constants'
-import { TransactionResponse } from '@ethersproject/providers'
 import {
-  Trade,
-  TokenAmount,
   CurrencyAmount,
   ETHER,
-  ROUTER_ADDRESS_WITH_PRICE,
   ROUTER_ADDRESS_V1,
+  ROUTER_ADDRESS_WITH_PRICE,
+  TokenAmount,
+  Trade,
   getRouterAddress,
 } from '@brownfi/sdk'
-import { useCallback, useMemo } from 'react'
+import { MaxUint256 } from '@ethersproject/constants'
 import { useTokenAllowance } from 'data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from 'data/V1'
+import { useCallback, useMemo } from 'react'
 import { Field } from 'state/swap/actions'
-import { useTransactionAdder, useHasPendingApproval } from 'state/transactions/hooks'
+import { useHasPendingApproval } from 'state/transactions/hooks'
+import { calculateGasMargin } from 'utils'
 import { computeSlippageAdjustedAmounts } from 'utils/prices'
-import { calculateGasMargin, getTokenSymbol } from 'utils'
-import { useTokenContract } from './useContract'
 import { useActiveWeb3React } from './index'
+import { useTokenContract } from './useContract'
 import { Version } from './useToggledVersion'
 import { useVersion } from './useVersion'
 
@@ -33,7 +32,7 @@ export function useApproveCallback(
   amountToApprove?: CurrencyAmount,
   spender?: string,
 ): [ApprovalState, () => Promise<void>] {
-  const { account, chainId } = useActiveWeb3React()
+  const { account } = useActiveWeb3React()
   const token = amountToApprove instanceof TokenAmount ? amountToApprove.token : undefined
   const currentAllowance = useTokenAllowance(token, account ?? undefined, spender)
   const pendingApproval = useHasPendingApproval(token?.address, spender)
@@ -54,7 +53,6 @@ export function useApproveCallback(
   }, [amountToApprove, currentAllowance, pendingApproval, spender])
 
   const tokenContract = useTokenContract(token?.address)
-  const addTransaction = useTransactionAdder()
 
   const approve = useCallback(async (): Promise<void> => {
     if (approvalState !== ApprovalState.NOT_APPROVED) {
@@ -92,17 +90,11 @@ export function useApproveCallback(
       .approve(spender, useExact ? amountToApprove.raw.toString() : MaxUint256, {
         gasLimit: calculateGasMargin(estimatedGas),
       })
-      .then((response: TransactionResponse) => {
-        addTransaction(response, {
-          summary: 'Approve ' + getTokenSymbol(amountToApprove.currency, chainId),
-          approval: { tokenAddress: token.address, spender: spender },
-        })
-      })
       .catch((error: Error) => {
         console.debug('Failed to approve token', error)
         throw error
       })
-  }, [approvalState, token, tokenContract, amountToApprove, spender, addTransaction])
+  }, [approvalState, token, tokenContract, amountToApprove, spender])
 
   return [approvalState, approve]
 }

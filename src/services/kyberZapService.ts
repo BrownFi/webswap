@@ -176,6 +176,35 @@ const getKyberZapInRoute = async ({
   return response.data.data
 }
 
+type KyberZapOutRouteParams = {
+  chainId: ChainId
+  poolId: string
+  positionId: string
+  tokenOut: string
+  dex?: string
+}
+
+const getKyberZapOutRoute = async ({
+  chainId,
+  poolId,
+  positionId,
+  tokenOut,
+  dex = KYBER_ZAP_DEX_ID,
+}: KyberZapOutRouteParams): Promise<KyberZapRouteData> => {
+  const chainName = chainMap[chainId]
+
+  const response = await client.get<KyberZapRouteResponse>(`/${chainName}/api/v1/out/route`, {
+    params: {
+      dexFrom: dex,
+      'poolFrom.id': poolId,
+      'positionFrom.id': positionId,
+      tokenOut,
+    },
+  })
+
+  return response.data.data
+}
+
 type KyberBuildZapRouteData = {
   routerAddress: string
   callData: string
@@ -212,7 +241,27 @@ const buildKyberZapInRoute = async ({
   return response.data.data
 }
 
+const buildKyberZapOutRoute = async ({
+  chainId,
+  recipient,
+  sender,
+  route,
+}: KyberBuildZapRouteRequest): Promise<KyberBuildZapRouteData> => {
+  const chainName = chainMap[chainId]
+
+  const response = await client.post<KyberBuildZapRouteResponse>(`/${chainName}/api/v1/out/route/build`, {
+    recipient,
+    sender,
+    route,
+    source: KYBER_ZAP_CLIENT_ID,
+  })
+
+  return response.data.data
+}
+
 export const kyberZapService = {
   getKyberZapInRoute,
+  getKyberZapOutRoute,
   buildKyberZapInRoute,
+  buildKyberZapOutRoute,
 }

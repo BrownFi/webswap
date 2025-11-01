@@ -30,7 +30,6 @@ import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { AppBody } from 'pages/AppBody'
 import { Dots, Wrapper } from 'pages/Pool/styleds'
-import { useTransactionAdder } from 'state/transactions/hooks'
 import { useIsExpertMode, useUserSlippageTolerance } from 'state/user/hooks'
 import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
@@ -149,8 +148,6 @@ export default function AddLiquidity({
   const [approvalA, approveACallback] = useApproveCallback(approvalAmountA, getRouterAddress(chainId || 0, version))
   const [approvalB, approveBCallback] = useApproveCallback(approvalAmountB, getRouterAddress(chainId || 0, version))
 
-  const addTransaction = useTransactionAdder()
-
   async function onAdd() {
     try {
       const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
@@ -170,19 +167,6 @@ export default function AddLiquidity({
 
       if (response) {
         setAttemptingTxn(false)
-
-        addTransaction(response, {
-          summary:
-            'Add ' +
-            parsedAmounts[Field.CURRENCY_A]?.toSignificant(3) +
-            ' ' +
-            getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
-            ' and ' +
-            parsedAmounts[Field.CURRENCY_B]?.toSignificant(3) +
-            ' ' +
-            getTokenSymbol(currencies[Field.CURRENCY_B], chainId),
-        })
-
         setTxHash(response.hash)
       }
     } catch (error) {
