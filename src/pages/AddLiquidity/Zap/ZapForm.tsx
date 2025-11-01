@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ButtonError, ButtonPrimary, ButtonSecondary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { RowBetween } from 'components/Row'
+import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 import { Dots } from 'components/swap/styleds'
 import { useToast } from 'containers/ToastProvider'
 import { PairState } from 'data/Reserves'
@@ -17,7 +18,6 @@ import { ThemeContext } from 'styled-components'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 import {
   executeKyberZapTransaction,
   getKyberZapRouteData,
@@ -142,6 +142,7 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
         inputs: routeInputs,
       }),
     enabled: isRouteAvailable,
+    refetchInterval: 10_000,
   })
 
   const zapError = useMemo(() => {

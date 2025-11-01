@@ -145,7 +145,7 @@ type KyberZapRouteParams = {
   positionId?: string
   tokensIn: OneOrMany<string>
   amountsIn: OneOrMany<string>
-  slippage: number | string
+  slippage: string
 }
 
 const getKyberZapInRoute = async ({
@@ -181,7 +181,8 @@ type KyberZapOutRouteParams = {
   poolId: string
   positionId: string
   tokenOut: string
-  dex?: string
+  liquidityOut: string
+  slippage: string
 }
 
 const getKyberZapOutRoute = async ({
@@ -189,16 +190,19 @@ const getKyberZapOutRoute = async ({
   poolId,
   positionId,
   tokenOut,
-  dex = KYBER_ZAP_DEX_ID,
+  liquidityOut,
+  slippage,
 }: KyberZapOutRouteParams): Promise<KyberZapRouteData> => {
   const chainName = chainMap[chainId]
 
   const response = await client.get<KyberZapRouteResponse>(`/${chainName}/api/v1/out/route`, {
     params: {
-      dexFrom: dex,
+      dexFrom: KYBER_ZAP_DEX_ID,
       'poolFrom.id': poolId,
       'positionFrom.id': positionId,
       tokenOut,
+      liquidityOut,
+      slippage,
     },
   })
 

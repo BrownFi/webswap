@@ -11,6 +11,8 @@ type GetKyberZapOutRouteParams = {
   pair: Pair
   account: string
   tokenOut: Currency
+  amountOut: string
+  allowedSlippage: number
 }
 
 export const getKyberZapOutRouteData = async ({
@@ -18,11 +20,16 @@ export const getKyberZapOutRouteData = async ({
   pair,
   account,
   tokenOut,
+  amountOut,
+  allowedSlippage,
 }: GetKyberZapOutRouteParams): Promise<KyberZapOutRouteData> => {
   const tokenOutAddress = wrappedCurrency(tokenOut, chainId)?.address
 
   if (!tokenOutAddress) {
     throw new Error('Missing token address for zap out route')
+  }
+  if (!amountOut || amountOut === '0') {
+    throw new Error('Missing liquidity amount for zap out route')
   }
 
   return kyberZapService.getKyberZapOutRoute({
@@ -30,6 +37,8 @@ export const getKyberZapOutRouteData = async ({
     poolId: pair.liquidityToken.address,
     positionId: account,
     tokenOut: tokenOutAddress,
+    liquidityOut: amountOut,
+    slippage: allowedSlippage.toString(),
   })
 }
 

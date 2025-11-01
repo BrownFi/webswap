@@ -1,42 +1,46 @@
-import { ChainId, currencyEquals, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
-import { splitSignature } from '@ethersproject/bytes'
-import { Contract } from '@ethersproject/contracts'
+import { Currency, currencyEquals, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
+import { useQuery } from '@tanstack/react-query'
 import { ButtonConfirmed, ButtonError, ButtonPrimary } from 'components/Button'
-import { BlueCard, RemoveLiqudityCard } from 'components/Card'
+import { RemoveLiqudityCard } from 'components/Card'
 import { AutoColumn, ColumnCenter } from 'components/Column'
 import ConnectWallet from 'components/ConnectWallet'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { Loader } from 'components/Loader'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import NumericInput from 'components/NumericInput'
 import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row, { RowBetween, RowFixed } from 'components/Row'
+import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 import Slider from 'components/Slider'
 import { Dots } from 'components/swap/styleds'
 import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
 import { useActiveWeb3React } from 'hooks'
 import { useCurrency } from 'hooks/Tokens'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
-import { usePairContract } from 'hooks/useContract'
-import useIsArgentWallet from 'hooks/useIsArgentWallet'
+import useDebounce from 'hooks/useDebounce'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useVersion } from 'hooks/useVersion'
+import { SwitchZap } from 'pages/AddLiquidity/Zap/SwitchZap'
+import { isZapSupportedOnChain } from 'pages/AddLiquidity/Zap/zapHelpers'
+import { ZapRoutePreview } from 'pages/AddLiquidity/Zap/ZapRoutePreview'
 import { AppBody } from 'pages/AppBody'
 import { MaxButton, Wrapper } from 'pages/Pool/styleds'
-import { useCallback, useContext, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { isMobile } from 'react-device-detect'
 import { ArrowDown, Plus } from 'react-feather'
 import { RouteComponentProps } from 'react-router-dom'
 import { Text } from 'rebass'
 import { Field } from 'state/burn/actions'
 import { useBurnActionHandlers, useBurnState, useDerivedBurnInfo } from 'state/burn/hooks'
-import { useTransactionAdder } from 'state/transactions/hooks'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { ThemeContext } from 'styled-components'
 import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
+import { formatNumber } from 'utils/prices'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { executeKyberZapOutTransaction, getKyberZapOutRouteData, KyberZapOutRouteData } from './zapHelpers'
 
 export default function RemoveLiquidity({
   match: {
@@ -47,6 +51,11 @@ export default function RemoveLiquidity({
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
 
+  const supportsZap = useMemo(() => isZapSupportedOnChain(chainId), [chainId])
+  const [useZap, setUseZap] = useState(false)
+  const [zapOutCurrency, setZapOutCurrency] = useState<Currency | null>(null)
+  const [isZapCurrencyModalOpen, setIsZapCurrencyModalOpen] = useState(false)
+
   const [currencyA, currencyB] = [useCurrency(currencyIdA) ?? undefined, useCurrency(currencyIdB) ?? undefined]
   const [tokenA, tokenB] = useMemo(() => [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)], [
     currencyA,
@@ -54,20 +63,36 @@ export default function RemoveLiquidity({
     chainId,
   ])
 
-  // burn state
-  const { independentField, typedValue } = useBurnState()
-  const { pair, parsedAmounts, error } = useDerivedBurnInfo(currencyA ?? undefined, currencyB ?? undefined)
-  const { onUserInput: _onUserInput } = useBurnActionHandlers()
-  const isValid = !error
+  useEffect(() => {
+    if (useZap) {
+      if (!zapOutCurrency) {
+        setZapOutCurrency(currencyA ?? currencyB ?? null)
+      }
+    } else if (zapOutCurrency) {
+      setZapOutCurrency(null)
+    }
+  }, [useZap, zapOutCurrency, currencyA, currencyB])
 
-  // modal and loading
+  useEffect(() => {
+    if (!supportsZap && useZap) {
+      setUseZap(false)
+    }
+  }, [supportsZap, useZap])
+
+  const { independentField, typedValue } = useBurnState()
+  const { pair, parsedAmounts, error: derivedError } = useDerivedBurnInfo(
+    currencyA ?? undefined,
+    currencyB ?? undefined,
+  )
+  const { onUserInput } = useBurnActionHandlers()
+
   const [showConfirm, setShowConfirm] = useState<boolean>(false)
   const [attemptingTxn, setAttemptingTxn] = useState(false) // clicked confirm
 
-  // txn values
   const [txHash, setTxHash] = useState<string>('')
-  const deadline = useTransactionDeadline()
   const [allowedSlippage] = useUserSlippageTolerance()
+
+  const deadline = useTransactionDeadline()
 
   const formattedAmounts = {
     [Field.LIQUIDITY_PERCENT]: parsedAmounts[Field.LIQUIDITY_PERCENT].equalTo('0')
@@ -85,136 +110,151 @@ export default function RemoveLiquidity({
 
   const atMaxAmount = parsedAmounts[Field.LIQUIDITY_PERCENT]?.equalTo(new Percent('1'))
 
-  // pair contract
-  const pairContract: Contract | null = usePairContract(pair?.liquidityToken?.address)
-
-  // allowance handling
-  const [signatureData, setSignatureData] = useState<{ v: number; r: string; s: string; deadline: number } | null>(null)
-  const [approval, approveCallback] = useApproveCallback(
-    parsedAmounts[Field.LIQUIDITY],
-    getRouterAddress(chainId || 0, version),
-  )
-
-  const isArgentWallet = useIsArgentWallet()
-
-  async function onAttemptToApprove() {
-    if (!pairContract || !pair || !library || !deadline) throw new Error('missing dependencies')
-    const liquidityAmount = parsedAmounts[Field.LIQUIDITY]
-    if (!liquidityAmount) throw new Error('missing liquidity amount')
-
-    if (isArgentWallet || version === 1) {
-      return approveCallback()
-    }
-
-    // try to gather a signature for permission
-    const nonce = await pairContract.nonces(account)
-
-    const EIP712Domain = [
-      { name: 'name', type: 'string' },
-      { name: 'version', type: 'string' },
-      { name: 'chainId', type: 'uint256' },
-      { name: 'verifyingContract', type: 'address' },
-    ]
-    const domain = {
-      name: 'BrownFi V2',
-      version: '1',
-      chainId: chainId,
-      verifyingContract: pair.liquidityToken.address,
-    }
-    const Permit = [
-      { name: 'owner', type: 'address' },
-      { name: 'spender', type: 'address' },
-      { name: 'value', type: 'uint256' },
-      { name: 'nonce', type: 'uint256' },
-      { name: 'deadline', type: 'uint256' },
-    ]
-    const message = {
-      owner: account,
-      spender: getRouterAddress(chainId || 0, version),
-      value: liquidityAmount.raw.toString(),
-      nonce: nonce.toHexString(),
-      deadline: deadline.toNumber(),
-    }
-    const data = JSON.stringify({
-      types: {
-        EIP712Domain,
-        Permit,
-      },
-      domain,
-      primaryType: 'Permit',
-      message,
-    })
-
-    library
-      .send('eth_signTypedData_v4', [account, data])
-      .then(splitSignature)
-      .then((signature) => {
-        setSignatureData({
-          v: signature.v,
-          r: signature.r,
-          s: signature.s,
-          deadline: deadline.toNumber(),
-        })
-      })
-      .catch((error) => {
-        // for all errors other than 4001 (EIP-1193 user rejected request), fall back to manual approve
-        if (error?.code !== 4001) {
-          approveCallback()
-        }
-      })
-  }
-
-  // wrapped onUserInput to clear signatures
-  const onUserInput = useCallback(
-    (field: Field, typedValue: string) => {
-      setSignatureData(null)
-      return _onUserInput(field, typedValue)
-    },
-    [_onUserInput],
-  )
-
   const onLiquidityInput = useCallback((typedValue: string): void => onUserInput(Field.LIQUIDITY, typedValue), [
     onUserInput,
   ])
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onCurrencyAInput = useCallback((typedValue: string): void => onUserInput(Field.CURRENCY_A, typedValue), [
     onUserInput,
   ])
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onCurrencyBInput = useCallback((typedValue: string): void => onUserInput(Field.CURRENCY_B, typedValue), [
     onUserInput,
   ])
 
-  // tx sending
-  const addTransaction = useTransactionAdder()
+  const amountOut = useDebounce(parsedAmounts[Field.LIQUIDITY]?.raw.toString() ?? '0', 200)
+
+  const zapOutQueryKey = useMemo(() => {
+    if (!useZap || !supportsZap) {
+      return ['zap-out-disabled']
+    }
+
+    const tokenOutAddress = zapOutCurrency
+      ? wrappedCurrency(zapOutCurrency, chainId)?.address ?? zapOutCurrency.symbol ?? 'token-out'
+      : 'token-out'
+
+    return ['kyberZapOutRoute', chainId ?? 'unknown', pair?.liquidityToken.address, account, tokenOutAddress, amountOut]
+  }, [useZap, supportsZap, zapOutCurrency, chainId, pair, account, amountOut])
+
+  const isZapRouteAvailable = Boolean(
+    useZap && supportsZap && pair && chainId && account && zapOutCurrency && Number(amountOut) > 0,
+  )
+
+  const { data: zapOutRouteData, error: zapOutRouteError, isFetching: isFetchingZapOutRoute } = useQuery<
+    KyberZapOutRouteData
+  >({
+    queryKey: zapOutQueryKey,
+    queryFn: () =>
+      getKyberZapOutRouteData({
+        chainId: chainId!,
+        pair: pair!,
+        account: account!,
+        tokenOut: zapOutCurrency!,
+        amountOut: amountOut,
+        allowedSlippage,
+      }),
+    enabled: isZapRouteAvailable,
+    refetchInterval: 10_000,
+  })
+
+  const approvalSpender = useMemo(() => {
+    if (useZap && supportsZap && zapOutRouteData?.routerAddress) {
+      return zapOutRouteData.routerAddress
+    }
+    return chainId ? getRouterAddress(chainId, version) : undefined
+  }, [useZap, supportsZap, zapOutRouteData, chainId, version])
+
+  const [approval, approveCallback] = useApproveCallback(parsedAmounts[Field.LIQUIDITY], approvalSpender)
+
+  const zapOutValidationError = useMemo(() => {
+    if (!useZap || !supportsZap) return undefined
+    if (!zapOutCurrency) return 'Select token'
+    if (zapOutRouteError) return 'Failed to get zap route'
+    if (isZapRouteAvailable && !zapOutRouteData) return 'Fetching zap route'
+    return undefined
+  }, [useZap, supportsZap, zapOutCurrency, zapOutRouteError, isZapRouteAvailable, zapOutRouteData])
+
+  const combinedError = zapOutValidationError ?? derivedError
+  const isValid = !combinedError
+
+  const zapOutToken = useMemo(() => wrappedCurrency(zapOutCurrency ?? undefined, chainId), [zapOutCurrency, chainId])
+
+  const { data: zapOutTokenPrice = 0, isFetching: isFetchingZapOutPrice } = useQuery({
+    queryKey: ['getPythPrice', zapOutToken?.address],
+    queryFn: () => getPythPrice(zapOutToken!.address, chainId!, version),
+    enabled: Boolean(useZap && supportsZap && zapOutToken && chainId && version),
+  })
+
+  const isFetchingZapOutAmount = isFetchingZapOutRoute || isFetchingZapOutPrice
+
+  const zapOutEstimatedTokenAmount = useMemo(() => {
+    if (!zapOutRouteData?.zapDetails?.finalAmountUsd) {
+      return undefined
+    }
+    const finalUsd = Number(zapOutRouteData.zapDetails.finalAmountUsd)
+    if (!Number.isFinite(finalUsd) || finalUsd <= 0) {
+      return undefined
+    }
+    if (!zapOutTokenPrice || zapOutTokenPrice <= 0) {
+      return undefined
+    }
+    const amount = finalUsd / zapOutTokenPrice
+    return Number.isFinite(amount) && amount > 0 ? amount : undefined
+  }, [zapOutRouteData, zapOutTokenPrice])
+
+  const handleOpenZapCurrencyModal = useCallback(() => {
+    setIsZapCurrencyModalOpen(true)
+  }, [])
+
+  const handleCloseZapCurrencyModal = useCallback(() => {
+    setIsZapCurrencyModalOpen(false)
+  }, [])
+
+  const handleSelectZapCurrency = useCallback((currency: Currency) => {
+    setZapOutCurrency(currency)
+    setIsZapCurrencyModalOpen(false)
+  }, [])
+
   async function onRemove() {
     try {
-      setAttemptingTxn(true)
-      const response = await removeLiquidity(
-        chainId,
-        library as any,
-        account,
-        parsedAmounts,
-        deadline as any,
-        allowedSlippage,
-        approval,
-        signatureData,
-        version,
-      )
+      if (!chainId || !library || !account) {
+        throw new Error('missing dependencies')
+      }
 
-      setAttemptingTxn(false)
-      if (response) {
-        addTransaction(response, {
-          summary:
-            'Remove ' +
-            parsedAmounts[Field.CURRENCY_A]?.toSignificant(3) +
-            ' ' +
-            getTokenSymbol(currencyA, chainId) +
-            ' and ' +
-            parsedAmounts[Field.CURRENCY_B]?.toSignificant(3) +
-            ' ' +
-            getTokenSymbol(currencyB, chainId),
+      setAttemptingTxn(true)
+      if (useZap && supportsZap) {
+        if (!zapOutRouteData) {
+          throw new Error('Zap route unavailable')
+        }
+
+        const response = await executeKyberZapOutTransaction({
+          chainId,
+          account,
+          routeData: zapOutRouteData,
+          library,
         })
 
-        setTxHash(response.hash)
+        setAttemptingTxn(false)
+        if (response) {
+          setTxHash(response.hash)
+        }
+      } else {
+        const response = await removeLiquidity(
+          chainId,
+          library as any,
+          account,
+          parsedAmounts,
+          deadline as any,
+          allowedSlippage,
+          approval,
+          null, // signatureData, @deprecated
+          version,
+        )
+
+        setAttemptingTxn(false)
+        if (response) {
+          setTxHash(response.hash)
+        }
       }
     } catch (e) {
       setAttemptingTxn(false)
@@ -223,33 +263,58 @@ export default function RemoveLiquidity({
   }
 
   function modalHeader() {
+    if (useZap && zapOutCurrency) {
+      return (
+        <AutoColumn gap={'md'} style={{ marginTop: '20px' }}>
+          <RowBetween align="flex-end">
+            <Text fontSize={24} fontWeight={500} color={'white'}>
+              {formatNumber(zapOutEstimatedTokenAmount, { maximumFractionDigits: 2 })}
+            </Text>
+            <RowFixed gap="4px">
+              <CurrencyLogo currency={zapOutCurrency} size={'24px'} />
+              <Text fontSize={24} fontWeight={500} style={{ marginLeft: '10px' }} color={'white'}>
+                {zapOutSymbol ?? getTokenSymbol(zapOutCurrency, chainId)}
+              </Text>
+            </RowFixed>
+          </RowBetween>
+
+          <TYPE.italic fontSize={12} color={theme.white} textAlign="left" padding={'12px 0 0 0'} opacity={0.5}>
+            {`Output token is estimated. Zap out execution will attempt to convert withdrawn liquidity into ${zapOutSymbol ??
+              getTokenSymbol(zapOutCurrency, chainId)}.`}
+          </TYPE.italic>
+        </AutoColumn>
+      )
+    }
+
     return (
       <AutoColumn gap={'md'} style={{ marginTop: '20px' }}>
-        <RowBetween align="flex-end">
-          <Text fontSize={24} fontWeight={500} color={'white'}>
-            {parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}
-          </Text>
-          <RowFixed gap="4px">
-            <CurrencyLogo currency={currencyA} size={'24px'} />
-            <Text fontSize={24} fontWeight={500} style={{ marginLeft: '10px' }} color={'white'}>
-              {getTokenSymbol(currencyA, chainId)}
+        <AutoColumn gap="4px">
+          <RowBetween align="flex-end">
+            <Text fontSize={24} fontWeight={500} color={'white'}>
+              {parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}
             </Text>
+            <RowFixed gap="4px">
+              <CurrencyLogo currency={currencyA} size={'24px'} />
+              <Text fontSize={24} fontWeight={500} style={{ marginLeft: '10px' }} color={'white'}>
+                {getTokenSymbol(currencyA, chainId)}
+              </Text>
+            </RowFixed>
+          </RowBetween>
+          <RowFixed>
+            <Plus size="16" color={theme.white} />
           </RowFixed>
-        </RowBetween>
-        <RowFixed>
-          <Plus size="16" color={theme.white} />
-        </RowFixed>
-        <RowBetween align="flex-end">
-          <Text fontSize={24} fontWeight={500} color={'white'}>
-            {parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}
-          </Text>
-          <RowFixed gap="4px">
-            <CurrencyLogo currency={currencyB} size={'24px'} />
-            <Text fontSize={24} fontWeight={500} style={{ marginLeft: '10px' }} color={'white'}>
-              {getTokenSymbol(currencyB, chainId)}
+          <RowBetween align="flex-end">
+            <Text fontSize={24} fontWeight={500} color={'white'}>
+              {parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}
             </Text>
-          </RowFixed>
-        </RowBetween>
+            <RowFixed gap="4px">
+              <CurrencyLogo currency={currencyB} size={'24px'} />
+              <Text fontSize={24} fontWeight={500} style={{ marginLeft: '10px' }} color={'white'}>
+                {getTokenSymbol(currencyB, chainId)}
+              </Text>
+            </RowFixed>
+          </RowBetween>
+        </AutoColumn>
 
         <TYPE.italic fontSize={12} color={theme.white} textAlign="left" padding={'12px 0 0 0'} opacity={0.5}>
           {`Output is estimated. If the price changes by more than ${allowedSlippage /
@@ -293,7 +358,7 @@ export default function RemoveLiquidity({
             </RowBetween>
           </>
         )}
-        <ButtonPrimary disabled={!(approval === ApprovalState.APPROVED || signatureData !== null)} onClick={onRemove}>
+        <ButtonPrimary onClick={onRemove}>
           <Text fontWeight={500} fontSize={20}>
             Confirm
           </Text>
@@ -302,10 +367,14 @@ export default function RemoveLiquidity({
     )
   }
 
+  const zapOutSymbol = useMemo(() => getTokenSymbol(zapOutCurrency, chainId), [zapOutCurrency, chainId])
+
   const pendingText =
-    `Removing ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}` +
-    ` ${getTokenSymbol(currencyA, chainId)} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}` +
-    ` ${getTokenSymbol(currencyB, chainId)}`
+    useZap && zapOutSymbol
+      ? `Removing liquidity into ${zapOutSymbol}`
+      : `Removing ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}` +
+        ` ${getTokenSymbol(currencyA, chainId)} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}` +
+        ` ${getTokenSymbol(currencyB, chainId)}`
 
   const liquidityPercentChangeCallback = useCallback(
     (value: number) => {
@@ -323,8 +392,6 @@ export default function RemoveLiquidity({
 
   const handleDismissConfirmation = useCallback(() => {
     setShowConfirm(false)
-    setSignatureData(null) // important that we clear signature data to avoid bad sigs
-    // if there was a tx hash, we want to clear the input
     if (txHash) {
       onUserInput(Field.LIQUIDITY_PERCENT, '0')
     }
@@ -352,14 +419,6 @@ export default function RemoveLiquidity({
             pendingText={pendingText}
           />
           <AutoColumn gap="20px">
-            <BlueCard>
-              <AutoColumn gap="10px">
-                <TYPE.link fontWeight={400} color={'#27E3AB'}>
-                  <b>Tip:</b> Removing pool tokens converts your position back into underlying tokens at the current
-                  rate, proportional to your share of the pool. Accrued fees are included in the amounts you receive.
-                </TYPE.link>
-              </AutoColumn>
-            </BlueCard>
             <RemoveLiqudityCard>
               <AutoColumn gap="20px">
                 <Text fontWeight={500} color={'white'} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
@@ -418,34 +477,87 @@ export default function RemoveLiquidity({
 
             <RemoveLiqudityCard>
               <AutoColumn gap="20px">
-                <Text fontWeight={500} color={'white'} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
-                  Receive
-                </Text>
+                <div className="flex flex-wrap justify-between gap-3">
+                  <Text fontWeight={500} color={'white'} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
+                    Receive
+                  </Text>
 
-                <AutoColumn gap="10px">
-                  <RowBetween>
-                    <Text fontSize={24} fontWeight={500} color={'white'}>
-                      {formattedAmounts[Field.CURRENCY_A] || '-'}
-                    </Text>
-                    <RowFixed>
-                      <CurrencyLogo currency={currencyA} style={{ marginRight: '12px' }} />
-                      <Text fontSize={24} fontWeight={500} id="remove-liquidity-tokena-symbol" color={'white'}>
-                        {getTokenSymbol(currencyA, chainId)}
+                  {supportsZap && (
+                    <SwitchZap
+                      enabled={useZap}
+                      onToggle={() => {
+                        setUseZap((prev) => !prev)
+                      }}
+                    />
+                  )}
+                </div>
+
+                {useZap && supportsZap ? (
+                  <AutoColumn gap="16px">
+                    <button
+                      type="button"
+                      className="flex items-center justify-between w-full px-4 py-3 bg-[#131216] border border-white/10 hover:bg-white/10 rounded"
+                      onClick={handleOpenZapCurrencyModal}
+                    >
+                      {zapOutCurrency ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <CurrencyLogo currency={zapOutCurrency} size={'24px'} />
+                            <Text color="white" fontWeight={600}>
+                              {zapOutSymbol ?? getTokenSymbol(zapOutCurrency, chainId)}
+                            </Text>
+                          </div>
+                          <span className="text-sm font-medium text-white/60">Change</span>
+                        </>
+                      ) : (
+                        <span className="text-base font-semibold text-white/60">Select token</span>
+                      )}
+                    </button>
+                    <div className="flex items-center justify-between">
+                      <Text fontSize={14} fontWeight={600} color={theme.white} opacity={0.8}>
+                        Estimated Amount
                       </Text>
-                    </RowFixed>
-                  </RowBetween>
-                  <RowBetween>
-                    <Text fontSize={24} fontWeight={500} color={'white'}>
-                      {formattedAmounts[Field.CURRENCY_B] || '-'}
-                    </Text>
-                    <RowFixed>
-                      <CurrencyLogo currency={currencyB} style={{ marginRight: '12px' }} />
-                      <Text fontSize={24} fontWeight={500} id="remove-liquidity-tokenb-symbol" color={'white'}>
-                        {getTokenSymbol(currencyB, chainId)}
+                      <Text fontSize={20} fontWeight={600} color={theme.white} minHeight="30px">
+                        {isFetchingZapOutAmount ? (
+                          <Loader stroke="gray" />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            {zapOutEstimatedTokenAmount
+                              ? formatNumber(zapOutEstimatedTokenAmount, { maximumFractionDigits: 2 })
+                              : '-'}{' '}
+                            {zapOutCurrency && <CurrencyLogo currency={zapOutCurrency} size={'24px'} />}
+                          </div>
+                        )}
                       </Text>
-                    </RowFixed>
-                  </RowBetween>
-                </AutoColumn>
+                    </div>
+                    <ZapRoutePreview routeData={zapOutRouteData} />
+                  </AutoColumn>
+                ) : (
+                  <AutoColumn gap="10px">
+                    <RowBetween>
+                      <Text fontSize={24} fontWeight={500} color={'white'}>
+                        {formattedAmounts[Field.CURRENCY_A] || '-'}
+                      </Text>
+                      <RowFixed>
+                        <CurrencyLogo currency={currencyA} style={{ marginRight: '12px' }} />
+                        <Text fontSize={24} fontWeight={500} id="remove-liquidity-tokena-symbol" color={'white'}>
+                          {getTokenSymbol(currencyA, chainId)}
+                        </Text>
+                      </RowFixed>
+                    </RowBetween>
+                    <RowBetween>
+                      <Text fontSize={24} fontWeight={500} color={'white'}>
+                        {formattedAmounts[Field.CURRENCY_B] || '-'}
+                      </Text>
+                      <RowFixed>
+                        <CurrencyLogo currency={currencyB} style={{ marginRight: '12px' }} />
+                        <Text fontSize={24} fontWeight={500} id="remove-liquidity-tokenb-symbol" color={'white'}>
+                          {getTokenSymbol(currencyB, chainId)}
+                        </Text>
+                      </RowFixed>
+                    </RowBetween>
+                  </AutoColumn>
+                )}
               </AutoColumn>
             </RemoveLiqudityCard>
 
@@ -473,42 +585,42 @@ export default function RemoveLiquidity({
               ) : (
                 <RowBetween>
                   <ButtonConfirmed
-                    onClick={onAttemptToApprove}
-                    confirmed={approval === ApprovalState.APPROVED || signatureData !== null}
-                    disabled={approval !== ApprovalState.NOT_APPROVED || signatureData !== null}
+                    onClick={approveCallback}
+                    confirmed={approval === ApprovalState.APPROVED}
+                    disabled={approval !== ApprovalState.NOT_APPROVED}
                     mr="0.5rem"
                     fontWeight={500}
                     fontSize={16}
                   >
                     {approval === ApprovalState.PENDING ? (
                       <Dots>Approving</Dots>
-                    ) : approval === ApprovalState.APPROVED || signatureData !== null ? (
+                    ) : approval === ApprovalState.APPROVED ? (
                       'Approved'
                     ) : (
                       'Approve'
                     )}
                   </ButtonConfirmed>
+
                   <ButtonError
                     onClick={() => {
                       setShowConfirm(true)
                     }}
-                    disabled={!isValid || (signatureData === null && approval !== ApprovalState.APPROVED)}
-                    error={!isValid && !!parsedAmounts[Field.CURRENCY_A] && !!parsedAmounts[Field.CURRENCY_B]}
+                    disabled={!isValid || approval !== ApprovalState.APPROVED}
+                    error={!isValid}
                     fontWeight={500}
                     fontSize={16}
                   >
-                    {error || 'Remove'}
+                    {combinedError ? (
+                      combinedError === 'Fetching zap route' ? (
+                        <Dots>Loading</Dots>
+                      ) : (
+                        combinedError
+                      )
+                    ) : (
+                      'Remove'
+                    )}
                   </ButtonError>
                 </RowBetween>
-              )}
-              {chainId === ChainId.SONIC_TESTNET && (
-                <Text fontWeight={500} fontSize={14} color={theme.gray} marginTop={'10px'} textAlign={'center'}>
-                  {currencyA?.symbol === 'DIAM' || currencyB?.symbol === 'DIAM'
-                    ? 'Pair S/Diamond = FTM/USD'
-                    : currencyA?.symbol === 'CORAL' || currencyB?.symbol === 'CORAL'
-                    ? 'Pair S/CORAL = FTM/ETH'
-                    : ''}
-                </Text>
               )}
             </div>
           </AutoColumn>
@@ -520,6 +632,14 @@ export default function RemoveLiquidity({
           <MinimalInfoCard showUnwrapped={oneCurrencyIsWETH} pair={pair} />
         </AutoColumn>
       ) : null}
+
+      <CurrencySearchModal
+        isOpen={isZapCurrencyModalOpen}
+        onDismiss={handleCloseZapCurrencyModal}
+        onCurrencySelect={handleSelectZapCurrency}
+        selectedCurrency={zapOutCurrency ?? undefined}
+        showCommonBases
+      />
     </>
   )
 }
