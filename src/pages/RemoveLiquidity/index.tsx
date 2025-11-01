@@ -496,40 +496,32 @@ export default function RemoveLiquidity({
                   <AutoColumn gap="16px">
                     <button
                       type="button"
-                      className="flex items-center justify-between w-full px-4 py-3 bg-[#131216] border border-white/10 hover:bg-white/10 rounded"
+                      className="flex items-center justify-between w-full px-4 py-2 min-h-12 bg-[#131216] border border-white/10 hover:bg-white/10 rounded"
                       onClick={handleOpenZapCurrencyModal}
                     >
                       {zapOutCurrency ? (
                         <>
+                          {isFetchingZapOutAmount ? (
+                            <Loader stroke="gray" />
+                          ) : (
+                            <Text fontSize={20} color="white" fontWeight={600}>
+                              {zapOutEstimatedTokenAmount
+                                ? formatNumber(zapOutEstimatedTokenAmount, { maximumFractionDigits: 2 })
+                                : '-'}
+                            </Text>
+                          )}
+
                           <div className="flex items-center gap-2">
                             <CurrencyLogo currency={zapOutCurrency} size={'24px'} />
                             <Text color="white" fontWeight={600}>
                               {zapOutSymbol ?? getTokenSymbol(zapOutCurrency, chainId)}
                             </Text>
                           </div>
-                          <span className="text-sm font-medium text-white/60">Change</span>
                         </>
                       ) : (
                         <span className="text-base font-semibold text-white/60">Select token</span>
                       )}
                     </button>
-                    <div className="flex items-center justify-between">
-                      <Text fontSize={14} fontWeight={600} color={theme.white} opacity={0.8}>
-                        Estimated Amount
-                      </Text>
-                      <Text fontSize={20} fontWeight={600} color={theme.white} minHeight="30px">
-                        {isFetchingZapOutAmount ? (
-                          <Loader stroke="gray" />
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            {zapOutEstimatedTokenAmount
-                              ? formatNumber(zapOutEstimatedTokenAmount, { maximumFractionDigits: 2 })
-                              : '-'}{' '}
-                            {zapOutCurrency && <CurrencyLogo currency={zapOutCurrency} size={'24px'} />}
-                          </div>
-                        )}
-                      </Text>
-                    </div>
                     <ZapRoutePreview routeData={zapOutRouteData} />
                   </AutoColumn>
                 ) : (
