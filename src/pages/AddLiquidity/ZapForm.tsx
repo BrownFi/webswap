@@ -106,7 +106,7 @@ export function ZapForm({ pair, pairState, currencies, currencyBalances, allowed
     }
 
     if (zapRouteError) {
-      return 'Unable to find zap route'
+      return 'Failed to get zap routes'
     }
 
     for (const field of userSuppliedFields) {
@@ -237,7 +237,7 @@ export function ZapForm({ pair, pairState, currencies, currencyBalances, allowed
         disableCurrencySelect
       />
 
-      {isRouteAvailable && <ZapRoutePreview routeData={zapRouteData} />}
+      {isRouteAvailable && !zapError && <ZapRoutePreview routeData={zapRouteData} />}
 
       {approvalsPending.length > 0 && isFormValid && (
         <RowBetween>
