@@ -190,7 +190,7 @@ export default function Pool() {
           </TYPE.mediumHeader>
           <TYPE.main fontSize={16} fontWeight={500} color="#f2dfc8" lineHeight="22px">
             We&apos;re performing an indexer upgrade. Your portfolio and charts may be temporarily outdated during this
-            time, but all functions are working normally.
+            time, but all other functions are working normally.
           </TYPE.main>
           <ButtonPrimary onClick={handleIndexerModalDismiss} className="!py-2">
             <Text fontWeight={700}>Got it</Text>
