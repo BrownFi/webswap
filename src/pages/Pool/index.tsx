@@ -1,16 +1,15 @@
 import { ChainId, JSBI, Pair, Token, TokenAmount, WETH } from '@brownfi/sdk'
-import { useContext, useMemo } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import styled, { ThemeContext } from 'styled-components'
+import { ThemeContext } from 'styled-components'
+import { X } from 'react-feather'
 
 import SwitchVersion from 'components/SwitchVersion'
 import { useVersion } from 'hooks/useVersion'
 import { Address, checksumAddress } from 'viem'
 
-import { ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import FullPositionCard from 'components/PositionCard'
-import { RowBetween } from 'components/Row'
 import { Flex, Text } from 'rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
@@ -26,38 +25,14 @@ import { usePairs } from 'data/Reserves'
 import { useStakingInfo } from 'state/stake/hooks'
 import { BIG_INT_ZERO } from 'constants/common'
 import { useDefaultTokens } from 'state/lists/hooks'
-
-const PageWrapper = styled(AutoColumn)`
-  max-width: 894px;
-  width: 100%;
-  background-color: #1d1c21;
-`
-
-const TitleRow = styled(RowBetween)`
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    flex-wrap: wrap;
-    gap: 12px;
-    width: 100%;
-    flex-direction: column-reverse;
-  `};
-`
-
-const ResponsiveButtonPrimary = styled(ButtonPrimary)`
-  width: fit-content;
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    width: 48%;
-  `};
-`
-
-const EmptyProposals = styled.div`
-  border: 1px solid ${({ theme }) => theme.text4};
-  padding: 16px 12px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`
+import {
+  CloseBannerButton,
+  EmptyProposals,
+  IndexerBanner,
+  PageWrapper,
+  ResponsiveButtonPrimary,
+  TitleRow,
+} from './styleds'
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
@@ -107,7 +82,7 @@ export default function Pool() {
   const { version, enableGraphQL } = useVersion({ chainId })
   const allTokens = useDefaultTokens(chainId)
 
-  const { data } = useSWR<{
+  const { data, error } = useSWR<{
     pairs: {
       totalCount: number
       items: {
@@ -197,9 +172,33 @@ export default function Pool() {
   })
 
   const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
+  const [showIndexerBanner, setShowIndexerBanner] = useState(true)
+
+  const isIndexerOutdated = filteredPairs.some((pair) => pair.tvl > 10 && pair.updatedAt < Date.now() / 1000 - 2 * 3600)
+
+  useEffect(() => {
+    if (isIndexerOutdated || error) {
+      setShowIndexerBanner(true)
+    }
+  }, [isIndexerOutdated, error])
 
   return (
     <>
+      {showIndexerBanner && (
+        <IndexerBanner className="px-2">
+          <TYPE.main fontSize={14} fontWeight={500} lineHeight="20px" color="#f2dfc8">
+            We&apos;re performing an indexer upgrade. Your portfolio and charts may be temporarily outdated during this
+            time, but all functions are working normally.
+          </TYPE.main>
+          <CloseBannerButton
+            type="button"
+            onClick={() => setShowIndexerBanner(false)}
+            aria-label="Dismiss indexer notice"
+          >
+            <X size={16} />
+          </CloseBannerButton>
+        </IndexerBanner>
+      )}
       {chainId === ChainId.BERA_MAINNET && version === 1 && (
         <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] px-2">
           With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and

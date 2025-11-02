@@ -1,3 +1,6 @@
+import { ButtonPrimary } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import { RowBetween } from 'components/Row'
 import { Text } from 'rebass'
 import styled from 'styled-components'
 
@@ -54,5 +57,82 @@ export const Dots = styled.span`
     66% {
       content: '...';
     }
+  }
+`
+
+// Pool page
+
+export const PageWrapper = styled(AutoColumn)`
+  max-width: 894px;
+  width: 100%;
+  background-color: #1d1c21;
+`
+
+export const TitleRow = styled(RowBetween)`
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    flex-direction: column-reverse;
+  `};
+`
+
+export const ResponsiveButtonPrimary = styled(ButtonPrimary)`
+  width: fit-content;
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    width: 48%;
+  `};
+`
+
+export const EmptyProposals = styled.div`
+  border: 1px solid ${({ theme }) => theme.text4};
+  padding: 16px 12px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`
+
+export const IndexerBanner = styled.div`
+  max-width: 894px;
+  width: 100%;
+  top: 90px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #bb9981;
+  background: rgba(187, 153, 129, 0.18);
+  color: #f2dfc8;
+  margin: 0 auto 16px;
+  position: fixed;
+
+  ${({ theme }) => theme.mediaWidth.upToLarge`
+    position: static;
+  `};
+`
+
+export const CloseBannerButton = styled.button`
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &:focus {
+    outline: 2px solid rgba(242, 223, 200, 0.4);
+    outline-offset: 2px;
   }
 `
