@@ -94,45 +94,9 @@ export const EmptyProposals = styled.div`
   align-items: center;
 `
 
-export const IndexerBanner = styled.div`
-  max-width: 894px;
+export const IndexerModalContent = styled(AutoColumn)`
+  position: relative;
   width: 100%;
-  top: 90px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #bb9981;
-  background: rgba(187, 153, 129, 0.18);
-  color: #f2dfc8;
-  margin: 0 auto 16px;
-  position: fixed;
-
-  ${({ theme }) => theme.mediaWidth.upToLarge`
-    position: static;
-  `};
-`
-
-export const CloseBannerButton = styled.button`
-  appearance: none;
-  background: transparent;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 0;
-
-  &:hover {
-    opacity: 0.85;
-  }
-
-  &:focus {
-    outline: 2px solid rgba(242, 223, 200, 0.4);
-    outline-offset: 2px;
-  }
+  padding: 24px;
+  gap: 16px;
 `

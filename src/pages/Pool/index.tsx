@@ -2,7 +2,6 @@ import { ChainId, JSBI, Pair, Token, TokenAmount, WETH } from '@brownfi/sdk'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ThemeContext } from 'styled-components'
-import { X } from 'react-feather'
 
 import SwitchVersion from 'components/SwitchVersion'
 import { useVersion } from 'hooks/useVersion'
@@ -25,14 +24,9 @@ import { usePairs } from 'data/Reserves'
 import { useStakingInfo } from 'state/stake/hooks'
 import { BIG_INT_ZERO } from 'constants/common'
 import { useDefaultTokens } from 'state/lists/hooks'
-import {
-  CloseBannerButton,
-  EmptyProposals,
-  IndexerBanner,
-  PageWrapper,
-  ResponsiveButtonPrimary,
-  TitleRow,
-} from './styleds'
+import { Modal } from 'components/Modal'
+import { EmptyProposals, IndexerModalContent, PageWrapper, ResponsiveButtonPrimary, TitleRow } from './styleds'
+import { ButtonPrimary } from 'components/Button'
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
@@ -172,33 +166,38 @@ export default function Pool() {
   })
 
   const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
-  const [showIndexerBanner, setShowIndexerBanner] = useState(true)
+  const [showIndexerModal, setShowIndexerModal] = useState(false)
 
-  const isIndexerOutdated = filteredPairs.some((pair) => pair.tvl > 10 && pair.updatedAt < Date.now() / 1000 - 2 * 3600)
+  const hasIndexerIssue =
+    !!error || filteredPairs.some((pair) => pair.tvl > 10 && pair.updatedAt < Date.now() / 1000 - 2 * 3600)
 
   useEffect(() => {
-    if (isIndexerOutdated || error) {
-      setShowIndexerBanner(true)
+    if (hasIndexerIssue) {
+      setShowIndexerModal(true)
+    } else {
+      setShowIndexerModal(false)
     }
-  }, [isIndexerOutdated, error])
+  }, [hasIndexerIssue])
+
+  const handleIndexerModalDismiss = () => setShowIndexerModal(false)
 
   return (
     <>
-      {showIndexerBanner && (
-        <IndexerBanner className="px-2">
-          <TYPE.main fontSize={14} fontWeight={500} lineHeight="20px" color="#f2dfc8">
+      <Modal isOpen={hasIndexerIssue && showIndexerModal} onDismiss={handleIndexerModalDismiss} maxWidth={480}>
+        <IndexerModalContent>
+          <TYPE.mediumHeader fontSize={16} fontWeight={600} color="white">
+            Indexer Upgrade In Progress
+          </TYPE.mediumHeader>
+          <TYPE.main fontSize={16} fontWeight={500} color="#f2dfc8" lineHeight="22px">
             We&apos;re performing an indexer upgrade. Your portfolio and charts may be temporarily outdated during this
             time, but all functions are working normally.
           </TYPE.main>
-          <CloseBannerButton
-            type="button"
-            onClick={() => setShowIndexerBanner(false)}
-            aria-label="Dismiss indexer notice"
-          >
-            <X size={16} />
-          </CloseBannerButton>
-        </IndexerBanner>
-      )}
+          <ButtonPrimary onClick={handleIndexerModalDismiss} className="!py-2">
+            <Text fontWeight={700}>Got it</Text>
+          </ButtonPrimary>
+        </IndexerModalContent>
+      </Modal>
+
       {chainId === ChainId.BERA_MAINNET && version === 1 && (
         <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] px-2">
           With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and
