@@ -90,7 +90,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
 
   const chartData = useMemo(() => {
     return (
-      data?.pairDayDatas.items
+      data?.pairDayDatas?.items
         .map((item) => {
           return {
             ...item,
@@ -445,7 +445,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                 </ComposedChart>
               </ResponsiveContainer>
 
-              {data?.pairDayDatas.items.length === 0 && (
+              {data?.pairDayDatas?.items.length === 0 && (
                 <div className="absolute inset-0 flex justify-center items-center">
                   <Text fontSize={18} color="#FFFA" fontFamily={'Russo One'}>
                     No Data
