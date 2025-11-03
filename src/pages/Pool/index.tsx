@@ -129,7 +129,7 @@ export default function Pool() {
     },
   )
 
-  const sortedPairs = (data?.pairs.items ?? [])
+  const sortedPairs = (data?.pairs?.items ?? [])
     .slice()
     .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
