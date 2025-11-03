@@ -186,11 +186,11 @@ export default function Pool() {
       <Modal isOpen={hasIndexerIssue && showIndexerModal} onDismiss={handleIndexerModalDismiss} maxWidth={480}>
         <IndexerModalContent>
           <TYPE.mediumHeader fontSize={16} fontWeight={600} color="white">
-            Indexer Upgrade In Progress
+            Indexer is syncing
           </TYPE.mediumHeader>
           <TYPE.main fontSize={16} fontWeight={500} color="#f2dfc8" lineHeight="22px">
-            We&apos;re performing an indexer upgrade. Your portfolio and charts may be temporarily outdated during this
-            time, but all other functions are working normally.
+            Charts and portfolios are temporarily delayed while our indexer syncs with the blockchain. All other
+            functions are operating normally and data will update shortly.
           </TYPE.main>
           <ButtonPrimary onClick={handleIndexerModalDismiss} className="!py-2">
             <Text fontWeight={700}>Got it</Text>
