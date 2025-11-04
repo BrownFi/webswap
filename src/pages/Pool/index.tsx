@@ -169,7 +169,7 @@ export default function Pool() {
   const [showIndexerModal, setShowIndexerModal] = useState(false)
 
   const hasIndexerIssue =
-    !!error || filteredPairs.some((pair) => pair.tvl > 10 && pair.updatedAt < Date.now() / 1000 - 2 * 3600)
+    !!error || filteredPairs.some((pair) => pair.tvl > 1000 && pair.updatedAt < Date.now() / 1000 - 8 * 3600)
 
   useEffect(() => {
     if (hasIndexerIssue) {
