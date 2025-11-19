@@ -428,14 +428,24 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                     tick={{ fill: '#FFFA' }}
                     tickLine={{ stroke: '#FFFA' }}
                     // allow negative/positive net PnL values and add a small margin
-                    // round domain to 1 decimal place
+                    // expand bounds by 10% and ensure axis crosses zero when data is one-sided
                     domain={[
-                      (dataMin: number) => +(dataMin * 1.1).toFixed(0),
-                      (dataMax: number) => +(dataMax * 1.1).toFixed(0),
+                      (dataMin: number) => {
+                        const min = typeof dataMin === 'number' && !Number.isNaN(dataMin) ? dataMin : 0
+                        // if there's any negative values, make lower bound slightly more negative
+                        const lower = Math.min(min * 1.1, 0)
+                        return +lower.toFixed(1)
+                      },
+                      (dataMax: number) => {
+                        const max = typeof dataMax === 'number' && !Number.isNaN(dataMax) ? dataMax : 0
+                        // if there's any positive values, make upper bound slightly larger
+                        const upper = Math.max(max * 1.1, 0)
+                        return +upper.toFixed(1)
+                      },
                     ]}
                     // show ticks rounded to 1 decimal
                     tickFormatter={(value: number) =>
-                      formatNumber(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                      formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
                     }
                   />
                   {/* hidden axis for volume so bars don't share the netPnL scale */}
@@ -450,7 +460,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                   <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
                   <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
                   <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />
-                  <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B	" yAxisId="right" {...lineDotConfig} />
+                  <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" {...lineDotConfig} />
                   {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
                     <ReferenceArea
                       x1={referenceArea.x1}
@@ -523,11 +533,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="text-sm" style={{ color: '#4DA3FF' }}>
           HODL Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
-        <p className="text-sm" style={{ color: '#EE4B2B	' }}>
-          Net PnL: {formatPrice(payload[2].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+        <p className="text-sm" style={{ color: '#EE4B2B' }}>
+          Net PnL: {formatPrice(payload[3].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
         <p className="text-sm" style={{ color: '#66CC99' }}>
-          Volume: {formatPrice((payload[3] || payload[1]).value)}
+          Volume: {formatPrice((payload[2] || payload[1]).value)}
         </p>
       </div>
     )
