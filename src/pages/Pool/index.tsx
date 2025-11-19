@@ -148,7 +148,7 @@ export default function Pool() {
         checkPair = !['USDC/cbBTC'].includes(symbol)
       }
       if (pair.chainId === ChainId.HYPER_EVM) {
-        checkPair = !['USD₮0/kHYPE'].includes(symbol)
+        // checkPair = !['USD₮0/kHYPE'].includes(symbol)
       }
       if (!checkPair) return false
 
