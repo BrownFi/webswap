@@ -62,6 +62,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       '0x9aBE906bC272CBb317588D9D495bCc12FAf3ff92', // DOLO/BERA
       '0x67FBB8A61D6D6433f3428d1f10cfb09bABC1A4D5', // DOLO/HONEY
       '0x5E9B2Cd773d8283B578Df77754DFcC2894e36b4D', // LBGT/HONEY
+      '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3', // kHYPE/USDT
     ].includes(pair?.liquidityToken.address as string)
 
     const isNotPairBeta = ([
