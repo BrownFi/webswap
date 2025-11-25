@@ -97,7 +97,6 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
             date: moment.unix(item.startUnix).format('DD/MM'),
             bnhPrice: item.bnhPrice,
             netPnL: item.tvl - (item.bnhPrice * item.tvl) / item.lpPrice,
-            netPrice: (item.tvl * item.lpPrice - item.bnhPrice * item.tvl) / item.tvl,
           }
         })
         .filter((item) => {
@@ -460,7 +459,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                   <Legend content={<CustomLegend />} />
                   <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
                   <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
-                  <Line type="monotone" dataKey="netPrice" stroke="#DA70D6" yAxisId="left" {...lineDotConfig} />
+                  <Line type="monotone" dataKey="tvl" stroke="#DA70D6" yAxisId="right" {...lineDotConfig} />
                   <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />
                   <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" {...lineDotConfig} />
                   {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
@@ -516,8 +515,8 @@ const CustomLegend = ({ payload, onClick }: any) => {
               ? 'HODL Price'
               : it.value === 'netPnL'
               ? 'Net PnL'
-              : it.value === 'netPrice'
-              ? 'Net Price'
+              : it.value === 'tvl'
+              ? 'TVL'
               : String(it.value)}
           </Text>
         </div>
@@ -538,7 +537,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           HODL Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
         <p className="text-sm" style={{ color: '#DA70D6' }}>
-          Net Price: {formatPrice(payload[2].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+          TVL: {formatPrice(payload[2].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
         <p className="text-sm" style={{ color: '#EE4B2B' }}>
           Net PnL: {formatPrice(payload[4].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
