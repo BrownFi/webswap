@@ -97,6 +97,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
             date: moment.unix(item.startUnix).format('DD/MM'),
             bnhPrice: item.bnhPrice,
             netPnL: item.tvl - (item.bnhPrice * item.tvl) / item.lpPrice,
+            formattedTvl: item.tvl / 10,
           }
         })
         .filter((item) => {
@@ -459,7 +460,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                   <Legend content={<CustomLegend />} />
                   <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
                   <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
-                  <Line type="monotone" dataKey="tvl" stroke="#DA70D6" yAxisId="right" {...lineDotConfig} />
+                  <Line type="monotone" dataKey="formattedTvl" stroke="#DA70D6" yAxisId="right" {...lineDotConfig} />
                   <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />
                   <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" {...lineDotConfig} />
                   {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
@@ -515,7 +516,7 @@ const CustomLegend = ({ payload, onClick }: any) => {
               ? 'HODL Price'
               : it.value === 'netPnL'
               ? 'Net PnL'
-              : it.value === 'tvl'
+              : it.value === 'formattedTvl'
               ? 'TVL'
               : String(it.value)}
           </Text>
