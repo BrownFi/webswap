@@ -87,6 +87,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
   )
 
   const isHYPEUSDT = pair.liquidityToken.address === '0x122524E1c403739bd33Ec54d606DDc287117B0A6' // HYPE/USD₮0
+  const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3' // HYPE/USD₮0
 
   const chartData = useMemo(() => {
     return (
@@ -103,6 +104,9 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
         .filter((item) => {
           if (isHYPEUSDT) {
             return moment.unix(item.startUnix) > moment('2025-08-09')
+          }
+          if (iskHYPEUSDT) {
+            return moment.unix(item.startUnix) > moment('2025-11-22')
           }
           return true
         }) ?? []
