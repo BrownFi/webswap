@@ -96,7 +96,8 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
           return {
             ...item,
             date: moment.unix(item.startUnix).format('DD/MM'),
-            bnhPrice: item.bnhPrice,
+            lpPrice: iskHYPEUSDT ? item.lpPrice / 1e9 : item.lpPrice,
+            bnhPrice: iskHYPEUSDT ? item.bnhPrice / 1e9 : item.bnhPrice,
             netPnL: item.tvl - (item.bnhPrice * item.tvl) / item.lpPrice,
             formattedTvl: item.tvl / 10,
           }

@@ -76,6 +76,8 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const [showMore, setShowMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
 
+  const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3' // HYPE/USD₮0
+
   const {
     tradingFee,
     totalSupply: totalPoolTokens,
@@ -268,7 +270,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   Price per LP
                 </Text>
                 <Text fontSize={16} fontWeight={500} color="white">
-                  {formatPrice(lpPrice)}
+                  {formatPrice(iskHYPEUSDT ? lpPrice/1e9: lpPrice )}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
