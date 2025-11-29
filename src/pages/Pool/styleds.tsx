@@ -1,3 +1,6 @@
+import { ButtonPrimary } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import { RowBetween } from 'components/Row'
 import { Text } from 'rebass'
 import styled from 'styled-components'
 
@@ -55,4 +58,45 @@ export const Dots = styled.span`
       content: '...';
     }
   }
+`
+
+// Pool page
+
+export const PageWrapper = styled(AutoColumn)`
+  max-width: 894px;
+  width: 100%;
+  background-color: #1d1c21;
+`
+
+export const TitleRow = styled(RowBetween)`
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    flex-direction: column-reverse;
+  `};
+`
+
+export const ResponsiveButtonPrimary = styled(ButtonPrimary)`
+  width: fit-content;
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    width: 48%;
+  `};
+`
+
+export const EmptyProposals = styled.div`
+  border: 1px solid ${({ theme }) => theme.text4};
+  padding: 16px 12px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`
+
+export const IndexerModalContent = styled(AutoColumn)`
+  position: relative;
+  width: 100%;
+  padding: 24px;
+  gap: 16px;
 `

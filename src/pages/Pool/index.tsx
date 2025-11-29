@@ -1,16 +1,14 @@
 import { ChainId, JSBI, Pair, Token, TokenAmount, WETH } from '@brownfi/sdk'
-import { useContext, useMemo } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import styled, { ThemeContext } from 'styled-components'
+import { ThemeContext } from 'styled-components'
 
 import SwitchVersion from 'components/SwitchVersion'
 import { useVersion } from 'hooks/useVersion'
 import { Address, checksumAddress } from 'viem'
 
-import { ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import FullPositionCard from 'components/PositionCard'
-import { RowBetween } from 'components/Row'
 import { Flex, Text } from 'rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
@@ -26,38 +24,9 @@ import { usePairs } from 'data/Reserves'
 import { useStakingInfo } from 'state/stake/hooks'
 import { BIG_INT_ZERO } from 'constants/common'
 import { useDefaultTokens } from 'state/lists/hooks'
-
-const PageWrapper = styled(AutoColumn)`
-  max-width: 894px;
-  width: 100%;
-  background-color: #1d1c21;
-`
-
-const TitleRow = styled(RowBetween)`
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    flex-wrap: wrap;
-    gap: 12px;
-    width: 100%;
-    flex-direction: column-reverse;
-  `};
-`
-
-const ResponsiveButtonPrimary = styled(ButtonPrimary)`
-  width: fit-content;
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    width: 48%;
-  `};
-`
-
-const EmptyProposals = styled.div`
-  border: 1px solid ${({ theme }) => theme.text4};
-  padding: 16px 12px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`
+import { Modal } from 'components/Modal'
+import { EmptyProposals, IndexerModalContent, PageWrapper, ResponsiveButtonPrimary, TitleRow } from './styleds'
+import { ButtonPrimary } from 'components/Button'
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
@@ -107,7 +76,7 @@ export default function Pool() {
   const { version, enableGraphQL } = useVersion({ chainId })
   const allTokens = useDefaultTokens(chainId)
 
-  const { data } = useSWR<{
+  const { data, error } = useSWR<{
     pairs: {
       totalCount: number
       items: {
@@ -160,7 +129,7 @@ export default function Pool() {
     },
   )
 
-  const sortedPairs = (data?.pairs.items ?? [])
+  const sortedPairs = (data?.pairs?.items ?? [])
     .slice()
     .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
@@ -179,7 +148,7 @@ export default function Pool() {
         checkPair = !['USDC/cbBTC'].includes(symbol)
       }
       if (pair.chainId === ChainId.HYPER_EVM) {
-        checkPair = !['USD₮0/kHYPE'].includes(symbol)
+        // checkPair = !['USD₮0/kHYPE'].includes(symbol)
       }
       if (!checkPair) return false
 
@@ -197,9 +166,38 @@ export default function Pool() {
   })
 
   const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
+  const [showIndexerModal, setShowIndexerModal] = useState(false)
+
+  const hasIndexerIssue =
+    !!error || filteredPairs.some((pair) => pair.tvl > 1000 && pair.updatedAt < Date.now() / 1000 - 8 * 3600)
+
+  useEffect(() => {
+    if (hasIndexerIssue) {
+      setShowIndexerModal(true)
+    } else {
+      setShowIndexerModal(false)
+    }
+  }, [hasIndexerIssue])
+
+  const handleIndexerModalDismiss = () => setShowIndexerModal(false)
 
   return (
     <>
+      <Modal isOpen={hasIndexerIssue && showIndexerModal} onDismiss={handleIndexerModalDismiss} maxWidth={480}>
+        <IndexerModalContent>
+          <TYPE.mediumHeader fontSize={16} fontWeight={600} color="white">
+            Indexer is syncing
+          </TYPE.mediumHeader>
+          <TYPE.main fontSize={16} fontWeight={500} color="#f2dfc8" lineHeight="22px">
+            Charts and portfolios are temporarily delayed while our indexer syncs with the blockchain. All other
+            functions are operating normally and data will update shortly.
+          </TYPE.main>
+          <ButtonPrimary onClick={handleIndexerModalDismiss} className="!py-2">
+            <Text fontWeight={700}>Got it</Text>
+          </ButtonPrimary>
+        </IndexerModalContent>
+      </Modal>
+
       {chainId === ChainId.BERA_MAINNET && version === 1 && (
         <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] px-2">
           With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and
