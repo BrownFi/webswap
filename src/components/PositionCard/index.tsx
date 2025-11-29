@@ -137,6 +137,14 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     totalBalance: userPoolBalance,
   })
 
+  const handleCopyPoolAddress = () => {
+    if (isTest) {
+      const text = `'${pair.liquidityToken.address}', // ${pair.token0.symbol}/${pair.token1.symbol}`
+      console.log(text)
+      navigator.clipboard.writeText(text)
+    }
+  }
+
   return (
     <StyledPositionCard border={border}>
       <AutoColumn gap="12px">
@@ -145,7 +153,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
+                  <div onClick={handleCopyPoolAddress} className="cursor-pointer">
+                    <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
+                  </div>
                   <Text fontWeight={600} fontSize={20} className="text-white !min-w-[160px]">
                     <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                   </Text>
