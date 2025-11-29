@@ -46,34 +46,31 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
   }
 
   const isBeta = useMemo(() => {
-    const isChainBeta = [
-      //
-      ChainId.ARBITRUM_MAINNET,
-      ChainId.BASE_MAINNET,
-      ChainId.BSC_MAINNET,
-      ChainId.SEI_MAINNET,
-    ].includes(chainId as number)
-
-    const isPairBeta = [
-      //
-      '0x46Ebd96e4a09b97AeFf54c123b9C34433682a238', // WBERA/iBGT
-      '0xF943aF974Cb195107C915A0594dC69BfDdD5c712', // iBGT/HONEY
-      '0x116e5e74eC5F7332075e96978CF44413f445540C', // WBERA/USDe
-      '0x9aBE906bC272CBb317588D9D495bCc12FAf3ff92', // DOLO/BERA
-      '0x67FBB8A61D6D6433f3428d1f10cfb09bABC1A4D5', // DOLO/HONEY
-      '0x5E9B2Cd773d8283B578Df77754DFcC2894e36b4D', // LBGT/HONEY
-      '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3', // kHYPE/USDT
-      '0x73F341882dba17841d268D10c968855672F99000', // HYPE/UETH
-      '0x4AEc17532B4Cb741B515E5bD4D031390A3d82318', // HYPE/UBTC
-      '0xcc920076d4DC3EEA5CA173414AB9135963b00F67', // HYPE/USDC
-    ].includes(pair?.liquidityToken.address as string)
-
     const isNotPairBeta = ([
+      // Bera Mainnet
+      '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C', // WBERA/HONEY
+      '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc', // USDC.e/WBERA
+      '0x8AD2af4375245A260EE13aD5FfA7A8cD14ecBB99', // WETH/HONEY
+      '0x85061AA68F32B9176784dbD57a2A3d17e6F88Ac9', // WETH/WBERA
+      '0xdc33131c0DDfD4f551879fBF20449975f1BE6f97', // WBTC/WETH
+      '0xC118dFd4ceEea0A10C79AeA77921BAebe9B259A5', // WBTC/HONEY
+      '0x1C84a73ed3918EA5Ca18564A8206a28119082d9F', // WBTC/WBERA
+      '0xFC5b86437A50e9B4ae0f20Ef9B50f8D79B053121', // WBERA/LBGT
+      // Base Mainnet
+      '0xdC46421B43688FdDBB6030aaE761385782e84905', // WETH/USDC
+      // Hyper EVM Mainnet
+      '0x122524E1c403739bd33Ec54d606DDc287117B0A6', // WHYPE/USDT
+      // LINEA Mainnet
+      '0xA87E2c65F2b79164bab690Ec6808431D8c419598', // USDC/WETH
+      '0xeC029CED99314ff39d59a121b60aDfd1FDde4604', // USDC/LINEA
+      '0xaFDbF57C83c55B1813a140b087C502d47fb469A4', // USDT/WETH
+      '0xA3805eb1b8FAD35c2cFc6C148073493F316e3489', // LINEA/WETH
+      '0x679e84FB0b5F922AaaA9e1d06cb044110A603852', // WBTC/WETH
+      '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT
       //
-      '0xdC46421B43688FdDBB6030aaE761385782e84905', // ETH/USDC
     ] as string[]).includes(pair?.liquidityToken.address as string)
 
-    return (isChainBeta || isPairBeta) && !isNotPairBeta && version === 2
+    return version === 2 && !isNotPairBeta
   }, [chainId, pair?.liquidityToken.address, version])
 
   const enableGraphQL = useMemo(() => {
