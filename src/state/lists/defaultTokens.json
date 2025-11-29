@@ -269,6 +269,22 @@
       "logoURI": "https://hyperevmscan.io/token/images/khype.svg"
     },
     {
+      "chainId": 999,
+      "address": "0xBe6727B535545C67d5cAa73dEa54865B92CF7907",
+      "name": "Unit Ethereum",
+      "symbol": "UETH",
+      "decimals": 18,
+      "logoURI": "https://hyperevmscan.io/token/images/eth.svg"
+    },
+    {
+      "chainId": 999,
+      "address": "0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463",
+      "name": "Unit Bitcoin",
+      "symbol": "UBTC",
+      "decimals": 8,
+      "logoURI": "https://hyperevmscan.io/token/images/ubtc_64.png"
+    },
+    {
       "chainId": 59144,
       "address": "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
       "name": "USDC",
