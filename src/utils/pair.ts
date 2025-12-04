@@ -18,6 +18,8 @@ export const shouldReverse = (pairSymbols: string) => {
     'USDC/KAITO',
     // LINEA
     'USDT/ETH',
+    // MONAD
+    'AUSD/MON',
   ].includes(pairSymbols)
 }
 
