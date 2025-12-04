@@ -150,12 +150,21 @@ const sei = overrideChain({
   ],
 })
 
-export const appEnv = process.env.REACT_APP_ENVIROMENT as 'mainnet' | 'beta' | 'testnet'
+const monad = overrideChain({
+  chain: defaultChains.monad,
+  iconUrl: require('assets/images/monad.png'),
+  fallbackRpcs: [
+    //
+    'https://rpc3.monad.xyz',
+  ],
+})
+
+export const appEnv = 'beta' as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 console.log(`======== ENVIROMENT: "${appEnv}" =========`, { isMainnet })
 
 const mainChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, viction, u2uMainnet]
-const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, viction, u2uMainnet]
+const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, monad, viction, u2uMainnet]
 const testChains: Chain[] = [berachain, sepolia]
 
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains

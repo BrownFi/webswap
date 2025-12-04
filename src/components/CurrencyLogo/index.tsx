@@ -6,6 +6,7 @@ import BNBLogo from 'assets/images/bnb.svg'
 import EthereumLogo from 'assets/images/ethereum-logo.png'
 import hyperevmLogo from 'assets/images/hyperevm.png'
 import seiLogo from 'assets/images/sei.png'
+import monadLogo from 'assets/images/monad.png'
 import u2uLogo from 'assets/images/u2u.jpg'
 import VictionLogo from 'assets/images/viction.png'
 import beraLogo from 'assets/images/w-bera.png'
@@ -78,25 +79,28 @@ export function CurrencyLogo({
     )
   }
 
-  if ((currency as any)?.symbol === 'WVIC') {
+  if (currency?.symbol === 'WVIC') {
     return <StyledEthereumLogo src={VictionLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'WU2U') {
+  if (currency?.symbol === 'WU2U') {
     return <StyledEthereumLogo src={u2uLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'WBNB') {
+  if (currency?.symbol === 'WBNB') {
     return <StyledEthereumLogo src={BNBLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'WBERA') {
+  if (currency?.symbol === 'WBERA') {
     return <StyledEthereumLogo src={beraLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'WHYPE') {
+  if (currency?.symbol === 'WHYPE') {
     return <StyledEthereumLogo src={hyperevmLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'WSEI') {
+  if (currency?.symbol === 'WSEI') {
     return <StyledEthereumLogo src={seiLogo} size={size} style={style} />
   }
-  if ((currency as any)?.symbol === 'WETH') {
+  if (currency?.symbol === 'WMON') {
+    return <StyledEthereumLogo src={monadLogo} size={size} style={style} />
+  }
+  if (currency?.symbol === 'WETH') {
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
 
@@ -118,6 +122,9 @@ export function CurrencyLogo({
     }
     if (chainId === ChainId.SEI_MAINNET) {
       return <StyledEthereumLogo src={seiLogo} size={size} style={style} />
+    }
+    if (chainId === ChainId.MONAD) {
+      return <StyledEthereumLogo src={monadLogo} size={size} style={style} />
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
