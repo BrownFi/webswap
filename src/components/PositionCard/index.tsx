@@ -8,6 +8,7 @@ import styled from 'styled-components'
 
 import { ButtonEmpty, ButtonPrimary, ButtonSecondary } from 'components/Button'
 import { useActiveWeb3React } from 'hooks'
+import { useDevStats } from 'hooks/useDevStats'
 import { useTokenBalance } from 'state/wallet/hooks'
 import { currencyId } from 'utils/currencyId'
 import { unwrappedToken } from 'utils/wrappedCurrency'
@@ -25,6 +26,7 @@ import { BIG_INT_ZERO } from 'constants/common'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
+import { isMainnet } from 'connectors'
 import { shouldReversePair } from 'utils/pair'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { PairStats, usePoolStats } from './usePoolStats'
@@ -72,6 +74,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
   const enableBgt = !!pairBGT[pair.liquidityToken.address]
+  const devStats = useDevStats({ pair, enabled: !isMainnet })
 
   const [showMore, setShowMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
@@ -138,11 +141,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   })
 
   const handleCopyPoolAddress = () => {
-    if (isTest) {
-      const text = `'${pair.liquidityToken.address}', // ${pair.token0.symbol}/${pair.token1.symbol}`
-      console.log(text)
-      navigator.clipboard.writeText(text)
-    }
+    const text = `'${pair.liquidityToken.address}', // ${pair.token0.symbol}/${pair.token1.symbol}`
+    console.log(text)
+    navigator.clipboard.writeText(text)
   }
 
   return (
@@ -232,6 +233,14 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           </div>
         </FixedHeightRow>
 
+        {!isMainnet && (
+          <div className="flex flex-wrap gap-3 text-white text-sm">
+            <Text>Lambda: {formatNumber(devStats.lambda, { maximumFractionDigits: 6 })}</Text>
+            <Text>Kappa: {formatNumber(devStats.kappa, { maximumFractionDigits: 6 })}</Text>
+            <Text>DevFee: {`${formatNumber(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
+          </div>
+        )}
+
         {showMore && (
           <AutoColumn gap="8px">
             <>
@@ -280,7 +289,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   Price per LP
                 </Text>
                 <Text fontSize={16} fontWeight={500} color="white">
-                  {formatPrice(iskHYPEUSDT ? lpPrice/1e9: lpPrice )}
+                  {formatPrice(iskHYPEUSDT ? lpPrice / 1e9 : lpPrice)}
                 </Text>
               </FixedHeightRow>
               <FixedHeightRow>
