@@ -67,7 +67,8 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       '0xA3805eb1b8FAD35c2cFc6C148073493F316e3489', // LINEA/WETH
       '0x679e84FB0b5F922AaaA9e1d06cb044110A603852', // WBTC/WETH
       '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT
-      //
+      // Arbritrum Mainnet
+      '0x9106eeF158990574f13fF631b730D5Bf16d99139', // ETH/USDC
     ] as string[]).includes(pair?.liquidityToken.address as string)
 
     return version === 2 && !isNotPairBeta
