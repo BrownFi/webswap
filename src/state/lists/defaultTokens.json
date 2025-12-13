@@ -253,6 +253,14 @@
       "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/3717.png"
     },
     {
+      "chainId": 42161,
+      "address": "0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8",
+      "name": "PENDLE",
+      "symbol": "PENDLE",
+      "decimals": 18,
+      "logoURI": "https://arbiscan.io/token/images/pendlefin_32.png"
+    },
+    {
       "chainId": 999,
       "address": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
       "name": "USD₮0",
