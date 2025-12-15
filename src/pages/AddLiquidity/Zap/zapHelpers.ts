@@ -1,8 +1,8 @@
-import { ChainId, Currency, CurrencyAmount, Pair } from '@brownfi/sdk'
+import { ChainId, Currency, CurrencyAmount, Pair, Token } from '@brownfi/sdk'
+import { AddressZero } from '@ethersproject/constants'
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionResponse, Web3Provider } from '@ethersproject/providers'
 import { kyberZapService } from 'services'
-import { wrappedCurrency } from 'utils/wrappedCurrency'
 
 export const SUPPORTED_ZAP_CHAIN_IDS = new Set<ChainId>([ChainId.BERA_MAINNET, ChainId.LINEA_MAINNET])
 
@@ -30,7 +30,7 @@ export const getKyberZapRouteData = async ({
   allowedSlippage,
 }: BuildKyberZapRouteParams): Promise<KyberZapRouteData> => {
   const tokensIn = inputs.map(({ currency }) => {
-    const address = wrappedCurrency(currency, chainId)?.address
+    const address = currency instanceof Token ? currency.address : AddressZero
     if (!address) {
       throw new Error('Missing address for zap route')
     }
