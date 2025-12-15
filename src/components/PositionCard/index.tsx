@@ -146,6 +146,8 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     navigator.clipboard.writeText(text)
   }
 
+  const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3' // HYPE/USD₮0
+
   return (
     <StyledPositionCard border={border}>
       <AutoColumn gap="12px">

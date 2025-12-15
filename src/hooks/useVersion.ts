@@ -61,6 +61,9 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       '0xdC46421B43688FdDBB6030aaE761385782e84905', // WETH/USDC
       // Hyper EVM Mainnet
       '0x122524E1c403739bd33Ec54d606DDc287117B0A6', // WHYPE/USDT
+      '0x73F341882dba17841d268D10c968855672F99000', // WHYPE/UETH
+      '0x4AEc17532B4Cb741B515E5bD4D031390A3d82318', // WHYPE/UBTC
+      '0xcc920076d4DC3EEA5CA173414AB9135963b00F67', // WHYPE/USDC
       // LINEA Mainnet
       '0xA87E2c65F2b79164bab690Ec6808431D8c419598', // USDC/WETH
       '0xeC029CED99314ff39d59a121b60aDfd1FDde4604', // USDC/LINEA
@@ -69,7 +72,8 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       '0x679e84FB0b5F922AaaA9e1d06cb044110A603852', // WBTC/WETH
       '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT
       // Arbritrum Mainnet
-      '0x9106eeF158990574f13fF631b730D5Bf16d99139', // ETH/USDC
+      '0x9106eeF158990574f13fF631b730D5Bf16d99139', // WETH/USDC
+      '0xcA138f5755225d887655B30961e1E3D8C2010A0f', // WETH/USDT
     ] as string[]).includes(pair?.liquidityToken.address as string)
 
     return version === 2 && !isNotPairBeta
