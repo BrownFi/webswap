@@ -77,9 +77,16 @@ export const executeKyberZapTransaction = async ({
     throw new Error('No signer available for zap transaction')
   }
 
-  const txRequest: { to: string; data: string; value?: BigNumber } = {
+  const txRequest: { to: string; data: string; value?: BigNumber; gasLimit?: BigNumber } = {
     to: routeData.routerAddress,
     data: buildData.callData,
+  }
+
+  // Use the suggested gas limit from Kyber to avoid estimateGas failures on complex routes.
+  const gasLimit = routeData.gas ? BigNumber.from(routeData.gas) : undefined
+  if (gasLimit) {
+    // add 20% buffer to reduce out-of-gas risk
+    txRequest.gasLimit = gasLimit.mul(120).div(100)
   }
 
   if (buildData.value) {
