@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Currency, ETHER, Token } from '@brownfi/sdk'
 import React, { KeyboardEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { FixedSizeList } from 'react-window'
 import { Text } from 'rebass'
 import { useActiveWeb3React } from 'hooks'
@@ -63,7 +62,6 @@ export function CurrencySearch({
   showImportView,
   setImportToken,
 }: CurrencySearchProps) {
-  const { t } = useTranslation()
   const { chainId } = useActiveWeb3React()
   const theme = useTheme()
 

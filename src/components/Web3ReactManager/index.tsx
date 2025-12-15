@@ -3,7 +3,7 @@ import { useWeb3React } from '@web3-react/core'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 
-import { useEagerConnect, useInactiveListener } from 'hooks'
+import { useEagerConnect } from 'hooks'
 import { NetworkContextName } from 'constants/common'
 import { Loader } from 'components/Loader'
 import { NetworkConnector } from 'connectors/NetworkConnector'
