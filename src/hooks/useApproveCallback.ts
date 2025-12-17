@@ -1,23 +1,23 @@
-import { MaxUint256 } from '@ethersproject/constants'
-import { TransactionResponse } from '@ethersproject/providers'
 import {
-  Trade,
-  TokenAmount,
   CurrencyAmount,
   ETHER,
-  ROUTER_ADDRESS_WITH_PRICE,
   ROUTER_ADDRESS_V1,
+  ROUTER_ADDRESS_WITH_PRICE,
+  TokenAmount,
+  Trade,
   getRouterAddress,
 } from '@brownfi/sdk'
-import { useCallback, useMemo } from 'react'
+import { MaxUint256 } from '@ethersproject/constants'
+import { TransactionResponse } from '@ethersproject/providers'
 import { useTokenAllowance } from 'data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from 'data/V1'
+import { useCallback, useMemo } from 'react'
 import { Field } from 'state/swap/actions'
-import { useTransactionAdder, useHasPendingApproval } from 'state/transactions/hooks'
-import { computeSlippageAdjustedAmounts } from 'utils/prices'
+import { useHasPendingApproval, useTransactionAdder } from 'state/transactions/hooks'
 import { calculateGasMargin, getTokenSymbol } from 'utils'
-import { useTokenContract } from './useContract'
+import { computeSlippageAdjustedAmounts } from 'utils/prices'
 import { useActiveWeb3React } from './index'
+import { useTokenContract } from './useContract'
 import { Version } from './useToggledVersion'
 import { useVersion } from './useVersion'
 

@@ -98,6 +98,8 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
             date: moment.unix(item.startUnix).format('DD/MM'),
             lpPrice: iskHYPEUSDT ? item.lpPrice / 1e9 : item.lpPrice,
             bnhPrice: iskHYPEUSDT ? item.bnhPrice / 1e9 : item.bnhPrice,
+            netPnL: item.tvl - (item.bnhPrice * item.tvl) / item.lpPrice,
+            formattedTvl: item.tvl / 10,
           }
         })
         .filter((item) => {
@@ -426,6 +428,36 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                   <YAxis
                     yAxisId="right"
                     orientation="right"
+                    hide={false}
+                    width={60}
+                    axisLine={{ stroke: '#FFFA' }}
+                    tick={{ fill: '#FFFA' }}
+                    tickLine={{ stroke: '#FFFA' }}
+                    // allow negative/positive net PnL values and add a small margin
+                    // expand bounds by 10% and ensure axis crosses zero when data is one-sided
+                    domain={[
+                      (dataMin: number) => {
+                        const min = typeof dataMin === 'number' && !Number.isNaN(dataMin) ? dataMin : 0
+                        // if there's any negative values, make lower bound slightly more negative
+                        const lower = Math.min(min * 1.1, 0)
+                        return +lower.toFixed(1)
+                      },
+                      (dataMax: number) => {
+                        const max = typeof dataMax === 'number' && !Number.isNaN(dataMax) ? dataMax : 0
+                        // if there's any positive values, make upper bound slightly larger
+                        const upper = Math.max(max * 1.1, 0)
+                        return +upper.toFixed(1)
+                      },
+                    ]}
+                    // show ticks rounded to 1 decimal
+                    tickFormatter={(value: number) =>
+                      formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                    }
+                  />
+                  {/* hidden axis for volume so bars don't share the netPnL scale */}
+                  <YAxis
+                    yAxisId="volume"
+                    orientation="right"
                     hide={true}
                     domain={[0, (dataMax: number) => dataMax * 4]}
                   />
@@ -433,7 +465,9 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                   <Legend content={<CustomLegend />} />
                   <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
                   <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
-                  <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="right" />
+                  <Line type="monotone" dataKey="formattedTvl" stroke="#DA70D6" yAxisId="right" {...lineDotConfig} />
+                  <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />
+                  <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" {...lineDotConfig} />
                   {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
                     <ReferenceArea
                       x1={referenceArea.x1}
@@ -481,7 +515,15 @@ const CustomLegend = ({ payload, onClick }: any) => {
             }}
           />
           <Text color="#FFFA">
-            {it.value === 'lpPrice' ? 'LP Price' : it.value === 'bnhPrice' ? 'HODL Price' : String(it.value)}
+            {it.value === 'lpPrice'
+              ? 'LP Price'
+              : it.value === 'bnhPrice'
+              ? 'HODL Price'
+              : it.value === 'netPnL'
+              ? 'Net PnL'
+              : it.value === 'formattedTvl'
+              ? 'TVL'
+              : String(it.value)}
           </Text>
         </div>
       ))}
@@ -500,8 +542,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="text-sm" style={{ color: '#4DA3FF' }}>
           HODL Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
         </p>
+        <p className="text-sm" style={{ color: '#DA70D6' }}>
+          TVL: {formatPrice(payload[2].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+        </p>
+        <p className="text-sm" style={{ color: '#EE4B2B' }}>
+          Net PnL: {formatPrice(payload[4].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+        </p>
         <p className="text-sm" style={{ color: '#66CC99' }}>
-          Volume: {formatPrice((payload[2] || payload[1]).value)}
+          Volume: {formatPrice((payload[3] || payload[1]).value)}
         </p>
       </div>
     )

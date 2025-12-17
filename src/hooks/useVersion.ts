@@ -29,6 +29,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
         ChainId.HYPER_EVM,
         ChainId.LINEA_MAINNET,
         ChainId.SEI_MAINNET,
+        ChainId.MONAD,
         ChainId.ARBITRUM_SEPOLIA,
         ChainId.SEPOLIA,
       ].includes(chainId as number)
@@ -89,6 +90,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
         ChainId.HYPER_EVM,
         ChainId.LINEA_MAINNET,
         ChainId.SEI_MAINNET,
+        ChainId.MONAD,
       ].includes(chainId as number) && version === 2
     )
   }, [chainId, version])

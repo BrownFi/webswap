@@ -5,6 +5,7 @@ import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId, JSBI, Percent, Token, CurrencyAmount, Currency, ETHER, WETH } from '@brownfi/sdk'
 import { TokenAddressMap } from 'state/lists/hooks'
+import { monad } from 'viem/chains'
 
 // returns the checksummed address if the address is valid, otherwise returns false
 export function isAddress(value: any): string | false {
@@ -100,6 +101,9 @@ export function getEtherscanLink(
       break
     case ChainId.SEI_MAINNET:
       prefix = 'https://seiscan.io'
+      break
+    case ChainId.MONAD:
+      prefix = monad.blockExplorers.monadscan.url
       break
     case ChainId.OP_MAINNET:
       prefix = 'https://optimistic.etherscan.io'
@@ -205,25 +209,14 @@ export function getNativeToken(chainId: ChainId) {
   if (chainId === ChainId.SEI_MAINNET) {
     return 'SEI'
   }
+  if (chainId === ChainId.MONAD) {
+    return 'MON'
+  }
   return 'ETH'
 }
 
 export function getWrappedNativeToken(chainId: ChainId) {
-  if (
-    [
-      ChainId.VICTION_TESTNET,
-      ChainId.VICTION_MAINNET,
-      ChainId.U2U_MAINNET,
-      ChainId.BSC_TESTNET,
-      ChainId.BSC_MAINNET,
-      ChainId.BERA_MAINNET,
-      ChainId.HYPER_EVM,
-      ChainId.SEI_MAINNET,
-    ].includes(chainId)
-  ) {
-    return WETH[chainId].symbol
-  }
-  return 'WETH'
+  return WETH[chainId]?.symbol || 'WETH'
 }
 
 export function getTokenSymbol(currency: Currency | null | undefined, chainId: ChainId | undefined) {
@@ -245,6 +238,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
     }
     if (chainId === ChainId.SEI_MAINNET) {
       return 'SEI'
+    }
+    if (chainId === ChainId.MONAD) {
+      return 'MON'
     }
     return 'ETH'
   }
@@ -287,6 +283,9 @@ export function getTokenName(currency: Currency | null | undefined, chainId: Cha
     if (chainId === ChainId.SEI_MAINNET) {
       return 'SEI'
     }
+    if (chainId === ChainId.MONAD) {
+      return 'MON'
+    }
     return 'Ethereum'
   }
   return currency?.name
@@ -315,6 +314,8 @@ export function getScanText(chainId: ChainId) {
       return 'Lineascan'
     case ChainId.SEI_MAINNET:
       return 'Seiscan'
+    case ChainId.MONAD:
+      return 'Monadscan'
     default:
       return 'Etherscan'
   }
@@ -328,6 +329,7 @@ export function isNativeCurrency(symbol: string | undefined) {
     symbol === 'WBERA' ||
     symbol === 'WHYPE' ||
     symbol === 'WSEI' ||
+    symbol === 'WMON' ||
     symbol === 'WETH' ||
     //
     false

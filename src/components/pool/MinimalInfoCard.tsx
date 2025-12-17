@@ -14,7 +14,7 @@ import { useTradingFee } from 'hooks/useTradingFee'
 import { getTokenSymbol } from 'utils'
 import { Card, GreyCard, LightCard } from 'components/Card'
 import { AutoColumn } from 'components/Column'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { RowBetween, RowFixed } from 'components/Row'
 
 export const FixedHeightRow = styled(RowBetween)`
@@ -81,53 +81,35 @@ export function MinimalInfoCard({ pair, showUnwrapped = false, border }: Positio
             </FixedHeightRow>
             <FixedHeightRow onClick={() => setShowMore(!showMore)}>
               <RowFixed>
-                <DoubleCurrencyLogo currency0={currency0} currency1={currency1} margin={true} size={20} />
-                <Text fontWeight={500} fontSize={20} color={'white'}>
-                  {getTokenSymbol(currency0, chainId)}/{getTokenSymbol(currency1, chainId)}
+                <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={20} />
+                <Text fontWeight={600} fontSize={20} className="text-white !min-w-[160px] !ml-2">
+                  <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                 </Text>
               </RowFixed>
               <RowFixed>
-                <Text fontWeight={500} fontSize={20} color={'white'}>
+                <Text fontWeight={600} fontSize={20} color={'white'}>
                   {userPoolBalance.toSignificant(4)}
                 </Text>
               </RowFixed>
             </FixedHeightRow>
             <AutoColumn gap="8px">
               <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
+                <Text fontWeight={500} color="white">
                   Your share:
                 </Text>
-                <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {poolTokenPercentage ? poolTokenPercentage.toSignificant(4) + '%' : '-'}
-                </Text>
+                <TYPE.black>{poolTokenPercentage ? poolTokenPercentage.toSignificant(4) + '%' : '-'}</TYPE.black>
               </FixedHeightRow>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {getTokenSymbol(currency0, chainId)}:
+                  {getTokenSymbol(currency0, chainId)}
                 </Text>
-                {token0Deposited ? (
-                  <RowFixed>
-                    <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
-                      {token0Deposited?.toSignificant(6)}
-                    </Text>
-                  </RowFixed>
-                ) : (
-                  '-'
-                )}
+                {token0Deposited ? <TYPE.black>{token0Deposited?.toSignificant(4)}</TYPE.black> : '-'}
               </FixedHeightRow>
               <FixedHeightRow>
                 <Text fontSize={16} fontWeight={500} color={'white'}>
-                  {getTokenSymbol(currency1, chainId)}:
+                  {getTokenSymbol(currency1, chainId)}
                 </Text>
-                {token1Deposited ? (
-                  <RowFixed>
-                    <Text fontSize={16} fontWeight={500} marginLeft={'6px'} color={'white'}>
-                      {token1Deposited?.toSignificant(6)}
-                    </Text>
-                  </RowFixed>
-                ) : (
-                  '-'
-                )}
+                {token1Deposited ? <TYPE.black>{token1Deposited?.toSignificant(4)}</TYPE.black> : '-'}
               </FixedHeightRow>
             </AutoColumn>
           </AutoColumn>

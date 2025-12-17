@@ -1,4 +1,4 @@
-import { ChainId, Currency, Pair } from '@brownfi/sdk'
+import { Currency, Pair } from '@brownfi/sdk'
 import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import { darken } from 'polished'
@@ -213,16 +213,15 @@ export function CurrencyInputPanel({
             }}
           >
             <Aligner>
-              <div className="flex items-center flex-1">
+              <div className="flex items-center flex-1 gap-1">
                 {pair ? (
-                  <DoubleCurrencyLogo currency0={pair.token0} currency1={pair.token1} size={24} margin={true} />
+                  <DoubleCurrencyLogo currency0={pair.token0} currency1={pair.token1} size={24} />
                 ) : currency ? (
                   <CurrencyLogo currency={currency} size={'24px'} />
                 ) : null}
                 {pair ? (
                   <StyledTokenName className="pair-name-container">
-                    {/* {pair?.token0.symbol}:{pair?.token1.symbol} */}
-                    {chainId === ChainId.BOBA_MAINNET ? 'BOBA' : pair?.token0.symbol}:{pair?.token1.symbol}
+                    {pair?.token0.symbol}:{pair?.token1.symbol}
                   </StyledTokenName>
                 ) : (
                   <StyledTokenName className="token-symbol-container" active={Boolean(currency && currency.symbol)}>

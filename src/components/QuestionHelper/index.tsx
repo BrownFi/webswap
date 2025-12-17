@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { ReactNode, useCallback, useState } from 'react'
 import { HelpCircle as Question } from 'react-feather'
 import styled from 'styled-components'
 import Tooltip from 'components/Tooltip'
@@ -64,7 +64,7 @@ export default function QuestionHelper({ text }: { text: string }) {
   )
 }
 
-export function LightQuestionHelper({ text }: { text: string }) {
+export function LightQuestionHelper({ text }: { text: ReactNode }) {
   const [show, setShow] = useState<boolean>(false)
 
   const open = useCallback(() => setShow(true), [setShow])

@@ -8,6 +8,7 @@ import styled from 'styled-components'
 
 import { ButtonEmpty, ButtonPrimary, ButtonSecondary } from 'components/Button'
 import { useActiveWeb3React } from 'hooks'
+import { useDevStats } from 'hooks/useDevStats'
 import { useTokenBalance } from 'state/wallet/hooks'
 import { currencyId } from 'utils/currencyId'
 import { unwrappedToken } from 'utils/wrappedCurrency'
@@ -25,6 +26,7 @@ import { BIG_INT_ZERO } from 'constants/common'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
+import { isMainnet } from 'connectors'
 import { shouldReversePair } from 'utils/pair'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { PairStats, usePoolStats } from './usePoolStats'
@@ -72,9 +74,12 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
   const enableBgt = !!pairBGT[pair.liquidityToken.address]
+  const devStats = useDevStats({ pair, enabled: !isMainnet })
 
   const [showMore, setShowMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
+
+  const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3' // HYPE/USD₮0
 
   const {
     tradingFee,
@@ -135,7 +140,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     totalBalance: userPoolBalance,
   })
 
-  const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3' // HYPE/USD₮0
+  const handleCopyPoolAddress = () => {
+    const text = `'${pair.liquidityToken.address}', // ${pair.token0.symbol}/${pair.token1.symbol}`
+    console.log(text)
+    navigator.clipboard.writeText(text)
+  }
 
   return (
     <StyledPositionCard border={border}>
@@ -145,7 +154,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
+                  <div onClick={handleCopyPoolAddress} className="cursor-pointer">
+                    <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
+                  </div>
                   <Text fontWeight={600} fontSize={20} className="text-white !min-w-[160px]">
                     <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
                   </Text>
@@ -221,6 +232,14 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </ButtonEmpty>
           </div>
         </FixedHeightRow>
+
+        {!isMainnet && (
+          <div className="flex flex-wrap gap-3 text-white text-sm">
+            <Text>Lambda: {formatNumber(devStats.lambda, { maximumFractionDigits: 6 })}</Text>
+            <Text>Kappa: {formatNumber(devStats.kappa, { maximumFractionDigits: 6 })}</Text>
+            <Text>DevFee: {`${formatNumber(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
+          </div>
+        )}
 
         {showMore && (
           <AutoColumn gap="8px">

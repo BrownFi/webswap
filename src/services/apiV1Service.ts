@@ -48,7 +48,7 @@ const getUserRank = (address: string) =>
     return data.data
   })
 
-export const internalService = {
+export const apiV1Service = {
   getPoolStats,
   fetchLeaderboard,
   getUserRank,

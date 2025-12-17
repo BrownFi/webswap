@@ -341,6 +341,30 @@
       "logoURI": "https://seiscan.io/token/images/weth_64.png"
     },
     {
+      "chainId": 143,
+      "address": "0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242",
+      "name": "WETH",
+      "symbol": "WETH",
+      "decimals": 18,
+      "logoURI": "https://monadscan.com/token/images/weth_64.png"
+    },
+    {
+      "chainId": 143,
+      "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "logoURI": "https://monadscan.com/token/images/usdc_ofc_32.svg"
+    },
+    {
+      "chainId": 143,
+      "address": "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a",
+      "name": "AUSD",
+      "symbol": "AUSD",
+      "decimals": 6,
+      "logoURI": "https://monadscan.com/token/images/agrousd_64.png"
+    },
+    {
       "chainId": 10,
       "address": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
       "name": "USDC",
