@@ -57,6 +57,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
   const [isOpen, setOpen] = useState(false)
   const [zoomRange, setZoomRange] = useState<{ startIndex: number; endIndex: number } | null>(null)
   const [selection, setSelection] = useState<{ startIndex: number; endIndex: number } | null>(null)
+  const showExtendedMetrics = !isMainnet
 
   const { data } = useSWR<{
     pairDayDatas: {
@@ -425,49 +426,56 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                       formatNumber(value, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
                     }
                   />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    hide={false}
-                    width={60}
-                    axisLine={{ stroke: '#FFFA' }}
-                    tick={{ fill: '#FFFA' }}
-                    tickLine={{ stroke: '#FFFA' }}
-                    // allow negative/positive net PnL values and add a small margin
-                    // expand bounds by 10% and ensure axis crosses zero when data is one-sided
-                    domain={[
-                      (dataMin: number) => {
-                        const min = typeof dataMin === 'number' && !Number.isNaN(dataMin) ? dataMin : 0
-                        // if there's any negative values, make lower bound slightly more negative
-                        const lower = Math.min(min * 1.1, 0)
-                        return +lower.toFixed(1)
-                      },
-                      (dataMax: number) => {
-                        const max = typeof dataMax === 'number' && !Number.isNaN(dataMax) ? dataMax : 0
-                        // if there's any positive values, make upper bound slightly larger
-                        const upper = Math.max(max * 1.1, 0)
-                        return +upper.toFixed(1)
-                      },
-                    ]}
-                    // show ticks rounded to 1 decimal
-                    tickFormatter={(value: number) =>
-                      formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-                    }
-                  />
+                  {showExtendedMetrics && (
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      width={60}
+                      axisLine={{ stroke: '#FFFA' }}
+                      tick={{ fill: '#FFFA' }}
+                      tickLine={{ stroke: '#FFFA' }}
+                      // allow negative/positive net PnL values and add a small margin
+                      // expand bounds by 10% and ensure axis crosses zero when data is one-sided
+                      domain={[
+                        (dataMin: number) => {
+                          const min = typeof dataMin === 'number' && !Number.isNaN(dataMin) ? dataMin : 0
+                          // if there's any negative values, make lower bound slightly more negative
+                          const lower = Math.min(min * 1.1, 0)
+                          return +lower.toFixed(1)
+                        },
+                        (dataMax: number) => {
+                          const max = typeof dataMax === 'number' && !Number.isNaN(dataMax) ? dataMax : 0
+                          // if there's any positive values, make upper bound slightly larger
+                          const upper = Math.max(max * 1.1, 0)
+                          return +upper.toFixed(1)
+                        },
+                      ]}
+                      // show ticks rounded to 1 decimal
+                      tickFormatter={(value: number) =>
+                        formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                      }
+                    />
+                  )}
                   {/* hidden axis for volume so bars don't share the netPnL scale */}
-                  <YAxis
-                    yAxisId="volume"
-                    orientation="right"
-                    hide={true}
-                    domain={[0, (dataMax: number) => dataMax * 4]}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend content={<CustomLegend />} />
+                  {showExtendedMetrics && (
+                    <YAxis
+                      yAxisId="volume"
+                      orientation="right"
+                      hide={true}
+                      domain={[0, (dataMax: number) => dataMax * 4]}
+                    />
+                  )}
+                  <Tooltip content={<CustomTooltip showExtendedMetrics={showExtendedMetrics} />} />
+                  <Legend content={<CustomLegend showExtendedMetrics={showExtendedMetrics} />} />
                   <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
                   <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
-                  <Line type="monotone" dataKey="formattedTvl" stroke="#DA70D6" yAxisId="right" {...lineDotConfig} />
-                  <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />
-                  <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" {...lineDotConfig} />
+                  {showExtendedMetrics && (
+                    <Line type="monotone" dataKey="formattedTvl" stroke="#DA70D6" yAxisId="right" {...lineDotConfig} />
+                  )}
+                  {showExtendedMetrics && <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />}
+                  {showExtendedMetrics && (
+                    <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" {...lineDotConfig} />
+                  )}
                   {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
                     <ReferenceArea
                       x1={referenceArea.x1}
@@ -499,8 +507,9 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
   )
 }
 
-const CustomLegend = ({ payload, onClick }: any) => {
-  const items = (payload ?? []).filter((it: any) => it.value !== 'totalVolume')
+const CustomLegend = ({ payload, onClick, showExtendedMetrics }: any) => {
+  const allowedKeys = showExtendedMetrics ? ['lpPrice', 'bnhPrice', 'netPnL', 'formattedTvl'] : ['lpPrice', 'bnhPrice']
+  const items = (payload ?? []).filter((it: any) => allowedKeys.includes(it.value))
   return (
     <div className="flex items-center justify-center gap-4">
       {items.map((it: any) => (
@@ -531,30 +540,42 @@ const CustomLegend = ({ payload, onClick }: any) => {
   )
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-2 rounded shadow-md border flex flex-col gap-1">
-        <p className="text-sm text-gray-600">{label}</p>
-        <p className="text-sm" style={{ color: '#FFB347' }}>
-          LP Price: {formatPrice(payload[0].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
-        </p>
-        <p className="text-sm" style={{ color: '#4DA3FF' }}>
-          HODL Price: {formatPrice(payload[1].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
-        </p>
-        <p className="text-sm" style={{ color: '#DA70D6' }}>
-          TVL: {formatPrice(payload[2].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
-        </p>
-        <p className="text-sm" style={{ color: '#EE4B2B' }}>
-          Net PnL: {formatPrice(payload[4].value, { maximumFractionDigits: isMainnet ? 2 : 5 })}
-        </p>
-        <p className="text-sm" style={{ color: '#66CC99' }}>
-          Volume: {formatPrice((payload[3] || payload[1]).value)}
-        </p>
-      </div>
-    )
+const CustomTooltip = ({ active, payload, label, showExtendedMetrics }: any) => {
+  if (!active || !payload || !payload.length) {
+    return null
   }
-  return null
+
+  const byKey = Object.fromEntries(payload.map((item: any) => [item.dataKey, item.value]))
+  const lpPrice = byKey['lpPrice'] ?? 0
+  const hodlPrice = byKey['bnhPrice'] ?? 0
+  const tvl = byKey['formattedTvl'] ?? 0
+  const netPnL = byKey['netPnL'] ?? 0
+  const volume = byKey['totalVolume']
+
+  return (
+    <div className="bg-white p-2 rounded shadow-md border flex flex-col gap-1">
+      <p className="text-sm text-gray-600">{label}</p>
+      <p className="text-sm" style={{ color: '#FFB347' }}>
+        LP Price: {formatPrice(lpPrice, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+      </p>
+      <p className="text-sm" style={{ color: '#4DA3FF' }}>
+        HODL Price: {formatPrice(hodlPrice, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+      </p>
+      {showExtendedMetrics && (
+        <>
+          <p className="text-sm" style={{ color: '#DA70D6' }}>
+            TVL: {formatPrice(tvl, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+          </p>
+          <p className="text-sm" style={{ color: '#EE4B2B' }}>
+            Net PnL: {formatPrice(netPnL, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+          </p>
+          <p className="text-sm" style={{ color: '#66CC99' }}>
+            Volume: {formatPrice(volume ?? hodlPrice)}
+          </p>
+        </>
+      )}
+    </div>
+  )
 }
 
 export { PairChartModal }
