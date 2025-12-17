@@ -1,9 +1,12 @@
+import { isMainnet } from 'connectors'
+
 type SwitchZapProps = {
   enabled: boolean
   onToggle: () => void
 }
 
 export const SwitchZap = ({ enabled, onToggle }: SwitchZapProps) => {
+  if (isMainnet) return null
   return (
     <div
       onClick={onToggle}
