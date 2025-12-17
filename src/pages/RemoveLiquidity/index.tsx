@@ -482,14 +482,12 @@ export default function RemoveLiquidity({
                     Receive
                   </Text>
 
-                  {supportsZap && (
-                    <SwitchZap
-                      enabled={useZap}
-                      onToggle={() => {
-                        setUseZap((prev) => !prev)
-                      }}
-                    />
-                  )}
+                  <SwitchZap
+                    enabled={useZap}
+                    onToggle={() => {
+                      setUseZap((prev) => !prev)
+                    }}
+                  />
                 </div>
 
                 {useZap && supportsZap ? (

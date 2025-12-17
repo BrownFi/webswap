@@ -159,7 +159,7 @@ const monad = overrideChain({
   ],
 })
 
-export const appEnv = 'beta' as 'mainnet' | 'beta' | 'testnet'
+export const appEnv = process.env.REACT_APP_ENVIROMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 console.log(`======== ENVIROMENT: "${appEnv}" =========`, { isMainnet })
 
