@@ -456,15 +456,13 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                       }
                     />
                   )}
-                  {/* hidden axis for volume so bars don't share the netPnL scale */}
-                  {showExtendedMetrics && (
-                    <YAxis
-                      yAxisId="volume"
-                      orientation="right"
-                      hide={true}
-                      domain={[0, (dataMax: number) => dataMax * 4]}
-                    />
-                  )}
+                  {/* hidden axis for volume so bars don't share other scales */}
+                  <YAxis
+                    yAxisId="volume"
+                    orientation="right"
+                    hide={true}
+                    domain={[0, (dataMax: number) => dataMax * 4]}
+                  />
                   <Tooltip content={<CustomTooltip showExtendedMetrics={showExtendedMetrics} />} />
                   <Legend content={<CustomLegend showExtendedMetrics={showExtendedMetrics} />} />
                   <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
@@ -472,7 +470,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                   {showExtendedMetrics && (
                     <Line type="monotone" dataKey="formattedTvl" stroke="#DA70D6" yAxisId="right" {...lineDotConfig} />
                   )}
-                  {showExtendedMetrics && <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />}
+                  <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />
                   {showExtendedMetrics && (
                     <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" {...lineDotConfig} />
                   )}
@@ -508,7 +506,9 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
 }
 
 const CustomLegend = ({ payload, onClick, showExtendedMetrics }: any) => {
-  const allowedKeys = showExtendedMetrics ? ['lpPrice', 'bnhPrice', 'netPnL', 'formattedTvl'] : ['lpPrice', 'bnhPrice']
+  const allowedKeys = showExtendedMetrics
+    ? ['lpPrice', 'bnhPrice', 'netPnL', 'formattedTvl', 'totalVolume']
+    : ['lpPrice', 'bnhPrice', 'totalVolume']
   const items = (payload ?? []).filter((it: any) => allowedKeys.includes(it.value))
   return (
     <div className="flex items-center justify-center gap-4">
@@ -532,6 +532,8 @@ const CustomLegend = ({ payload, onClick, showExtendedMetrics }: any) => {
               ? 'Net PnL'
               : it.value === 'formattedTvl'
               ? 'TVL'
+              : it.value === 'totalVolume'
+              ? 'Volume'
               : String(it.value)}
           </Text>
         </div>
@@ -550,7 +552,7 @@ const CustomTooltip = ({ active, payload, label, showExtendedMetrics }: any) => 
   const hodlPrice = byKey['bnhPrice'] ?? 0
   const tvl = byKey['formattedTvl'] ?? 0
   const netPnL = byKey['netPnL'] ?? 0
-  const volume = byKey['totalVolume']
+  const volume = byKey['totalVolume'] ?? 0
 
   return (
     <div className="bg-white p-2 rounded shadow-md border flex flex-col gap-1">
@@ -569,11 +571,11 @@ const CustomTooltip = ({ active, payload, label, showExtendedMetrics }: any) => 
           <p className="text-sm" style={{ color: '#EE4B2B' }}>
             Net PnL: {formatPrice(netPnL, { maximumFractionDigits: isMainnet ? 2 : 5 })}
           </p>
-          <p className="text-sm" style={{ color: '#66CC99' }}>
-            Volume: {formatPrice(volume ?? hodlPrice)}
-          </p>
         </>
       )}
+      <p className="text-sm" style={{ color: '#66CC99' }}>
+        Volume: {formatPrice(volume, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+      </p>
     </div>
   )
 }
