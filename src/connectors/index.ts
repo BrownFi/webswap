@@ -115,8 +115,7 @@ const base = overrideChain({
   iconUrl: require('assets/images/base.png'),
   fallbackRpcs: [
     //
-    'https://base.drpc.org',
-    'https://base.llamarpc.com',
+    'https://base-rpc.publicnode.com',
   ],
 })
 
