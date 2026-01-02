@@ -136,6 +136,15 @@ export default function Pool() {
   // Filter pairs using GraphQL
   const filteredPairs = sortedPairs.filter((pair) => {
     if (isMainnet) {
+      if (
+        [
+          '0xFC5b86437A50e9B4ae0f20Ef9B50f8D79B053121', // WBERA/LBGT
+          '0x5E9B2Cd773d8283B578Df77754DFcC2894e36b4D', // LBGT/HONEY
+        ].includes(pair.address)
+      ) {
+        return false
+      }
+
       const [token0Address, token1Address, wethAddress] = [
         pair.token0?.address.toLowerCase(),
         pair.token1?.address.toLowerCase(),
