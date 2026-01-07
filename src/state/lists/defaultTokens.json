@@ -365,6 +365,14 @@
       "logoURI": "https://monadscan.com/token/images/agrousd_64.png"
     },
     {
+      "chainId": 143,
+      "address": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+      "name": "Wrapped BTC",
+      "symbol": "WBTC",
+      "decimals": 8,
+      "logoURI": "https://monadscan.com/token/images/wrappedbtc_ofc_32.svg"
+    },
+    {
       "chainId": 10,
       "address": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
       "name": "USDC",
