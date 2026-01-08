@@ -235,8 +235,8 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
         {!isMainnet && (
           <div className="flex flex-wrap gap-3 text-white text-sm">
-            <Text>Lambda: {formatNumber(devStats.lambda, { maximumFractionDigits: 6 })}</Text>
-            <Text>Kappa: {formatNumber(devStats.kappa, { maximumFractionDigits: 6 })}</Text>
+            <Text>Lambda: {formatNumber(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
+            <Text>Kappa: {formatNumber(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
             <Text>DevFee: {`${formatNumber(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
           </div>
         )}
