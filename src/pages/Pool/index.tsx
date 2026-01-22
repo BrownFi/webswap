@@ -140,7 +140,8 @@ export default function Pool() {
         [
           '0xFC5b86437A50e9B4ae0f20Ef9B50f8D79B053121', // WBERA/LBGT
           '0x5E9B2Cd773d8283B578Df77754DFcC2894e36b4D', // LBGT/HONEY
-          '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT
+          '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT Linea
+          '0x6b3987abbf550c4114918F78267F728d85A65dfd', // USDC/USDT Base
         ]
           .map((a) => a.toLowerCase())
           .includes(pair.address.toLowerCase())

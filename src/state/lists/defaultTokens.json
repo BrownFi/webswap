@@ -165,6 +165,14 @@
       "logoURI": "https://basescan.org/token/images/CLANKER_32.png"
     },
     {
+      "chainId": 8453,
+      "address": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
+      "name": "Bridged Tether USD",
+      "symbol": "USDT",
+      "decimals": 18,
+      "logoURI": "https://basescan.org/token/images/bridgedusdt2_ofc_64.png"
+    },
+    {
       "chainId": 1301,
       "address": "0x8Aca9B80b6752Ec62e06eC48E07a301e97852dAA",
       "name": "USDC",
