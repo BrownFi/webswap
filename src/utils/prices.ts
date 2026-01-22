@@ -109,3 +109,11 @@ export function formatNumber(value: string | number | undefined | null, options?
   }).format(number)
   return formatNumberString(formattedNumber)
 }
+
+export function formatNumberLambda(value: string | number | undefined | null, options?: Intl.NumberFormatOptions) {
+  const number = Number(value || 0)
+  const formattedNumber = new Intl.NumberFormat('en-US', {
+    ...options,
+  }).format(number)
+  return formatNumberString(formattedNumber)
+}

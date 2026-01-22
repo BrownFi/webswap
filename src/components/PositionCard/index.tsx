@@ -28,7 +28,7 @@ import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { isMainnet } from 'connectors'
 import { shouldReversePair } from 'utils/pair'
-import { formatNumber, formatPrice } from 'utils/prices'
+import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { PairStats, usePoolStats } from './usePoolStats'
 import { MouseoverTooltip } from 'components/Tooltip'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
@@ -235,9 +235,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
         {!isMainnet && (
           <div className="flex flex-wrap gap-3 text-white text-sm">
-            <Text>Lambda: {formatNumber(devStats.lambda, { maximumFractionDigits: 6 })}</Text>
-            <Text>Kappa: {formatNumber(devStats.kappa, { maximumFractionDigits: 6 })}</Text>
-            <Text>DevFee: {`${formatNumber(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
+            <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
+            <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
+            <Text>DevFee: {`${formatNumberLambda(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
           </div>
         )}
 
