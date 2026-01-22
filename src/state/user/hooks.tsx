@@ -486,6 +486,26 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
         },
       },
     },
+    [ChainId.MONAD]: {
+      '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a:0x754704Bc059F8C67012fEd69BC8A327a5aafb603': {
+        token0: {
+          chainId: 143,
+          address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a',
+          name: 'AUSD',
+          symbol: 'AUSD',
+          decimals: 6,
+          logoURI: 'https://monadscan.com/token/images/agrousd_64.png',
+        },
+        token1: {
+          chainId: 143,
+          address: '0x754704Bc059F8C67012fEd69BC8A327a5aafb603',
+          name: 'USDC',
+          symbol: 'USDC',
+          decimals: 6,
+          logoURI: 'https://monadscan.com/token/images/usdc_ofc_32.svg',
+        },
+      },
+    },
   }
 
   const pairs = useGetListPairs(chainId as ChainId, tokens, savedSerializedPairs, additionalSerializedPairs)
