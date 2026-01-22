@@ -142,6 +142,7 @@ export default function Pool() {
           '0x5E9B2Cd773d8283B578Df77754DFcC2894e36b4D', // LBGT/HONEY
           '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT Linea
           '0x6b3987abbf550c4114918F78267F728d85A65dfd', // USDC/USDT Base
+          '0xD4bAA274885F86717d70C1d5382F32499b11DE17', // AUSD/USDC Monad
         ]
           .map((a) => a.toLowerCase())
           .includes(pair.address.toLowerCase())
