@@ -54,11 +54,15 @@ const StyledPositionCard = styled(LightCard)<{ bgColor?: any }>`
 
 const pairBGT: Record<string, [string, string]> = {
   '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': [
+    // BERA/HONEY
     'https://hub.berachain.com/earn/0x2cb34eeadb1e7ae9cc7bafb84a189e9d921e193a',
     'https://infrared.finance/pol-vaults/brownfi-wbera-honey',
-  ], // BERA/HONEY
-  // '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc':
-  //   'https://hub.berachain.com/earn/0x519cef5cc2913bcefdd03d0a22601c19794c4581', // BERA/USDC.e
+  ],
+  '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': [
+    // BERA/USDC.e
+    'https://hub.berachain.com/earn/0x519cef5cc2913bcefdd03d0a22601c19794c4581',
+    'https://infrared.finance/pol-vaults/brownfi-wbera-honey',
+  ],
 }
 
 interface PositionCardProps {
