@@ -485,6 +485,24 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
           logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/27657.png',
         },
       },
+      '0x176211869cA2b568f2A7D4EE941E073a821EE1ff:0xA219439258ca9da29E9Cc4cE5596924745e12B93': {
+        token0: {
+          chainId: 59144,
+          address: '0x176211869cA2b568f2A7D4EE941E073a821EE1ff',
+          name: 'USDC',
+          symbol: 'USDC',
+          decimals: 6,
+          logoURI: 'https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png',
+        },
+        token1: {
+          chainId: 59144,
+          address: '0xA219439258ca9da29E9Cc4cE5596924745e12B93',
+          name: 'USDT',
+          symbol: 'USDT',
+          decimals: 6,
+          logoURI: 'https://lineascan.build/token/images/bridgedusdt2_ofc_64.png',
+        },
+      },
     },
     [ChainId.MONAD]: {
       '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a:0x754704Bc059F8C67012fEd69BC8A327a5aafb603': {
