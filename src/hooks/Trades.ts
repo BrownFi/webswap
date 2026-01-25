@@ -119,6 +119,7 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
             )
           })
           setTrade(bestTradeIn?.[0] ?? null)
+          setLoading(false)
           return
         }
         const bestTradeIn = await Trade.bestTradeExactIn(
