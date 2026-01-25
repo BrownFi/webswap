@@ -61,7 +61,7 @@ const pairBGT: Record<string, [string, string]> = {
   '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': [
     // BERA/USDC.e
     'https://hub.berachain.com/earn/0x519cef5cc2913bcefdd03d0a22601c19794c4581',
-    'https://infrared.finance/pol-vaults/brownfi-wbera-honey',
+    'https://infrared.finance/pol-vaults/brownfi-wbera-usdc.e',
   ],
 }
 
