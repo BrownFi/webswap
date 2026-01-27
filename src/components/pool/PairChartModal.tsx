@@ -25,17 +25,17 @@ import { formatNumber, formatPrice } from 'utils/prices'
 import { graphqlFetcher } from 'utils/swr'
 
 const GET_PAIR_STATS = `
-  query PairStats($chainId: Int, $address: String) {
+  query PairStats($pair: String) {
     pairDayDatas(
-      limit: 1000
-      where: {chainId: $chainId, address: $address}
-      orderBy: "startUnix"
-      orderDirection: "asc"
+      first: 1000
+      orderBy: dayStartUnix
+      where: {pair: $pair}
+      orderDirection: asc
     ) {
-      items {
-        chainId
-        address
-        startUnix
+      pair {
+        id
+      }
+        dayStartUnix
         tvl
         totalVolume
         totalFee
@@ -44,7 +44,6 @@ const GET_PAIR_STATS = `
         bnhPrice
       }
     }
-  }
 `
 
 type Props = {
@@ -61,26 +60,21 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
 
   const { data } = useSWR<{
     pairDayDatas: {
-      totalCount: number
-      items: {
-        chainId: number
-        address: string
-        startUnix: number
-        tvl: number
-        totalVolume: number
-        totalFee: number
-        apr: number
-        lpPrice: number
-        bnhPrice: number
-      }[]
-    }
+      dayStartUnix: number
+      tvl: number
+      totalVolume: number
+      totalFee: number
+      apr: number
+      lpPrice: number
+      bnhPrice: number
+    }[]
   }>(
     isOpen ? [pair.chainId, pair.liquidityToken.address] : null,
     ([chainId, address]) =>
       graphqlFetcher({
         operationName: 'PairStats',
         query: GET_PAIR_STATS,
-        variables: { chainId, address: address },
+        variables: { chainId, pair: (address as string).toLowerCase() },
       }),
     {
       refreshInterval: 1 * 60 * 1000,
@@ -92,11 +86,11 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
 
   const chartData = useMemo(() => {
     return (
-      data?.pairDayDatas?.items
+      data?.pairDayDatas
         .map((item) => {
           return {
             ...item,
-            date: moment.unix(item.startUnix).format('DD/MM'),
+            date: moment.unix(item.dayStartUnix).format('DD/MM'),
             lpPrice: iskHYPEUSDT ? item.lpPrice / 1e9 : item.lpPrice,
             bnhPrice: iskHYPEUSDT ? item.bnhPrice / 1e9 : item.bnhPrice,
             netPnL: item.tvl - (item.bnhPrice * item.tvl) / item.lpPrice,
@@ -105,10 +99,10 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
         })
         .filter((item) => {
           if (isHYPEUSDT) {
-            return moment.unix(item.startUnix) > moment('2025-08-09')
+            return moment.unix(item.dayStartUnix) > moment('2025-08-09')
           }
           if (iskHYPEUSDT) {
-            return moment.unix(item.startUnix) > moment('2025-11-22')
+            return moment.unix(item.dayStartUnix) > moment('2025-11-22')
           }
           return true
         }) ?? []
@@ -490,7 +484,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                 </ComposedChart>
               </ResponsiveContainer>
 
-              {data?.pairDayDatas?.items.length === 0 && (
+              {data?.pairDayDatas.length === 0 && (
                 <div className="absolute inset-0 flex justify-center items-center">
                   <Text fontSize={18} color="#FFFA" fontFamily={'Russo One'}>
                     No Data

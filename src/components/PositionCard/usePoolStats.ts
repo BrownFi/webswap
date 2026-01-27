@@ -11,8 +11,7 @@ import { graphqlFetcher } from 'utils/swr'
 
 type Token = {
   __typename?: 'token'
-  address: string
-  chainId: number
+  id: string
   decimals: number
   name: string
   price: number
@@ -23,8 +22,7 @@ type Token = {
 
 export type PairStats = {
   __typename?: 'pair'
-  chainId: number
-  address: string
+  id: string
   fee: number
   protocolFee: number
   feeDay: number
@@ -41,11 +39,9 @@ export type PairStats = {
 }
 
 const GET_PAIR_ACCOUNT = `
-  query PairAccount($chainId: Float!, $pairAddress: String!, $address: String!) {
+  query PairAccount($id: String!) {
     pairAccount(
-      chainId: $chainId
-      pairAddress: $pairAddress
-      address: $address
+      id: $id
     ) {
       lpPortfolio
       basePortfolio
@@ -99,7 +95,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       graphqlFetcher({
         operationName: 'PairAccount',
         query: GET_PAIR_ACCOUNT,
-        variables: { chainId, pairAddress, address },
+        variables: { chainId, id: `${address}-${pairAddress}` },
       }),
     {
       refreshInterval: 1 * 60 * 1000,

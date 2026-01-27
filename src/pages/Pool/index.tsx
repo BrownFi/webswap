@@ -29,43 +29,37 @@ import { EmptyProposals, IndexerModalContent, PageWrapper, ResponsiveButtonPrima
 import { ButtonPrimary } from 'components/Button'
 
 const LIST_ALL_PAIRS = `
-  query PairList($chainId: Int) {
-    pairs(where: {chainId: $chainId}) {
-      totalCount
-      items {
-        chainId
-        address
-        fee
-        protocolFee
-        feeDay
+  query PairList {
+    pairs {
+      id
+      fee
+      protocolFee
+      feeDay
+      totalSupply
+      reserve0
+      reserve1
+      tvl
+      apr
+      volumeDay
+      volume7Day
+      updatedAt
+      token0 {
+        id
+        decimals
+        name
+        price
+        priceFeedId
+        symbol
         totalSupply
-        reserve0
-        reserve1
-        tvl
-        apr
-        volumeDay
-        volume7Day
-        updatedAt
-        token0 {
-          address
-          chainId
-          decimals
-          name
-          price
-          priceFeedId
-          symbol
-          totalSupply
-        }
-        token1 {
-          address
-          chainId
-          decimals
-          name
-          price
-          priceFeedId
-          symbol
-          totalSupply
-        }
+      }
+      token1 {
+        id
+        decimals
+        name
+        price
+        priceFeedId
+        symbol
+        totalSupply
       }
     }
   }
@@ -78,43 +72,37 @@ export default function Pool() {
 
   const { data, error } = useSWR<{
     pairs: {
-      totalCount: number
-      items: {
-        chainId: number
-        address: string
-        fee: number
-        protocolFee: number
-        feeDay: number
+      id: string
+      fee: number
+      protocolFee: number
+      feeDay: number
+      totalSupply: number
+      reserve0: number
+      reserve1: number
+      tvl: number
+      apr: number
+      volumeDay: number
+      volume7Day: number
+      updatedAt: number
+      token0: {
+        id: string
+        decimals: number
+        name: string
+        price: number
+        priceFeedId: string
+        symbol: string
         totalSupply: number
-        reserve0: number
-        reserve1: number
-        tvl: number
-        apr: number
-        volumeDay: number
-        volume7Day: number
-        updatedAt: number
-        token0: {
-          chainId: number
-          address: string
-          decimals: number
-          name: string
-          price: number
-          priceFeedId: string
-          symbol: string
-          totalSupply: number
-        }
-        token1: {
-          chainId: number
-          address: string
-          decimals: number
-          name: string
-          price: number
-          priceFeedId: string
-          symbol: string
-          totalSupply: number
-        }
-      }[]
-    }
+      }
+      token1: {
+        id: string
+        decimals: number
+        name: string
+        price: number
+        priceFeedId: string
+        symbol: string
+        totalSupply: number
+      }
+    }[]
   }>(
     enableGraphQL ? [chainId] : null,
     ([chainId]) =>
@@ -129,9 +117,7 @@ export default function Pool() {
     },
   )
 
-  const sortedPairs = (data?.pairs?.items ?? [])
-    .slice()
-    .sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
+  const sortedPairs = (data?.pairs ?? []).slice().sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
   // Filter pairs using GraphQL
   const filteredPairs = sortedPairs.filter((pair) => {
@@ -145,15 +131,15 @@ export default function Pool() {
           '0xD4bAA274885F86717d70C1d5382F32499b11DE17', // AUSD/USDC Monad
         ]
           .map((a) => a.toLowerCase())
-          .includes(pair.address.toLowerCase())
+          .includes(pair.id.toLowerCase())
       ) {
         return false
       }
 
       const [token0Address, token1Address, wethAddress] = [
-        pair.token0?.address.toLowerCase(),
-        pair.token1?.address.toLowerCase(),
-        WETH[pair.chainId as 1]?.address.toLowerCase(),
+        pair.token0?.id.toLowerCase(),
+        pair.token1?.id.toLowerCase(),
+        WETH[chainId]?.address.toLowerCase(),
       ]
       const allTokensAddress = allTokens.map((token) => token.address.toLowerCase()).concat(wethAddress)
       const isValidToken0 = allTokensAddress.includes(token0Address)
@@ -262,7 +248,7 @@ export default function Pool() {
                     new TokenAmount(
                       new Token(
                         chainId,
-                        checksumAddress(token0!.address as Address),
+                        checksumAddress(token0!.id as Address),
                         token0!.decimals,
                         token0?.symbol,
                         token0?.name,
@@ -272,7 +258,7 @@ export default function Pool() {
                     new TokenAmount(
                       new Token(
                         chainId,
-                        checksumAddress(token1!.address as Address),
+                        checksumAddress(token1!.id as Address),
                         token1!.decimals,
                         token1?.symbol,
                         token1?.name,
@@ -283,7 +269,7 @@ export default function Pool() {
                   )
                   return (
                     <FullPositionCard
-                      key={checksumAddress(item.address as Address)}
+                      key={checksumAddress(item.id as Address)}
                       pair={pair}
                       pairStats={item as PairStats}
                     />
