@@ -168,11 +168,14 @@ export function useSocksController(): Contract | null {
   )
 }
 
-export function useFactoryContract(): Contract | null {
+export function useFactoryContract(
+  withSignerIfPossible = false,
+  options: { readonly?: boolean } = { readonly: true },
+): Contract | null {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
   const factoryAddress = getFactoryAddress(chainId, version)
-  return useContract(factoryAddress, IFactoryV2, false, { readonly: true })
+  return useContract(factoryAddress, IFactoryV2, withSignerIfPossible, options)
 }
 
 export function usePythContract(): Contract | null {
