@@ -32,18 +32,16 @@ const GET_PAIR_STATS = `
       orderBy: dayStartUnix
       orderDirection: asc
     ) {
-      items {
-        pair {
-          id
-        }
-        dayStartUnix
-        tvl
-        totalVolume
-        totalFee
-        apr
-        lpPrice
-        bnhPrice
+      pair {
+        id
       }
+      dayStartUnix
+      tvl
+      totalVolume
+      totalFee
+      apr
+      lpPrice
+      bnhPrice
     }
   }
 `
