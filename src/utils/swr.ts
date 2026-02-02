@@ -10,17 +10,17 @@ export const graphqlFetcher = ({
   query: string
   variables: object
 }) => {
-  const { chainId } = variables as { chainId: number }
+  const { chainId, ...restVar } = variables as { chainId: number }
   if (chainId !== ChainId.BERA_MAINNET) {
     query = query.replace(/stakeLP/g, '')
   }
   return axios
     .post(
-      `${process.env.REACT_APP_API_V2_URL!}/indexer`,
+      `${process.env.REACT_APP_API_V2_URL!}/indexer?chainId=${chainId}`,
       {
         operationName,
         query,
-        variables,
+        variables: restVar,
       },
       {
         withCredentials: true,
