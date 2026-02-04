@@ -20,7 +20,7 @@ type Props = {
   pair: Pair
 }
 
-const sanitizeUintInput = (value: string) => value.replace(/[^\d]/g, '')
+const sanitizeUintInput = (value: string) => value.trim()
 
 export function PairSettingsModal({ isOpen, onDismiss, pair }: Props) {
   const { account } = useActiveWeb3React()
@@ -64,22 +64,34 @@ export function PairSettingsModal({ isOpen, onDismiss, pair }: Props) {
     try {
       let response: TransactionResponse
       if (field === 'k') {
-        response = await factoryContract.setKOfPair(tokenA, tokenB, inputValue)
+        response = await factoryContract.setKOfPair(tokenA, tokenB, Math.floor(Number(inputValue) * 2 ** 64).toString())
         addTransaction(response, {
           summary: `Set K for ${pair.token0.symbol}/${pair.token1.symbol}`,
         })
       } else if (field === 'lambda') {
-        response = await factoryContract.setLambdaOfPair(tokenA, tokenB, inputValue)
+        response = await factoryContract.setLambdaOfPair(
+          tokenA,
+          tokenB,
+          Math.floor(Number(inputValue) * 2 ** 64).toString(),
+        )
         addTransaction(response, {
           summary: `Set Lambda for ${pair.token0.symbol}/${pair.token1.symbol}`,
         })
       } else if (field === 'fee') {
-        response = await factoryContract.setFeeOfPair(tokenA, tokenB, inputValue)
+        response = await factoryContract.setFeeOfPair(
+          tokenA,
+          tokenB,
+          Math.floor(Number(inputValue) * 10 ** 8).toString(),
+        )
         addTransaction(response, {
           summary: `Set Fee for ${pair.token0.symbol}/${pair.token1.symbol}`,
         })
       } else {
-        response = await factoryContract.setProtocolFeeOfPair(tokenA, tokenB, inputValue)
+        response = await factoryContract.setProtocolFeeOfPair(
+          tokenA,
+          tokenB,
+          Math.floor(Number(inputValue) * 10 ** 8).toString(),
+        )
         addTransaction(response, {
           summary: `Set Protocol Fee for ${pair.token0.symbol}/${pair.token1.symbol}`,
         })
