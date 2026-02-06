@@ -48,6 +48,10 @@ export const MERKLE_DISTRIBUTOR_ADDRESS: { [chainId in ChainId]?: string } = {
 export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   ...WETH_ONLY,
   [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET]],
+  [ChainId.HYPER_EVM]: [
+    ...WETH_ONLY[ChainId.HYPER_EVM],
+    new Token(ChainId.HYPER_EVM, '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb', 8, 'USDT', 'USDT'),
+  ],
 }
 
 export const ADDITIONAL_BASES: { [chainId in ChainId]?: { [tokenAddress: string]: Token[] } } = {
