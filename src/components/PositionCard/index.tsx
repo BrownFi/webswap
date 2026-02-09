@@ -1,4 +1,4 @@
-import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
+import { JSBI, Pair, TokenAmount, WETH } from '@brownfi/sdk'
 import { darken } from 'polished'
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Info, Settings } from 'react-feather'
@@ -32,7 +32,7 @@ import { shouldReversePair } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
-import { PairStats, usePoolStats } from './usePoolStats'
+import { merklCampaignPool, PairStats, usePoolStats } from './usePoolStats'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -79,6 +79,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const { isTest, isBeta } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
   const enableBgt = !!pairBGT[pair.liquidityToken.address]
+  const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
   const devStats = useDevStats({ pair, enabled: !isMainnet })
 
   const [showMore, setShowMore] = useState(isFavorite)
@@ -98,6 +99,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     volume7d,
     shouldUseIndexer,
     pairAccount,
+    merklCampaignApr,
   } = usePoolStats({
     pair,
     pairStats,
@@ -178,7 +180,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   </ButtonSecondary>
                 </div>
                 <Text className="whitespace-nowrap text-[aqua] !min-w-[120px]">TVL: {formatPrice(tvl)}</Text>
-                {enableBgt ? (
+                {enableBgt || enableMerklCampaignApr ? (
                   <MouseoverTooltip
                     text={
                       <div className="text-sm">
@@ -190,15 +192,17 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="text-[#dcdcdc]">BGT APR:</div>
+                          <div className="text-[#dcdcdc]">{enableBgt ? 'BGT' : 'Merkl'} APR:</div>
                           <div className="text-[#e5b28e]">
-                            {`${formatNumber(bgtAPR, { maximumFractionDigits: 2 })}%`}
+                            {`${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%`}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[#dcdcdc]">Total APR:</div>
                           <div className="text-[#27E3AB]">
-                            {`${formatNumber(feeAPR + bgtAPR, { maximumFractionDigits: 2 })}%`}
+                            {`${formatNumber(feeAPR + (enableBgt ? bgtAPR : merklCampaignApr), {
+                              maximumFractionDigits: 2,
+                            })}%`}
                           </div>
                         </div>
                       </div>
@@ -211,7 +215,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                           {` + ${formatNumber(bgtAPR, { maximumFractionDigits: 2 })}%`}
                         </span>
                       </Text>
-                      <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
+                      {enableBgt ? (
+                        <img src="https://furthermore.app/icons/bgt.svg" className="h-5 border-none" />
+                      ) : (
+                        <img src="https://lineascan.build/token/images/weth_32.png" className="h-5" />
+                      )}
                     </div>
                   </MouseoverTooltip>
                 ) : (

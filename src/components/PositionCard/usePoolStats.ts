@@ -60,6 +60,10 @@ const pairBGT: Record<string, string[]> = {
   '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': ['0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc'], // BERA/USDC.e
 }
 
+export const merklCampaignPool: string[] = [
+  '0xA87E2c65F2b79164bab690Ec6808431D8c419598'.toLowerCase(), // WETH/USDC.e on LINEA
+]
+
 type Props = {
   pair: Pair
   pairStats?: PairStats
@@ -129,6 +133,16 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
     enabled: pair.chainId === ChainId.BERA_MAINNET && !!pairBGT[pair.liquidityToken.address],
   })
 
+  // Merkl Campaign APR
+  const { data: merklCampaignApr } = useQuery({
+    queryKey: ['getMerklCampaignApr', pair.liquidityToken.address],
+    queryFn: () => {
+      return apiV2Service.getMerklCampaignApr({ address: pair.liquidityToken.address })
+    },
+    enabled:
+      pair.chainId === ChainId.LINEA_MAINNET && merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase()),
+  })
+
   const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : useTradingFee({ pair })
 
   const totalSupply = shouldUseIndexer
@@ -147,5 +161,6 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
     volume7d: (shouldUseIndexer ? pairStats.volume7Day : poolStats?.volume7d) || 0,
     shouldUseIndexer,
     pairAccount: data?.pairAccount,
+    merklCampaignApr: merklCampaignApr?.apr || 0,
   }
 }

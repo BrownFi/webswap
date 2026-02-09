@@ -20,7 +20,7 @@ interface DoubleCurrencyLogoProps {
   currency1?: Currency
 }
 
-const HigherLogo = styled(CurrencyLogo)`
+export const HigherLogo = styled(CurrencyLogo)`
   z-index: 2;
 `
 const CoveredLogo = styled(CurrencyLogo)<{ sizeraw: number }>`
