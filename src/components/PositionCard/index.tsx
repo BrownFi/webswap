@@ -212,7 +212,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       <Text className="whitespace-nowrap text-[#27E3AB]">
                         APR: {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}
                         <span className="text-[#e5b28e]">
-                          {` + ${formatNumber(bgtAPR, { maximumFractionDigits: 2 })}%`}
+                          {` + ${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%`}
                         </span>
                       </Text>
                       {enableBgt ? (
