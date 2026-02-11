@@ -193,13 +193,20 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                             {`${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%`}
                           </div>
                           {enableMerklCampaignApr && (
-                            <a
-                              href="https://app.merkl.xyz/opportunities/linea/ERC20LOGPROCESSOR/0xA87E2c65F2b79164bab690Ec6808431D8c419598"
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <ExternalLink size="14" className="cursor-pointer text-blue-400 hover:text-blue-500" />
-                            </a>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href="https://app.merkl.xyz/opportunities/linea/ERC20LOGPROCESSOR/0xA87E2c65F2b79164bab690Ec6808431D8c419598"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center"
+                              >
+                                <div>Check</div>
+                                <ExternalLink
+                                  size="14"
+                                  className="cursor-pointer text-orange-400 hover:text-orange-500"
+                                />
+                              </a>
+                            </div>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
