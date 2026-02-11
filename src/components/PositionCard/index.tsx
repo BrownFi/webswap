@@ -203,7 +203,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                                 <div>Check</div>
                                 <ExternalLink
                                   size="14"
-                                  className="cursor-pointer text-orange-400 hover:text-orange-500"
+                                  className="ml-0.5 cursor-pointer text-blue-600 hover:text-blue-600"
                                 />
                               </a>
                             </div>
