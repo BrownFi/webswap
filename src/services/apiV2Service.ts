@@ -33,7 +33,17 @@ const getPoolBgt = (options: { address: string }) =>
       return data.data
     })
 
+const getMerklCampaignApr = (options: { address: string }) =>
+  client
+    .get(`/merkl-campaign`, {
+      params: { pool: options.address },
+    })
+    .then((data: AxiosResponse<{ apr: number }>) => {
+      return data.data
+    })
+
 export const apiV2Service = {
   getPoolPrices,
   getPoolBgt,
+  getMerklCampaignApr,
 }
