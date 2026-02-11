@@ -14,18 +14,29 @@ const TooltipContainer = styled.div`
 
 interface TooltipProps extends Omit<PopoverProps, 'content'> {
   text: ReactNode
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
 }
 
-export default function Tooltip({ text, ...rest }: TooltipProps) {
-  return <Popover content={<TooltipContainer>{text}</TooltipContainer>} {...rest} />
+export default function Tooltip({ text, onMouseEnter, onMouseLeave, ...rest }: TooltipProps) {
+  return (
+    <Popover
+      content={
+        <TooltipContainer onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+          {text}
+        </TooltipContainer>
+      }
+      {...rest}
+    />
+  )
 }
 
-export function MouseoverTooltip({ children, ...rest }: Omit<TooltipProps, 'show'>) {
+export function MouseoverTooltip({ children, placement = 'bottom', ...rest }: Omit<TooltipProps, 'show'>) {
   const [show, setShow] = useState(false)
   const open = useCallback(() => setShow(true), [setShow])
   const close = useCallback(() => setShow(false), [setShow])
   return (
-    <Tooltip {...rest} show={show}>
+    <Tooltip {...rest} show={show} placement={placement} onMouseEnter={open} onMouseLeave={close}>
       <div onMouseEnter={open} onMouseLeave={close}>
         {children}
       </div>

@@ -1,7 +1,7 @@
 import { JSBI, Pair, TokenAmount, WETH } from '@brownfi/sdk'
 import { darken } from 'polished'
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Info, Settings } from 'react-feather'
+import { ChevronDown, ChevronUp, Info, Settings, ExternalLink } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
@@ -196,6 +196,21 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                           <div className="text-[#e5b28e]">
                             {`${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%`}
                           </div>
+                          {enableMerklCampaignApr && (
+                            <div className="flex items-center gap-1">
+                              <div>Check</div>
+                              <a
+                                href="https://app.merkl.xyz/opportunities/linea/ERC20LOGPROCESSOR/0xA87E2c65F2b79164bab690Ec6808431D8c419598"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ExternalLink
+                                  size="14"
+                                  className="cursor-pointer text-orange-400 hover:text-orange-500"
+                                />
+                              </a>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[#dcdcdc]">Total APR:</div>
