@@ -112,6 +112,7 @@ export const Input = React.memo(function InnerInput({
       // universal input options
       inputMode="decimal"
       title="Token Amount"
+      aria-label="Token amount"
       autoComplete="off"
       autoCorrect="off"
       // text-specific options

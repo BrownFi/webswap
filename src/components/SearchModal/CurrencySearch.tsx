@@ -159,7 +159,7 @@ export function CurrencySearch({
           <Text fontWeight={500} fontSize={24} fontFamily={'Russo One'} color="white">
             Select a token
           </Text>
-          <CloseIcon onClick={onDismiss} color="white" />
+          <CloseIcon onClick={onDismiss} color="white" aria-label="Close" />
         </RowBetween>
         <Row className="relative">
           <img src={searchIcon} className="w-[24px] absolute left-[16px] z-[2]" alt="search" />
@@ -172,6 +172,7 @@ export function CurrencySearch({
             ref={inputRef as RefObject<HTMLInputElement>}
             onChange={handleInput}
             onKeyDown={handleEnter}
+            aria-label="Search tokens by name or address"
           />
         </Row>
         {showCommonBases && (

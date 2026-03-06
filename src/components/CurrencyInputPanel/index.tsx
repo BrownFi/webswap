@@ -184,7 +184,7 @@ export function CurrencyInputPanel({
                   </TYPE.body>
                 )}
                 {account && currency && showMaxButton && label !== 'To' && (
-                  <StyledBalanceMax onClick={onMax}>MAX</StyledBalanceMax>
+                  <StyledBalanceMax onClick={onMax} aria-label="Use maximum balance">MAX</StyledBalanceMax>
                 )}
               </div>
             </RowBetween>
@@ -206,6 +206,8 @@ export function CurrencyInputPanel({
           <CurrencySelect
             selected={!!currency}
             className="open-currency-select-button"
+            aria-label="Select token"
+            aria-haspopup="dialog"
             onClick={() => {
               if (!disableCurrencySelect) {
                 setModalOpen(true)

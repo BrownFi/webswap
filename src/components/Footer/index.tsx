@@ -19,34 +19,38 @@ const Footer = () => {
           target="_blank"
           rel="noopener noreferrer"
           className="cursor-pointer hover:brightness-90"
+          aria-label="BrownFi on X"
         >
-          <img src={xIcon} alt="ico" className="lg:w-[40px] w-8" />
+          <img src={xIcon} alt="X" className="lg:w-[40px] w-8" />
         </a>
         <a
           href="https://t.me/+X13wPOv_ZtQ3M2U9"
           target="_blank"
           rel="noopener noreferrer"
           className="cursor-pointer hover:brightness-90"
+          aria-label="BrownFi Announcement on Telegram"
         >
-          <img src={telegramIcon} alt="ico" className="lg:w-[40px] w-8" title="BrownFi Announcement" />
+          <img src={telegramIcon} alt="Telegram" className="lg:w-[40px] w-8" title="BrownFi Announcement" />
         </a>
         <a
           href="https://t.me/brownfiammcommunity"
           target="_blank"
           rel="noopener noreferrer"
           className="cursor-pointer hover:brightness-90"
+          aria-label="BrownFi Community on Telegram"
         >
-          <img src={telegramIcon} alt="ico" className="lg:w-[40px] w-8" title="BrownFi Community" />
+          <img src={telegramIcon} alt="Telegram" className="lg:w-[40px] w-8" title="BrownFi Community" />
         </a>
         <a
           href="https://mirror.xyz/0x64f4Fbd29b0AE2C8e18E7940CF823df5CB639bBa"
           target="_blank"
           rel="noopener noreferrer"
           className="cursor-pointer hover:brightness-90"
+          aria-label="BrownFi on Mirror"
         >
           <img
             src={mirrorIcon}
-            alt="ico"
+            alt="Mirror"
             className="lg:w-[40px] w-8 rounded-full border-white/70 border"
             title="Mirror"
           />

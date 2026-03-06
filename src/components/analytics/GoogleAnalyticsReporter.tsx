@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { RouteComponentProps } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 
 // fires a GA pageview every time the route changes
-export default function GoogleAnalyticsReporter({ location: { pathname, search } }: RouteComponentProps): null {
+export default function GoogleAnalyticsReporter(): null {
+  const { pathname, search } = useLocation()
   useEffect(() => {
     // ReactGA.pageview(`${pathname}${search}`)
   }, [pathname, search])

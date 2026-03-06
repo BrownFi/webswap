@@ -18,8 +18,8 @@ import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
-import useSWR from 'swr'
-import { graphqlFetcher } from 'utils/swr'
+import { useQuery } from '@tanstack/react-query'
+import { graphqlFetcher } from 'utils/graphql'
 import { usePairs } from 'data/Reserves'
 import { useStakingInfo } from 'state/stake/hooks'
 import { BIG_INT_ZERO } from 'constants/common'
@@ -70,7 +70,7 @@ export default function Pool() {
   const { version, enableGraphQL } = useVersion({ chainId })
   const allTokens = useDefaultTokens(chainId)
 
-  const { data, error } = useSWR<{
+  const { data, error } = useQuery<{
     pairs: {
       id: string
       fee: number
@@ -103,19 +103,18 @@ export default function Pool() {
         totalSupply: number
       }
     }[]
-  }>(
-    enableGraphQL ? [chainId] : null,
-    ([chainId]) =>
+  }>({
+    queryKey: ['pairList', chainId],
+    queryFn: () =>
       graphqlFetcher({
         operationName: 'PairList',
         query: LIST_ALL_PAIRS,
         variables: { chainId },
       }),
-    {
-      refreshInterval: 1 * 60 * 1000,
-      refreshWhenHidden: true,
-    },
-  )
+    enabled: enableGraphQL,
+    refetchInterval: 60_000,
+    staleTime: 0,
+  })
 
   const sortedPairs = (data?.pairs ?? []).slice().sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 

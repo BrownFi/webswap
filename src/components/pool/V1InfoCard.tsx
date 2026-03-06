@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { Link, RouteComponentProps, withRouter } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Token, TokenAmount, WETH } from '@brownfi/sdk'
 
 import { Text } from 'rebass'
@@ -11,7 +11,7 @@ import { DoubleCurrencyLogo } from 'components/DoubleLogo'
 import { useActiveWeb3React } from 'hooks'
 import { ThemeContext } from 'styled-components'
 
-interface PositionCardProps extends RouteComponentProps<any> {
+interface PositionCardProps {
   token: Token
   V1LiquidityBalance: TokenAmount
 }
@@ -66,4 +66,4 @@ function V1InfoCard({ token, V1LiquidityBalance }: PositionCardProps) {
   )
 }
 
-export default withRouter(V1InfoCard)
+export default V1InfoCard

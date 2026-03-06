@@ -99,11 +99,7 @@ const UniIcon = styled.div`
   }
 `
 
-const activeClassName = 'ACTIVE'
-
-const StyledNavLink = styled(NavLink).attrs({
-  activeClassName,
-})`
+const StyledNavLink = styled(NavLink)`
   ${({ theme }) => theme.flexRowNoWrap}
   align-items: left;
   border-radius: 3rem;
@@ -118,7 +114,7 @@ const StyledNavLink = styled(NavLink).attrs({
   padding: 8px 16px;
   font-family: 'Russo One', sans-serif;
 
-  &.${activeClassName} {
+  &.active {
     border-radius: 12px;
     font-weight: 600;
     color: ${({ theme }) => theme.greenMain};
@@ -184,27 +180,32 @@ export default function Header() {
         </Title>
 
         <HamburgerMenu>
-          <HeaderLinks>
-            <StyledNavLink id={`swap-nav-link`} to={'/swap'}>
-              Swap
-            </StyledNavLink>
-            <StyledNavLink
-              id={`pool-nav-link`}
-              to={'/pool'}
-              isActive={(match, { pathname }) =>
-                Boolean(match) ||
-                pathname.startsWith('/add') ||
-                pathname.startsWith('/remove') ||
-                pathname.startsWith('/create') ||
-                pathname.startsWith('/find')
-              }
-            >
-              Pool
-            </StyledNavLink>
-            <StyledNavLink id={`leaderboard-nav-link`} to={'/campaign/contest-1'}>
-              Campaign
-            </StyledNavLink>
-          </HeaderLinks>
+          <nav aria-label="Main navigation">
+            <HeaderLinks>
+              <StyledNavLink id={`swap-nav-link`} to={'/swap'}>
+                Swap
+              </StyledNavLink>
+              <StyledNavLink
+                id={`pool-nav-link`}
+                to={'/pool'}
+                className={({ isActive }) => {
+                  const pathname = window.location.pathname
+                  const active =
+                    isActive ||
+                    pathname.startsWith('/add') ||
+                    pathname.startsWith('/remove') ||
+                    pathname.startsWith('/create') ||
+                    pathname.startsWith('/find')
+                  return active ? 'active' : ''
+                }}
+              >
+                Pool
+              </StyledNavLink>
+              <StyledNavLink id={`leaderboard-nav-link`} to={'/campaign/contest-1'}>
+                Campaign
+              </StyledNavLink>
+            </HeaderLinks>
+          </nav>
         </HamburgerMenu>
       </HeaderRow>
 

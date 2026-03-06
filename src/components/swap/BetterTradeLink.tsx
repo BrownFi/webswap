@@ -30,7 +30,8 @@ export default function BetterTradeLink({ version }: { version: Version }) {
 
   const linkDestination = useMemo(() => {
     return {
-      ...location,
+      pathname: location.pathname,
+      hash: location.hash,
       search: `?${stringify({
         ...search,
         use: version !== DEFAULT_VERSION ? version : undefined,
@@ -55,7 +56,8 @@ export function DefaultVersionLink() {
 
   const linkDestination = useMemo(() => {
     return {
-      ...location,
+      pathname: location.pathname,
+      hash: location.hash,
       search: `?${stringify({
         ...search,
         use: DEFAULT_VERSION,

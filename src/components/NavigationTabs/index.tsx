@@ -21,11 +21,7 @@ const Tabs = styled.div`
   justify-content: space-evenly;
 `
 
-const activeClassName = 'ACTIVE'
-
-const StyledNavLink = styled(NavLink).attrs({
-  activeClassName,
-})`
+const StyledNavLink = styled(NavLink)`
   ${({ theme }) => theme.flexRowNoWrap}
   align-items: center;
   justify-content: center;
@@ -37,7 +33,7 @@ const StyledNavLink = styled(NavLink).attrs({
   color: ${({ theme }) => theme.text3};
   font-size: 20px;
 
-  &.${activeClassName} {
+  &.active {
     border-radius: 12px;
     font-weight: 500;
     color: ${({ theme }) => theme.text1};
@@ -64,10 +60,18 @@ export function SwapPoolTabs({ active }: { active: 'swap' | 'pool' }) {
   const { t } = useTranslation()
   return (
     <Tabs style={{ marginBottom: '20px', display: 'none' }}>
-      <StyledNavLink id={`swap-nav-link`} to={'/swap'} isActive={() => active === 'swap'}>
+      <StyledNavLink
+        id={`swap-nav-link`}
+        to={'/swap'}
+        className={({ isActive }) => (active === 'swap' || isActive ? 'active' : '')}
+      >
         {t('swap')}
       </StyledNavLink>
-      <StyledNavLink id={`pool-nav-link`} to={'/pool'} isActive={() => active === 'pool'}>
+      <StyledNavLink
+        id={`pool-nav-link`}
+        to={'/pool'}
+        className={({ isActive }) => (active === 'pool' || isActive ? 'active' : '')}
+      >
         {t('pool')}
       </StyledNavLink>
     </Tabs>

@@ -1,10 +1,12 @@
 import { ButtonConfirmed } from 'components/Button'
 import React, { Component, ReactNode } from 'react'
-import { RouteComponentProps, withRouter } from 'react-router-dom'
+import { useNavigate, useLocation, NavigateFunction, Location } from 'react-router-dom'
 import StaticScreen from './StaticScreen'
 
-interface Props extends RouteComponentProps {
+interface Props {
   children: ReactNode
+  navigate: NavigateFunction
+  location: Location
 }
 
 interface State {
@@ -46,8 +48,8 @@ class ErrorBoundaryBase extends Component<Props, State> {
     if (this.state.hasError && !prevState.hasError) {
       if (this.props.location.pathname.includes('/add') || this.props.location.pathname.includes('/remove')) {
         // Keep original behavior for add/remove: reload immediately
-        this.props.history.replace('/pool')
-        location.reload()
+        this.props.navigate('/pool', { replace: true })
+        window.location.reload()
       } else {
         // Start a 10s countdown before auto-reload
         if (!this.countdownInterval) {
@@ -58,7 +60,7 @@ class ErrorBoundaryBase extends Component<Props, State> {
               if (next <= 0) {
                 if (this.countdownInterval) window.clearInterval(this.countdownInterval)
                 this.countdownInterval = undefined
-                location.reload()
+                window.location.reload()
                 return { countdown: 0 }
               }
               return { countdown: next }
@@ -76,25 +78,38 @@ class ErrorBoundaryBase extends Component<Props, State> {
     }
   }
 
+  private handleRetry = () => {
+    if (this.countdownInterval) {
+      window.clearInterval(this.countdownInterval)
+      this.countdownInterval = undefined
+    }
+    this.setState({ hasError: false, error: '', countdown: null })
+  }
+
   render() {
     if (this.state.hasError) {
       return (
         <StaticScreen>
-          <div className="w-[1600px] max-w-[100vw] bg-[##131216] text-white z-10 mx-auto px-6 py-10">
+          <div className="w-[1600px] max-w-[100vw] bg-[#131216] text-white z-10 mx-auto px-6 py-10">
             <div className="max-w-[480px] flex flex-col gap-2 items-center mx-auto text-center">
               <div>
                 <div>An unexpected error occurred</div>
-                <div>Please refresh the page and try again.</div>
+                <div>Please try again or reload the page.</div>
               </div>
-              <ButtonConfirmed
-                className="!w-[180px] !p-2"
-                onClick={() => {
-                  this.props.history.replace('/')
-                  location.reload()
-                }}
-              >
-                {this.state.countdown && this.state.countdown > 0 ? `RELOAD (${this.state.countdown})` : 'RELOAD'}
-              </ButtonConfirmed>
+              <div className="flex gap-2">
+                <ButtonConfirmed className="!w-[140px] !p-2" onClick={this.handleRetry}>
+                  TRY AGAIN
+                </ButtonConfirmed>
+                <ButtonConfirmed
+                  className="!w-[140px] !p-2"
+                  onClick={() => {
+                    this.props.navigate('/', { replace: true })
+                    window.location.reload()
+                  }}
+                >
+                  {this.state.countdown && this.state.countdown > 0 ? `RELOAD (${this.state.countdown})` : 'RELOAD'}
+                </ButtonConfirmed>
+              </div>
             </div>
             <pre className="whitespace-pre-wrap text-sm md:text-base">{this.state.error}</pre>
           </div>
@@ -106,4 +121,12 @@ class ErrorBoundaryBase extends Component<Props, State> {
   }
 }
 
-export const ErrorBoundary = withRouter(ErrorBoundaryBase)
+export function ErrorBoundary({ children }: { children: ReactNode }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  return (
+    <ErrorBoundaryBase navigate={navigate} location={location}>
+      {children}
+    </ErrorBoundaryBase>
+  )
+}

@@ -20,9 +20,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import useSWR from 'swr'
+import { useQuery } from '@tanstack/react-query'
 import { formatNumber, formatPrice } from 'utils/prices'
-import { graphqlFetcher } from 'utils/swr'
+import { graphqlFetcher } from 'utils/graphql'
 
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {
@@ -58,7 +58,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
   const [selection, setSelection] = useState<{ startIndex: number; endIndex: number } | null>(null)
   const showExtendedMetrics = !isMainnet
 
-  const { data } = useSWR<{
+  const { data } = useQuery<{
     pairDayDatas: {
       dayStartUnix: number
       tvl: number
@@ -68,18 +68,18 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
       lpPrice: number
       bnhPrice: number
     }[]
-  }>(
-    isOpen ? [pair.chainId, pair.liquidityToken.address] : null,
-    ([chainId, address]) =>
+  }>({
+    queryKey: ['pairStats', pair.chainId, pair.liquidityToken.address],
+    queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
         query: GET_PAIR_STATS,
-        variables: { chainId, pair: (address as string).toLowerCase() },
+        variables: { chainId: pair.chainId, pair: pair.liquidityToken.address.toLowerCase() },
       }),
-    {
-      refreshInterval: 1 * 60 * 1000,
-    },
-  )
+    enabled: isOpen,
+    refetchInterval: 60_000,
+    staleTime: 0,
+  })
 
   const isHYPEUSDT = pair.liquidityToken.address === '0x122524E1c403739bd33Ec54d606DDc287117B0A6' // HYPE/USD₮0
   const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3' // HYPE/USD₮0

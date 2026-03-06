@@ -137,7 +137,7 @@ export function SettingsTab() {
               <Text fontWeight={500} fontSize={20}>
                 Are you sure?
               </Text>
-              <StyledCloseIcon onClick={() => setShowConfirmation(false)} />
+              <StyledCloseIcon onClick={() => setShowConfirmation(false)} aria-label="Close" />
             </RowBetween>
             <Break />
             <AutoColumn gap="lg" style={{ padding: '0 2rem' }}>
@@ -166,7 +166,7 @@ export function SettingsTab() {
           </AutoColumn>
         </ModalContentWrapper>
       </Modal>
-      <StyledMenuButton onClick={toggle} id="open-settings-dialog-button">
+      <StyledMenuButton onClick={toggle} id="open-settings-dialog-button" aria-label="Open settings">
         <div className="w-[40px] h-[40px] flex items-center justify-center bg-[#131216]">
           <img src={settings} alt="settings" className="w-[24px]" />
         </div>

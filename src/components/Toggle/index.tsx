@@ -40,7 +40,7 @@ export interface ToggleProps {
 
 export default function Toggle({ id, isActive, toggle }: ToggleProps) {
   return (
-    <StyledToggle id={id} isActive={isActive} onClick={toggle}>
+    <StyledToggle id={id} isActive={isActive} onClick={toggle} aria-pressed={isActive}>
       <ToggleElement isActive={!isActive} isOnSwitch={false}>
         Off
       </ToggleElement>

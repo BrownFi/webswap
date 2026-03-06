@@ -38,12 +38,13 @@ import { ClickableText, Dots } from 'pages/Pool/styleds'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
 import { isTradeBetter } from 'utils/trades'
-import { RouteComponentProps } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import switchIcon from 'assets/svg/switch.svg'
 import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
 
-export default function Swap({ history }: RouteComponentProps) {
+export default function Swap() {
+  const navigate = useNavigate()
   const loadedUrlParams = useDefaultsFromURLSearch()
   const { account, chainId } = useActiveWeb3React()
   // token warning stuff
@@ -152,8 +153,8 @@ export default function Swap({ history }: RouteComponentProps) {
   // reset if they close warning without tokens in params
   const handleDismissTokenWarning = useCallback(() => {
     setDismissTokenWarning(true)
-    history.push('/swap/')
-  }, [history])
+    navigate('/swap/')
+  }, [navigate])
 
   const [{ showConfirm, tradeToConfirm, swapErrorMessage, attemptingTxn, txHash }, setSwapState] = useState<{
     showConfirm: boolean
@@ -332,6 +333,8 @@ export default function Swap({ history }: RouteComponentProps) {
               >
                 <ArrowWrapper clickable>
                   <a
+                    role="button"
+                    aria-label="Switch input and output tokens"
                     onClick={() => {
                       setApprovalSubmitted(false) // reset 2 step UI for approvals
                       onSwitchTokens()
@@ -345,7 +348,7 @@ export default function Swap({ history }: RouteComponentProps) {
                   /> */}
                 </ArrowWrapper>
                 {recipient === null && !showWrap && isExpertMode ? (
-                  <LinkStyledButton id="add-recipient-button" onClick={() => onChangeRecipient('')}>
+                  <LinkStyledButton id="add-recipient-button" aria-label="Add a recipient address" onClick={() => onChangeRecipient('')}>
                     + Add a send (optional)
                   </LinkStyledButton>
                 ) : null}
@@ -370,7 +373,7 @@ export default function Swap({ history }: RouteComponentProps) {
                   <ArrowWrapper clickable={false}>
                     <ArrowDown size="16" color={theme.text2} />
                   </ArrowWrapper>
-                  <LinkStyledButton id="remove-recipient-button" onClick={() => onChangeRecipient(null)}>
+                  <LinkStyledButton id="remove-recipient-button" aria-label="Remove recipient address" onClick={() => onChangeRecipient(null)}>
                     - Remove send
                   </LinkStyledButton>
                 </AutoRow>

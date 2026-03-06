@@ -6,8 +6,7 @@ import { useTradingFee } from 'hooks/useTradingFee'
 import moment from 'moment'
 import { useMemo } from 'react'
 import { apiV1Service, apiV2Service } from 'services'
-import useSWR from 'swr'
-import { graphqlFetcher } from 'utils/swr'
+import { graphqlFetcher } from 'utils/graphql'
 
 type Token = {
   __typename?: 'token'
@@ -73,38 +72,32 @@ type Props = {
 export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
   const { account } = useActiveWeb3React()
 
-  const pairAccountKey =
-    enableFetchDetail && account && pair?.chainId && pairStats
-      ? (['PairAccount', pair.chainId, pair.liquidityToken.address, account] as const)
-      : null
-
-  const { data } = useSWR<
-    {
-      pairAccount: {
-        lpPortfolio: number
-        basePortfolio: number
-        bnhPortfolio: number
-        stakeLP: number
-        netPnL: number
-        netBnHPnL: number
-        unrealizedPnL: number
-        unrealizedBnHPnL: number
-      }
-    },
-    unknown,
-    typeof pairAccountKey
-  >(
-    pairAccountKey,
-    ([, chainId, pairAddress, address]) =>
+  const { data } = useQuery<{
+    pairAccount: {
+      lpPortfolio: number
+      basePortfolio: number
+      bnhPortfolio: number
+      stakeLP: number
+      netPnL: number
+      netBnHPnL: number
+      unrealizedPnL: number
+      unrealizedBnHPnL: number
+    }
+  }>({
+    queryKey: ['PairAccount', pair?.chainId, pair?.liquidityToken.address, account],
+    queryFn: () =>
       graphqlFetcher({
         operationName: 'PairAccount',
         query: GET_PAIR_ACCOUNT,
-        variables: { chainId, id: `${address.toLowerCase()}-${pairAddress.toLowerCase()}` },
+        variables: {
+          chainId: pair.chainId,
+          id: `${account!.toLowerCase()}-${pair.liquidityToken.address.toLowerCase()}`,
+        },
       }),
-    {
-      refreshInterval: 1 * 60 * 1000,
-    },
-  )
+    enabled: !!enableFetchDetail && !!account && !!pair?.chainId && !!pairStats,
+    refetchInterval: 60_000,
+    staleTime: 0,
+  })
 
   const shouldUseIndexer =
     useMemo(() => {

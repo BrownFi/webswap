@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { Route, Switch } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import 'rc-slider/assets/index.css'
 import 'theme/index.css'
 import styled from 'styled-components'
@@ -59,35 +59,29 @@ function TopLevelModals() {
 export default function App() {
   return (
     <Suspense fallback={null}>
-      <Route component={GoogleAnalyticsReporter} />
-      <Route component={DarkModeQueryParamReader} />
+      <GoogleAnalyticsReporter />
+      <DarkModeQueryParamReader />
       <StaticScreen>
         <BodyWrapper>
           <Popups />
           <TopLevelModals />
           <Web3ReactManager>
-            <Switch>
-              <Route exact strict path="/swap" component={Swap} />
-              <Route exact strict path="/claim" component={OpenClaimAddressModalAndRedirectToSwap} />
-              <Route exact strict path="/swap/:outputCurrency" component={RedirectToSwap} />
-              <Route exact strict path="/send" component={RedirectPathToSwapOnly} />
-              <Route exact strict path="/find" component={PoolFinder} />
-              <Route exact strict path="/pool" component={Pool} />
-              <Route exact strict path="/campaign/contest-1" component={Leaderboard} />
-              <Route exact strict path="/uni" component={Earn} />
-              <Route exact strict path="/vote" component={Vote} />
-              <Route exact strict path="/create" component={RedirectToAddLiquidity} />
-              <Route exact path="/add" component={AddLiquidity} />
-              <Route exact path="/add/:currencyIdA" component={RedirectOldAddLiquidityPathStructure} />
-              <Route exact path="/add/:currencyIdA/:currencyIdB" component={RedirectDuplicateTokenIds} />
-              <Route exact strict path="/remove/:tokens" component={RedirectOldRemoveLiquidityPathStructure} />
-              <Route exact strict path="/remove/:currencyIdA/:currencyIdB" component={RemoveLiquidity} />
-              <Route exact strict path="/migrate/v1" component={MigrateV1} />
-              <Route exact strict path="/migrate/v1/:address" component={MigrateV1Exchange} />
-              <Route exact strict path="/uni/:currencyIdA/:currencyIdB" component={Manage} />
-              <Route exact strict path="/vote/:id" component={VotePage} />
-              <Route component={RedirectPathToSwapOnly} />
-            </Switch>
+            <Routes>
+              <Route path="/swap" element={<Swap />} />
+              <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
+              <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
+              <Route path="/send" element={<RedirectPathToSwapOnly />} />
+              <Route path="/find" element={<PoolFinder />} />
+              <Route path="/pool" element={<Pool />} />
+              <Route path="/campaign/contest-1" element={<Leaderboard />} />
+              <Route path="/create" element={<RedirectToAddLiquidity />} />
+              <Route path="/add" element={<AddLiquidity />} />
+              <Route path="/add/:currencyIdA" element={<RedirectOldAddLiquidityPathStructure />} />
+              <Route path="/add/:currencyIdA/:currencyIdB" element={<RedirectDuplicateTokenIds />} />
+              <Route path="/remove/:tokens" element={<RedirectOldRemoveLiquidityPathStructure />} />
+              <Route path="/remove/:currencyIdA/:currencyIdB" element={<RemoveLiquidity />} />
+              <Route path="*" element={<RedirectPathToSwapOnly />} />
+            </Routes>
           </Web3ReactManager>
 
           {/* <div

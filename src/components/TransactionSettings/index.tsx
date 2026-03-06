@@ -205,6 +205,7 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
                 }}
                 onChange={(e) => parseCustomSlippage(e.target.value)}
                 color={!slippageInputIsValid ? 'red' : ''}
+                aria-label="Custom slippage percentage"
               />
               %
             </RowBetween>
@@ -244,6 +245,7 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
               placeholder={(deadline / 60).toString()}
               value={deadlineInput}
               onChange={(e) => parseCustomDeadline(e.target.value)}
+              aria-label="Transaction deadline in minutes"
             />
           </OptionCustom>
           <TYPE.body style={{ paddingLeft: '8px' }} fontSize={14} fontWeight={500} color="white">

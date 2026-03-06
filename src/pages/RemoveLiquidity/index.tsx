@@ -30,7 +30,7 @@ import { MaxButton, Wrapper } from 'pages/Pool/styleds'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { isMobile } from 'react-device-detect'
 import { ArrowDown, Plus } from 'react-feather'
-import { RouteComponentProps } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { Text } from 'rebass'
 import { Field } from 'state/burn/actions'
 import { useBurnActionHandlers, useBurnState, useDerivedBurnInfo } from 'state/burn/hooks'
@@ -42,11 +42,8 @@ import { formatNumber } from 'utils/prices'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { executeKyberZapOutTransaction, getKyberZapOutRouteData, KyberZapOutRouteData } from './zapHelpers'
 
-export default function RemoveLiquidity({
-  match: {
-    params: { currencyIdA, currencyIdB },
-  },
-}: RouteComponentProps<{ currencyIdA: string; currencyIdB: string }>) {
+export default function RemoveLiquidity() {
+  const { currencyIdA, currencyIdB } = useParams<{ currencyIdA: string; currencyIdB: string }>()
   const theme = useContext(ThemeContext)
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })

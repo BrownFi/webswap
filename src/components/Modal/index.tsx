@@ -132,6 +132,8 @@ export function Modal({
                       style: { transform: y.interpolate((y: any) => `translateY(${y > 0 ? y : 0}px)`) },
                     }
                   : {})}
+                role="dialog"
+                aria-modal="true"
                 aria-label="dialog content"
                 minHeight={minHeight}
                 maxHeight={maxHeight}
