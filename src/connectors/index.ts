@@ -1,25 +1,7 @@
-import { InjectedConnector } from '@web3-react/injected-connector'
-import { WalletConnectConnector } from './WalletConnector'
-import { WalletLinkConnector } from '@web3-react/walletlink-connector'
-
 import * as defaultChains from 'viem/chains'
 
-import UNISWAP_LOGO_URL from 'assets/svg/logo.svg'
-import { ChainId } from '@brownfi/sdk'
 import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { defineChain } from 'viem'
-
-// mainnet only
-export const walletconnect = new WalletConnectConnector({
-  projectId: 'b64df0521d25ed5108cd242cfa8412e5',
-  chains: [ChainId.MAINNET],
-})
-
-export const walletlink = new WalletLinkConnector({
-  url: defaultChains.mainnet.rpcUrls.default.http[0],
-  appName: 'Brownfi',
-  appLogoUrl: UNISWAP_LOGO_URL,
-})
 
 const overrideChain = ({
   chain,
@@ -171,10 +153,6 @@ const testChains: Chain[] = [berachain, sepolia]
 
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
-
-export const injected = new InjectedConnector({
-  supportedChainIds: availableChains.map((chain) => chain.id),
-})
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',

@@ -85,8 +85,6 @@ function TransactionSubmittedContent({
 }) {
   const theme = useContext(ThemeContext)
 
-  const { library } = useActiveWeb3React()
-
   const { addToken, success } = useAddTokenToMetamask(currencyToAdd)
 
   return (
@@ -112,7 +110,7 @@ function TransactionSubmittedContent({
               </Text>
             </ExternalLink>
           )}
-          {currencyToAdd && library?.provider?.isMetaMask && (
+          {currencyToAdd && window?.ethereum?.isMetaMask && (
             <ButtonPrimary mt="12px" padding="6px 12px" width="100%" onClick={addToken}>
               {!success ? (
                 <RowFixed>

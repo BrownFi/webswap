@@ -7,7 +7,7 @@ import { useWalletClient } from 'wagmi'
 export default function useAddTokenToMetamask(
   currencyToAdd: Currency | undefined,
 ): { addToken: () => void; success: boolean | undefined } {
-  const { library, chainId } = useActiveWeb3React()
+  const { chainId } = useActiveWeb3React()
   const { data: walletClient } = useWalletClient()
 
   const token: Token | undefined = wrappedCurrency(currencyToAdd, chainId)
@@ -15,9 +15,9 @@ export default function useAddTokenToMetamask(
   const [success, setSuccess] = useState<boolean | undefined>()
 
   const addToken = useCallback(() => {
-    if (token) {
-      ;(walletClient || library?.provider)
-        ?.request?.({
+    if (token && walletClient) {
+      walletClient
+        .request({
           method: 'wallet_watchAsset',
           params: {
             type: 'ERC20',
@@ -37,7 +37,7 @@ export default function useAddTokenToMetamask(
     } else {
       setSuccess(false)
     }
-  }, [library, token])
+  }, [walletClient, token])
 
   return { addToken, success }
 }

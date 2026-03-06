@@ -1,11 +1,9 @@
-import { createWeb3ReactRoot, Web3ReactProvider } from '@web3-react/core'
 import 'inter-ui'
 import React, { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import Blocklist from 'components/Blocklist'
-import { NetworkContextName } from 'constants/common'
 import './i18n'
 import App from 'pages/App'
 import store from 'state'
@@ -16,7 +14,6 @@ import MulticallUpdater from 'state/multicall/updater'
 import TransactionUpdater from 'state/transactions/updater'
 import UserUpdater from 'state/user/updater'
 import ThemeProvider, { FixedGlobalStyle, ThemedGlobalStyle } from 'theme'
-import getLibrary from 'utils/getLibrary'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from 'services/queryClient'
 import { WagmiProvider } from 'wagmi'
@@ -32,8 +29,6 @@ const missingEnvVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key])
 if (missingEnvVars.length > 0) {
   console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
 }
-
-const Web3ProviderNetwork = createWeb3ReactRoot(NetworkContextName)
 
 if (!!window.ethereum) {
   window.ethereum.autoRefreshOnNetworkChange = false
@@ -60,29 +55,23 @@ root.render(
     <FixedGlobalStyle />
     <Provider store={store}>
       <BrowserRouter basename={routerBasename}>
-        <Web3ReactProvider getLibrary={getLibrary}>
-          <Web3ProviderNetwork getLibrary={getLibrary}>
-            {/* Wagmi provider (autoConnect behavior configured via wagmiConfig in connectors/index.ts) */}
-            <WagmiProvider config={wagmiConfig}>
-              <QueryClientProvider client={queryClient}>
-                {/* RainbowKit UI; relies on Wagmi for connection state (including autoConnect) */}
-                <RainbowKitProvider theme={darkTheme()}>
-                  <Blocklist>
-                    <Updaters />
-                    <ThemeProvider>
-                      <ToastProvider>
-                        <ThemedGlobalStyle />
-                        <ErrorBoundary>
-                          <App />
-                        </ErrorBoundary>
-                      </ToastProvider>
-                    </ThemeProvider>
-                  </Blocklist>
-                </RainbowKitProvider>
-              </QueryClientProvider>
-            </WagmiProvider>
-          </Web3ProviderNetwork>
-        </Web3ReactProvider>
+        <WagmiProvider config={wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            <RainbowKitProvider theme={darkTheme()}>
+              <Blocklist>
+                <Updaters />
+                <ThemeProvider>
+                  <ToastProvider>
+                    <ThemedGlobalStyle />
+                    <ErrorBoundary>
+                      <App />
+                    </ErrorBoundary>
+                  </ToastProvider>
+                </ThemeProvider>
+              </Blocklist>
+            </RainbowKitProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
       </BrowserRouter>
     </Provider>
   </StrictMode>,

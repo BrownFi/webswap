@@ -1,28 +1,22 @@
 import { Web3Provider } from '@ethersproject/providers'
 import { ChainId } from '@brownfi/sdk'
-import { useWeb3React as useWeb3ReactCore } from '@web3-react/core'
-import { Web3ReactContextInterface } from '@web3-react/core/dist/types'
-import { useEffect, useMemo, useState } from 'react'
-import { isMobile } from 'react-device-detect'
+import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { availableChains, injected } from 'connectors'
-import { NetworkContextName } from 'constants/common'
-import { useAccount } from 'wagmi'
+import { availableChains } from 'connectors'
+import { useAccount, useWalletClient } from 'wagmi'
 import { useSelector } from 'react-redux'
 import { chainSelector } from 'state/chainSlice'
 import { isAddress } from 'utils'
+import { walletClientToProvider, getReadOnlyProvider } from 'utils/ethersAdapter'
 
 const mockAccounts: Record<string, string> = {
   neikop: '0x9fb15eD1b5eF911F4EB3046FACF3fF1c67aaAEB4',
   kane: '0xdE3EE2Bf6c04E2a4C8aaE988A191AF6f8Cbd9F76',
 }
 
-export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & { chainId: ChainId } {
-  const context = useWeb3ReactCore<Web3Provider>()
-  const contextNetwork = useWeb3ReactCore<Web3Provider>(NetworkContextName)
-  const ctx = context.active ? context : contextNetwork
-
-  const { address, chainId: networkChainId, isConnected, connector } = useAccount()
+export function useActiveWeb3React(): { library: Web3Provider; account?: string | null; chainId: ChainId } {
+  const { address, chainId: networkChainId, isConnected } = useAccount()
+  const { data: walletClient } = useWalletClient()
 
   const { search } = useLocation()
   const mockAccount = useMemo(() => {
@@ -37,101 +31,16 @@ export function useActiveWeb3React(): Web3ReactContextInterface<Web3Provider> & 
   const isWrongNetwork = availableChains.every((chain) => chain.id !== networkChainId)
   const chainId = (isConnected && !isWrongNetwork ? networkChainId : currentChain.id) as ChainId
 
-  useEffect(() => {
-    if (isConnected && connector) {
-      if ('getProvider' in connector) {
-        connector.getProvider({ chainId }).then((a: any) => {
-          ctx.library = new Web3Provider(a)
-        })
-      }
+  const library = useMemo(() => {
+    if (walletClient && isConnected && !isWrongNetwork) {
+      return walletClientToProvider(walletClient)
     }
-  }, [isConnected])
+    return getReadOnlyProvider(chainId) as unknown as Web3Provider
+  }, [walletClient, chainId, isConnected, isWrongNetwork])
 
   return {
-    ...ctx,
-    account: mockAccount || address || ctx.account,
-    chainId: chainId || ctx.chainId!,
+    library,
+    account: mockAccount || address || undefined,
+    chainId,
   }
-}
-
-/**
- * Attempts an automatic (silent) connection to the injected provider on mount
- * if the user has previously authorized the site (or on mobile if provider exists).
- * Returns a boolean indicating we've tried (to gate UI until the attempt resolves).
- */
-export function useEagerConnect() {
-  const { activate, active } = useWeb3ReactCore() // specifically using useWeb3ReactCore because of what this hook does
-  const [tried, setTried] = useState(false)
-
-  // On first mount: check authorization and try to activate the injected connector
-  useEffect(() => {
-    injected.isAuthorized().then((isAuthorized) => {
-      if (isAuthorized) {
-        activate(injected, undefined, true).catch(() => {
-          setTried(true)
-        })
-      } else {
-        if (isMobile && window.ethereum) {
-          activate(injected, undefined, true).catch(() => {
-            setTried(true)
-          })
-        } else {
-          setTried(true)
-        }
-      }
-    })
-  }, [activate]) // intentionally only running on mount (make sure it's only mounted once :))
-
-  // if the connection worked, wait until we get confirmation of that to flip the flag
-  useEffect(() => {
-    if (active) {
-      setTried(true)
-    }
-  }, [active])
-
-  return tried
-}
-
-/**
- * Listens for provider events and (re)activates the injected connector
- * to keep the app in sync when the user changes chain or accounts externally.
- *
- * Use for network and injected - logs user in
- * and out after checking what network theyre on
- */
-export function useInactiveListener(suppress = false) {
-  const { active, error, activate } = useWeb3ReactCore() // specifically using useWeb3React because of what this hook does
-
-  useEffect(() => {
-    const { ethereum } = window
-
-    if (ethereum && ethereum.on && !active && !error && !suppress) {
-      const handleChainChanged = () => {
-        // Auto-reconnect on chain changes
-        activate(injected, undefined, true).catch((error) => {
-          console.error('Failed to activate after chain changed', error)
-        })
-      }
-
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length > 0) {
-          // Auto-reconnect when user connects an account
-          activate(injected, undefined, true).catch((error) => {
-            console.error('Failed to activate after accounts changed', error)
-          })
-        }
-      }
-
-      ethereum.on('chainChanged', handleChainChanged)
-      ethereum.on('accountsChanged', handleAccountsChanged)
-
-      return () => {
-        if (ethereum.removeListener) {
-          ethereum.removeListener('chainChanged', handleChainChanged)
-          ethereum.removeListener('accountsChanged', handleAccountsChanged)
-        }
-      }
-    }
-    return undefined
-  }, [active, error, suppress, activate])
 }

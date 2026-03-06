@@ -1,12 +1,12 @@
 import { ChainId, getFactoryAddress, PYTH_ADDRESS, WETH } from '@brownfi/sdk'
 import { Contract } from '@ethersproject/contracts'
+import { Web3Provider } from '@ethersproject/providers'
 import GOVERNANCE_ABI from '@uniswap/governance/build/GovernorAlpha.json'
 import UNI_ABI from '@uniswap/governance/build/Uni.json'
 import STAKING_REWARDS_ABI from '@uniswap/liquidity-staker/build/StakingRewards.json'
 import MERKLE_DISTRIBUTOR_ABI from '@uniswap/merkle-distributor/build/MerkleDistributor.json'
 import IUniswapV2PairABI from '@uniswap/v2-core/build/IUniswapV2Pair.json'
 import { availableChains } from 'connectors'
-import { NetworkConnector } from 'connectors/NetworkConnector'
 import { useMemo } from 'react'
 import { GOVERNANCE_ADDRESS, MERKLE_DISTRIBUTOR_ADDRESS } from 'constants/common'
 import {
@@ -27,8 +27,28 @@ import WETH_ABI from 'constants/abis/weth.json'
 import { MULTICALL_ABI, MULTICALL_NETWORKS } from 'constants/multicall'
 import { V1_EXCHANGE_ABI, V1_FACTORY_ABI, V1_FACTORY_ADDRESSES } from 'constants/v1'
 import { getContract } from 'utils'
+import { getReadOnlyProvider } from 'utils/ethersAdapter'
 import { useActiveWeb3React } from './index'
 import { useVersion } from './useVersion'
+
+function useReadContract(address: string | undefined, ABI: any, enabled?: boolean): Contract | null {
+  const { chainId } = useActiveWeb3React()
+
+  return useMemo(() => {
+    if (!enabled || !address) return null
+    const chain = availableChains.find((chain) => chain.id === chainId)
+    if (chain) {
+      try {
+        const provider = getReadOnlyProvider(chainId as ChainId)
+        return getContract(address, ABI, provider as unknown as Web3Provider)
+      } catch (error) {
+        console.error('Failed to get read contract', error)
+        return null
+      }
+    }
+    return null
+  }, [address, ABI, chainId, enabled])
+}
 
 function useContract(
   address: string | undefined,
@@ -37,13 +57,10 @@ function useContract(
   options?: { readonly?: boolean },
 ): Contract | null {
   const { library, account } = useActiveWeb3React()
-
-  if (address && options?.readonly) {
-    const contract = useReadContract(address, ABI)
-    if (contract) return contract
-  }
+  const readContract = useReadContract(address, ABI, options?.readonly)
 
   return useMemo(() => {
+    if (readContract) return readContract
     if (!address || !ABI || !library) return null
     try {
       return getContract(address, ABI, library, withSignerIfPossible && account ? account : undefined)
@@ -51,28 +68,7 @@ function useContract(
       console.error('Failed to get contract', error)
       return null
     }
-  }, [address, ABI, library, withSignerIfPossible, account])
-}
-
-function useReadContract(address: string, ABI: any): Contract | null {
-  const { chainId } = useActiveWeb3React()
-
-  return useMemo(() => {
-    const chain = availableChains.find((chain) => chain.id === chainId)
-    if (chain) {
-      const network = new NetworkConnector({
-        urls: { [chain.id]: chain.rpcUrls.default.http as string[] },
-        defaultChainId: chain.id,
-      })
-      try {
-        return getContract(address, ABI, network.getEthersProvider())
-      } catch (error) {
-        console.error('Failed to get read contract', error)
-        return null
-      }
-    }
-    return null
-  }, [chainId])
+  }, [readContract, address, ABI, library, withSignerIfPossible, account])
 }
 
 export function useV1FactoryContract(): Contract | null {
