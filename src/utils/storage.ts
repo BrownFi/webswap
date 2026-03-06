@@ -73,7 +73,7 @@ let hasLoggedBrowserStorageNotAvailableWarning = false
  */
 function logOnceBrowserStorageNotAvailableWarning(error: Error) {
   if (!hasLoggedBrowserStorageNotAvailableWarning) {
-    console.warn(
+    console.error(
       `Browser storage is not available.
 Possible reasons: running app in an iframe, in an incognito browser session, or using too strict browser privacy settings.`,
       error,

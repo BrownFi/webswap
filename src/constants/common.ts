@@ -151,8 +151,8 @@ export const SUPPORTED_WALLETS: { [key: string]: WalletInfo } = {
 
 export const NetworkContextName = 'NETWORK'
 
-// default allowed slippage, in bips
-export const INITIAL_ALLOWED_SLIPPAGE = 1000
+// default allowed slippage, in bips (0.5% — suitable for BrownFi's K=0.01 low-impact AMM)
+export const INITIAL_ALLOWED_SLIPPAGE = 50
 // 20 minutes, denominated in seconds
 export const DEFAULT_DEADLINE_FROM_NOW = 60 * 20
 

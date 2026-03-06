@@ -31,8 +31,7 @@ export default function useAddTokenToMetamask(
         .then((success) => {
           setSuccess(success)
         })
-        .catch((error) => {
-          console.warn(error)
+        .catch(() => {
           setSuccess(false)
         })
     } else {

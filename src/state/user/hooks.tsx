@@ -535,7 +535,6 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
   // Filter pairs using Liem's api
   const filteredPairs = pairs.filter((tokens) => {
     const symbol = `${tokens[0].symbol}/${tokens[1].symbol}`
-    // console.log('symbol', symbol)
     if (isMainnet) {
       if (chainId === ChainId.ARBITRUM_MAINNET) {
         return !['WBTC/WETH', 'WETH/USDT'].includes(symbol)

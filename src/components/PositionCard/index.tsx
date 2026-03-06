@@ -148,7 +148,6 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
   const handleCopyPoolAddress = () => {
     const text = `'${pair.liquidityToken.address}', // ${pair.token0.symbol}/${pair.token1.symbol}`
-    console.log(text)
     navigator.clipboard.writeText(text)
   }
 

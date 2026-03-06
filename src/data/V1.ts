@@ -128,8 +128,8 @@ export function useV1Trade(
       route && exactAmount
         ? new Trade(route, exactAmount, isExactIn ? TradeType.EXACT_INPUT : TradeType.EXACT_OUTPUT)
         : undefined
-  } catch (error) {
-    console.debug('Failed to create V1 trade', error)
+  } catch {
+    // silently ignored
   }
   return v1Trade
 }

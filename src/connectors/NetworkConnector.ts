@@ -51,7 +51,6 @@ class MiniRpcProvider implements AsyncSendable {
 
   private nextUrl() {
     this.urlIndex = (this.urlIndex + 1) % this.urls.length
-    console.warn('4. Rotate to the next RPC', this.chainId, this.currentUrl)
   }
 
   public readonly clearBatch = async () => {
@@ -108,7 +107,6 @@ class MiniRpcProvider implements AsyncSendable {
         // Thành công toàn bộ => return
         return
       } catch (error) {
-        console.warn(`[RPC] Failed ${this.currentUrl}:`, error)
         this.nextUrl()
         if (attempt === this.urls.length - 1) {
           batch.forEach(({ reject }) => reject(new Error(`All RPC URLs failed for chain ${this.chainId}`)))

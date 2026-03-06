@@ -100,7 +100,8 @@ export default createReducer(initialState, (builder) =>
       state.timestamp = currentTimestamp()
     })
     .addCase(updateUserSlippageTolerance, (state, action) => {
-      state.userSlippageTolerance = action.payload.userSlippageTolerance
+      // Clamp slippage to valid range: 1 bip (0.01%) to 5000 bips (50%)
+      state.userSlippageTolerance = Math.min(Math.max(action.payload.userSlippageTolerance, 1), 5000)
       state.timestamp = currentTimestamp()
     })
     .addCase(updateUserDeadline, (state, action) => {

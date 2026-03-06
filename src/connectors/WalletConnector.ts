@@ -74,9 +74,7 @@ export class WalletConnectConnector extends AbstractConnector {
       })
     }
 
-    this.walletConnectProvider.on('display_uri', () => {
-      // console.log('uri =====>', uri)
-    })
+    this.walletConnectProvider.on('display_uri', () => {})
     this.walletConnectProvider.on('disconnect', this.handleDisconnect)
     this.walletConnectProvider.on('chainChanged', this.handleChainChanged)
     this.walletConnectProvider.on('accountsChanged', this.handleAccountsChanged)
@@ -85,7 +83,6 @@ export class WalletConnectConnector extends AbstractConnector {
       .enable()
       .then((accounts: string[]): string => accounts[0])
       .catch((error: Error): void => {
-        console.log('errror =====>', error)
         if (error.message === 'User closed modal') {
           throw new UserRejectedRequestError()
         }
@@ -97,7 +94,10 @@ export class WalletConnectConnector extends AbstractConnector {
       const pairing = localStorage.getItem('wc@2:core:0.3//pairing')
       if (pairing === '[]') {
         this.deactivate()
-        localStorage.clear()
+        // Remove only WalletConnect-related keys instead of clearing all localStorage
+        Object.keys(localStorage)
+          .filter((key) => key.startsWith('wc@'))
+          .forEach((key) => localStorage.removeItem(key))
       }
     }, 1000)
 

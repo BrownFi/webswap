@@ -25,6 +25,7 @@ import useENSAddress from 'hooks/useENSAddress'
 import { useSwapCallback } from 'hooks/useSwapCallback'
 import useToggledVersion, { DEFAULT_VERSION, Version } from 'hooks/useToggledVersion'
 import useWrapCallback, { WrapType } from 'hooks/useWrapCallback'
+import { useToast } from 'containers/ToastProvider'
 import { useToggleSettingsMenu } from 'state/application/hooks'
 import { Field } from 'state/swap/actions'
 import { useDefaultsFromURLSearch, useDerivedSwapInfo, useSwapActionHandlers, useSwapState } from 'state/swap/hooks'
@@ -68,6 +69,7 @@ export default function Swap({ history }: RouteComponentProps) {
     })
 
   const theme = useContext(ThemeContext)
+  const { createToast } = useToast()
 
   // for expert mode
   const toggleSettings = useToggleSettingsMenu()
@@ -98,7 +100,10 @@ export default function Swap({ history }: RouteComponentProps) {
   const handleWrap = async () => {
     setLoadingWrap(true)
     await onWrap?.()
-      .catch(console.warn)
+      .catch((error: Error) => {
+        console.error('Wrap/unwrap failed', error)
+        createToast(error?.message || 'Transaction failed. Please try again.', 'error')
+      })
       .finally(() => {
         setLoadingWrap(false)
       })
@@ -196,7 +201,7 @@ export default function Swap({ history }: RouteComponentProps) {
   // the callback to execute the swap
   const { callback: swapCallback, error: swapCallbackError } = useSwapCallback(trade, allowedSlippage, recipient)
 
-  const { priceImpactWithoutFee } = computeTradePriceBreakdown(trade)
+  const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
@@ -213,7 +218,6 @@ export default function Swap({ history }: RouteComponentProps) {
         setSwapState({ attemptingTxn: false, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: hash })
       })
       .catch((error) => {
-        console.log('error', error.data, error.message, error.status)
         setSwapState({
           attemptingTxn: false,
           tradeToConfirm,

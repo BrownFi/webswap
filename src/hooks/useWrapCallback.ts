@@ -52,6 +52,7 @@ export default function useWrapCallback(
                   })
                 } catch (error) {
                   console.error('Could not deposit', error)
+                  throw error
                 }
               }
             : undefined,
@@ -72,6 +73,7 @@ export default function useWrapCallback(
                   })
                 } catch (error) {
                   console.error('Could not withdraw', error)
+                  throw error
                 }
               }
             : undefined,

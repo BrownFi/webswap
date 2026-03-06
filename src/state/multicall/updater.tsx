@@ -34,30 +34,20 @@ async function fetchChunk(
 ): Promise<{ results: string[]; blockNumber: number }> {
   let resultsBlockNumber, returnData
   try {
-    console.debug('4. Fetching results', { chainId, blockNumber: minBlockNumber, size: chunk.length })
     ;[resultsBlockNumber, returnData] = await multicallContract.aggregate(
       chunk.map((obj) => [obj.address, obj.callData]),
     )
   } catch (error) {
-    console.warn('4. Failed to fetch chunk inside retry', chainId)
     throw error
   }
-  const [fetched, min, newly] = [
-    resultsBlockNumber.toNumber(),
-    minBlockNumber,
-    resultsBlockNumber.toNumber() - minBlockNumber,
-  ]
   if (resultsBlockNumber.toNumber() < minBlockNumber) {
-    console.debug('4. Fetched results for OLD block number', { chainId, fetched, min, newly })
-    if (newly < -100) {
-      console.error(`4. MISMATCH BLOCK NUMBER ${min} > ${fetched}`)
+    if (resultsBlockNumber.toNumber() - minBlockNumber < -100) {
+      console.error(`4. MISMATCH BLOCK NUMBER ${minBlockNumber} > ${resultsBlockNumber.toNumber()}`)
       // setTimeout(() => {
       //   location.reload()
       // }, 200)
     }
     throw new RetryableError('Fetched for old block number')
-  } else {
-    console.debug('4. Fetched results for NEW block number', { chainId, fetched, min, newly, size: chunk.length })
   }
   return { results: returnData, blockNumber: resultsBlockNumber.toNumber() }
 }
@@ -201,7 +191,6 @@ export default function Updater(): null {
           })
           .catch((error: any) => {
             if (error instanceof CancelledError) {
-              console.debug('Cancelled fetch for blockNumber', latestBlockNumber)
               return
             }
             dispatch(
