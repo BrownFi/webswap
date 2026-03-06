@@ -110,14 +110,6 @@ export default function RemoveLiquidity() {
   const onLiquidityInput = useCallback((typedValue: string): void => onUserInput(Field.LIQUIDITY, typedValue), [
     onUserInput,
   ])
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onCurrencyAInput = useCallback((typedValue: string): void => onUserInput(Field.CURRENCY_A, typedValue), [
-    onUserInput,
-  ])
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onCurrencyBInput = useCallback((typedValue: string): void => onUserInput(Field.CURRENCY_B, typedValue), [
-    onUserInput,
-  ])
 
   const amountOut = useDebounce(parsedAmounts[Field.LIQUIDITY]?.raw.toString() ?? '0', 200)
 

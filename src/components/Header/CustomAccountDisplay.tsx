@@ -36,7 +36,7 @@ const CustomAccountDisplay = () => {
 }
 
 const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { account, chainId, connector, deactivate } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
   const { disconnect } = useDisconnect()
 
   const [isCopying, setIsCopying] = useState(false)
@@ -109,13 +109,6 @@ const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
             <button
               className="flex flex-1 flex-col items-center rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold p-2"
               onClick={() => {
-                if ((connector as any)?.handleClose) {
-                  ;(connector as any).handleClose()
-                }
-                if ((connector as any)?.close) {
-                  ;(connector as any).close()
-                }
-                deactivate()
                 disconnect()
               }}
             >

@@ -1,4 +1,4 @@
-import { JSBI, Pair, TokenAmount, WETH } from '@brownfi/sdk'
+import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Info, ExternalLink } from 'react-feather'

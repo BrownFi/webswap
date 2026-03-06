@@ -1,5 +1,3 @@
-import React from 'react'
-
 /**
  * Connection management is now handled by wagmi/RainbowKit.
  * This component is kept as a pass-through to avoid changing the App tree structure.

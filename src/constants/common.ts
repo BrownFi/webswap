@@ -2,8 +2,6 @@ import { ChainId, JSBI, Percent, Token, WETH, WETH_ONLY } from '@brownfi/sdk'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-export { PRELOADED_PROPOSALS } from './proposals'
-
 // a list of tokens by chain
 type ChainTokenList = {
   readonly [chainId in ChainId]: Token[]
