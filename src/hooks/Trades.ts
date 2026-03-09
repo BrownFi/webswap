@@ -106,6 +106,7 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
 
     const getTrade = async () => {
       setLoading(true)
+      setInsufficient(false)
       if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeIn = await Trade.bestTradeExactIn(account ?? '', allowedPairs, currencyAmountIn, currencyOut, {
@@ -121,7 +122,9 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
             }
           })
           if (!stale) {
-            setTrade(bestTradeIn?.[0] ?? null)
+            const foundTrade = bestTradeIn?.[0] ?? null
+            setTrade(foundTrade)
+            if (!foundTrade) setInsufficient(true)
             setLoading(false)
           }
           return
@@ -141,7 +144,9 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           }
         })
         if (!stale) {
-          setTrade(bestTradeIn?.[0] ?? null)
+          const foundTrade = bestTradeIn?.[0] ?? null
+          setTrade(foundTrade)
+          if (!foundTrade) setInsufficient(true)
           setLoading(false)
         }
         return
@@ -216,7 +221,9 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
             }
           })
           if (!stale) {
-            setTrade(bestTradeOut?.[0] ?? null)
+            const foundTrade = bestTradeOut?.[0] ?? null
+            setTrade(foundTrade)
+            if (!foundTrade) setInsufficient(true)
             setLoading(false)
           }
           return
@@ -237,7 +244,9 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           }
         })
         if (!stale) {
-          setTrade(bestTradeOut?.[0] ?? null)
+          const foundTrade = bestTradeOut?.[0] ?? null
+          setTrade(foundTrade)
+          if (!foundTrade) setInsufficient(true)
           setLoading(false)
         }
         return
