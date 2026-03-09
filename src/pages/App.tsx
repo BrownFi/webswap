@@ -52,10 +52,6 @@ const Marginer = styled.div`
   margin-top: 5rem;
 `
 
-function TopLevelModals() {
-  return <div />
-}
-
 export default function App() {
   return (
     <Suspense fallback={null}>
@@ -64,7 +60,6 @@ export default function App() {
       <StaticScreen>
         <BodyWrapper>
           <Popups />
-          <TopLevelModals />
           <Routes>
             <Route path="/swap" element={<Swap />} />
             <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
