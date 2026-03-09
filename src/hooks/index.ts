@@ -9,10 +9,13 @@ import { chainSelector } from 'state/chainSlice'
 import { isAddress } from 'utils'
 import { walletClientToProvider, getReadOnlyProvider } from 'utils/ethersAdapter'
 
-const mockAccounts: Record<string, string> = {
-  neikop: '0x9fb15eD1b5eF911F4EB3046FACF3fF1c67aaAEB4',
-  kane: '0xdE3EE2Bf6c04E2a4C8aaE988A191AF6f8Cbd9F76',
-}
+const mockAccounts: Record<string, string> =
+  process.env.NODE_ENV !== 'production'
+    ? {
+        neikop: '0x9fb15eD1b5eF911F4EB3046FACF3fF1c67aaAEB4',
+        kane: '0xdE3EE2Bf6c04E2a4C8aaE988A191AF6f8Cbd9F76',
+      }
+    : {}
 
 export function useActiveWeb3React(): { library: Web3Provider; account?: string | null; chainId: ChainId } {
   const { address, chainId: networkChainId, isConnected } = useAccount()

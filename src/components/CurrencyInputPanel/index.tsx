@@ -197,6 +197,7 @@ export function CurrencyInputPanel({
                 className="token-amount-input"
                 value={value}
                 loading={loading}
+                maxDecimals={currency?.decimals}
                 onUserInput={(val) => {
                   onUserInput(val)
                 }}

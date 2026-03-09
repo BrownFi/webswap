@@ -41,7 +41,9 @@ export default function Updater(): null {
       .getBlockNumber()
       .then(updateBlockNumber)
       .catch(() => {
-        updateBlockNumber(10) // TODO: blockNumber
+        // Fallback to a low block number so the UI isn't stuck on null — the
+        // 'block' listener will correct it once a real block arrives.
+        updateBlockNumber(10)
       })
 
     library.on('block', updateBlockNumber)
@@ -57,7 +59,9 @@ export default function Updater(): null {
     dispatch(
       updateBlockNumber({
         chainId: debouncedState.chainId,
-        blockNumber: debouncedState.blockNumber - 3, // TODO: blockNumber
+        // Subtract a few blocks as a reorg safety buffer so multicall reads
+        // target a block that is highly likely to be finalized.
+        blockNumber: debouncedState.blockNumber - 3,
       }),
     )
   }, [windowVisible, dispatch, debouncedState.blockNumber, debouncedState.chainId])

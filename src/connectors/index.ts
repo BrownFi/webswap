@@ -141,7 +141,7 @@ const monad = overrideChain({
   ],
 })
 
-export const appEnv = (process.env.REACT_APP_ENVIRONMENT || process.env.REACT_APP_ENVIROMENT) as
+export const appEnv = process.env.REACT_APP_ENVIRONMENT as
   | 'mainnet'
   | 'beta'
   | 'testnet'

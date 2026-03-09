@@ -10,7 +10,7 @@ const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: s
   outline: none;
   border: none;
   flex: 1 1 auto;
-  background-color: transparent};
+  background-color: transparent;
   font-size: ${({ fontSize }) => fontSize ?? '20px'};
   text-align: ${({ align }) => align && align};
   white-space: nowrap;
@@ -82,6 +82,7 @@ export const Input = React.memo(function InnerInput({
   onUserInput,
   placeholder,
   loading,
+  maxDecimals,
   ...rest
 }: {
   loading?: boolean
@@ -90,9 +91,14 @@ export const Input = React.memo(function InnerInput({
   error?: boolean
   fontSize?: string
   align?: 'right' | 'left'
+  maxDecimals?: number
 } & Omit<React.HTMLProps<HTMLInputElement>, 'ref' | 'onChange' | 'as'>) {
   const enforcer = (nextUserInput: string) => {
     if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
+      if (maxDecimals !== undefined && nextUserInput.includes('.')) {
+        const decimals = nextUserInput.split('.')[1]
+        if (decimals && decimals.length > maxDecimals) return
+      }
       onUserInput(nextUserInput)
     }
   }
@@ -127,5 +133,3 @@ export const Input = React.memo(function InnerInput({
 })
 
 export default Input
-
-// const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`) // match escaped "." characters via in a non-capturing group

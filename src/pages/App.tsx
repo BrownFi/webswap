@@ -5,7 +5,7 @@ import 'theme/index.css'
 import styled from 'styled-components'
 import GoogleAnalyticsReporter from 'components/analytics/GoogleAnalyticsReporter'
 import Popups from 'components/Popups'
-import Web3ReactManager from 'components/Web3ReactManager'
+
 import DarkModeQueryParamReader from 'theme/DarkModeQueryParamReader'
 import AddLiquidity from './AddLiquidity'
 import {
@@ -65,24 +65,22 @@ export default function App() {
         <BodyWrapper>
           <Popups />
           <TopLevelModals />
-          <Web3ReactManager>
-            <Routes>
-              <Route path="/swap" element={<Swap />} />
-              <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
-              <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
-              <Route path="/send" element={<RedirectPathToSwapOnly />} />
-              <Route path="/find" element={<PoolFinder />} />
-              <Route path="/pool" element={<Pool />} />
-              <Route path="/campaign/contest-1" element={<Leaderboard />} />
-              <Route path="/create" element={<RedirectToAddLiquidity />} />
-              <Route path="/add" element={<AddLiquidity />} />
-              <Route path="/add/:currencyIdA" element={<RedirectOldAddLiquidityPathStructure />} />
-              <Route path="/add/:currencyIdA/:currencyIdB" element={<RedirectDuplicateTokenIds />} />
-              <Route path="/remove/:tokens" element={<RedirectOldRemoveLiquidityPathStructure />} />
-              <Route path="/remove/:currencyIdA/:currencyIdB" element={<RemoveLiquidity />} />
-              <Route path="*" element={<RedirectPathToSwapOnly />} />
-            </Routes>
-          </Web3ReactManager>
+          <Routes>
+            <Route path="/swap" element={<Swap />} />
+            <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
+            <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
+            <Route path="/send" element={<RedirectPathToSwapOnly />} />
+            <Route path="/find" element={<PoolFinder />} />
+            <Route path="/pool" element={<Pool />} />
+            <Route path="/campaign/contest-1" element={<Leaderboard />} />
+            <Route path="/create" element={<RedirectToAddLiquidity />} />
+            <Route path="/add" element={<AddLiquidity />} />
+            <Route path="/add/:currencyIdA" element={<RedirectOldAddLiquidityPathStructure />} />
+            <Route path="/add/:currencyIdA/:currencyIdB" element={<RedirectDuplicateTokenIds />} />
+            <Route path="/remove/:tokens" element={<RedirectOldRemoveLiquidityPathStructure />} />
+            <Route path="/remove/:currencyIdA/:currencyIdB" element={<RemoveLiquidity />} />
+            <Route path="*" element={<RedirectPathToSwapOnly />} />
+          </Routes>
 
           {/* <div
             className={classNames(

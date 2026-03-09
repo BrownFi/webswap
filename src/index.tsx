@@ -54,7 +54,7 @@ root.render(
   <StrictMode>
     <FixedGlobalStyle />
     <Provider store={store}>
-      <BrowserRouter basename={routerBasename}>
+      <BrowserRouter basename={routerBasename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
             <RainbowKitProvider theme={darkTheme()}>

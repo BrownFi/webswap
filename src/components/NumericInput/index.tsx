@@ -53,6 +53,7 @@ export default function NumericInput({
       }}
       allowNegative={allowNegative}
       decimalScale={decimalScale}
+      allowedDecimalSeparators={['.', ',']}
       inputMode={resolvedInputMode}
       // Allow typing any number; we clamp in onValueChange
       isAllowed={() => true}
