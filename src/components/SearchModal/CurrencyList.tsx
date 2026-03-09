@@ -6,8 +6,7 @@ import { RowFixed } from 'components/Row'
 import { MouseoverTooltip } from 'components/Tooltip'
 import { useActiveWeb3React } from 'hooks'
 import { useAllInactiveTokens, useIsUserAddedToken } from 'hooks/Tokens'
-import useTheme from 'hooks/useTheme'
-import { CSSProperties, MutableRefObject, useCallback, useMemo } from 'react'
+import { CSSProperties, memo, MutableRefObject, useCallback, useMemo } from 'react'
 import { FixedSizeList } from 'react-window'
 import { Text } from 'rebass'
 import { useCombinedActiveList, WrappedTokenInfo } from 'state/lists/hooks'
@@ -86,7 +85,7 @@ function TokenTags({ currency }: { currency: Currency }) {
   )
 }
 
-function CurrencyRow({
+const CurrencyRow = memo(function CurrencyRow({
   currency,
   onSelect,
   isSelected,
@@ -130,7 +129,7 @@ function CurrencyRow({
       </RowFixed>
     </MenuItem>
   )
-}
+})
 
 export default function CurrencyList({
   height,
@@ -164,7 +163,6 @@ export default function CurrencyList({
   }, [breakIndex, currencies, showETH])
 
   const { chainId } = useActiveWeb3React()
-  const theme = useTheme()
 
   const inactiveTokens: {
     [address: string]: Token
@@ -216,7 +214,6 @@ export default function CurrencyList({
       setImportToken,
       showImportView,
       breakIndex,
-      theme.text1,
     ],
   )
 

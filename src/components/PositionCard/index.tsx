@@ -1,6 +1,6 @@
 import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { ChevronDown, ChevronUp, Info, ExternalLink } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
@@ -18,7 +18,7 @@ import { AutoColumn } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { Loader } from 'components/Loader'
-import { PairChartModal } from 'components/pool/PairChartModal'
+const PairChartModal = lazy(() => import('components/pool/PairChartModal').then(m => ({ default: m.PairChartModal })))
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import QuestionHelper from 'components/QuestionHelper'
 import { AutoRow, RowBetween, RowFixed } from 'components/Row'
@@ -286,11 +286,13 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                     >
                       <Info size="20" style={{ color: '#27E3AB' }} />
                     </a>
-                    <PairChartModal
-                      enableAdvancedZoom
-                      pair={pair}
-                      name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
-                    />
+                    <Suspense fallback={null}>
+                      <PairChartModal
+                        enableAdvancedZoom
+                        pair={pair}
+                        name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
+                      />
+                    </Suspense>
                   </div>
                 </div>
                 {isTest && <PairFavorite pair={pair} />}

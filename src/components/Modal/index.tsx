@@ -1,34 +1,27 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
-import { animated, useTransition, useSpring } from '@react-spring/web'
 import { DialogOverlay, DialogContent } from '@reach/dialog'
 import { isMobile } from 'react-device-detect'
 import '@reach/dialog/styles.css'
 import { transparentize } from 'polished'
-import { useGesture } from 'react-use-gesture'
 
-const AnimatedDialogOverlay = animated(DialogOverlay)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const StyledDialogOverlay = styled(AnimatedDialogOverlay)`
+const StyledDialogOverlay = styled(DialogOverlay)<{ visible: boolean }>`
   &[data-reach-dialog-overlay] {
     z-index: 2;
-    background-color: transparent;
     overflow: hidden;
-
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #00000088
-
-    /* background-color: ${({ theme }) => theme.modalBG}; */
+    background-color: #00000088;
+    opacity: ${({ visible }) => (visible ? 1 : 0)};
+    transition: opacity 200ms ease;
   }
 `
 
-const AnimatedDialogContent = animated(DialogContent)
 // destructure to not pass custom props to Dialog DOM element
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const StyledDialogContent = styled(({ minHeight, maxHeight, maxWidth, mobile, isOpen, ...rest }) => (
-  <AnimatedDialogContent {...rest} />
+  <DialogContent {...rest} />
 )).attrs({
   'aria-label': 'dialog',
 })`
@@ -94,59 +87,43 @@ export function Modal({
   initialFocusRef,
   children,
 }: ModalProps) {
-  const fadeTransition = useTransition(isOpen, {
-    config: { duration: 200 },
-    from: { opacity: 0 },
-    enter: { opacity: 1 },
-    leave: { opacity: 0 },
-  })
+  const [visible, setVisible] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
-  const [{ y }, set] = useSpring(() => ({ y: 0, config: { mass: 1, tension: 210, friction: 20 } }))
-  const bind = useGesture({
-    onDrag: (state) => {
-      set({
-        y: state.down ? state.movement[1] : 0,
-      })
-      if (state.movement[1] > 300 || (state.velocity > 3 && state.direction[1] > 0)) {
-        onDismiss()
-      }
-    },
-  })
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true)
+      requestAnimationFrame(() => setVisible(true))
+    } else {
+      setVisible(false)
+      const timer = setTimeout(() => setMounted(false), 200)
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [isOpen])
+
+  if (!mounted) return null
 
   return (
-    <>
-      {fadeTransition?.(
-        (style: any, item: any, key: any) =>
-          item && (
-            <StyledDialogOverlay
-              key={key}
-              style={style}
-              onDismiss={onDismiss}
-              initialFocusRef={initialFocusRef}
-              unstable_lockFocusAcrossFrames={false}
-            >
-              <StyledDialogContent
-                {...(isMobile
-                  ? {
-                      ...bind(),
-                      style: { transform: y.interpolate((y: any) => `translateY(${y > 0 ? y : 0}px)`) },
-                    }
-                  : {})}
-                role="dialog"
-                aria-modal="true"
-                aria-label="dialog content"
-                minHeight={minHeight}
-                maxHeight={maxHeight}
-                maxWidth={maxWidth}
-                mobile={isMobile}
-              >
-                {/* prevents the automatic focusing of inputs on mobile by the reach dialog */}
-                {!initialFocusRef && isMobile ? <div tabIndex={1} /> : null}
-                {children}
-              </StyledDialogContent>
-            </StyledDialogOverlay>
-          ),
-      )}
-    </>
+    <StyledDialogOverlay
+      visible={visible}
+      onDismiss={onDismiss}
+      initialFocusRef={initialFocusRef}
+      unstable_lockFocusAcrossFrames={false}
+    >
+      <StyledDialogContent
+        role="dialog"
+        aria-modal="true"
+        aria-label="dialog content"
+        minHeight={minHeight}
+        maxHeight={maxHeight}
+        maxWidth={maxWidth}
+        mobile={isMobile}
+      >
+        {/* prevents the automatic focusing of inputs on mobile by the reach dialog */}
+        {!initialFocusRef && isMobile ? <div tabIndex={1} /> : null}
+        {children}
+      </StyledDialogContent>
+    </StyledDialogOverlay>
   )
 }

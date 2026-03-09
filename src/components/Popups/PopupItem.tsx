@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useEffect } from 'react'
 import { X } from 'react-feather'
-import { useSpring, animated } from '@react-spring/web'
-import styled, { ThemeContext } from 'styled-components'
+import styled, { ThemeContext, keyframes } from 'styled-components'
 import { PopupContent } from 'state/application/actions'
 import { useRemovePopup } from 'state/application/hooks'
 import ListUpdatePopup from './ListUpdatePopup'
@@ -34,16 +33,20 @@ export const Popup = styled.div`
     }
   `}
 `
-const Fader = styled.div`
+const shrink = keyframes`
+  from { width: 100%; }
+  to { width: 0%; }
+`
+
+const Fader = styled.div<{ duration: number }>`
   position: absolute;
   bottom: 0px;
   left: 0px;
   width: 100%;
   height: 2px;
   background-color: ${({ theme }) => theme.bg3};
+  animation: ${shrink} ${({ duration }) => duration}ms linear forwards;
 `
-
-const AnimatedFader = animated(Fader)
 
 export default function PopupItem({
   removeAfterMs,
@@ -83,17 +86,11 @@ export default function PopupItem({
     popupContent = <ListUpdatePopup popKey={popKey} listUrl={listUrl} oldList={oldList} newList={newList} auto={auto} />
   }
 
-  const faderStyle = useSpring({
-    from: { width: '100%' },
-    to: { width: '0%' },
-    config: { duration: removeAfterMs ?? undefined },
-  })
-
   return (
     <Popup>
       <StyledClose color={theme.text2} onClick={removeThisPopup} />
       {popupContent}
-      {removeAfterMs !== null ? <AnimatedFader style={faderStyle} /> : null}
+      {removeAfterMs !== null ? <Fader duration={removeAfterMs} /> : null}
     </Popup>
   )
 }
