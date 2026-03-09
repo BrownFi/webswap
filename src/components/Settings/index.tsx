@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from 'react'
+import React, { useCallback, useContext, useRef, useState } from 'react'
 import { X } from 'react-feather'
 import { Text } from 'rebass'
 import styled, { ThemeContext } from 'styled-components'
@@ -123,6 +123,15 @@ export function SettingsTab() {
 
   // show confirmation view before turning on
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
+
+  const handleConfirmExpertMode = useCallback(() => {
+    if (confirmText === 'confirm') {
+      toggleExpertMode()
+      setShowConfirmation(false)
+      setConfirmText('')
+    }
+  }, [confirmText, toggleExpertMode])
 
   useOnClickOutside(node, open ? toggle : undefined)
 
@@ -148,15 +157,29 @@ export function SettingsTab() {
               <Text fontWeight={600} fontSize={20}>
                 ONLY USE THIS MODE IF YOU KNOW WHAT YOU ARE DOING.
               </Text>
+              <input
+                type="text"
+                placeholder='Type "confirm" to enable expert mode'
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleConfirmExpertMode()}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #40444F',
+                  backgroundColor: '#1A1B1F',
+                  color: 'white',
+                  fontSize: '16px',
+                  outline: 'none',
+                }}
+                aria-label="Type confirm to enable expert mode"
+              />
               <ButtonError
                 error={true}
                 padding={'12px'}
-                onClick={() => {
-                  if (window.prompt(`Please type the word "confirm" to enable expert mode.`) === 'confirm') {
-                    toggleExpertMode()
-                    setShowConfirmation(false)
-                  }
-                }}
+                onClick={handleConfirmExpertMode}
+                disabled={confirmText !== 'confirm'}
               >
                 <Text fontSize={20} fontWeight={500} id="confirm-expert-mode">
                   Turn On Expert Mode

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { UNSUPPORTED_LIST_URLS } from 'constants/lists'
 import DEFAULT_TOKEN_LIST from './defaultTokens.json'
 import { ChainId, Token } from '@brownfi/sdk'

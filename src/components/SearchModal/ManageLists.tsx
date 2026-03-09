@@ -120,7 +120,7 @@ const ListRow = memo(function ListRow({ listUrl }: { listUrl: string }) {
   }, [dispatch, listUrl, pending])
 
   const handleRemoveList = useCallback(() => {
-    if (window.prompt(`Please confirm you would like to remove this list by typing REMOVE`) === `REMOVE`) {
+    if (window.confirm('Are you sure you want to remove this token list?')) {
       dispatch(removeList(listUrl))
     }
   }, [dispatch, listUrl])
@@ -150,7 +150,7 @@ const ListRow = memo(function ListRow({ listUrl }: { listUrl: string }) {
           <StyledListUrlText active={isActive} mr="6px">
             {list?.tokens?.length} tokens
           </StyledListUrlText>
-          <StyledMenu ref={node as any}>
+          <StyledMenu ref={node as React.RefObject<HTMLDivElement>}>
             <ButtonEmpty onClick={toggle} ref={setReferenceElement} padding="0">
               <Settings stroke={isActive ? theme.bg1 : theme.text1} size={12} />
             </ButtonEmpty>

@@ -49,7 +49,7 @@ function Updaters() {
   )
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root') as any)
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
   <StrictMode>
     <FixedGlobalStyle />

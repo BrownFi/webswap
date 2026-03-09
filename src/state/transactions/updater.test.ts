@@ -1,12 +1,23 @@
 import { shouldCheck } from './updater'
 
+const mockReceipt = {
+  to: '0x0',
+  from: '0x0',
+  contractAddress: '0x0',
+  transactionIndex: 0,
+  blockHash: '0x0',
+  transactionHash: '0x0',
+  blockNumber: 1,
+  status: 1,
+}
+
 describe('transactions updater', () => {
   describe('shouldCheck', () => {
     it('returns true if no receipt and never checked', () => {
       expect(shouldCheck(10, { addedTime: 100 })).toEqual(true)
     })
     it('returns false if has receipt and never checked', () => {
-      expect(shouldCheck(10, { addedTime: 100, receipt: {} })).toEqual(false)
+      expect(shouldCheck(10, { addedTime: 100, receipt: mockReceipt })).toEqual(false)
     })
     it('returns true if has not been checked in 1 blocks', () => {
       expect(shouldCheck(10, { addedTime: new Date().getTime(), lastCheckedBlockNumber: 9 })).toEqual(true)

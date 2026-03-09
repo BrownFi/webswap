@@ -58,26 +58,9 @@ export function useApproveCallback(
 
   const approve = useCallback(async (): Promise<void> => {
     if (approvalState !== ApprovalState.NOT_APPROVED) {
-      console.error('approve was called unnecessarily')
       return
     }
-    if (!token) {
-      console.error('no token')
-      return
-    }
-
-    if (!tokenContract) {
-      console.error('tokenContract is null')
-      return
-    }
-
-    if (!amountToApprove) {
-      console.error('missing amount to approve')
-      return
-    }
-
-    if (!spender) {
-      console.error('no spender')
+    if (!token || !tokenContract || !amountToApprove || !spender) {
       return
     }
 
@@ -97,6 +80,12 @@ export function useApproveCallback(
           summary: 'Approve ' + getTokenSymbol(amountToApprove.currency, chainId),
           approval: { tokenAddress: token.address, spender: spender },
         })
+      })
+      .catch((error: Error) => {
+        if ((error as any)?.code !== 4001) {
+          console.error('Approval failed', error)
+        }
+        throw error
       })
   }, [approvalState, token, tokenContract, amountToApprove, spender, addTransaction])
 

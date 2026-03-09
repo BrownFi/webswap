@@ -1,7 +1,6 @@
 import * as defaultChains from 'viem/chains'
 
 import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { defineChain } from 'viem'
 
 const overrideChain = ({
   chain,
@@ -9,23 +8,19 @@ const overrideChain = ({
   fallbackRpcs,
 }: {
   chain: Chain
-  iconUrl?: any
+  iconUrl?: string
   fallbackRpcs: string[]
-}): Chain => {
-  // @ts-ignore
-  return defineChain({
-    ...chain,
-    rpcUrls: {
-      default: {
-        http: chain.rpcUrls.default.http.concat(fallbackRpcs),
-      },
+}): Chain => ({
+  ...chain,
+  rpcUrls: {
+    default: {
+      http: chain.rpcUrls.default.http.concat(fallbackRpcs),
     },
-    iconUrl,
-  })
-}
+  },
+  iconUrl,
+})
 
-// @ts-ignore
-const u2uMainnet: Chain = defineChain({
+const u2uMainnet: Chain = {
   id: 39,
   name: 'U2U Network',
   nativeCurrency: { decimals: 18, name: 'U2U', symbol: 'U2U' },
@@ -38,9 +33,9 @@ const u2uMainnet: Chain = defineChain({
     default: { name: 'U2U Scan', url: 'https://u2uscan.xyz' },
   },
   iconUrl: require('assets/images/u2u.jpg'),
-})
+}
 
-const viction: Chain = overrideChain({
+const viction = overrideChain({
   chain: defaultChains.viction,
   iconUrl: require('assets/images/viction.png'),
   fallbackRpcs: [
@@ -49,8 +44,7 @@ const viction: Chain = overrideChain({
   ],
 })
 
-// @ts-ignore
-const hyperEVM: Chain = defineChain({
+const hyperEVM: Chain = {
   id: 999,
   name: 'HyperEVM',
   nativeCurrency: { decimals: 18, name: 'HYPE', symbol: 'HYPE' },
@@ -63,14 +57,12 @@ const hyperEVM: Chain = defineChain({
     default: { name: 'HyperEVM Scan', url: 'https://hyperevmscan.io' },
   },
   iconUrl: require('assets/images/hyperevm.png'),
-})
+}
 
-// @ts-ignore
-// eslint-disable-next-line
-const sepolia = defineChain({
+const sepolia: Chain = {
   ...defaultChains.sepolia,
   iconUrl: require('assets/images/ethereum-logo.png'),
-})
+}
 
 const berachain = overrideChain({
   chain: defaultChains.berachain,
@@ -147,16 +139,16 @@ export const appEnv = process.env.REACT_APP_ENVIRONMENT as
   | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
-const mainChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, monad, viction, u2uMainnet]
-const betaChains: Chain[] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, monad, viction, u2uMainnet]
-const testChains: Chain[] = [berachain, sepolia]
+const mainChains: readonly [Chain, ...Chain[]] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, monad, viction, u2uMainnet]
+const betaChains: readonly [Chain, ...Chain[]] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, monad, viction, u2uMainnet]
+const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
-  chains: availableChains as any,
-  projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '3441811a50334d46eef9f2435cadee36',
+  chains: availableChains,
+  projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID ?? '',
   ssr: false,
 })

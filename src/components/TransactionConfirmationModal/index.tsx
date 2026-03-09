@@ -179,7 +179,7 @@ export function TransactionErrorContent({ message, onDismiss }: { message: strin
         </RowBetween>
         <div style={{ marginTop: 40 }}>
           <div className="flex justify-center mb-[20px]">
-            <img src={cancel} className="w-[100px]" />
+            <img src={cancel} className="w-[100px]" alt="Transaction failed" />
           </div>
           <p className="text-[32px] font-semibold text-[#FF3B6A] text-center mb-[20px]">Swap fail</p>
 

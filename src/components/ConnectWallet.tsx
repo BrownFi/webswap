@@ -7,9 +7,8 @@ const ConnectWallet = () => {
   const toggleWalletModal = useWalletModalToggle()
 
   const openConnectWallet = () => {
-    const connectBtn = document.querySelector('[data-testid="rk-connect-button"]')
+    const connectBtn = document.querySelector<HTMLElement>('[data-testid="rk-connect-button"]')
     if (connectBtn) {
-      // @ts-ignore
       connectBtn.click()
     } else {
       toggleWalletModal()

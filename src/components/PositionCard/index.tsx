@@ -227,9 +227,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                         </span>
                       </Text>
                       {enableBgt ? (
-                        <img src="https://furthermore.app/icons/bgt.svg" className="h-5 border-none" />
+                        <img src="https://furthermore.app/icons/bgt.svg" className="h-5 border-none" alt="BGT" />
                       ) : (
-                        <img src="https://lineascan.build/token/images/weth_32.png" className="h-5" />
+                        <img src="https://lineascan.build/token/images/weth_32.png" className="h-5" alt="WETH" />
                       )}
                     </div>
                   </MouseoverTooltip>

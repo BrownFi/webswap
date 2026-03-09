@@ -24,7 +24,7 @@ const CustomChainSelect = () => {
         style={{ border: '1px solid #FFFFFF20' }}
         onClick={openChainModal || (() => setOpen(true))}
       >
-        <img className="w-5 mr-2 rounded-full" src={chain.iconUrl as string} />
+        <img className="w-5 mr-2 rounded-full" src={chain.iconUrl as string} alt={chain.name} />
         <div className="hidden sm:block">{chain.name}</div>
       </ButtonDropdown>
 
@@ -61,6 +61,7 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           <button
             onClick={onClose}
             className="bg-white/15 text-white/60 font-black hover:text-white  transition p-1 w-8 rounded-full"
+            aria-label="Close network selector"
           >
             ✕
           </button>
