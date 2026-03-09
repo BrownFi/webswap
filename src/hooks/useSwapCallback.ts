@@ -77,5 +77,5 @@ export function useSwapCallback(
       },
       error: null,
     }
-  }, [trade, library, account, chainId, recipient, recipientAddressOrName, deadline, addTransaction])
+  }, [trade, library, account, chainId, recipient, recipientAddressOrName, deadline, addTransaction, allowedSlippage])
 }

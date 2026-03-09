@@ -23,6 +23,7 @@ export function useActiveWeb3React(): { library: Web3Provider; account?: string 
 
   const { search } = useLocation()
   const mockAccount = useMemo(() => {
+    if (process.env.NODE_ENV === 'production') return undefined
     const searchParams = new URLSearchParams(search)
     const account = searchParams.get('account')
     if (account && mockAccounts[account]) return mockAccounts[account]

@@ -32,20 +32,12 @@ async function fetchChunk(
   chunk: Call[],
   minBlockNumber: number,
 ): Promise<{ results: string[]; blockNumber: number }> {
-  let resultsBlockNumber, returnData
-  try {
-    ;[resultsBlockNumber, returnData] = await multicallContract.aggregate(
-      chunk.map((obj) => [obj.address, obj.callData]),
-    )
-  } catch (error) {
-    throw error
-  }
+  const [resultsBlockNumber, returnData] = await multicallContract.aggregate(
+    chunk.map((obj) => [obj.address, obj.callData]),
+  )
   if (resultsBlockNumber.toNumber() < minBlockNumber) {
     if (resultsBlockNumber.toNumber() - minBlockNumber < -100) {
-      console.error(`4. MISMATCH BLOCK NUMBER ${minBlockNumber} > ${resultsBlockNumber.toNumber()}`)
-      // setTimeout(() => {
-      //   location.reload()
-      // }, 200)
+      console.error(`Multicall block mismatch: expected >= ${minBlockNumber}, got ${resultsBlockNumber.toNumber()}`)
     }
     throw new RetryableError('Fetched for old block number')
   }

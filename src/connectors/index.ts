@@ -157,6 +157,6 @@ export const getDefaultChain = (index?: number): Chain => availableChains[index 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
   chains: availableChains as any,
-  projectId: '3441811a50334d46eef9f2435cadee36',
+  projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '3441811a50334d46eef9f2435cadee36',
   ssr: false,
 })

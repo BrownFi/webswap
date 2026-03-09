@@ -103,6 +103,8 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
   const [singleHopOnly] = useUserSingleHopOnly()
 
   useEffect(() => {
+    let stale = false
+
     const getTrade = async () => {
       setLoading(true)
       if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
@@ -111,14 +113,18 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
             maxHops: 1,
             maxNumResults: 1,
           }).catch((error) => {
-            setInsufficient(
-              error.message.includes('INSUFFICIENT') ||
-                error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
-                error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
-            )
+            if (!stale) {
+              setInsufficient(
+                error.message.includes('INSUFFICIENT') ||
+                  error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
+                  error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
+              )
+            }
           })
-          setTrade(bestTradeIn?.[0] ?? null)
-          setLoading(false)
+          if (!stale) {
+            setTrade(bestTradeIn?.[0] ?? null)
+            setLoading(false)
+          }
           return
         }
         const bestTradeIn = await Trade.bestTradeExactIn(
@@ -127,19 +133,25 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           currencyAmountIn,
           currencyOut,
         ).catch((error) => {
-          setInsufficient(
-            error.message.includes('INSUFFICIENT') ||
-              error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
-              error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
-          )
+          if (!stale) {
+            setInsufficient(
+              error.message.includes('INSUFFICIENT') ||
+                error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
+                error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
+            )
+          }
         })
-        setTrade(bestTradeIn?.[0] ?? null)
-        setLoading(false)
+        if (!stale) {
+          setTrade(bestTradeIn?.[0] ?? null)
+          setLoading(false)
+        }
         return
       }
 
-      setTrade(null)
-      setLoading(false)
+      if (!stale) {
+        setTrade(null)
+        setLoading(false)
+      }
     }
 
     const timeout = setTimeout(() => {
@@ -147,6 +159,7 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
     }, 300)
 
     return () => {
+      stale = true
       clearTimeout(timeout)
     }
   }, [allowedPairs?.length, currencyAmountIn?.raw.toString(), currencyOut?.name, singleHopOnly])
@@ -177,6 +190,8 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
   const [singleHopOnly] = useUserSingleHopOnly()
 
   useEffect(() => {
+    let stale = false
+
     const getTrade = async () => {
       setTrade(null)
       setLoading(true)
@@ -193,13 +208,18 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
               maxNumResults: 1,
             },
           ).catch((error) => {
-            setInsufficient(
-              error.message.includes('INSUFFICIENT') ||
-                error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
-                error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
-            )
+            if (!stale) {
+              setInsufficient(
+                error.message.includes('INSUFFICIENT') ||
+                  error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
+                  error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
+              )
+            }
           })
-          setTrade(bestTradeOut?.[0] ?? null)
+          if (!stale) {
+            setTrade(bestTradeOut?.[0] ?? null)
+            setLoading(false)
+          }
           return
         }
 
@@ -209,17 +229,23 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           currencyIn,
           currencyAmountOut,
         ).catch((error) => {
-          setInsufficient(
-            error.message.includes('INSUFFICIENT') ||
-              error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
-              error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
-          )
+          if (!stale) {
+            setInsufficient(
+              error.message.includes('INSUFFICIENT') ||
+                error.message.includes('MAX_90_PERCENT_OF_RESERVE') ||
+                error.message.includes('MAX_80_PERCENT_OF_RESERVE'),
+            )
+          }
         })
-        setTrade(bestTradeOut?.[0] ?? null)
-        setLoading(false)
+        if (!stale) {
+          setTrade(bestTradeOut?.[0] ?? null)
+          setLoading(false)
+        }
         return
       }
-      setLoading(false)
+      if (!stale) {
+        setLoading(false)
+      }
     }
 
     const timeout = setTimeout(() => {
@@ -227,6 +253,7 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
     }, 300)
 
     return () => {
+      stale = true
       clearTimeout(timeout)
     }
   }, [currencyIn?.name, currencyAmountOut?.raw?.toString(), allowedPairs?.length, singleHopOnly])

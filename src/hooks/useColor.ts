@@ -6,7 +6,11 @@ import { Token } from '@brownfi/sdk'
 import uriToHttp from 'utils/uriToHttp'
 
 async function getColorFromToken(token: Token): Promise<string | null> {
-  const path = token ? '' : ''
+  const logoURI = (token as any).logoURI
+  if (!logoURI) return null
+
+  const path = uriToHttp(logoURI)[0]
+  if (!path) return null
 
   return Vibrant.from(path)
     .getPalette()

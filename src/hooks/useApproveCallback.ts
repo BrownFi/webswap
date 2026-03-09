@@ -98,9 +98,6 @@ export function useApproveCallback(
           approval: { tokenAddress: token.address, spender: spender },
         })
       })
-      .catch((error: Error) => {
-        throw error
-      })
   }, [approvalState, token, tokenContract, amountToApprove, spender, addTransaction])
 
   return [approvalState, approve]
