@@ -1,5 +1,5 @@
 import { darken } from 'polished'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 
 import styled from 'styled-components'
 
@@ -159,6 +159,10 @@ export default function Header() {
   const { account } = useActiveWeb3React()
   const { isConnected } = useAccount()
   const showCustomAccountDisplay = !!account && !isConnected
+  const location = useLocation()
+  const isPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) =>
+    location.pathname.startsWith(p),
+  )
 
   return (
     <HeaderFrame>
@@ -188,16 +192,8 @@ export default function Header() {
               <StyledNavLink
                 id={`pool-nav-link`}
                 to={'/pool'}
-                className={({ isActive }) => {
-                  const pathname = window.location.pathname
-                  const active =
-                    isActive ||
-                    pathname.startsWith('/add') ||
-                    pathname.startsWith('/remove') ||
-                    pathname.startsWith('/create') ||
-                    pathname.startsWith('/find')
-                  return active ? 'active' : ''
-                }}
+                end
+                className={isPoolActive ? 'active' : ''}
               >
                 Pool
               </StyledNavLink>

@@ -22,7 +22,7 @@ export default function Updater(): null {
 
     setState({ chainId, blockNumber: null })
 
-    const currentChainId = parseInt((library.provider as any).chainId) || chainId
+    const currentChainId = chainId
 
     const updateBlockNumber = (blockNumber: number) => {
       const chainId = currentChainId

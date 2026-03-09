@@ -1,4 +1,3 @@
-import React from 'react'
 import styled from 'styled-components'
 import { darken } from 'polished'
 import { useTranslation } from 'react-i18next'
@@ -60,18 +59,10 @@ export function SwapPoolTabs({ active }: { active: 'swap' | 'pool' }) {
   const { t } = useTranslation()
   return (
     <Tabs style={{ marginBottom: '20px', display: 'none' }}>
-      <StyledNavLink
-        id={`swap-nav-link`}
-        to={'/swap'}
-        className={({ isActive }) => (active === 'swap' || isActive ? 'active' : '')}
-      >
+      <StyledNavLink id={`swap-nav-link`} to={'/swap'} end className={active === 'swap' ? 'active' : ''}>
         {t('swap')}
       </StyledNavLink>
-      <StyledNavLink
-        id={`pool-nav-link`}
-        to={'/pool'}
-        className={({ isActive }) => (active === 'pool' || isActive ? 'active' : '')}
-      >
+      <StyledNavLink id={`pool-nav-link`} to={'/pool'} end className={active === 'pool' ? 'active' : ''}>
         {t('pool')}
       </StyledNavLink>
     </Tabs>
