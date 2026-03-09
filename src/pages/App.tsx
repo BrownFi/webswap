@@ -5,6 +5,7 @@ import 'theme/index.css'
 import styled from 'styled-components'
 import GoogleAnalyticsReporter from 'components/analytics/GoogleAnalyticsReporter'
 import Popups from 'components/Popups'
+import { RouteErrorBoundary } from 'components/RouteErrorBoundary'
 
 import DarkModeQueryParamReader from 'theme/DarkModeQueryParamReader'
 import {
@@ -55,19 +56,19 @@ export default function App() {
         <BodyWrapper>
           <Popups />
           <Routes>
-            <Route path="/swap" element={<Swap />} />
+            <Route path="/swap" element={<RouteErrorBoundary><Swap /></RouteErrorBoundary>} />
             <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
             <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
             <Route path="/send" element={<RedirectPathToSwapOnly />} />
-            <Route path="/find" element={<PoolFinder />} />
-            <Route path="/pool" element={<Pool />} />
-            <Route path="/campaign/contest-1" element={<Leaderboard />} />
+            <Route path="/find" element={<RouteErrorBoundary fallbackPath="/pool"><PoolFinder /></RouteErrorBoundary>} />
+            <Route path="/pool" element={<RouteErrorBoundary><Pool /></RouteErrorBoundary>} />
+            <Route path="/campaign/contest-1" element={<RouteErrorBoundary><Leaderboard /></RouteErrorBoundary>} />
             <Route path="/create" element={<RedirectToAddLiquidity />} />
-            <Route path="/add" element={<AddLiquidity />} />
+            <Route path="/add" element={<RouteErrorBoundary fallbackPath="/pool"><AddLiquidity /></RouteErrorBoundary>} />
             <Route path="/add/:currencyIdA" element={<RedirectOldAddLiquidityPathStructure />} />
-            <Route path="/add/:currencyIdA/:currencyIdB" element={<RedirectDuplicateTokenIds />} />
+            <Route path="/add/:currencyIdA/:currencyIdB" element={<RouteErrorBoundary fallbackPath="/pool"><RedirectDuplicateTokenIds /></RouteErrorBoundary>} />
             <Route path="/remove/:tokens" element={<RedirectOldRemoveLiquidityPathStructure />} />
-            <Route path="/remove/:currencyIdA/:currencyIdB" element={<RemoveLiquidity />} />
+            <Route path="/remove/:currencyIdA/:currencyIdB" element={<RouteErrorBoundary fallbackPath="/pool"><RemoveLiquidity /></RouteErrorBoundary>} />
             <Route path="*" element={<RedirectPathToSwapOnly />} />
           </Routes>
 
