@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTotalSupply } from 'data/TotalSupply'
 import { useActiveWeb3React } from 'hooks'
 import { useTradingFee } from 'hooks/useTradingFee'
-import moment from 'moment'
+import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { apiV1Service, apiV2Service } from 'services'
 import { graphqlFetcher } from 'utils/graphql'
@@ -102,7 +102,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
   const shouldUseIndexer =
     useMemo(() => {
       if (pairStats?.updatedAt) {
-        const diffMinutes = moment().diff(moment.unix(pairStats.updatedAt), 'minutes')
+        const diffMinutes = dayjs().diff(dayjs.unix(pairStats.updatedAt), 'minute')
         return diffMinutes < 60 * 24 * 30
       }
       return !!pairStats

@@ -4,7 +4,7 @@ import { AutoColumn } from 'components/Column'
 import { Modal } from 'components/Modal'
 import QuestionHelper from 'components/QuestionHelper'
 import { isMainnet } from 'connectors'
-import moment from 'moment'
+import dayjs from 'dayjs'
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
 import { Flex, Text } from 'rebass'
@@ -90,7 +90,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
         .map((item) => {
           return {
             ...item,
-            date: moment.unix(item.dayStartUnix).format('DD/MM'),
+            date: dayjs.unix(item.dayStartUnix).format('DD/MM'),
             lpPrice: iskHYPEUSDT ? item.lpPrice / 1e9 : item.lpPrice,
             bnhPrice: iskHYPEUSDT ? item.bnhPrice / 1e9 : item.bnhPrice,
             netPnL: item.tvl - (item.bnhPrice * item.tvl) / item.lpPrice,
@@ -99,10 +99,10 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
         })
         .filter((item) => {
           if (isHYPEUSDT) {
-            return moment.unix(item.dayStartUnix) > moment('2025-08-09')
+            return dayjs.unix(item.dayStartUnix).isAfter(dayjs('2025-08-09'))
           }
           if (iskHYPEUSDT) {
-            return moment.unix(item.dayStartUnix) > moment('2025-11-22')
+            return dayjs.unix(item.dayStartUnix).isAfter(dayjs('2025-11-22'))
           }
           return true
         }) ?? []

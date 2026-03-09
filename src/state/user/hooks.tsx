@@ -2,7 +2,6 @@ import { BASES_TO_TRACK_LIQUIDITY_FOR, ChainId, Pair, PINNED_PAIRS, Token } from
 import { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 
-import { flatMap } from 'lodash'
 
 import { useActiveWeb3React } from 'hooks'
 import { useAllTokens } from 'hooks/Tokens'
@@ -225,7 +224,7 @@ export function useGetListPairs(
   // pairs for every token against every base
   const generatedPairs: [Token, Token][] = useMemo(() => {
     if (!chainId) return []
-    return flatMap(Object.keys(tokens), (tokenAddress) => {
+    return Object.keys(tokens).flatMap((tokenAddress) => {
       const token = tokens[tokenAddress]
       // for each token on the current chain,
       return (

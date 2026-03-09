@@ -1,5 +1,4 @@
 import { Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
-import { flatMap } from 'lodash'
 import { useEffect, useMemo, useState } from 'react'
 
 import { BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES, ADDITIONAL_BASES } from 'constants/common'
@@ -28,7 +27,7 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
   }, [chainId, tokenA, tokenB])
 
   const basePairs: [Token, Token][] = useMemo(
-    () => flatMap(bases, (base): [Token, Token][] => bases.map((otherBase) => [base, otherBase])),
+    () => bases.flatMap((base): [Token, Token][] => bases.map((otherBase) => [base, otherBase])),
     [bases],
   )
 

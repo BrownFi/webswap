@@ -1,90 +1,11 @@
-import { useState, useLayoutEffect } from 'react'
-import { shade } from 'polished'
-import Vibrant from 'node-vibrant'
-import { hex } from 'wcag-contrast'
 import { Token } from '@brownfi/sdk'
-import uriToHttp from 'utils/uriToHttp'
 
-async function getColorFromToken(token: Token): Promise<string | null> {
-  const logoURI = (token as any).logoURI
-  if (!logoURI) return null
+const DEFAULT_COLOR = '#2172E5'
 
-  const path = uriToHttp(logoURI)[0]
-  if (!path) return null
-
-  return Vibrant.from(path)
-    .getPalette()
-    .then((palette) => {
-      if (palette?.Vibrant) {
-        let detectedHex = palette.Vibrant.hex
-        let AAscore = hex(detectedHex, '#FFF')
-        while (AAscore < 3) {
-          detectedHex = shade(0.005, detectedHex)
-          AAscore = hex(detectedHex, '#FFF')
-        }
-        return detectedHex
-      }
-      return null
-    })
-    .catch(() => null)
+export function useColor(_token?: Token) {
+  return DEFAULT_COLOR
 }
 
-async function getColorFromUriPath(uri: string): Promise<string | null> {
-  const formattedPath = uriToHttp(uri)[0]
-
-  return Vibrant.from(formattedPath)
-    .getPalette()
-    .then((palette) => {
-      if (palette?.Vibrant) {
-        return palette.Vibrant.hex
-      }
-      return null
-    })
-    .catch(() => null)
-}
-
-export function useColor(token?: Token) {
-  const [color, setColor] = useState('#2172E5')
-
-  useLayoutEffect(() => {
-    let stale = false
-
-    if (token) {
-      getColorFromToken(token).then((tokenColor) => {
-        if (!stale && tokenColor !== null) {
-          setColor(tokenColor)
-        }
-      })
-    }
-
-    return () => {
-      stale = true
-      setColor('#2172E5')
-    }
-  }, [token])
-
-  return color
-}
-
-export function useListColor(listImageUri?: string) {
-  const [color, setColor] = useState('#2172E5')
-
-  useLayoutEffect(() => {
-    let stale = false
-
-    if (listImageUri) {
-      getColorFromUriPath(listImageUri).then((color) => {
-        if (!stale && color !== null) {
-          setColor(color)
-        }
-      })
-    }
-
-    return () => {
-      stale = true
-      setColor('#2172E5')
-    }
-  }, [listImageUri])
-
-  return color
+export function useListColor(_listImageUri?: string) {
+  return DEFAULT_COLOR
 }
