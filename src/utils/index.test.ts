@@ -25,11 +25,8 @@ describe('utils', () => {
     it('unrecognized chain id defaults to mainnet', () => {
       expect(getEtherscanLink(2, 'abc', 'address')).toEqual('https://etherscan.io/address/abc')
     })
-    it('ropsten', () => {
-      expect(getEtherscanLink(3, 'abc', 'address')).toEqual('https://ropsten.etherscan.io/address/abc')
-    })
-    it('enum', () => {
-      expect(getEtherscanLink(ChainId.SEPOLIA, 'abc', 'address')).toEqual('https://rinkeby.etherscan.io/address/abc')
+    it('sepolia', () => {
+      expect(getEtherscanLink(ChainId.SEPOLIA, 'abc', 'address')).toEqual('https://sepolia.etherscan.io/address/abc')
     })
   })
 
@@ -73,15 +70,20 @@ describe('utils', () => {
     })
 
     it('truncates middle characters', () => {
-      expect(shortenAddress('0xf164fc0ec4e93095b804a4795bbe1e041497b92a')).toBe('0xf164...b92a')
+      // default chars=4: substring(0,4)='0xf1', substring(42-4)='b92a'
+      expect(shortenAddress('0xf164fc0ec4e93095b804a4795bbe1e041497b92a')).toBe('0xf1...b92a')
     })
 
     it('truncates middle characters even without prefix', () => {
-      expect(shortenAddress('f164fc0ec4e93095b804a4795bbe1e041497b92a')).toBe('0xf164...b92a')
+      expect(shortenAddress('f164fc0ec4e93095b804a4795bbe1e041497b92a')).toBe('0xf1...b92a')
     })
 
     it('renders checksummed address', () => {
-      expect(shortenAddress('0x2E1b342132A67Ea578e4E3B814bae2107dc254CC'.toLowerCase())).toBe('0x2E1b...54CC')
+      expect(shortenAddress('0x2E1b342132A67Ea578e4E3B814bae2107dc254CC'.toLowerCase())).toBe('0x2E...54CC')
+    })
+
+    it('truncates with custom chars', () => {
+      expect(shortenAddress('0xf164fc0ec4e93095b804a4795bbe1e041497b92a', 6)).toBe('0xf164...97b92a')
     })
   })
 

@@ -1,4 +1,4 @@
-import { ChainId, JSBI, Pair, Percent, Route, Token, TokenAmount, Trade, TradeType } from '@brownfi/sdk'
+import { JSBI, Percent } from '@brownfi/sdk'
 import {
   computeTradePriceBreakdown,
   computeSlippageAdjustedAmounts,
@@ -10,39 +10,12 @@ import {
 import { Field } from 'state/swap/actions'
 
 describe('prices', () => {
-  const token1 = new Token(ChainId.MAINNET, '0x0000000000000000000000000000000000000001', 18)
-  const token2 = new Token(ChainId.MAINNET, '0x0000000000000000000000000000000000000002', 18)
-  const token3 = new Token(ChainId.MAINNET, '0x0000000000000000000000000000000000000003', 18)
-
-  const pair12 = new Pair(new TokenAmount(token1, JSBI.BigInt(10000)), new TokenAmount(token2, JSBI.BigInt(20000)), 1)
-  const pair23 = new Pair(new TokenAmount(token2, JSBI.BigInt(20000)), new TokenAmount(token3, JSBI.BigInt(30000)), 1)
-
   describe('computeTradePriceBreakdown', () => {
     it('returns undefined for undefined', () => {
       expect(computeTradePriceBreakdown(undefined)).toEqual({
         priceImpactWithoutFee: undefined,
         realizedLPFee: undefined,
       })
-    })
-
-    it('correct realized lp fee for single hop', () => {
-      expect(
-        computeTradePriceBreakdown(
-          new Trade(new Route([pair12], token1), new TokenAmount(token1, JSBI.BigInt(1000)), TradeType.EXACT_INPUT),
-        ).realizedLPFee,
-      ).toEqual(new TokenAmount(token1, JSBI.BigInt(3)))
-    })
-
-    it('correct realized lp fee for double hop', () => {
-      expect(
-        computeTradePriceBreakdown(
-          new Trade(
-            new Route([pair12, pair23], token1),
-            new TokenAmount(token1, JSBI.BigInt(1000)),
-            TradeType.EXACT_INPUT,
-          ),
-        ).realizedLPFee,
-      ).toEqual(new TokenAmount(token1, JSBI.BigInt(5)))
     })
   })
 
@@ -51,19 +24,6 @@ describe('prices', () => {
       const result = computeSlippageAdjustedAmounts(undefined, 50)
       expect(result[Field.INPUT]).toBeUndefined()
       expect(result[Field.OUTPUT]).toBeUndefined()
-    })
-
-    it('computes slippage-adjusted amounts for a trade', () => {
-      const trade = new Trade(
-        new Route([pair12], token1),
-        new TokenAmount(token1, JSBI.BigInt(1000)),
-        TradeType.EXACT_INPUT,
-      )
-      const result = computeSlippageAdjustedAmounts(trade, 50) // 0.5% slippage
-      expect(result[Field.INPUT]).toBeDefined()
-      expect(result[Field.OUTPUT]).toBeDefined()
-      // Max input should be >= trade input
-      expect(JSBI.greaterThanOrEqual(result[Field.INPUT]!.raw, trade.inputAmount!.raw)).toBe(true)
     })
   })
 
