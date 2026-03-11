@@ -63,11 +63,10 @@ export default function Swap() {
 
   // dismiss warning if all imported tokens are in active lists
   const defaultTokens = useAllTokens()
-  const importTokensNotInDefault =
-    urlLoadedTokens &&
-    urlLoadedTokens.filter((token: Token) => {
-      return !Boolean(token.address in defaultTokens)
-    })
+  const importTokensNotInDefault = useMemo(
+    () => urlLoadedTokens.filter((token: Token) => !(token.address in defaultTokens)),
+    [urlLoadedTokens, defaultTokens],
+  )
 
   const theme = useContext(ThemeContext)
   const { createToast } = useToast()
@@ -113,10 +112,10 @@ export default function Swap() {
   const showWrap: boolean = wrapType !== WrapType.NOT_APPLICABLE
   const { address: recipientAddress } = useENSAddress(recipient)
   const toggledVersion = useToggledVersion()
-  const tradesByVersion = {
+  const tradesByVersion = useMemo(() => ({
     [Version.v1]: v1Trade,
     [Version.v2]: v2Trade,
-  }
+  }), [v1Trade, v2Trade])
   const trade = showWrap ? undefined : tradesByVersion[toggledVersion]
   const defaultTrade = showWrap ? undefined : tradesByVersion[DEFAULT_VERSION]
 
@@ -170,12 +169,12 @@ export default function Swap() {
     txHash: undefined,
   })
 
-  const formattedAmounts = {
+  const formattedAmounts = useMemo(() => ({
     [independentField]: typedValue,
     [dependentField]: showWrap
       ? parsedAmounts[independentField]?.toExact() ?? ''
       : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
-  }
+  }), [independentField, dependentField, typedValue, showWrap, parsedAmounts])
 
   const route = trade?.route
   const userHasSpecifiedInputOutput = Boolean(

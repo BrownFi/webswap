@@ -1,5 +1,5 @@
 import { ChainId, Currency, Field, getPythPrice, getPythPricePair, Pair, Token } from '@brownfi/sdk'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { PairStats } from 'components/PositionCard/usePoolStats'
 import { useState } from 'react'
 import { apiV2Service } from 'services'
@@ -37,9 +37,10 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
           return [0, 0]
         }),
     enabled: version === 2 && enableFetchDetail && !disabled,
-    refetchInterval: 1 * 60 * 1000,
+    refetchInterval: 60_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData,
   })
 
   const tokenPricesV2 = usePythPricesV2({
