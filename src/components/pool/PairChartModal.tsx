@@ -5,7 +5,7 @@ import { Modal } from 'components/Modal'
 import QuestionHelper from 'components/QuestionHelper'
 import { isMainnet } from 'connectors'
 import dayjs from 'dayjs'
-import { ReactNode, useEffect, useMemo, useState } from 'react'
+import { memo, ReactNode, useEffect, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
 import { Flex, Text } from 'rebass'
 import {
@@ -20,7 +20,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { graphqlFetcher } from 'utils/graphql'
 
@@ -52,13 +52,13 @@ type Props = {
   enableAdvancedZoom?: boolean
 }
 
-const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
+const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
   const [isOpen, setOpen] = useState(false)
   const [zoomRange, setZoomRange] = useState<{ startIndex: number; endIndex: number } | null>(null)
   const [selection, setSelection] = useState<{ startIndex: number; endIndex: number } | null>(null)
   const showExtendedMetrics = !isMainnet
 
-  const { data } = useQuery<{
+  const { data, isPending } = useQuery<{
     pairDayDatas: {
       dayStartUnix: number
       tvl: number
@@ -78,7 +78,8 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
       }),
     enabled: isOpen,
     refetchInterval: 60_000,
-    staleTime: 0,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
   })
 
   const isHYPEUSDT = pair.liquidityToken.address === '0x122524E1c403739bd33Ec54d606DDc287117B0A6' // HYPE/USD₮0
@@ -107,7 +108,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
           return true
         }) ?? []
     )
-  }, [data, isHYPEUSDT])
+  }, [data, isHYPEUSDT, iskHYPEUSDT])
 
   const defaultRange = useMemo(() => {
     if (!chartData.length) {
@@ -198,7 +199,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
     return fallback === -1 ? null : fallback
   }
 
-  const getIndexFromState = (chartState: any) => {
+  const getIndexFromState = (chartState: Record<string, any> | null) => {
     if (!enableAdvancedZoom) {
       return null
     }
@@ -259,7 +260,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
     return null
   }
 
-  const handleMouseDown = (state: any) => {
+  const handleMouseDown = (state: Record<string, any>) => {
     if (!enableAdvancedZoom) {
       return
     }
@@ -271,7 +272,7 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
     setSelection({ startIndex: idx, endIndex: idx })
   }
 
-  const handleMouseMove = (state: any) => {
+  const handleMouseMove = (state: Record<string, any>) => {
     if (!enableAdvancedZoom) {
       return
     }
@@ -459,14 +460,14 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                   />
                   <Tooltip content={<CustomTooltip showExtendedMetrics={showExtendedMetrics} />} />
                   <Legend content={<CustomLegend showExtendedMetrics={showExtendedMetrics} />} />
-                  <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" {...lineDotConfig} />
-                  <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" {...lineDotConfig} />
+                  <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" isAnimationActive={false} {...lineDotConfig} />
+                  <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" isAnimationActive={false} {...lineDotConfig} />
                   {showExtendedMetrics && (
-                    <Line type="monotone" dataKey="formattedTvl" stroke="#DA70D6" yAxisId="right" {...lineDotConfig} />
+                    <Line type="monotone" dataKey="formattedTvl" stroke="#DA70D6" yAxisId="right" isAnimationActive={false} {...lineDotConfig} />
                   )}
-                  <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" />
+                  <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" isAnimationActive={false} />
                   {showExtendedMetrics && (
-                    <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" {...lineDotConfig} />
+                    <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" isAnimationActive={false} {...lineDotConfig} />
                   )}
                   {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
                     <ReferenceArea
@@ -484,7 +485,14 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
                 </ComposedChart>
               </ResponsiveContainer>
 
-              {data?.pairDayDatas.length === 0 && (
+              {isPending && (
+                <div className="absolute inset-0 flex justify-center items-center">
+                  <Text fontSize={18} color="#FFFA" fontFamily={'Russo One'}>
+                    Loading...
+                  </Text>
+                </div>
+              )}
+              {!isPending && data?.pairDayDatas.length === 0 && (
                 <div className="absolute inset-0 flex justify-center items-center">
                   <Text fontSize={18} color="#FFFA" fontFamily={'Russo One'}>
                     No Data
@@ -499,15 +507,34 @@ const PairChartModal = ({ pair, name, enableAdvancedZoom }: Props) => {
   )
 }
 
-const CustomLegend = ({ payload, onClick, showExtendedMetrics }: any) => {
+const PairChartModal = memo(PairChartModalInner, (prev, next) => {
+  return prev.pair.liquidityToken.address === next.pair.liquidityToken.address
+    && prev.pair.chainId === next.pair.chainId
+    && prev.enableAdvancedZoom === next.enableAdvancedZoom
+})
+
+interface LegendItem {
+  value: string
+  color: string
+}
+
+const CustomLegend = ({
+  payload,
+  onClick,
+  showExtendedMetrics,
+}: {
+  payload?: LegendItem[]
+  onClick?: (item: LegendItem) => void
+  showExtendedMetrics: boolean
+}) => {
   const allowedKeys = showExtendedMetrics
     ? ['lpPrice', 'bnhPrice', 'netPnL', 'formattedTvl', 'totalVolume']
     : ['lpPrice', 'bnhPrice', 'totalVolume']
-  const items = (payload ?? []).filter((it: any) => allowedKeys.includes(it.value))
+  const items = (payload ?? []).filter((it) => allowedKeys.includes(it.value))
   return (
     <div className="flex items-center justify-center gap-4">
-      {items.map((it: any) => (
-        <div className="flex gap-1.5 items-center" key={String(it.value)} onClick={() => onClick?.(it)}>
+      {items.map((it) => (
+        <div className="flex gap-1.5 items-center" key={it.value} onClick={() => onClick?.(it)}>
           <span
             style={{
               width: 14,
@@ -536,12 +563,27 @@ const CustomLegend = ({ payload, onClick, showExtendedMetrics }: any) => {
   )
 }
 
-const CustomTooltip = ({ active, payload, label, showExtendedMetrics }: any) => {
+interface TooltipPayloadItem {
+  dataKey: string
+  value: number
+}
+
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  showExtendedMetrics,
+}: {
+  active?: boolean
+  payload?: TooltipPayloadItem[]
+  label?: string
+  showExtendedMetrics: boolean
+}) => {
   if (!active || !payload || !payload.length) {
     return null
   }
 
-  const byKey = Object.fromEntries(payload.map((item: any) => [item.dataKey, item.value]))
+  const byKey = Object.fromEntries(payload.map((item) => [item.dataKey, item.value]))
   const lpPrice = byKey['lpPrice'] ?? 0
   const hodlPrice = byKey['bnhPrice'] ?? 0
   const tvl = byKey['formattedTvl'] ?? 0

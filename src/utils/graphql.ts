@@ -24,7 +24,7 @@ export const graphqlFetcher = ({
       },
       {
         withCredentials: true,
-        timeout: 2_000,
+        timeout: 10_000,
       },
     )
     .then((res) => res.data.data)
