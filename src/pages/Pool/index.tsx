@@ -113,37 +113,41 @@ export default function Pool() {
       }),
     enabled: enableGraphQL,
     refetchInterval: 60_000,
-    staleTime: 0,
+    staleTime: 60_000,
   })
 
   const sortedPairs = (data?.pairs ?? []).slice().sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
 
-  // Filter pairs using GraphQL
-  const filteredPairs = sortedPairs.filter((pair) => {
-    if (isMainnet) {
-      if (
+  const blocklist = useMemo(
+    () =>
+      new Set(
         [
           '0xFC5b86437A50e9B4ae0f20Ef9B50f8D79B053121', // WBERA/LBGT
           '0x5E9B2Cd773d8283B578Df77754DFcC2894e36b4D', // LBGT/HONEY
           '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT Linea
           '0x6b3987abbf550c4114918F78267F728d85A65dfd', // USDC/USDT Base
           '0xD4bAA274885F86717d70C1d5382F32499b11DE17', // AUSD/USDC Monad
-        ]
-          .map((a) => a.toLowerCase())
-          .includes(pair.id.toLowerCase())
-      ) {
+        ].map((a) => a.toLowerCase()),
+      ),
+    [],
+  )
+
+  const allowedTokenAddresses = useMemo(() => {
+    const wethAddress = WETH[chainId]?.address.toLowerCase()
+    const set = new Set(allTokens.map((token) => token.address.toLowerCase()))
+    if (wethAddress) set.add(wethAddress)
+    return set
+  }, [allTokens, chainId])
+
+  // Filter pairs using GraphQL
+  const filteredPairs = sortedPairs.filter((pair) => {
+    if (isMainnet) {
+      if (blocklist.has(pair.id.toLowerCase())) {
         return false
       }
-
-      const [token0Address, token1Address, wethAddress] = [
-        pair.token0?.id.toLowerCase(),
-        pair.token1?.id.toLowerCase(),
-        WETH[chainId]?.address.toLowerCase(),
-      ]
-      const allTokensAddress = allTokens.map((token) => token.address.toLowerCase()).concat(wethAddress)
-      const isValidToken0 = allTokensAddress.includes(token0Address)
-      const isValidToken1 = allTokensAddress.includes(token1Address)
-      return isValidToken0 || isValidToken1
+      const token0Address = pair.token0?.id.toLowerCase()
+      const token1Address = pair.token1?.id.toLowerCase()
+      return allowedTokenAddresses.has(token0Address) || allowedTokenAddresses.has(token1Address)
     }
     return true
   })

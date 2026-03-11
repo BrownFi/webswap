@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from 'axios'
 const client = axios.create({
   baseURL: process.env.REACT_APP_API_V2_URL,
   withCredentials: true,
-  timeout: 2_000,
+  timeout: 10_000,
 })
 
 type PoolPrices = {

@@ -96,7 +96,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       }),
     enabled: !!enableFetchDetail && !!account && !!pair?.chainId && !!pairStats,
     refetchInterval: 60_000,
-    staleTime: 0,
+    staleTime: 60_000,
   })
 
   const shouldUseIndexer =

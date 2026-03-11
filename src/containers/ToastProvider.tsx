@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
 import { AlertCircle, CheckCircle } from 'react-feather'
 
 type ToastType = 'success' | 'error'
@@ -71,7 +71,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [])
 
   return (
-    <ToastContext.Provider value={{ createToast }}>
+    <ToastContext.Provider value={useMemo(() => ({ createToast }), [createToast])}>
       {children}
       <div className="fixed top-20 right-8 space-y-2 z-50">
         {toasts.map((toast) => (
