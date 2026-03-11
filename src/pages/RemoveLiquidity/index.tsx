@@ -143,7 +143,7 @@ export default function RemoveLiquidity() {
         allowedSlippage,
       }),
     enabled: isZapRouteAvailable,
-    refetchInterval: 10_000,
+    refetchInterval: 30_000,
   })
 
   const approvalSpender = useMemo(() => {

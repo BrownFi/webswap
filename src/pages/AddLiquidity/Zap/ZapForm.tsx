@@ -142,7 +142,7 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
         inputs: routeInputs,
       }),
     enabled: isRouteAvailable,
-    refetchInterval: 10_000,
+    refetchInterval: 30_000,
   })
 
   const zapError = useMemo(() => {
