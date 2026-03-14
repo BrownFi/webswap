@@ -4,9 +4,18 @@ import { darken, lighten } from 'polished'
 
 import { RowBetween } from 'components/Row'
 import { ChevronDown } from 'react-feather'
-import { Button as RebassButton, ButtonProps } from 'rebass/styled-components'
 
-const Base = styled(RebassButton)<{
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  padding?: string
+  width?: string
+  borderRadius?: string
+  altDisabledStyle?: boolean
+  as?: React.ElementType
+  to?: string
+  [key: string]: any
+}
+
+const Base = styled.button<{
   padding?: string
   width?: string
   borderRadius?: string

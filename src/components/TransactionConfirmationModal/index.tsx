@@ -111,7 +111,7 @@ function TransactionSubmittedContent({
             </ExternalLink>
           )}
           {currencyToAdd && window?.ethereum?.isMetaMask && (
-            <ButtonPrimary mt="12px" padding="6px 12px" width="100%" onClick={addToken}>
+            <ButtonPrimary padding="6px 12px" width="100%" style={{ marginTop: '12px' }} onClick={addToken}>
               {!success ? (
                 <RowFixed>
                   Add {getTokenSymbol(currencyToAdd, chainId)} to Metamask <StyledLogo src={MetaMaskLogo} />

@@ -495,7 +495,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               </>
             )}
 
-            <RowBetween marginTop="10px">
+            <RowBetween style={{ marginTop: '10px' }}>
               <ButtonPrimary
                 padding="8px"
                 as={Link}

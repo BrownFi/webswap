@@ -2,6 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   Theme CSS Custom Properties
+   Dark mode (default) / Light mode
+   Toggled via class="dark" on <html>
+   ============================================ */
+
+/* Light mode (default when no .dark class) */
+:root {
+  --color-text1: #000000;
+  --color-text2: #565A69;
+  --color-text3: #888D9B;
+  --color-text4: #C3C5CB;
+  --color-text5: #EDEEF2;
+
+  --color-bg1: #3F3D44;
+  --color-bg2: #F7F8FA;
+  --color-bg3: #EDEEF2;
+  --color-bg4: #CED0D9;
+  --color-bg5: #888D9B;
+
+  --color-modalBG: rgba(0, 0, 0, 0.3);
+  --color-advancedBG: rgba(255, 255, 255, 0.6);
+
+  --color-primary1: #773030;
+  --color-primary2: #FF8CC3;
+  --color-primary3: #FF99C9;
+  --color-primary4: #F6DDE8;
+  --color-primary5: #FDEAF1;
+
+  --color-primaryText1: #ff007a;
+
+  --color-secondary1: #ff007a;
+  --color-secondary2: #F6DDE8;
+  --color-secondary3: #FDEAF1;
+
+  --color-shadow1: #2F80ED;
+}
+
+/* Dark mode */
+.dark {
+  --color-text1: #FFFFFF;
+  --color-text2: #C3C5CB;
+  --color-text3: #6C7284;
+  --color-text4: #565A69;
+  --color-text5: #2C2F36;
+
+  --color-bg1: #3F3D44;
+  --color-bg2: #2C2F36;
+  --color-bg3: #40444F;
+  --color-bg4: #565A69;
+  --color-bg5: #6C7284;
+
+  --color-modalBG: rgba(0, 0, 0, 0.425);
+  --color-advancedBG: rgba(0, 0, 0, 0.1);
+
+  --color-primary1: #773030;
+  --color-primary2: #3680E7;
+  --color-primary3: #4D8FEA;
+  --color-primary4: #376bad70;
+  --color-primary5: #153d6f70;
+
+  --color-primaryText1: #6da8ff;
+
+  --color-secondary1: #2172E5;
+  --color-secondary2: #17000b26;
+  --color-secondary3: #17000b26;
+
+  --color-shadow1: #000000;
+}
+
 .math-image {
   width: calc(100% - 80px);
 }

@@ -165,7 +165,7 @@ export function CurrencyInputPanel({
       <Container hideInput={hideInput}>
         {!hideInput && (
           <LabelRow>
-            <RowBetween minHeight={24}>
+            <RowBetween style={{ minHeight: 24 }}>
               <TYPE.body color={'white'} fontWeight={500} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
                 {label}
               </TYPE.body>

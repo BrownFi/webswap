@@ -146,12 +146,12 @@ const ListRow = memo(function ListRow({ listUrl }: { listUrl: string }) {
         <Row>
           <StyledTitleText active={isActive}>{list.name}</StyledTitleText>
         </Row>
-        <RowFixed mt="4px">
+        <RowFixed style={{ marginTop: '4px' }}>
           <StyledListUrlText active={isActive} mr="6px">
             {list?.tokens?.length} tokens
           </StyledListUrlText>
           <StyledMenu ref={node as React.RefObject<HTMLDivElement>}>
-            <ButtonEmpty onClick={toggle} ref={setReferenceElement} padding="0">
+            <ButtonEmpty onClick={toggle} ref={setReferenceElement as any} padding="0">
               <Settings stroke={isActive ? theme.bg1 : theme.text1} size={12} />
             </ButtonEmpty>
             {open && (

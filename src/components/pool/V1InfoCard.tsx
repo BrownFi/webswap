@@ -46,7 +46,7 @@ function V1InfoCard({ token, V1LiquidityBalance }: PositionCardProps) {
         </FixedHeightRow>
 
         <AutoColumn gap="8px">
-          <RowBetween marginTop="10px">
+          <RowBetween style={{ marginTop: '10px' }}>
             <ButtonSecondary width="68%" as={Link} to={`/migrate/v1/${V1LiquidityBalance.token.address}`}>
               Migrate
             </ButtonSecondary>

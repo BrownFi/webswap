@@ -92,8 +92,7 @@ export default function ImportRow({
         <ButtonPrimary
           width="fit-content"
           padding="6px 12px"
-          fontWeight={500}
-          fontSize="14px"
+          style={{ fontWeight: 500, fontSize: '14px' }}
           onClick={() => {
             setImportToken && setImportToken(token)
             showImportView()

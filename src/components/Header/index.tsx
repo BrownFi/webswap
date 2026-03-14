@@ -1,7 +1,4 @@
-import { darken } from 'polished'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-
-import styled from 'styled-components'
 
 import Logo from 'assets/svg/logo.svg'
 
@@ -16,144 +13,46 @@ import CustomAccountDisplay from './CustomAccountDisplay'
 import CustomChainSelect from './CustomChainSelect'
 import HamburgerMenu from './HamburgerMenu'
 
-const HeaderFrame = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  justify-content: space-between;
-  align-items: center;
-  flex-direction: row;
-  width: 100%;
-  top: 0;
-  position: relative;
-  padding: 20px 44px;
-  z-index: 2;
-  ${({ theme }) => theme.mediaWidth.upToMedium`
-    grid-template-columns: 1fr;
-    padding: 0 1rem;
-    width: calc(100%);
-    position: relative;
-  `};
+function StyledNavLink({ id, to, end, className, children }: {
+  id: string
+  to: string
+  end?: boolean
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <NavLink
+      id={id}
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        `flex flex-row flex-nowrap items-start rounded-[3rem] outline-none cursor-pointer no-underline
+        text-menuText text-xl w-fit mr-4 font-normal py-2 px-4
+        hover:text-[#20c899] focus:text-[#20c899]
+        ${isActive || className?.includes('active') ? 'rounded-xl font-semibold !text-greenMain' : ''}
+        ${className ?? ''}`
+      }
+      style={{ fontFamily: "'Russo One', sans-serif" }}
+    >
+      {children}
+    </NavLink>
+  )
+}
 
-  ${({ theme }) => theme.mediaWidth.upToExtraSmall`
-        padding: 0.5rem 1rem;
-  `}
-`
-
-const HeaderControls = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-self: flex-end;
-  gap: 8px;
-
-  ${({ theme }) => theme.mediaWidth.upToMedium`
-    flex-direction: row;
-    justify-content: space-between;
-    justify-self: center;
-    width: 100%;
-    max-width: 960px;
-    padding: 1rem;
-    position: fixed;
-    bottom: 0px;
-    left: 0px;
-    width: 100%;
-    z-index: 99;
-    height: 72px;
-    border-radius: 12px 12px 0 0;
-    background-color: ${({ theme }) => theme.bg1};
-  `};
-`
-
-const HeaderRow = styled(RowFixed)`
-  ${({ theme }) => theme.mediaWidth.upToMedium`
-   width: 100%;
-  `};
-`
-
-const HeaderLinks = styled(Row)`
-  justify-content: center;
-  ${({ theme }) => theme.mediaWidth.upToMedium`
-    flex-direction: column;
-`};
-`
-
-const Title = styled.div`
-  display: flex;
-  align-items: center;
-  pointer-events: auto;
-  justify-self: flex-start;
-  gap: 16px;
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    justify-self: center;
-  `};
-  :hover {
-    cursor: pointer;
-  }
-`
-
-const UniIcon = styled.div`
-  transition: transform 0.3s ease;
-  :hover {
-    transform: rotate(-5deg);
-  }
-`
-
-const StyledNavLink = styled(NavLink)`
-  ${({ theme }) => theme.flexRowNoWrap}
-  align-items: left;
-  border-radius: 3rem;
-  outline: none;
-  cursor: pointer;
-  text-decoration: none;
-  color: ${({ theme }) => theme.menuText};
-  font-size: 20px;
-  width: fit-content;
-  margin-right: 16px;
-  font-weight: 400;
-  padding: 8px 16px;
-  font-family: 'Russo One', sans-serif;
-
-  &.active {
-    border-radius: 12px;
-    font-weight: 600;
-    color: ${({ theme }) => theme.greenMain};
-  }
-
-  :hover,
-  :focus {
-    color: ${({ theme }) => darken(0.1, theme.greenMain)};
-  }
-`
-
-export const StyledMenuButton = styled.button`
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border: none;
-  background-color: transparent;
-  margin: 0;
-  padding: 0;
-  height: 35px;
-  background-color: ${({ theme }) => theme.bg3};
-  margin-left: 8px;
-  padding: 0.15rem 0.5rem;
-  border-radius: 0.5rem;
-
-  :hover,
-  :focus {
-    cursor: pointer;
-    outline: none;
-    background-color: ${({ theme }) => theme.bg4};
-  }
-
-  svg {
-    margin-top: 2px;
-  }
-  > * {
-    stroke: ${({ theme }) => theme.text1};
-  }
-`
+export const StyledMenuButton = ({
+  className,
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-lg
+      h-[35px] hover:cursor-pointer hover:bg-bg4 focus:cursor-pointer focus:outline-none focus:bg-bg4
+      [&>*]:stroke-text1 [&_svg]:mt-0.5 ${className ?? ''}`}
+    {...props}
+  >
+    {children}
+  </button>
+)
 
 export default function Header() {
   const { account } = useActiveWeb3React()
@@ -165,13 +64,19 @@ export default function Header() {
   )
 
   return (
-    <HeaderFrame>
-      <HeaderRow>
-        <Title className="mr-[40px] relative">
+    <div className="grid grid-cols-2 items-center justify-between flex-row w-full top-0 relative py-5 px-11 z-[2]
+      max-md:grid-cols-1 max-md:px-4 max-md:relative
+      max-xs:py-2 max-xs:px-4">
+
+      {/* HeaderRow */}
+      <RowFixed className="max-md:w-full">
+        {/* Title */}
+        <div className="flex items-center pointer-events-auto justify-self-start gap-4 max-sm:justify-self-center hover:cursor-pointer mr-[40px] relative">
           <Link to="/">
-            <UniIcon>
+            {/* UniIcon */}
+            <div className="transition-transform duration-300 hover:-rotate-[5deg]">
               <img className="min-w-[142px] w-[142px]" src={Logo} alt="logo" />
-            </UniIcon>
+            </div>
           </Link>
 
           <SwitchVersion isMobile />
@@ -181,34 +86,39 @@ export default function Header() {
               {appEnv}
             </ButtonSecondary>
           )}
-        </Title>
+        </div>
 
         <HamburgerMenu>
           <nav aria-label="Main navigation">
-            <HeaderLinks>
-              <StyledNavLink id={`swap-nav-link`} to={'/swap'}>
+            {/* HeaderLinks */}
+            <Row className="justify-center max-md:flex-col">
+              <StyledNavLink id="swap-nav-link" to="/swap">
                 Swap
               </StyledNavLink>
               <StyledNavLink
-                id={`pool-nav-link`}
-                to={'/pool'}
+                id="pool-nav-link"
+                to="/pool"
                 end
                 className={isPoolActive ? 'active' : ''}
               >
                 Pool
               </StyledNavLink>
-              <StyledNavLink id={`leaderboard-nav-link`} to={'/campaign/contest-1'}>
+              <StyledNavLink id="leaderboard-nav-link" to="/campaign/contest-1">
                 Campaign
               </StyledNavLink>
-            </HeaderLinks>
+            </Row>
           </nav>
         </HamburgerMenu>
-      </HeaderRow>
+      </RowFixed>
 
-      <HeaderControls>
+      {/* HeaderControls */}
+      <div className="flex flex-row items-center justify-self-end gap-2
+        max-md:justify-between max-md:justify-self-center max-md:w-full max-md:max-w-[960px]
+        max-md:p-4 max-md:fixed max-md:bottom-0 max-md:left-0 max-md:z-[99]
+        max-md:h-[72px] max-md:rounded-t-xl max-md:bg-bg1">
         <CustomChainSelect />
         {showCustomAccountDisplay ? <CustomAccountDisplay /> : <ConnectButton />}
-      </HeaderControls>
-    </HeaderFrame>
+      </div>
+    </div>
   )
 }

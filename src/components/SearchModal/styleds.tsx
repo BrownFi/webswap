@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import { AutoColumn } from 'components/Column'
-import { RowBetween, RowFixed } from 'components/Row'
+import { RowFixed } from 'components/Row'
 
 export const ModalInfo = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
@@ -63,13 +63,14 @@ export const PaddedColumn = styled(AutoColumn)`
   `};
 `
 
-export const MenuItem = styled(RowBetween)`
+export const MenuItem = styled.div<{ disabled?: boolean; selected?: boolean }>`
   margin: 0 40px;
   padding: 12px;
   height: 68px;
   display: grid;
   grid-template-columns: auto minmax(auto, 1fr) auto minmax(0, 72px);
   grid-gap: 16px;
+  align-items: center;
   cursor: ${({ disabled }) => !disabled && 'pointer'};
   pointer-events: ${({ disabled }) => disabled && 'none'};
   :hover {

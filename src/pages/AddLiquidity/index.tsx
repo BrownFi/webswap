@@ -181,7 +181,7 @@ export default function AddLiquidity() {
   const modalHeader = () => {
     return noLiquidity ? (
       <AutoColumn gap="20px">
-        <LightCard mt="20px" borderRadius="16px">
+        <LightCard borderRadius="16px" style={{ marginTop: '20px' }}>
           <RowFlat className="px-2">
             <Text fontSize="36px" fontWeight={600} lineHeight="42px" marginRight={10} color="white">
               {getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
