@@ -1,4 +1,14 @@
-import * as defaultChains from 'viem/chains'
+import {
+  viction as victionChain,
+  sepolia as sepoliaChain,
+  berachain as berachainChain,
+  arbitrum as arbitrumChain,
+  base as baseChain,
+  bsc as bscChain,
+  linea as lineaChain,
+  sei as seiChain,
+  monad as monadChain,
+} from 'viem/chains'
 
 import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
 
@@ -48,7 +58,7 @@ const u2uMainnet: Chain = {
 }
 
 const viction = overrideChain({
-  chain: defaultChains.viction,
+  chain: victionChain,
   iconUrl: victionIcon,
   fallbackRpcs: [
     //
@@ -72,12 +82,12 @@ const hyperEVM: Chain = {
 }
 
 const sepolia: Chain = {
-  ...defaultChains.sepolia,
+  ...sepoliaChain,
   iconUrl: ethereumIcon,
 }
 
 const berachain = overrideChain({
-  chain: defaultChains.berachain,
+  chain: berachainChain,
   iconUrl: beraIcon,
   fallbackRpcs: [
     //
@@ -87,7 +97,7 @@ const berachain = overrideChain({
 })
 
 const arbitrum = overrideChain({
-  chain: defaultChains.arbitrum,
+  chain: arbitrumChain,
   iconUrl: arbIcon,
   fallbackRpcs: [
     //
@@ -97,7 +107,7 @@ const arbitrum = overrideChain({
 })
 
 const base = overrideChain({
-  chain: defaultChains.base,
+  chain: baseChain,
   iconUrl: baseIcon,
   fallbackRpcs: [
     //
@@ -107,7 +117,7 @@ const base = overrideChain({
 })
 
 const bsc = overrideChain({
-  chain: defaultChains.bsc,
+  chain: bscChain,
   iconUrl: bscIcon,
   fallbackRpcs: [
     //
@@ -117,7 +127,7 @@ const bsc = overrideChain({
 })
 
 const linea = overrideChain({
-  chain: defaultChains.linea,
+  chain: lineaChain,
   iconUrl: lineaIcon,
   fallbackRpcs: [
     //
@@ -127,7 +137,7 @@ const linea = overrideChain({
 })
 
 const sei = overrideChain({
-  chain: defaultChains.sei,
+  chain: seiChain,
   iconUrl: seiIcon,
   fallbackRpcs: [
     //
@@ -137,7 +147,7 @@ const sei = overrideChain({
 })
 
 const monad = overrideChain({
-  chain: defaultChains.monad,
+  chain: monadChain,
   iconUrl: monadIcon,
   fallbackRpcs: [
     //
