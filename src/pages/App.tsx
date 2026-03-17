@@ -28,24 +28,19 @@ const BodyWrapper = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding-top: 100px;
+  max-width: 100%;
+  padding-top: 140px;
   align-items: center;
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  z-index: 10;
+  z-index: 1;
 
   ${({ theme }) => theme.mediaWidth.upToLarge`
     padding: 16px 12px;
-    padding-top: 2rem;
+    padding-top: 120px;
+    padding-bottom: 40px;
   `};
-
-  z-index: 1;
 `
 
-const Marginer = styled.div`
-  margin-top: 5rem;
-`
 
 export default function App() {
   return (
@@ -129,7 +124,6 @@ export default function App() {
           >
             <Referral />
           </div> */}
-          <Marginer />
         </BodyWrapper>
       </StaticScreen>
     </Suspense>

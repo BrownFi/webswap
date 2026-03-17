@@ -10,7 +10,7 @@ import Header from 'components/Header'
 const AppWrapper = styled.div`
   display: flex;
   flex-flow: column;
-  align-items: flex-start;
+  align-items: center;
   overflow-x: hidden;
   background-color: #131216;
   min-height: 100vh;
@@ -18,16 +18,26 @@ const AppWrapper = styled.div`
 
 const HeaderWrapper = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   width: 100%;
   justify-content: space-between;
   min-height: 78px;
+  z-index: 100;
+  background-color: #131216;
 `
 
 const StaticScreen = ({ children }: PropsWithChildren) => {
   return (
     <AppWrapper className="relative">
-      <img src={csm} alt="csm" className="absolute  right-[40px] top-[100px]" />
-      <img src={mathImage} alt="math" className="absolute left-[40px] right-[40px] math-image bottom-[120px]" />
+      <img src={csm} alt="" className="fixed right-[40px] top-[100px] pointer-events-none" />
+      <img
+        src={mathImage}
+        alt=""
+        className="fixed left-[40px] right-[40px] bottom-[120px] pointer-events-none math-image"
+      />
       <HeaderWrapper>
         <Header />
       </HeaderWrapper>

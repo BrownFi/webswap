@@ -80,6 +80,14 @@
   background-color: #323038;
 }
 
+html {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
 * {
   outline: none !important;
 }
