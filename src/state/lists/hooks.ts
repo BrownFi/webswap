@@ -1,7 +1,7 @@
 import { UNSUPPORTED_LIST_URLS } from 'constants/lists'
 import DEFAULT_TOKEN_LIST from './defaultTokens.json'
 import { ChainId, Token } from '@brownfi/sdk'
-import { Tags, TokenInfo, TokenList } from '@uniswap/token-lists'
+import { Tags, TokenInfo, TokenList } from 'types/tokenList'
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { AppState } from 'state'

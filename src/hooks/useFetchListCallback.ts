@@ -1,6 +1,6 @@
 import { nanoid } from '@reduxjs/toolkit'
 import { ChainId } from '@brownfi/sdk'
-import { TokenList } from '@uniswap/token-lists'
+import { TokenList } from 'types/tokenList'
 import { useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import { AppDispatch } from 'state'

@@ -8,7 +8,7 @@ import styled from 'styled-components'
 import { Token } from '@brownfi/sdk'
 import { ManageLists } from './ManageLists'
 import ManageTokens from './ManageTokens'
-import { TokenList } from '@uniswap/token-lists'
+import { TokenList } from 'types/tokenList'
 import { CurrencyModalView } from './CurrencySearchModal'
 
 const Wrapper = styled.div`

@@ -23,10 +23,7 @@
     "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
     "types": ["vite/client", "vite-plugin-svgr/client"],
-    "baseUrl": "src",
-    "paths": {
-      "@uniswap/token-lists": ["../node_modules/@uniswap/token-lists/src"]
-    }
+    "baseUrl": "src"
   },
   "exclude": [
       "node_modules",
