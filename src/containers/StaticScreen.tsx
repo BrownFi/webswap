@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react'
+import { PropsWithChildren } from 'react'
 import 'rc-slider/assets/index.css'
 import 'theme/index.css'
 import styled from 'styled-components'

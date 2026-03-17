@@ -1,6 +1,6 @@
-import React, { useCallback, useContext, useRef, useState } from 'react'
+import { useCallback, useContext, useRef, useState } from 'react'
 import { X } from 'react-feather'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import styled, { ThemeContext } from 'styled-components'
 import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import { ApplicationModal } from 'state/application/actions'

@@ -9,7 +9,7 @@ import { Address, checksumAddress } from 'viem'
 
 import { AutoColumn } from 'components/Column'
 import FullPositionCard from 'components/PositionCard'
-import { Flex, Text } from 'rebass'
+import { Flex, Text } from 'components/Rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 

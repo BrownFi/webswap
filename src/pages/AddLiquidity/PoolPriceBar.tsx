@@ -1,6 +1,6 @@
 import { Currency, Percent, Price } from '@brownfi/sdk'
-import React, { useContext } from 'react'
-import { Text } from 'rebass'
+import { useContext } from 'react'
+import { Text } from 'components/Rebass'
 import { ThemeContext } from 'styled-components'
 import { AutoColumn } from 'components/Column'
 import { AutoRow } from 'components/Row'

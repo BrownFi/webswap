@@ -16,15 +16,31 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "noImplicitReturns": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["react-spring", "jest"],
-    "baseUrl": "src"
+    "types": ["vite/client", "vite-plugin-svgr/client"],
+    "baseUrl": "src",
+    "paths": {
+      "@uniswap/token-lists": ["../node_modules/@uniswap/token-lists/src"]
+    }
   },
-  "exclude": ["node_modules", "cypress"],
+  "exclude": [
+      "node_modules",
+      "cypress",
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+      "src/**/*.test.skip.ts",
+      "src/pages/Vote",
+      "src/pages/MigrateV1",
+      "src/pages/Earn/Manage.tsx",
+      "src/components/Web3Status",
+      "src/starknet-provider.tsx",
+      "src/state/governance/**",
+      "src/components/vote/**"
+    ],
   "include": ["./src/**/*.ts", "./src/**/*.tsx"]
 }

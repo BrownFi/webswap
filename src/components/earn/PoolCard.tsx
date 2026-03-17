@@ -1,4 +1,3 @@
-import React from 'react'
 import { AutoColumn } from 'components/Column'
 import { RowBetween } from 'components/Row'
 import styled from 'styled-components'
@@ -103,10 +102,6 @@ export default function PoolCard({ stakingInfo }: { stakingInfo: StakingInfo }) 
       ),
     )
   }
-
-  // get the USD value of staked WETH
-  // const USDPrice = useUSDCPrice(WETH) // removed during wagmi migration
-  const valueOfTotalStakedAmountInUSDC: undefined = undefined
 
   return (
     <Wrapper showBackground={isStaking} bgColor={backgroundColor}>

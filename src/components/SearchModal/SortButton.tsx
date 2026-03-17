@@ -1,5 +1,4 @@
-import React from 'react'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import styled from 'styled-components'
 import { RowFixed } from 'components/Row'
 

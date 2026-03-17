@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react'
 import { usePopper } from 'react-popper'
 import styled from 'styled-components'
 import useInterval from 'hooks/useInterval'
-import Portal from '@reach/portal'
+import { createPortal } from 'react-dom'
 
 const PopoverContainer = styled.div<{ show: boolean }>`
   z-index: 9999;
@@ -103,7 +103,7 @@ export default function Popover({ content, show, children, placement = 'auto', a
   return (
     <>
       <ReferenceElement ref={setReferenceElement as any}>{children}</ReferenceElement>
-      <Portal>
+      {createPortal(
         <PopoverContainer show={show} ref={setPopperElement as any} style={styles.popper} {...attributes.popper}>
           {content}
           {arrow && (
@@ -114,8 +114,9 @@ export default function Popover({ content, show, children, placement = 'auto', a
               {...attributes.arrow}
             />
           )}
-        </PopoverContainer>
-      </Portal>
+        </PopoverContainer>,
+        document.body,
+      )}
     </>
   )
 }

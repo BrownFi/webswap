@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 // useIsArgentWallet hook removed during wagmi migration
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { Modal } from 'components/Modal'

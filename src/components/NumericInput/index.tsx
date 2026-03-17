@@ -1,4 +1,3 @@
-import React from 'react'
 import { NumericFormat, NumericFormatProps } from 'react-number-format'
 
 export type NumericInputProps = Omit<NumericFormatProps, 'onValueChange' | 'value' | 'customInput'> & {

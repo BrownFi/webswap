@@ -1,7 +1,6 @@
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useVersion } from 'hooks/useVersion'
-import React from 'react'
 
 type Props = {
   isMobile?: boolean

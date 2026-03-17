@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState } from 'react'
+import { CSSProperties, useState } from 'react'
 import { HelpCircle } from 'react-feather'
 
 const BAD_SRCS: { [tokenAddress: string]: true } = {}

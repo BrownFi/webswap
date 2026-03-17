@@ -2,7 +2,7 @@ import { Pair } from '@brownfi/sdk'
 import axios, { AxiosResponse } from 'axios'
 
 const client = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: import.meta.env.VITE_API_URL,
   timeout: 10_000,
 })
 

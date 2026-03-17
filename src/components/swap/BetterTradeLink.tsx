@@ -1,7 +1,7 @@
 import { stringify } from 'qs'
 import React, { useContext, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import { ThemeContext } from 'styled-components'
 import useParsedQueryString from 'hooks/useParsedQueryString'
 import useToggledVersion, { DEFAULT_VERSION, Version } from 'hooks/useToggledVersion'

@@ -10,7 +10,7 @@ import { isAddress } from 'utils'
 import { walletClientToProvider, getReadOnlyProvider } from 'utils/ethersAdapter'
 
 const mockAccounts: Record<string, string> =
-  process.env.NODE_ENV !== 'production'
+  import.meta.env.MODE !== 'production'
     ? {
         neikop: '0x9fb15eD1b5eF911F4EB3046FACF3fF1c67aaAEB4',
         kane: '0xdE3EE2Bf6c04E2a4C8aaE988A191AF6f8Cbd9F76',
@@ -23,7 +23,7 @@ export function useActiveWeb3React(): { library: Web3Provider; account?: string 
 
   const { search } = useLocation()
   const mockAccount = useMemo(() => {
-    if (process.env.NODE_ENV === 'production') return undefined
+    if (import.meta.env.MODE === 'production') return undefined
     const searchParams = new URLSearchParams(search)
     const account = searchParams.get('account')
     if (account && mockAccounts[account]) return mockAccounts[account]

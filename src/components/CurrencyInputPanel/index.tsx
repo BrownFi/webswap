@@ -1,5 +1,5 @@
 import { Currency, Pair } from '@brownfi/sdk'
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import { darken } from 'polished'
 import { useCurrencyBalance } from 'state/wallet/hooks'

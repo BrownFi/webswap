@@ -1,4 +1,3 @@
-import React from 'react'
 
 /**
  * Legacy PendingView - RainbowKit now handles wallet connection.

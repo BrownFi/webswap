@@ -1,6 +1,6 @@
 import { TransactionResponse } from '@ethersproject/abstract-provider'
 import { JSBI, Token, TokenAmount, WETH, Fraction, Percent, CurrencyAmount } from '@brownfi/sdk'
-import React, { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Redirect, RouteComponentProps } from 'react-router-dom'
 import { ButtonConfirmed } from 'components/Button'
 import { LightCard } from 'components/Card'

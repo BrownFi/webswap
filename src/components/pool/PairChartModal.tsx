@@ -7,7 +7,7 @@ import { isMainnet } from 'connectors'
 import dayjs from 'dayjs'
 import { memo, ReactNode, useEffect, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
-import { Flex, Text } from 'rebass'
+import { Flex, Text } from 'components/Rebass'
 import {
   Bar,
   CartesianGrid,

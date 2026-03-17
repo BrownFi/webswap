@@ -1,6 +1,5 @@
 import { Currency, CurrencyAmount, Fraction, Percent } from '@brownfi/sdk'
-import React from 'react'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import { ButtonPrimary } from 'components/Button'
 import { RowBetween, RowFixed } from 'components/Row'
 import { CurrencyLogo } from 'components/CurrencyLogo'

@@ -1,0 +1,7 @@
+{
+  "name": "@brownfi/sdk",
+  "version": "0.0.0",
+  "main": "index.js",
+  "module": "index.modern.js",
+  "types": "index.d.ts"
+}

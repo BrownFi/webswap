@@ -1,7 +1,7 @@
 import { useChainModal } from '@rainbow-me/rainbowkit'
 import { ButtonDropdown } from 'components/Button'
 import { availableChains } from 'connectors'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { chainSelector, switchChain } from 'state/chainSlice'

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import { TYPE, CloseIcon } from 'theme'
 import { Card } from 'components/Card'

@@ -1,7 +1,7 @@
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import { useState } from 'react'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import styled from 'styled-components'
 import { useTotalSupply } from 'data/TotalSupply'
 

@@ -2,8 +2,8 @@ import { renderHook, act } from '@testing-library/react'
 import useDebounce from './useDebounce'
 
 describe('useDebounce', () => {
-  beforeEach(() => jest.useFakeTimers())
-  afterEach(() => jest.useRealTimers())
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
 
   it('returns initial value immediately', () => {
     const { result } = renderHook(() => useDebounce('hello', 500))
@@ -15,7 +15,7 @@ describe('useDebounce', () => {
       initialProps: { value: 'hello', delay: 500 },
     })
     rerender({ value: 'world', delay: 500 })
-    act(() => jest.advanceTimersByTime(499))
+    act(() => vi.advanceTimersByTime(499))
     expect(result.current).toBe('hello')
   })
 
@@ -24,7 +24,7 @@ describe('useDebounce', () => {
       initialProps: { value: 'hello', delay: 500 },
     })
     rerender({ value: 'world', delay: 500 })
-    act(() => jest.advanceTimersByTime(500))
+    act(() => vi.advanceTimersByTime(500))
     expect(result.current).toBe('world')
   })
 
@@ -33,12 +33,12 @@ describe('useDebounce', () => {
       initialProps: { value: 'a', delay: 300 },
     })
     rerender({ value: 'b', delay: 300 })
-    act(() => jest.advanceTimersByTime(200))
+    act(() => vi.advanceTimersByTime(200))
     rerender({ value: 'c', delay: 300 })
-    act(() => jest.advanceTimersByTime(200))
+    act(() => vi.advanceTimersByTime(200))
     // 'b' should not have resolved, still 'a'
     expect(result.current).toBe('a')
-    act(() => jest.advanceTimersByTime(100))
+    act(() => vi.advanceTimersByTime(100))
     // now 300ms since 'c' was set
     expect(result.current).toBe('c')
   })
@@ -48,7 +48,7 @@ describe('useDebounce', () => {
       initialProps: { value: 0, delay: 200 },
     })
     rerender({ value: 42, delay: 200 })
-    act(() => jest.advanceTimersByTime(200))
+    act(() => vi.advanceTimersByTime(200))
     expect(result.current).toBe(42)
   })
 })

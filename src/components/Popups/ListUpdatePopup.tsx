@@ -1,7 +1,7 @@
 import { diffTokenLists, TokenList } from '@uniswap/token-lists'
 import React, { useCallback, useMemo } from 'react'
 import { useDispatch } from 'react-redux'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import styled from 'styled-components'
 import { AppDispatch } from 'state'
 import { useRemovePopup } from 'state/application/hooks'

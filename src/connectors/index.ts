@@ -2,6 +2,18 @@ import * as defaultChains from 'viem/chains'
 
 import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
 
+import u2uIcon from 'assets/images/u2u.jpg'
+import victionIcon from 'assets/images/viction.png'
+import hyperevmIcon from 'assets/images/hyperevm.png'
+import ethereumIcon from 'assets/images/ethereum-logo.png'
+import beraIcon from 'assets/images/w-bera.png'
+import arbIcon from 'assets/images/arb.png'
+import baseIcon from 'assets/images/base.png'
+import bscIcon from 'assets/images/bsc.png'
+import lineaIcon from 'assets/images/linea.webp'
+import seiIcon from 'assets/images/sei.png'
+import monadIcon from 'assets/images/monad.png'
+
 const overrideChain = ({
   chain,
   iconUrl,
@@ -32,12 +44,12 @@ const u2uMainnet: Chain = {
   blockExplorers: {
     default: { name: 'U2U Scan', url: 'https://u2uscan.xyz' },
   },
-  iconUrl: require('assets/images/u2u.jpg'),
+  iconUrl: u2uIcon,
 }
 
 const viction = overrideChain({
   chain: defaultChains.viction,
-  iconUrl: require('assets/images/viction.png'),
+  iconUrl: victionIcon,
   fallbackRpcs: [
     //
     'https://viction.drpc.org',
@@ -56,17 +68,17 @@ const hyperEVM: Chain = {
   blockExplorers: {
     default: { name: 'HyperEVM Scan', url: 'https://hyperevmscan.io' },
   },
-  iconUrl: require('assets/images/hyperevm.png'),
+  iconUrl: hyperevmIcon,
 }
 
 const sepolia: Chain = {
   ...defaultChains.sepolia,
-  iconUrl: require('assets/images/ethereum-logo.png'),
+  iconUrl: ethereumIcon,
 }
 
 const berachain = overrideChain({
   chain: defaultChains.berachain,
-  iconUrl: require('assets/images/w-bera.png'),
+  iconUrl: beraIcon,
   fallbackRpcs: [
     //
     'https://rpc.berachain-apis.com',
@@ -76,7 +88,7 @@ const berachain = overrideChain({
 
 const arbitrum = overrideChain({
   chain: defaultChains.arbitrum,
-  iconUrl: require('assets/images/arb.png'),
+  iconUrl: arbIcon,
   fallbackRpcs: [
     //
     'https://arbitrum.drpc.org',
@@ -86,7 +98,7 @@ const arbitrum = overrideChain({
 
 const base = overrideChain({
   chain: defaultChains.base,
-  iconUrl: require('assets/images/base.png'),
+  iconUrl: baseIcon,
   fallbackRpcs: [
     //
     'https://1rpc.io/base',
@@ -96,7 +108,7 @@ const base = overrideChain({
 
 const bsc = overrideChain({
   chain: defaultChains.bsc,
-  iconUrl: require('assets/images/bsc.png'),
+  iconUrl: bscIcon,
   fallbackRpcs: [
     //
     'https://bsc-dataseed1.defibit.io',
@@ -106,7 +118,7 @@ const bsc = overrideChain({
 
 const linea = overrideChain({
   chain: defaultChains.linea,
-  iconUrl: require('assets/images/linea.webp'),
+  iconUrl: lineaIcon,
   fallbackRpcs: [
     //
     'https://1rpc.io/linea',
@@ -116,7 +128,7 @@ const linea = overrideChain({
 
 const sei = overrideChain({
   chain: defaultChains.sei,
-  iconUrl: require('assets/images/sei.png'),
+  iconUrl: seiIcon,
   fallbackRpcs: [
     //
     'https://sei.drpc.org',
@@ -126,14 +138,14 @@ const sei = overrideChain({
 
 const monad = overrideChain({
   chain: defaultChains.monad,
-  iconUrl: require('assets/images/monad.png'),
+  iconUrl: monadIcon,
   fallbackRpcs: [
     //
     'https://rpc3.monad.xyz',
   ],
 })
 
-export const appEnv = process.env.REACT_APP_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
+export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
 const mainChains: readonly [Chain, ...Chain[]] = [
@@ -168,6 +180,6 @@ export const getDefaultChain = (index?: number): Chain => availableChains[index 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
   chains: availableChains,
-  projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID ?? '',
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? '',
   ssr: false,
 })

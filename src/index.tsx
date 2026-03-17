@@ -1,5 +1,5 @@
 import 'inter-ui'
-import React, { StrictMode } from 'react'
+import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
@@ -7,7 +7,6 @@ import Blocklist from 'components/Blocklist'
 import './i18n'
 import App from 'pages/App'
 import store from 'state'
-import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import ApplicationUpdater from 'state/application/updater'
 import ListsUpdater from 'state/lists/updater'
 import MulticallUpdater from 'state/multicall/updater'
@@ -24,8 +23,8 @@ import { ToastProvider } from 'containers/ToastProvider'
 import { ErrorBoundary } from 'containers/ErrorBoundary'
 
 // Validate required environment variables at startup
-const REQUIRED_ENV_VARS = ['REACT_APP_API_URL', 'REACT_APP_API_V2_URL'] as const
-const missingEnvVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key])
+const REQUIRED_ENV_VARS = ['VITE_API_URL', 'VITE_API_V2_URL'] as const
+const missingEnvVars = REQUIRED_ENV_VARS.filter((key) => !import.meta.env[key])
 if (missingEnvVars.length > 0) {
   console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
 }
@@ -34,8 +33,8 @@ if (!!window.ethereum) {
   window.ethereum.autoRefreshOnNetworkChange = false
 }
 
-const publicUrl = process.env.PUBLIC_URL
-const routerBasename = !publicUrl || publicUrl === '.' || publicUrl === '/' ? undefined : publicUrl
+const baseUrl = import.meta.env.BASE_URL
+const routerBasename = !baseUrl || baseUrl === '.' || baseUrl === '/' ? undefined : baseUrl
 
 function Updaters() {
   return (
@@ -76,5 +75,3 @@ root.render(
     </Provider>
   </StrictMode>,
 )
-
-serviceWorkerRegistration.unregister()

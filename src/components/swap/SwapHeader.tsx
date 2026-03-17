@@ -1,8 +1,7 @@
-import React from 'react'
 import styled from 'styled-components'
 import { SettingsTab } from 'components/Settings'
 import { RowBetween } from 'components/Row'
-import { Flex } from 'rebass'
+import { Flex } from 'components/Rebass'
 import SwitchVersion from 'components/SwitchVersion'
 
 const StyledSwapHeader = styled.div`

@@ -5,7 +5,7 @@ import { ThemeContext } from 'styled-components'
 import { KyberZapRouteData } from './zapHelpers'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { TYPE } from 'theme'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import { Loader } from 'components/Loader'
 
 type ZapRoutePreviewProps = {

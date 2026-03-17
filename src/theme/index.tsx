@@ -1,5 +1,5 @@
 import { transparentize } from 'polished'
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import styled, {
   ThemeProvider as StyledComponentsThemeProvider,
   createGlobalStyle,
@@ -7,7 +7,7 @@ import styled, {
   DefaultTheme,
 } from 'styled-components'
 import { useIsDarkMode } from 'state/user/hooks'
-import { Text, TextProps } from 'rebass'
+import { Text, TextProps } from 'components/Rebass'
 import { Colors } from './styled'
 
 export * from './components'
@@ -128,8 +128,8 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   return <StyledComponentsThemeProvider theme={themeObject}>{children}</StyledComponentsThemeProvider>
 }
 
-const TextWrapper = styled(Text)<{ color: keyof Colors }>`
-  color: ${({ color, theme }) => (theme as any)[color]};
+const TextWrapper = styled(Text)`
+  color: ${({ color, theme }) => (theme as any)[color as string]};
 `
 
 export const TYPE = {

@@ -1,7 +1,7 @@
 import { ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { RowBetween } from 'components/Row'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import styled from 'styled-components'
 
 export const Wrapper = styled.div`

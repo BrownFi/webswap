@@ -3,7 +3,7 @@ import { darken } from 'polished'
 import { lazy, Suspense, useState } from 'react'
 import { ChevronDown, ChevronUp, Info, ExternalLink } from 'react-feather'
 import { Link } from 'react-router-dom'
-import { Flex, Text } from 'rebass'
+import { Flex, Text } from 'components/Rebass'
 import styled from 'styled-components'
 
 import { ButtonEmpty, ButtonPrimary, ButtonSecondary } from 'components/Button'

@@ -1,7 +1,7 @@
 import { Currency, ETHER, Token } from '@brownfi/sdk'
 import React, { KeyboardEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList } from 'react-window'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import { useActiveWeb3React } from 'hooks'
 import { useAllTokens, useToken, useIsUserAddedToken, useFoundOnInactiveList } from 'hooks/Tokens'
 import { CloseIcon, TYPE, ButtonText } from 'theme'

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Token, Currency } from '@brownfi/sdk'
 import styled from 'styled-components'
 import { TYPE, CloseIcon } from 'theme'

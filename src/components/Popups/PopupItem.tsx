@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect } from 'react'
+import { useCallback, useContext, useEffect } from 'react'
 import { X } from 'react-feather'
 import styled, { ThemeContext, keyframes } from 'styled-components'
 import { PopupContent } from 'state/application/actions'

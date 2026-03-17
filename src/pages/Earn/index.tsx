@@ -1,4 +1,3 @@
-import React from 'react'
 import { AutoColumn } from 'components/Column'
 import styled from 'styled-components'
 import { STAKING_REWARDS_INFO, useStakingInfo } from 'state/stake/hooks'

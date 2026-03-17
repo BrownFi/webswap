@@ -8,7 +8,7 @@ import { useDispatch } from 'react-redux'
 import { AppDispatch } from 'state'
 import { resetMintState } from 'state/mint/actions'
 import { isMobile } from 'react-device-detect'
-import { Flex } from 'rebass'
+import { Flex } from 'components/Rebass'
 import SwitchVersion from 'components/SwitchVersion'
 
 function StyledNavLink({

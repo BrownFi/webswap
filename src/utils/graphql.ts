@@ -16,7 +16,7 @@ export const graphqlFetcher = ({
   }
   return axios
     .post(
-      `${process.env.REACT_APP_API_V2_URL!}/indexer?chainId=${chainId}`,
+      `${import.meta.env.VITE_API_V2_URL}/indexer?chainId=${chainId}`,
       {
         operationName,
         query,

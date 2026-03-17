@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { AutoColumn } from 'components/Column'
 import styled from 'styled-components'
 import { Link } from 'react-router-dom'

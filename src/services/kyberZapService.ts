@@ -12,7 +12,7 @@ const chainMap: Partial<Record<ChainId, string>> = {
 }
 
 const client = axios.create({
-  baseURL: process.env.REACT_APP_KYBERSWAP_ZAP_API_URL,
+  baseURL: import.meta.env.VITE_KYBERSWAP_ZAP_API_URL,
   timeout: 30_000,
   headers: {
     'x-client-id': KYBER_ZAP_CLIENT_ID,

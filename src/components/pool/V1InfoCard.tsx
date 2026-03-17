@@ -1,8 +1,8 @@
-import React, { useContext } from 'react'
+import { useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { Token, TokenAmount, WETH } from '@brownfi/sdk'
 
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import { AutoColumn } from 'components/Column'
 import { ButtonSecondary } from 'components/Button'
 import { RowBetween, RowFixed } from 'components/Row'

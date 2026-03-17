@@ -11,7 +11,7 @@ import { ConfirmationModalContent, TransactionConfirmationModal } from 'componen
 import { useCallback, useContext, useMemo, useState } from 'react'
 import { Plus } from 'react-feather'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import { ThemeContext } from 'styled-components'
 
 import { PairState } from 'data/Reserves'

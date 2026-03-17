@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react'
+import { useState, useContext } from 'react'
 import { useActiveWeb3React } from 'hooks'
 
 import { Modal } from 'components/Modal'

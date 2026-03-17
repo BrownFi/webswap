@@ -1,8 +1,7 @@
 import { transparentize } from 'polished'
-import React from 'react'
 import { AlertTriangle } from 'react-feather'
 import styled, { css } from 'styled-components'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import { AutoColumn } from 'components/Column'
 
 export const Wrapper = styled.div`

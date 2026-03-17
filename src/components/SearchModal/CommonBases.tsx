@@ -1,5 +1,4 @@
-import React from 'react'
-import { Text } from 'rebass'
+import { Text } from 'components/Rebass'
 import { ChainId, Currency, currencyEquals, ETHER, Token } from '@brownfi/sdk'
 import styled from 'styled-components'
 

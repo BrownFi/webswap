@@ -1,5 +1,4 @@
 import { Currency } from '@brownfi/sdk'
-import React from 'react'
 import styled from 'styled-components'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { getTokenSymbol } from 'utils'

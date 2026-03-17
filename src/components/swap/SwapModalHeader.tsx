@@ -1,5 +1,5 @@
 import { Trade, TradeType } from '@brownfi/sdk'
-import React, { useContext, useMemo } from 'react'
+import { useContext, useMemo } from 'react'
 import { AlertTriangle } from 'react-feather'
 import { ThemeContext } from 'styled-components'
 import { Field } from 'state/swap/actions'
