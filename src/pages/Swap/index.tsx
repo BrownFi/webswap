@@ -112,10 +112,13 @@ export default function Swap() {
   const showWrap: boolean = wrapType !== WrapType.NOT_APPLICABLE
   const { address: recipientAddress } = useENSAddress(recipient)
   const toggledVersion = useToggledVersion()
-  const tradesByVersion = useMemo(() => ({
-    [Version.v1]: v1Trade,
-    [Version.v2]: v2Trade,
-  }), [v1Trade, v2Trade])
+  const tradesByVersion = useMemo(
+    () => ({
+      [Version.v1]: v1Trade,
+      [Version.v2]: v2Trade,
+    }),
+    [v1Trade, v2Trade],
+  )
   const trade = showWrap ? undefined : tradesByVersion[toggledVersion]
   const defaultTrade = showWrap ? undefined : tradesByVersion[DEFAULT_VERSION]
 
@@ -169,12 +172,15 @@ export default function Swap() {
     txHash: undefined,
   })
 
-  const formattedAmounts = useMemo(() => ({
-    [independentField]: typedValue,
-    [dependentField]: showWrap
-      ? parsedAmounts[independentField]?.toExact() ?? ''
-      : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
-  }), [independentField, dependentField, typedValue, showWrap, parsedAmounts])
+  const formattedAmounts = useMemo(
+    () => ({
+      [independentField]: typedValue,
+      [dependentField]: showWrap
+        ? parsedAmounts[independentField]?.toExact() ?? ''
+        : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
+    }),
+    [independentField, dependentField, typedValue, showWrap, parsedAmounts],
+  )
 
   const route = trade?.route
   const userHasSpecifiedInputOutput = Boolean(
@@ -278,9 +284,10 @@ export default function Swap() {
     maxAmountInput && onUserInput(Field.INPUT, maxAmountInput.toExact())
   }, [maxAmountInput, onUserInput])
 
-  const handleOutputSelect = useCallback((outputCurrency: Currency) => onCurrencySelection(Field.OUTPUT, outputCurrency), [
-    onCurrencySelection,
-  ])
+  const handleOutputSelect = useCallback(
+    (outputCurrency: Currency) => onCurrencySelection(Field.OUTPUT, outputCurrency),
+    [onCurrencySelection],
+  )
 
   const swapIsUnsupported = useIsTransactionUnsupported(currencies?.INPUT, currencies?.OUTPUT)
 
@@ -347,7 +354,11 @@ export default function Swap() {
                   /> */}
                 </ArrowWrapper>
                 {recipient === null && !showWrap && isExpertMode ? (
-                  <LinkStyledButton id="add-recipient-button" aria-label="Add a recipient address" onClick={() => onChangeRecipient('')}>
+                  <LinkStyledButton
+                    id="add-recipient-button"
+                    aria-label="Add a recipient address"
+                    onClick={() => onChangeRecipient('')}
+                  >
                     + Add a send (optional)
                   </LinkStyledButton>
                 ) : null}
@@ -372,7 +383,11 @@ export default function Swap() {
                   <ArrowWrapper clickable={false}>
                     <ArrowDown size="16" color={theme.text2} />
                   </ArrowWrapper>
-                  <LinkStyledButton id="remove-recipient-button" aria-label="Remove recipient address" onClick={() => onChangeRecipient(null)}>
+                  <LinkStyledButton
+                    id="remove-recipient-button"
+                    aria-label="Remove recipient address"
+                    onClick={() => onChangeRecipient(null)}
+                  >
                     - Remove send
                   </LinkStyledButton>
                 </AutoRow>

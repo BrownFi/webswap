@@ -28,7 +28,9 @@ export default function Updater(): null {
   const fetchAllListsCallback = useCallback(() => {
     if (!isWindowVisible) return
     Object.keys(lists).forEach((url) =>
-      fetchList(url).catch(() => { /* silently ignored */ }),
+      fetchList(url).catch(() => {
+        /* silently ignored */
+      }),
     )
   }, [fetchList, isWindowVisible, lists])
 
@@ -40,7 +42,9 @@ export default function Updater(): null {
     Object.keys(lists).forEach((listUrl) => {
       const list = lists[listUrl]
       if (!list.current && !list.loadingRequestId && !list.error) {
-        fetchList(listUrl).catch(() => { /* silently ignored */ })
+        fetchList(listUrl).catch(() => {
+          /* silently ignored */
+        })
       }
     })
   }, [dispatch, fetchList, library, lists])
@@ -50,7 +54,9 @@ export default function Updater(): null {
     Object.keys(UNSUPPORTED_LIST_URLS).forEach((listUrl) => {
       const list = lists[listUrl]
       if (!list || (!list.current && !list.loadingRequestId && !list.error)) {
-        fetchList(listUrl).catch(() => { /* silently ignored */ })
+        fetchList(listUrl).catch(() => {
+          /* silently ignored */
+        })
       }
     })
   }, [dispatch, fetchList, library, lists])

@@ -38,7 +38,7 @@ export const AutoColumn = React.forwardRef<HTMLDivElement, AutoColumnProps>(
         {...props}
       />
     )
-  }
+  },
 )
 AutoColumn.displayName = 'AutoColumn'
 

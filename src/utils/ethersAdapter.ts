@@ -1,6 +1,6 @@
 import { StaticJsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import { ChainId } from '@brownfi/sdk'
-import { type WalletClient } from 'viem'
+import { WalletClient } from 'viem'
 import { availableChains } from 'connectors'
 
 /**

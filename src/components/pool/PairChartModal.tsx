@@ -460,14 +460,42 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
                   />
                   <Tooltip content={<CustomTooltip showExtendedMetrics={showExtendedMetrics} />} />
                   <Legend content={<CustomLegend showExtendedMetrics={showExtendedMetrics} />} />
-                  <Line type="monotone" dataKey="lpPrice" stroke="#FFB347" yAxisId="left" isAnimationActive={false} {...lineDotConfig} />
-                  <Line type="monotone" dataKey="bnhPrice" stroke="#4DA3FF" yAxisId="left" isAnimationActive={false} {...lineDotConfig} />
+                  <Line
+                    type="monotone"
+                    dataKey="lpPrice"
+                    stroke="#FFB347"
+                    yAxisId="left"
+                    isAnimationActive={false}
+                    {...lineDotConfig}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="bnhPrice"
+                    stroke="#4DA3FF"
+                    yAxisId="left"
+                    isAnimationActive={false}
+                    {...lineDotConfig}
+                  />
                   {showExtendedMetrics && (
-                    <Line type="monotone" dataKey="formattedTvl" stroke="#DA70D6" yAxisId="right" isAnimationActive={false} {...lineDotConfig} />
+                    <Line
+                      type="monotone"
+                      dataKey="formattedTvl"
+                      stroke="#DA70D6"
+                      yAxisId="right"
+                      isAnimationActive={false}
+                      {...lineDotConfig}
+                    />
                   )}
                   <Bar dataKey="totalVolume" fill="#66CC99" barSize={20} yAxisId="volume" isAnimationActive={false} />
                   {showExtendedMetrics && (
-                    <Line type="monotone" dataKey="netPnL" stroke="#EE4B2B" yAxisId="right" isAnimationActive={false} {...lineDotConfig} />
+                    <Line
+                      type="monotone"
+                      dataKey="netPnL"
+                      stroke="#EE4B2B"
+                      yAxisId="right"
+                      isAnimationActive={false}
+                      {...lineDotConfig}
+                    />
                   )}
                   {enableAdvancedZoom && referenceArea?.x1 && referenceArea?.x2 && (
                     <ReferenceArea
@@ -508,9 +536,11 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
 }
 
 const PairChartModal = memo(PairChartModalInner, (prev, next) => {
-  return prev.pair.liquidityToken.address === next.pair.liquidityToken.address
-    && prev.pair.chainId === next.pair.chainId
-    && prev.enableAdvancedZoom === next.enableAdvancedZoom
+  return (
+    prev.pair.liquidityToken.address === next.pair.liquidityToken.address &&
+    prev.pair.chainId === next.pair.chainId &&
+    prev.enableAdvancedZoom === next.enableAdvancedZoom
+  )
 })
 
 interface LegendItem {

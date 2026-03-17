@@ -1,11 +1,13 @@
-import React, { useState } from 'react'
+import React, { CSSProperties, useState } from 'react'
 import { HelpCircle } from 'react-feather'
-import { ImageProps } from 'rebass'
 
 const BAD_SRCS: { [tokenAddress: string]: true } = {}
 
-export interface LogoProps extends Pick<ImageProps, 'style' | 'alt' | 'className'> {
+export interface LogoProps {
   srcs: string[]
+  alt?: string
+  style?: CSSProperties
+  className?: string
 }
 
 /**

@@ -56,19 +56,68 @@ export default function App() {
         <BodyWrapper>
           <Popups />
           <Routes>
-            <Route path="/swap" element={<RouteErrorBoundary><Swap /></RouteErrorBoundary>} />
+            <Route
+              path="/swap"
+              element={
+                <RouteErrorBoundary>
+                  <Swap />
+                </RouteErrorBoundary>
+              }
+            />
             <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
             <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
             <Route path="/send" element={<RedirectPathToSwapOnly />} />
-            <Route path="/find" element={<RouteErrorBoundary fallbackPath="/pool"><PoolFinder /></RouteErrorBoundary>} />
-            <Route path="/pool" element={<RouteErrorBoundary><Pool /></RouteErrorBoundary>} />
-            <Route path="/campaign/contest-1" element={<RouteErrorBoundary><Leaderboard /></RouteErrorBoundary>} />
+            <Route
+              path="/find"
+              element={
+                <RouteErrorBoundary fallbackPath="/pool">
+                  <PoolFinder />
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path="/pool"
+              element={
+                <RouteErrorBoundary>
+                  <Pool />
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path="/campaign/contest-1"
+              element={
+                <RouteErrorBoundary>
+                  <Leaderboard />
+                </RouteErrorBoundary>
+              }
+            />
             <Route path="/create" element={<RedirectToAddLiquidity />} />
-            <Route path="/add" element={<RouteErrorBoundary fallbackPath="/pool"><AddLiquidity /></RouteErrorBoundary>} />
+            <Route
+              path="/add"
+              element={
+                <RouteErrorBoundary fallbackPath="/pool">
+                  <AddLiquidity />
+                </RouteErrorBoundary>
+              }
+            />
             <Route path="/add/:currencyIdA" element={<RedirectOldAddLiquidityPathStructure />} />
-            <Route path="/add/:currencyIdA/:currencyIdB" element={<RouteErrorBoundary fallbackPath="/pool"><RedirectDuplicateTokenIds /></RouteErrorBoundary>} />
+            <Route
+              path="/add/:currencyIdA/:currencyIdB"
+              element={
+                <RouteErrorBoundary fallbackPath="/pool">
+                  <RedirectDuplicateTokenIds />
+                </RouteErrorBoundary>
+              }
+            />
             <Route path="/remove/:tokens" element={<RedirectOldRemoveLiquidityPathStructure />} />
-            <Route path="/remove/:currencyIdA/:currencyIdB" element={<RouteErrorBoundary fallbackPath="/pool"><RemoveLiquidity /></RouteErrorBoundary>} />
+            <Route
+              path="/remove/:currencyIdA/:currencyIdB"
+              element={
+                <RouteErrorBoundary fallbackPath="/pool">
+                  <RemoveLiquidity />
+                </RouteErrorBoundary>
+              }
+            />
             <Route path="*" element={<RedirectPathToSwapOnly />} />
           </Routes>
 

@@ -184,7 +184,9 @@ export function CurrencyInputPanel({
                   </TYPE.body>
                 )}
                 {account && currency && showMaxButton && label !== 'To' && (
-                  <StyledBalanceMax onClick={onMax} aria-label="Use maximum balance">MAX</StyledBalanceMax>
+                  <StyledBalanceMax onClick={onMax} aria-label="Use maximum balance">
+                    MAX
+                  </StyledBalanceMax>
                 )}
               </div>
             </RowBetween>

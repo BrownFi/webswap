@@ -9,16 +9,13 @@ import { AutoRow } from 'components/Row'
 import Copy from './Copy'
 import Transaction from './Transaction'
 
-import { SUPPORTED_WALLETS } from 'constants/common'
 import { ReactComponent as Close } from 'assets/images/x.svg'
 import { getEtherscanLink } from 'utils'
-import { injected, walletconnect, walletlink } from 'connectors'
-import CoinbaseWalletIcon from 'assets/images/coinbaseWalletIcon.svg'
-import WalletConnectIcon from 'assets/images/walletConnectIcon.svg'
 import { Identicon } from 'components/Identicon'
 import { ButtonSecondary } from 'components/Button'
 import { ExternalLink as LinkIcon } from 'react-feather'
 import { ExternalLink, LinkStyledButton, TYPE } from 'theme'
+import { useDisconnect } from 'wagmi'
 
 const HeaderRow = styled.div`
   ${({ theme }) => theme.flexRowNoWrap};
@@ -219,43 +216,21 @@ export function AccountDetails({
   ENSName,
   openOptions,
 }: AccountDetailsProps) {
-  const { chainId, account, connector, deactivate } = useActiveWeb3React()
+  const { chainId, account } = useActiveWeb3React()
+  const { disconnect } = useDisconnect()
   const theme = useContext(ThemeContext)
   const dispatch = useDispatch<AppDispatch>()
 
   function formatConnectorName() {
-    const { ethereum } = window
-    const isMetaMask = !!(ethereum && ethereum.isMetaMask)
-    const name = Object.keys(SUPPORTED_WALLETS)
-      .filter(
-        (k) =>
-          SUPPORTED_WALLETS[k].connector === connector && (connector !== injected || isMetaMask === (k === 'METAMASK')),
-      )
-      .map((k) => SUPPORTED_WALLETS[k].name)[0]
-    return <WalletName>Connected with {name}</WalletName>
+    return <WalletName>Connected</WalletName>
   }
 
   function getStatusIcon() {
-    if (connector === injected) {
-      return (
-        <IconWrapper size={16}>
-          <Identicon />
-        </IconWrapper>
-      )
-    } else if (connector === walletconnect) {
-      return (
-        <IconWrapper size={16}>
-          <img src={WalletConnectIcon} alt={'wallet connect logo'} />
-        </IconWrapper>
-      )
-    } else if (connector === walletlink) {
-      return (
-        <IconWrapper size={16}>
-          <img src={CoinbaseWalletIcon} alt={'coinbase wallet logo'} />
-        </IconWrapper>
-      )
-    }
-    return null
+    return (
+      <IconWrapper size={16}>
+        <Identicon />
+      </IconWrapper>
+    )
   }
 
   const clearAllTransactionsCallback = useCallback(() => {
@@ -275,34 +250,15 @@ export function AccountDetails({
               <AccountGroupingRow>
                 {formatConnectorName()}
                 <div>
-                  {connector !== injected && connector !== walletlink && (
-                    <a
-                      onClick={() => {
-                        ;(connector as any).close()
-                      }}
-                      className="h-[26px] px-[8px] flex items-center bg-[#1E1E1E] mr-[8px]"
-                    >
-                      <WalletAction
-                        style={{ fontSize: '12px', fontWeight: 'bold', color: 'white', backgroundColor: '#1E1E1E' }}
-                      >
-                        Disconnect
-                      </WalletAction>
-                    </a>
-                  )}
-                  {(connector === injected || connector === walletlink) && (
-                    <WalletAction
-                      style={{ fontSize: '.825rem', fontWeight: 400, marginRight: '8px' }}
-                      onClick={() => {
-                        deactivate()
-                        if ((connector as any).handleClose) {
-                          ;(connector as any).handleClose()
-                        }
-                        localStorage.clear()
-                      }}
-                    >
-                      Disconnect
-                    </WalletAction>
-                  )}
+                  <WalletAction
+                    style={{ fontSize: '.825rem', fontWeight: 400, marginRight: '8px' }}
+                    onClick={() => {
+                      disconnect()
+                      localStorage.clear()
+                    }}
+                  >
+                    Disconnect
+                  </WalletAction>
 
                   <a
                     onClick={() => {
@@ -399,7 +355,7 @@ export function AccountDetails({
       </UpperSection>
       {!!pendingTransactions.length || !!confirmedTransactions.length ? (
         <LowerSection>
-          <AutoRow mb={'1rem'} style={{ justifyContent: 'space-between' }}>
+          <AutoRow style={{ justifyContent: 'space-between', marginBottom: '1rem' }}>
             <TYPE.body color={theme.white} fontWeight={600} fontSize={'16px'}>
               Recent Transactions
             </TYPE.body>

@@ -13,7 +13,7 @@ import { Break, CardNoise, CardBGImage } from './styled'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { useTotalSupply } from 'data/TotalSupply'
 import { usePair } from 'data/Reserves'
-import useUSDCPrice from 'utils/useUSDCPrice'
+// import useUSDCPrice from 'utils/useUSDCPrice' // removed during wagmi migration
 import { BIG_INT_SECONDS_IN_WEEK } from 'constants/common'
 import { getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
@@ -105,9 +105,8 @@ export default function PoolCard({ stakingInfo }: { stakingInfo: StakingInfo }) 
   }
 
   // get the USD value of staked WETH
-  const USDPrice = useUSDCPrice(WETH)
-  const valueOfTotalStakedAmountInUSDC =
-    valueOfTotalStakedAmountInWETH && USDPrice?.quote(valueOfTotalStakedAmountInWETH)
+  // const USDPrice = useUSDCPrice(WETH) // removed during wagmi migration
+  const valueOfTotalStakedAmountInUSDC: undefined = undefined
 
   return (
     <Wrapper showBackground={isStaking} bgColor={backgroundColor}>
@@ -131,9 +130,7 @@ export default function PoolCard({ stakingInfo }: { stakingInfo: StakingInfo }) 
         <RowBetween>
           <TYPE.white> Total deposited</TYPE.white>
           <TYPE.white>
-            {valueOfTotalStakedAmountInUSDC
-              ? `$${valueOfTotalStakedAmountInUSDC.toFixed(0, { groupSeparator: ',' })}`
-              : `${valueOfTotalStakedAmountInWETH?.toSignificant(4, { groupSeparator: ',' }) ?? '-'} ETH`}
+            {`${valueOfTotalStakedAmountInWETH?.toSignificant(4, { groupSeparator: ',' }) ?? '-'} ETH`}
           </TYPE.white>
         </RowBetween>
         <RowBetween>

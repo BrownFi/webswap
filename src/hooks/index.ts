@@ -39,7 +39,7 @@ export function useActiveWeb3React(): { library: Web3Provider; account?: string 
     if (walletClient && isConnected && !isWrongNetwork) {
       return walletClientToProvider(walletClient)
     }
-    return getReadOnlyProvider(chainId) as unknown as Web3Provider
+    return (getReadOnlyProvider(chainId) as unknown) as Web3Provider
   }, [walletClient, chainId, isConnected, isWrongNetwork])
 
   return {

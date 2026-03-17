@@ -11,7 +11,13 @@ import { isMobile } from 'react-device-detect'
 import { Flex } from 'rebass'
 import SwitchVersion from 'components/SwitchVersion'
 
-function StyledNavLink({ id, to, end, className, children }: {
+function StyledNavLink({
+  id,
+  to,
+  end,
+  className,
+  children,
+}: {
   id: string
   to: string
   end?: boolean

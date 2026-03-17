@@ -31,7 +31,7 @@ function useReadContract(address: string | undefined, ABI: any, enabled?: boolea
     if (chain) {
       try {
         const provider = getReadOnlyProvider(chainId as ChainId)
-        return getContract(address, ABI, provider as unknown as Web3Provider)
+        return getContract(address, ABI, (provider as unknown) as Web3Provider)
       } catch (error) {
         console.error('Failed to get read contract', error)
         return null

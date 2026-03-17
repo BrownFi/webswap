@@ -23,7 +23,7 @@ const Referral = () => {
           walletAddress: account,
         })
       } catch (e) {
-        console.log(e)
+        console.error('Failed to add referral', e)
       }
     }
     if (account && params.ref) {
@@ -44,7 +44,7 @@ const Referral = () => {
 
         setNumberReferrals(result?.data?.data?.numberReferrals)
       } catch (e) {
-        console.log(e)
+        console.error('Failed to get referrals', e)
       }
     }
     if (account) {

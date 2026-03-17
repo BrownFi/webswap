@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import useIsArgentWallet from 'hooks/useIsArgentWallet'
+// useIsArgentWallet hook removed during wagmi migration
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { Modal } from 'components/Modal'
 import { AutoColumn } from 'components/Column'
@@ -84,7 +84,7 @@ export default function StakingModal({ isOpen, onDismiss, stakingInfo, userLiqui
   const [signatureData, setSignatureData] = useState<{ v: number; r: string; s: string; deadline: number } | null>(null)
   const [approval, approveCallback] = useApproveCallback(parsedAmount, stakingInfo.stakingRewardAddress)
 
-  const isArgentWallet = useIsArgentWallet()
+  const isArgentWallet = false
   const stakingContract = useStakingContract(stakingInfo.stakingRewardAddress)
   async function onStake() {
     setAttempting(true)
@@ -109,7 +109,7 @@ export default function StakingModal({ isOpen, onDismiss, stakingInfo, userLiqui
           })
           .catch((error: any) => {
             setAttempting(false)
-            console.log(error)
+            console.error('Staking failed', error)
           })
       } else {
         setAttempting(false)

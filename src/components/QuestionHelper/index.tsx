@@ -56,7 +56,13 @@ export default function QuestionHelper({ text }: { text: string }) {
   return (
     <span style={{ marginLeft: 4 }}>
       <Tooltip text={text} show={show}>
-        <QuestionWrapper onClick={open} onMouseEnter={open} onMouseLeave={close} role="button" aria-label="More information">
+        <QuestionWrapper
+          onClick={open}
+          onMouseEnter={open}
+          onMouseLeave={close}
+          role="button"
+          aria-label="More information"
+        >
           <Question size={16} />
         </QuestionWrapper>
       </Tooltip>
@@ -73,7 +79,13 @@ export function LightQuestionHelper({ text }: { text: ReactNode }) {
   return (
     <span style={{ marginLeft: 4 }}>
       <Tooltip text={text} show={show}>
-        <LightQuestionWrapper onClick={open} onMouseEnter={open} onMouseLeave={close} role="button" aria-label="More information">
+        <LightQuestionWrapper
+          onClick={open}
+          onMouseEnter={open}
+          onMouseLeave={close}
+          role="button"
+          aria-label="More information"
+        >
           <QuestionMark>?</QuestionMark>
         </LightQuestionWrapper>
       </Tooltip>

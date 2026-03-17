@@ -133,14 +133,33 @@ const monad = overrideChain({
   ],
 })
 
-export const appEnv = process.env.REACT_APP_ENVIRONMENT as
-  | 'mainnet'
-  | 'beta'
-  | 'testnet'
+export const appEnv = process.env.REACT_APP_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
-const mainChains: readonly [Chain, ...Chain[]] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, monad, viction, u2uMainnet]
-const betaChains: readonly [Chain, ...Chain[]] = [berachain, arbitrum, base, bsc, hyperEVM, linea, sei, monad, viction, u2uMainnet]
+const mainChains: readonly [Chain, ...Chain[]] = [
+  berachain,
+  arbitrum,
+  base,
+  bsc,
+  hyperEVM,
+  linea,
+  sei,
+  monad,
+  viction,
+  u2uMainnet,
+]
+const betaChains: readonly [Chain, ...Chain[]] = [
+  berachain,
+  arbitrum,
+  base,
+  bsc,
+  hyperEVM,
+  linea,
+  sei,
+  monad,
+  viction,
+  u2uMainnet,
+]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains

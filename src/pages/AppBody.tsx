@@ -8,11 +8,11 @@ export const BodyWrapper = React.forwardRef<HTMLDivElement, React.HTMLAttributes
       className={classNames(
         'relative w-full max-w-[500px] bg-[#1d1c21] rounded-none pb-8',
         'shadow-[0px_0px_1px_rgba(0,0,0,0.01),0px_4px_8px_rgba(0,0,0,0.04),0px_16px_24px_rgba(0,0,0,0.04),0px_24px_32px_rgba(0,0,0,0.01)]',
-        className
+        className,
       )}
       {...props}
     />
-  )
+  ),
 )
 BodyWrapper.displayName = 'BodyWrapper'
 

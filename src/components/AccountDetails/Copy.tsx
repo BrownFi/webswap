@@ -1,6 +1,5 @@
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
-import useCopyClipboard from 'hooks/useCopyClipboard'
 
 import { LinkStyledButton } from 'theme'
 import { CheckCircle, Copy } from 'react-feather'
@@ -27,7 +26,14 @@ const TransactionStatusText = styled.span`
 `
 
 export default function CopyHelper(props: { toCopy: string; children?: React.ReactNode }) {
-  const [isCopied, setCopied] = useCopyClipboard()
+  const [isCopied, setIsCopied] = useState(false)
+
+  const setCopied = useCallback((text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
+    })
+  }, [])
 
   return (
     <CopyIcon onClick={() => setCopied(props.toCopy)}>

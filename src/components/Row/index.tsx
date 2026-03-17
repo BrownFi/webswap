@@ -30,7 +30,7 @@ const Row = React.forwardRef<HTMLDivElement, RowProps>(
         {...rest}
       />
     )
-  }
+  },
 )
 Row.displayName = 'Row'
 
@@ -42,7 +42,7 @@ RowBetween.displayName = 'RowBetween'
 export const RowFlat = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
     return <div ref={ref} className={classNames('flex items-center', className)} {...props} />
-  }
+  },
 )
 RowFlat.displayName = 'RowFlat'
 
@@ -64,12 +64,12 @@ export const AutoRow = React.forwardRef<HTMLDivElement, RowProps>(
                 ? React.cloneElement(child as React.ReactElement<any>, {
                     style: { margin: gap, ...(child.props as any).style },
                   })
-                : child
+                : child,
             )
           : children}
       </Row>
     )
-  }
+  },
 )
 AutoRow.displayName = 'AutoRow'
 

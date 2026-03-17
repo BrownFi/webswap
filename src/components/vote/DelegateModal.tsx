@@ -78,7 +78,7 @@ export default function DelegateModal({ isOpen, onDismiss, title }: VoteModalPro
     // try delegation and store hash
     const hash = await delegateCallback(parsedAddress ?? undefined)?.catch((error) => {
       setAttempting(false)
-      console.log(error)
+      console.error('Delegation failed', error)
     })
 
     if (hash) {

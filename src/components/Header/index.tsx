@@ -13,7 +13,13 @@ import CustomAccountDisplay from './CustomAccountDisplay'
 import CustomChainSelect from './CustomChainSelect'
 import HamburgerMenu from './HamburgerMenu'
 
-function StyledNavLink({ id, to, end, className, children }: {
+function StyledNavLink({
+  id,
+  to,
+  end,
+  className,
+  children,
+}: {
   id: string
   to: string
   end?: boolean
@@ -39,11 +45,7 @@ function StyledNavLink({ id, to, end, className, children }: {
   )
 }
 
-export const StyledMenuButton = ({
-  className,
-  children,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+export const StyledMenuButton = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
     className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-lg
       h-[35px] hover:cursor-pointer hover:bg-bg4 focus:cursor-pointer focus:outline-none focus:bg-bg4
@@ -59,15 +61,14 @@ export default function Header() {
   const { isConnected } = useAccount()
   const showCustomAccountDisplay = !!account && !isConnected
   const location = useLocation()
-  const isPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) =>
-    location.pathname.startsWith(p),
-  )
+  const isPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) => location.pathname.startsWith(p))
 
   return (
-    <div className="grid grid-cols-2 items-center justify-between flex-row w-full top-0 relative py-5 px-11 z-[2]
+    <div
+      className="grid grid-cols-2 items-center justify-between flex-row w-full top-0 relative py-5 px-11 z-[2]
       max-md:grid-cols-1 max-md:px-4 max-md:relative
-      max-xs:py-2 max-xs:px-4">
-
+      max-xs:py-2 max-xs:px-4"
+    >
       {/* HeaderRow */}
       <RowFixed className="max-md:w-full">
         {/* Title */}
@@ -95,12 +96,7 @@ export default function Header() {
               <StyledNavLink id="swap-nav-link" to="/swap">
                 Swap
               </StyledNavLink>
-              <StyledNavLink
-                id="pool-nav-link"
-                to="/pool"
-                end
-                className={isPoolActive ? 'active' : ''}
-              >
+              <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
                 Pool
               </StyledNavLink>
               <StyledNavLink id="leaderboard-nav-link" to="/campaign/contest-1">
@@ -112,10 +108,12 @@ export default function Header() {
       </RowFixed>
 
       {/* HeaderControls */}
-      <div className="flex flex-row items-center justify-self-end gap-2
+      <div
+        className="flex flex-row items-center justify-self-end gap-2
         max-md:justify-between max-md:justify-self-center max-md:w-full max-md:max-w-[960px]
         max-md:p-4 max-md:fixed max-md:bottom-0 max-md:left-0 max-md:z-[99]
-        max-md:h-[72px] max-md:rounded-t-xl max-md:bg-bg1">
+        max-md:h-[72px] max-md:rounded-t-xl max-md:bg-bg1"
+      >
         <CustomChainSelect />
         {showCustomAccountDisplay ? <CustomAccountDisplay /> : <ConnectButton />}
       </div>

@@ -2,7 +2,6 @@ import { BASES_TO_TRACK_LIQUIDITY_FOR, ChainId, Pair, PINNED_PAIRS, Token } from
 import { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 
-
 import { useActiveWeb3React } from 'hooks'
 import { useAllTokens } from 'hooks/Tokens'
 import { AppDispatch, AppState } from 'state'

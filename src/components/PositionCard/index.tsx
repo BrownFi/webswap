@@ -18,7 +18,7 @@ import { AutoColumn } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { Loader } from 'components/Loader'
-const PairChartModal = lazy(() => import('components/pool/PairChartModal').then(m => ({ default: m.PairChartModal })))
+const PairChartModal = lazy(() => import('components/pool/PairChartModal').then((m) => ({ default: m.PairChartModal })))
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import QuestionHelper from 'components/QuestionHelper'
 import { AutoRow, RowBetween, RowFixed } from 'components/Row'
