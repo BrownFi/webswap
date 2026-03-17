@@ -5,7 +5,7 @@ import { useActiveWeb3React } from 'hooks'
 import { useTradingFee } from 'hooks/useTradingFee'
 import dayjs from 'dayjs'
 import { useMemo } from 'react'
-import { apiV1Service, apiV2Service } from 'services'
+import { apiV2Service } from 'services'
 import { graphqlFetcher } from 'utils/graphql'
 
 type Token = {
@@ -108,16 +108,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       return !!pairStats
     }, [pairStats]) && !!pairStats
 
-  // Api A Lien
-  const { data: poolStats } = useQuery({
-    queryKey: ['getPoolStats', pair.liquidityToken.address],
-    queryFn: () => {
-      return apiV1Service.getPoolStats(pair)
-    },
-    enabled: !shouldUseIndexer,
-  })
-
-  // Apt BGT
+  // BGT APR
   const { data: poolApr } = useQuery({
     queryKey: ['getBgtApr', pair.liquidityToken.address],
     queryFn: () => {
@@ -150,10 +141,10 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
   return {
     tradingFee,
     totalSupply,
-    feeAPR: (shouldUseIndexer ? pairStats.apr * (1 - pairStats.protocolFee) : poolStats?.apy) || 0,
+    feeAPR: (shouldUseIndexer ? pairStats.apr * (1 - pairStats.protocolFee) : 0) || 0,
     bgtAPR: (poolApr?.apr || 0) * 100,
-    volume24h: (shouldUseIndexer ? pairStats.volumeDay : poolStats?.volume24h) || 0,
-    volume7d: (shouldUseIndexer ? pairStats.volume7Day : poolStats?.volume7d) || 0,
+    volume24h: (shouldUseIndexer ? pairStats.volumeDay : 0) || 0,
+    volume7d: (shouldUseIndexer ? pairStats.volume7Day : 0) || 0,
     shouldUseIndexer,
     pairAccount: data?.pairAccount,
     merklCampaignApr: merklCampaignApr?.apr || 0,

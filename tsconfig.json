@@ -31,13 +31,6 @@
       "src/**/*.test.ts",
       "src/**/*.test.tsx",
       "src/**/*.test.skip.ts",
-      "src/pages/Vote",
-      "src/pages/MigrateV1",
-      "src/pages/Earn/Manage.tsx",
-      "src/components/Web3Status",
-      "src/starknet-provider.tsx",
-      "src/state/governance/**",
-      "src/components/vote/**"
     ],
   "include": ["./src/**/*.ts", "./src/**/*.tsx"]
 }
