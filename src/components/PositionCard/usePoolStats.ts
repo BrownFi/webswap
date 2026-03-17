@@ -136,14 +136,16 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       pair.chainId === ChainId.LINEA_MAINNET && merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase()),
   })
 
-  const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : useTradingFee({ pair })
+  const rpcTradingFee = useTradingFee({ pair })
+  const rpcTotalSupply = useTotalSupply(shouldUseIndexer ? undefined : pair.liquidityToken)
 
+  const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : rpcTradingFee
   const totalSupply = shouldUseIndexer
     ? new TokenAmount(
         pair.liquidityToken,
         JSBI.BigInt(Math.round(pairStats.totalSupply * 10 ** pair.liquidityToken.decimals)),
       )
-    : useTotalSupply(pair.liquidityToken)
+    : rpcTotalSupply
 
   return {
     tradingFee,

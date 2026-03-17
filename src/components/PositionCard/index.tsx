@@ -116,8 +116,8 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     currencyB: pair.token1,
     enableFetchDetail: showMore,
   })
-  const token0Price = pythPrices.CURRENCY_A
-  const token1Price = pythPrices.CURRENCY_B
+  const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
+  const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
   const reserve0Price = token0Price * Number(pair.reserve0.toSignificant(4))
   const reserve1Price = token1Price * Number(pair.reserve1.toSignificant(4))

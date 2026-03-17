@@ -116,7 +116,10 @@ export default function Pool() {
     staleTime: 60_000,
   })
 
-  const sortedPairs = (data?.pairs ?? []).slice().sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl)
+  const sortedPairs = useMemo(
+    () => (data?.pairs ?? []).slice().sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl),
+    [data?.pairs],
+  )
 
   const blocklist = useMemo(
     () =>
@@ -140,17 +143,21 @@ export default function Pool() {
   }, [allTokens, chainId])
 
   // Filter pairs using GraphQL
-  const filteredPairs = sortedPairs.filter((pair) => {
-    if (isMainnet) {
-      if (blocklist.has(pair.id.toLowerCase())) {
-        return false
-      }
-      const token0Address = pair.token0?.id.toLowerCase()
-      const token1Address = pair.token1?.id.toLowerCase()
-      return allowedTokenAddresses.has(token0Address) || allowedTokenAddresses.has(token1Address)
-    }
-    return true
-  })
+  const filteredPairs = useMemo(
+    () =>
+      sortedPairs.filter((pair) => {
+        if (isMainnet) {
+          if (blocklist.has(pair.id.toLowerCase())) {
+            return false
+          }
+          const token0Address = pair.token0?.id.toLowerCase()
+          const token1Address = pair.token1?.id.toLowerCase()
+          return allowedTokenAddresses.has(token0Address) || allowedTokenAddresses.has(token1Address)
+        }
+        return true
+      }),
+    [sortedPairs, blocklist, allowedTokenAddresses],
+  )
 
   const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
   const [showIndexerModal, setShowIndexerModal] = useState(false)
