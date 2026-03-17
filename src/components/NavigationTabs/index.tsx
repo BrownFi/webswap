@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import { NavLink, Link as HistoryLink } from 'react-router-dom'
 
 import { ChevronLeft } from 'react-feather'
@@ -42,17 +41,16 @@ function StyledNavLink({
 }
 
 export function SwapPoolTabs({ active }: { active: 'swap' | 'pool' }) {
-  const { t } = useTranslation()
   return (
     <div
       className="flex flex-row flex-nowrap items-center rounded-[3rem] justify-evenly"
       style={{ marginBottom: '20px', display: 'none' }}
     >
       <StyledNavLink id="swap-nav-link" to="/swap" end className={active === 'swap' ? 'active' : ''}>
-        {t('swap')}
+        Swap
       </StyledNavLink>
       <StyledNavLink id="pool-nav-link" to="/pool" end className={active === 'pool' ? 'active' : ''}>
-        {t('pool')}
+        Pool
       </StyledNavLink>
     </div>
   )

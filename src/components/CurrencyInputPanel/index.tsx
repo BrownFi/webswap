@@ -12,7 +12,6 @@ import { Input as NumericalInput } from 'components/NumericalInput'
 import downIcon from 'assets/svg/arrow_drop_down.svg'
 
 import { useActiveWeb3React } from 'hooks'
-import { useTranslation } from 'react-i18next'
 import useTheme from 'hooks/useTheme'
 import { isMobile } from 'react-device-detect'
 import { getTokenSymbol } from 'utils'
@@ -149,8 +148,6 @@ export function CurrencyInputPanel({
   customBalanceText,
   loading,
 }: CurrencyInputPanelProps) {
-  const { t } = useTranslation()
-
   const [modalOpen, setModalOpen] = useState(false)
   const { account, chainId } = useActiveWeb3React()
   const selectedCurrencyBalance = useCurrencyBalance(account ?? undefined, currency ?? undefined)
@@ -234,7 +231,7 @@ export function CurrencyInputPanel({
                       ? currency.symbol.slice(0, 4) +
                         '...' +
                         currency.symbol.slice(currency.symbol.length - 5, currency.symbol.length)
-                      : getTokenSymbol(currency, chainId)) || t('Select token')}
+                      : getTokenSymbol(currency, chainId)) || 'Select token'}
                   </StyledTokenName>
                 )}
               </div>
