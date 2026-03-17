@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import styled, { css } from 'styled-components'
 import { isMobile } from 'react-device-detect'
 import { transparentize } from 'polished'
@@ -9,7 +10,7 @@ const StyledDialogOverlay = styled.div<{ visible: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 2;
+  z-index: 999;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -103,7 +104,7 @@ export function Modal({
 
   if (!mounted) return null
 
-  return (
+  return createPortal(
     <StyledDialogOverlay visible={visible} onClick={onDismiss}>
       <StyledDialogContent
         role="dialog"
@@ -115,10 +116,10 @@ export function Modal({
         mobile={isMobile}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
-        {/* prevents the automatic focusing of inputs on mobile by the reach dialog */}
         {!initialFocusRef && isMobile ? <div tabIndex={1} /> : null}
         {children}
       </StyledDialogContent>
-    </StyledDialogOverlay>
+    </StyledDialogOverlay>,
+    document.body,
   )
 }
