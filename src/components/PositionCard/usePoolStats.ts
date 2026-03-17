@@ -103,7 +103,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
     useMemo(() => {
       if (pairStats?.updatedAt) {
         const diffMinutes = dayjs().diff(dayjs.unix(pairStats.updatedAt), 'minute')
-        return diffMinutes < 60 * 24 * 30
+        return diffMinutes < 120 // 2 hours — fall back to RPC if indexer is stale
       }
       return !!pairStats
     }, [pairStats]) && !!pairStats

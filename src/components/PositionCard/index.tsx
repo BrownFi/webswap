@@ -1,6 +1,6 @@
 import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Info, ExternalLink } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'components/Rebass'
@@ -119,13 +119,15 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  const reserve0Price = token0Price * Number(pair.reserve0.toSignificant(4))
-  const reserve1Price = token1Price * Number(pair.reserve1.toSignificant(4))
-
-  const tvl = reserve0Price + reserve1Price
-  const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(4)) || 1)
-  const feeAPRLiem = tradingFee * (((Number(volume24h) || 0) * 360) / (tvl || 1))
-  const feeAPR = shouldUseIndexer ? feeAPRIndexer : feeAPRLiem
+  const { tvl, lpPrice, feeAPR } = useMemo(() => {
+    const r0 = token0Price * Number(pair.reserve0.toSignificant(6))
+    const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
+    const tvl = r0 + r1
+    const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(6)) || 1)
+    const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
+    const feeAPR = shouldUseIndexer ? feeAPRIndexer : feeAPRFallback
+    return { tvl, lpPrice, feeAPR }
+  }, [token0Price, token1Price, pair, totalPoolTokens, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
 
   const stakedLiquidityTokenAmount = parseStakeLpAmount(pairAccount?.stakeLP, pair.liquidityToken)
 
@@ -349,7 +351,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   <Text fontSize={16} fontWeight={500} color="white">
                     {formatNumber(pair.reserve0.toSignificant(4))}{' '}
                     <span className="text-[#949494]">
-                      ({formatPrice(showTokenPrice ? token0Price : reserve0Price)})
+                      ({formatPrice(showTokenPrice ? token0Price : token0Price * Number(pair.reserve0.toSignificant(6)))})
                     </span>
                   </Text>
                 </FixedHeightRow>
@@ -364,7 +366,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   <Text fontSize={16} fontWeight={500} color="white">
                     {formatNumber(pair.reserve1.toSignificant(4))}{' '}
                     <span className="text-[#949494]">
-                      ({formatPrice(showTokenPrice ? token1Price : reserve1Price)})
+                      ({formatPrice(showTokenPrice ? token1Price : token1Price * Number(pair.reserve1.toSignificant(6)))})
                     </span>
                   </Text>
                 </FixedHeightRow>
@@ -580,7 +582,7 @@ const UserPositionRow = ({
         color={colored ? (Math.abs(value) < 0.01 ? '#949494' : value > 0 ? '#35b935' : '#ff6c00') : 'white'}
       >
         {Math.abs(value) >= 0.01 ? formatPrice(value) : '~ $0'}
-        {Math.abs(value) >= 0.01 && mauso && ` (${((value * 100) / mauso).toFixed(2)}%)`}
+        {Math.abs(value) >= 0.01 && mauso && Math.abs(mauso) >= 0.01 && ` (${((value * 100) / mauso).toFixed(2)}%)`}
       </Text>
     </FixedHeightRow>
   )

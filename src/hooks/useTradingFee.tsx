@@ -15,7 +15,7 @@ export const useTradingFee = ({ pair }: Props) => {
   const { version } = useVersion({ chainId })
 
   const { get: getTradingFee, save: saveTradingFee, isAvailable } = useStorageCache({
-    key: ['tradingFee', pair.liquidityToken.address].join('-'),
+    key: ['tradingFee', pair.liquidityToken.address, `v${version}`].join('-'),
     initValue: 0,
     cacheTime: 1 * 60 * 60,
   })

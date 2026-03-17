@@ -70,7 +70,7 @@ export default function Pool() {
   const { version, enableGraphQL } = useVersion({ chainId })
   const allTokens = useDefaultTokens(chainId)
 
-  const { data, error } = useQuery<{
+  const { data, error, isLoading: isLoadingPairs } = useQuery<{
     pairs: {
       id: string
       fee: number
@@ -251,47 +251,57 @@ export default function Pool() {
             </TitleRow>
 
             {shouldUseGraphQL ? (
-              <>
-                {filteredPairs.map((item: PairStats) => {
-                  const { token0, token1 } = item
-                  const pair = new Pair(
-                    new TokenAmount(
-                      new Token(
-                        chainId,
-                        checksumAddress(token0!.id as Address),
-                        token0!.decimals,
-                        token0?.symbol,
-                        token0?.name,
-                      ),
-                      JSBI.BigInt(Math.round(item.reserve0 * 10 ** token0!.decimals)),
-                    ),
-                    new TokenAmount(
-                      new Token(
-                        chainId,
-                        checksumAddress(token1!.id as Address),
-                        token1!.decimals,
-                        token1?.symbol,
-                        token1?.name,
-                      ),
-                      JSBI.BigInt(Math.round(item.reserve1 * 10 ** token1!.decimals)),
-                    ),
-                    version,
-                  )
-                  return (
-                    <FullPositionCard
-                      key={checksumAddress(item.id as Address)}
-                      pair={pair}
-                      pairStats={item as PairStats}
-                    />
-                  )
-                })}
-              </>
+              <MemoizedPairList pairs={filteredPairs} chainId={chainId} version={version} />
+            ) : enableGraphQL && isLoadingPairs ? (
+              <EmptyProposals>
+                <TYPE.body color={'#999'} textAlign="center">
+                  <Dots>Loading pools</Dots>
+                </TYPE.body>
+              </EmptyProposals>
             ) : (
               <OnChainLiquidityPositions />
             )}
           </AutoColumn>
         </AutoColumn>
       </PageWrapper>
+    </>
+  )
+}
+
+function MemoizedPairList({
+  pairs,
+  chainId,
+  version,
+}: {
+  pairs: PairStats[]
+  chainId: number
+  version: number
+}) {
+  const pairsWithObjects = useMemo(
+    () =>
+      pairs.map((item) => {
+        const { token0, token1 } = item
+        const pair = new Pair(
+          new TokenAmount(
+            new Token(chainId, checksumAddress(token0!.id as Address), token0!.decimals, token0?.symbol, token0?.name),
+            JSBI.BigInt(Math.round(item.reserve0 * 10 ** token0!.decimals)),
+          ),
+          new TokenAmount(
+            new Token(chainId, checksumAddress(token1!.id as Address), token1!.decimals, token1?.symbol, token1?.name),
+            JSBI.BigInt(Math.round(item.reserve1 * 10 ** token1!.decimals)),
+          ),
+          version,
+        )
+        return { pair, stats: item }
+      }),
+    [pairs, chainId, version],
+  )
+
+  return (
+    <>
+      {pairsWithObjects.map(({ pair, stats }) => (
+        <FullPositionCard key={pair.liquidityToken.address} pair={pair} pairStats={stats} />
+      ))}
     </>
   )
 }

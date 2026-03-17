@@ -1,7 +1,7 @@
 import { Pair } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
 import { useActiveWeb3React } from 'hooks'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useSingleCallResult } from 'state/multicall/hooks'
 import { usePairV2Contract } from './useContract'
 import { useStorageCache } from './useStorageCache'
@@ -41,6 +41,13 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
   const kappaCall = useSingleCallResult(contract, 'k', undefined, { disabled: shouldSkipCall })
   const protocolFeeCall = useSingleCallResult(contract, 'protocolFee', undefined, { disabled: shouldSkipCall })
 
+  // Stabilize saveDevStats reference to prevent effect re-runs
+  const stableSave = useCallback(
+    (data: { lambda: number; kappa: number; protocolFee: number }) => saveDevStats(data),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pair.liquidityToken.address],
+  )
+
   useEffect(() => {
     if (shouldSkipCall) return
 
@@ -50,8 +57,8 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
 
     if (lambda === undefined || kappa === undefined || protocolFee === undefined) return
 
-    saveDevStats({ lambda, kappa, protocolFee })
-  }, [shouldSkipCall, lambdaCall.result, kappaCall.result, protocolFeeCall.result, saveDevStats])
+    stableSave({ lambda, kappa, protocolFee })
+  }, [shouldSkipCall, lambdaCall.result, kappaCall.result, protocolFeeCall.result, stableSave])
 
   return getDevStats()
 }
