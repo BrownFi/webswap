@@ -5,7 +5,7 @@ import useParsedQueryString from 'hooks/useParsedQueryString'
 import axios from 'axios'
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_SERVER_URL,
+  baseURL: import.meta.env.VITE_API_URL,
 })
 
 const ENABLED_REFERRAL = false

@@ -22,7 +22,7 @@ import { ToastProvider } from 'containers/ToastProvider'
 import { ErrorBoundary } from 'containers/ErrorBoundary'
 
 // Validate required environment variables at startup
-const REQUIRED_ENV_VARS = ['VITE_API_URL', 'VITE_API_V2_URL'] as const
+const REQUIRED_ENV_VARS = ['VITE_API_URL'] as const
 const missingEnvVars = REQUIRED_ENV_VARS.filter((key) => !import.meta.env[key])
 if (missingEnvVars.length > 0) {
   console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
