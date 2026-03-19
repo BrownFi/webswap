@@ -24,6 +24,7 @@ import {
   isZapSupportedOnChain,
   KyberZapRouteData,
 } from './zapHelpers'
+import { isUserRejection, parseZapError } from 'utils/zapErrors'
 import ZapTokenInputRow, { ParsedZapInput, ZapInput } from './ZapInput'
 import { ZapRoutePreview } from './ZapRoutePreview'
 
@@ -142,7 +143,7 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
         inputs: routeInputs,
       }),
     enabled: isRouteAvailable,
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
   })
 
   const zapError = useMemo(() => {
@@ -312,12 +313,9 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
       createToast('Zap Successful', 'success')
     } catch (error) {
       setIsSubmitting(false)
-      if ((error as any)?.code !== 4001) {
-        console.error(error)
-      }
-      if (typeof (error as any)?.reason === 'string') {
-        createToast((error as any)?.reason, 'error')
-      }
+      if (isUserRejection(error as any)) return
+      console.error('Zap transaction failed:', error)
+      createToast(parseZapError(error), 'error')
     }
   }, [chainId, account, library, zapRouteData])
 

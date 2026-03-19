@@ -11,25 +11,34 @@ const chainMap: Partial<Record<ChainId, string>> = {
   [ChainId.LINEA_MAINNET]: 'linea',
 }
 
-async function fetchJson<T>(path: string, options?: { params?: Record<string, any>; timeout?: number }): Promise<T> {
-  const url = new URL(path, BASE_URL)
-  if (options?.params) {
-    Object.entries(options.params).forEach(([key, value]) => {
-      if (value !== undefined) url.searchParams.set(key, String(value))
-    })
+async function fetchJson<T>(path: string, options?: { params?: Record<string, any>; timeout?: number; retries?: number }): Promise<T> {
+  const maxRetries = options?.retries ?? 1
+  let lastError: Error | undefined
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const url = new URL(path, BASE_URL)
+    if (options?.params) {
+      Object.entries(options.params).forEach(([key, value]) => {
+        if (value !== undefined) url.searchParams.set(key, String(value))
+      })
+    }
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), options?.timeout ?? 30_000)
+    try {
+      const response = await fetch(url.toString(), {
+        signal: controller.signal,
+        headers: { 'x-client-id': KYBER_ZAP_CLIENT_ID },
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      return response.json()
+    } catch (e) {
+      lastError = e as Error
+      if (attempt < maxRetries) continue
+    } finally {
+      clearTimeout(timeoutId)
+    }
   }
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), options?.timeout ?? 30_000)
-  try {
-    const response = await fetch(url.toString(), {
-      signal: controller.signal,
-      headers: { 'x-client-id': KYBER_ZAP_CLIENT_ID },
-    })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    return response.json()
-  } finally {
-    clearTimeout(timeoutId)
-  }
+  throw lastError
 }
 
 async function postJson<T>(path: string, data: unknown, options?: { timeout?: number }): Promise<T> {

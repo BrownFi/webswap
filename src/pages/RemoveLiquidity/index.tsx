@@ -1,4 +1,5 @@
 import { Currency, currencyEquals, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
+import { isUserRejection, parseZapError } from 'utils/zapErrors'
 import { useQuery } from '@tanstack/react-query'
 import { ButtonConfirmed, ButtonError, ButtonPrimary } from 'components/Button'
 import { RemoveLiqudityCard } from 'components/Card'
@@ -249,10 +250,9 @@ export default function RemoveLiquidity() {
       }
     } catch (e: any) {
       setAttemptingTxn(false)
-      if (e?.code !== 4001) {
-        console.error('Remove liquidity failed', e)
-        createToast(e?.reason || e?.message || 'Remove liquidity failed. Please try again.', 'error')
-      }
+      if (isUserRejection(e)) return
+      console.error('Remove liquidity failed:', e)
+      createToast(useZap ? parseZapError(e) : (e?.reason || e?.message || 'Remove liquidity failed. Please try again.'), 'error')
     }
   }
 

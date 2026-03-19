@@ -76,8 +76,8 @@ export const executeKyberZapOutTransaction = async ({
   // Use the suggested gas limit from Kyber to avoid estimateGas failures on complex routes.
   const gasLimit = routeData.gas ? BigNumber.from(routeData.gas) : undefined
   if (gasLimit) {
-    // add 20% buffer to reduce out-of-gas risk
-    txRequest.gasLimit = gasLimit.mul(120).div(100)
+    // add 30% buffer to reduce out-of-gas risk on complex routes
+    txRequest.gasLimit = gasLimit.mul(130).div(100)
   }
 
   if (buildData.value) {
