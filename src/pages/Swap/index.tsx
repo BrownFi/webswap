@@ -432,9 +432,13 @@ export default function Swap() {
                 {wrapInputError ??
                   (wrapType === WrapType.WRAP ? 'Wrap' : wrapType === WrapType.UNWRAP ? 'Unwrap' : null)}
               </ButtonPrimary>
-            ) : isLoadingWrap || (noRoute && userHasSpecifiedInputOutput && !swapInputError) ? (
+            ) : isLoadingWrap || ((loadingExactIn || loadingExactOut) && userHasSpecifiedInputOutput && !swapInputError) ? (
               <ButtonError disabled>
                 <Dots>Loading</Dots>
+              </ButtonError>
+            ) : noRoute && userHasSpecifiedInputOutput && !swapInputError ? (
+              <ButtonError disabled>
+                Insufficient liquidity for this trade.
               </ButtonError>
             ) : showApproveFlow ? (
               <RowBetween>
