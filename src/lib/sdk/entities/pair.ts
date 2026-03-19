@@ -21,8 +21,6 @@ import {
   getRouterAddress,
 } from '../utils'
 import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/addresses'
-import axios from 'axios'
-import * as ethers from 'ethers'
 
 // Helper: fetch Pyth price feed data and update fee for WithPrice router calls
 async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[string[], number]> {
@@ -51,6 +49,7 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
   }))).flat()
 
   const uniqueIds = allIds.filter((id, i, arr) => arr.indexOf(id) === i && id !== ZERO_ADDRESS)
+  const { default: axios } = await import('axios')
   const { data } = await axios.get('https://hermes.pyth.network/api/latest_vaas', { params: { ids: uniqueIds } })
   const priceUpdate = (data as string[]).map((vaa: string) => '0x' + Buffer.from(vaa, 'base64').toString('hex'))
 
@@ -69,9 +68,11 @@ async function solidityPackHelper(addresses: string[], chainId: number): Promise
   const { getFactoryAddress: getFactory } = await import('../utils')
   const factoryContract = new web3.eth.Contract(IFactoryV2 as any, getFactory(chainId, 2))
   const priceFeedIds = await Promise.all(addresses.map((addr) => (factoryContract.methods as any).priceFeedIds(addr).call()))
+  const { default: axios } = await import('axios')
   const { data } = await axios.get('https://hermes.pyth.network/v2/updates/price/latest', { params: { ids: priceFeedIds } })
   const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`)
-  return ethers.utils.defaultAbiCoder.encode(['bytes[]'], [dataBytes])
+  const { utils } = await import('ethers')
+  return utils.defaultAbiCoder.encode(['bytes[]'], [dataBytes])
 }
 import { Token } from './token'
 import { Price } from './fractions/price'

@@ -20,5 +20,5 @@ export const _997: JSBI = JSBI.BigInt(997)
 export const _1000: JSBI = JSBI.BigInt(1000)
 
 export const BIPS_BASE: JSBI = JSBI.BigInt(10000)
-export const INITIAL_ALLOWED_SLIPPAGE = 50
+export const INITIAL_ALLOWED_SLIPPAGE = 1000
 export const AddressZero = '0x0000000000000000000000000000000000000000'

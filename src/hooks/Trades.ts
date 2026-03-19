@@ -124,7 +124,6 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           if (!stale) {
             const foundTrade = bestTradeIn?.[0] ?? null
             setTrade(foundTrade)
-            if (!foundTrade) setInsufficient(true)
             setLoading(false)
           }
           return
@@ -146,7 +145,6 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
         if (!stale) {
           const foundTrade = bestTradeIn?.[0] ?? null
           setTrade(foundTrade)
-          if (!foundTrade) setInsufficient(true)
           setLoading(false)
         }
         return
@@ -223,7 +221,6 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           if (!stale) {
             const foundTrade = bestTradeOut?.[0] ?? null
             setTrade(foundTrade)
-            if (!foundTrade) setInsufficient(true)
             setLoading(false)
           }
           return
@@ -246,7 +243,6 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
         if (!stale) {
           const foundTrade = bestTradeOut?.[0] ?? null
           setTrade(foundTrade)
-          if (!foundTrade) setInsufficient(true)
           setLoading(false)
         }
         return
