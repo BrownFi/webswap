@@ -1,97 +1,66 @@
-import { parse } from 'qs'
-import { Field } from './actions'
-import { queryParametersToSwapState } from './hooks'
+import { Token, ETHER, JSBI, TokenAmount, CurrencyAmount, ChainId } from '@brownfi/sdk'
+import { tryParseAmount } from './hooks'
 
-describe('hooks', () => {
-  describe('#queryParametersToSwapState', () => {
-    test('ETH to DAI', () => {
-      expect(
-        queryParametersToSwapState(
-          parse(
-            '?inputCurrency=ETH&outputCurrency=0x6b175474e89094c44da98b954eedeac495271d0f&exactAmount=20.5&exactField=outPUT',
-            { parseArrays: false, ignoreQueryPrefix: true },
-          ),
-        ),
-      ).toEqual({
-        [Field.OUTPUT]: { currencyId: '0x6B175474E89094C44Da98b954EedeAC495271d0F' },
-        [Field.INPUT]: { currencyId: 'ETH' },
-        typedValue: '20.5',
-        independentField: Field.OUTPUT,
-        recipient: null,
-      })
-    })
+const TOKEN_18 = new Token(ChainId.MAINNET, '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 18, 'TEST', 'Test Token')
+const TOKEN_6 = new Token(ChainId.MAINNET, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6, 'USDT', 'Tether USD')
 
-    test('does not duplicate eth for invalid output token', () => {
-      expect(
-        queryParametersToSwapState(parse('?outputCurrency=invalid', { parseArrays: false, ignoreQueryPrefix: true })),
-      ).toEqual({
-        [Field.INPUT]: { currencyId: '' },
-        [Field.OUTPUT]: { currencyId: 'ETH' },
-        typedValue: '',
-        independentField: Field.INPUT,
-        recipient: null,
-      })
-    })
+describe('tryParseAmount', () => {
+  it('returns undefined for empty value', () => {
+    expect(tryParseAmount('', TOKEN_18)).toBeUndefined()
+  })
 
-    test('output ETH only', () => {
-      expect(
-        queryParametersToSwapState(
-          parse('?outputCurrency=eth&exactAmount=20.5', { parseArrays: false, ignoreQueryPrefix: true }),
-        ),
-      ).toEqual({
-        [Field.OUTPUT]: { currencyId: 'ETH' },
-        [Field.INPUT]: { currencyId: '' },
-        typedValue: '20.5',
-        independentField: Field.INPUT,
-        recipient: null,
-      })
-    })
+  it('returns undefined for undefined value', () => {
+    expect(tryParseAmount(undefined, TOKEN_18)).toBeUndefined()
+  })
 
-    test('invalid recipient', () => {
-      expect(
-        queryParametersToSwapState(
-          parse('?outputCurrency=eth&exactAmount=20.5&recipient=abc', { parseArrays: false, ignoreQueryPrefix: true }),
-        ),
-      ).toEqual({
-        [Field.OUTPUT]: { currencyId: 'ETH' },
-        [Field.INPUT]: { currencyId: '' },
-        typedValue: '20.5',
-        independentField: Field.INPUT,
-        recipient: null,
-      })
-    })
+  it('returns undefined for undefined currency', () => {
+    expect(tryParseAmount('1.0', undefined)).toBeUndefined()
+  })
 
-    test('valid recipient', () => {
-      expect(
-        queryParametersToSwapState(
-          parse('?outputCurrency=eth&exactAmount=20.5&recipient=0x0fF2D1eFd7A57B7562b2bf27F3f37899dB27F4a5', {
-            parseArrays: false,
-            ignoreQueryPrefix: true,
-          }),
-        ),
-      ).toEqual({
-        [Field.OUTPUT]: { currencyId: 'ETH' },
-        [Field.INPUT]: { currencyId: '' },
-        typedValue: '20.5',
-        independentField: Field.INPUT,
-        recipient: '0x0fF2D1eFd7A57B7562b2bf27F3f37899dB27F4a5',
-      })
-    })
-    test('accepts any recipient', () => {
-      expect(
-        queryParametersToSwapState(
-          parse('?outputCurrency=eth&exactAmount=20.5&recipient=bob.argent.xyz', {
-            parseArrays: false,
-            ignoreQueryPrefix: true,
-          }),
-        ),
-      ).toEqual({
-        [Field.OUTPUT]: { currencyId: 'ETH' },
-        [Field.INPUT]: { currencyId: '' },
-        typedValue: '20.5',
-        independentField: Field.INPUT,
-        recipient: 'bob.argent.xyz',
-      })
-    })
+  it('returns undefined for zero value', () => {
+    // parseUnits('0', 18) => '0', which triggers the '!== 0' check
+    expect(tryParseAmount('0', TOKEN_18)).toBeUndefined()
+  })
+
+  it('parses a valid amount for an 18-decimal token', () => {
+    const result = tryParseAmount('1.5', TOKEN_18)
+    expect(result).toBeDefined()
+    expect(result).toBeInstanceOf(TokenAmount)
+    // 1.5 * 10^18 = 1500000000000000000
+    expect(result!.raw.toString()).toBe('1500000000000000000')
+  })
+
+  it('parses a valid amount for a 6-decimal token', () => {
+    const result = tryParseAmount('100', TOKEN_6)
+    expect(result).toBeDefined()
+    expect(result).toBeInstanceOf(TokenAmount)
+    // 100 * 10^6 = 100000000
+    expect(result!.raw.toString()).toBe('100000000')
+  })
+
+  it('parses ETHER (native currency) and returns CurrencyAmount', () => {
+    const result = tryParseAmount('2.0', ETHER)
+    expect(result).toBeDefined()
+    // ETHER is not a Token instance, so it should be CurrencyAmount.ether
+    expect(result!.raw.toString()).toBe('2000000000000000000')
+    expect(result!.currency).toBe(ETHER)
+  })
+
+  it('returns undefined for too many decimal places', () => {
+    // Token has 6 decimals, but value has 7+ decimals => parseUnits throws
+    const result = tryParseAmount('1.1234567', TOKEN_6)
+    expect(result).toBeUndefined()
+  })
+
+  it('returns undefined for invalid string', () => {
+    const result = tryParseAmount('abc', TOKEN_18)
+    expect(result).toBeUndefined()
+  })
+
+  it('parses very small amounts', () => {
+    const result = tryParseAmount('0.000001', TOKEN_18)
+    expect(result).toBeDefined()
+    // 0.000001 * 10^18 = 1000000000000
+    expect(result!.raw.toString()).toBe('1000000000000')
   })
 })
