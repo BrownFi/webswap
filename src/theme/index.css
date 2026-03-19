@@ -88,6 +88,29 @@ html::-webkit-scrollbar {
   display: none;
 }
 
+/* Thin styled scrollbar for inner containers (token list, modals) */
+.styled-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4a4850 transparent;
+}
+
+.styled-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.styled-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.styled-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #4a4850;
+  border-radius: 2px;
+}
+
+.styled-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #6C7284;
+}
+
 * {
   outline: none !important;
 }

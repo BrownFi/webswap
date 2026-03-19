@@ -228,6 +228,7 @@ export default function CurrencyList({
       itemCount={itemData.length}
       itemSize={68}
       itemKey={itemKey}
+      className="styled-scrollbar"
     >
       {Row}
     </FixedSizeList>

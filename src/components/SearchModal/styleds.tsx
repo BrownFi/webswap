@@ -74,13 +74,13 @@ export const MenuItem = styled.div<{ disabled?: boolean; selected?: boolean }>`
   cursor: ${({ disabled }) => !disabled && 'pointer'};
   pointer-events: ${({ disabled }) => disabled && 'none'};
   :hover {
-    background-color: #323038;
+    background-color: ${({ disabled, selected }) => (!disabled && !selected ? '#4a4850' : 'transparent')};
   }
-  opacity: ${({ disabled, selected }) => (disabled || selected ? 0.5 : 1)};
-  border-bottom: 1px solid #323135;
-  width: calc(100% - 80px) !important;
+  opacity: ${({ disabled, selected }) => (disabled || selected ? 0.4 : 1)};
+  ${({ selected }) => selected && 'background-color: #4a4850;'}
+  width: calc(100% - 40px) !important;
   ${({ theme }) => theme.mediaWidth.upToMedium`
-   width: calc(100% - 40px) !important;
+   width: calc(100% - 24px) !important;
    margin: 0 20px;
   `};
 `
@@ -92,24 +92,23 @@ export const SearchInput = styled.input`
   width: 100%;
   white-space: nowrap;
   background: none;
-  border: none;
   outline: none;
   border-radius: 0;
   color: white;
-  border: 0;
   -webkit-appearance: none;
 
   font-size: 14px;
-  background-color: #131216;
+  background-color: #2C2F36;
   font-weight: 500;
   height: 44px;
   padding: 0 20px 0 50px;
+  border: 1px solid #40444F;
   ::placeholder {
-    color: ${({ theme }) => theme.text3};
+    color: #6C7284;
   }
-  transition: border 100ms;
+  transition: border 150ms;
   :focus {
-    border: 0;
+    border: 1px solid #27E3AB60;
     outline: none;
   }
 `

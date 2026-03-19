@@ -180,7 +180,8 @@ export function CurrencySearch({
         )}
       </PaddedColumn>
 
-      <Column style={{ padding: '20px 0', flex: 1 }}>
+      <div className="h-px bg-[#40444F] mx-6" />
+      <Column style={{ padding: '12px 0', flex: 1 }}>
         {filteredSortedTokens?.length > 0 || filteredInactiveTokens?.length > 0 ? (
           <AutoSizer disableWidth>
             {({ height }: { height: number }) => (
