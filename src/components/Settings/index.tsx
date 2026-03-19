@@ -86,7 +86,7 @@ const MenuFlyout = styled.span`
   position: absolute;
   top: 3rem;
   right: 0rem;
-  z-index: 100;
+  z-index: 1000;
 
   ${({ theme }) => theme.mediaWidth.upToMedium`
     position: fixed;
@@ -214,7 +214,7 @@ export function SettingsTab() {
       </StyledMenuButton>
       {open && (
         <>
-        <div className="fixed inset-0 z-[99] bg-black/75 backdrop-blur-sm" onClick={toggle} />
+        <div className="fixed inset-0 z-[999] bg-black/75 backdrop-blur-sm" onClick={toggle} />
         <MenuFlyout>
           <AutoColumn style={{ padding: '1rem' }} gap={'20px'}>
             <div className="flex items-center justify-between">
