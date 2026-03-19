@@ -545,7 +545,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   </a>{' '}
                   (earn iBGT)
                 </div>
-                <img src="https://furthermore.app/icons/bgt.svg" className="h-5" />
+                <img src="https://furthermore.app/icons/bgt.svg" className="h-5" alt="BGT" />
               </div>
             )}
           </AutoColumn>

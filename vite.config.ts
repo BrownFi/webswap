@@ -35,6 +35,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom', 'react-redux', '@reduxjs/toolkit'],
           // UI / Query
           'vendor-ui': ['@tanstack/react-query', 'styled-components', 'polished'],
+          'vendor-recharts': ['recharts'],
         },
       },
     },

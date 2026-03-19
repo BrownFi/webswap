@@ -199,7 +199,7 @@ export async function removeLiquidity(
     const response = await router[methodName](...args, { gasLimit: safeGasEstimate })
     return response
   } catch (e) {
-    console.log(e)
+    console.error('removeLiquidity transaction failed', e)
     return null
   }
 }
@@ -245,9 +245,6 @@ export async function addLiquidity(
       noLiquidity || (shouldExactAmountInput && exactFieldInput === Field.CURRENCY_B) ? 0 : allowedSlippage
     )[0],
   }
-
-  console.log('CURRENCY_A =', currencyA.symbol, parsedAmountA.toExact(), amountsMin[Field.CURRENCY_A].toString())
-  console.log('CURRENCY_B =', currencyB.symbol, parsedAmountB.toExact(), amountsMin[Field.CURRENCY_B].toString())
 
   let estimate: any
   let method: any
@@ -308,10 +305,6 @@ export async function addLiquidity(
     // V2 solidity pack would be appended here (Phase B)
     value = null
   }
-
-  console.log('========', value ? 'addLiquidityETH' : 'addLiquidity')
-  console.log('value', value?.toString())
-  console.log('input', ...args)
 
   try {
     const estimatedGasLimit = await estimate(...args, ...(value ? [{ value }] : [{}]))

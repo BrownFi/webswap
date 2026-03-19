@@ -73,8 +73,7 @@
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.10",
     "@tanstack/react-query": "^5.90.21",
-    "@uniswap/sdk": "^3.0.3",
-    "@walletconnect/ethereum-provider": "^2.23.8",
+"@walletconnect/ethereum-provider": "^2.23.8",
     "@walletconnect/modal": "^2.7.0",
     "axios": "^0.21.0",
     "classnames": "^2.5.1",

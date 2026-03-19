@@ -83,26 +83,22 @@ export async function callSwapContract(
 
       // For V2, solidity pack would be appended here (Phase B)
 
-      console.log('========= Swap', index)
-      console.log({ methodName, value })
-      console.log(args)
-
       const options = !value || isZero(value) ? {} : { value }
 
       try {
         const gasEstimate = await contract.estimateGas[methodName](...args, options)
         return { call, gasEstimate }
       } catch (gasError) {
-        console.debug('Gas estimate failed, trying eth_call to extract error', call)
+        // console.debug('Gas estimate failed, trying eth_call to extract error', call)
         try {
-          const result = await contract.callStatic[methodName](...args, options)
-          console.debug('Unexpected successful call after failed estimate gas', call, gasError, result)
+          await contract.callStatic[methodName](...args, options)
+          // console.debug('Unexpected successful call after failed estimate gas', call, gasError, result)
           return {
             call,
             error: new Error('Unexpected issue with estimating the gas. Please try again.'),
           }
         } catch (callError: any) {
-          console.debug('Call threw error', call, callError)
+          // console.debug('Call threw error', call, callError)
           let errorMessage: string
           switch (callError.reason) {
             case 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT':

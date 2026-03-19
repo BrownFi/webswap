@@ -313,7 +313,6 @@ export class Trade {
         )
         amountOut = result[0]
       } catch (error) {
-        console.log(path.map((token) => token.symbol))
         console.warn('======= getOutputAmountAsync error', error)
         return
       }
@@ -392,7 +391,6 @@ export class Trade {
         )
         amountIn = result[0]
       } catch (error) {
-        console.log(path.map((token) => token.symbol))
         console.error('======= getInputAmountAsync error', error)
         continue
       }

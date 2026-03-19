@@ -14,7 +14,7 @@ import {
   RedirectToAddLiquidity,
 } from './AddLiquidity/redirects'
 import { RedirectOldRemoveLiquidityPathStructure } from './RemoveLiquidity/redirects'
-import Swap from './Swap'
+const Swap = lazy(() => import('./Swap'))
 import { OpenClaimAddressModalAndRedirectToSwap, RedirectPathToSwapOnly, RedirectToSwap } from './Swap/redirects'
 import StaticScreen from 'containers/StaticScreen'
 

@@ -40,6 +40,7 @@ import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
 import { formatNumber } from 'utils/prices'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { useToast } from 'containers/ToastProvider'
 import { executeKyberZapOutTransaction, getKyberZapOutRouteData, KyberZapOutRouteData } from './zapHelpers'
 
 export default function RemoveLiquidity() {
@@ -48,6 +49,7 @@ export default function RemoveLiquidity() {
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
 
+  const { createToast } = useToast()
   const supportsZap = useMemo(() => isZapSupportedOnChain(chainId), [chainId])
   const [useZap, setUseZap] = useState(false)
   const [zapOutCurrency, setZapOutCurrency] = useState<Currency | null>(null)
@@ -245,9 +247,12 @@ export default function RemoveLiquidity() {
           setTxHash(response.hash)
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       setAttemptingTxn(false)
-      throw e
+      if (e?.code !== 4001) {
+        console.error('Remove liquidity failed', e)
+        createToast(e?.reason || e?.message || 'Remove liquidity failed. Please try again.', 'error')
+      }
     }
   }
 
