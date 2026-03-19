@@ -75,7 +75,8 @@ const StyledMenu = styled.div`
 
 const MenuFlyout = styled.span`
   min-width: 391px;
-  background-color: #3f3d44;
+  background-color: #1a1a1a;
+  border: 1px solid #FFFFFF20;
   box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
     0px 24px 32px rgba(0, 0, 0, 0.01);
   border-radius: 0;
@@ -88,14 +89,23 @@ const MenuFlyout = styled.span`
   z-index: 100;
 
   ${({ theme }) => theme.mediaWidth.upToMedium`
-    min-width: 18.125rem;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    right: auto;
+    min-width: unset;
+    width: calc(100% - 32px);
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
   `};
 `
 
 const Break = styled.div`
   width: 100%;
   height: 1px;
-  background-color: ${({ theme }) => theme.bg3};
+  background-color: #FFFFFF15;
 `
 
 const ModalContentWrapper = styled.div`
@@ -203,11 +213,18 @@ export function SettingsTab() {
         ) : null}
       </StyledMenuButton>
       {open && (
+        <>
+        <div className="fixed inset-0 z-[99] bg-black/75 backdrop-blur-sm" onClick={toggle} />
         <MenuFlyout>
           <AutoColumn style={{ padding: '1rem' }} gap={'20px'}>
-            <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
-              Transaction Settings
-            </Text>
+            <div className="flex items-center justify-between">
+              <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
+                Transaction Settings
+              </Text>
+              <button onClick={toggle} className="text-white/60 hover:text-white transition p-1" aria-label="Close settings">
+                ✕
+              </button>
+            </div>
             <TransactionSettings
               rawSlippage={userSlippageTolerance}
               setRawSlippage={setUserslippageTolerance}
@@ -235,6 +252,7 @@ export function SettingsTab() {
             </RowBetween>
           </AutoColumn>
         </MenuFlyout>
+        </>
       )}
     </StyledMenu>
   )

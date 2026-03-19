@@ -15,7 +15,8 @@ const StyledDialogOverlay = styled.div<{ visible: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #00000098;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
   opacity: ${({ visible }) => (visible ? 1 : 0)};
   transition: opacity 200ms ease;
 `
@@ -30,7 +31,8 @@ const StyledDialogContent = styled(({ minHeight, maxHeight, maxWidth, mobile, is
   overflow-y: ${({ mobile }) => (mobile ? 'scroll' : 'hidden')};
 
   margin: 0 0 2rem 0;
-  background-color: ${({ theme }) => theme.bg1};
+  background-color: #1a1a1a;
+  border: 1px solid #FFFFFF20;
   box-shadow: 0 4px 8px 0 ${({ theme }) => transparentize(0.95, theme.shadow1)};
   padding: 0px;
   width: 50vw;

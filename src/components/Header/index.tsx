@@ -65,7 +65,7 @@ const StyledConnectButton = () => {
                     {chain.hasIcon && chain.iconUrl && (
                       <img src={chain.iconUrl} alt={chain.name ?? ''} className="w-5 h-5 rounded-full" />
                     )}
-                    <span className="hidden sm:block text-white text-sm">{chain.name}</span>
+                    <span className="text-white text-sm">{chain.name}</span>
                   </button>
                   <button
                     onClick={() => setAccountModalOpen(true)}
@@ -202,7 +202,7 @@ export default function Header() {
         className="flex flex-row items-center justify-self-end gap-2
         max-md:justify-between max-md:justify-self-center max-md:w-full max-md:max-w-[960px]
         max-md:p-4 max-md:fixed max-md:bottom-0 max-md:left-0 max-md:z-[99]
-        max-md:h-[72px] max-md:rounded-t-xl max-md:bg-bg1"
+        max-md:h-[72px] max-md:bg-[#131216] max-md:border-t max-md:border-[#FFFFFF15]"
       >
         <CustomChainSelect />
         {showCustomAccountDisplay ? <CustomAccountDisplay /> : <StyledConnectButton />}

@@ -25,7 +25,7 @@ const CustomChainSelect = () => {
         onClick={openChainModal || (() => setOpen(true))}
       >
         <img className="w-5 mr-2 rounded-full" src={chain.iconUrl as string} alt={chain.name} />
-        <div className="hidden sm:block">{chain.name}</div>
+        <div>{chain.name}</div>
       </ButtonDropdown>
 
       <ChainModal isOpen={isOpen} onClose={() => setOpen(false)} />
@@ -48,7 +48,7 @@ export const ChainModal = ({
   if (!isOpen) return null
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex sm:items-center items-end pb-[72px] sm:pb-0 justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -87,7 +87,7 @@ export const ChainModal = ({
                   dispatch(switchChain(parsed))
                   if (onSwitchChain) onSwitchChain(c.id)
                 }}
-                className={`flex items-center justify-between w-full px-2 py-1.5 transition
+                className={`flex items-center justify-between w-full px-2 py-1 transition
                   ${isActive ? 'bg-[#3b82f6] text-white' : 'hover:bg-white/5 text-white/80'}
                 `}
               >
