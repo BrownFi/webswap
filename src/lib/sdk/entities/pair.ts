@@ -61,8 +61,11 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
   }))).flat()
 
   const uniqueIds = allIds.filter((id, i, arr) => arr.indexOf(id) === i && id !== ZERO_ADDRESS)
-  const { default: axios } = await import('axios')
-  const { data } = await axios.get('https://hermes.pyth.network/api/latest_vaas', { params: { ids: uniqueIds } })
+  const pythUrl = new URL('https://hermes.pyth.network/api/latest_vaas')
+  uniqueIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+  const pythResponse = await fetch(pythUrl.toString())
+  if (!pythResponse.ok) throw new Error(`HTTP ${pythResponse.status}`)
+  const data = await pythResponse.json()
   const priceUpdate = (data as string[]).map((vaa: string) => '0x' + Buffer.from(vaa, 'base64').toString('hex'))
 
   const updateFee = await client.readContract({
@@ -96,8 +99,11 @@ async function solidityPackHelper(addresses: string[], chainId: number): Promise
       args: [addr as `0x${string}`],
     })
   ))
-  const { default: axios } = await import('axios')
-  const { data } = await axios.get('https://hermes.pyth.network/v2/updates/price/latest', { params: { ids: priceFeedIds } })
+  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest')
+  priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+  const pythResponse = await fetch(pythUrl.toString())
+  if (!pythResponse.ok) throw new Error(`HTTP ${pythResponse.status}`)
+  const data = await pythResponse.json()
   const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
   return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
 }

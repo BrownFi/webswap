@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react'
 import Copy from 'components/AccountDetails/Copy'
 import { useActiveWeb3React } from 'hooks'
 import useParsedQueryString from 'hooks/useParsedQueryString'
-import axios from 'axios'
-
-const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-})
+const BASE_URL = import.meta.env.VITE_API_URL
 
 const ENABLED_REFERRAL = false
 
@@ -18,9 +14,10 @@ const Referral = () => {
   useEffect(() => {
     const addReferral = async () => {
       try {
-        await client.post(`/api/user/add-referral`, {
-          owner: params.ref,
-          walletAddress: account,
+        await fetch(new URL('/api/user/add-referral', BASE_URL).toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ owner: params.ref, walletAddress: account }),
         })
       } catch (e) {
         console.error('Failed to add referral', e)
@@ -36,13 +33,13 @@ const Referral = () => {
   useEffect(() => {
     const getReferrals = async () => {
       try {
-        const result = await client.get(`/api/user/count-referral`, {
-          params: {
-            owner: account,
-          },
-        })
+        const url = new URL('/api/user/count-referral', BASE_URL)
+        url.searchParams.set('owner', account!)
+        const response = await fetch(url.toString())
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const result = await response.json()
 
-        setNumberReferrals(result?.data?.data?.numberReferrals)
+        setNumberReferrals(result?.data?.numberReferrals)
       } catch (e) {
         console.error('Failed to get referrals', e)
       }

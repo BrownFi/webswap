@@ -1,23 +1,57 @@
 import { ChainId } from '@brownfi/sdk'
-import axios from 'axios'
 
 type OneOrMany<T> = T | T[]
 
 const KYBER_ZAP_CLIENT_ID = 'BrownFi'
 const KYBER_ZAP_DEX_ID = 'DEX_BROWNFI'
+const BASE_URL = import.meta.env.VITE_KYBERSWAP_ZAP_API_URL
 
 const chainMap: Partial<Record<ChainId, string>> = {
   [ChainId.BERA_MAINNET]: 'berachain',
   [ChainId.LINEA_MAINNET]: 'linea',
 }
 
-const client = axios.create({
-  baseURL: import.meta.env.VITE_KYBERSWAP_ZAP_API_URL,
-  timeout: 30_000,
-  headers: {
-    'x-client-id': KYBER_ZAP_CLIENT_ID,
-  },
-})
+async function fetchJson<T>(path: string, options?: { params?: Record<string, any>; timeout?: number }): Promise<T> {
+  const url = new URL(path, BASE_URL)
+  if (options?.params) {
+    Object.entries(options.params).forEach(([key, value]) => {
+      if (value !== undefined) url.searchParams.set(key, String(value))
+    })
+  }
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), options?.timeout ?? 30_000)
+  try {
+    const response = await fetch(url.toString(), {
+      signal: controller.signal,
+      headers: { 'x-client-id': KYBER_ZAP_CLIENT_ID },
+    })
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    return response.json()
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+async function postJson<T>(path: string, data: unknown, options?: { timeout?: number }): Promise<T> {
+  const url = new URL(path, BASE_URL)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), options?.timeout ?? 30_000)
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-id': KYBER_ZAP_CLIENT_ID,
+      },
+      body: JSON.stringify(data),
+      signal: controller.signal,
+    })
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    return response.json()
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
 
 const toArray = (value: OneOrMany<string>) => (Array.isArray(value) ? value : [value])
 
@@ -160,7 +194,7 @@ const getKyberZapInRoute = async ({
 }: KyberZapRouteParams): Promise<KyberZapRouteData> => {
   const chainName = chainMap[chainId]
 
-  const response = await client.get<KyberZapRouteResponse>(`/${chainName}/api/v1/in/route`, {
+  const response = await fetchJson<KyberZapRouteResponse>(`/${chainName}/api/v1/in/route`, {
     params: {
       dex: KYBER_ZAP_DEX_ID,
       'pool.id': poolId,
@@ -173,7 +207,7 @@ const getKyberZapInRoute = async ({
     },
   })
 
-  return response.data.data
+  return response.data
 }
 
 type KyberZapOutRouteParams = {
@@ -195,7 +229,7 @@ const getKyberZapOutRoute = async ({
 }: KyberZapOutRouteParams): Promise<KyberZapRouteData> => {
   const chainName = chainMap[chainId]
 
-  const response = await client.get<KyberZapRouteResponse>(`/${chainName}/api/v1/out/route`, {
+  const response = await fetchJson<KyberZapRouteResponse>(`/${chainName}/api/v1/out/route`, {
     params: {
       dexFrom: KYBER_ZAP_DEX_ID,
       'poolFrom.id': poolId,
@@ -206,7 +240,7 @@ const getKyberZapOutRoute = async ({
     },
   })
 
-  return response.data.data
+  return response.data
 }
 
 type KyberBuildZapRouteData = {
@@ -235,14 +269,14 @@ const buildKyberZapInRoute = async ({
 }: KyberBuildZapRouteRequest): Promise<KyberBuildZapRouteData> => {
   const chainName = chainMap[chainId]
 
-  const response = await client.post<KyberBuildZapRouteResponse>(`/${chainName}/api/v1/in/route/build`, {
+  const response = await postJson<KyberBuildZapRouteResponse>(`/${chainName}/api/v1/in/route/build`, {
     recipient,
     sender,
     route,
     source: KYBER_ZAP_CLIENT_ID,
   })
 
-  return response.data.data
+  return response.data
 }
 
 const buildKyberZapOutRoute = async ({
@@ -253,14 +287,14 @@ const buildKyberZapOutRoute = async ({
 }: KyberBuildZapRouteRequest): Promise<KyberBuildZapRouteData> => {
   const chainName = chainMap[chainId]
 
-  const response = await client.post<KyberBuildZapRouteResponse>(`/${chainName}/api/v1/out/route/build`, {
+  const response = await postJson<KyberBuildZapRouteResponse>(`/${chainName}/api/v1/out/route/build`, {
     recipient,
     sender,
     route,
     source: KYBER_ZAP_CLIENT_ID,
   })
 
-  return response.data.data
+  return response.data
 }
 
 export const kyberZapService = {

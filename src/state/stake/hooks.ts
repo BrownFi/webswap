@@ -70,17 +70,14 @@ export interface StakingInfo {
 export function useStakingInfo(pairToFilterBy?: Pair | null, options?: { disabled?: boolean }): StakingInfo[] {
   const { chainId, account } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
-
-  if (options?.disabled) {
-    return []
-  }
+  const disabled = options?.disabled ?? false
 
   // detect if staking is ended
   const currentBlockTimestamp = useCurrentBlockTimestamp()
 
   const info = useMemo(
     () =>
-      chainId
+      chainId && !disabled
         ? STAKING_REWARDS_INFO[chainId]?.filter((stakingRewardInfo) =>
             pairToFilterBy === undefined
               ? true
@@ -90,7 +87,7 @@ export function useStakingInfo(pairToFilterBy?: Pair | null, options?: { disable
                 pairToFilterBy.involvesToken(stakingRewardInfo.tokens[1]),
           ) ?? []
         : [],
-    [chainId, pairToFilterBy],
+    [chainId, disabled, pairToFilterBy],
   )
 
   const uni = undefined
@@ -121,7 +118,7 @@ export function useStakingInfo(pairToFilterBy?: Pair | null, options?: { disable
   )
 
   return useMemo(() => {
-    if (!chainId || !uni) return []
+    if (!chainId || !uni || disabled) return []
 
     return rewardsAddresses.reduce<StakingInfo[]>((memo, rewardsAddress, index) => {
       // these two are dependent on account

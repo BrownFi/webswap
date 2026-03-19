@@ -63,6 +63,16 @@ export function CurrencyLogo({
     return defaultSrcs
   }, [currency, defaultSrcs])
 
+  const srcsSymbol: string[] = useMemo(() => {
+    if (defaultSrcs.length === 0) {
+      const logoURI = findLogoBySymbol(currency as Token)
+      if (logoURI) {
+        return [logoURI]
+      }
+    }
+    return defaultSrcs
+  }, [currency, defaultSrcs])
+
   if ((currency as any)?.logoURI) {
     return <StyledEthereumLogo src={(currency as any)?.logoURI} size={size} style={style} />
   }
@@ -128,16 +138,6 @@ export function CurrencyLogo({
     }
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />
   }
-
-  const srcsSymbol: string[] = useMemo(() => {
-    if (defaultSrcs.length === 0) {
-      const logoURI = findLogoBySymbol(currency as Token)
-      if (logoURI) {
-        return [logoURI]
-      }
-    }
-    return defaultSrcs
-  }, [currency, defaultSrcs])
 
   return <StyledLogo size={size} srcs={srcsSymbol} alt={`${currency?.symbol ?? 'token'} logo`} style={style} />
 }

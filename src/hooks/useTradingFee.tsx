@@ -21,13 +21,10 @@ export const useTradingFee = ({ pair }: Props) => {
   })
 
   const pairContract = usePairV2Contract(pair.liquidityToken.address)
-  const fee =
-    (useSingleCallResult(pairContract, 'fee', undefined, { disabled: isAvailable() }).result?.[0] || 0) *
-    (version === 2 ? 1 : 2)
-  const precision =
-    version === 2
-      ? useSingleCallResult(pairContract, 'PRECISION', undefined, { disabled: isAvailable() }).result?.[0] || 100000000
-      : 10000
+  const feeResult = useSingleCallResult(pairContract, 'fee', undefined, { disabled: isAvailable() })
+  const precisionResult = useSingleCallResult(pairContract, 'PRECISION', undefined, { disabled: isAvailable() })
+  const fee = (feeResult.result?.[0] || 0) * (version === 2 ? 1 : 2)
+  const precision = version === 2 ? precisionResult.result?.[0] || 100000000 : 10000
   const tradingFee = (Number(fee) * 100) / precision
 
   useEffect(() => {
