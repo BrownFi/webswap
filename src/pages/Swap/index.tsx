@@ -299,7 +299,6 @@ export default function Swap() {
         onConfirm={handleConfirmTokenWarning}
         onDismiss={handleDismissTokenWarning}
       />
-      {/* <SwapPoolTabs active={'swap'} /> */}
       <AppBody>
         <SwapHeader />
         <Wrapper id="swap-page">
@@ -348,10 +347,6 @@ export default function Swap() {
                   >
                     <img src={switchIcon} className="w-[40px]" alt="switch" />
                   </a>
-                  {/* <ArrowDown
-                    size="16"
-                    color={currencies[Field.INPUT] && currencies[Field.OUTPUT] ? theme.primary1 : theme.text2}
-                  /> */}
                 </ArrowWrapper>
                 {recipient === null && !showWrap && isExpertMode ? (
                   <LinkStyledButton

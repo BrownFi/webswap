@@ -81,7 +81,7 @@ export default function Updater(): null {
             }
           })
           .catch((error) => {
-            console.error(`failed to check transaction hash: ${hash}`, error)
+            console.error('Failed to check transaction hash', error)
           })
       })
   }, [chainId, library, transactions, lastBlockNumber, dispatch, addPopup])

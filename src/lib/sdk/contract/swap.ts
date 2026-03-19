@@ -89,16 +89,13 @@ export async function callSwapContract(
         const gasEstimate = await contract.estimateGas[methodName](...args, options)
         return { call, gasEstimate }
       } catch (gasError) {
-        // console.debug('Gas estimate failed, trying eth_call to extract error', call)
         try {
           await contract.callStatic[methodName](...args, options)
-          // console.debug('Unexpected successful call after failed estimate gas', call, gasError, result)
           return {
             call,
             error: new Error('Unexpected issue with estimating the gas. Please try again.'),
           }
         } catch (callError: any) {
-          // console.debug('Call threw error', call, callError)
           let errorMessage: string
           switch (callError.reason) {
             case 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT':

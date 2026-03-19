@@ -218,29 +218,6 @@ export function SettingsTab() {
             <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
               Interface Settings
             </Text>
-            {/* <RowBetween>
-              <RowFixed>
-                <TYPE.black fontWeight={500} fontSize={16} color={theme.white}>
-                  Toggle Expert Mode
-                </TYPE.black>
-                <QuestionHelper text="Bypasses confirmation modals and allows high slippage trades. Use at your own risk." />
-              </RowFixed>
-              <Toggle
-                id="toggle-expert-mode-button"
-                isActive={expertMode}
-                toggle={
-                  expertMode
-                    ? () => {
-                        toggleExpertMode()
-                        setShowConfirmation(false)
-                      }
-                    : () => {
-                        toggle()
-                        setShowConfirmation(true)
-                      }
-                }
-              />
-            </RowBetween> */}
             <RowBetween>
               <RowFixed>
                 <TYPE.black fontWeight={500} fontSize={16} color={theme.white}>

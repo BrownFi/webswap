@@ -124,11 +124,6 @@ function TransactionSubmittedContent({
               )}
             </ButtonPrimary>
           )}
-          {/* <ButtonLight onClick={onDismiss} style={{ margin: '20px 0 0 0' }}>
-            <Text fontWeight={500} fontSize={20}>
-              Close
-            </Text>
-          </ButtonLight> */}
         </AutoColumn>
       </Section>
     </Wrapper>
