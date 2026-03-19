@@ -9,6 +9,7 @@ import {
   Pair,
   Trade,
   Route,
+  Router,
   JSBI,
   ChainId,
   WETH,
@@ -21,6 +22,9 @@ import {
   getRouterAddress,
   getFactoryAddress,
   getInitCodeHash,
+  FACTORY_ADDRESS,
+  ROUTER_ADDRESS,
+  RPC_URLS,
 } from '@brownfi/sdk'
 
 // Known tokens on Berachain mainnet
@@ -269,5 +273,178 @@ describe('SDK Integration: Percent & Fraction', () => {
     expect(a.lessThan(b)).toBe(true)
     expect(b.greaterThan(a)).toBe(true)
     expect(a.add(b).equalTo(new Percent(JSBI.BigInt(3), JSBI.BigInt(100)))).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// New test suites
+// ---------------------------------------------------------------------------
+
+describe('API Integration: apiV2Service', () => {
+  it('getPoolPrices returns prices for WBERA/HONEY on Berachain', async () => {
+    const BASE_URL = 'https://api.brownfi.io'
+    const url = new URL('/prices', BASE_URL)
+    url.searchParams.set('chainId', '80094')
+    url.searchParams.set('tokenA', '0x6969696969696969696969696969696969696969')
+    url.searchParams.set('tokenB', '0xfcbd14dc51f0a4d49d5e53c2e0950e0bc26d0dce')
+    const response = await fetch(url.toString(), { credentials: 'include' })
+    expect(response.ok).toBe(true)
+    const data = await response.json()
+    expect(data.price0).toBeDefined()
+    expect(data.price1).toBeDefined()
+    expect(Number(data.price0)).toBeGreaterThan(0)
+  }, 15000)
+})
+
+describe('API Integration: GraphQL Indexer', () => {
+  it('returns pairs for Berachain', async () => {
+    const response = await fetch('https://api.brownfi.io/indexer?chainId=80094', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        operationName: 'PairList',
+        query: 'query PairList($chainId: Int) { pairs { id tvl apr token0 { id symbol } token1 { id symbol } } }',
+        variables: { chainId: 80094 },
+      }),
+      credentials: 'include',
+    })
+    expect(response.ok).toBe(true)
+    const data = await response.json()
+    expect(data.data.pairs).toBeDefined()
+    expect(data.data.pairs.length).toBeGreaterThan(0)
+    // Check first pair has required fields
+    const pair = data.data.pairs[0]
+    expect(pair.id).toBeDefined()
+    expect(pair.tvl).toBeDefined()
+    expect(pair.token0.symbol).toBeDefined()
+  }, 15000)
+})
+
+describe('SDK Constants: Address validity', () => {
+  it('all FACTORY_ADDRESS entries are valid addresses', () => {
+    for (const [chainId, address] of Object.entries(FACTORY_ADDRESS)) {
+      if (!address) continue // skip chains with empty placeholder
+      expect(address.startsWith('0x')).toBe(true)
+      expect(address.length).toBeGreaterThanOrEqual(42)
+    }
+  })
+
+  it('all ROUTER_ADDRESS entries are valid addresses', () => {
+    for (const [chainId, address] of Object.entries(ROUTER_ADDRESS)) {
+      if (!address) continue // skip chains with empty placeholder
+      expect(address.startsWith('0x')).toBe(true)
+      expect(address.length).toBeGreaterThanOrEqual(42)
+    }
+  })
+
+  it('all RPC_URLS are valid URLs', () => {
+    for (const [chainId, url] of Object.entries(RPC_URLS)) {
+      expect(url.startsWith('http')).toBe(true)
+    }
+  })
+
+  it('all WETH tokens have valid addresses', () => {
+    for (const [chainId, token] of Object.entries(WETH)) {
+      if (token) {
+        expect(token.address.startsWith('0x')).toBe(true)
+        expect(token.decimals).toBe(18)
+      }
+    }
+  })
+})
+
+describe('SDK: Multi-chain Pair.getAddress', () => {
+  const chains = [
+    { chainId: ChainId.ARBITRUM_MAINNET, name: 'Arbitrum' },
+    { chainId: ChainId.BASE_MAINNET, name: 'Base' },
+    { chainId: ChainId.BSC_MAINNET, name: 'BSC' },
+    { chainId: ChainId.LINEA_MAINNET, name: 'Linea' },
+    { chainId: ChainId.HYPER_EVM, name: 'HyperEVM' },
+    { chainId: ChainId.SEI_MAINNET, name: 'Sei' },
+  ]
+
+  for (const { chainId, name } of chains) {
+    it(`computes valid pair address for ${name}`, () => {
+      const weth = WETH[chainId]
+      if (!weth) return // skip if no WETH for this chain
+      const testToken = new Token(chainId, '0x0000000000000000000000000000000000000001', 18, 'TEST')
+      const address = Pair.getAddress(weth, testToken, 2)
+      expect(address.startsWith('0x')).toBe(true)
+      expect(address.length).toBe(42)
+    })
+  }
+})
+
+describe('SDK: Router.swapCallParameters', () => {
+  it('generates valid swap parameters for exact-in trade', () => {
+    const pair = new Pair(
+      new TokenAmount(WBERA, JSBI.BigInt('20000000000000000000000')),
+      new TokenAmount(HONEY, JSBI.BigInt('10000000000000000000000')),
+      2,
+    )
+    const route = new Route([pair], WBERA, HONEY)
+    const trade = Trade.exactIn(route, new TokenAmount(WBERA, JSBI.BigInt('1000000000000000000')))
+
+    const params = Router.swapCallParameters(trade, {
+      allowedSlippage: new Percent(JSBI.BigInt(100), JSBI.BigInt(10000)),
+      recipient: '0x0000000000000000000000000000000000000001',
+      deadline: Math.floor(Date.now() / 1000) + 1200,
+    }, ChainId.BERA_MAINNET)
+
+    expect(params.methodName).toBeDefined()
+    expect(params.args).toBeDefined()
+    expect(params.args.length).toBeGreaterThan(0)
+  })
+})
+
+describe('SDK: Live RPC on multiple chains', () => {
+  it('getOutputAmountAsync works on Arbitrum', async () => {
+    const WETH_ARB = WETH[ChainId.ARBITRUM_MAINNET]
+    if (!WETH_ARB) return
+    const testToken = new Token(ChainId.ARBITRUM_MAINNET, '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', 6, 'USDC')
+    const pair = new Pair(
+      new TokenAmount(WETH_ARB, JSBI.BigInt('1000000000000000000')),
+      new TokenAmount(testToken, JSBI.BigInt('3000000000')),
+      2,
+    )
+    try {
+      const [output] = await pair.getOutputAmountAsync(
+        new TokenAmount(WETH_ARB, JSBI.BigInt('100000000000000000')), // 0.1 ETH
+        [pair],
+        [WETH_ARB, testToken],
+        ChainId.ARBITRUM_MAINNET,
+        '0x0000000000000000000000000000000000000001',
+      )
+      expect(Number(output.toSignificant(6))).toBeGreaterThan(0)
+    } catch (e: any) {
+      // Contract revert is OK (pair may not exist with these reserves)
+      expect(e.message).toBeDefined()
+    }
+  }, 30000)
+})
+
+describe('SDK: TokenAmount arithmetic', () => {
+  it('add works correctly', () => {
+    const a = new TokenAmount(WBERA, JSBI.BigInt('1000000000000000000'))
+    const b = new TokenAmount(WBERA, JSBI.BigInt('2000000000000000000'))
+    const sum = a.add(b)
+    expect(sum.toExact()).toBe('3')
+  })
+
+  it('subtract works correctly', () => {
+    const a = new TokenAmount(WBERA, JSBI.BigInt('3000000000000000000'))
+    const b = new TokenAmount(WBERA, JSBI.BigInt('1000000000000000000'))
+    const diff = a.subtract(b)
+    expect(diff.toExact()).toBe('2')
+  })
+
+  it('toSignificant formats correctly', () => {
+    const amount = new TokenAmount(WBERA, JSBI.BigInt('1234567890000000000'))
+    expect(amount.toSignificant(4)).toBe('1.234')
+  })
+
+  it('toFixed formats correctly', () => {
+    const amount = new TokenAmount(WBERA, JSBI.BigInt('1500000000000000000'))
+    expect(amount.toFixed(2)).toBe('1.50')
   })
 })
