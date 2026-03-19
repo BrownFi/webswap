@@ -15,7 +15,7 @@ const StyledDialogOverlay = styled.div<{ visible: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #00000088;
+  background-color: #00000098;
   opacity: ${({ visible }) => (visible ? 1 : 0)};
   transition: opacity 200ms ease;
 `

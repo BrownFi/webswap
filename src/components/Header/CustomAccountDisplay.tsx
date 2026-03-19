@@ -35,7 +35,7 @@ const CustomAccountDisplay = () => {
   )
 }
 
-const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+export const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { account, chainId } = useActiveWeb3React()
   const { disconnect } = useDisconnect()
 
@@ -74,14 +74,14 @@ const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       onClick={onClose}
     >
       <div
-        className="bg-[#1a1a1a] m-2 rounded-3xl w-full max-w-sm p-4"
+        className="bg-[#1a1a1a] m-2 w-full max-w-sm p-4"
         style={{ border: '1px solid #FFFFFF20' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-end">
           <button
             onClick={onClose}
-            className="bg-white/15 text-white/60 font-black hover:text-white  transition p-1 w-8 rounded-full"
+            className="text-white/60 font-black hover:text-white transition p-1 w-8"
           >
             ✕
           </button>
@@ -89,7 +89,7 @@ const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
         {/* Chain list */}
         <div className="space-y-2">
-          <div className="flex justify-center items-center w-[82px] h-[82px] bg-[#ffb35a] rounded-full mx-auto text-[45px]">
+          <div className="flex justify-center items-center w-[82px] h-[82px] bg-[#ffb35a] mx-auto text-[45px]">
             🤠
           </div>
           <div className="text-center">
@@ -100,14 +100,14 @@ const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
           </div>
           <div className="flex gap-2">
             <button
-              className="flex flex-1 flex-col items-center rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold p-2"
+              className="flex flex-1 flex-col items-center  bg-white/15 hover:bg-white/25 text-white font-semibold p-2"
               onClick={handleCopy}
             >
               {isCopying ? <Check size={16} /> : <Copy size={16} />}
               <div className="text-sm">{isCopying ? 'Copied!' : 'Copy Address'}</div>
             </button>
             <button
-              className="flex flex-1 flex-col items-center rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold p-2"
+              className="flex flex-1 flex-col items-center  bg-white/15 hover:bg-white/25 text-white font-semibold p-2"
               onClick={() => {
                 disconnect()
               }}

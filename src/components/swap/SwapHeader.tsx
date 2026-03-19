@@ -5,7 +5,7 @@ import { Flex } from 'components/Rebass'
 import SwitchVersion from 'components/SwitchVersion'
 
 const StyledSwapHeader = styled.div`
-  padding: 32px 24px 28px 32px;
+  padding: 24px 24px 24px 24px;
   margin-bottom: -4px;
   width: 100%;
   max-width: 500px;

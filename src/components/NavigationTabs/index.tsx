@@ -75,7 +75,7 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
 
   return (
     <div className="flex flex-row flex-nowrap items-center rounded-[3rem] justify-evenly">
-      <RowBetween style={{ padding: isMobile ? '20px 20px 10px 20px' : '32px 32px 10px 32px' }}>
+      <RowBetween style={{ padding: isMobile ? '20px 20px 10px 20px' : '24px 24px 10px 24px' }}>
         <div className="flex items-center">
           <HistoryLink
             to="/pool"

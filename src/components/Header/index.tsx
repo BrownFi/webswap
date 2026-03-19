@@ -3,70 +3,96 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import Logo from 'assets/svg/logo.svg'
 
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { useState } from 'react'
+import { ChainModal } from './CustomChainSelect'
+import { AccountModal } from './CustomAccountDisplay'
+import { useSwitchChain } from 'wagmi'
 
-const StyledConnectButton = () => (
-  <ConnectButton.Custom>
-    {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
-      const connected = mounted && account && chain
+const StyledConnectButton = () => {
+  const [chainModalOpen, setChainModalOpen] = useState(false)
+  const [accountModalOpen, setAccountModalOpen] = useState(false)
+  const { switchChain } = useSwitchChain()
 
-      return (
-        <div
-          {...(!mounted && {
-            'aria-hidden': true,
-            style: { opacity: 0, pointerEvents: 'none', userSelect: 'none' },
-          })}
-        >
-          {(() => {
-            if (!connected) {
+  return (
+    <ConnectButton.Custom>
+      {({ account, chain, openConnectModal, mounted }) => {
+        const connected = mounted && account && chain
+
+        return (
+          <div
+            {...(!mounted && {
+              'aria-hidden': true,
+              style: { opacity: 0, pointerEvents: 'none', userSelect: 'none' },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button
+                    onClick={openConnectModal}
+                    className="bg-[#27E3AB] hover:bg-[#20c899] text-black font-semibold px-2.5 py-1 rounded-none min-h-10 transition-all hover:scale-105 text-sm"
+                  >
+                    Connect Wallet
+                  </button>
+                )
+              }
+
+              if (chain.unsupported) {
+                return (
+                  <>
+                    <button
+                      onClick={() => setChainModalOpen(true)}
+                      className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-none min-h-10 transition-all"
+                    >
+                      Wrong network
+                    </button>
+                    <ChainModal
+                      isOpen={chainModalOpen}
+                      onClose={() => setChainModalOpen(false)}
+                      onSwitchChain={(chainId) => switchChain?.({ chainId })}
+                    />
+                  </>
+                )
+              }
+
               return (
-                <button
-                  onClick={openConnectModal}
-                  className="bg-[#27E3AB] hover:bg-[#20c899] text-black font-semibold px-2.5 py-1 rounded-none min-h-10 transition-all hover:scale-105 text-sm"
-                >
-                  Connect Wallet
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setChainModalOpen(true)}
+                    className="flex items-center gap-1.5 bg-black/40 hover:scale-105 transition-all py-1 px-2.5 min-h-10"
+                    style={{ border: '1px solid #FFFFFF20' }}
+                  >
+                    {chain.hasIcon && chain.iconUrl && (
+                      <img src={chain.iconUrl} alt={chain.name ?? ''} className="w-5 h-5 rounded-full" />
+                    )}
+                    <span className="hidden sm:block text-white text-sm">{chain.name}</span>
+                  </button>
+                  <button
+                    onClick={() => setAccountModalOpen(true)}
+                    className="flex items-center gap-1.5 bg-black/40 hover:scale-105 transition-all py-1 px-2.5 min-h-10 text-white text-sm"
+                    style={{ border: '1px solid #FFFFFF20' }}
+                  >
+                    {account.displayBalance && <span>{account.displayBalance}</span>}
+                    <span>{account.displayName}</span>
+                  </button>
+                  <AccountModal
+                    isOpen={accountModalOpen}
+                    onClose={() => setAccountModalOpen(false)}
+                  />
+                  <ChainModal
+                    isOpen={chainModalOpen}
+                    onClose={() => setChainModalOpen(false)}
+                    onSwitchChain={(chainId) => switchChain?.({ chainId })}
+                  />
+                </div>
               )
-            }
-
-            if (chain.unsupported) {
-              return (
-                <button
-                  onClick={openChainModal}
-                  className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-none min-h-10 transition-all"
-                >
-                  Wrong network
-                </button>
-              )
-            }
-
-            return (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={openChainModal}
-                  className="flex items-center gap-1.5 bg-black/40 hover:scale-105 transition-all py-1 px-2.5 min-h-10 rounded-xl"
-                  style={{ border: '1px solid #FFFFFF20' }}
-                >
-                  {chain.hasIcon && chain.iconUrl && (
-                    <img src={chain.iconUrl} alt={chain.name ?? ''} className="w-5 h-5 rounded-full" />
-                  )}
-                  <span className="hidden sm:block text-white text-sm">{chain.name}</span>
-                </button>
-                <button
-                  onClick={openAccountModal}
-                  className="flex items-center gap-1.5 bg-black/40 hover:scale-105 transition-all py-1 px-2.5 min-h-10 rounded-xl text-white text-sm"
-                  style={{ border: '1px solid #FFFFFF20' }}
-                >
-                  {account.displayBalance && <span>{account.displayBalance}</span>}
-                  <span>{account.displayName}</span>
-                </button>
-              </div>
-            )
-          })()}
-        </div>
-      )
-    }}
-  </ConnectButton.Custom>
-)
+            })()}
+          </div>
+        )
+      }}
+    </ConnectButton.Custom>
+  )
+}
 import { ButtonSecondary } from 'components/Button'
 import Row, { RowFixed } from 'components/Row'
 import SwitchVersion from 'components/SwitchVersion'

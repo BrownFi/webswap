@@ -230,7 +230,7 @@ export default function Pool() {
       )}
 
       <PageWrapper>
-        <AutoColumn gap="lg" justify="center" className="p-[20px] lg:p-[32px]">
+        <AutoColumn gap="lg" justify="center" className="p-[12px] pt-[32px] lg:p-[32px]">
           <AutoColumn gap="lg" style={{ width: '100%' }}>
             <TitleRow padding={'0'}>
               <Flex alignItems="center" className="gap-6">

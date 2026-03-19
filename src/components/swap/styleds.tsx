@@ -6,7 +6,7 @@ import { AutoColumn } from 'components/Column'
 
 export const Wrapper = styled.div`
   position: relative;
-  padding: 0 32px;
+  padding: 0 24px;
   ${({ theme }) => theme.mediaWidth.upToMedium`
    padding: 0 20px
   `};
