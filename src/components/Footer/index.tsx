@@ -1,6 +1,7 @@
 import telegramIcon from 'assets/svg/telegram.svg'
+import telegramChatIcon from 'assets/svg/telegram-chat.svg'
 import logoWhite from 'assets/svg/logo_white.svg'
-import mirrorIcon from 'assets/images/mirror.png'
+import mirrorIcon from 'assets/svg/mirror.svg'
 import xIcon from 'assets/svg/x.svg'
 
 const Footer = () => {
@@ -28,8 +29,9 @@ const Footer = () => {
           rel="noopener noreferrer"
           className="cursor-pointer hover:brightness-90"
           aria-label="BrownFi Announcement on Telegram"
+          title="Announcement"
         >
-          <img src={telegramIcon} alt="Telegram" className="lg:w-[40px] w-8" title="BrownFi Announcement" />
+          <img src={telegramIcon} alt="Telegram Announcement" className="lg:w-[40px] w-8" />
         </a>
         <a
           href="https://t.me/brownfiammcommunity"
@@ -37,8 +39,9 @@ const Footer = () => {
           rel="noopener noreferrer"
           className="cursor-pointer hover:brightness-90"
           aria-label="BrownFi Community on Telegram"
+          title="Community Chat"
         >
-          <img src={telegramIcon} alt="Telegram" className="lg:w-[40px] w-8" title="BrownFi Community" />
+          <img src={telegramChatIcon} alt="Telegram Community" className="lg:w-[40px] w-8" />
         </a>
         <a
           href="https://mirror.xyz/0x64f4Fbd29b0AE2C8e18E7940CF823df5CB639bBa"
@@ -50,7 +53,7 @@ const Footer = () => {
           <img
             src={mirrorIcon}
             alt="Mirror"
-            className="lg:w-[40px] w-8 rounded-full border-white/70 border"
+            className="lg:w-[40px] w-8"
             title="Mirror"
           />
         </a>

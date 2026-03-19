@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill-rule="evenodd" clip-rule="evenodd">
+  <circle cx="256" cy="256" r="256" fill="#fff"/>
+  <g transform="translate(145, 100)">
+    <!-- Paragraph/pilcrow symbol ¶ -->
+    <path d="M90 0 L90 280 M130 0 L130 280 M90 0 C30 0 0 30 0 70 C0 110 30 140 90 140" stroke="#131216" stroke-width="28" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

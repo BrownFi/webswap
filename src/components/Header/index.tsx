@@ -3,6 +3,70 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import Logo from 'assets/svg/logo.svg'
 
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+
+const StyledConnectButton = () => (
+  <ConnectButton.Custom>
+    {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+      const connected = mounted && account && chain
+
+      return (
+        <div
+          {...(!mounted && {
+            'aria-hidden': true,
+            style: { opacity: 0, pointerEvents: 'none', userSelect: 'none' },
+          })}
+        >
+          {(() => {
+            if (!connected) {
+              return (
+                <button
+                  onClick={openConnectModal}
+                  className="bg-[#27E3AB] hover:bg-[#20c899] text-black font-semibold px-2.5 py-1 rounded-xl min-h-10 transition-all hover:scale-105 text-sm"
+                >
+                  Connect Wallet
+                </button>
+              )
+            }
+
+            if (chain.unsupported) {
+              return (
+                <button
+                  onClick={openChainModal}
+                  className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-xl min-h-10 transition-all"
+                >
+                  Wrong network
+                </button>
+              )
+            }
+
+            return (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={openChainModal}
+                  className="flex items-center gap-1.5 bg-black/40 hover:scale-105 transition-all py-1 px-2.5 min-h-10 rounded-xl"
+                  style={{ border: '1px solid #FFFFFF20' }}
+                >
+                  {chain.hasIcon && chain.iconUrl && (
+                    <img src={chain.iconUrl} alt={chain.name ?? ''} className="w-5 h-5 rounded-full" />
+                  )}
+                  <span className="hidden sm:block text-white text-sm">{chain.name}</span>
+                </button>
+                <button
+                  onClick={openAccountModal}
+                  className="flex items-center gap-1.5 bg-black/40 hover:scale-105 transition-all py-1 px-2.5 min-h-10 rounded-xl text-white text-sm"
+                  style={{ border: '1px solid #FFFFFF20' }}
+                >
+                  {account.displayBalance && <span>{account.displayBalance}</span>}
+                  <span>{account.displayName}</span>
+                </button>
+              </div>
+            )
+          })()}
+        </div>
+      )
+    }}
+  </ConnectButton.Custom>
+)
 import { ButtonSecondary } from 'components/Button'
 import Row, { RowFixed } from 'components/Row'
 import SwitchVersion from 'components/SwitchVersion'
@@ -115,7 +179,7 @@ export default function Header() {
         max-md:h-[72px] max-md:rounded-t-xl max-md:bg-bg1"
       >
         <CustomChainSelect />
-        {showCustomAccountDisplay ? <CustomAccountDisplay /> : <ConnectButton />}
+        {showCustomAccountDisplay ? <CustomAccountDisplay /> : <StyledConnectButton />}
       </div>
     </div>
   )
