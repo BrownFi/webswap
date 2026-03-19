@@ -2,6 +2,7 @@ import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import warning from 'tiny-warning'
 import { getAddress } from '@ethersproject/address'
+import { createPublicClient, http } from 'viem'
 import {
   ChainId,
   SolidityType,
@@ -102,8 +103,9 @@ export function currencyEquals(currencyA: any, currencyB: any): boolean {
 }
 
 export function getPriceFromUnsafe(priceUnsafe: any): number {
-  const price = priceUnsafe[0]
-  const expo = priceUnsafe[2]
+  // Handle both viem object format { price, conf, expo, publishTime } and legacy array format
+  const price = priceUnsafe.price !== undefined ? priceUnsafe.price : priceUnsafe[0]
+  const expo = priceUnsafe.expo !== undefined ? priceUnsafe.expo : priceUnsafe[2]
   return +price * Math.pow(10, +expo)
 }
 
@@ -125,29 +127,47 @@ export function getInitCodeHash(chainId: number, version: number): string {
 
 /**
  * Fetches Pyth oracle price for a given token address.
- * Uses Web3 + Pyth on-chain contract to read the price feed.
+ * Uses viem + Pyth on-chain contract to read the price feed.
  */
 export async function getPythPrice(address: string, chainId: number, version: number): Promise<number> {
   if (!address || !chainId) return 0
   try {
-    // Lazy import to avoid bundling Web3 when not needed
-    const { default: Web3 } = await import('web3')
     const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
 
-    const web3 = new Web3(RPC_URLS[chainId])
+    const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
 
-    // Minimal ABI for factory.priceFeedIds(address) and pyth.getPriceUnsafe(bytes32)
-    const IFactoryV2: any[] = [
-      { inputs: [{ name: '', type: 'address' }], name: 'priceFeedIds', outputs: [{ name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
-    ]
-    const IPythUpgradable: any[] = [
-      { inputs: [{ name: 'id', type: 'bytes32' }], name: 'getPriceUnsafe', outputs: [{ components: [{ name: 'price', type: 'int64' }, { name: 'conf', type: 'uint64' }, { name: 'expo', type: 'int32' }, { name: 'publishTime', type: 'uint256' }], name: 'price', type: 'tuple' }], stateMutability: 'view', type: 'function' },
-    ]
+    const priceFeedId = await client.readContract({
+      address: getFactoryAddress(chainId, version) as `0x${string}`,
+      abi: [{
+        inputs: [{ name: '', type: 'address' }],
+        name: 'priceFeedIds',
+        outputs: [{ name: '', type: 'bytes32' }],
+        stateMutability: 'view', type: 'function',
+      }] as const,
+      functionName: 'priceFeedIds',
+      args: [address as `0x${string}`],
+    })
 
-    const factoryContract = new web3.eth.Contract(IFactoryV2 as any, getFactoryAddress(chainId, version))
-    const pythContract = new web3.eth.Contract(IPythUpgradable as any, PYTH_ADDRESS[chainId])
-    const priceFeedId = await (factoryContract.methods as any).priceFeedIds(address).call()
-    const priceUnsafe = await (pythContract.methods as any).getPriceUnsafe(priceFeedId).call()
+    const priceUnsafe = await client.readContract({
+      address: PYTH_ADDRESS[chainId] as `0x${string}`,
+      abi: [{
+        inputs: [{ name: 'id', type: 'bytes32' }],
+        name: 'getPriceUnsafe',
+        outputs: [{
+          components: [
+            { name: 'price', type: 'int64' },
+            { name: 'conf', type: 'uint64' },
+            { name: 'expo', type: 'int32' },
+            { name: 'publishTime', type: 'uint256' },
+          ],
+          name: 'price', type: 'tuple',
+        }],
+        stateMutability: 'view', type: 'function',
+      }] as const,
+      functionName: 'getPriceUnsafe',
+      args: [priceFeedId],
+    })
+
     return getPriceFromUnsafe(priceUnsafe)
   } catch (error) {
     console.warn('Cannot get Pyth price', error)
@@ -161,51 +181,110 @@ export async function getPythPrice(address: string, chainId: number, version: nu
 export async function getPythPricePair(pair: any, chainId: number): Promise<[number, number]> {
   if (!pair || !chainId) return [0, 0]
   try {
-    const { default: Web3 } = await import('web3')
     const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
 
-    const web3 = new Web3(RPC_URLS[chainId])
+    const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
 
-    const IPair: any[] = [
-      { inputs: [], name: 'priceFeed', outputs: [{ name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
-      { inputs: [], name: 'qti', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
-    ]
-    const IPythPriceFeed: any[] = [
-      { inputs: [], name: 'baseTokenPriceId', outputs: [{ name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
-      { inputs: [], name: 'quoteTokenPriceId', outputs: [{ name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
-      { inputs: [], name: 'latestRoundData', outputs: [{ name: 'roundId', type: 'uint80' }, { name: 'answer', type: 'int256' }, { name: 'startedAt', type: 'uint256' }, { name: 'updatedAt', type: 'uint256' }, { name: 'answeredInRound', type: 'uint80' }], stateMutability: 'view', type: 'function' },
-    ]
-    const IPythUpgradable: any[] = [
-      { inputs: [{ name: 'id', type: 'bytes32' }], name: 'getPriceUnsafe', outputs: [{ components: [{ name: 'price', type: 'int64' }, { name: 'conf', type: 'uint64' }, { name: 'expo', type: 'int32' }, { name: 'publishTime', type: 'uint256' }], name: 'price', type: 'tuple' }], stateMutability: 'view', type: 'function' },
-    ]
+    const ABI_PAIR = [{
+      inputs: [], name: 'priceFeed',
+      outputs: [{ name: '', type: 'address' }],
+      stateMutability: 'view', type: 'function',
+    }, {
+      inputs: [], name: 'qti',
+      outputs: [{ name: '', type: 'uint256' }],
+      stateMutability: 'view', type: 'function',
+    }] as const
 
-    const pairContract = new web3.eth.Contract(IPair as any, pair.liquidityToken.address)
+    const ABI_PYTH_PRICE_FEED = [{
+      inputs: [], name: 'baseTokenPriceId',
+      outputs: [{ name: '', type: 'bytes32' }],
+      stateMutability: 'view', type: 'function',
+    }, {
+      inputs: [], name: 'quoteTokenPriceId',
+      outputs: [{ name: '', type: 'bytes32' }],
+      stateMutability: 'view', type: 'function',
+    }, {
+      inputs: [], name: 'latestRoundData',
+      outputs: [
+        { name: 'roundId', type: 'uint80' },
+        { name: 'answer', type: 'int256' },
+        { name: 'startedAt', type: 'uint256' },
+        { name: 'updatedAt', type: 'uint256' },
+        { name: 'answeredInRound', type: 'uint80' },
+      ],
+      stateMutability: 'view', type: 'function',
+    }] as const
+
+    const ABI_PYTH_UPGRADABLE = [{
+      inputs: [{ name: 'id', type: 'bytes32' }],
+      name: 'getPriceUnsafe',
+      outputs: [{
+        components: [
+          { name: 'price', type: 'int64' },
+          { name: 'conf', type: 'uint64' },
+          { name: 'expo', type: 'int32' },
+          { name: 'publishTime', type: 'uint256' },
+        ],
+        name: 'price', type: 'tuple',
+      }],
+      stateMutability: 'view', type: 'function',
+    }] as const
+
+    const pairAddress = pair.liquidityToken.address as `0x${string}`
+
     const [priceFeedAddress, qti] = await Promise.all([
-      (pairContract.methods as any).priceFeed().call(),
-      (pairContract.methods as any).qti().call(),
+      client.readContract({
+        address: pairAddress,
+        abi: ABI_PAIR,
+        functionName: 'priceFeed',
+      }),
+      client.readContract({
+        address: pairAddress,
+        abi: ABI_PAIR,
+        functionName: 'qti',
+      }),
     ])
-
-    const pythPriceFeedContract = new web3.eth.Contract(IPythPriceFeed as any, priceFeedAddress)
 
     // U2U special case: uses latestRoundData instead of Pyth
     if (chainId === ChainId.U2U_MAINNET) {
-      const latestRoundData = await (pythPriceFeedContract.methods as any).latestRoundData().call()
-      return [1, +latestRoundData[1] / Math.pow(10, 18)]
+      const latestRoundData = await client.readContract({
+        address: priceFeedAddress as `0x${string}`,
+        abi: ABI_PYTH_PRICE_FEED,
+        functionName: 'latestRoundData',
+      })
+      return [1, Number(latestRoundData[1]) / Math.pow(10, 18)]
     }
 
     const [basePriceId, quotePriceId] = await Promise.all([
-      (pythPriceFeedContract.methods as any).baseTokenPriceId().call(),
-      (pythPriceFeedContract.methods as any).quoteTokenPriceId().call(),
+      client.readContract({
+        address: priceFeedAddress as `0x${string}`,
+        abi: ABI_PYTH_PRICE_FEED,
+        functionName: 'baseTokenPriceId',
+      }),
+      client.readContract({
+        address: priceFeedAddress as `0x${string}`,
+        abi: ABI_PYTH_PRICE_FEED,
+        functionName: 'quoteTokenPriceId',
+      }),
     ])
 
-    const pythContract = new web3.eth.Contract(IPythUpgradable as any, PYTH_ADDRESS[chainId])
     const [priceUnsafe0, priceUnsafe1] = await Promise.all([
-      (pythContract.methods as any).getPriceUnsafe(basePriceId).call(),
-      (pythContract.methods as any).getPriceUnsafe(quotePriceId).call(),
+      client.readContract({
+        address: PYTH_ADDRESS[chainId] as `0x${string}`,
+        abi: ABI_PYTH_UPGRADABLE,
+        functionName: 'getPriceUnsafe',
+        args: [basePriceId],
+      }),
+      client.readContract({
+        address: PYTH_ADDRESS[chainId] as `0x${string}`,
+        abi: ABI_PYTH_UPGRADABLE,
+        functionName: 'getPriceUnsafe',
+        args: [quotePriceId],
+      }),
     ])
 
     const prices: [number, number] = [getPriceFromUnsafe(priceUnsafe0), getPriceFromUnsafe(priceUnsafe1)]
-    return +qti === 0 ? (prices.reverse() as [number, number]) : prices
+    return Number(qti) === 0 ? (prices.reverse() as [number, number]) : prices
   } catch (error) {
     console.warn('Cannot get Pyth price', error)
     return [0, 0]

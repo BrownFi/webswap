@@ -2,6 +2,7 @@ import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { getCreate2Address } from '@ethersproject/address'
 import { keccak256, pack } from '@ethersproject/solidity'
+import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
 import { ChainId } from '../constants/chainId'
 import {
   BigintIsh,
@@ -24,16 +25,37 @@ import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/
 
 // Helper: fetch Pyth price feed data and update fee for WithPrice router calls
 async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[string[], number]> {
-  const { default: Web3 } = await import('web3')
-  const web3 = new Web3(RPC_URLS[chainId])
+  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
 
   const allIds = (await Promise.all(pairs.map(async (pair) => {
-    const pairContract = new web3.eth.Contract(ABI_PAIR_PRICE_FEED as any, pair.liquidityToken.address)
-    const priceFeedAddress = await (pairContract.methods as any).priceFeed().call()
-    const pf = new web3.eth.Contract(ABI_PYTH_PRICE_FEED as any, priceFeedAddress)
+    const priceFeedAddress = await client.readContract({
+      address: pair.liquidityToken.address as `0x${string}`,
+      abi: [{
+        inputs: [], name: 'priceFeed',
+        outputs: [{ name: '', type: 'address' }],
+        stateMutability: 'view', type: 'function',
+      }] as const,
+      functionName: 'priceFeed',
+    })
     const [base, quote] = await Promise.all([
-      (pf.methods as any).baseTokenPriceId().call(),
-      (pf.methods as any).quoteTokenPriceId().call(),
+      client.readContract({
+        address: priceFeedAddress as `0x${string}`,
+        abi: [{
+          inputs: [], name: 'baseTokenPriceId',
+          outputs: [{ name: '', type: 'bytes32' }],
+          stateMutability: 'view', type: 'function',
+        }] as const,
+        functionName: 'baseTokenPriceId',
+      }),
+      client.readContract({
+        address: priceFeedAddress as `0x${string}`,
+        abi: [{
+          inputs: [], name: 'quoteTokenPriceId',
+          outputs: [{ name: '', type: 'bytes32' }],
+          stateMutability: 'view', type: 'function',
+        }] as const,
+        functionName: 'quoteTokenPriceId',
+      }),
     ])
     return [base, quote]
   }))).flat()
@@ -43,23 +65,41 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
   const { data } = await axios.get('https://hermes.pyth.network/api/latest_vaas', { params: { ids: uniqueIds } })
   const priceUpdate = (data as string[]).map((vaa: string) => '0x' + Buffer.from(vaa, 'base64').toString('hex'))
 
-  const pythContract = new web3.eth.Contract(ABI_PYTH_UPDATE_FEE as any, PYTH_ADDRESS[chainId])
-  const updateFee = await (pythContract.methods as any).getUpdateFee(priceUpdate).call()
-  return [priceUpdate, +updateFee]
+  const updateFee = await client.readContract({
+    address: PYTH_ADDRESS[chainId] as `0x${string}`,
+    abi: [{
+      inputs: [{ name: 'updateData', type: 'bytes[]' }],
+      name: 'getUpdateFee',
+      outputs: [{ name: 'feeAmount', type: 'uint256' }],
+      stateMutability: 'view', type: 'function',
+    }] as const,
+    functionName: 'getUpdateFee',
+    args: [priceUpdate as `0x${string}`[]],
+  })
+  return [priceUpdate, Number(updateFee)]
 }
 
 // Helper: fetch Pyth price update data and encode for V2 router
 async function solidityPackHelper(addresses: string[], chainId: number): Promise<string> {
-  const { default: Web3 } = await import('web3')
-  const web3 = new Web3(RPC_URLS[chainId])
+  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const { getFactoryAddress: getFactory } = await import('../utils')
-  const factoryContract = new web3.eth.Contract(ABI_FACTORY_PRICE_FEED as any, getFactory(chainId, 2))
-  const priceFeedIds = await Promise.all(addresses.map((addr) => (factoryContract.methods as any).priceFeedIds(addr).call()))
+  const priceFeedIds = await Promise.all(addresses.map((addr) =>
+    client.readContract({
+      address: getFactory(chainId, 2) as `0x${string}`,
+      abi: [{
+        inputs: [{ name: 'token', type: 'address' }],
+        name: 'priceFeedIds',
+        outputs: [{ name: '', type: 'bytes32' }],
+        stateMutability: 'view', type: 'function',
+      }] as const,
+      functionName: 'priceFeedIds',
+      args: [addr as `0x${string}`],
+    })
+  ))
   const { default: axios } = await import('axios')
   const { data } = await axios.get('https://hermes.pyth.network/v2/updates/price/latest', { params: { ids: priceFeedIds } })
-  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`)
-  const { utils } = await import('ethers')
-  return utils.defaultAbiCoder.encode(['bytes[]'], [dataBytes])
+  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+  return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
 }
 import { Token } from './token'
 import { Price } from './fractions/price'
@@ -67,45 +107,31 @@ import { TokenAmount } from './fractions/tokenAmount'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
-// Proper ABIs with internalType (required by web3 v1 + ethers ABI coder)
+// Viem ABI constants
 const ABI_ROUTER_V2 = [{
-  inputs: [{ internalType: 'uint256', name: 'amountIn', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }, { internalType: 'bytes', name: 'updateData', type: 'bytes' }],
-  name: 'getAmountsOut', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
-}]
+  inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
+  name: 'getAmountsOut', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
+}] as const
 const ABI_ROUTER_V1 = [{
-  inputs: [{ internalType: 'uint256', name: 'amountIn', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }],
-  name: 'getAmountsOut', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
-}]
+  inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }],
+  name: 'getAmountsOut', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
+}] as const
 const ABI_ROUTER_WITH_PRICE = [{
-  inputs: [{ internalType: 'uint256', name: 'amountIn', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }, { internalType: 'bytes[]', name: 'priceUpdate', type: 'bytes[]' }],
-  name: 'getAmountsOutWithPrice', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
-}]
+  inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'priceUpdate', type: 'bytes[]' }],
+  name: 'getAmountsOutWithPrice', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
+}] as const
 const ABI_ROUTER_V2_IN = [{
-  inputs: [{ internalType: 'uint256', name: 'amountOut', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }, { internalType: 'bytes', name: 'updateData', type: 'bytes' }],
-  name: 'getAmountsIn', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
-}]
+  inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
+  name: 'getAmountsIn', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
+}] as const
 const ABI_ROUTER_V1_IN = [{
-  inputs: [{ internalType: 'uint256', name: 'amountOut', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }],
-  name: 'getAmountsIn', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
-}]
+  inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }],
+  name: 'getAmountsIn', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
+}] as const
 const ABI_ROUTER_WITH_PRICE_IN = [{
-  inputs: [{ internalType: 'uint256', name: 'amountOut', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }, { internalType: 'bytes[]', name: 'priceUpdate', type: 'bytes[]' }],
-  name: 'getAmountsInWithPrice', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
-}]
-const ABI_FACTORY_PRICE_FEED = [{
-  inputs: [{ internalType: 'address', name: 'token', type: 'address' }],
-  name: 'priceFeedIds', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function',
-}]
-const ABI_PAIR_PRICE_FEED = [
-  { inputs: [], name: 'priceFeed', outputs: [{ internalType: 'address', name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
-]
-const ABI_PYTH_PRICE_FEED = [
-  { inputs: [], name: 'baseTokenPriceId', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
-  { inputs: [], name: 'quoteTokenPriceId', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
-]
-const ABI_PYTH_UPDATE_FEE = [
-  { inputs: [{ internalType: 'bytes[]', name: 'updateData', type: 'bytes[]' }], name: 'getUpdateFee', outputs: [{ internalType: 'uint256', name: 'feeAmount', type: 'uint256' }], stateMutability: 'view', type: 'function' },
-]
+  inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'priceUpdate', type: 'bytes[]' }],
+  name: 'getAmountsInWithPrice', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
+}] as const
 
 class InsufficientReservesError extends Error {
   public readonly isInsufficientReservesError = true
@@ -297,30 +323,45 @@ export class Pair {
     const inputReserve = this.reserveOf(inputAmount.token)
     const outputReserve = this.reserveOf(inputAmount.token.equals(this.token0) ? this.token1 : this.token0)
 
-    const { default: Web3 } = await import('web3')
-    const web3 = new Web3(RPC_URLS[chainId])
-    const pathAddresses = path.map((t: Token) => t.address)
+    const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+    const pathAddresses = path.map((t: Token) => t.address) as `0x${string}`[]
 
     let priceUpdate: string[] = []
     let updateFee = 0
-    let amountOuts: any
+    let amountOuts: readonly bigint[]
 
     if (isContractWithPrice(chainId, version)) {
-      const routerContract = new web3.eth.Contract(ABI_ROUTER_WITH_PRICE as any, ROUTER_ADDRESS_WITH_PRICE[chainId])
       const feedResult = await getFeedPriceAndFee(pairs, chainId)
       priceUpdate = feedResult[0]
       updateFee = feedResult[1]
-      amountOuts = await (routerContract.methods as any).getAmountsOutWithPrice(inputAmount.raw.toString(), pathAddresses, priceUpdate).call({ value: updateFee, from: account })
+      const { result } = await client.simulateContract({
+        address: ROUTER_ADDRESS_WITH_PRICE[chainId] as `0x${string}`,
+        abi: ABI_ROUTER_WITH_PRICE,
+        functionName: 'getAmountsOutWithPrice',
+        args: [BigInt(inputAmount.raw.toString()), pathAddresses, priceUpdate as `0x${string}`[]],
+        value: BigInt(updateFee),
+        account: account as `0x${string}`,
+      })
+      amountOuts = result
     } else if (version === 2) {
-      const routerContract = new web3.eth.Contract(ABI_ROUTER_V2 as any, getRouterAddress(chainId, version))
-      const updateData = await solidityPackHelper(pathAddresses, chainId)
-      amountOuts = await (routerContract.methods as any).getAmountsOut(inputAmount.raw.toString(), pathAddresses, updateData).call({ from: account })
+      const updateData = await solidityPackHelper(pathAddresses as string[], chainId)
+      amountOuts = await client.readContract({
+        address: getRouterAddress(chainId, version) as `0x${string}`,
+        abi: ABI_ROUTER_V2,
+        functionName: 'getAmountsOut',
+        args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+        account: account as `0x${string}`,
+      })
     } else {
-      const routerContract = new web3.eth.Contract(ABI_ROUTER_V1 as any, getRouterAddress(chainId, version))
-      amountOuts = await (routerContract.methods as any).getAmountsOut(inputAmount.raw.toString(), pathAddresses).call()
+      amountOuts = await client.readContract({
+        address: getRouterAddress(chainId, version) as `0x${string}`,
+        abi: ABI_ROUTER_V1,
+        functionName: 'getAmountsOut',
+        args: [BigInt(inputAmount.raw.toString()), pathAddresses],
+      })
     }
 
-    const outputAmount = new TokenAmount(outputReserve.token, amountOuts[amountOuts.length - 1])
+    const outputAmount = new TokenAmount(outputReserve.token, amountOuts[amountOuts.length - 1].toString())
     if (JSBI.equal(outputAmount.raw, ZERO)) {
       throw new InsufficientInputAmountError()
     }
@@ -348,30 +389,45 @@ export class Pair {
     const outputReserve = this.reserveOf(outputAmount.token)
     const inputReserve = this.reserveOf(outputAmount.token.equals(this.token0) ? this.token1 : this.token0)
 
-    const { default: Web3 } = await import('web3')
-    const web3 = new Web3(RPC_URLS[chainId])
-    const pathAddresses = path.map((t: Token) => t.address)
+    const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+    const pathAddresses = path.map((t: Token) => t.address) as `0x${string}`[]
 
     let priceUpdate: string[] = []
     let updateFee = 0
-    let amountIns: any
+    let amountIns: readonly bigint[]
 
     if (isContractWithPrice(chainId, version)) {
-      const routerContract = new web3.eth.Contract(ABI_ROUTER_WITH_PRICE_IN as any, ROUTER_ADDRESS_WITH_PRICE[chainId])
       const feedResult = await getFeedPriceAndFee(pairs, chainId)
       priceUpdate = feedResult[0]
       updateFee = feedResult[1]
-      amountIns = await (routerContract.methods as any).getAmountsInWithPrice(outputAmount.raw.toString(), pathAddresses, priceUpdate).call({ value: updateFee, from: account })
+      const { result } = await client.simulateContract({
+        address: ROUTER_ADDRESS_WITH_PRICE[chainId] as `0x${string}`,
+        abi: ABI_ROUTER_WITH_PRICE_IN,
+        functionName: 'getAmountsInWithPrice',
+        args: [BigInt(outputAmount.raw.toString()), pathAddresses, priceUpdate as `0x${string}`[]],
+        value: BigInt(updateFee),
+        account: account as `0x${string}`,
+      })
+      amountIns = result
     } else if (version === 2) {
-      const routerContract = new web3.eth.Contract(ABI_ROUTER_V2_IN as any, getRouterAddress(chainId, version))
-      const updateData = await solidityPackHelper(pathAddresses, chainId)
-      amountIns = await (routerContract.methods as any).getAmountsIn(outputAmount.raw.toString(), pathAddresses, updateData).call({ from: account })
+      const updateData = await solidityPackHelper(pathAddresses as string[], chainId)
+      amountIns = await client.readContract({
+        address: getRouterAddress(chainId, version) as `0x${string}`,
+        abi: ABI_ROUTER_V2_IN,
+        functionName: 'getAmountsIn',
+        args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+        account: account as `0x${string}`,
+      })
     } else {
-      const routerContract = new web3.eth.Contract(ABI_ROUTER_V1_IN as any, getRouterAddress(chainId, version))
-      amountIns = await (routerContract.methods as any).getAmountsIn(outputAmount.raw.toString(), pathAddresses).call()
+      amountIns = await client.readContract({
+        address: getRouterAddress(chainId, version) as `0x${string}`,
+        abi: ABI_ROUTER_V1_IN,
+        functionName: 'getAmountsIn',
+        args: [BigInt(outputAmount.raw.toString()), pathAddresses],
+      })
     }
 
-    const inputAmountResult = new TokenAmount(inputReserve.token, amountIns[0])
+    const inputAmountResult = new TokenAmount(inputReserve.token, amountIns[0].toString())
     const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
     const priceImpactK = 0.001 * Number(ratio) * 100
 
