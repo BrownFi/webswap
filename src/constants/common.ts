@@ -4,7 +4,7 @@ export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 // a list of tokens by chain
 type ChainTokenList = {
-  readonly [chainId in ChainId]: Token[]
+  readonly [chainId in ChainId]?: Token[]
 }
 
 export const DAI = new Token(ChainId.MAINNET, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 18, 'DAI', 'Dai Stablecoin')

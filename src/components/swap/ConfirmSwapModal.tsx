@@ -18,9 +18,9 @@ import { getTokenSymbol } from 'utils'
 function tradeMeaningfullyDiffers(tradeA: Trade, tradeB: Trade): boolean {
   return (
     tradeA.tradeType !== tradeB.tradeType ||
-    !currencyEquals(tradeA.inputAmount?.currency, tradeB.inputAmount?.currency) ||
+    !currencyEquals(tradeA.inputAmount!.currency, tradeB.inputAmount!.currency) ||
     !tradeA.inputAmount?.equalTo(tradeB?.inputAmount as any) ||
-    !currencyEquals(tradeA.outputAmount?.currency, tradeB.outputAmount?.currency) ||
+    !currencyEquals(tradeA.outputAmount!.currency, tradeB.outputAmount!.currency) ||
     !tradeA.outputAmount?.equalTo(tradeB.outputAmount as any)
   )
 }

@@ -191,7 +191,7 @@ export default function Pool() {
       </Modal>
 
       {chainId === ChainId.BERA_MAINNET && version === 1 && (
-        <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] px-2">
+        <TYPE.main mb={6} color="#bb9981" className="max-w-[894px] px-2">
           With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and
           redeposit to V2 now to keep earning fees.{' '}
           <a
@@ -205,7 +205,7 @@ export default function Pool() {
         </TYPE.main>
       )}
       {version === 2 && (
-        <TYPE.main mb={3} color="#bb9981" className="max-w-[894px] px-2">
+        <TYPE.main mb={6} color="#bb9981" className="max-w-[894px] px-2">
           BrownFi is a novel primitive AMM in DeFi. While audited by{' '}
           <a
             href="https://skynet.certik.com/projects/brownfi"
@@ -239,7 +239,7 @@ export default function Pool() {
                 </TYPE.mediumHeader>
                 <SwitchVersion />
               </Flex>
-              <div className="flex items-center justify-end flex-1 w-full lg:w-auto">
+              <div className="flex items-center justify-center md:justify-end flex-1 w-full lg:w-auto">
                 <ResponsiveButtonPrimary id="join-pool-button" as={Link} to="/add/ETH" className="!h-[40px]">
                   <Text fontWeight={700} fontSize={14} color={'white'}>
                     Add Liquidity

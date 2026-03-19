@@ -15,8 +15,8 @@ export function isTradeBetter(
     tradeA.inputAmount &&
     tradeB.inputAmount &&
     (tradeA.tradeType !== tradeB.tradeType ||
-      !currencyEquals(tradeA.inputAmount?.currency, tradeB.inputAmount?.currency) ||
-      !currencyEquals(tradeB.outputAmount?.currency, tradeB.outputAmount?.currency))
+      !currencyEquals(tradeA.inputAmount!.currency, tradeB.inputAmount!.currency) ||
+      !currencyEquals(tradeB.outputAmount!.currency, tradeB.outputAmount!.currency))
   ) {
     throw new Error('Trades are not comparable')
   }

@@ -153,12 +153,12 @@ export default function AddLiquidity() {
       const response = await addLiquidity(
         chainId,
         library as any,
-        account,
+        account as string,
         parsedAmountA,
         parsedAmountB,
         exactFieldInput,
         deadline as any,
-        noLiquidity,
+        noLiquidity ?? false,
         allowedSlippage,
         version,
       )
