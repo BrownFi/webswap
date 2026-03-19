@@ -134,7 +134,7 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
       if (!Number.isNaN(valueAsIntFromRoundedFloat) && valueAsIntFromRoundedFloat < 5000) {
         setRawSlippage(valueAsIntFromRoundedFloat)
       }
-    } catch {}
+    } catch { /* intentionally empty */ }
   }
 
   function parseCustomDeadline(value: string) {
@@ -145,7 +145,7 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
       if (!Number.isNaN(valueAsInt) && valueAsInt > 0) {
         setDeadline(valueAsInt)
       }
-    } catch {}
+    } catch { /* intentionally empty */ }
   }
 
   return (

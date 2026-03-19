@@ -19,13 +19,13 @@ export default async function getTokenList(
     try {
       contentHashUri = await resolveENSContentHash(parsedENS.ensName)
     } catch (error) {
-      throw new Error(`Failed to resolve ENS name: ${parsedENS.ensName}`)
+      throw new Error(`Failed to resolve ENS name: ${parsedENS.ensName}`, { cause: error })
     }
     let translatedUri
     try {
       translatedUri = contenthashToUri(contentHashUri)
     } catch (error) {
-      throw new Error(`Failed to translate contenthash to URI: ${contentHashUri}`)
+      throw new Error(`Failed to translate contenthash to URI: ${contentHashUri}`, { cause: error })
     }
     urls = uriToHttp(`${translatedUri}${parsedENS.ensPath ?? ''}`)
   } else {
@@ -38,7 +38,7 @@ export default async function getTokenList(
     try {
       response = await fetch(url)
     } catch (error) {
-      if (isLast) throw new Error(`Failed to download list ${listUrl}`)
+      if (isLast) throw new Error(`Failed to download list ${listUrl}`, { cause: error })
       continue
     }
 

@@ -80,7 +80,7 @@ export function tryParseAmount(value?: string, currency?: Currency): CurrencyAmo
         ? new TokenAmount(currency, JSBI.BigInt(typedValueParsed))
         : CurrencyAmount.ether(JSBI.BigInt(typedValueParsed))
     }
-  } catch (error) {
+  } catch {
     // should fail if the user specifies too many decimal places of precision (or maybe exceed max uint?)
   }
   // necessary for all paths to return a value

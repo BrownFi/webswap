@@ -81,6 +81,7 @@ export function CurrencySearch({
 
   useEffect(() => {
     if (isAddressSearch) {
+      // intentionally empty
     }
   }, [isAddressSearch])
 

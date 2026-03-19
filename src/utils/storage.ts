@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 /**
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
@@ -8,9 +7,7 @@
 
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 
-const StorageTypes = ['localStorage', 'sessionStorage', 'none'] as const
-
-export type StorageType = typeof StorageTypes[number]
+export type StorageType = 'localStorage' | 'sessionStorage' | 'none'
 
 const DefaultStorageType: StorageType = 'localStorage'
 
@@ -245,7 +242,7 @@ export const getStorageData = <T>(storageSlot: StorageSlot): T | undefined => {
       return
     }
     return JSON.parse(data) as T
-  } catch (err) {
+  } catch {
     return {} as T
   }
 }

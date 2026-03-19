@@ -185,7 +185,7 @@ export class Trade {
       invariant(currencyEquals(amount.currency, route.input), 'INPUT')
       const inputAmount = wrappedAmount(amount, route.chainId)
       const computePair = getComputePair(route.pairs, route.path)
-      const [amountOut, _nextPair, priceUpdate, updateFee, priceImpactK] =
+      const [amountOut, , priceUpdate, updateFee, priceImpactK] =
         await computePair.getOutputAmountAsync(inputAmount, route.pairs, route.path, route.chainId, account)
       amounts[amounts.length - 1] = amountOut
       this.priceUpdate = priceUpdate
@@ -195,7 +195,7 @@ export class Trade {
       invariant(currencyEquals(amount.currency, route.output), 'OUTPUT')
       const outputAmount = wrappedAmount(amount, route.chainId)
       const computePair = getComputePair(route.pairs, route.path)
-      const [amountIn, _nextPair, priceUpdate, updateFee, priceImpactK] =
+      const [amountIn, , priceUpdate, updateFee, priceImpactK] =
         await computePair.getInputAmountAsync(outputAmount, route.pairs, route.path, route.chainId, account)
       amounts[0] = amountIn
       this.priceUpdate = priceUpdate

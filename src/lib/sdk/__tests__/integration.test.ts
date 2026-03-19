@@ -26,7 +26,7 @@ import {
 // Known tokens on Berachain mainnet
 const WBERA = WETH[ChainId.BERA_MAINNET]
 const HONEY = new Token(ChainId.BERA_MAINNET, '0xfcbd14dc51f0a4d49d5e53c2e0950e0bc26d0dce', 18, 'HONEY', 'Honey')
-const USDC_E = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6e4e9568c1d3241', 6, 'USDC.e', 'Bridged USDC')
+// const USDC_E = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6e4e9568c1d3241', 6, 'USDC.e', 'Bridged USDC')
 
 // Known pair address (WBERA/HONEY V2) — verified on-chain
 const KNOWN_PAIR_ADDRESS = '0xd932c344e21ef6c3a94971bf4d4cc71304e2a66c'
@@ -220,7 +220,7 @@ describe('SDK Integration: Pair.getOutputAmountAsync (live RPC)', () => {
     const input = new TokenAmount(WBERA, JSBI.BigInt('1000000000000000000')) // 1 BERA
     const path = [WBERA, HONEY]
 
-    const [output, , priceUpdate, updateFee, priceImpactK] = await pair.getOutputAmountAsync(
+    const [output, , , , priceImpactK] = await pair.getOutputAmountAsync(
       input,
       [pair],
       path,

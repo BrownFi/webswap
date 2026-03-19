@@ -251,7 +251,7 @@ export async function addLiquidity(
 
   let estimate: any
   let method: any
-  let args: any[] = []
+  let args: any[]
   let value: BigNumber | null
 
   if (currencyA === ETHER || currencyB === ETHER) {

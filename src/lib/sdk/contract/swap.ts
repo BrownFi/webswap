@@ -142,10 +142,10 @@ export async function callSwapContract(
     return response
   } catch (error: any) {
     if (error?.code === 4001) {
-      throw new Error('Transaction rejected.')
+      throw new Error('Transaction rejected.', { cause: error })
     } else {
       console.error('Swap failed', error, methodName, args, value)
-      throw new Error(`Swap failed: ${error.message}`)
+      throw new Error(`Swap failed: ${error.message}`, { cause: error })
     }
   }
 }

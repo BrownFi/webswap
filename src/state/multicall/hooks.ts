@@ -140,7 +140,7 @@ function toCallState(
   if (success && data) {
     try {
       result = contractInterface.decodeFunctionResult(fragment, data)
-    } catch (error) {
+    } catch {
       return {
         valid: true,
         loading: false,

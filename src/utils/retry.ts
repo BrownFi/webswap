@@ -33,30 +33,33 @@ export function retry<T>(
 ): { promise: Promise<T>; cancel: () => void } {
   let completed = false
   let rejectCancelled: (error: Error) => void
-  const promise = new Promise<T>(async (resolve, reject) => {
+  const promise = new Promise<T>((resolve, reject) => {
     rejectCancelled = reject
-    while (true) {
-      let result: T
-      try {
-        result = await fn()
-        if (!completed) {
-          resolve(result)
-          completed = true
-        }
-        break
-      } catch (error) {
-        if (completed) {
+    const attempt = async () => {
+      while (true) {
+        let result: T
+        try {
+          result = await fn()
+          if (!completed) {
+            resolve(result)
+            completed = true
+          }
           break
+        } catch (error) {
+          if (completed) {
+            break
+          }
+          if (n <= 0 || !(error instanceof RetryableError)) {
+            reject(error)
+            completed = true
+            break
+          }
+          n--
         }
-        if (n <= 0 || !(error instanceof RetryableError)) {
-          reject(error)
-          completed = true
-          break
-        }
-        n--
+        await waitRandom(minWait, maxWait)
       }
-      await waitRandom(minWait, maxWait)
     }
+    attempt()
   })
   return {
     promise,
