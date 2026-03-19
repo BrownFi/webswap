@@ -25,7 +25,7 @@ import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/
 // Helper: fetch Pyth price feed data and update fee for WithPrice router calls
 async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[string[], number]> {
   const { default: Web3 } = await import('web3')
-  const web3 = new Web3(new (Web3 as any).providers.HttpProvider(RPC_URLS[chainId]))
+  const web3 = new Web3(RPC_URLS[chainId])
   const IPair = [
     { inputs: [], name: 'priceFeed', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' },
   ]
@@ -61,7 +61,7 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
 // Helper: fetch Pyth price update data and encode for V2 router
 async function solidityPackHelper(addresses: string[], chainId: number): Promise<string> {
   const { default: Web3 } = await import('web3')
-  const web3 = new Web3(new (Web3 as any).providers.HttpProvider(RPC_URLS[chainId]))
+  const web3 = new Web3(RPC_URLS[chainId])
   const IFactoryV2 = [
     { inputs: [{ type: 'address' }], name: 'priceFeedIds', outputs: [{ type: 'bytes32' }], stateMutability: 'view', type: 'function' },
   ]
@@ -271,7 +271,7 @@ export class Pair {
     const outputReserve = this.reserveOf(inputAmount.token.equals(this.token0) ? this.token1 : this.token0)
 
     const { default: Web3 } = await import('web3')
-    const web3 = new Web3(new (Web3 as any).providers.HttpProvider(RPC_URLS[chainId]))
+    const web3 = new Web3(RPC_URLS[chainId])
     const pathAddresses = path.map((t: Token) => t.address)
 
     let priceUpdate: string[] = []
@@ -331,7 +331,7 @@ export class Pair {
     const inputReserve = this.reserveOf(outputAmount.token.equals(this.token0) ? this.token1 : this.token0)
 
     const { default: Web3 } = await import('web3')
-    const web3 = new Web3(new (Web3 as any).providers.HttpProvider(RPC_URLS[chainId]))
+    const web3 = new Web3(RPC_URLS[chainId])
     const pathAddresses = path.map((t: Token) => t.address)
 
     let priceUpdate: string[] = []

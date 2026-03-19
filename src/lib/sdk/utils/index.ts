@@ -134,7 +134,7 @@ export async function getPythPrice(address: string, chainId: number, version: nu
     const { default: Web3 } = await import('web3')
     const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
 
-    const web3 = new Web3(new Web3.providers.HttpProvider(RPC_URLS[chainId]))
+    const web3 = new Web3(RPC_URLS[chainId])
 
     // Minimal ABI for factory.priceFeedIds(address) and pyth.getPriceUnsafe(bytes32)
     const IFactoryV2: any[] = [
@@ -164,7 +164,7 @@ export async function getPythPricePair(pair: any, chainId: number): Promise<[num
     const { default: Web3 } = await import('web3')
     const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
 
-    const web3 = new Web3(new Web3.providers.HttpProvider(RPC_URLS[chainId]))
+    const web3 = new Web3(RPC_URLS[chainId])
 
     const IPair: any[] = [
       { inputs: [], name: 'priceFeed', outputs: [{ name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
