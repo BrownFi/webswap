@@ -33,7 +33,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
 Card.displayName = 'Card'
 
 export const LightCard = React.forwardRef<HTMLDivElement, CardProps>(({ className, ...props }, ref) => {
-  return <Card ref={ref} className={classNames('border border-bg2 bg-bg1', className)} {...props} />
+  return <Card ref={ref} className={classNames('border border-bg1 bg-bg1', className)} {...props} />
 })
 LightCard.displayName = 'LightCard'
 

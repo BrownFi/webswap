@@ -22,7 +22,7 @@ const CustomAccountDisplay = () => {
   return (
     <>
       <ButtonDropdown
-        className="!bg-black/40 hover:scale-105 transition-all !py-1 !px-2.5 !min-h-10 !rounded-xl !w-fit"
+        className="!bg-black/40 hover:scale-105 transition-all !py-1 !px-2.5 h-full !min-h-10 !rounded-none !w-fit"
         style={{ border: '1px solid #FFFFFF20' }}
         onClick={openAccountModal || (() => setOpen(true))}
       >

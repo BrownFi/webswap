@@ -1,21 +1,12 @@
 import connectWalletIcon from 'assets/svg/account_balance_wallet.svg'
 import { ButtonPrimary } from './Button'
-import { useWalletModalToggle } from 'state/application/hooks'
+import { useConnectModal } from '@rainbow-me/rainbowkit'
 
 const ConnectWallet = () => {
-  const toggleWalletModal = useWalletModalToggle()
-
-  const openConnectWallet = () => {
-    const connectBtn = document.querySelector<HTMLElement>('[data-testid="rk-connect-button"]')
-    if (connectBtn) {
-      connectBtn.click()
-    } else {
-      toggleWalletModal()
-    }
-  }
+  const { openConnectModal } = useConnectModal()
 
   return (
-    <ButtonPrimary onClick={openConnectWallet}>
+    <ButtonPrimary onClick={openConnectModal}>
       <img src={connectWalletIcon} alt="icon" className="w-[24px] mr-2" />
       Connect Wallet
     </ButtonPrimary>

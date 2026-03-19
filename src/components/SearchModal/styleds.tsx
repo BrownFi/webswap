@@ -57,14 +57,14 @@ export const Checkbox = styled.input`
 `
 
 export const PaddedColumn = styled(AutoColumn)`
-  padding: 32px 40px 12px 40px;
+  padding: 24px 24px 12px 24px;
   ${({ theme }) => theme.mediaWidth.upToMedium`
-   padding: 20px 20px 12px 20px;
+   padding: 16px 16px 12px 16px;
   `};
 `
 
 export const MenuItem = styled.div<{ disabled?: boolean; selected?: boolean }>`
-  margin: 0 40px;
+  margin: 0 24px;
   padding: 12px;
   height: 68px;
   display: grid;

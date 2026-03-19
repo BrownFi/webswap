@@ -190,7 +190,7 @@ export function SettingsTab() {
         </ModalContentWrapper>
       </Modal>
       <StyledMenuButton onClick={toggle} id="open-settings-dialog-button" aria-label="Open settings">
-        <div className="w-[40px] h-[40px] flex items-center justify-center bg-[#131216]">
+        <div className="w-[40px] h-[40px] flex items-center justify-center ">
           <img src={settings} alt="settings" className="w-[24px]" />
         </div>
 

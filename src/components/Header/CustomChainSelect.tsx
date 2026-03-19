@@ -20,7 +20,7 @@ const CustomChainSelect = () => {
   return (
     <>
       <ButtonDropdown
-        className="!bg-black/40 hover:scale-105 transition-all !py-1 !px-2.5 !min-h-10 !rounded-xl !w-fit"
+        className="!bg-black/40 hover:scale-105 transition-all !py-1 !px-2.5 h-full !min-h-[41px] !rounded-none !w-fit border-1"
         style={{ border: '1px solid #FFFFFF20' }}
         onClick={openChainModal || (() => setOpen(true))}
       >
@@ -44,7 +44,7 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
       onClick={onClose}
     >
       <div
-        className="bg-[#1a1a1a] m-2 rounded-3xl w-full max-w-sm p-4"
+        className="bg-[#1a1a1a] m-2 w-full max-w-sm p-4"
         style={{ border: '1px solid #FFFFFF20' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -60,7 +60,7 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           </h2>
           <button
             onClick={onClose}
-            className="bg-white/15 text-white/60 font-black hover:text-white  transition p-1 w-8 rounded-full"
+            className=" text-white/60 font-black hover:text-white transition p-1 w-8"
             aria-label="Close network selector"
           >
             ✕
@@ -80,7 +80,7 @@ const ChainModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                   const parsed = JSON.parse(JSON.stringify(c, null, 2))
                   dispatch(switchChain(parsed))
                 }}
-                className={`flex items-center justify-between w-full px-2 py-1.5 rounded-xl transition
+                className={`flex items-center justify-between w-full px-2 py-1.5 transition
                   ${isActive ? 'bg-[#3b82f6] text-white' : 'hover:bg-white/5 text-white/80'}
                 `}
               >

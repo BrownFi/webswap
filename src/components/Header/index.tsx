@@ -21,7 +21,7 @@ const StyledConnectButton = () => (
               return (
                 <button
                   onClick={openConnectModal}
-                  className="bg-[#27E3AB] hover:bg-[#20c899] text-black font-semibold px-2.5 py-1 rounded-xl min-h-10 transition-all hover:scale-105 text-sm"
+                  className="bg-[#27E3AB] hover:bg-[#20c899] text-black font-semibold px-2.5 py-1 rounded-none min-h-10 transition-all hover:scale-105 text-sm"
                 >
                   Connect Wallet
                 </button>
@@ -32,7 +32,7 @@ const StyledConnectButton = () => (
               return (
                 <button
                   onClick={openChainModal}
-                  className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-xl min-h-10 transition-all"
+                  className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-none min-h-10 transition-all"
                 >
                   Wrong network
                 </button>
