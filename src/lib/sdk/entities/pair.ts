@@ -17,7 +17,62 @@ import {
   sqrt,
   getFactoryAddress,
   getInitCodeHash,
+  isContractWithPrice,
+  getRouterAddress,
 } from '../utils'
+import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/addresses'
+import axios from 'axios'
+import * as ethers from 'ethers'
+
+// Helper: fetch Pyth price feed data and update fee for WithPrice router calls
+async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[string[], number]> {
+  const { default: Web3 } = await import('web3')
+  const web3 = new Web3(new (Web3 as any).providers.HttpProvider(RPC_URLS[chainId]))
+  const IPair = [
+    { inputs: [], name: 'priceFeed', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' },
+  ]
+  const IPythPriceFeed = [
+    { inputs: [], name: 'baseTokenPriceId', outputs: [{ type: 'bytes32' }], stateMutability: 'view', type: 'function' },
+    { inputs: [], name: 'quoteTokenPriceId', outputs: [{ type: 'bytes32' }], stateMutability: 'view', type: 'function' },
+  ]
+  const IPyth = [
+    { inputs: [{ type: 'bytes[]' }], name: 'getUpdateFee', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  ]
+
+  const allIds = (await Promise.all(pairs.map(async (pair) => {
+    const pairContract = new web3.eth.Contract(IPair as any, pair.liquidityToken.address)
+    const priceFeedAddress = await (pairContract.methods as any).priceFeed().call()
+    const pf = new web3.eth.Contract(IPythPriceFeed as any, priceFeedAddress)
+    const [base, quote] = await Promise.all([
+      (pf.methods as any).baseTokenPriceId().call(),
+      (pf.methods as any).quoteTokenPriceId().call(),
+    ])
+    return [base, quote]
+  }))).flat()
+
+  const uniqueIds = allIds.filter((id, i, arr) => arr.indexOf(id) === i && id !== ZERO_ADDRESS)
+  const { data } = await axios.get('https://hermes.pyth.network/api/latest_vaas', { params: { ids: uniqueIds } })
+  const priceUpdate = (data as string[]).map((vaa: string) => '0x' + Buffer.from(vaa, 'base64').toString('hex'))
+
+  const pythContract = new web3.eth.Contract(IPyth as any, PYTH_ADDRESS[chainId])
+  const updateFee = await (pythContract.methods as any).getUpdateFee(priceUpdate).call()
+  return [priceUpdate, +updateFee]
+}
+
+// Helper: fetch Pyth price update data and encode for V2 router
+async function solidityPackHelper(addresses: string[], chainId: number): Promise<string> {
+  const { default: Web3 } = await import('web3')
+  const web3 = new Web3(new (Web3 as any).providers.HttpProvider(RPC_URLS[chainId]))
+  const IFactoryV2 = [
+    { inputs: [{ type: 'address' }], name: 'priceFeedIds', outputs: [{ type: 'bytes32' }], stateMutability: 'view', type: 'function' },
+  ]
+  const { getFactoryAddress: getFactory } = await import('../utils')
+  const factoryContract = new web3.eth.Contract(IFactoryV2 as any, getFactory(chainId, 2))
+  const priceFeedIds = await Promise.all(addresses.map((addr) => (factoryContract.methods as any).priceFeedIds(addr).call()))
+  const { data } = await axios.get('https://hermes.pyth.network/v2/updates/price/latest', { params: { ids: priceFeedIds } })
+  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`)
+  return ethers.utils.defaultAbiCoder.encode(['bytes[]'], [dataBytes])
+}
 import { Token } from './token'
 import { Price } from './fractions/price'
 import { TokenAmount } from './fractions/tokenAmount'
@@ -198,25 +253,119 @@ export class Pair {
     return [inputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount), this.version)]
   }
 
-  // Phase B async stubs
-  getOutputAmountAsync(
-    _inputAmount: TokenAmount,
-    _pairs: Pair[],
-    _path: Token[],
-    _chainId: ChainId,
-    _account: string
+  async getOutputAmountAsync(
+    inputAmount: TokenAmount,
+    pairs: Pair[],
+    path: Token[],
+    chainId: ChainId,
+    account: string
   ): Promise<[TokenAmount, Pair, string[], number, number]> {
-    throw new Error('Not implemented yet')
+    const version = pairs[0].version
+    invariant(this.involvesToken(inputAmount.token), 'TOKEN')
+    if (JSBI.equal(this.reserve0.raw, ZERO) || JSBI.equal(this.reserve1.raw, ZERO)) {
+      throw new InsufficientReservesError()
+    }
+
+    const inputReserve = this.reserveOf(inputAmount.token)
+    const outputReserve = this.reserveOf(inputAmount.token.equals(this.token0) ? this.token1 : this.token0)
+
+    const { default: Web3 } = await import('web3')
+    const web3 = new Web3(new (Web3 as any).providers.HttpProvider(RPC_URLS[chainId]))
+    const pathAddresses = path.map((t: Token) => t.address)
+
+    let priceUpdate: string[] = []
+    let updateFee = 0
+    let amountOuts: any
+
+    if (isContractWithPrice(chainId, version)) {
+      const IRouterWithPrice = [
+        { inputs: [{ type: 'uint256' }, { type: 'address[]' }, { type: 'bytes[]' }], name: 'getAmountsOutWithPrice', outputs: [{ type: 'uint256[]' }], stateMutability: 'payable', type: 'function' },
+      ]
+      const routerContract = new web3.eth.Contract(IRouterWithPrice as any, ROUTER_ADDRESS_WITH_PRICE[chainId])
+      const feedResult = await getFeedPriceAndFee(pairs, chainId)
+      priceUpdate = feedResult[0]
+      updateFee = feedResult[1]
+      amountOuts = await (routerContract.methods as any).getAmountsOutWithPrice(inputAmount.raw.toString(), pathAddresses, priceUpdate).call({ value: updateFee, from: account })
+    } else if (version === 2) {
+      const IRouterV2 = [
+        { inputs: [{ type: 'uint256' }, { type: 'address[]' }, { type: 'bytes' }], name: 'getAmountsOut', outputs: [{ type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function' },
+      ]
+      const routerContract = new web3.eth.Contract(IRouterV2 as any, getRouterAddress(chainId, version))
+      const updateData = await solidityPackHelper(pathAddresses, chainId)
+      amountOuts = await (routerContract.methods as any).getAmountsOut(inputAmount.raw.toString(), pathAddresses, updateData).call({ from: account })
+    } else {
+      const IRouterV1 = [
+        { inputs: [{ type: 'uint256' }, { type: 'address[]' }], name: 'getAmountsOut', outputs: [{ type: 'uint256[]' }], stateMutability: 'view', type: 'function' },
+      ]
+      const routerContract = new web3.eth.Contract(IRouterV1 as any, getRouterAddress(chainId, version))
+      amountOuts = await (routerContract.methods as any).getAmountsOut(inputAmount.raw.toString(), pathAddresses).call()
+    }
+
+    const outputAmount = new TokenAmount(outputReserve.token, amountOuts[amountOuts.length - 1])
+    if (JSBI.equal(outputAmount.raw, ZERO)) {
+      throw new InsufficientInputAmountError()
+    }
+
+    const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
+    const priceImpactK = 0.001 * Number(ratio) * 100
+
+    return [outputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount), version), priceUpdate, updateFee, priceImpactK]
   }
 
-  getInputAmountAsync(
-    _outputAmount: TokenAmount,
-    _pairs: Pair[],
-    _path: Token[],
-    _chainId: ChainId,
-    _account: string
+  async getInputAmountAsync(
+    outputAmount: TokenAmount,
+    pairs: Pair[],
+    path: Token[],
+    chainId: ChainId,
+    account: string
   ): Promise<[TokenAmount, Pair, string[], number, number]> {
-    throw new Error('Not implemented yet')
+    const version = pairs[0].version
+    invariant(this.involvesToken(outputAmount.token), 'TOKEN')
+    if (JSBI.equal(this.reserve0.raw, ZERO) || JSBI.equal(this.reserve1.raw, ZERO) ||
+        JSBI.greaterThanOrEqual(outputAmount.raw, this.reserveOf(outputAmount.token).raw)) {
+      throw new InsufficientReservesError()
+    }
+
+    const outputReserve = this.reserveOf(outputAmount.token)
+    const inputReserve = this.reserveOf(outputAmount.token.equals(this.token0) ? this.token1 : this.token0)
+
+    const { default: Web3 } = await import('web3')
+    const web3 = new Web3(new (Web3 as any).providers.HttpProvider(RPC_URLS[chainId]))
+    const pathAddresses = path.map((t: Token) => t.address)
+
+    let priceUpdate: string[] = []
+    let updateFee = 0
+    let amountIns: any
+
+    if (isContractWithPrice(chainId, version)) {
+      const IRouterWithPrice = [
+        { inputs: [{ type: 'uint256' }, { type: 'address[]' }, { type: 'bytes[]' }], name: 'getAmountsInWithPrice', outputs: [{ type: 'uint256[]' }], stateMutability: 'payable', type: 'function' },
+      ]
+      const routerContract = new web3.eth.Contract(IRouterWithPrice as any, ROUTER_ADDRESS_WITH_PRICE[chainId])
+      const feedResult = await getFeedPriceAndFee(pairs, chainId)
+      priceUpdate = feedResult[0]
+      updateFee = feedResult[1]
+      amountIns = await (routerContract.methods as any).getAmountsInWithPrice(outputAmount.raw.toString(), pathAddresses, priceUpdate).call({ value: updateFee, from: account })
+    } else if (version === 2) {
+      const IRouterV2 = [
+        { inputs: [{ type: 'uint256' }, { type: 'address[]' }, { type: 'bytes' }], name: 'getAmountsIn', outputs: [{ type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function' },
+      ]
+      const routerContract = new web3.eth.Contract(IRouterV2 as any, getRouterAddress(chainId, version))
+      const updateData = await solidityPackHelper(pathAddresses, chainId)
+      amountIns = await (routerContract.methods as any).getAmountsIn(outputAmount.raw.toString(), pathAddresses, updateData).call({ from: account })
+    } else {
+      const IRouterV1 = [
+        { inputs: [{ type: 'uint256' }, { type: 'address[]' }], name: 'getAmountsIn', outputs: [{ type: 'uint256[]' }], stateMutability: 'view', type: 'function' },
+      ]
+      const routerContract = new web3.eth.Contract(IRouterV1 as any, getRouterAddress(chainId, version))
+      amountIns = await (routerContract.methods as any).getAmountsIn(outputAmount.raw.toString(), pathAddresses).call()
+    }
+
+    const inputAmountResult = new TokenAmount(inputReserve.token, amountIns[0])
+    const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
+    const priceImpactK = 0.001 * Number(ratio) * 100
+
+    return [inputAmountResult, new Pair(inputReserve.add(inputAmountResult), outputReserve.subtract(outputAmount), version), priceUpdate, updateFee, priceImpactK]
   }
 
   getLiquidityMinted(totalSupply: TokenAmount, tokenAmountA: TokenAmount, tokenAmountB: TokenAmount): TokenAmount {
