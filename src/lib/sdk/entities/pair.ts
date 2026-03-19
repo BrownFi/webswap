@@ -26,21 +26,11 @@ import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/
 async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[string[], number]> {
   const { default: Web3 } = await import('web3')
   const web3 = new Web3(RPC_URLS[chainId])
-  const IPair = [
-    { inputs: [], name: 'priceFeed', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' },
-  ]
-  const IPythPriceFeed = [
-    { inputs: [], name: 'baseTokenPriceId', outputs: [{ type: 'bytes32' }], stateMutability: 'view', type: 'function' },
-    { inputs: [], name: 'quoteTokenPriceId', outputs: [{ type: 'bytes32' }], stateMutability: 'view', type: 'function' },
-  ]
-  const IPyth = [
-    { inputs: [{ type: 'bytes[]' }], name: 'getUpdateFee', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
-  ]
 
   const allIds = (await Promise.all(pairs.map(async (pair) => {
-    const pairContract = new web3.eth.Contract(IPair as any, pair.liquidityToken.address)
+    const pairContract = new web3.eth.Contract(ABI_PAIR_PRICE_FEED as any, pair.liquidityToken.address)
     const priceFeedAddress = await (pairContract.methods as any).priceFeed().call()
-    const pf = new web3.eth.Contract(IPythPriceFeed as any, priceFeedAddress)
+    const pf = new web3.eth.Contract(ABI_PYTH_PRICE_FEED as any, priceFeedAddress)
     const [base, quote] = await Promise.all([
       (pf.methods as any).baseTokenPriceId().call(),
       (pf.methods as any).quoteTokenPriceId().call(),
@@ -53,7 +43,7 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
   const { data } = await axios.get('https://hermes.pyth.network/api/latest_vaas', { params: { ids: uniqueIds } })
   const priceUpdate = (data as string[]).map((vaa: string) => '0x' + Buffer.from(vaa, 'base64').toString('hex'))
 
-  const pythContract = new web3.eth.Contract(IPyth as any, PYTH_ADDRESS[chainId])
+  const pythContract = new web3.eth.Contract(ABI_PYTH_UPDATE_FEE as any, PYTH_ADDRESS[chainId])
   const updateFee = await (pythContract.methods as any).getUpdateFee(priceUpdate).call()
   return [priceUpdate, +updateFee]
 }
@@ -62,11 +52,8 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
 async function solidityPackHelper(addresses: string[], chainId: number): Promise<string> {
   const { default: Web3 } = await import('web3')
   const web3 = new Web3(RPC_URLS[chainId])
-  const IFactoryV2 = [
-    { inputs: [{ type: 'address' }], name: 'priceFeedIds', outputs: [{ type: 'bytes32' }], stateMutability: 'view', type: 'function' },
-  ]
   const { getFactoryAddress: getFactory } = await import('../utils')
-  const factoryContract = new web3.eth.Contract(IFactoryV2 as any, getFactory(chainId, 2))
+  const factoryContract = new web3.eth.Contract(ABI_FACTORY_PRICE_FEED as any, getFactory(chainId, 2))
   const priceFeedIds = await Promise.all(addresses.map((addr) => (factoryContract.methods as any).priceFeedIds(addr).call()))
   const { default: axios } = await import('axios')
   const { data } = await axios.get('https://hermes.pyth.network/v2/updates/price/latest', { params: { ids: priceFeedIds } })
@@ -79,6 +66,46 @@ import { Price } from './fractions/price'
 import { TokenAmount } from './fractions/tokenAmount'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000000000000000000000000000'
+
+// Proper ABIs with internalType (required by web3 v1 + ethers ABI coder)
+const ABI_ROUTER_V2 = [{
+  inputs: [{ internalType: 'uint256', name: 'amountIn', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }, { internalType: 'bytes', name: 'updateData', type: 'bytes' }],
+  name: 'getAmountsOut', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
+}]
+const ABI_ROUTER_V1 = [{
+  inputs: [{ internalType: 'uint256', name: 'amountIn', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }],
+  name: 'getAmountsOut', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
+}]
+const ABI_ROUTER_WITH_PRICE = [{
+  inputs: [{ internalType: 'uint256', name: 'amountIn', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }, { internalType: 'bytes[]', name: 'priceUpdate', type: 'bytes[]' }],
+  name: 'getAmountsOutWithPrice', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
+}]
+const ABI_ROUTER_V2_IN = [{
+  inputs: [{ internalType: 'uint256', name: 'amountOut', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }, { internalType: 'bytes', name: 'updateData', type: 'bytes' }],
+  name: 'getAmountsIn', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
+}]
+const ABI_ROUTER_V1_IN = [{
+  inputs: [{ internalType: 'uint256', name: 'amountOut', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }],
+  name: 'getAmountsIn', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
+}]
+const ABI_ROUTER_WITH_PRICE_IN = [{
+  inputs: [{ internalType: 'uint256', name: 'amountOut', type: 'uint256' }, { internalType: 'address[]', name: 'path', type: 'address[]' }, { internalType: 'bytes[]', name: 'priceUpdate', type: 'bytes[]' }],
+  name: 'getAmountsInWithPrice', outputs: [{ internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
+}]
+const ABI_FACTORY_PRICE_FEED = [{
+  inputs: [{ internalType: 'address', name: 'token', type: 'address' }],
+  name: 'priceFeedIds', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function',
+}]
+const ABI_PAIR_PRICE_FEED = [
+  { inputs: [], name: 'priceFeed', outputs: [{ internalType: 'address', name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
+]
+const ABI_PYTH_PRICE_FEED = [
+  { inputs: [], name: 'baseTokenPriceId', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'quoteTokenPriceId', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
+]
+const ABI_PYTH_UPDATE_FEE = [
+  { inputs: [{ internalType: 'bytes[]', name: 'updateData', type: 'bytes[]' }], name: 'getUpdateFee', outputs: [{ internalType: 'uint256', name: 'feeAmount', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+]
 
 class InsufficientReservesError extends Error {
   public readonly isInsufficientReservesError = true
@@ -279,26 +306,17 @@ export class Pair {
     let amountOuts: any
 
     if (isContractWithPrice(chainId, version)) {
-      const IRouterWithPrice = [
-        { inputs: [{ type: 'uint256' }, { type: 'address[]' }, { type: 'bytes[]' }], name: 'getAmountsOutWithPrice', outputs: [{ type: 'uint256[]' }], stateMutability: 'payable', type: 'function' },
-      ]
-      const routerContract = new web3.eth.Contract(IRouterWithPrice as any, ROUTER_ADDRESS_WITH_PRICE[chainId])
+      const routerContract = new web3.eth.Contract(ABI_ROUTER_WITH_PRICE as any, ROUTER_ADDRESS_WITH_PRICE[chainId])
       const feedResult = await getFeedPriceAndFee(pairs, chainId)
       priceUpdate = feedResult[0]
       updateFee = feedResult[1]
       amountOuts = await (routerContract.methods as any).getAmountsOutWithPrice(inputAmount.raw.toString(), pathAddresses, priceUpdate).call({ value: updateFee, from: account })
     } else if (version === 2) {
-      const IRouterV2 = [
-        { inputs: [{ type: 'uint256' }, { type: 'address[]' }, { type: 'bytes' }], name: 'getAmountsOut', outputs: [{ type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function' },
-      ]
-      const routerContract = new web3.eth.Contract(IRouterV2 as any, getRouterAddress(chainId, version))
+      const routerContract = new web3.eth.Contract(ABI_ROUTER_V2 as any, getRouterAddress(chainId, version))
       const updateData = await solidityPackHelper(pathAddresses, chainId)
       amountOuts = await (routerContract.methods as any).getAmountsOut(inputAmount.raw.toString(), pathAddresses, updateData).call({ from: account })
     } else {
-      const IRouterV1 = [
-        { inputs: [{ type: 'uint256' }, { type: 'address[]' }], name: 'getAmountsOut', outputs: [{ type: 'uint256[]' }], stateMutability: 'view', type: 'function' },
-      ]
-      const routerContract = new web3.eth.Contract(IRouterV1 as any, getRouterAddress(chainId, version))
+      const routerContract = new web3.eth.Contract(ABI_ROUTER_V1 as any, getRouterAddress(chainId, version))
       amountOuts = await (routerContract.methods as any).getAmountsOut(inputAmount.raw.toString(), pathAddresses).call()
     }
 
@@ -339,26 +357,17 @@ export class Pair {
     let amountIns: any
 
     if (isContractWithPrice(chainId, version)) {
-      const IRouterWithPrice = [
-        { inputs: [{ type: 'uint256' }, { type: 'address[]' }, { type: 'bytes[]' }], name: 'getAmountsInWithPrice', outputs: [{ type: 'uint256[]' }], stateMutability: 'payable', type: 'function' },
-      ]
-      const routerContract = new web3.eth.Contract(IRouterWithPrice as any, ROUTER_ADDRESS_WITH_PRICE[chainId])
+      const routerContract = new web3.eth.Contract(ABI_ROUTER_WITH_PRICE_IN as any, ROUTER_ADDRESS_WITH_PRICE[chainId])
       const feedResult = await getFeedPriceAndFee(pairs, chainId)
       priceUpdate = feedResult[0]
       updateFee = feedResult[1]
       amountIns = await (routerContract.methods as any).getAmountsInWithPrice(outputAmount.raw.toString(), pathAddresses, priceUpdate).call({ value: updateFee, from: account })
     } else if (version === 2) {
-      const IRouterV2 = [
-        { inputs: [{ type: 'uint256' }, { type: 'address[]' }, { type: 'bytes' }], name: 'getAmountsIn', outputs: [{ type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function' },
-      ]
-      const routerContract = new web3.eth.Contract(IRouterV2 as any, getRouterAddress(chainId, version))
+      const routerContract = new web3.eth.Contract(ABI_ROUTER_V2_IN as any, getRouterAddress(chainId, version))
       const updateData = await solidityPackHelper(pathAddresses, chainId)
       amountIns = await (routerContract.methods as any).getAmountsIn(outputAmount.raw.toString(), pathAddresses, updateData).call({ from: account })
     } else {
-      const IRouterV1 = [
-        { inputs: [{ type: 'uint256' }, { type: 'address[]' }], name: 'getAmountsIn', outputs: [{ type: 'uint256[]' }], stateMutability: 'view', type: 'function' },
-      ]
-      const routerContract = new web3.eth.Contract(IRouterV1 as any, getRouterAddress(chainId, version))
+      const routerContract = new web3.eth.Contract(ABI_ROUTER_V1_IN as any, getRouterAddress(chainId, version))
       amountIns = await (routerContract.methods as any).getAmountsIn(outputAmount.raw.toString(), pathAddresses).call()
     }
 
