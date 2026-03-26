@@ -21,7 +21,7 @@ const SwitchVersion = ({ isMobile }: Props) => {
   }
 
   if (isDisabled) return null
-  if (isMainnet && !hasV3) return null
+  if (isMainnet) return null
 
   return (
     <div
