@@ -76,7 +76,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       '0xcA138f5755225d887655B30961e1E3D8C2010A0f', // WETH/USDT
     ] as string[]).includes(pair?.liquidityToken.address as string)
 
-    return version === 2 && !isNotPairBeta
+    return (version === 2 || version === 3) && !isNotPairBeta
   }, [chainId, pair?.liquidityToken.address, version])
 
   const enableGraphQL = useMemo(() => {
@@ -91,7 +91,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
         ChainId.LINEA_MAINNET,
         ChainId.SEI_MAINNET,
         ChainId.MONAD,
-      ].includes(chainId as number) && version === 2
+      ].includes(chainId as number) && version >= 2
     )
   }, [chainId, version])
 

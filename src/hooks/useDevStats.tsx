@@ -33,7 +33,7 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
   })
 
   const pairContract = usePairV2Contract(pair.liquidityToken.address)
-  const contract = enabled && version === 2 ? pairContract : null
+  const contract = enabled && version >= 2 ? pairContract : null
   const hasCache = isAvailable()
   const shouldSkipCall = hasCache || !contract
 

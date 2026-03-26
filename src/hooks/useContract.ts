@@ -139,5 +139,5 @@ export function usePythContract(): Contract | null {
 export function usePairV2Contract(pairAddress: string): Contract | null {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
-  return useContract(pairAddress, version === 2 ? IPairV2 : IPair, false, { readonly: true })
+  return useContract(pairAddress, version >= 2 ? IPairV2 : IPair, false, { readonly: true })
 }

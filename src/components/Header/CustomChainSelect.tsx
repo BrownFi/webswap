@@ -1,4 +1,3 @@
-import { useChainModal } from '@rainbow-me/rainbowkit'
 import { ButtonDropdown } from 'components/Button'
 import { availableChains } from 'connectors'
 import { useState } from 'react'
@@ -12,7 +11,6 @@ const CustomChainSelect = () => {
   const chain = useSelector(chainSelector)
   const isWrongNetwork = availableChains.every((chain) => chain.id !== chainId)
 
-  const { openChainModal } = useChainModal()
   const [isOpen, setOpen] = useState(false)
 
   if (isConnected && !isWrongNetwork) return <div />
@@ -22,7 +20,7 @@ const CustomChainSelect = () => {
       <ButtonDropdown
         className="!bg-black/40 hover:scale-105 transition-all !py-1 !px-2.5 h-full !min-h-[41px] !rounded-none !w-fit border-1"
         style={{ border: '1px solid #FFFFFF20' }}
-        onClick={openChainModal || (() => setOpen(true))}
+        onClick={() => setOpen(true)}
       >
         <img className="w-5 mr-2 rounded-full" src={chain.iconUrl as string} alt={chain.name} />
         <div>{chain.name}</div>

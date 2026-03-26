@@ -192,8 +192,8 @@ export class Pair {
     const tokenAmounts: [TokenAmount, TokenAmount] = tokenAmountA.token.sortsBefore(tokenAmountB.token)
       ? [tokenAmountA, tokenAmountB]
       : [tokenAmountB, tokenAmountA]
-    const symbol = version === 2 ? 'BF-V2' : 'BRF-V1'
-    const name = version === 2 ? 'BrownFi V2' : 'BrownFi V1'
+    const symbol = version >= 2 ? (version === 3 ? 'BF-V3' : 'BF-V2') : 'BRF-V1'
+    const name = version >= 2 ? (version === 3 ? 'BrownFi V3' : 'BrownFi V2') : 'BrownFi V1'
     this.liquidityToken = new Token(
       tokenAmounts[0].token.chainId,
       Pair.getAddress(tokenAmounts[0].token, tokenAmounts[1].token, version),
@@ -349,7 +349,7 @@ export class Pair {
         account: account as `0x${string}`,
       })
       amountOuts = result
-    } else if (version === 2) {
+    } else if (version >= 2) {
       const updateData = await solidityPackHelper(pathAddresses as string[], chainId)
       amountOuts = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,
@@ -415,7 +415,7 @@ export class Pair {
         account: account as `0x${string}`,
       })
       amountIns = result
-    } else if (version === 2) {
+    } else if (version >= 2) {
       const updateData = await solidityPackHelper(pathAddresses as string[], chainId)
       amountIns = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,

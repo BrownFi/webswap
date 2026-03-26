@@ -49,13 +49,13 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 }
 
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
-  // V3 router addresses — populated when V3 contracts are deployed
-  // [ChainId.BERA_MAINNET]: '',
+  // TODO: Replace with actual V3 router addresses when deployed
+  [ChainId.BERA_MAINNET]: '0xb91458408dc7bb0561da70ffd89903794eAcDDA7', // mock: using V2 address for UI testing
 }
 
 export const FACTORY_ADDRESS_V3: Record<number, string> = {
-  // V3 factory addresses — populated when V3 contracts are deployed
-  // [ChainId.BERA_MAINNET]: '',
+  // TODO: Replace with actual V3 factory addresses when deployed
+  [ChainId.BERA_MAINNET]: '0x43AB776770cC5c739adDf318Af712DD40918C42d', // mock: using V2 address for UI testing
 }
 
 export const FACTORY_ADDRESS: Record<number, string> = {
