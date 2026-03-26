@@ -48,6 +48,16 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0xa244C6d127Ec19689f0DEf715417736c7f6cf0C4',
 }
 
+export const ROUTER_ADDRESS_V3: Record<number, string> = {
+  // V3 router addresses — populated when V3 contracts are deployed
+  // [ChainId.BERA_MAINNET]: '',
+}
+
+export const FACTORY_ADDRESS_V3: Record<number, string> = {
+  // V3 factory addresses — populated when V3 contracts are deployed
+  // [ChainId.BERA_MAINNET]: '',
+}
+
 export const FACTORY_ADDRESS: Record<number, string> = {
   [ChainId.MAINNET]: '0xD705B4e18055D8Fa1d099d0533163a9e8fA09E4A',
   [ChainId.SEPOLIA]: '0x43aFB543FdbcD0F00CeA9119819225F5Dc1Ec55d',

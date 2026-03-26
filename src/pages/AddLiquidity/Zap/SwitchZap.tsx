@@ -3,10 +3,13 @@ import { isMainnet } from 'connectors'
 type SwitchZapProps = {
   enabled: boolean
   onToggle: () => void
+  version?: number
 }
 
-export const SwitchZap = ({ enabled, onToggle }: SwitchZapProps) => {
-  if (isMainnet) return null
+export const SwitchZap = ({ enabled, onToggle, version }: SwitchZapProps) => {
+  // V3: always show zap toggle (not gated by mainnet)
+  // V2 and below: keep existing behavior
+  if (version !== 3 && isMainnet) return null
   return (
     <div
       onClick={onToggle}

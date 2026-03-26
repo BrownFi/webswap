@@ -13,9 +13,11 @@ import {
   THREE,
   ROUTER_ADDRESS,
   ROUTER_ADDRESS_V1,
+  ROUTER_ADDRESS_V3,
   ROUTER_ADDRESS_WITH_PRICE,
   FACTORY_ADDRESS,
   FACTORY_ADDRESS_V1,
+  FACTORY_ADDRESS_V3,
   INIT_CODE_HASH,
   INIT_CODE_HASH_V1,
 } from '../constants'
@@ -114,10 +116,12 @@ export function isContractWithPrice(chainId: number, version: number): boolean {
 }
 
 export function getRouterAddress(chainId: number, version: number): string {
+  if (version === 3) return ROUTER_ADDRESS_V3[chainId] ?? ''
   return version === 2 ? ROUTER_ADDRESS[chainId] : ROUTER_ADDRESS_V1[chainId]
 }
 
 export function getFactoryAddress(chainId: number, version: number): string {
+  if (version === 3) return FACTORY_ADDRESS_V3[chainId] ?? ''
   return version === 2 ? FACTORY_ADDRESS[chainId] : FACTORY_ADDRESS_V1[chainId]
 }
 

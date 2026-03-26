@@ -40,6 +40,7 @@ import { PoolPriceBar } from './PoolPriceBar'
 import { SwitchZap } from './Zap/SwitchZap'
 import { getApprovalBuffer } from './utils'
 import { ZapForm } from './Zap/ZapForm'
+import { V3ZapForm } from './Zap/V3ZapForm'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 
 export default function AddLiquidity() {
@@ -304,11 +305,15 @@ export default function AddLiquidity() {
             </Text>
           )}
           <div className="ml-auto">
-            <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} />
+            <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} version={version} />
           </div>
         </div>
 
-        {useZap && pair ? (
+        {useZap && version === 3 && pair ? (
+          <Wrapper>
+            <V3ZapForm pair={pair} pairState={pairState} currencies={currencies} allowedSlippage={allowedSlippage} />
+          </Wrapper>
+        ) : useZap && pair ? (
           <Wrapper>
             <ZapForm pair={pair} pairState={pairState} currencies={currencies} allowedSlippage={allowedSlippage} />
           </Wrapper>

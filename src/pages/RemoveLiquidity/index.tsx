@@ -1,5 +1,6 @@
-import { Currency, currencyEquals, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
+import { Currency, currencyEquals, ETHER, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
+import { executeV3ZapOut, isV3ZapSupported } from 'utils/v3Zap'
 import { useQuery } from '@tanstack/react-query'
 import { ButtonConfirmed, ButtonError, ButtonPrimary } from 'components/Button'
 import { RemoveLiqudityCard } from 'components/Card'
@@ -51,7 +52,9 @@ export default function RemoveLiquidity() {
   const { version } = useVersion({ chainId })
 
   const { createToast } = useToast()
-  const supportsZap = useMemo(() => isZapSupportedOnChain(chainId), [chainId])
+  const supportsZapV2 = useMemo(() => isZapSupportedOnChain(chainId), [chainId])
+  const supportsZapV3 = useMemo(() => isV3ZapSupported(chainId, version), [chainId, version])
+  const supportsZap = supportsZapV2 || supportsZapV3
   const [useZap, setUseZap] = useState(false)
   const [zapOutCurrency, setZapOutCurrency] = useState<Currency | null>(null)
   const [isZapCurrencyModalOpen, setIsZapCurrencyModalOpen] = useState(false)
@@ -214,7 +217,28 @@ export default function RemoveLiquidity() {
       }
 
       setAttemptingTxn(true)
-      if (useZap && supportsZap) {
+      if (useZap && version === 3 && supportsZapV3 && zapOutCurrency) {
+        const tokenOut = wrappedCurrency(zapOutCurrency, chainId)
+        if (!tokenOut) throw new Error('Invalid output token')
+        const isNativeETH = zapOutCurrency === ETHER
+        const response = await executeV3ZapOut({
+          chainId,
+          library,
+          account,
+          tokenA: pair!.token0.address,
+          tokenB: pair!.token1.address,
+          tokenOut: tokenOut.address,
+          liquidity: parsedAmounts[Field.LIQUIDITY]!.raw.toString(),
+          amountMin: '0', // TODO: calculate from reserves + slippage
+          deadline: deadline as any,
+          isNativeETH,
+        })
+
+        setAttemptingTxn(false)
+        if (response) {
+          setTxHash(response.hash)
+        }
+      } else if (useZap && supportsZap) {
         if (!zapOutRouteData) {
           throw new Error('Zap route unavailable')
         }
@@ -478,6 +502,7 @@ export default function RemoveLiquidity() {
 
                   <SwitchZap
                     enabled={useZap}
+                    version={version}
                     onToggle={() => {
                       setUseZap((prev) => !prev)
                     }}
