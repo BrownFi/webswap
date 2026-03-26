@@ -74,10 +74,10 @@ export const MenuItem = styled.div<{ disabled?: boolean; selected?: boolean }>`
   cursor: ${({ disabled }) => !disabled && 'pointer'};
   pointer-events: ${({ disabled }) => disabled && 'none'};
   :hover {
-    background-color: ${({ disabled, selected }) => (!disabled && !selected ? '#2a2a2f' : 'transparent')};
+    background-color: ${({ disabled, selected }) => (!disabled && !selected ? '#252528' : 'transparent')};
   }
   opacity: ${({ disabled, selected }) => (disabled || selected ? 0.4 : 1)};
-  ${({ selected }) => selected && 'background-color: #2a2a2f;'}
+  ${({ selected }) => selected && 'background-color: #252528;'}
   width: calc(100% - 40px) !important;
   ${({ theme }) => theme.mediaWidth.upToMedium`
    width: calc(100% - 24px) !important;
@@ -98,11 +98,11 @@ export const SearchInput = styled.input`
   -webkit-appearance: none;
 
   font-size: 14px;
-  background-color: #131216;
+  background-color: #111114;
   font-weight: 500;
   height: 44px;
   padding: 0 20px 0 50px;
-  border: 1px solid #FFFFFF15;
+  border: 1px solid #FFFFFF10;
   ::placeholder {
     color: #6C7284;
   }

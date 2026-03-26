@@ -77,7 +77,7 @@
 }
 
 .bg-gray {
-  background-color: #323038;
+  background-color: #252528;
 }
 
 html {
@@ -91,7 +91,7 @@ html::-webkit-scrollbar {
 /* Thin styled scrollbar for inner containers (token list, modals) */
 .styled-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #4a4850 transparent;
+  scrollbar-color: #252528 transparent;
 }
 
 .styled-scrollbar::-webkit-scrollbar {
@@ -103,12 +103,12 @@ html::-webkit-scrollbar {
 }
 
 .styled-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #4a4850;
+  background-color: #252528;
   border-radius: 2px;
 }
 
 .styled-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #6C7284;
+  background-color: #333338;
 }
 
 * {

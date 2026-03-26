@@ -65,7 +65,7 @@ export const Dots = styled.span`
 export const PageWrapper = styled(AutoColumn)`
   max-width: 894px;
   width: 100%;
-  background-color: #1d1c21;
+  background-color: #1A1A1E;
 `
 
 export const TitleRow = styled(RowBetween)`

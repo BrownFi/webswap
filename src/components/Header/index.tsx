@@ -202,7 +202,7 @@ export default function Header() {
         className="flex flex-row items-center justify-self-end gap-2
         max-md:justify-between max-md:justify-self-center max-md:w-full max-md:max-w-[960px]
         max-md:p-4 max-md:fixed max-md:bottom-0 max-md:left-0 max-md:z-[99]
-        max-md:h-[72px] max-md:bg-[#131216] max-md:border-t max-md:border-[#FFFFFF15]"
+        max-md:h-[72px] max-md:bg-[#0D0D0F] max-md:border-t max-md:border-[#FFFFFF15]"
       >
         <CustomChainSelect />
         {showCustomAccountDisplay ? <CustomAccountDisplay /> : <StyledConnectButton />}

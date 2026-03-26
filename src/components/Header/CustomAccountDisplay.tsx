@@ -74,7 +74,7 @@ export const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
       onClick={onClose}
     >
       <div
-        className="bg-[#1a1a1a] m-2 w-full max-w-sm p-4"
+        className="bg-[#1A1A1E] m-2 w-full max-w-sm p-4"
         style={{ border: '1px solid #FFFFFF20' }}
         onClick={(e) => e.stopPropagation()}
       >

@@ -37,7 +37,7 @@ export default function Slider({ value, onChange, min = 0, step = 1, max = 100 }
       }}
       styles={{
         rail: {
-          backgroundColor: '#1d1c21',
+          backgroundColor: '#1A1A1E',
         },
         track: {
           backgroundColor: '#27E3AB',

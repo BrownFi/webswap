@@ -52,7 +52,7 @@ const HamburgerMenu: React.FC<PropsWithChildren> = ({ children }) => {
         className={`
           fixed top-0 left-0 right-0 p-6 shadow-xl overflow-auto z-10
           transform transition-all duration-300 ease-in-out
-          bg-[#131216] border-b border-[#FFFFFF15]
+          bg-[#0D0D0F] border-b border-[#FFFFFF15]
           ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none'}
         `}
       >

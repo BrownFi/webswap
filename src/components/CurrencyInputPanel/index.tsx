@@ -28,7 +28,7 @@ const CurrencySelect = styled.button<{ selected: boolean }>`
   min-width: 150px;
   font-size: 20px;
   font-weight: 500;
-  background-color: ${({ selected }) => (selected ? '#1D1C21' : '#1D1C21')};
+  background-color: ${({ selected }) => (selected ? '#1A1A1E' : '#1A1A1E')};
   color: ${({ selected, theme }) => (selected ? theme.white : theme.white)};
   border-radius: 0;
   box-shadow: ${({ selected }) => (selected ? 'none' : '0px 6px 10px rgba(0, 0, 0, 0.075)')};
@@ -40,7 +40,7 @@ const CurrencySelect = styled.button<{ selected: boolean }>`
 
   :focus,
   :hover {
-    background-color: ${({ selected }) => (selected ? '#1D1C21' : '#1D1C21')};
+    background-color: ${({ selected }) => (selected ? '#1A1A1E' : '#1A1A1E')};
   }
 `
 
@@ -67,14 +67,14 @@ const InputPanel = styled.div<{ hideInput?: boolean }>`
   ${({ theme }) => theme.flexColumnNoWrap}
   position: relative;
   border-radius: 0;
-  background-color: #131216;
+  background-color: #111114;
   z-index: 1;
 `
 
 const Container = styled.div<{ hideInput: boolean }>`
   border-radius: 0;
   border: 0;
-  background-color: #131216;
+  background-color: #111114;
 `
 
 const StyledTokenName = styled.span<{ active?: boolean }>`

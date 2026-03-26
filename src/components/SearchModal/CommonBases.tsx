@@ -19,7 +19,7 @@ const BaseWrapper = styled.div<{ disable?: boolean }>`
     cursor: ${({ disable }) => !disable && 'pointer'};
   }
 
-  background-color: #1d1c21;
+  background-color: #1A1A1E;
   opacity: ${({ disable }) => disable && '0.6'};
 `
 

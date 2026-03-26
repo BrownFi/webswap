@@ -12,7 +12,7 @@ const AppWrapper = styled.div`
   flex-flow: column;
   align-items: center;
   overflow-x: hidden;
-  background-color: #131216;
+  background-color: #0D0D0F;
   min-height: 100vh;
 `
 
@@ -26,7 +26,7 @@ const HeaderWrapper = styled.div`
   justify-content: space-between;
   min-height: 78px;
   z-index: 100;
-  background-color: #131216;
+  background-color: #0D0D0F;
 `
 
 const StaticScreen = ({ children }: PropsWithChildren) => {

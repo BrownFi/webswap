@@ -48,7 +48,7 @@ export const LightGreyCard = React.forwardRef<HTMLDivElement, CardProps>(({ clas
 LightGreyCard.displayName = 'LightGreyCard'
 
 export const GreyCard = React.forwardRef<HTMLDivElement, CardProps>(({ className, ...props }, ref) => {
-  return <Card ref={ref} className={classNames('bg-[#1d1c21]', className)} {...props} />
+  return <Card ref={ref} className={classNames('bg-[#1A1A1E]', className)} {...props} />
 })
 GreyCard.displayName = 'GreyCard'
 
