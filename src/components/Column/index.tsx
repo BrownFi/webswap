@@ -15,8 +15,8 @@ ColumnCenter.displayName = 'ColumnCenter'
 
 const GAP_MAP: Record<string, string> = {
   sm: '8px',
-  md: '12px',
-  lg: '24px',
+  md: '8px',
+  lg: '8px',
 }
 
 interface AutoColumnProps extends React.HTMLAttributes<HTMLDivElement> {

@@ -46,10 +46,11 @@ export const HoverCard = styled(Card)`
 `
 const StyledPositionCard = styled(LightCard)<{ bgColor?: any }>`
   border: none;
+  border-bottom: 1px solid #FFFFFF10;
   background: #1A1A1E;
   position: relative;
   overflow: hidden;
-  padding: 8px 12px;
+  padding: 8px 16px 16px 16px;
 `
 
 const pairBGT: Record<string, [string, string]> = {
@@ -155,21 +156,30 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
   return (
     <StyledPositionCard border={border}>
-      <AutoColumn gap="12px">
+      <AutoColumn gap="8px">
+        {/* Top row: pool name + collapse icon (always same line) */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div onClick={handleCopyPoolAddress} className="cursor-pointer">
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
+            </div>
+            <Text fontWeight={600} fontSize={20} className="text-white">
+              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
+            </Text>
+            {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1">Beta</ButtonSecondary>}
+          </div>
+          <ButtonEmpty padding="0px" width="fit-content" onClick={() => setShowMore(!showMore)}>
+            <div className="text-[#27E3AB] flex items-center">
+              <span className="hidden md:inline">Manage</span>
+              {showMore ? <ChevronUp size="20" className="md:ml-2" /> : <ChevronDown size="20" className="md:ml-2" />}
+            </div>
+          </ButtonEmpty>
+        </div>
+
+        {/* Stats row */}
         <FixedHeightRow>
           <AutoRow className="!w-fit" gap="8px">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <div onClick={handleCopyPoolAddress} className="cursor-pointer">
-                    <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
-                  </div>
-                  <Text fontWeight={600} fontSize={20} className="text-white !min-w-[160px]">
-                    <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
-                  </Text>
-                </div>
-                {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1">Beta</ButtonSecondary>}
-              </div>
               <div className="flex flex-wrap items-center gap-1 gap-y-1">
                 <div className="min-w-[60px]">
                   <ButtonSecondary className="!w-fit !px-1">
@@ -237,29 +247,12 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   </MouseoverTooltip>
                 ) : (
                   <Text className="whitespace-nowrap text-[#27E3AB]">
-                    Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '...'}
+                    Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
                   </Text>
                 )}
               </div>
             </div>
           </AutoRow>
-          <div className="flex-1 flex justify-end">
-            <ButtonEmpty padding="0px" width="fit-content" onClick={() => setShowMore(!showMore)}>
-              <div className="text-[#27E3AB] flex items-center">
-                {showMore ? (
-                  <>
-                    Manage
-                    <ChevronUp size="20" style={{ marginLeft: '10px' }} />
-                  </>
-                ) : (
-                  <>
-                    Manage
-                    <ChevronDown size="20" style={{ marginLeft: '10px' }} />
-                  </>
-                )}
-              </div>
-            </ButtonEmpty>
-          </div>
         </FixedHeightRow>
 
         {!isMainnet && (

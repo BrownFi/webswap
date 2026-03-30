@@ -63,7 +63,7 @@ export const Dots = styled.span`
 // Pool page
 
 export const PageWrapper = styled(AutoColumn)`
-  max-width: 894px;
+  max-width: 990px;
   width: 100%;
   background-color: #1A1A1E;
 `
