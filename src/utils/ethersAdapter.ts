@@ -27,7 +27,9 @@ export function getReadOnlyProvider(chainId: ChainId): StaticJsonRpcProvider {
   if (!readOnlyProviders[chainId]) {
     const chain = availableChains.find((c) => c.id === chainId)
     const rpcUrl = chain?.rpcUrls.default.http[0] ?? 'https://eth.llamarpc.com'
-    readOnlyProviders[chainId] = new StaticJsonRpcProvider(rpcUrl, chainId)
+    const provider = new StaticJsonRpcProvider(rpcUrl, chainId)
+    provider.pollingInterval = 30_000 // Match production: poll every 30s, not 4s
+    readOnlyProviders[chainId] = provider
   }
   return readOnlyProviders[chainId]
 }
