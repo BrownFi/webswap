@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Currency, ETHER, Token } from '@brownfi/sdk'
 import React, { KeyboardEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList } from 'react-window'
@@ -81,7 +82,6 @@ export function CurrencySearch({
 
   useEffect(() => {
     if (isAddressSearch) {
-      // intentionally empty
     }
   }, [isAddressSearch])
 
@@ -159,7 +159,7 @@ export function CurrencySearch({
           <Text fontWeight={500} fontSize={24} fontFamily={'Russo One'} color="white">
             Select a token
           </Text>
-          <CloseIcon onClick={onDismiss} color="white" aria-label="Close" />
+          <CloseIcon onClick={onDismiss} color="white" />
         </RowBetween>
         <Row className="relative">
           <img src={searchIcon} className="w-[24px] absolute left-[16px] z-[2]" alt="search" />
@@ -172,7 +172,6 @@ export function CurrencySearch({
             ref={inputRef as RefObject<HTMLInputElement>}
             onChange={handleInput}
             onKeyDown={handleEnter}
-            aria-label="Search tokens by name or address"
           />
         </Row>
         {showCommonBases && (
@@ -180,8 +179,7 @@ export function CurrencySearch({
         )}
       </PaddedColumn>
 
-      <div className="h-px bg-[#FFFFFF10] mx-6" />
-      <Column style={{ padding: '12px 0', flex: 1 }}>
+      <Column style={{ padding: '20px 0', flex: 1 }}>
         {filteredSortedTokens?.length > 0 || filteredInactiveTokens?.length > 0 ? (
           <AutoSizer disableWidth>
             {({ height }: { height: number }) => (
