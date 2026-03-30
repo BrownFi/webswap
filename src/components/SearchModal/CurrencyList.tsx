@@ -6,7 +6,8 @@ import { RowFixed } from 'components/Row'
 import { MouseoverTooltip } from 'components/Tooltip'
 import { useActiveWeb3React } from 'hooks'
 import { useAllInactiveTokens, useIsUserAddedToken } from 'hooks/Tokens'
-import { CSSProperties, memo, MutableRefObject, useCallback, useMemo } from 'react'
+import useTheme from 'hooks/useTheme'
+import { CSSProperties, MutableRefObject, useCallback, useMemo } from 'react'
 import { FixedSizeList } from 'react-window'
 import { Text } from 'components/Rebass'
 import { useCombinedActiveList, WrappedTokenInfo } from 'state/lists/hooks'
@@ -85,7 +86,7 @@ function TokenTags({ currency }: { currency: Currency }) {
   )
 }
 
-const CurrencyRow = memo(function CurrencyRow({
+function CurrencyRow({
   currency,
   onSelect,
   isSelected,
@@ -129,7 +130,7 @@ const CurrencyRow = memo(function CurrencyRow({
       </RowFixed>
     </MenuItem>
   )
-})
+}
 
 export default function CurrencyList({
   height,
@@ -163,6 +164,7 @@ export default function CurrencyList({
   }, [breakIndex, currencies, showETH])
 
   const { chainId } = useActiveWeb3React()
+  const theme = useTheme()
 
   const inactiveTokens: {
     [address: string]: Token
@@ -214,6 +216,7 @@ export default function CurrencyList({
       setImportToken,
       showImportView,
       breakIndex,
+      theme.text1,
     ],
   )
 
@@ -228,7 +231,6 @@ export default function CurrencyList({
       itemCount={itemData.length}
       itemSize={68}
       itemKey={itemKey}
-      className="styled-scrollbar"
     >
       {Row}
     </FixedSizeList>

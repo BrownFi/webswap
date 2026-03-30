@@ -14,7 +14,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={classNames('w-full rounded-none p-2', className)}
+        className={classNames('w-full rounded-none p-0', className)}
         style={{
           width: width ?? undefined,
           padding: padding ?? undefined,
@@ -38,7 +38,7 @@ export const LightCard = React.forwardRef<HTMLDivElement, CardProps>(({ classNam
 LightCard.displayName = 'LightCard'
 
 export const RemoveLiqudityCard = React.forwardRef<HTMLDivElement, CardProps>(({ className, ...props }, ref) => {
-  return <Card ref={ref} className={classNames('border-0 bg-[#131216]', className)} padding="16px 24px" {...props} />
+  return <Card ref={ref} className={classNames('border-0 bg-[#131216]', className)} padding="8px 12px" {...props} />
 })
 RemoveLiqudityCard.displayName = 'RemoveLiqudityCard'
 

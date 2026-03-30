@@ -49,7 +49,7 @@ const StyledPositionCard = styled(LightCard)<{ bgColor?: any }>`
   background: #1A1A1E;
   position: relative;
   overflow: hidden;
-  padding: 16px 24px;
+  padding: 8px 12px;
 `
 
 const pairBGT: Record<string, [string, string]> = {
