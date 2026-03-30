@@ -231,15 +231,15 @@ export default function Pool() {
 
       <PageWrapper>
         <AutoColumn gap="lg" justify="center" className="p-[12px] pt-[32px] lg:p-[32px]">
-          <AutoColumn gap="lg" style={{ width: '100%' }}>
-            <TitleRow padding={'0'}>
+          <AutoColumn gap="lg" style={{ width: '100%' } }>
+            <TitleRow padding={'0 0 16px 0'}>
               <Flex alignItems="center" className="gap-6">
                 <TYPE.mediumHeader style={{ fontFamily: 'Russo One', fontSize: '24px' }} color={'white'}>
                   All Pools
                 </TYPE.mediumHeader>
                 <SwitchVersion />
               </Flex>
-              <div className="flex items-center justify-center md:justify-end flex-1 w-full lg:w-auto">
+              <div className="flex items-center justify-end flex-1">
                 <ResponsiveButtonPrimary id="join-pool-button" as={Link} to="/add/ETH" className="!h-[40px]">
                   <Text fontWeight={700} fontSize={14} color={'white'}>
                     Add Liquidity

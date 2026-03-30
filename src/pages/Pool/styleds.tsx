@@ -69,18 +69,19 @@ export const PageWrapper = styled(AutoColumn)`
 `
 
 export const TitleRow = styled(RowBetween)`
+  align-items: center;
   ${({ theme }) => theme.mediaWidth.upToSmall`
-    flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
-    flex-direction: column-reverse;
   `};
 `
 
 export const ResponsiveButtonPrimary = styled(ButtonPrimary)`
   width: fit-content;
+  white-space: nowrap;
   ${({ theme }) => theme.mediaWidth.upToSmall`
-    width: 48%;
+    padding: 8px 12px;
+    font-size: 13px;
   `};
 `
 
