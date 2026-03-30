@@ -17,6 +17,8 @@ import { RedirectOldRemoveLiquidityPathStructure } from './RemoveLiquidity/redir
 const Swap = lazy(() => import('./Swap'))
 import { OpenClaimAddressModalAndRedirectToSwap, RedirectPathToSwapOnly, RedirectToSwap } from './Swap/redirects'
 import StaticScreen from 'containers/StaticScreen'
+import { isMainnet } from 'connectors'
+import { Navigate } from 'react-router-dom'
 
 const Pool = lazy(() => import('./Pool'))
 const PoolFinder = lazy(() => import('./PoolFinder'))
@@ -54,14 +56,16 @@ export default function App() {
             <Route
               path="/swap"
               element={
-                <RouteErrorBoundary>
-                  <Swap />
-                </RouteErrorBoundary>
+                isMainnet ? <Navigate to="/pool" replace /> : (
+                  <RouteErrorBoundary>
+                    <Swap />
+                  </RouteErrorBoundary>
+                )
               }
             />
             <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
-            <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
-            <Route path="/send" element={<RedirectPathToSwapOnly />} />
+            <Route path="/swap/:outputCurrency" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectToSwap />} />
+            <Route path="/send" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectPathToSwapOnly />} />
             <Route
               path="/find"
               element={
@@ -113,7 +117,7 @@ export default function App() {
                 </RouteErrorBoundary>
               }
             />
-            <Route path="*" element={<RedirectPathToSwapOnly />} />
+            <Route path="*" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectPathToSwapOnly />} />
           </Routes>
 
         </BodyWrapper>

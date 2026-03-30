@@ -183,9 +183,11 @@ export default function Header() {
           <nav aria-label="Main navigation">
             {/* HeaderLinks */}
             <Row className="justify-center max-md:flex-col">
-              <StyledNavLink id="swap-nav-link" to="/swap">
-                Swap
-              </StyledNavLink>
+              {!isMainnet && (
+                <StyledNavLink id="swap-nav-link" to="/swap">
+                  Swap
+                </StyledNavLink>
+              )}
               <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
                 Pool
               </StyledNavLink>
