@@ -14,14 +14,14 @@ import {
   getRouterContractWithPrice,
 } from './helpers'
 import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
-import { RPC_URLS } from '../constants/addresses'
+import { RPC_URLS, PYTH_ADDRESS } from '../constants/addresses'
 
 export { SwapCallbackState }
 
-// Build Pyth updateData for V2/V3 swap calls (same as solidityPackHelper in pair.ts)
-async function buildSwapUpdateData(tokenAddresses: string[], chainId: number, version: number): Promise<string> {
+// Build Pyth updateData for V2/V3 swap calls and query the Pyth update fee
+async function buildSwapUpdateData(tokenAddresses: string[], chainId: number, version: number): Promise<{ updateData: string; pythFee: bigint }> {
   const factoryAddr = getFactoryAddress(chainId, version)
-  if (!factoryAddr) return encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
+  if (!factoryAddr) return { updateData: encodeAbiParameters(parseAbiParameters('bytes[]'), [[]]), pythFee: BigInt(0) }
 
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const priceFeedIds = await Promise.all(
@@ -40,7 +40,25 @@ async function buildSwapUpdateData(tokenAddresses: string[], chainId: number, ve
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()
   const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
-  return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+  const updateData = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+
+  // Query Pyth update fee
+  let pythFee = BigInt(0)
+  const pythAddr = PYTH_ADDRESS[chainId]
+  if (pythAddr) {
+    try {
+      pythFee = await client.readContract({
+        address: pythAddr as `0x${string}`,
+        abi: [{ inputs: [{ name: 'updateData', type: 'bytes[]' }], name: 'getUpdateFee', outputs: [{ name: 'feeAmount', type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,
+        functionName: 'getUpdateFee',
+        args: [dataBytes],
+      })
+    } catch {
+      pythFee = BigInt(0)
+    }
+  }
+
+  return { updateData, pythFee }
 }
 
 /**
@@ -108,19 +126,26 @@ export async function callSwapContract(
       const { methodName, args, value } = call.parameters
       const { contract } = call
 
-      // Append Pyth updateData for V2/V3 swaps
+      // Append Pyth updateData for V2/V3 swaps and add Pyth fee to value
       const version = trade.route.pairs[0].version
+      let txValue = value
       if (version >= 2) {
         const path = trade.route.path.map((token) => token.address)
-        const updateData = await buildSwapUpdateData(path, chainId, version)
+        const { updateData, pythFee } = await buildSwapUpdateData(path, chainId, version)
         args.push(updateData)
+        if (pythFee > BigInt(0)) {
+          const feeHex = '0x' + pythFee.toString(16)
+          txValue = txValue && !isZero(txValue)
+            ? '0x' + (BigInt(txValue) + pythFee).toString(16)
+            : feeHex
+        }
       }
 
-      const options = !value || isZero(value) ? {} : { value }
+      const options = !txValue || isZero(txValue) ? {} : { value: txValue }
 
       try {
         const gasEstimate = await contract.estimateGas[methodName](...args, options)
-        return { call, gasEstimate }
+        return { call, gasEstimate, txValue }
       } catch (gasError) {
         try {
           await contract.callStatic[methodName](...args, options)
@@ -156,21 +181,22 @@ export async function callSwapContract(
   }
 
   const {
-    call: { contract, parameters: { methodName, args, value } },
+    call: { contract, parameters: { methodName, args } },
     gasEstimate,
+    txValue: finalValue,
   } = successfulEstimation
 
   try {
     const response = await contract[methodName](...args, {
       gasLimit: calculateGasMargin(gasEstimate),
-      ...(value && !isZero(value) ? { value, from: account } : { from: account }),
+      ...(finalValue && !isZero(finalValue) ? { value: finalValue, from: account } : { from: account }),
     })
     return response
   } catch (error: any) {
     if (error?.code === 4001) {
       throw new Error('Transaction rejected.', { cause: error })
     } else {
-      console.error('Swap failed', error, methodName, args, value)
+      console.error('Swap failed', error, methodName, args, finalValue)
       throw new Error(`Swap failed: ${error.message}`, { cause: error })
     }
   }

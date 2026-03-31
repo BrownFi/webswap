@@ -13,13 +13,13 @@ import {
   getRouterContract,
 } from './helpers'
 import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
-import { RPC_URLS } from '../constants/addresses'
+import { RPC_URLS, PYTH_ADDRESS } from '../constants/addresses'
 import { getFactoryAddress } from '../utils'
 
-// Build Pyth updateData for V2/V3 addLiquidity calls
-async function buildUpdateData(tokenAddresses: string[], chainId: number, version: number): Promise<string> {
+// Build Pyth updateData for V2/V3 addLiquidity calls, and query the Pyth update fee
+async function buildUpdateData(tokenAddresses: string[], chainId: number, version: number): Promise<{ updateData: string; pythFee: bigint }> {
   const factoryAddr = getFactoryAddress(chainId, version)
-  if (!factoryAddr) return encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
+  if (!factoryAddr) return { updateData: encodeAbiParameters(parseAbiParameters('bytes[]'), [[]]), pythFee: BigInt(0) }
 
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const priceFeedIds = await Promise.all(
@@ -38,7 +38,25 @@ async function buildUpdateData(tokenAddresses: string[], chainId: number, versio
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()
   const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
-  return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+  const updateData = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+
+  // Query Pyth update fee
+  let pythFee = BigInt(0)
+  const pythAddr = PYTH_ADDRESS[chainId]
+  if (pythAddr) {
+    try {
+      pythFee = await client.readContract({
+        address: pythAddr as `0x${string}`,
+        abi: [{ inputs: [{ name: 'updateData', type: 'bytes[]' }], name: 'getUpdateFee', outputs: [{ name: 'feeAmount', type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,
+        functionName: 'getUpdateFee',
+        args: [dataBytes],
+      })
+    } catch {
+      pythFee = BigInt(0)
+    }
+  }
+
+  return { updateData, pythFee }
 }
 
 // Wraps a currency for liquidity operations (returns undefined if not wrappable)
@@ -304,12 +322,15 @@ export async function addLiquidity(
       deadline.toHexString(),
     ]
 
-    // Append Pyth updateData for V2/V3
+    // Append Pyth updateData for V2/V3 and add Pyth fee to value
     if (version >= 2) {
       const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
       const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
-      const updateData = await buildUpdateData([tokenAAddr, tokenBAddr], chainId, version)
+      const { updateData, pythFee } = await buildUpdateData([tokenAAddr, tokenBAddr], chainId, version)
       args.push(updateData)
+      if (pythFee > BigInt(0) && value) {
+        value = value.add(BigNumber.from(pythFee.toString()))
+      }
     }
   } else {
     estimate = router.estimateGas.addLiquidity
@@ -336,14 +357,20 @@ export async function addLiquidity(
       deadline.toHexString(),
     ]
 
-    // Append Pyth updateData for V2/V3
+    // Append Pyth updateData for V2/V3 and include Pyth fee as value
     if (version >= 2) {
       const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
       const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
-      const updateData = await buildUpdateData([tokenAAddr, tokenBAddr], chainId, version)
+      const { updateData, pythFee } = await buildUpdateData([tokenAAddr, tokenBAddr], chainId, version)
       args.push(updateData)
+      if (pythFee > BigInt(0)) {
+        value = BigNumber.from(pythFee.toString())
+      } else {
+        value = null
+      }
+    } else {
+      value = null
     }
-    value = null
   }
 
   try {
