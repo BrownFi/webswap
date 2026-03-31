@@ -43,7 +43,6 @@ const GET_PAIR_STATS = `
       lpPrice
       bnhPrice
     }
-  }
 `
 
 type Props = {

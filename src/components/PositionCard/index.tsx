@@ -1,7 +1,7 @@
 import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { darken } from 'polished'
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { ChevronDown, ChevronUp, Info, ExternalLink } from 'react-feather'
+import { ChevronDown, ChevronUp, Info, Settings, ExternalLink } from 'react-feather'
 import { Link } from 'react-router-dom'
 import { Flex, Text } from 'components/Rebass'
 import styled from 'styled-components'
@@ -22,16 +22,17 @@ const PairChartModal = lazy(() => import('components/pool/PairChartModal').then(
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import QuestionHelper from 'components/QuestionHelper'
 import { AutoRow, RowBetween, RowFixed } from 'components/Row'
+import { MouseoverTooltip } from 'components/Tooltip'
+import { isMainnet } from 'connectors'
 import { BIG_INT_ZERO } from 'constants/common'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
-import { isMainnet } from 'connectors'
 import { shouldReversePair } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
-import { merklCampaignPool, PairStats, usePoolStats } from './usePoolStats'
-import { MouseoverTooltip } from 'components/Tooltip'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
+import { PairSettingsModal } from './PairSettingsModal'
+import { merklCampaignPool, PairStats, usePoolStats } from './usePoolStats'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -84,6 +85,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
   const [showMore, setShowMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
+
+  const canEditSettings = !isMainnet && !!account
+  const [showSettings, setShowSettings] = useState(false)
 
   const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3' // HYPE/USD₮0
 
@@ -204,17 +208,16 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                             {`${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%`}
                           </div>
                           {enableMerklCampaignApr && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <div>Check</div>
                               <a
                                 href="https://app.merkl.xyz/opportunities/linea/ERC20LOGPROCESSOR/0xA87E2c65F2b79164bab690Ec6808431D8c419598"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex items-center"
                               >
-                                <div>Check</div>
                                 <ExternalLink
                                   size="14"
-                                  className="ml-0.5 cursor-pointer text-blue-600 hover:text-blue-600"
+                                  className="cursor-pointer text-orange-400 hover:text-orange-500"
                                 />
                               </a>
                             </div>
@@ -256,10 +259,18 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         </FixedHeightRow>
 
         {!isMainnet && (
-          <div className="flex flex-wrap gap-3 text-white text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-white text-sm">
             <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
             <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
             <Text>DevFee: {`${formatNumberLambda(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
+
+            {canEditSettings && (
+              <Settings
+                size="14"
+                className="cursor-pointer text-orange-400 hover:text-orange-500"
+                onClick={() => setShowSettings(true)}
+              />
+            )}
           </div>
         )}
 
@@ -544,6 +555,8 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           </AutoColumn>
         )}
       </AutoColumn>
+
+      {showSettings && <PairSettingsModal isOpen={showSettings} onDismiss={() => setShowSettings(false)} pair={pair} />}
     </StyledPositionCard>
   )
 }
