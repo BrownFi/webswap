@@ -20,7 +20,7 @@ const SwitchVersion = ({ isMobile }: Props) => {
     setTimeout(() => location.reload(), 200)
   }
 
-  if (isDisabled) return null
+  if (isDisabled || versions.length <= 1) return null
 
   return (
     <div
