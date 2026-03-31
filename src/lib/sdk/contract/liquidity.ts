@@ -16,10 +16,10 @@ import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } fro
 import { RPC_URLS, PYTH_ADDRESS } from '../constants/addresses'
 import { getFactoryAddress } from '../utils'
 
-// Build Pyth updateData for V2/V3 addLiquidity calls, and query the Pyth update fee
-async function buildUpdateData(tokenAddresses: string[], chainId: number, version: number): Promise<{ updateData: string; pythFee: bigint }> {
+// Fetch Pyth price data from Hermes for the given tokens
+async function fetchPythData(tokenAddresses: string[], chainId: number, version: number) {
   const factoryAddr = getFactoryAddress(chainId, version)
-  if (!factoryAddr) return { updateData: encodeAbiParameters(parseAbiParameters('bytes[]'), [[]]), pythFee: BigInt(0) }
+  if (!factoryAddr) return { dataBytes: [] as `0x${string}`[], pythFee: BigInt(0) }
 
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const priceFeedIds = await Promise.all(
@@ -32,15 +32,13 @@ async function buildUpdateData(tokenAddresses: string[], chainId: number, versio
       })
     )
   )
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest')
+  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
   priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()
   const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
-  const updateData = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
 
-  // Query Pyth update fee
   let pythFee = BigInt(0)
   const pythAddr = PYTH_ADDRESS[chainId]
   if (pythAddr) {
@@ -56,7 +54,7 @@ async function buildUpdateData(tokenAddresses: string[], chainId: number, versio
     }
   }
 
-  return { updateData, pythFee }
+  return { dataBytes, pythFee }
 }
 
 // Wraps a currency for liquidity operations (returns undefined if not wrappable)
@@ -322,15 +320,15 @@ export async function addLiquidity(
       deadline.toHexString(),
     ]
 
-    // Append Pyth updateData for V2/V3 and add Pyth fee to value
+    // Append Pyth updateData for V2/V3 (router pays Pyth fee from its own balance)
     if (version >= 2) {
       const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
       const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
-      const { updateData, pythFee } = await buildUpdateData([tokenAAddr, tokenBAddr], chainId, version)
+      const { dataBytes } = await fetchPythData([tokenAAddr, tokenBAddr], chainId, version)
+      const updateData = dataBytes.length > 0
+        ? encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+        : encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
       args.push(updateData)
-      if (pythFee > BigInt(0) && value) {
-        value = value.add(BigNumber.from(pythFee.toString()))
-      }
     }
   } else {
     estimate = router.estimateGas.addLiquidity
@@ -357,20 +355,17 @@ export async function addLiquidity(
       deadline.toHexString(),
     ]
 
-    // Append Pyth updateData for V2/V3 and include Pyth fee as value
+    // Append Pyth updateData for V2/V3 (router pays Pyth fee from its own balance)
     if (version >= 2) {
       const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
       const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
-      const { updateData, pythFee } = await buildUpdateData([tokenAAddr, tokenBAddr], chainId, version)
+      const { dataBytes } = await fetchPythData([tokenAAddr, tokenBAddr], chainId, version)
+      const updateData = dataBytes.length > 0
+        ? encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+        : encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
       args.push(updateData)
-      if (pythFee > BigInt(0)) {
-        value = BigNumber.from(pythFee.toString())
-      } else {
-        value = null
-      }
-    } else {
-      value = null
     }
+    value = null
   }
 
   try {

@@ -105,7 +105,7 @@ async function solidityPackHelper(addresses: string[], chainId: number, version:
       args: [addr as `0x${string}`],
     })
   ))
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest')
+  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
   priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
   const pythResponse = await fetch(pythUrl.toString())
   if (!pythResponse.ok) throw new Error(`HTTP ${pythResponse.status}`)

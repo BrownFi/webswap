@@ -91,7 +91,7 @@ export async function buildV3UpdateData(
     )
   )
 
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest')
+  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
   priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)

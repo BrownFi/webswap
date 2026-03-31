@@ -84,7 +84,7 @@ export default function AddLiquidity() {
     liquidityMinted,
     poolTokenPercentage,
     error,
-  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, version === 2 ? pythPrices : undefined)
+  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, version >= 2 ? pythPrices : undefined)
 
   const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
 

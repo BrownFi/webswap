@@ -26,7 +26,7 @@ export const graphqlFetcher = async ({
     })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const res = await response.json()
-    return res.data
+    return res.data ?? null
   } finally {
     clearTimeout(timeoutId)
   }

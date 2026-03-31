@@ -36,7 +36,7 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
           setApiFailed(true)
           return [0, 0]
         }),
-    enabled: version === 2 && enableFetchDetail && !disabled,
+    enabled: version >= 2 && enableFetchDetail && !disabled,
     refetchInterval: 60_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
@@ -47,7 +47,7 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
     chainId,
     tokenA: tokenA!,
     tokenB: tokenB!,
-    enabled: version === 2 && enableFetchDetail && apiFailed && !disabled,
+    enabled: version >= 2 && enableFetchDetail && apiFailed && !disabled,
   })
 
   const { data: tokenPricesV1 = [0, 0] } = useQuery({
@@ -67,9 +67,9 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
 
   const pythPrices = {
     [Field.CURRENCY_A]:
-      (version === 2 ? tokenPricesApi?.[0] || tokenPricesV2[0] : tokenPricesV1[0]) || fallbackPrices[0],
+      (version >= 2 ? tokenPricesApi?.[0] || tokenPricesV2[0] : tokenPricesV1[0]) || fallbackPrices[0],
     [Field.CURRENCY_B]:
-      (version === 2 ? tokenPricesApi?.[1] || tokenPricesV2[1] : tokenPricesV1[1]) || fallbackPrices[1],
+      (version >= 2 ? tokenPricesApi?.[1] || tokenPricesV2[1] : tokenPricesV1[1]) || fallbackPrices[1],
   }
 
   return pythPrices
@@ -85,7 +85,7 @@ type PropsV2 = {
 const usePythPricesV2 = ({ chainId, tokenA, tokenB, enabled = false }: PropsV2) => {
   const { version } = useVersion({ chainId })
 
-  const disabled = !enabled || !tokenA || !tokenB || version !== 2
+  const disabled = !enabled || !tokenA || !tokenB || version < 2
 
   const { data: tokenAPrice = 0 } = useQuery({
     queryFn: () => getPythPrice(tokenA.address, chainId, version),
