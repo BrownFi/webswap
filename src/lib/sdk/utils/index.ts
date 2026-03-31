@@ -108,7 +108,7 @@ export function getPriceFromUnsafe(priceUnsafe: any): number {
   // Handle both viem object format { price, conf, expo, publishTime } and legacy array format
   const price = priceUnsafe.price !== undefined ? priceUnsafe.price : priceUnsafe[0]
   const expo = priceUnsafe.expo !== undefined ? priceUnsafe.expo : priceUnsafe[2]
-  return +price * Math.pow(10, +expo)
+  return Number(price) * Math.pow(10, Number(expo))
 }
 
 export function isContractWithPrice(chainId: number, version: number): boolean {
