@@ -18,27 +18,29 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
   }, [location.search])
 
   const [version, isDisabled] = useMemo(() => {
-    if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
-      return [1, true]
-    }
-    if (
-      [
-        ChainId.ARBITRUM_MAINNET,
-        ChainId.BASE_MAINNET,
-        ChainId.BSC_MAINNET,
-        ChainId.HYPER_EVM,
-        ChainId.LINEA_MAINNET,
-        ChainId.SEI_MAINNET,
-        ChainId.MONAD,
-        ChainId.ARBITRUM_SEPOLIA,
-        ChainId.SEPOLIA,
-      ].includes(chainId as number)
-    ) {
-      return [2, true]
-    }
+    // Mainnet: lock specific chains to their version
     if (isMainnet) {
+      if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
+        return [1, true]
+      }
+      if (
+        [
+          ChainId.ARBITRUM_MAINNET,
+          ChainId.BASE_MAINNET,
+          ChainId.BSC_MAINNET,
+          ChainId.HYPER_EVM,
+          ChainId.LINEA_MAINNET,
+          ChainId.SEI_MAINNET,
+          ChainId.MONAD,
+          ChainId.ARBITRUM_SEPOLIA,
+          ChainId.SEPOLIA,
+        ].includes(chainId as number)
+      ) {
+        return [2, true]
+      }
       return [2, false]
     }
+    // Beta/testnet: always allow version switching
     return [stableVersion, false]
   }, [isMainnet, chainId, stableVersion])
 
