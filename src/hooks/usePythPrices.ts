@@ -30,7 +30,13 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
       apiV2Service
         .getPoolPrices({ chainId, tokenA: tokenA!.address, tokenB: tokenB!.address })
         .then((pool) => {
-          return [+pool.price0 / 2 ** 64, +pool.price1 / 2 ** 64]
+          const p0 = +pool.price0 / 2 ** 64
+          const p1 = +pool.price1 / 2 ** 64
+          if (!p0 || !p1 || isNaN(p0) || isNaN(p1)) {
+            setApiFailed(true)
+            return [0, 0]
+          }
+          return [p0, p1]
         })
         .catch(() => {
           setApiFailed(true)

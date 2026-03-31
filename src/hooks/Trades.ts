@@ -107,15 +107,12 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
     const getTrade = async () => {
       setLoading(true)
       setInsufficient(false)
-      console.log('[useTradeExactIn] allowedPairs:', allowedPairs.length, 'currencyAmountIn:', currencyAmountIn?.toExact(), 'currencyOut:', currencyOut?.name)
       if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
-        console.log('[useTradeExactIn] pairs versions:', allowedPairs.map(p => p.version), 'pairs:', allowedPairs.map(p => `${p.token0.symbol}/${p.token1.symbol} @ ${p.liquidityToken.address}`))
         if (singleHopOnly) {
           const bestTradeIn = await Trade.bestTradeExactIn(account ?? '', allowedPairs, currencyAmountIn, currencyOut, {
             maxHops: 1,
             maxNumResults: 1,
           }).catch((error) => {
-            console.error('[useTradeExactIn] singleHop error:', error)
             if (!stale) {
               setInsufficient(
                 error.message.includes('INSUFFICIENT') ||
@@ -137,7 +134,6 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           currencyAmountIn,
           currencyOut,
         ).catch((error) => {
-          console.error('[useTradeExactIn] multiHop error:', error)
           if (!stale) {
             setInsufficient(
               error.message.includes('INSUFFICIENT') ||
