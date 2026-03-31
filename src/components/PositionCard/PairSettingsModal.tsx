@@ -18,11 +18,12 @@ type Props = {
   isOpen: boolean
   onDismiss: () => void
   pair: Pair
+  currentValues?: { lambda?: number; kappa?: number; protocolFee?: number }
 }
 
 const sanitizeUintInput = (value: string) => value.trim()
 
-export function PairSettingsModal({ isOpen, onDismiss, pair }: Props) {
+export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Props) {
   const { account } = useActiveWeb3React()
   const { createToast } = useToast()
   const factoryContract = useFactoryContract(true, { readonly: false })
@@ -32,6 +33,16 @@ export function PairSettingsModal({ isOpen, onDismiss, pair }: Props) {
   const [lambdaInput, setLambdaInput] = useState('')
   const [feeInput, setFeeInput] = useState('')
   const [protocolFeeInput, setProtocolFeeInput] = useState('')
+
+  // Pre-fill inputs with current on-chain values when modal opens
+  const [initialized, setInitialized] = useState(false)
+  if (isOpen && !initialized && currentValues) {
+    if (currentValues.kappa !== undefined) setKInput(String(currentValues.kappa))
+    if (currentValues.lambda !== undefined) setLambdaInput(String(currentValues.lambda))
+    if (currentValues.protocolFee !== undefined) setFeeInput(String(currentValues.protocolFee))
+    setInitialized(true)
+  }
+  if (!isOpen && initialized) setInitialized(false)
 
   const [submitting, setSubmitting] = useState<Record<FieldKey, boolean>>({
     k: false,
@@ -123,7 +134,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair }: Props) {
               <input
                 value={kInput}
                 onChange={(event) => setKInput(sanitizeUintInput(event.target.value))}
-                placeholder="K"
+                placeholder={currentValues?.kappa !== undefined ? `Current: ${currentValues.kappa}` : 'K'}
                 className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -142,7 +153,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair }: Props) {
               <input
                 value={lambdaInput}
                 onChange={(event) => setLambdaInput(sanitizeUintInput(event.target.value))}
-                placeholder="Lambda"
+                placeholder={currentValues?.lambda !== undefined ? `Current: ${currentValues.lambda}` : 'Lambda'}
                 className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -165,7 +176,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair }: Props) {
               <input
                 value={feeInput}
                 onChange={(event) => setFeeInput(sanitizeUintInput(event.target.value))}
-                placeholder="Fee"
+                placeholder={currentValues?.protocolFee !== undefined ? `Current: ${currentValues.protocolFee}` : 'Fee'}
                 className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
                 inputMode="numeric"
                 pattern="[0-9]*"

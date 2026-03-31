@@ -556,7 +556,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         )}
       </AutoColumn>
 
-      {showSettings && <PairSettingsModal isOpen={showSettings} onDismiss={() => setShowSettings(false)} pair={pair} />}
+      {showSettings && <PairSettingsModal isOpen={showSettings} onDismiss={() => setShowSettings(false)} pair={pair} currentValues={devStats} />}
     </StyledPositionCard>
   )
 }
