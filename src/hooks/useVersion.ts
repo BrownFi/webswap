@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
 import { isMainnet } from 'connectors'
+import { ROUTER_ADDRESS, ROUTER_ADDRESS_V1, ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
 
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
   const location = useLocation()
@@ -40,8 +41,11 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       }
       return [2, false]
     }
-    // Beta/testnet: always allow version switching
-    return [stableVersion, false]
+    // Beta/testnet: allow version switching, but validate stored version has a router
+    const selectedVersion = stableVersion
+    if (selectedVersion === 1 && !ROUTER_ADDRESS_V1[chainId as number]) return [2, false]
+    if (selectedVersion === 3 && !ROUTER_ADDRESS_V3[chainId as number]) return [2, false]
+    return [selectedVersion, false]
   }, [isMainnet, chainId, stableVersion])
 
   const dispatchSwitchVersion = (version: number) => {
