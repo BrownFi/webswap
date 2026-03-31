@@ -22,6 +22,12 @@ import {
   getRouterAddress,
 } from '../utils'
 import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/addresses'
+import { WETH } from '../constants/tokens'
+
+// Build WETH address lookup for V3 quoting (detect ETH-in swaps)
+const WETH_ADDRESSES: Record<number, string> = Object.fromEntries(
+  Object.entries(WETH).map(([k, v]) => [k, (v as any).address?.toLowerCase()])
+)
 
 // Helper: fetch Pyth price feed data and update fee for WithPrice router calls
 async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[string[], number]> {
@@ -83,12 +89,12 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
 }
 
 // Helper: fetch Pyth price update data and encode for V2 router
-async function solidityPackHelper(addresses: string[], chainId: number): Promise<string> {
+async function solidityPackHelper(addresses: string[], chainId: number, version: number = 2): Promise<string> {
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const { getFactoryAddress: getFactory } = await import('../utils')
   const priceFeedIds = await Promise.all(addresses.map((addr) =>
     client.readContract({
-      address: getFactory(chainId, 2) as `0x${string}`,
+      address: getFactory(chainId, version) as `0x${string}`,
       abi: [{
         inputs: [{ name: 'token', type: 'address' }],
         name: 'priceFeedIds',
@@ -138,6 +144,49 @@ const ABI_ROUTER_WITH_PRICE_IN = [{
   inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'priceUpdate', type: 'bytes[]' }],
   name: 'getAmountsInWithPrice', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
 }] as const
+// Multicall3 is deployed at this address on all EVM chains
+// const MULTICALL3_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11'
+
+// V3 quote: simulate the actual swap function to get amounts.
+// The V3 router's getAmountsOut is a view function that reverts with StalePrice because
+// the pair has its own price cache that only gets refreshed during swap/addLiquidity calls.
+// By simulating the full swap, the router handles: Pyth update → pair price sync → compute amounts.
+const ABI_V3_SWAP_ETH_FOR_TOKENS = [{
+  inputs: [{ name: 'amountOutMin', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }],
+  name: 'swapExactETHForTokens', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
+}] as const
+
+async function v3GetAmounts(
+  client: any,
+  routerAddr: string,
+  amount: bigint,
+  path: readonly `0x${string}`[],
+  updateData: `0x${string}`,
+  chainId: number,
+  direction: 'out' | 'in',
+  account: string
+): Promise<readonly bigint[] | null> {
+  const wethAddr = WETH_ADDRESSES[chainId]
+  const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600)
+  const isETHIn = path[0].toLowerCase() === wethAddr?.toLowerCase()
+
+  if (direction === 'out' && isETHIn) {
+    // ETH→Token: simulate swapExactETHForTokens (payable, no approval needed)
+    const { result } = await client.simulateContract({
+      address: routerAddr as `0x${string}`,
+      abi: ABI_V3_SWAP_ETH_FOR_TOKENS,
+      functionName: 'swapExactETHForTokens',
+      args: [BigInt(0), path, account as `0x${string}`, deadline, updateData],
+      value: amount,
+      account: account as `0x${string}`,
+    })
+    return result
+  }
+
+  // For non-ETH-input swaps (Token→ETH, Token→Token) and exact-output:
+  // Return null to signal caller should use sync reserve-based calculation
+  return null
+}
 
 class InsufficientReservesError extends Error {
   public readonly isInsufficientReservesError = true
@@ -349,8 +398,8 @@ export class Pair {
         account: account as `0x${string}`,
       })
       amountOuts = result
-    } else if (version >= 2) {
-      const updateData = await solidityPackHelper(pathAddresses as string[], chainId)
+    } else if (version === 2) {
+      const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
       amountOuts = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,
         abi: ABI_ROUTER_V2,
@@ -358,6 +407,17 @@ export class Pair {
         args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         account: account as `0x${string}`,
       })
+    } else if (version === 3) {
+      // V3: simulate actual swap to get amounts (getAmountsOut has stale price cache)
+      const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
+      const simResult = await v3GetAmounts(client, getRouterAddress(chainId, version), BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`, chainId, 'out', account)
+      if (simResult) {
+        amountOuts = simResult
+      } else {
+        // Non-ETH input: fall back to sync reserve-based calculation
+        const [syncOutput, syncPair] = this.getOutputAmount(inputAmount)
+        return [syncOutput, syncPair, priceUpdate, updateFee, 0]
+      }
     } else {
       amountOuts = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,
@@ -415,8 +475,8 @@ export class Pair {
         account: account as `0x${string}`,
       })
       amountIns = result
-    } else if (version >= 2) {
-      const updateData = await solidityPackHelper(pathAddresses as string[], chainId)
+    } else if (version === 2) {
+      const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
       amountIns = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,
         abi: ABI_ROUTER_V2_IN,
@@ -424,6 +484,10 @@ export class Pair {
         args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         account: account as `0x${string}`,
       })
+    } else if (version === 3) {
+      // V3: getAmountsIn has stale price cache — fall back to sync reserve-based calculation
+      const [syncInput, syncPair] = this.getInputAmount(outputAmount)
+      return [syncInput, syncPair, priceUpdate, updateFee, 0]
     } else {
       amountIns = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,

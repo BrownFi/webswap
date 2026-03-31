@@ -26,6 +26,17 @@ import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, ResponsiveButtonPrimary, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
 
+// V3 hardcoded pools — temporary until V3 indexer is ready
+const V3_POOLS: Record<number, { pair: string; token0: { address: string; decimals: number; symbol: string; name: string }; token1: { address: string; decimals: number; symbol: string; name: string } }[]> = {
+  [ChainId.BERA_MAINNET]: [
+    {
+      pair: '0x29128FD83F5feF53fE64Fd10A5e68084d9629EDb',
+      token0: { address: '0x6969696969696969696969696969696969696969', decimals: 18, symbol: 'WBERA', name: 'Wrapped Bera' },
+      token1: { address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', decimals: 18, symbol: 'HONEY', name: 'Honey' },
+    },
+  ],
+}
+
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
     pairs {
@@ -248,7 +259,9 @@ export default function Pool() {
               </div>
             </TitleRow>
 
-            {shouldUseGraphQL ? (
+            {version === 3 ? (
+              <V3PoolList />
+            ) : shouldUseGraphQL ? (
               <MemoizedPairList pairs={filteredPairs} chainId={chainId} version={version} />
             ) : enableGraphQL && isLoadingPairs ? (
               <EmptyProposals>
@@ -299,6 +312,75 @@ function MemoizedPairList({
     <>
       {pairsWithObjects.map(({ pair, stats }) => (
         <FullPositionCard key={pair.liquidityToken.address} pair={pair} pairStats={stats} />
+      ))}
+    </>
+  )
+}
+
+function V3PoolList() {
+  const { chainId } = useActiveWeb3React()
+  const pools = V3_POOLS[chainId] ?? []
+
+  const { data: v3Pairs, isLoading } = useQuery({
+    queryKey: ['v3Pools', chainId],
+    queryFn: async () => {
+      const { createPublicClient, http } = await import('viem')
+      const { RPC_URLS } = await import('lib/sdk/constants/addresses')
+      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+
+      const results = await Promise.all(
+        pools.map(async (pool) => {
+          try {
+            const reserves = await client.readContract({
+              address: pool.pair as `0x${string}`,
+              abi: [{ inputs: [], name: 'getReserves', outputs: [{ type: 'uint112' }, { type: 'uint112' }, { type: 'uint32' }], stateMutability: 'view', type: 'function' }] as const,
+              functionName: 'getReserves',
+            })
+            const token0 = new Token(chainId, pool.token0.address, pool.token0.decimals, pool.token0.symbol, pool.token0.name)
+            const token1 = new Token(chainId, pool.token1.address, pool.token1.decimals, pool.token1.symbol, pool.token1.name)
+            const pair = new Pair(
+              new TokenAmount(token0, reserves[0].toString()),
+              new TokenAmount(token1, reserves[1].toString()),
+              3,
+            )
+            // V3 uses factory.getPair() not CREATE2 — override LP token with real pair address
+            ;(pair as any).liquidityToken = new Token(chainId, pool.pair, 18, 'BF-V3', 'BrownFi V3')
+            return pair
+          } catch {
+            return null
+          }
+        }),
+      )
+      return results.filter((p): p is Pair => p !== null)
+    },
+    enabled: pools.length > 0,
+    refetchInterval: 30_000,
+  })
+
+  if (isLoading) {
+    return (
+      <EmptyProposals>
+        <TYPE.body color={'#999'} textAlign="center">
+          <Dots>Loading V3 pools</Dots>
+        </TYPE.body>
+      </EmptyProposals>
+    )
+  }
+
+  if (!v3Pairs || v3Pairs.length === 0) {
+    return (
+      <EmptyProposals>
+        <TYPE.body color={'#999'} textAlign="center">
+          No V3 pools found.
+        </TYPE.body>
+      </EmptyProposals>
+    )
+  }
+
+  return (
+    <>
+      {v3Pairs.map((pair) => (
+        <FullPositionCard key={pair.liquidityToken.address} pair={pair} />
       ))}
     </>
   )

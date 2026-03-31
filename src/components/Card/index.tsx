@@ -14,7 +14,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={classNames('w-full rounded-none p-0', className)}
+        className={classNames('w-full rounded-none p-2', className)}
         style={{
           width: width ?? undefined,
           padding: padding ?? undefined,

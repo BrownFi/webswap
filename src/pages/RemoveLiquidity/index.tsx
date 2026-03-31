@@ -43,6 +43,7 @@ import { getTokenSymbol } from 'utils'
 import { formatNumber } from 'utils/prices'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { useToast } from 'containers/ToastProvider'
+import { useQueryClient } from '@tanstack/react-query'
 import { executeKyberZapOutTransaction, getKyberZapOutRouteData, KyberZapOutRouteData } from './zapHelpers'
 
 export default function RemoveLiquidity() {
@@ -52,6 +53,7 @@ export default function RemoveLiquidity() {
   const { version } = useVersion({ chainId })
 
   const { createToast } = useToast()
+  const queryClient = useQueryClient()
   const supportsZapV2 = useMemo(() => isZapSupportedOnChain(chainId), [chainId])
   const supportsZapV3 = useMemo(() => isV3ZapSupported(chainId, version), [chainId, version])
   const supportsZap = supportsZapV2 || supportsZapV3
@@ -270,6 +272,7 @@ export default function RemoveLiquidity() {
         setAttemptingTxn(false)
         if (response) {
           setTxHash(response.hash)
+          setTimeout(() => queryClient.invalidateQueries(), 5000)
         }
       }
     } catch (e: any) {

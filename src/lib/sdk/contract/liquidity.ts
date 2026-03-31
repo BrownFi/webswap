@@ -12,6 +12,34 @@ import {
   calculateSlippageAmount,
   getRouterContract,
 } from './helpers'
+import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
+import { RPC_URLS } from '../constants/addresses'
+import { getFactoryAddress } from '../utils'
+
+// Build Pyth updateData for V2/V3 addLiquidity calls
+async function buildUpdateData(tokenAddresses: string[], chainId: number, version: number): Promise<string> {
+  const factoryAddr = getFactoryAddress(chainId, version)
+  if (!factoryAddr) return encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
+
+  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const priceFeedIds = await Promise.all(
+    tokenAddresses.map((addr) =>
+      client.readContract({
+        address: factoryAddr as `0x${string}`,
+        abi: [{ inputs: [{ name: 'token', type: 'address' }], name: 'priceFeedIds', outputs: [{ name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' }] as const,
+        functionName: 'priceFeedIds',
+        args: [addr as `0x${string}`],
+      })
+    )
+  )
+  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest')
+  priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+  const response = await fetch(pythUrl.toString())
+  if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
+  const data = await response.json()
+  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+  return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+}
 
 // Wraps a currency for liquidity operations (returns undefined if not wrappable)
 function wrappedCurrency(currency: Currency, chainId: number): Token | undefined {
@@ -276,7 +304,13 @@ export async function addLiquidity(
       deadline.toHexString(),
     ]
 
-    // V2 solidity pack would be appended here (Phase B)
+    // Append Pyth updateData for V2/V3
+    if (version >= 2) {
+      const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
+      const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
+      const updateData = await buildUpdateData([tokenAAddr, tokenBAddr], chainId, version)
+      args.push(updateData)
+    }
   } else {
     estimate = router.estimateGas.addLiquidity
     method = router.addLiquidity
@@ -302,7 +336,13 @@ export async function addLiquidity(
       deadline.toHexString(),
     ]
 
-    // V2 solidity pack would be appended here (Phase B)
+    // Append Pyth updateData for V2/V3
+    if (version >= 2) {
+      const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
+      const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
+      const updateData = await buildUpdateData([tokenAAddr, tokenBAddr], chainId, version)
+      args.push(updateData)
+    }
     value = null
   }
 

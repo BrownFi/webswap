@@ -8,9 +8,12 @@ import { ROUTER_ADDRESS_WITH_PRICE } from '../constants/addresses'
 import { CurrencyAmount } from '../entities/fractions/currencyAmount'
 
 // ABI stubs - Phase B will add real ABIs
-const IRouterV1: any[] = []
-const IRouterV2: any[] = []
-const IRouterWithPrice: any[] = []
+import IRouterABI from 'constants/abis/IRouter.json'
+import IRouterV3ABI from 'constants/abis/IRouterV3.json'
+const IRouterV1: any[] = IRouterABI
+const IRouterV2: any[] = IRouterV3ABI  // V2 router also has updateData param on swap/liquidity functions
+const IRouterV3: any[] = IRouterV3ABI
+const IRouterWithPrice: any[] = IRouterABI
 
 export function isZero(hexNumberString: string): boolean {
   return /^0x0*$/.test(hexNumberString)
@@ -38,7 +41,7 @@ export function getContract(address: string, ABI: any, library: any, account?: s
 }
 
 export function getRouterContract(chainId: number, library: any, account: string, version: number): Contract {
-  const IRouter = version >= 2 ? IRouterV2 : IRouterV1
+  const IRouter = version === 3 ? IRouterV3 : version === 2 ? IRouterV2 : IRouterV1
   return getContract(getRouterAddress(chainId, version), IRouter, library, account)
 }
 

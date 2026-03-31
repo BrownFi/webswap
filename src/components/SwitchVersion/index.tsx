@@ -1,4 +1,3 @@
-import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useVersion } from 'hooks/useVersion'
 import { ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
@@ -21,7 +20,6 @@ const SwitchVersion = ({ isMobile }: Props) => {
   }
 
   if (isDisabled) return null
-  if (isMainnet) return null
 
   return (
     <div

@@ -91,7 +91,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
         ChainId.LINEA_MAINNET,
         ChainId.SEI_MAINNET,
         ChainId.MONAD,
-      ].includes(chainId as number) && version >= 2
+      ].includes(chainId as number) && version === 2
     )
   }, [chainId, version])
 

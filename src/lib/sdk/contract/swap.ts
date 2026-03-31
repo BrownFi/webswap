@@ -6,15 +6,42 @@ import { SwapCallbackState } from '../constants/enums'
 import { Trade } from '../entities/trade'
 import { Percent } from '../entities/fractions/percent'
 import { Router } from '../router'
-import { isContractWithPrice } from '../utils'
+import { isContractWithPrice, getFactoryAddress } from '../utils'
 import {
   isZero,
   calculateGasMargin,
   getRouterContract,
   getRouterContractWithPrice,
 } from './helpers'
+import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
+import { RPC_URLS } from '../constants/addresses'
 
 export { SwapCallbackState }
+
+// Build Pyth updateData for V2/V3 swap calls (same as solidityPackHelper in pair.ts)
+async function buildSwapUpdateData(tokenAddresses: string[], chainId: number, version: number): Promise<string> {
+  const factoryAddr = getFactoryAddress(chainId, version)
+  if (!factoryAddr) return encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
+
+  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const priceFeedIds = await Promise.all(
+    tokenAddresses.map((addr) =>
+      client.readContract({
+        address: factoryAddr as `0x${string}`,
+        abi: [{ inputs: [{ name: 'token', type: 'address' }], name: 'priceFeedIds', outputs: [{ name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' }] as const,
+        functionName: 'priceFeedIds',
+        args: [addr as `0x${string}`],
+      })
+    )
+  )
+  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest')
+  priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+  const response = await fetch(pythUrl.toString())
+  if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
+  const data = await response.json()
+  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+  return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+}
 
 /**
  * Builds the swap call arguments for a given trade.
@@ -81,7 +108,13 @@ export async function callSwapContract(
       const { methodName, args, value } = call.parameters
       const { contract } = call
 
-      // For V2, solidity pack would be appended here (Phase B)
+      // Append Pyth updateData for V2/V3 swaps
+      const version = trade.route.pairs[0].version
+      if (version >= 2) {
+        const path = trade.route.path.map((token) => token.address)
+        const updateData = await buildSwapUpdateData(path, chainId, version)
+        args.push(updateData)
+      }
 
       const options = !value || isZero(value) ? {} : { value }
 

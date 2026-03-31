@@ -26,6 +26,7 @@ import { useSwapCallback } from 'hooks/useSwapCallback'
 import useToggledVersion, { DEFAULT_VERSION, Version } from 'hooks/useToggledVersion'
 import useWrapCallback, { WrapType } from 'hooks/useWrapCallback'
 import { useToast } from 'containers/ToastProvider'
+import { useQueryClient } from '@tanstack/react-query'
 import { useToggleSettingsMenu } from 'state/application/hooks'
 import { Field } from 'state/swap/actions'
 import { useDefaultsFromURLSearch, useDerivedSwapInfo, useSwapActionHandlers, useSwapState } from 'state/swap/hooks'
@@ -70,6 +71,7 @@ export default function Swap() {
 
   const theme = useContext(ThemeContext)
   const { createToast } = useToast()
+  const queryClient = useQueryClient()
 
   // for expert mode
   const toggleSettings = useToggleSettingsMenu()
@@ -222,6 +224,8 @@ export default function Swap() {
     swapCallback()
       .then((hash) => {
         setSwapState({ attemptingTxn: false, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: hash })
+        // Refresh RainbowKit/wagmi balance display after swap
+        setTimeout(() => queryClient.invalidateQueries(), 5000)
       })
       .catch((error) => {
         setSwapState({

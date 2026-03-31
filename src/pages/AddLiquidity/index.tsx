@@ -25,6 +25,7 @@ import { useDerivedMintInfo, useMintActionHandlers, useMintState } from 'state/m
 import ConnectWallet from 'components/ConnectWallet'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
 import { useToast } from 'containers/ToastProvider'
+import { useQueryClient } from '@tanstack/react-query'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
@@ -51,6 +52,7 @@ export default function AddLiquidity() {
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
   const { createToast } = useToast()
+  const queryClient = useQueryClient()
 
   const [useZap, setUseZap] = useState(false)
 
@@ -167,6 +169,7 @@ export default function AddLiquidity() {
       if (response) {
         setAttemptingTxn(false)
         setTxHash(response.hash)
+        setTimeout(() => queryClient.invalidateQueries(), 5000)
       }
     } catch (error) {
       setAttemptingTxn(false)
