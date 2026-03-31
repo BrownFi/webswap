@@ -135,7 +135,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
               <input
                 value={kInput}
                 onChange={(event) => setKInput(sanitizeUintInput(event.target.value))}
-                placeholder={currentValues?.kappa !== undefined ? `Current: ${currentValues.kappa}` : 'K'}
+                placeholder={currentValues?.kappa !== undefined ? `Current: ${round(currentValues.kappa)}` : 'K'}
                 className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -154,7 +154,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
               <input
                 value={lambdaInput}
                 onChange={(event) => setLambdaInput(sanitizeUintInput(event.target.value))}
-                placeholder={currentValues?.lambda !== undefined ? `Current: ${currentValues.lambda}` : 'Lambda'}
+                placeholder={currentValues?.lambda !== undefined ? `Current: ${round(currentValues.lambda)}` : 'Lambda'}
                 className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -177,7 +177,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
               <input
                 value={feeInput}
                 onChange={(event) => setFeeInput(sanitizeUintInput(event.target.value))}
-                placeholder={currentValues?.protocolFee !== undefined ? `Current: ${currentValues.protocolFee}` : 'Fee'}
+                placeholder={currentValues?.protocolFee !== undefined ? `Current: ${round(currentValues.protocolFee)}` : 'Fee'}
                 className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
                 inputMode="numeric"
                 pattern="[0-9]*"
