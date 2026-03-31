@@ -35,11 +35,12 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   const [protocolFeeInput, setProtocolFeeInput] = useState('')
 
   // Pre-fill inputs with current on-chain values when modal opens
+  const round = (v: number) => parseFloat(v.toPrecision(4)).toString()
   const [initialized, setInitialized] = useState(false)
   if (isOpen && !initialized && currentValues) {
-    if (currentValues.kappa !== undefined) setKInput(String(currentValues.kappa))
-    if (currentValues.lambda !== undefined) setLambdaInput(String(currentValues.lambda))
-    if (currentValues.protocolFee !== undefined) setFeeInput(String(currentValues.protocolFee))
+    if (currentValues.kappa !== undefined) setKInput(round(currentValues.kappa))
+    if (currentValues.lambda !== undefined) setLambdaInput(round(currentValues.lambda))
+    if (currentValues.protocolFee !== undefined) setFeeInput(round(currentValues.protocolFee))
     setInitialized(true)
   }
   if (!isOpen && initialized) setInitialized(false)
