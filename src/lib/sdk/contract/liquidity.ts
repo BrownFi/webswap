@@ -13,13 +13,13 @@ import {
   getRouterContract,
 } from './helpers'
 import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
-import { RPC_URLS, PYTH_ADDRESS } from '../constants/addresses'
+import { RPC_URLS } from '../constants/addresses'
 import { getFactoryAddress } from '../utils'
 
 // Fetch Pyth price data from Hermes for the given tokens
-async function fetchPythData(tokenAddresses: string[], chainId: number, version: number) {
+async function fetchPythData(tokenAddresses: string[], chainId: number, version: number): Promise<`0x${string}`[]> {
   const factoryAddr = getFactoryAddress(chainId, version)
-  if (!factoryAddr) return { dataBytes: [] as `0x${string}`[], pythFee: BigInt(0) }
+  if (!factoryAddr) return []
 
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const priceFeedIds = await Promise.all(
@@ -37,24 +37,7 @@ async function fetchPythData(tokenAddresses: string[], chainId: number, version:
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()
-  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
-
-  let pythFee = BigInt(0)
-  const pythAddr = PYTH_ADDRESS[chainId]
-  if (pythAddr) {
-    try {
-      pythFee = await client.readContract({
-        address: pythAddr as `0x${string}`,
-        abi: [{ inputs: [{ name: 'updateData', type: 'bytes[]' }], name: 'getUpdateFee', outputs: [{ name: 'feeAmount', type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,
-        functionName: 'getUpdateFee',
-        args: [dataBytes],
-      })
-    } catch {
-      pythFee = BigInt(0)
-    }
-  }
-
-  return { dataBytes, pythFee }
+  return (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
 }
 
 // Wraps a currency for liquidity operations (returns undefined if not wrappable)
@@ -324,7 +307,7 @@ export async function addLiquidity(
     if (version >= 2) {
       const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
       const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
-      const { dataBytes } = await fetchPythData([tokenAAddr, tokenBAddr], chainId, version)
+      const dataBytes = await fetchPythData([tokenAAddr, tokenBAddr], chainId, version)
       const updateData = dataBytes.length > 0
         ? encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
         : encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
@@ -359,7 +342,7 @@ export async function addLiquidity(
     if (version >= 2) {
       const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
       const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
-      const { dataBytes } = await fetchPythData([tokenAAddr, tokenBAddr], chainId, version)
+      const dataBytes = await fetchPythData([tokenAAddr, tokenBAddr], chainId, version)
       const updateData = dataBytes.length > 0
         ? encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
         : encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
