@@ -29,7 +29,13 @@ import { ButtonPrimary } from 'components/Button'
 // V3 hardcoded pools — temporary until V3 indexer is ready
 // Update pair addresses after creating pools on new V3 factory
 const V3_POOLS: Record<number, { pair: string; token0: { address: string; decimals: number; symbol: string; name: string }; token1: { address: string; decimals: number; symbol: string; name: string } }[]> = {
-  [ChainId.BERA_MAINNET]: [],
+  [ChainId.BERA_MAINNET]: [
+    {
+      pair: '0xD67aDD2577B60A9079e3C1D8066a3F4b75da897F',
+      token0: { address: '0x6969696969696969696969696969696969696969', decimals: 18, symbol: 'WBERA', name: 'Wrapped Bera' },
+      token1: { address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', decimals: 18, symbol: 'HONEY', name: 'Honey' },
+    },
+  ],
 }
 
 const LIST_ALL_PAIRS = `
