@@ -27,14 +27,9 @@ import { EmptyProposals, IndexerModalContent, PageWrapper, ResponsiveButtonPrima
 import { ButtonPrimary } from 'components/Button'
 
 // V3 hardcoded pools — temporary until V3 indexer is ready
+// Update pair addresses after creating pools on new V3 factory
 const V3_POOLS: Record<number, { pair: string; token0: { address: string; decimals: number; symbol: string; name: string }; token1: { address: string; decimals: number; symbol: string; name: string } }[]> = {
-  [ChainId.BERA_MAINNET]: [
-    {
-      pair: '0x29128FD83F5feF53fE64Fd10A5e68084d9629EDb',
-      token0: { address: '0x6969696969696969696969696969696969696969', decimals: 18, symbol: 'WBERA', name: 'Wrapped Bera' },
-      token1: { address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', decimals: 18, symbol: 'HONEY', name: 'Honey' },
-    },
-  ],
+  [ChainId.BERA_MAINNET]: [],
 }
 
 const LIST_ALL_PAIRS = `
