@@ -468,14 +468,16 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
                     isAnimationActive={false}
                     {...lineDotConfig}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="bnhPrice"
-                    stroke="#4DA3FF"
-                    yAxisId="left"
-                    isAnimationActive={false}
-                    {...lineDotConfig}
-                  />
+                  {showExtendedMetrics && (
+                    <Line
+                      type="monotone"
+                      dataKey="bnhPrice"
+                      stroke="#4DA3FF"
+                      yAxisId="left"
+                      isAnimationActive={false}
+                      {...lineDotConfig}
+                    />
+                  )}
                   {showExtendedMetrics && (
                     <Line
                       type="monotone"
@@ -559,7 +561,7 @@ const CustomLegend = ({
 }) => {
   const allowedKeys = showExtendedMetrics
     ? ['lpPrice', 'bnhPrice', 'netPnL', 'formattedTvl', 'totalVolume']
-    : ['lpPrice', 'bnhPrice', 'totalVolume']
+    : ['lpPrice', 'totalVolume']
   const items = (payload ?? []).filter((it) => allowedKeys.includes(it.value))
   return (
     <div className="flex items-center justify-center gap-4">
@@ -626,9 +628,11 @@ const CustomTooltip = ({
       <p className="text-sm" style={{ color: '#FFB347' }}>
         LP Price: {formatPrice(lpPrice, { maximumFractionDigits: isMainnet ? 2 : 5 })}
       </p>
-      <p className="text-sm" style={{ color: '#4DA3FF' }}>
-        HODL Price: {formatPrice(hodlPrice, { maximumFractionDigits: isMainnet ? 2 : 5 })}
-      </p>
+      {showExtendedMetrics && (
+        <p className="text-sm" style={{ color: '#4DA3FF' }}>
+          HODL Price: {formatPrice(hodlPrice, { maximumFractionDigits: 5 })}
+        </p>
+      )}
       {showExtendedMetrics && (
         <>
           <p className="text-sm" style={{ color: '#DA70D6' }}>
