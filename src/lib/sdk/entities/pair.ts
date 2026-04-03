@@ -369,14 +369,20 @@ export class Pair {
       })
     } else if (version === 3) {
       // V3: use quoteAmountsOutWithUpdate (includes Pyth update + accurate AMM math)
-      const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-      const { result } = await client.simulateContract({
-        address: getRouterAddress(chainId, version) as `0x${string}`,
-        abi: ABI_V3_QUOTE_OUT,
-        functionName: 'quoteAmountsOutWithUpdate',
-        args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
-      })
-      amountOuts = result
+      try {
+        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
+        const { result } = await client.simulateContract({
+          address: getRouterAddress(chainId, version) as `0x${string}`,
+          abi: ABI_V3_QUOTE_OUT,
+          functionName: 'quoteAmountsOutWithUpdate',
+          args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+        })
+        amountOuts = result
+      } catch {
+        // Fallback to sync reserve-based estimate if V3 quote fails
+        const [syncOutput, syncPair] = this.getOutputAmount(inputAmount)
+        return [syncOutput, syncPair, priceUpdate, updateFee, 0]
+      }
     } else {
       amountOuts = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,
@@ -445,14 +451,20 @@ export class Pair {
       })
     } else if (version === 3) {
       // V3: use quoteAmountsInWithUpdate (includes Pyth update + accurate AMM math)
-      const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-      const { result } = await client.simulateContract({
-        address: getRouterAddress(chainId, version) as `0x${string}`,
-        abi: ABI_V3_QUOTE_IN,
-        functionName: 'quoteAmountsInWithUpdate',
-        args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
-      })
-      amountIns = result
+      try {
+        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
+        const { result } = await client.simulateContract({
+          address: getRouterAddress(chainId, version) as `0x${string}`,
+          abi: ABI_V3_QUOTE_IN,
+          functionName: 'quoteAmountsInWithUpdate',
+          args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+        })
+        amountIns = result
+      } catch {
+        // Fallback to sync reserve-based estimate if V3 quote fails
+        const [syncInput, syncPair] = this.getInputAmount(outputAmount)
+        return [syncInput, syncPair, priceUpdate, updateFee, 0]
+      }
     } else {
       amountIns = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,
