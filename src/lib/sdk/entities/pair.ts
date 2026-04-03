@@ -408,13 +408,18 @@ export class Pair {
         account: account as `0x${string}`,
       })
     } else if (version === 3) {
-      // V3: simulate actual swap to get amounts (getAmountsOut has stale price cache)
-      const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-      const simResult = await v3GetAmounts(client, getRouterAddress(chainId, version), BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`, chainId, 'out', account)
-      if (simResult) {
-        amountOuts = simResult
-      } else {
-        // Non-ETH input: fall back to sync reserve-based calculation
+      // V3: simulate actual swap to get amounts, fall back to sync calculation on any error
+      try {
+        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
+        const simResult = await v3GetAmounts(client, getRouterAddress(chainId, version), BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`, chainId, 'out', account)
+        if (simResult) {
+          amountOuts = simResult
+        } else {
+          const [syncOutput, syncPair] = this.getOutputAmount(inputAmount)
+          return [syncOutput, syncPair, priceUpdate, updateFee, 0]
+        }
+      } catch {
+        // V3 simulation failed (e.g. INVALID_INVENTORY rounding) — use reserve-based estimate
         const [syncOutput, syncPair] = this.getOutputAmount(inputAmount)
         return [syncOutput, syncPair, priceUpdate, updateFee, 0]
       }
