@@ -129,7 +129,6 @@ export async function callSwapContract(
             error: new Error('Unexpected issue with estimating the gas. Please try again.'),
           }
         } catch (callError: any) {
-          console.error('[callSwapContract] static call failed:', callError.reason, callError.data, callError)
           const reason = callError.reason || callError.data?.message || ''
           let errorMessage: string
           if (reason.includes('INSUFFICIENT_OUTPUT_AMOUNT') || reason.includes('EXCESSIVE_INPUT_AMOUNT')) {
