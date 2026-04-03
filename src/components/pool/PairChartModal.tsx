@@ -370,9 +370,11 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
               <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
                 {name}
               </Text>
-              <QuestionHelper
-                text={`This analysis benchmarks the overall performance of the pool (not individual users). By tokenizing both the liquidity provision (LP) position and the passive holding two tokens (HODL) strategy, the chart tracks the LP token's value relative to a synthetic 'HODL' token.`}
-              />
+              {showExtendedMetrics && (
+                <QuestionHelper
+                  text={`This analysis benchmarks the overall performance of the pool (not individual users). By tokenizing both the liquidity provision (LP) position and the passive holding two tokens (HODL) strategy, the chart tracks the LP token's value relative to a synthetic 'HODL' token.`}
+                />
+              )}
             </Flex>
 
             <div className="w-full h-[400px] relative">
