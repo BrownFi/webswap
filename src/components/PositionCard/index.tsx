@@ -472,30 +472,36 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 {account && pairAccount && (
                   <>
                     <UserPositionRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
-                    <UserPositionRow
-                      label="HODL portfolio"
-                      value={pairAccount.bnhPortfolio}
-                      description="Your position value if you had just held the two tokens in your wallet."
-                    />
+                    {!isMainnet && (
+                      <UserPositionRow
+                        label="HODL portfolio"
+                        value={pairAccount.bnhPortfolio}
+                        description="Your position value if you had just held the two tokens in your wallet."
+                      />
+                    )}
                     <UserPositionRow
                       colored
                       label="LPing PnL"
                       value={pairAccount.unrealizedPnL}
                       mauso={pairAccount.basePortfolio}
                     />
-                    <UserPositionRow
-                      colored
-                      label="HODL PnL"
-                      value={pairAccount.bnhPortfolio - pairAccount.basePortfolio}
-                      mauso={pairAccount.basePortfolio}
-                      description="Your profit and loss if if you had just held the two tokens in your wallet."
-                    />
-                    <UserPositionRow
-                      colored
-                      label="LPing vs. HODL"
-                      value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio}
-                      description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`}
-                    />
+                    {!isMainnet && (
+                      <>
+                        <UserPositionRow
+                          colored
+                          label="HODL PnL"
+                          value={pairAccount.bnhPortfolio - pairAccount.basePortfolio}
+                          mauso={pairAccount.basePortfolio}
+                          description="Your profit and loss if if you had just held the two tokens in your wallet."
+                        />
+                        <UserPositionRow
+                          colored
+                          label="LPing vs. HODL"
+                          value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio}
+                          description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`}
+                        />
+                      </>
+                    )}
                   </>
                 )}
               </>
