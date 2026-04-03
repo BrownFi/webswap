@@ -129,15 +129,15 @@ export async function callSwapContract(
             error: new Error('Unexpected issue with estimating the gas. Please try again.'),
           }
         } catch (callError: any) {
+          console.error('[callSwapContract] static call failed:', callError.reason, callError.data, callError)
+          const reason = callError.reason || callError.data?.message || ''
           let errorMessage: string
-          switch (callError.reason) {
-            case 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT':
-            case 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT':
-              errorMessage =
-                'This transaction will not succeed either due to price movement or fee on transfer. Try increasing your slippage tolerance.'
-              break
-            default:
-              errorMessage = `The transaction cannot succeed due to error: ${callError.reason}. This is probably an issue with one of the tokens you are swapping.`
+          if (reason.includes('INSUFFICIENT_OUTPUT_AMOUNT') || reason.includes('EXCESSIVE_INPUT_AMOUNT')) {
+            errorMessage = 'This transaction will not succeed either due to price movement or fee on transfer. Try increasing your slippage tolerance.'
+          } else if (reason.includes('INVALID_INVENTORY')) {
+            errorMessage = 'Swap failed due to V3 AMM constraint. Try a smaller amount or try again.'
+          } else {
+            errorMessage = `The transaction cannot succeed due to error: ${reason || 'unknown'}. Try increasing slippage tolerance.`
           }
           return { call, error: new Error(errorMessage) }
         }
