@@ -1,6 +1,7 @@
-import { Currency, currencyEquals, ETHER, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
+import { Currency, currencyEquals, ETHER, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH, RPC_URLS } from '@brownfi/sdk'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
-import { executeV3ZapOut, isV3ZapSupported } from 'utils/v3Zap'
+import { executeV3ZapOut, isV3ZapSupported, buildV3UpdateData } from 'utils/v3Zap'
+import { createPublicClient, http } from 'viem'
 import { useQuery } from '@tanstack/react-query'
 import { ButtonConfirmed, ButtonError, ButtonPrimary } from 'components/Button'
 import { RemoveLiqudityCard } from 'components/Card'
@@ -134,7 +135,7 @@ export default function RemoveLiquidity() {
   }, [useZap, supportsZap, zapOutCurrency, chainId, pair, account, amountOut])
 
   const isZapRouteAvailable = Boolean(
-    useZap && supportsZap && pair && chainId && account && zapOutCurrency && Number(amountOut) > 0,
+    useZap && supportsZapV2 && !supportsZapV3 && pair && chainId && account && zapOutCurrency && Number(amountOut) > 0,
   )
 
   const { data: zapOutRouteData, error: zapOutRouteError, isFetching: isFetchingZapOutRoute } = useQuery<
@@ -166,10 +167,11 @@ export default function RemoveLiquidity() {
   const zapOutValidationError = useMemo(() => {
     if (!useZap || !supportsZap) return undefined
     if (!zapOutCurrency) return 'Select token'
+    if (supportsZapV3) return undefined // V3 uses router contract directly, no Kyber route needed
     if (zapOutRouteError) return 'Failed to get zap route'
     if (isZapRouteAvailable && !zapOutRouteData) return 'Fetching zap route'
     return undefined
-  }, [useZap, supportsZap, zapOutCurrency, zapOutRouteError, isZapRouteAvailable, zapOutRouteData])
+  }, [useZap, supportsZap, supportsZapV3, zapOutCurrency, zapOutRouteError, isZapRouteAvailable, zapOutRouteData])
 
   const combinedError = zapOutValidationError ?? derivedError
   const isValid = !combinedError
@@ -182,22 +184,77 @@ export default function RemoveLiquidity() {
     enabled: Boolean(useZap && supportsZap && zapOutToken && chainId && version),
   })
 
-  const isFetchingZapOutAmount = isFetchingZapOutRoute || isFetchingZapOutPrice
+  // V3 zap: fetch both token prices for USD estimates
+  const { data: token0Price = 0 } = useQuery({
+    queryKey: ['getPythPrice', pair?.token0.address],
+    queryFn: () => getPythPrice(pair!.token0.address, chainId!, version),
+    enabled: Boolean(supportsZapV3 && useZap && pair && chainId && version),
+  })
+  const { data: token1Price = 0 } = useQuery({
+    queryKey: ['getPythPrice', pair?.token1.address],
+    queryFn: () => getPythPrice(pair!.token1.address, chainId!, version),
+    enabled: Boolean(supportsZapV3 && useZap && pair && chainId && version),
+  })
+
+  const isFetchingZapOutAmount = supportsZapV3 ? false : (isFetchingZapOutRoute || isFetchingZapOutPrice)
+
+  // V3: get accurate swap estimate from router's quoteAmountsOutWithUpdate
+  const { data: v3ZapOutEstimate } = useQuery({
+    queryKey: ['v3ZapOutQuote', pair?.liquidityToken.address, zapOutToken?.address,
+      parsedAmounts[Field.CURRENCY_A]?.toExact(), parsedAmounts[Field.CURRENCY_B]?.toExact()],
+    queryFn: async () => {
+      if (!pair || !zapOutToken || !chainId) return undefined
+      const amount0 = Number(parsedAmounts[Field.CURRENCY_A]?.toExact() || 0)
+      const amount1 = Number(parsedAmounts[Field.CURRENCY_B]?.toExact() || 0)
+      if (amount0 <= 0 && amount1 <= 0) return undefined
+
+      const isToken0Out = zapOutToken.address.toLowerCase() === pair.token0.address.toLowerCase()
+      const directAmount = isToken0Out ? amount0 : amount1
+      const swapAmount = isToken0Out ? amount1 : amount0
+      const swapTokenIn = isToken0Out ? pair.token1.address : pair.token0.address
+      const swapTokenOut = zapOutToken.address
+
+      if (swapAmount <= 0) return directAmount
+
+      // Use router's quoteAmountsOutWithUpdate for accurate swap estimate
+      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+      const routerAddr = getRouterAddress(chainId, version)
+      const updateData = await buildV3UpdateData([swapTokenIn, swapTokenOut], chainId)
+
+      const { result } = await client.simulateContract({
+        address: routerAddr as `0x${string}`,
+        abi: [{
+          inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
+          name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
+        }] as const,
+        functionName: 'quoteAmountsOutWithUpdate',
+        args: [
+          BigInt(Math.floor(swapAmount * 1e18).toString()),
+          [swapTokenIn as `0x${string}`, swapTokenOut as `0x${string}`],
+          updateData as `0x${string}`,
+        ],
+      })
+
+      const swapOut = Number(result[result.length - 1]) / 1e18
+      return directAmount + swapOut
+    },
+    enabled: Boolean(supportsZapV3 && useZap && pair && zapOutToken && chainId &&
+      (Number(parsedAmounts[Field.CURRENCY_A]?.toExact() || 0) > 0 || Number(parsedAmounts[Field.CURRENCY_B]?.toExact() || 0) > 0)),
+    staleTime: 10_000,
+  })
 
   const zapOutEstimatedTokenAmount = useMemo(() => {
-    if (!zapOutRouteData?.zapDetails?.finalAmountUsd) {
-      return undefined
-    }
+    // V3: use router quote
+    if (supportsZapV3) return v3ZapOutEstimate ?? undefined
+
+    // V2: estimate from Kyber route data
+    if (!zapOutRouteData?.zapDetails?.finalAmountUsd) return undefined
     const finalUsd = Number(zapOutRouteData.zapDetails.finalAmountUsd)
-    if (!Number.isFinite(finalUsd) || finalUsd <= 0) {
-      return undefined
-    }
-    if (!zapOutTokenPrice || zapOutTokenPrice <= 0) {
-      return undefined
-    }
+    if (!Number.isFinite(finalUsd) || finalUsd <= 0) return undefined
+    if (!zapOutTokenPrice || zapOutTokenPrice <= 0) return undefined
     const amount = finalUsd / zapOutTokenPrice
     return Number.isFinite(amount) && amount > 0 ? amount : undefined
-  }, [zapOutRouteData, zapOutTokenPrice])
+  }, [zapOutRouteData, zapOutTokenPrice, supportsZapV3, v3ZapOutEstimate])
 
   const handleOpenZapCurrencyModal = useCallback(() => {
     setIsZapCurrencyModalOpen(true)
@@ -542,7 +599,30 @@ export default function RemoveLiquidity() {
                         <span className="text-base font-semibold text-white/60">Select token</span>
                       )}
                     </button>
-                    <ZapRoutePreview routeData={zapOutRouteData} />
+                    {supportsZapV3 && zapOutEstimatedTokenAmount ? (() => {
+                      const initUsd = Number(parsedAmounts[Field.CURRENCY_A]?.toExact() || 0) * token0Price +
+                                      Number(parsedAmounts[Field.CURRENCY_B]?.toExact() || 0) * token1Price
+                      const estUsd = zapOutEstimatedTokenAmount * zapOutTokenPrice
+                      const impact = initUsd > 0 ? Math.abs((estUsd - initUsd) / initUsd * 100) : 0
+                      return (
+                        <div className="flex flex-col gap-1 text-sm text-white/60 px-1">
+                          <div className="flex justify-between">
+                            <span>Initial value (USD)</span>
+                            <span className="text-white">${formatNumber(initUsd, { maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Estimated value after zap</span>
+                            <span className="text-white">${formatNumber(estUsd, { maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Price impact</span>
+                            <span className="text-[#27E3AB]">{impact < 0.01 ? '< 0.01%' : formatNumber(impact, { maximumFractionDigits: 2 }) + '%'}</span>
+                          </div>
+                        </div>
+                      )
+                    })() : !supportsZapV3 ? (
+                      <ZapRoutePreview routeData={zapOutRouteData} />
+                    ) : null}
                   </AutoColumn>
                 ) : (
                   <AutoColumn gap="10px">
