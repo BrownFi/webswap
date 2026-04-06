@@ -369,6 +369,8 @@ export class Pair {
       })
     } else if (version === 3) {
       // V3: use quoteAmountsOutWithUpdate (includes Pyth update + accurate AMM math)
+      // If quote reverts (ExceedsMaxOut, StalePrice, etc.), throw InsufficientReservesError
+      // so UI shows "Insufficient liquidity" instead of a misleading sync fallback estimate
       try {
         const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
         const { result } = await client.simulateContract({
@@ -378,10 +380,10 @@ export class Pair {
           args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         })
         amountOuts = result
-      } catch {
-        // Fallback to sync reserve-based estimate if V3 quote fails
-        const [syncOutput, syncPair] = this.getOutputAmount(inputAmount)
-        return [syncOutput, syncPair, priceUpdate, updateFee, 0]
+      } catch (err: any) {
+        // Quote failed — likely ExceedsMaxOut (0xd0915224) or other contract revert
+        // Don't fall back to sync (would show wrong amount + 0% impact)
+        throw new InsufficientReservesError()
       }
     } else {
       amountOuts = await client.readContract({
@@ -397,8 +399,30 @@ export class Pair {
       throw new InsufficientInputAmountError()
     }
 
-    const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
-    const priceImpactK = 0.001 * Number(ratio) * 100
+    let priceImpactK: number
+    if (version === 3) {
+      // V3: price impact = (midPrice - executionPrice) / midPrice
+      // midPrice from Pyth oracle, executionPrice = amountOut/amountIn
+      const { getPythPrice: getPythPriceFn } = await import('../utils')
+      const inToken = inputAmount.token
+      const outToken = outputReserve.token
+      const [priceIn, priceOut] = await Promise.all([
+        getPythPriceFn(inToken.address, chainId, 3),
+        getPythPriceFn(outToken.address, chainId, 3),
+      ])
+      if (priceIn > 0 && priceOut > 0) {
+        const inAmt = Number(inputAmount.toExact())
+        const outAmt = Number(outputAmount.toExact())
+        const executionPrice = outAmt / inAmt
+        const midPrice = priceIn / priceOut
+        priceImpactK = midPrice > 0 ? Math.max(0, ((midPrice - executionPrice) / midPrice) * 100) : 0
+      } else {
+        priceImpactK = 0
+      }
+    } else {
+      const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
+      priceImpactK = 0.001 * Number(ratio) * 100
+    }
 
     return [outputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount), version), priceUpdate, updateFee, priceImpactK]
   }
@@ -460,10 +484,10 @@ export class Pair {
           args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         })
         amountIns = result
-      } catch {
-        // Fallback to sync reserve-based estimate if V3 quote fails
-        const [syncInput, syncPair] = this.getInputAmount(outputAmount)
-        return [syncInput, syncPair, priceUpdate, updateFee, 0]
+      } catch (err: any) {
+        // Quote failed — likely ExceedsMaxOut or other contract revert
+        // Throw InsufficientReservesError so UI shows proper error
+        throw new InsufficientReservesError()
       }
     } else {
       amountIns = await client.readContract({
@@ -475,8 +499,30 @@ export class Pair {
     }
 
     const inputAmountResult = new TokenAmount(inputReserve.token, amountIns[0].toString())
-    const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
-    const priceImpactK = 0.001 * Number(ratio) * 100
+
+    let priceImpactK: number
+    if (version === 3) {
+      // V3: price impact = (midPrice - executionPrice) / midPrice
+      const { getPythPrice: getPythPriceFn } = await import('../utils')
+      const inToken = inputReserve.token
+      const outToken = outputAmount.token
+      const [priceIn, priceOut] = await Promise.all([
+        getPythPriceFn(inToken.address, chainId, 3),
+        getPythPriceFn(outToken.address, chainId, 3),
+      ])
+      if (priceIn > 0 && priceOut > 0) {
+        const inAmt = Number(inputAmountResult.toExact())
+        const outAmt = Number(outputAmount.toExact())
+        const executionPrice = outAmt / inAmt
+        const midPrice = priceIn / priceOut
+        priceImpactK = midPrice > 0 ? Math.max(0, ((midPrice - executionPrice) / midPrice) * 100) : 0
+      } else {
+        priceImpactK = 0
+      }
+    } else {
+      const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
+      priceImpactK = 0.001 * Number(ratio) * 100
+    }
 
     return [inputAmountResult, new Pair(inputReserve.add(inputAmountResult), outputReserve.subtract(outputAmount), version), priceUpdate, updateFee, priceImpactK]
   }
