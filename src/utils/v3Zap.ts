@@ -12,7 +12,7 @@ import { ROUTER_ADDRESS_V3, RPC_URLS } from 'lib/sdk/constants/addresses'
 
 // V3 Router ABI — zap + quote functions only
 const V3_ZAP_ABI = [
-  { inputs: [{ name: 'tokenIn', type: 'address' }, { name: 'tokenOut', type: 'address' }, { name: 'amountIn', type: 'uint256' }], name: 'getAmountOut', outputs: [{ name: 'amountOut', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }], name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [{ name: 'tokenIn', type: 'address' }, { name: 'tokenOther', type: 'address' }, { name: 'amountIn', type: 'uint256' }, { name: 'amountOtherMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapIn', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [{ name: 'token', type: 'address' }, { name: 'amountTokenMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapInETH', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'payable', type: 'function' },
   { inputs: [{ name: 'tokenA', type: 'address' }, { name: 'tokenB', type: 'address' }, { name: 'tokenOut', type: 'address' }, { name: 'liquidity', type: 'uint256' }, { name: 'amountMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }], name: 'zapOut', outputs: [{ name: 'amount', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
@@ -29,7 +29,9 @@ export function isV3ZapSupported(chainId?: ChainId | null, version?: number): bo
 
 /**
  * Get estimated output amount for half the zap input (for slippage calculation).
- * Calls router.getAmountOut() view function via viem.
+ * Uses quoteAmountsOutWithUpdate (simulate) so the router can apply a fresh Pyth
+ * update — the legacy view getAmountOut reverts with StalePrice on the new V3
+ * deployment.
  */
 export async function getV3ZapEstimate(
   chainId: ChainId,
@@ -44,12 +46,16 @@ export async function getV3ZapEstimate(
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const halfAmount = BigInt(amountIn) / 2n
 
-  const amountOut = await client.readContract({
+  const updateData = await buildV3UpdateData([tokenIn, tokenOther], chainId)
+
+  const { result } = await client.simulateContract({
     address: routerAddress as `0x${string}`,
     abi: V3_ZAP_ABI,
-    functionName: 'getAmountOut',
-    args: [tokenIn as `0x${string}`, tokenOther as `0x${string}`, halfAmount],
+    functionName: 'quoteAmountsOutWithUpdate',
+    args: [halfAmount, [tokenIn as `0x${string}`, tokenOther as `0x${string}`], updateData as `0x${string}`],
   })
+
+  const amountOut = result[result.length - 1]
 
   // Apply slippage: amountOtherMin = amountOut * (10000 - slippage) / 10000
   const amountOtherMin = (amountOut * BigInt(10000 - slippageBips)) / 10000n
