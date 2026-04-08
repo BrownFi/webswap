@@ -274,7 +274,7 @@
       "name": "USD₮0",
       "symbol": "USDT",
       "decimals": 6,
-      "logoURI": "https://hyperevmscan.io/token/images/usdt0_64.png"
+      "logoURI": "https://assets.coingecko.com/coins/images/68307/standard/usdt0.jpg"
     },
     {
       "chainId": 999,
@@ -282,7 +282,7 @@
       "name": "kHYPE",
       "symbol": "kHYPE",
       "decimals": 18,
-      "logoURI": "https://hyperevmscan.io/token/images/khype.svg"
+      "logoURI": "https://assets.coingecko.com/coins/images/67388/standard/khype.png"
     },
     {
       "chainId": 999,
@@ -290,7 +290,7 @@
       "name": "Unit Ethereum",
       "symbol": "UETH",
       "decimals": 18,
-      "logoURI": "https://hyperevmscan.io/token/images/eth.svg"
+      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
     },
     {
       "chainId": 999,
@@ -298,7 +298,7 @@
       "name": "Unit Bitcoin",
       "symbol": "UBTC",
       "decimals": 8,
-      "logoURI": "https://hyperevmscan.io/token/images/ubtc_64.png"
+      "logoURI": "https://assets.coingecko.com/coins/images/1/standard/bitcoin.png"
     },
     {
       "chainId": 59144,
