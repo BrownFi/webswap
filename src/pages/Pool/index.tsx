@@ -31,7 +31,7 @@ import { ButtonPrimary } from 'components/Button'
 const V3_POOLS: Record<number, { pair: string; token0: { address: string; decimals: number; symbol: string; name: string }; token1: { address: string; decimals: number; symbol: string; name: string } }[]> = {
   [ChainId.BERA_MAINNET]: [
     {
-      pair: '0x6acaff4ed9efb087f3ba39b441e34cb43622f04e',
+      pair: '0xaaa4107d62d78e0260427d3bba61663056088608',
       token0: { address: '0x6969696969696969696969696969696969696969', decimals: 18, symbol: 'WBERA', name: 'Wrapped Bera' },
       token1: { address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', decimals: 18, symbol: 'HONEY', name: 'Honey' },
     },

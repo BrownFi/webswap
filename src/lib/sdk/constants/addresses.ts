@@ -49,11 +49,11 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 }
 
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
-  [ChainId.BERA_MAINNET]: '0x54b1a4ef157D48072CA11f366AAFf75857C4C934', // BrownFiV3Router (with quoteAmountsOut/In)
+  [ChainId.BERA_MAINNET]: '0x02b6c8b65fC66A27a95876231b8416bF6E1AbA23', // BrownFiV3Router (with quoteAmountsOut/In)
 }
 
 export const FACTORY_ADDRESS_V3: Record<number, string> = {
-  [ChainId.BERA_MAINNET]: '0x8ab70e2c4C897d85A4d774a21c67Cb8fD176CD99',
+  [ChainId.BERA_MAINNET]: '0xE896f3c7d2548c94543Cd0FeAB0bd293f36CDb8d',
 }
 
 export const FACTORY_ADDRESS: Record<number, string> = {
