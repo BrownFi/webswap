@@ -133,24 +133,47 @@ export function getInitCodeHash(chainId: number, version: number): string {
  * Fetches Pyth oracle price for a given token address.
  * Uses viem + Pyth on-chain contract to read the price feed.
  */
+// ── Shared caches for Pyth data (used by getPythPrice and pair.ts) ────
+// priceFeedId: never changes per (factory, token) — cache forever
+const _feedIdCache = new Map<string, string>()
+// getPriceUnsafe: short TTL (prices update ~1/s but UI doesn't need sub-second)
+const _priceCache = new Map<string, { value: number; ts: number }>()
+const _PRICE_TTL = 5_000
+
+/** Cached factory.priceFeedIds(token) — shared across all callers */
+export async function getCachedPriceFeedId(client: any, factoryAddr: string, tokenAddr: string): Promise<string> {
+  const key = `${factoryAddr}:${tokenAddr}`.toLowerCase()
+  const cached = _feedIdCache.get(key)
+  if (cached) return cached
+  const id = await client.readContract({
+    address: factoryAddr as `0x${string}`,
+    abi: [{
+      inputs: [{ name: '', type: 'address' }],
+      name: 'priceFeedIds',
+      outputs: [{ name: '', type: 'bytes32' }],
+      stateMutability: 'view', type: 'function',
+    }] as const,
+    functionName: 'priceFeedIds',
+    args: [tokenAddr as `0x${string}`],
+  })
+  _feedIdCache.set(key, id as string)
+  return id as string
+}
+
 export async function getPythPrice(address: string, chainId: number, version: number): Promise<number> {
   if (!address || !chainId) return 0
   try {
     const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
 
     const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+    const factoryAddr = getFactoryAddress(chainId, version)
 
-    const priceFeedId = await client.readContract({
-      address: getFactoryAddress(chainId, version) as `0x${string}`,
-      abi: [{
-        inputs: [{ name: '', type: 'address' }],
-        name: 'priceFeedIds',
-        outputs: [{ name: '', type: 'bytes32' }],
-        stateMutability: 'view', type: 'function',
-      }] as const,
-      functionName: 'priceFeedIds',
-      args: [address as `0x${string}`],
-    })
+    const priceFeedId = await getCachedPriceFeedId(client, factoryAddr, address)
+
+    // Cached price lookup (5s TTL)
+    const priceKey = `${chainId}:${priceFeedId}`
+    const cached = _priceCache.get(priceKey)
+    if (cached && Date.now() - cached.ts < _PRICE_TTL) return cached.value
 
     const priceUnsafe = await client.readContract({
       address: PYTH_ADDRESS[chainId] as `0x${string}`,
@@ -169,10 +192,12 @@ export async function getPythPrice(address: string, chainId: number, version: nu
         stateMutability: 'view', type: 'function',
       }] as const,
       functionName: 'getPriceUnsafe',
-      args: [priceFeedId],
+      args: [priceFeedId as `0x${string}`],
     })
 
-    return getPriceFromUnsafe(priceUnsafe)
+    const price = getPriceFromUnsafe(priceUnsafe)
+    _priceCache.set(priceKey, { value: price, ts: Date.now() })
+    return price
   } catch (error) {
     console.warn('Cannot get Pyth price', error)
     return 0

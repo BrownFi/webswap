@@ -23,6 +23,29 @@ import {
 } from '../utils'
 import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/addresses'
 
+// ── Caches: reduce redundant RPC calls per quote ──────────────────────
+// priceFeedId cache is shared with utils/index.ts — imported via getCachedPriceFeedId
+
+// Hermes + encoded updateData: cache 5s (Pyth publishes ~1/s but we don't need sub-second freshness for quotes)
+let hermesCache: { key: string; data: string; ts: number } | null = null
+const HERMES_TTL = 5_000
+
+async function getCachedUpdateData(feedIds: string[]): Promise<string> {
+  const sortedKey = [...feedIds].sort().join(',')
+  if (hermesCache && hermesCache.key === sortedKey && Date.now() - hermesCache.ts < HERMES_TTL) {
+    return hermesCache.data
+  }
+  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
+  feedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+  const resp = await fetch(pythUrl.toString())
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+  const json = await resp.json()
+  const dataBytes = (json.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+  const encoded = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+  hermesCache = { key: sortedKey, data: encoded, ts: Date.now() }
+  return encoded
+}
+
 // Helper: fetch Pyth price feed data and update fee for WithPrice router calls
 async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[string[], number]> {
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
@@ -82,30 +105,15 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
   return [priceUpdate, Number(updateFee)]
 }
 
-// Helper: fetch Pyth price update data and encode for V2 router
+// Helper: fetch Pyth price update data and encode for V2/V3 router
 async function solidityPackHelper(addresses: string[], chainId: number, version: number = 2): Promise<string> {
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-  const { getFactoryAddress: getFactory } = await import('../utils')
-  const priceFeedIds = await Promise.all(addresses.map((addr) =>
-    client.readContract({
-      address: getFactory(chainId, version) as `0x${string}`,
-      abi: [{
-        inputs: [{ name: 'token', type: 'address' }],
-        name: 'priceFeedIds',
-        outputs: [{ name: '', type: 'bytes32' }],
-        stateMutability: 'view', type: 'function',
-      }] as const,
-      functionName: 'priceFeedIds',
-      args: [addr as `0x${string}`],
-    })
-  ))
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
-  priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
-  const pythResponse = await fetch(pythUrl.toString())
-  if (!pythResponse.ok) throw new Error(`HTTP ${pythResponse.status}`)
-  const data = await pythResponse.json()
-  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
-  return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+  const { getFactoryAddress: getFactory, getCachedPriceFeedId } = await import('../utils')
+  const factoryAddr = getFactory(chainId, version)
+  const priceFeedIds = await Promise.all(
+    addresses.map((addr) => getCachedPriceFeedId(client, factoryAddr, addr))
+  )
+  return getCachedUpdateData(priceFeedIds)
 }
 import { Token } from './token'
 import { Price } from './fractions/price'

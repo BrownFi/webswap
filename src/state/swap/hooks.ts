@@ -11,6 +11,7 @@ import { useCurrency } from 'hooks/Tokens'
 import { useTradeExactIn, useTradeExactOut } from 'hooks/Trades'
 import useParsedQueryString from 'hooks/useParsedQueryString'
 import { getNativeToken, isAddress, isNativeCurrency } from 'utils'
+import useDebounce from 'hooks/useDebounce'
 import { AppDispatch, AppState } from 'state'
 import { useCurrencyBalances } from 'state/wallet/hooks'
 import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies, typeInput } from './actions'
@@ -139,8 +140,9 @@ export function useDerivedSwapInfo(): {
   ])
 
   const isExactIn: boolean = independentField === Field.INPUT
-  const parsedAmount = tryParseAmount(typedValue, (isExactIn ? inputCurrency : outputCurrency) ?? undefined)
-  const isInputEmpty = !(+typedValue > 0)
+  const debouncedTypedValue = useDebounce(typedValue, 300)
+  const parsedAmount = tryParseAmount(debouncedTypedValue, (isExactIn ? inputCurrency : outputCurrency) ?? undefined)
+  const isInputEmpty = !(+debouncedTypedValue > 0)
 
   const tradeIn = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined)
   const tradeOut = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined)
