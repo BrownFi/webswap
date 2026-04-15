@@ -22,8 +22,8 @@ const CustomAccountDisplay = () => {
   return (
     <>
       <ButtonDropdown
-        className="!bg-black/40 hover:scale-105 transition-all !py-1 !px-2.5 h-full !min-h-10 !rounded-none !w-fit"
-        style={{ border: '1px solid #FFFFFF20' }}
+        className="!bg-transparent hover:!bg-[#c4943a15] transition-all !py-2 !px-4 h-full !min-h-10 !rounded-full !w-fit"
+        style={{ border: '1px solid rgba(196,148,58,0.4)' }}
         onClick={openAccountModal || (() => setOpen(true))}
       >
         🤠
@@ -74,8 +74,8 @@ export const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
       onClick={onClose}
     >
       <div
-        className="bg-[#1A1A1E] m-2 w-full max-w-sm p-4"
-        style={{ border: '1px solid #FFFFFF20' }}
+        className="bg-[#1a1510] rounded-xl m-2 w-full max-w-sm p-4"
+        style={{ border: '1px solid #c4943a30' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-end">

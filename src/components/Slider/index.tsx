@@ -30,17 +30,17 @@ export default function Slider({ value, onChange, min = 0, step = 1, max = 100 }
       min={min}
       max={max}
       dotStyle={{
-        backgroundColor: '#27E3AB',
+        backgroundColor: '#c4943a',
       }}
       activeDotStyle={{
-        backgroundColor: '#27E3AB',
+        backgroundColor: '#c4943a',
       }}
       styles={{
         rail: {
-          backgroundColor: '#1A1A1E',
+          backgroundColor: '#1a1510',
         },
         track: {
-          backgroundColor: '#27E3AB',
+          backgroundColor: '#c4943a',
         },
       }}
     />

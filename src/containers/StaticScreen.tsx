@@ -3,8 +3,7 @@ import 'rc-slider/assets/index.css'
 import 'theme/index.css'
 import styled from 'styled-components'
 import Footer from 'components/Footer'
-import csm from 'assets/svg/csm.svg'
-import mathImage from 'assets/svg/math-image.svg'
+import bgGolden from 'assets/images/bg-golden.jpg'
 import Header from 'components/Header'
 
 const AppWrapper = styled.div`
@@ -12,7 +11,7 @@ const AppWrapper = styled.div`
   flex-flow: column;
   align-items: center;
   overflow-x: hidden;
-  background-color: #0D0D0F;
+  background-color: #0a0806;
   min-height: 100vh;
 `
 
@@ -26,17 +25,16 @@ const HeaderWrapper = styled.div`
   justify-content: space-between;
   min-height: 78px;
   z-index: 100;
-  background-color: #0D0D0F;
+  background-color: transparent;
 `
 
 const StaticScreen = ({ children }: PropsWithChildren) => {
   return (
     <AppWrapper className="relative">
-      <img src={csm} alt="" className="fixed right-[40px] top-[100px] pointer-events-none" />
       <img
-        src={mathImage}
+        src={bgGolden}
         alt=""
-        className="fixed left-[40px] right-[40px] bottom-[120px] pointer-events-none math-image"
+        className="fixed inset-0 w-full h-full object-cover pointer-events-none opacity-80"
       />
       <HeaderWrapper>
         <Header />

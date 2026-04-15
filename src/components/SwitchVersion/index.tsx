@@ -30,10 +30,10 @@ const SwitchVersion = ({ isMobile }: Props) => {
         <button
           key={v}
           onClick={() => handleSelect(v)}
-          className={`px-2 py-1 text-xs font-bold transition-all ${
+          className={`px-2.5 py-1 text-xs font-bold transition-all rounded-[6px] ${
             version === v
-              ? 'bg-[#773030] text-white'
-              : 'bg-[#77303044] text-white/60 hover:text-white'
+              ? 'bg-[#c4943a] text-white'
+              : 'bg-transparent border border-[#c4943a40] text-[#8A7D66] hover:text-white'
           } ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         >
           V{v}

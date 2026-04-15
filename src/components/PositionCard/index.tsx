@@ -45,13 +45,14 @@ export const HoverCard = styled(Card)`
     border: 1px solid ${({ theme }) => darken(0.06, theme.bg2)};
   }
 `
-const StyledPositionCard = styled(LightCard)<{ bgColor?: any }>`
-  border: none;
-  border-bottom: 1px solid #FFFFFF10;
-  background: #1A1A1E;
+const StyledPositionCard = styled.div<{ bgColor?: any }>`
   position: relative;
   overflow: hidden;
-  padding: 8px 16px 16px 16px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+  &:hover {
+    border-color: rgba(196, 148, 58, 0.3);
+  }
 `
 
 const pairBGT: Record<string, [string, string]> = {
@@ -159,406 +160,213 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   }
 
   return (
-    <StyledPositionCard border={border}>
-      <AutoColumn gap="8px">
-        {/* Top row: pool name + collapse icon (always same line) */}
-        <div className="flex items-center justify-between">
+    <StyledPositionCard
+      style={{
+        border: showMore ? '1px solid rgba(196,148,58,0.4)' : '1px solid transparent',
+        borderBottom: showMore ? '1px solid rgba(196,148,58,0.4)' : '1px solid rgba(196,148,58,0.08)',
+        background: showMore ? 'rgba(26,21,16,0.95)' : 'transparent',
+        borderRadius: showMore ? '16px' : '0',
+      }}
+    >
+      <AutoColumn gap="0px">
+        {/* Collapsed row: matching table columns */}
+        <div
+          className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 items-center cursor-pointer py-2 max-md:grid-cols-2 max-md:gap-2"
+          onClick={() => setShowMore(!showMore)}
+        >
+          {/* Pool name */}
           <div className="flex items-center gap-2">
-            <div onClick={handleCopyPoolAddress} className="cursor-pointer">
+            <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
             </div>
-            <Text fontWeight={600} fontSize={20} className="text-white">
-              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
-            </Text>
-            {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1">Beta</ButtonSecondary>}
-          </div>
-          <ButtonEmpty padding="0px" width="fit-content" onClick={() => setShowMore(!showMore)}>
-            <div className="text-[#27E3AB] flex items-center">
-              <span className="hidden md:inline">Manage</span>
-              {showMore ? <ChevronUp size="20" className="md:ml-2" /> : <ChevronDown size="20" className="md:ml-2" />}
+            <div>
+              <Text fontWeight={700} fontSize={16} className="text-[#F5F0E8]">
+                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
+              </Text>
+              <Text fontSize={12} className="text-[#c4943a]">
+                {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+              </Text>
             </div>
-          </ButtonEmpty>
+            {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0">Beta</ButtonSecondary>}
+          </div>
+          {/* TVL */}
+          <Text fontWeight={600} fontSize={14} className="text-[#F5F0E8] max-md:hidden">{formatPrice(tvl)}</Text>
+          {/* Vol 24h */}
+          <Text fontWeight={500} fontSize={14} className="text-[#F5F0E8] max-md:hidden">{formatPrice(volume24h)}</Text>
+          {/* Free APR */}
+          <Text fontWeight={600} fontSize={14} className="text-[#27AE60] max-md:hidden">
+            {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
+          </Text>
+          {/* Bgt APR */}
+          <Text fontWeight={600} fontSize={14} className="text-[#27AE60] max-md:hidden">
+            {enableBgt || enableMerklCampaignApr
+              ? `+${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%`
+              : '--'}
+          </Text>
+          {/* Actions */}
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <Link
+              to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+              className="text-xs bg-transparent border border-[rgba(196,148,58,0.4)] !text-[#c4943a] hover:bg-[rgba(196,148,58,0.1)] rounded-lg px-3 py-1.5 no-underline whitespace-nowrap transition-colors inline-flex items-center gap-1"
+              style={{ background: 'transparent', color: '#c4943a' }}
+            >
+              + Add liquidity
+            </Link>
+          </div>
         </div>
 
-        {/* Stats row */}
-        <FixedHeightRow>
-          <AutoRow className="!w-fit" gap="8px">
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex flex-wrap items-center gap-1 gap-y-1">
-                <div className="min-w-[60px]">
-                  <ButtonSecondary className="!w-fit !px-1">
-                    {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 4 })}%
-                  </ButtonSecondary>
-                </div>
-                <Text className="whitespace-nowrap text-[aqua] !min-w-[120px]">TVL: {formatPrice(tvl)}</Text>
-                {enableBgt || enableMerklCampaignApr ? (
-                  <MouseoverTooltip
-                    text={
-                      <div className="text-sm">
-                        <div className="font-bold">APR</div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-[#dcdcdc]">Fee APR:</div>
-                          <div className="text-[#27E3AB]">
-                            {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-[#dcdcdc]">{enableBgt ? 'BGT' : 'Merkl'} APR:</div>
-                          <div className="text-[#e5b28e]">
-                            {`${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%`}
-                          </div>
-                          {enableMerklCampaignApr && (
-                            <div className="flex items-center gap-1">
-                              <div>Check</div>
-                              <a
-                                href="https://app.merkl.xyz/opportunities/linea/ERC20LOGPROCESSOR/0xA87E2c65F2b79164bab690Ec6808431D8c419598"
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <ExternalLink
-                                  size="14"
-                                  className="cursor-pointer text-orange-400 hover:text-orange-500"
-                                />
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-[#dcdcdc]">Total APR:</div>
-                          <div className="text-[#27E3AB]">
-                            {`${formatNumber(feeAPR + (enableBgt ? bgtAPR : merklCampaignApr), {
-                              maximumFractionDigits: 2,
-                            })}%`}
-                          </div>
-                        </div>
-                      </div>
-                    }
-                  >
-                    <div className="flex gap-1 items-center">
-                      <Text className="whitespace-nowrap text-[#27E3AB]">
-                        APR: {`${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%`}
-                        <span className="text-[#e5b28e]">
-                          {` + ${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%`}
-                        </span>
-                      </Text>
-                      {enableBgt ? (
-                        <img src="https://furthermore.app/icons/bgt.svg" className="h-5 border-none" alt="BGT" />
-                      ) : (
-                        <img src="https://lineascan.build/token/images/weth_32.png" className="h-5" alt="WETH" />
-                      )}
-                    </div>
-                  </MouseoverTooltip>
-                ) : (
-                  <Text className="whitespace-nowrap text-[#27E3AB]">
-                    Fee APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
-                  </Text>
-                )}
-              </div>
-            </div>
-          </AutoRow>
-        </FixedHeightRow>
-
-        {!isMainnet && (
-          <div className="flex flex-wrap items-center gap-3 text-white text-sm">
+        {!isMainnet && showMore && (
+          <div className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2">
             <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
             <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
             <Text>DevFee: {`${formatNumberLambda(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
-
             {canEditSettings && (
-              <Settings
-                size="14"
-                className="cursor-pointer text-orange-400 hover:text-orange-500"
-                onClick={() => setShowSettings(true)}
-              />
+              <Settings size="14" className="cursor-pointer text-[#c4943a] hover:text-[#d4a94f]" onClick={() => setShowSettings(true)} />
             )}
           </div>
         )}
 
+        {/* Expanded: Two side-by-side panels */}
         {showMore && (
-          <AutoColumn gap="8px">
-            <>
-              <Flex alignItems="center" justifyContent="space-between" className="gap-3">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
-                    Pool stats
-                  </h2>
-                  <div className="flex gap-2">
-                    <a
-                      href={`${getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}`}
-                      target="_blank"
-                      className="cursor-pointer"
-                      rel="noreferrer"
-                      title={`View on ${getScanText(chainId)}`}
-                    >
-                      <Info size="20" style={{ color: '#27E3AB' }} />
-                    </a>
-                    <Suspense fallback={null}>
-                      <PairChartModal
-                        enableAdvancedZoom
-                        pair={pair}
-                        name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
-                      />
-                    </Suspense>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* Left panel: Pool stats */}
+            <div className="bg-[#12100b] rounded-xl p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <h3 className="text-[18px] font-bold text-[#F5F0E8]">Pool stats</h3>
+                <a
+                  href={`${getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}`}
+                  target="_blank"
+                  className="cursor-pointer"
+                  rel="noreferrer"
+                  title={`View on ${getScanText(chainId)}`}
+                >
+                  <Info size="16" className="text-[#8A7D66] hover:text-[#c4943a]" />
+                </a>
+                <Suspense fallback={null}>
+                  <PairChartModal
+                    enableAdvancedZoom
+                    pair={pair}
+                    name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
+                  />
+                </Suspense>
                 {isTest && <PairFavorite pair={pair} />}
-              </Flex>
-              <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  TVL
-                </Text>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  {formatPrice(tvl)}
-                </Text>
-              </FixedHeightRow>
-              <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  Total LP Tokens
-                </Text>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  {formatNumber(totalPoolTokens?.toSignificant(6))}
-                </Text>
-              </FixedHeightRow>
-              <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  Price per LP
-                </Text>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  {formatPrice(iskHYPEUSDT ? lpPrice / 1e9 : lpPrice)}
-                </Text>
-              </FixedHeightRow>
-              <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  Volume (24h)
-                </Text>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  {formatPrice(volume24h)}
-                </Text>
-              </FixedHeightRow>
-              <FixedHeightRow>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  Volume (7d)
-                </Text>
-                <Text fontSize={16} fontWeight={500} color="white">
-                  {formatPrice(volume7d)}
-                </Text>
-              </FixedHeightRow>
-
-              <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
-                <FixedHeightRow>
-                  <div className="flex items-center gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
-                    <CurrencyLogo currency={pair.token0} />
-                    <Text fontSize={16} fontWeight={500} color="white">
-                      {getTokenSymbol(currency0, chainId)}
-                    </Text>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between"><span className="text-[#8A7D66]">TVL</span><span className="text-[#F5F0E8]">{formatPrice(tvl)}</span></div>
+                <div className="flex justify-between"><span className="text-[#8A7D66]">Total LP Tokens</span><span className="text-[#F5F0E8]">{formatNumber(totalPoolTokens?.toSignificant(6))}</span></div>
+                <div className="flex justify-between"><span className="text-[#8A7D66]">Volume (24h)</span><span className="text-[#F5F0E8]">{formatPrice(volume24h)}</span></div>
+                <div className="flex justify-between"><span className="text-[#8A7D66]">Volume (7d)</span><span className="text-[#F5F0E8]">{formatPrice(volume7d)}</span></div>
+                <div className="flex justify-between items-center" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    <CurrencyLogo currency={pair.token0} size="20px" />
+                    <span className="text-[#F5F0E8]">{getTokenSymbol(currency0, chainId)}</span>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color="white">
-                    {formatNumber(pair.reserve0.toSignificant(4))}{' '}
-                    <span className="text-[#949494]">
-                      ({formatPrice(showTokenPrice ? token0Price : token0Price * Number(pair.reserve0.toSignificant(6)))})
-                    </span>
-                  </Text>
-                </FixedHeightRow>
-
-                <FixedHeightRow>
-                  <div className="flex items-center gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
-                    <CurrencyLogo currency={pair.token1} />
-                    <Text fontSize={16} fontWeight={500} color="white">
-                      {getTokenSymbol(currency1, chainId)}
-                    </Text>
+                  <span className="text-[#F5F0E8]">
+                    {formatNumber(pair.reserve0.toSignificant(4))} <span className="text-[#8A7D66]">({formatPrice(showTokenPrice ? token0Price : token0Price * Number(pair.reserve0.toSignificant(6)))})</span>
+                  </span>
+                </div>
+                <div className="flex justify-between items-center" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    <CurrencyLogo currency={pair.token1} size="20px" />
+                    <span className="text-[#F5F0E8]">{getTokenSymbol(currency1, chainId)}</span>
                   </div>
-                  <Text fontSize={16} fontWeight={500} color="white">
-                    {formatNumber(pair.reserve1.toSignificant(4))}{' '}
-                    <span className="text-[#949494]">
-                      ({formatPrice(showTokenPrice ? token1Price : token1Price * Number(pair.reserve1.toSignificant(6)))})
+                  <span className="text-[#F5F0E8]">
+                    {formatNumber(pair.reserve1.toSignificant(4))} <span className="text-[#8A7D66]">({formatPrice(showTokenPrice ? token1Price : token1Price * Number(pair.reserve1.toSignificant(6)))})</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right panel: Your position */}
+            <div className="bg-[#1a1510] border border-[rgba(196,148,58,0.15)] rounded-xl p-4">
+              <h3 className="text-[18px] font-bold text-[#F5F0E8] mb-4">Your position</h3>
+
+              {account ? (
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#8A7D66]">LP tokens</span>
+                    {poolTokenPercentage && userPoolBalance ? (
+                      <span className="text-[#F5F0E8]">
+                        {totalLpDisplay ?? '0'} <span className="text-[#8A7D66]">({(poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2))}%)</span>
+                      </span>
+                    ) : (
+                      <Loader stroke="gray" />
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <CurrencyLogo currency={currency0} size="20px" />
+                      <span className="text-[#8A7D66]">Pooled {getTokenSymbol(currency0, chainId)}</span>
+                    </div>
+                    <span className="text-[#F5F0E8]">
+                      {token0Deposited ? formatNumber(token0Deposited?.toSignificant(4)) : '-'}
+                      {token0Deposited && <span className="text-[#8A7D66]"> ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})</span>}
                     </span>
-                  </Text>
-                </FixedHeightRow>
-              </Flex>
-            </>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <CurrencyLogo currency={currency1} size="20px" />
+                      <span className="text-[#8A7D66]">Pooled {getTokenSymbol(currency1, chainId)}</span>
+                    </div>
+                    <span className="text-[#F5F0E8]">
+                      {token1Deposited ? formatNumber(token1Deposited?.toSignificant(4)) : '-'}
+                      {token1Deposited && <span className="text-[#8A7D66]"> ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})</span>}
+                    </span>
+                  </div>
 
-            {account && (
-              <>
-                <div className="w-full h-[1px] my-[8px] bg-white opacity-[0.1]" />
-                <h2 className="text-[20px] font-medium text-white" style={{ fontFamily: 'Russo One' }}>
-                  Your position
-                </h2>
-
-                <FixedHeightRow>
-                  <Text fontSize={16} fontWeight={500} color="white">
-                    LP tokens
-                  </Text>
-                  {poolTokenPercentage && userPoolBalance ? (
-                    <RowFixed className="gap-1 flex-wrap items-center">
-                      {stakedLpDisplay && (
-                        <Text fontSize={16} fontWeight={500} color="#e5b28e">
-                          {stakedLpDisplay} staked
-                        </Text>
+                  {pairAccount && (
+                    <>
+                      <UserPositionRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
+                      {!isMainnet && (
+                        <UserPositionRow label="HODL portfolio" value={pairAccount.bnhPortfolio} description="Your position value if you had just held the two tokens in your wallet." />
                       )}
-                      {walletLpDisplay && (
+                      <UserPositionRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} mauso={pairAccount.basePortfolio} />
+                      {!isMainnet && (
                         <>
-                          {stakedLpDisplay && (
-                            <Text fontSize={16} fontWeight={500} color="white">
-                              +
-                            </Text>
-                          )}
-                          <Text fontSize={16} fontWeight={500} color="white">
-                            {walletLpDisplay}
-                          </Text>
+                          <UserPositionRow colored label="HODL PnL" value={pairAccount.bnhPortfolio - pairAccount.basePortfolio} mauso={pairAccount.basePortfolio} description="Your profit and loss if you had just held the two tokens in your wallet." />
+                          <UserPositionRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio} description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`} />
                         </>
                       )}
-                      {!stakedLpDisplay && !walletLpDisplay && (
-                        <Text fontSize={16} fontWeight={500} color="white">
-                          {totalLpDisplay ?? '0'}
-                        </Text>
-                      )}
-                      <Text fontSize={16} fontWeight={500} color="#949494">
-                        ({(poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2)) + '%'})
-                      </Text>
-                    </RowFixed>
-                  ) : (
-                    <Loader stroke="gray" />
+                    </>
                   )}
-                </FixedHeightRow>
 
-                <Flex flexDirection={shouldReverse ? 'column-reverse' : 'column'} className="gap-2">
-                  <FixedHeightRow>
-                    <RowFixed className="gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
-                      <CurrencyLogo currency={currency0} />
-                      <Text fontSize={16} fontWeight={500} color="white">
-                        Pooled {getTokenSymbol(currency0, chainId)}
-                      </Text>
-                    </RowFixed>
-                    {token0Deposited ? (
-                      <RowFixed className="gap-1">
-                        <Text fontSize={16} fontWeight={500} color="white">
-                          {formatNumber(token0Deposited?.toSignificant(4))}
-                        </Text>
-                        <Text fontSize={16} fontWeight={500} color={'#949494'}>
-                          ({formatPrice(token0Price * (showTokenPrice ? 1 : Number(token0Deposited.toSignificant(4))))})
-                        </Text>
-                      </RowFixed>
-                    ) : (
-                      <Text fontSize={16} fontWeight={500} color="gray">
-                        -
-                      </Text>
-                    )}
-                  </FixedHeightRow>
-
-                  <FixedHeightRow>
-                    <RowFixed className="gap-2" onClick={() => setShowTokenPrice(!showTokenPrice)}>
-                      <CurrencyLogo currency={currency1} />
-                      <Text fontSize={16} fontWeight={500} color="white">
-                        Pooled {getTokenSymbol(currency1, chainId)}
-                      </Text>
-                    </RowFixed>
-                    {token1Deposited ? (
-                      <RowFixed className="gap-1">
-                        <Text fontSize={16} fontWeight={500} color="white">
-                          {formatNumber(token1Deposited?.toSignificant(4))}
-                        </Text>
-                        <Text fontSize={16} fontWeight={500} color={'#949494'}>
-                          ({formatPrice(token1Price * (showTokenPrice ? 1 : Number(token1Deposited.toSignificant(4))))})
-                        </Text>
-                      </RowFixed>
-                    ) : (
-                      <Text fontSize={16} fontWeight={500} color="gray">
-                        -
-                      </Text>
-                    )}
-                  </FixedHeightRow>
-                </Flex>
-
-                {account && pairAccount && (
-                  <>
-                    <UserPositionRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
-                    {!isMainnet && (
-                      <UserPositionRow
-                        label="HODL portfolio"
-                        value={pairAccount.bnhPortfolio}
-                        description="Your position value if you had just held the two tokens in your wallet."
-                      />
-                    )}
-                    <UserPositionRow
-                      colored
-                      label="LPing PnL"
-                      value={pairAccount.unrealizedPnL}
-                      mauso={pairAccount.basePortfolio}
-                    />
-                    {!isMainnet && (
-                      <>
-                        <UserPositionRow
-                          colored
-                          label="HODL PnL"
-                          value={pairAccount.bnhPortfolio - pairAccount.basePortfolio}
-                          mauso={pairAccount.basePortfolio}
-                          description="Your profit and loss if if you had just held the two tokens in your wallet."
-                        />
-                        <UserPositionRow
-                          colored
-                          label="LPing vs. HODL"
-                          value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio}
-                          description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`}
-                        />
-                      </>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-
-            <RowBetween style={{ marginTop: '10px' }}>
-              <ButtonPrimary
-                padding="8px"
-                as={Link}
-                to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-                width="48%"
-              >
-                Add
-              </ButtonPrimary>
-              {userPoolTokens && JSBI.greaterThan(userPoolTokens.raw, BIG_INT_ZERO) ? (
-                <ButtonPrimary
-                  padding="8px"
-                  as={Link}
-                  width="48%"
-                  to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
-                >
-                  Remove
-                </ButtonPrimary>
-              ) : (
-                <ButtonPrimary disabled padding="8px" width="48%">
-                  Remove
-                </ButtonPrimary>
-              )}
-            </RowBetween>
-
-            {enableBgt && account && (
-              <div className="flex gap-2 justify-center items-center mt-2">
-                <div className="text-center text-[#b2ada9]">
-                  Stake your LP tokens on{' '}
-                  <a
-                    href={pairBGT[pair.liquidityToken.address][0]}
-                    target="_blank"
-                    className="cursor-pointer hover:underline text-[#e9ad6e]"
-                    rel="noreferrer"
-                  >
-                    BeraHub
-                  </a>{' '}
-                  (earn BGT), or on{' '}
-                  <a
-                    href={pairBGT[pair.liquidityToken.address][1]}
-                    target="_blank"
-                    className="cursor-pointer hover:underline text-[#e9ad6e]"
-                    rel="noreferrer"
-                  >
-                    Infrared
-                  </a>{' '}
-                  (earn iBGT)
+                  {/* Action buttons */}
+                  <div className="pt-2 space-y-2">
+                    <ButtonPrimary
+                      as={Link}
+                      to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+                      padding="10px"
+                      className="!text-sm"
+                    >
+                      + Add liquidity
+                    </ButtonPrimary>
+                    <Link
+                      to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
+                      className="block text-center text-sm text-[#8A7D66] hover:text-[#c4943a] no-underline transition-colors"
+                    >
+                      Remove
+                    </Link>
+                  </div>
                 </div>
+              ) : (
+                <div className="text-[#8A7D66] text-sm text-center py-8">
+                  Connect wallet to view your position
+                </div>
+              )}
+            </div>
+
+            {/* BGT staking info */}
+            {enableBgt && account && (
+              <div className="md:col-span-2 flex gap-2 justify-center items-center text-sm text-[#b2ada9]">
+                Stake your LP tokens on{' '}
+                <a href={pairBGT[pair.liquidityToken.address][0]} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">BeraHub</a>{' '}
+                (earn BGT), or on{' '}
+                <a href={pairBGT[pair.liquidityToken.address][1]} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">Infrared</a>{' '}
+                (earn iBGT)
                 <img src="https://furthermore.app/icons/bgt.svg" className="h-5" alt="BGT" />
               </div>
             )}
-          </AutoColumn>
+          </div>
         )}
       </AutoColumn>
 
@@ -591,7 +399,7 @@ const UserPositionRow = ({
       <Text
         fontSize={16}
         fontWeight={500}
-        color={colored ? (Math.abs(value) < 0.01 ? '#949494' : value > 0 ? '#35b935' : '#ff6c00') : 'white'}
+        color={colored ? (Math.abs(value) < 0.01 ? '#8A7D66' : value > 0 ? '#35b935' : '#ff6c00') : 'white'}
       >
         {Math.abs(value) >= 0.01 ? formatPrice(value) : '~ $0'}
         {Math.abs(value) >= 0.01 && mauso && Math.abs(mauso) >= 0.01 && ` (${((value * 100) / mauso).toFixed(2)}%)`}

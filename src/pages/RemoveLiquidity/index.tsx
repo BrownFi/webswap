@@ -616,7 +616,7 @@ export default function RemoveLiquidity() {
                           </div>
                           <div className="flex justify-between">
                             <span>Price impact</span>
-                            <span className="text-[#27E3AB]">{impact < 0.01 ? '< 0.01%' : formatNumber(impact, { maximumFractionDigits: 2 }) + '%'}</span>
+                            <span className="text-[#c4943a]">{impact < 0.01 ? '< 0.01%' : formatNumber(impact, { maximumFractionDigits: 2 }) + '%'}</span>
                           </div>
                         </div>
                       )

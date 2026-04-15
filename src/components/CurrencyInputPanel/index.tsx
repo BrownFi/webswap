@@ -12,8 +12,6 @@ import { Input as NumericalInput } from 'components/NumericalInput'
 import downIcon from 'assets/svg/arrow_drop_down.svg'
 
 import { useActiveWeb3React } from 'hooks'
-import useTheme from 'hooks/useTheme'
-import { isMobile } from 'react-device-detect'
 import { getTokenSymbol } from 'utils'
 
 const InputRow = styled.div<{ selected: boolean }>`
@@ -28,26 +26,26 @@ const CurrencySelect = styled.button<{ selected: boolean }>`
   min-width: 150px;
   font-size: 20px;
   font-weight: 500;
-  background-color: ${({ selected }) => (selected ? '#1A1A1E' : '#1A1A1E')};
-  color: ${({ selected, theme }) => (selected ? theme.white : theme.white)};
-  border-radius: 0;
-  box-shadow: ${({ selected }) => (selected ? 'none' : '0px 6px 10px rgba(0, 0, 0, 0.075)')};
+  background-color: #1a1510;
+  color: white;
+  border-radius: 9999px;
+  box-shadow: none;
   outline: none;
   cursor: pointer;
   user-select: none;
   border: none;
-  padding: 0 0.5rem;
+  padding: 0 12px;
 
   :focus,
   :hover {
-    background-color: ${({ selected }) => (selected ? '#1A1A1E' : '#1A1A1E')};
+    background-color: #1a1510;
   }
 `
 
 const LabelRow = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
   align-items: center;
-  color: ${({ theme }) => theme.text1};
+  color: #8A7D66;
   font-size: 0.75rem;
   line-height: 1rem;
   padding: 16px 20px 20px 20px;
@@ -66,15 +64,21 @@ const Aligner = styled.span`
 const InputPanel = styled.div<{ hideInput?: boolean }>`
   ${({ theme }) => theme.flexColumnNoWrap}
   position: relative;
-  border-radius: 0;
-  background-color: #111114;
+  border-radius: 16px;
+  background-color: #2a2418;
   z-index: 1;
+  border: 1px solid transparent;
+  transition: background-color 150ms, border 150ms;
+  &:focus-within {
+    background-color: #0d0b08;
+    border: 1px solid #c4943a;
+  }
 `
 
 const Container = styled.div<{ hideInput: boolean }>`
-  border-radius: 0;
+  border-radius: 16px;
   border: 0;
-  background-color: #111114;
+  background-color: transparent;
 `
 
 const StyledTokenName = styled.span<{ active?: boolean }>`
@@ -85,21 +89,20 @@ const StyledTokenName = styled.span<{ active?: boolean }>`
 
 const StyledBalanceMax = styled.button`
   height: 24px;
-  background-color: #773030;
+  background-color: transparent;
   border: 0;
   border-radius: 0;
   font-size: 14px;
-  padding: 0 8px;
+  padding: 0;
   font-weight: 700;
-  padding: 0 16px;
-  margin-left: 12px;
+  margin-left: 8px;
 
-  font-weight: 500;
   cursor: pointer;
   margin-right: 0.5rem;
-  color: white;
+  color: #c4943a;
   :hover {
     border: 0;
+    opacity: 0.8;
   }
   :focus {
     border: 0;
@@ -151,7 +154,6 @@ export function CurrencyInputPanel({
   const [modalOpen, setModalOpen] = useState(false)
   const { account, chainId } = useActiveWeb3React()
   const selectedCurrencyBalance = useCurrencyBalance(account ?? undefined, currency ?? undefined)
-  const theme = useTheme()
 
   const handleDismissSearch = useCallback(() => {
     setModalOpen(false)
@@ -163,16 +165,16 @@ export function CurrencyInputPanel({
         {!hideInput && (
           <LabelRow>
             <RowBetween style={{ minHeight: 24 }}>
-              <TYPE.body color={'white'} fontWeight={500} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
+              <TYPE.body color={'#8A7D66'} fontWeight={400} fontSize={13}>
                 {label}
               </TYPE.body>
               <div className="flex items-center text-right">
                 {account && (
                   <TYPE.body
                     onClick={onMax}
-                    color={theme.white}
-                    fontWeight={500}
-                    fontSize={isMobile ? 14 : 16}
+                    color={'#8A7D66'}
+                    fontWeight={400}
+                    fontSize={13}
                     style={{ display: 'inline', cursor: 'pointer' }}
                   >
                     {!hideBalance && !!currency && selectedCurrencyBalance

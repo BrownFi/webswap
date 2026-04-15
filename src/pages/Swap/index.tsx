@@ -349,7 +349,7 @@ export default function Swap() {
                       onSwitchTokens()
                     }}
                   >
-                    <img src={switchIcon} className="w-[40px]" alt="switch" />
+                    <img src={switchIcon} className="w-[20px]" alt="switch" />
                   </a>
                 </ArrowWrapper>
                 {recipient === null && !showWrap && isExpertMode ? (

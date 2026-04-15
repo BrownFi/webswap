@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { Currency, ETHER, Token } from '@brownfi/sdk'
-import React, { KeyboardEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Currency, Token } from '@brownfi/sdk'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList } from 'react-window'
 import { Text } from 'components/Rebass'
 import { useActiveWeb3React } from 'hooks'
@@ -13,7 +13,7 @@ import CommonBases from './CommonBases'
 import CurrencyList from './CurrencyList'
 import { filterTokens, useSortedTokensByQuery } from './filtering'
 import { useTokenComparator } from './sorting'
-import { PaddedColumn, SearchInput } from './styleds'
+import { PaddedColumn } from './styleds'
 import AutoSizer from 'react-virtualized-auto-sizer'
 import styled from 'styled-components'
 import useToggle from 'hooks/useToggle'
@@ -21,7 +21,6 @@ import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import useTheme from 'hooks/useTheme'
 import ImportRow from './ImportRow'
 import useDebounce from 'hooks/useDebounce'
-import searchIcon from 'assets/svg/search.svg'
 
 const ContentWrapper = styled(Column)`
   width: 100%;
@@ -68,7 +67,7 @@ export function CurrencySearch({
   // refs for fixed size lists
   const fixedList = useRef<FixedSizeList>()
 
-  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [searchQuery] = useState<string>('')
   const debouncedQuery = useDebounce(searchQuery, 200)
 
   const [invertSearchOrder] = useState<boolean>(false)
@@ -112,36 +111,8 @@ export function CurrencySearch({
 
   // clear the input on open
   useEffect(() => {
-    if (isOpen) setSearchQuery('')
+    if (isOpen) { /* searchQuery is always empty */ }
   }, [isOpen])
-
-  // manage focus on modal show
-  const inputRef = useRef<HTMLInputElement>()
-  const handleInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const input = event.target.value
-    const checksummedInput = isAddress(input)
-    setSearchQuery(checksummedInput || input)
-    fixedList.current?.scrollTo(0)
-  }, [])
-
-  const handleEnter = useCallback(
-    (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        const s = debouncedQuery.toLowerCase().trim()
-        if (s === 'eth') {
-          handleCurrencySelect(ETHER)
-        } else if (filteredSortedTokens.length > 0) {
-          if (
-            filteredSortedTokens[0].symbol?.toLowerCase() === debouncedQuery.trim().toLowerCase() ||
-            filteredSortedTokens.length === 1
-          ) {
-            handleCurrencySelect(filteredSortedTokens[0])
-          }
-        }
-      }
-    },
-    [filteredSortedTokens, handleCurrencySelect, debouncedQuery],
-  )
 
   // menu ui
   const [open, toggle] = useToggle(false)
@@ -161,19 +132,6 @@ export function CurrencySearch({
           </Text>
           <CloseIcon onClick={onDismiss} color="white" />
         </RowBetween>
-        <Row className="relative">
-          <img src={searchIcon} className="w-[24px] absolute left-[16px] z-[2]" alt="search" />
-          <SearchInput
-            type="text"
-            id="token-search-input"
-            placeholder="Search name or paste address"
-            autoComplete="off"
-            value={searchQuery}
-            ref={inputRef as RefObject<HTMLInputElement>}
-            onChange={handleInput}
-            onKeyDown={handleEnter}
-          />
-        </Row>
         {showCommonBases && (
           <CommonBases chainId={chainId} onSelect={handleCurrencySelect} selectedCurrency={selectedCurrency} />
         )}

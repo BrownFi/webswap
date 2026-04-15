@@ -54,7 +54,7 @@ root.render(
       <BrowserRouter basename={routerBasename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider theme={darkTheme()}>
+            <RainbowKitProvider theme={darkTheme({ accentColor: '#c4943a', accentColorForeground: 'white' })}>
               <Blocklist>
                 <Updaters />
                 <ThemeProvider>

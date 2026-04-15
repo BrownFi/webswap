@@ -57,7 +57,7 @@ const InfoCard = styled.div`
   display: grid;
   grid-row-gap: 12px;
   margin-bottom: 20px;
-  background-color: #323038;
+  background-color: #251f16;
 `
 
 const AccountGroupingRow = styled.div`
@@ -264,10 +264,10 @@ export function AccountDetails({
                     onClick={() => {
                       openOptions()
                     }}
-                    className="h-[26px] px-[8px] flex items-center bg-[#773030]"
+                    className="h-[26px] px-[8px] flex items-center bg-[#c4943a]"
                   >
                     <WalletAction
-                      style={{ fontSize: '12px', fontWeight: 'bold', color: 'white', backgroundColor: '#773030' }}
+                      style={{ fontSize: '12px', fontWeight: 'bold', color: 'white', backgroundColor: '#c4943a' }}
                     >
                       Change
                     </WalletAction>
@@ -301,7 +301,7 @@ export function AccountDetails({
                       <div>
                         {account && (
                           <Copy toCopy={account}>
-                            <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
+                            <span style={{ marginLeft: '4px', color: '#c4943a', fontSize: '14px', fontWeight: 500 }}>
                               Copy Address
                             </span>
                           </Copy>
@@ -312,8 +312,8 @@ export function AccountDetails({
                             isENS={true}
                             href={chainId && getEtherscanLink(chainId, ENSName, 'address')}
                           >
-                            <LinkIcon size={16} color="#27E3AB" />
-                            <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
+                            <LinkIcon size={16} color="#c4943a" />
+                            <span style={{ marginLeft: '4px', color: '#c4943a', fontSize: '14px', fontWeight: 500 }}>
                               View on {getScanText(chainId)}
                             </span>
                           </AddressLink>
@@ -327,7 +327,7 @@ export function AccountDetails({
                       <div>
                         {account && (
                           <Copy toCopy={account}>
-                            <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
+                            <span style={{ marginLeft: '4px', color: '#c4943a', fontSize: '14px', fontWeight: 500 }}>
                               Copy Address
                             </span>
                           </Copy>
@@ -338,8 +338,8 @@ export function AccountDetails({
                             isENS={false}
                             href={getEtherscanLink(chainId, account, 'address')}
                           >
-                            <LinkIcon size={16} color="#27E3AB" />
-                            <span style={{ marginLeft: '4px', color: '#27E3AB', fontSize: '14px', fontWeight: 500 }}>
+                            <LinkIcon size={16} color="#c4943a" />
+                            <span style={{ marginLeft: '4px', color: '#c4943a', fontSize: '14px', fontWeight: 500 }}>
                               View on {getScanText(chainId)}
                             </span>
                           </AddressLink>

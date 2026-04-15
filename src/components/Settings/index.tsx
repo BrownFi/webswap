@@ -75,11 +75,11 @@ const StyledMenu = styled.div`
 
 const MenuFlyout = styled.span`
   min-width: 391px;
-  background-color: #1A1A1E;
-  border: 1px solid #FFFFFF20;
+  background-color: #1a1510;
+  border: 1px solid #c4943a30;
   box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
     0px 24px 32px rgba(0, 0, 0, 0.01);
-  border-radius: 0;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   font-size: 1rem;
@@ -105,7 +105,7 @@ const MenuFlyout = styled.span`
 const Break = styled.div`
   width: 100%;
   height: 1px;
-  background-color: #FFFFFF15;
+  background-color: #c4943a20;
 `
 
 const ModalContentWrapper = styled.div`
@@ -177,8 +177,8 @@ export function SettingsTab() {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: '1px solid #40444F',
-                  backgroundColor: '#1A1B1F',
+                  border: '1px solid #3d3425',
+                  backgroundColor: '#0d0b08',
                   color: 'white',
                   fontSize: '16px',
                   outline: 'none',
@@ -200,8 +200,8 @@ export function SettingsTab() {
         </ModalContentWrapper>
       </Modal>
       <StyledMenuButton onClick={toggle} id="open-settings-dialog-button" aria-label="Open settings">
-        <div className="w-[40px] h-[40px] flex items-center justify-center ">
-          <img src={settings} alt="settings" className="w-[24px]" />
+        <div className="w-[36px] h-[36px] flex items-center justify-center rounded-full border border-[rgba(196,148,58,0.25)] hover:border-[rgba(196,148,58,0.5)] transition-colors">
+          <img src={settings} alt="settings" className="w-[20px] opacity-70" />
         </div>
 
         {expertMode ? (
@@ -231,7 +231,7 @@ export function SettingsTab() {
               deadline={ttl}
               setDeadline={setTtl}
             />
-            <div className="w-full h-[1px] bg-[#323135]"></div>
+            <div className="w-full h-[1px] bg-[#2a2418]"></div>
             <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
               Interface Settings
             </Text>

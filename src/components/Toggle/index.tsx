@@ -2,14 +2,14 @@ import styled from 'styled-components'
 
 const ToggleElement = styled.span<{ isActive?: boolean; isOnSwitch?: boolean }>`
   padding: 5px 16px;
-  border-radius: 0;
-  background: ${({ theme, isActive, isOnSwitch }) => (isActive ? (isOnSwitch ? theme.primary1 : '#737373') : 'none')};
+  border-radius: 20px;
+  background: ${({ theme, isActive, isOnSwitch }) => (isActive ? (isOnSwitch ? theme.primary1 : '#3d3425') : 'none')};
   color: ${({ theme, isActive, isOnSwitch }) => (isActive ? (isOnSwitch ? theme.white : theme.white) : theme.white)};
   font-size: 12px;
   font-weight: bold;
 
-  border-radius: 0;
-  background: ${({ theme, isActive, isOnSwitch }) => (isActive ? (isOnSwitch ? theme.primary1 : '#737373') : 'none')};
+  border-radius: 20px;
+  background: ${({ theme, isActive, isOnSwitch }) => (isActive ? (isOnSwitch ? theme.primary1 : '#3d3425') : 'none')};
   color: ${({ theme, isActive, isOnSwitch }) => (isActive ? (isOnSwitch ? theme.white : theme.white) : theme.white)};
 
   :hover {
@@ -21,9 +21,9 @@ const ToggleElement = styled.span<{ isActive?: boolean; isOnSwitch?: boolean }>`
 `
 
 const StyledToggle = styled.button<{ isActive?: boolean; activeElement?: boolean }>`
-  border-radius: 0;
+  border-radius: 20px;
   border: none;
-  background: #131216;
+  background: #12100b;
   display: flex;
   width: fit-content;
   cursor: pointer;

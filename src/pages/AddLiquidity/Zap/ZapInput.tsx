@@ -95,7 +95,7 @@ const ZapTokenInputRow = ({
       {canRemove && (
         <button
           onClick={onRemove}
-          className="absolute top-[-8px] left-[-8px] z-10 bg-white/10 text-white/60 font-black hover:text-white  transition w-6 rounded-full"
+          className="absolute top-[-8px] left-[-8px] z-10 bg-[#c4943a20] text-[#c4943a] font-black hover:text-white  transition w-6 rounded-full"
         >
           ✕
         </button>

@@ -85,7 +85,7 @@ export default function ManageTokens({
           </RowFixed>
           <RowFixed>
             <TrashIcon onClick={() => removeToken(chainId, token.address)} />
-            <ExternalLinkIcon href={getEtherscanLink(chainId, token.address, 'address')} color="#27E3AB" />
+            <ExternalLinkIcon href={getEtherscanLink(chainId, token.address, 'address')} color="#c4943a" />
           </RowFixed>
         </RowBetween>
       ))
@@ -128,7 +128,7 @@ export default function ManageTokens({
             </TYPE.main>
             {userAddedTokens.length > 0 && (
               <ButtonText onClick={handleRemoveAll}>
-                <TYPE.blue className="!text-[#27E3AB]">Clear all</TYPE.blue>
+                <TYPE.blue className="!text-[#c4943a]">Clear all</TYPE.blue>
               </ButtonText>
             )}
           </RowBetween>

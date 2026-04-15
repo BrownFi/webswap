@@ -8,8 +8,8 @@ import { CurrencyLogo } from 'components/CurrencyLogo'
 import { getNativeToken, getTokenSymbol } from 'utils'
 
 const BaseWrapper = styled.div<{ disable?: boolean }>`
-  border: 0;
-  border-radius: 0;
+  border: 1px solid rgba(196, 148, 58, 0.2);
+  border-radius: 9999px;
   display: flex;
   padding: 0 12px;
   height: 34px;
@@ -17,10 +17,12 @@ const BaseWrapper = styled.div<{ disable?: boolean }>`
   align-items: center;
   :hover {
     cursor: ${({ disable }) => !disable && 'pointer'};
+    border-color: ${({ disable }) => !disable && 'rgba(196, 148, 58, 0.5)'};
   }
 
-  background-color: #1A1A1E;
+  background-color: #1a1510;
   opacity: ${({ disable }) => disable && '0.6'};
+  transition: border-color 150ms;
 `
 
 export default function CommonBases({

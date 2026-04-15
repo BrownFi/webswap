@@ -22,7 +22,7 @@ export const PairFavorite = ({ pair }: Props) => {
   return (
     <div className="cursor-pointer" onClick={() => setPairStorage({ ...rest, isFavorite: !isFavorite })}>
       {isFavorite ? (
-        <Heart size="20" style={{ fill: '#27E3AB', color: '#27E3AB' }} />
+        <Heart size="20" style={{ fill: '#c4943a', color: '#c4943a' }} />
       ) : (
         <Heart size="20" style={{ color: '#239d7a' }} />
       )}

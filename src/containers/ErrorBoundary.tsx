@@ -90,7 +90,7 @@ class ErrorBoundaryBase extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <StaticScreen>
-          <div className="w-[1600px] max-w-[100vw] bg-[#131216] text-white z-10 mx-auto px-6 py-10">
+          <div className="w-[1600px] max-w-[100vw] bg-[#12100b] text-white z-10 mx-auto px-6 py-10">
             <div className="max-w-[480px] flex flex-col gap-2 items-center mx-auto text-center">
               <div>
                 <div>An unexpected error occurred</div>

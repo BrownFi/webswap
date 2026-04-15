@@ -79,7 +79,7 @@ export function ImportToken({ tokens, onBack, onDismiss, handleCurrencySelect }:
         {tokens.map((token) => {
           const list = chainId && inactiveTokenList?.[chainId]?.[token.address]?.list
           return (
-            <Card backgroundColor={'#323038'} key={'import' + token.address} className=".token-warning-container">
+            <Card backgroundColor={'#251f16'} key={'import' + token.address} className=".token-warning-container">
               <AutoColumn gap="10px">
                 <AutoRow align="center">
                   <CurrencyLogo currency={token} size={'24px'} />

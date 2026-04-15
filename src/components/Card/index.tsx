@@ -14,7 +14,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={classNames('w-full rounded-none p-2', className)}
+        className={classNames('w-full rounded-[12px] p-2', className)}
         style={{
           width: width ?? undefined,
           padding: padding ?? undefined,
@@ -38,7 +38,7 @@ export const LightCard = React.forwardRef<HTMLDivElement, CardProps>(({ classNam
 LightCard.displayName = 'LightCard'
 
 export const RemoveLiqudityCard = React.forwardRef<HTMLDivElement, CardProps>(({ className, ...props }, ref) => {
-  return <Card ref={ref} className={classNames('border-0 bg-[#131216]', className)} padding="8px 12px" {...props} />
+  return <Card ref={ref} className={classNames('border-0 bg-[#12100b]', className)} padding="8px 12px" {...props} />
 })
 RemoveLiqudityCard.displayName = 'RemoveLiqudityCard'
 
@@ -48,7 +48,7 @@ export const LightGreyCard = React.forwardRef<HTMLDivElement, CardProps>(({ clas
 LightGreyCard.displayName = 'LightGreyCard'
 
 export const GreyCard = React.forwardRef<HTMLDivElement, CardProps>(({ className, ...props }, ref) => {
-  return <Card ref={ref} className={classNames('bg-[#1A1A1E]', className)} {...props} />
+  return <Card ref={ref} className={classNames('bg-[#1a1510]', className)} {...props} />
 })
 GreyCard.displayName = 'GreyCard'
 
@@ -83,7 +83,7 @@ export const BlueCard = React.forwardRef<HTMLDivElement, CardProps>(({ children,
   return (
     <Card
       ref={ref}
-      className={classNames('w-fit rounded-none bg-[rgba(39,227,171,0.1)] text-primary1', className)}
+      className={classNames('w-fit rounded-[12px] bg-[rgba(196,148,58,0.1)] text-primary1', className)}
       {...rest}
     >
       <span className="text-xs font-medium text-greenMain">{children}</span>

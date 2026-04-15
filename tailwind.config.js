@@ -57,9 +57,18 @@ module.exports = {
         yellow2: '#F3841E',
         blue1: '#2172E5',
 
-        menuText: 'rgba(255, 255, 255, 0.5)',
-        greenMain: '#27E3AB',
-        gray: '#999999',
+        menuText: 'rgba(196, 148, 58, 0.5)',
+        greenMain: '#c4943a',
+        gray: '#8A7D66',
+
+        // new gold palette
+        gold: '#c4943a',
+        goldLight: '#d4a94f',
+        goldDark: '#a67424',
+        brownBg: '#0a0806',
+        brownCard: '#1a1510',
+        brownInput: '#0d0b08',
+        brownPanel: '#12100b',
 
         // shadow
         shadow1: 'var(--color-shadow1)',

@@ -10,64 +10,64 @@
 
 /* Light mode (default when no .dark class) */
 :root {
-  --color-text1: #000000;
-  --color-text2: #565A69;
-  --color-text3: #888D9B;
-  --color-text4: #C3C5CB;
-  --color-text5: #EDEEF2;
+  --color-text1: #F5F0E8;
+  --color-text2: #C4B89A;
+  --color-text3: #8A7D66;
+  --color-text4: #5C5040;
+  --color-text5: #2a2418;
 
-  --color-bg1: #3F3D44;
-  --color-bg2: #F7F8FA;
-  --color-bg3: #EDEEF2;
-  --color-bg4: #CED0D9;
-  --color-bg5: #888D9B;
+  --color-bg1: #1a1510;
+  --color-bg2: #12100b;
+  --color-bg3: #2a2418;
+  --color-bg4: #3d3425;
+  --color-bg5: #5C5040;
 
-  --color-modalBG: rgba(0, 0, 0, 0.3);
-  --color-advancedBG: rgba(255, 255, 255, 0.6);
+  --color-modalBG: rgba(5, 3, 0, 0.75);
+  --color-advancedBG: rgba(10, 8, 6, 0.4);
 
-  --color-primary1: #773030;
-  --color-primary2: #FF8CC3;
-  --color-primary3: #FF99C9;
-  --color-primary4: #F6DDE8;
-  --color-primary5: #FDEAF1;
+  --color-primary1: #c4943a;
+  --color-primary2: #d4a94f;
+  --color-primary3: #a67424;
+  --color-primary4: rgba(196, 148, 58, 0.44);
+  --color-primary5: rgba(196, 148, 58, 0.22);
 
-  --color-primaryText1: #ff007a;
+  --color-primaryText1: #c4943a;
 
-  --color-secondary1: #ff007a;
-  --color-secondary2: #F6DDE8;
-  --color-secondary3: #FDEAF1;
+  --color-secondary1: #c4943a;
+  --color-secondary2: rgba(196, 148, 58, 0.15);
+  --color-secondary3: rgba(196, 148, 58, 0.10);
 
-  --color-shadow1: #2F80ED;
+  --color-shadow1: #000000;
 }
 
 /* Dark mode */
 .dark {
-  --color-text1: #FFFFFF;
-  --color-text2: #C3C5CB;
-  --color-text3: #6C7284;
-  --color-text4: #565A69;
-  --color-text5: #2C2F36;
+  --color-text1: #F5F0E8;
+  --color-text2: #C4B89A;
+  --color-text3: #8A7D66;
+  --color-text4: #5C5040;
+  --color-text5: #2a2418;
 
-  --color-bg1: #3F3D44;
-  --color-bg2: #2C2F36;
-  --color-bg3: #40444F;
-  --color-bg4: #565A69;
-  --color-bg5: #6C7284;
+  --color-bg1: #1a1510;
+  --color-bg2: #12100b;
+  --color-bg3: #2a2418;
+  --color-bg4: #3d3425;
+  --color-bg5: #5C5040;
 
-  --color-modalBG: rgba(0, 0, 0, 0.425);
-  --color-advancedBG: rgba(0, 0, 0, 0.1);
+  --color-modalBG: rgba(5, 3, 0, 0.75);
+  --color-advancedBG: rgba(10, 8, 6, 0.4);
 
-  --color-primary1: #773030;
-  --color-primary2: #3680E7;
-  --color-primary3: #4D8FEA;
-  --color-primary4: #376bad70;
-  --color-primary5: #153d6f70;
+  --color-primary1: #c4943a;
+  --color-primary2: #d4a94f;
+  --color-primary3: #a67424;
+  --color-primary4: rgba(196, 148, 58, 0.44);
+  --color-primary5: rgba(196, 148, 58, 0.22);
 
-  --color-primaryText1: #6da8ff;
+  --color-primaryText1: #c4943a;
 
-  --color-secondary1: #2172E5;
-  --color-secondary2: #17000b26;
-  --color-secondary3: #17000b26;
+  --color-secondary1: #c4943a;
+  --color-secondary2: rgba(196, 148, 58, 0.15);
+  --color-secondary3: rgba(196, 148, 58, 0.10);
 
   --color-shadow1: #000000;
 }
@@ -77,7 +77,7 @@
 }
 
 .bg-gray {
-  background-color: #252528;
+  background-color: #1e1a14;
 }
 
 html {
@@ -91,7 +91,7 @@ html::-webkit-scrollbar {
 /* Thin styled scrollbar for inner containers (token list, modals) */
 .styled-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #252528 transparent;
+  scrollbar-color: #2a2418 transparent;
 }
 
 .styled-scrollbar::-webkit-scrollbar {
@@ -103,12 +103,12 @@ html::-webkit-scrollbar {
 }
 
 .styled-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #252528;
+  background-color: #2a2418;
   border-radius: 2px;
 }
 
 .styled-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #333338;
+  background-color: #3d3425;
 }
 
 * {

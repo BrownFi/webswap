@@ -41,37 +41,37 @@ export function colors(darkMode: boolean): Colors {
     black,
 
     // text
-    text1: darkMode ? '#FFFFFF' : '#000000',
-    text2: darkMode ? '#C3C5CB' : '#565A69',
-    text3: darkMode ? '#6C7284' : '#888D9B',
-    text4: darkMode ? '#565A69' : '#C3C5CB',
-    text5: darkMode ? '#2C2F36' : '#EDEEF2',
+    text1: '#F5F0E8',
+    text2: '#C4B89A',
+    text3: '#8A7D66',
+    text4: '#5C5040',
+    text5: '#2a2418',
 
     // backgrounds / greys
-    bg1: darkMode ? '#3F3D44' : '#3F3D44',
-    bg2: darkMode ? '#2C2F36' : '#F7F8FA',
-    bg3: darkMode ? '#40444F' : '#EDEEF2',
-    bg4: darkMode ? '#565A69' : '#CED0D9',
-    bg5: darkMode ? '#6C7284' : '#888D9B',
+    bg1: '#1a1510',
+    bg2: '#12100b',
+    bg3: '#2a2418',
+    bg4: '#3d3425',
+    bg5: '#5C5040',
 
     //specialty colors
-    modalBG: darkMode ? 'rgba(0,0,0,.425)' : 'rgba(0,0,0,0.3)',
-    advancedBG: darkMode ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.6)',
+    modalBG: 'rgba(5,3,0,0.75)',
+    advancedBG: 'rgba(10,8,6,0.4)',
 
     //primary colors
-    primary1: darkMode ? '#773030' : '#773030',
-    primary2: darkMode ? '#3680E7' : '#FF8CC3',
-    primary3: darkMode ? '#4D8FEA' : '#FF99C9',
-    primary4: darkMode ? '#376bad70' : '#F6DDE8',
-    primary5: darkMode ? '#153d6f70' : '#FDEAF1',
+    primary1: '#c4943a',
+    primary2: '#d4a94f',
+    primary3: '#a67424',
+    primary4: 'rgba(196, 148, 58, 0.44)',
+    primary5: 'rgba(196, 148, 58, 0.22)',
 
     // color text
-    primaryText1: darkMode ? '#6da8ff' : '#ff007a',
+    primaryText1: '#c4943a',
 
     // secondary colors
-    secondary1: darkMode ? '#2172E5' : '#ff007a',
-    secondary2: darkMode ? '#17000b26' : '#F6DDE8',
-    secondary3: darkMode ? '#17000b26' : '#FDEAF1',
+    secondary1: '#c4943a',
+    secondary2: 'rgba(196, 148, 58, 0.15)',
+    secondary3: 'rgba(196, 148, 58, 0.10)',
 
     // other
     red1: '#FD4040',
@@ -82,13 +82,9 @@ export function colors(darkMode: boolean): Colors {
     yellow2: '#F3841E',
     blue1: '#2172E5',
 
-    menuText: 'rgba(255, 255, 255, 0.5)',
-    greenMain: '#27E3AB',
-    gray: '#999999',
-
-    // dont wanna forget these blue yet
-    // blue4: darkMode ? '#153d6f70' : '#C4D9F8',
-    // blue5: darkMode ? '#153d6f70' : '#EBF4FF',
+    menuText: 'rgba(196, 148, 58, 0.5)',
+    greenMain: '#c4943a',
+    gray: '#8A7D66',
   }
 }
 
@@ -225,17 +221,14 @@ html {
 export const ThemedGlobalStyle = createGlobalStyle`
 html {
   color: ${({ theme }) => theme.text1};
-  background-color: ${({ theme }) => theme.bg2};
+  background-color: #0a0806;
 }
 
 body {
   min-height: 100vh;
   background-position: 0 -30vh;
   background-repeat: no-repeat;
-  background-image: ${({ theme }) =>
-    `radial-gradient(50% 50% at 50% 50%, ${transparentize(0.9, theme.primary1)} 0%, ${transparentize(
-      1,
-      theme.bg1,
-    )} 100%)`};
+  background-image: radial-gradient(ellipse at 30% 40%, rgba(196,148,58,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 60%, rgba(196,148,58,0.04) 0%, transparent 50%);
 }
 `

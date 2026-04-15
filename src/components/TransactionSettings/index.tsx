@@ -28,7 +28,7 @@ const FancyButton = styled.button`
   min-width: 3.5rem;
   border: 0;
   outline: none;
-  background: #131216;
+  background: #12100b;
   :hover {
     border: 0;
   }

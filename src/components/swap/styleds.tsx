@@ -13,14 +13,27 @@ export const Wrapper = styled.div`
 `
 
 export const ArrowWrapper = styled.div<{ clickable: boolean }>`
-  padding: 2px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #c4943a;
+  border-radius: 8px;
+
+  img {
+    width: 20px !important;
+    height: 20px;
+    filter: brightness(0) saturate(100%);
+  }
 
   ${({ clickable }) =>
     clickable
       ? css`
           :hover {
             cursor: pointer;
-            opacity: 0.8;
+            opacity: 0.85;
           }
         `
       : null}

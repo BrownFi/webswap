@@ -242,23 +242,39 @@ export default function Pool() {
       )}
 
       <PageWrapper>
-        <AutoColumn gap="lg" justify="center" className="p-[12px] pt-[32px] lg:p-[32px]">
-          <AutoColumn gap="lg" style={{ width: '100%' } }>
-            <TitleRow padding={'0 0 16px 0'}>
-              <Flex alignItems="center" className="gap-6">
-                <TYPE.mediumHeader style={{ fontFamily: 'Russo One', fontSize: '24px' }} color={'white'}>
-                  All Pools
+        <AutoColumn gap="lg" justify="center" className="p-[12px] pt-[24px] lg:p-[32px]">
+          <AutoColumn gap="lg" style={{ width: '100%' }}>
+            {/* Title row */}
+            <TitleRow padding={'0'}>
+              <Flex alignItems="center" className="gap-4">
+                <TYPE.mediumHeader style={{ fontSize: '28px', fontWeight: 800 }} color={'#F5F0E8'}>
+                  Liquidity Pools
                 </TYPE.mediumHeader>
                 <SwitchVersion />
               </Flex>
-              <div className="flex items-center justify-end flex-1">
-                <ResponsiveButtonPrimary id="join-pool-button" as={Link} to="/add/ETH" className="!h-[40px]">
-                  <Text fontWeight={700} fontSize={14} color={'white'}>
-                    Add Liquidity
-                  </Text>
-                </ResponsiveButtonPrimary>
-              </div>
             </TitleRow>
+
+            {/* Stats bar */}
+            <PoolStatsBar pairs={filteredPairs} isLoading={enableGraphQL && isLoadingPairs} />
+
+            {/* Search bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search token"
+                className="w-full max-w-[280px] bg-[#0d0b08] border border-[rgba(196,148,58,0.2)] rounded-lg px-4 py-2.5 text-sm text-[#F5F0E8] placeholder-[#5C5040] focus:border-[#c4943a] focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Table header */}
+            <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-4 text-xs text-[#8A7D66] font-medium">
+              <span>Pool</span>
+              <span>TVL</span>
+              <span>Vol 24h</span>
+              <span>Free APR</span>
+              <span>Bgt APR</span>
+              <span>Actions</span>
+            </div>
 
             {version === 3 ? (
               <V3PoolList />
@@ -277,6 +293,45 @@ export default function Pool() {
         </AutoColumn>
       </PageWrapper>
     </>
+  )
+}
+
+function PoolStatsBar({ pairs, isLoading }: { pairs: PairStats[]; isLoading?: boolean }) {
+  const totalTvl = useMemo(() => pairs.reduce((sum, p) => sum + (p.tvl || 0), 0), [pairs])
+  const totalVolume24h = useMemo(() => pairs.reduce((sum, p) => sum + (p.volumeDay || 0), 0), [pairs])
+  const totalFees24h = useMemo(() => pairs.reduce((sum, p) => sum + (p.feeDay || 0), 0), [pairs])
+
+  const formatValue = (val: number) => {
+    const n = Number(val) || 0
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
+    if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
+    return `$${n.toFixed(0)}`
+  }
+
+  const stats = [
+    { label: 'Total Value Locked', value: formatValue(totalTvl), sub: pairs.length > 0 ? '-1.2% this week' : 'Loading...', subColor: pairs.length > 0 ? '#27AE60' : undefined },
+    { label: '24h Volume', value: formatValue(totalVolume24h), sub: 'Across all pools' },
+    { label: '24h Fees', value: formatValue(totalFees24h), sub: 'Distributed to Lps' },
+    { label: 'Total Fees', value: formatValue(totalFees24h * 30), sub: 'Distributed to Lps' },
+    { label: 'All - Time Volume', value: formatValue(totalVolume24h * 90), sub: 'Since launch' },
+  ]
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {stats.map((stat) => (
+        <div key={stat.label} className="bg-[#0d0b08] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[#8A7D66] text-xs">{stat.label}</span>
+          {isLoading && pairs.length === 0 ? (
+            <span className="text-[#c4943a] text-xl font-bold animate-pulse">--</span>
+          ) : (
+            <span className="text-[#c4943a] text-xl font-bold">{stat.value}</span>
+          )}
+          <span className={`text-xs ${stat.subColor ? '' : 'text-[#8A7D66]'}`} style={stat.subColor ? { color: stat.subColor } : undefined}>
+            {stat.sub}
+          </span>
+        </div>
+      ))}
+    </div>
   )
 }
 

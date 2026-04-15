@@ -21,11 +21,11 @@ const Base = styled.button<{
   borderRadius?: string
   altDisabledStyle?: boolean
 }>`
-  padding: ${({ padding }) => (padding ? padding : '18px')};
+  padding: ${({ padding }) => (padding ? padding : '12px 24px')};
   width: ${({ width }) => (width ? width : '100%')};
-  font-weight: 700;
+  font-weight: 500;
   text-align: center;
-  border-radius: 0;
+  border-radius: 12px;
   border-radius: ${({ borderRadius }) => borderRadius && borderRadius};
   outline: none;
   border: 1px solid transparent;
@@ -48,23 +48,32 @@ const Base = styled.button<{
 `
 
 export const ButtonPrimary = styled(Base)`
-  background-color: ${({ theme }) => theme.primary1};
-  border-radius: 0;
-  color: white;
+  background: linear-gradient(0deg, #503016 0%, #985C2A 100%);
+  box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  height: 48px;
+  padding: 12px 24px;
+  gap: 8px;
   &:focus {
-    box-shadow: 0 0 0 1pt ${({ theme }) => darken(0.05, theme.primary1)};
-    background-color: ${({ theme }) => darken(0.05, theme.primary1)};
+    box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8), 0 0 0 1pt ${darken(0.05, '#985C2A')};
+    background: linear-gradient(0deg, ${darken(0.05, '#503016')} 0%, ${darken(0.05, '#985C2A')} 100%);
   }
   &:hover {
-    background-color: ${({ theme }) => darken(0.05, theme.primary1)};
+    background: linear-gradient(0deg, ${lighten(0.03, '#503016')} 0%, ${lighten(0.03, '#985C2A')} 100%);
+    box-shadow: inset 0px 0px 6px rgba(255, 255, 255, 0.9);
   }
   &:active {
-    box-shadow: 0 0 0 1pt ${({ theme }) => darken(0.1, theme.primary1)};
-    background-color: ${({ theme }) => darken(0.1, theme.primary1)};
+    background: linear-gradient(0deg, ${darken(0.05, '#503016')} 0%, ${darken(0.05, '#985C2A')} 100%);
+    box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.6);
   }
   &:disabled {
-    background-color: #737373;
-    color: white;
+    background: linear-gradient(0deg, #503016 0%, #985C2A 100%);
+    color: rgba(255, 255, 255, 0.4);
     cursor: auto;
     box-shadow: none;
     border: 1px solid transparent;
@@ -74,21 +83,22 @@ export const ButtonPrimary = styled(Base)`
 `
 
 export const ButtonLight = styled(Base)`
-  background-color: #1A1A1E;
-  color: white;
+  background: linear-gradient(0deg, #503016 0%, #985C2A 100%);
+  box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 500;
-  &:focus {
-  }
+  height: 48px;
   &:hover {
-  }
-  &:active {
+    background: linear-gradient(0deg, ${lighten(0.03, '#503016')} 0%, ${lighten(0.03, '#985C2A')} 100%);
+    box-shadow: inset 0px 0px 6px rgba(255, 255, 255, 0.9);
   }
   :disabled {
-    opacity: 0.4;
+    opacity: 0.5;
     :hover {
       cursor: auto;
-      background-color: ${({ theme }) => theme.primary5};
       box-shadow: none;
       border: 1px solid transparent;
       outline: none;
@@ -115,7 +125,7 @@ export const ButtonGray = styled(Base)`
 export const ButtonSecondary = styled(Base)`
   border: 0;
   color: white;
-  background-color: #131216;
+  background-color: #12100b;
   font-size: 16px;
   border-radius: 0;
   padding: 0;
@@ -247,8 +257,14 @@ export const ButtonWhite = styled(Base)`
 `
 
 const ButtonConfirmedStyle = styled(Base)`
-  background-color: ${({ theme }) => lighten(0.5, theme.green1)};
-  color: ${({ theme }) => theme.green1};
+  background: linear-gradient(0deg, #1a4d2e 0%, #27AE60 100%);
+  box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  height: 48px;
   border: 1px solid ${({ theme }) => theme.green1};
 
   &:disabled {
@@ -258,26 +274,30 @@ const ButtonConfirmedStyle = styled(Base)`
 `
 
 const ButtonErrorStyle = styled(Base)`
-  background-color: ${({ theme }) => theme.red1};
-  border: 1px solid ${({ theme }) => theme.red1};
+  background: linear-gradient(0deg, #503016 0%, #985C2A 100%);
+  box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  height: 48px;
 
   &:focus {
-    box-shadow: 0 0 0 1pt ${({ theme }) => darken(0.05, theme.red1)};
-    background-color: ${({ theme }) => darken(0.05, theme.red1)};
+    box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8), 0 0 0 1pt ${darken(0.05, '#985C2A')};
+    background: linear-gradient(0deg, ${darken(0.05, '#503016')} 0%, ${darken(0.05, '#985C2A')} 100%);
   }
   &:hover {
-    background-color: ${({ theme }) => darken(0.05, theme.red1)};
+    background: linear-gradient(0deg, ${lighten(0.03, '#503016')} 0%, ${lighten(0.03, '#985C2A')} 100%);
+    box-shadow: inset 0px 0px 6px rgba(255, 255, 255, 0.9);
   }
   &:active {
-    box-shadow: 0 0 0 1pt ${({ theme }) => darken(0.1, theme.red1)};
-    background-color: ${({ theme }) => darken(0.1, theme.red1)};
+    background: linear-gradient(0deg, ${darken(0.05, '#503016')} 0%, ${darken(0.05, '#985C2A')} 100%);
   }
   &:disabled {
     opacity: 50%;
     cursor: auto;
     box-shadow: none;
-    background-color: ${({ theme }) => theme.red1};
-    border: 1px solid ${({ theme }) => theme.red1};
   }
 `
 

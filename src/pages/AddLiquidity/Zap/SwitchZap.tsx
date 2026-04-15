@@ -15,7 +15,7 @@ export const SwitchZap = ({ enabled, onToggle, version }: SwitchZapProps) => {
       onClick={onToggle}
       className={
         `relative w-[88px] h-8 rounded-full transition-colors duration-300 ease-in-out flex items-center justify-between px-2 ` +
-        `${enabled ? 'bg-[#773030]' : 'bg-[#77303088]'} cursor-pointer`
+        `${enabled ? 'bg-[#c4943a]' : 'bg-[#c4943a88]'} cursor-pointer`
       }
     >
       {enabled ? (

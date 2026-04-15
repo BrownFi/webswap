@@ -61,7 +61,7 @@ const Referral = () => {
         <>
           <p className="text-[14px] font-medium text-white mb-[8px]">You invited: {numberReferrals} users</p>
 
-          <div className="bg-[#131216] px-[16px] py-[12px] flex items-center">
+          <div className="bg-[#12100b] px-[16px] py-[12px] flex items-center">
             <p className="text-[15px] text-white font-medium mr-[10px] truncate flex-1 w-[300px]">
               {location.href}?ref={account}
             </p>

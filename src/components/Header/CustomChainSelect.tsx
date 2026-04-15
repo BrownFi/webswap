@@ -18,12 +18,12 @@ const CustomChainSelect = () => {
   return (
     <>
       <ButtonDropdown
-        className="!bg-black/40 hover:scale-105 transition-all !py-1 !px-2.5 h-full !min-h-[41px] !rounded-none !w-fit border-1"
-        style={{ border: '1px solid #FFFFFF20' }}
+        className="!bg-transparent hover:!bg-[#c4943a15] transition-all !py-2 !px-4 h-full !min-h-10 !rounded-full !w-fit"
+        style={{ border: '1px solid rgba(196,148,58,0.4)' }}
         onClick={() => setOpen(true)}
       >
         <img className="w-5 mr-2 rounded-full" src={chain.iconUrl as string} alt={chain.name} />
-        <div>{chain.name}</div>
+        <div className="text-sm">{chain.name}</div>
       </ButtonDropdown>
 
       <ChainModal isOpen={isOpen} onClose={() => setOpen(false)} />
@@ -50,8 +50,8 @@ export const ChainModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-[#1A1A1E] m-2 w-full max-w-sm p-4"
-        style={{ border: '1px solid #FFFFFF20' }}
+        className="bg-[#1a1510] m-2 w-full max-w-sm p-4 rounded-xl"
+        style={{ border: '1px solid #c4943a30' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
@@ -86,7 +86,7 @@ export const ChainModal = ({
                   if (onSwitchChain) onSwitchChain(c.id)
                 }}
                 className={`flex items-center justify-between w-full px-2 py-1 transition
-                  ${isActive ? 'bg-[#3b82f6] text-white' : 'hover:bg-white/5 text-white/80'}
+                  ${isActive ? 'bg-[#c4943a] text-white' : 'hover:bg-white/5 text-white/80'}
                 `}
               >
                 <div className="flex items-center gap-3 min-h-[28px]">

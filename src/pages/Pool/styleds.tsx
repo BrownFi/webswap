@@ -20,7 +20,7 @@ export const ClickableText = styled(Text)`
 `
 export const MaxButton = styled.button<{ width: string }>`
   padding: 0.5rem 1rem;
-  background-color: #27e3ab;
+  background-color: #c4943a;
   border: 0;
   border-radius: 0;
   font-size: 12px;
@@ -30,9 +30,9 @@ export const MaxButton = styled.button<{ width: string }>`
   font-weight: 700;
   cursor: pointer;
   overflow: hidden;
-  color: #1e1e1e;
+  color: #0a0806;
   :hover {
-    background-color: #27f3ab;
+    background-color: #d4a94f;
   }
   :focus {
     outline: none;
@@ -65,7 +65,10 @@ export const Dots = styled.span`
 export const PageWrapper = styled(AutoColumn)`
   max-width: 990px;
   width: 100%;
-  background-color: #1A1A1E;
+  background-color: rgba(26, 21, 16, 0.85);
+  border: 1px solid rgba(196, 148, 58, 0.25);
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
 `
 
 export const TitleRow = styled(RowBetween)`

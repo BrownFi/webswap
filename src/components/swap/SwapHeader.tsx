@@ -16,9 +16,10 @@ const StyledSwapHeader = styled.div`
 `
 
 const StyledSwaptitle = styled.p`
-  font-size: 24px;
-  color: white;
-  font-family: 'Russo One', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  color: #F5F0E8;
+  font-family: 'Montserrat', sans-serif;
   flex: 1;
 `
 

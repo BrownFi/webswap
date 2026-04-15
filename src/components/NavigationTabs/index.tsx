@@ -87,7 +87,7 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
           </HistoryLink>
 
           <Flex alignItems="center" className="gap-6">
-            <div className="font-medium text-xl text-white !text-[24px]" style={{ fontFamily: 'Russo One' }}>
+            <div className="font-extrabold text-[28px] text-[#F5F0E8]">
               {creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}
             </div>
             <SwitchVersion />

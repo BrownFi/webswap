@@ -360,7 +360,7 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
   return (
     <>
       <div title="View chart" className="cursor-pointer" onClick={() => setOpen(true)}>
-        <BarChart2 size="20" style={{ color: '#27E3AB' }} />
+        <BarChart2 size="20" style={{ color: '#c4943a' }} />
       </div>
 
       <Modal isOpen={isOpen} onDismiss={() => setOpen(false)} maxWidth={800}>
@@ -505,8 +505,8 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
                     <ReferenceArea
                       x1={referenceArea.x1}
                       x2={referenceArea.x2}
-                      fill="#27E3AB"
-                      stroke="#27E3AB"
+                      fill="#c4943a"
+                      stroke="#c4943a"
                       fillOpacity={0.35}
                       strokeOpacity={0.9}
                       strokeWidth={2}

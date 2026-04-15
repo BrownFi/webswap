@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { escapeRegExp } from 'utils'
 
 const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: string }>`
-  color: ${({ error, theme }) => (error ? theme.red1 : 'white')};
+  color: ${({ error }) => (error ? '#ff6b6b' : '#F5F0E8')};
   width: 0;
   position: relative;
   font-weight: 500;
@@ -11,7 +11,7 @@ const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: s
   border: none;
   flex: 1 1 auto;
   background-color: transparent;
-  font-size: ${({ fontSize }) => fontSize ?? '20px'};
+  font-size: ${({ fontSize }) => fontSize ?? '28px'};
   text-align: ${({ align }) => align && align};
   white-space: nowrap;
   overflow: hidden;

@@ -30,9 +30,9 @@ const StyledConnectButton = () => {
                 return (
                   <button
                     onClick={openConnectModal}
-                    className="bg-[#27E3AB] hover:bg-[#20c899] text-black font-semibold px-2.5 py-1 rounded-none min-h-10 transition-all hover:scale-105 text-sm"
+                    className="border border-[#c4943a80] bg-transparent text-[#F5F0E8] hover:border-[#c4943a] hover:bg-[#c4943a15] font-medium px-5 py-2 rounded-full min-h-10 transition-all text-sm"
                   >
-                    Connect Wallet
+                    Connect wallet
                   </button>
                 )
               }
@@ -42,7 +42,7 @@ const StyledConnectButton = () => {
                   <>
                     <button
                       onClick={() => setChainModalOpen(true)}
-                      className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-none min-h-10 transition-all"
+                      className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-full min-h-10 transition-all"
                     >
                       Wrong network
                     </button>
@@ -59,18 +59,19 @@ const StyledConnectButton = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setChainModalOpen(true)}
-                    className="flex items-center gap-1.5 bg-black/40 hover:scale-105 transition-all py-1 px-2.5 min-h-10"
-                    style={{ border: '1px solid #FFFFFF20' }}
+                    className="flex items-center gap-1.5 border border-[#c4943a60] hover:border-[#c4943a] bg-transparent hover:bg-[#c4943a15] transition-all py-2 px-4 min-h-10 rounded-full"
                   >
                     {chain.hasIcon && chain.iconUrl && (
                       <img src={chain.iconUrl} alt={chain.name ?? ''} className="w-5 h-5 rounded-full" />
                     )}
-                    <span className="text-white text-sm">{chain.name}</span>
+                    <span className="text-[#F5F0E8] text-sm">{chain.name}</span>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="ml-0.5">
+                      <path d="M3 4.5L6 7.5L9 4.5" stroke="#c4943a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                   </button>
                   <button
                     onClick={() => setAccountModalOpen(true)}
-                    className="flex items-center gap-1.5 bg-black/40 hover:scale-105 transition-all py-1 px-2.5 min-h-10 text-white text-sm"
-                    style={{ border: '1px solid #FFFFFF20' }}
+                    className="flex items-center gap-1.5 border border-[#c4943a60] hover:border-[#c4943a] bg-transparent hover:bg-[#c4943a15] transition-all py-2 px-4 min-h-10 rounded-full text-[#F5F0E8] text-sm"
                   >
                     {account.displayBalance && <span>{account.displayBalance}</span>}
                     <span>{account.displayName}</span>
@@ -122,13 +123,12 @@ function StyledNavLink({
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex flex-row flex-nowrap items-start rounded-[3rem] outline-none cursor-pointer no-underline
-        text-menuText text-xl w-fit mr-4 font-normal py-2 px-4
-        hover:text-[#20c899] focus:text-[#20c899]
-        ${isActive || className?.includes('active') ? 'rounded-xl font-semibold !text-greenMain' : ''}
+        `flex items-center cursor-pointer no-underline
+        text-[#8A7D66] text-sm font-medium py-2 px-4
+        hover:text-[#F5F0E8] transition-colors
+        ${isActive || className?.includes('active') ? 'font-semibold !text-[#F5F0E8]' : ''}
         ${className ?? ''}`
       }
-      style={{ fontFamily: "'Russo One', sans-serif" }}
     >
       {children}
     </NavLink>
@@ -155,56 +155,58 @@ export default function Header() {
 
   return (
     <div
-      className="grid grid-cols-2 items-center justify-between flex-row w-full top-0 relative py-5 px-11 z-[2]
-      max-md:grid-cols-1 max-md:px-4 max-md:relative
+      className="flex items-center justify-between w-full top-0 relative py-4 px-6 lg:px-11 z-[2]
+      max-md:px-4
       max-xs:py-2 max-xs:px-4"
     >
-      {/* HeaderRow */}
-      <RowFixed className="max-md:w-full">
-        {/* Title */}
-        <div className="flex items-center pointer-events-auto justify-self-start gap-4 max-sm:justify-self-center hover:cursor-pointer mr-[40px] relative">
-          <Link to="/">
-            {/* UniIcon */}
-            <div className="transition-transform duration-300 hover:-rotate-[5deg]">
-              <img className="min-w-[142px] w-[142px]" src={Logo} alt="logo" />
-            </div>
-          </Link>
+      {/* Left: Logo */}
+      <div className="flex items-center gap-4 shrink-0">
+        <Link to="/" className="flex items-center">
+          <div className="transition-transform duration-300 hover:-rotate-[5deg]">
+            <img className="min-w-[120px] w-[120px] lg:w-[142px] lg:min-w-[142px]" src={Logo} alt="logo" />
+          </div>
+        </Link>
 
-          <SwitchVersion isMobile />
+        <SwitchVersion isMobile />
 
-          {!isMainnet && (
-            <ButtonSecondary className="!w-fit !bg-blue-500/40 !px-1 uppercase !absolute -bottom-6 left-20">
-              {appEnv}
-            </ButtonSecondary>
-          )}
-        </div>
+        {!isMainnet && (
+          <ButtonSecondary className="!w-fit !bg-blue-500/40 !px-1 uppercase !text-xs">
+            {appEnv}
+          </ButtonSecondary>
+        )}
+      </div>
 
-        <HamburgerMenu>
-          <nav aria-label="Main navigation">
-            {/* HeaderLinks */}
-            <Row className="justify-center max-md:flex-col">
-              {!isMainnet && (
-                <StyledNavLink id="swap-nav-link" to="/swap">
-                  Swap
-                </StyledNavLink>
-              )}
-              <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
-                Pool
+      {/* Center: Nav capsule */}
+      <HamburgerMenu>
+        <nav aria-label="Main navigation">
+          <div className="flex items-center bg-[#1a1510]/60 border border-[#c4943a20] rounded-full px-1 py-0.5 backdrop-blur-sm max-md:flex-col max-md:bg-transparent max-md:border-none max-md:rounded-none">
+            <StyledNavLink id="home-nav-link" to="/" end>
+              Home
+            </StyledNavLink>
+            {!isMainnet && (
+              <StyledNavLink id="swap-nav-link" to="/swap">
+                Swap
               </StyledNavLink>
-              <StyledNavLink id="leaderboard-nav-link" to="/campaign/contest-1">
-                Campaign
-              </StyledNavLink>
-            </Row>
-          </nav>
-        </HamburgerMenu>
-      </RowFixed>
+            )}
+            <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
+              Pool
+            </StyledNavLink>
+            <StyledNavLink id="leaderboard-nav-link" to="/campaign/contest-1">
+              Campaign
+            </StyledNavLink>
+            <StyledNavLink id="faq-nav-link" to="/faq">
+              FAQ
+            </StyledNavLink>
+          </div>
+        </nav>
+      </HamburgerMenu>
 
-      {/* HeaderControls */}
+      {/* Right: Chain + Connect */}
       <div
-        className="flex flex-row items-center justify-self-end gap-2
-        max-md:justify-between max-md:justify-self-center max-md:w-full max-md:max-w-[960px]
-        max-md:p-4 max-md:fixed max-md:bottom-0 max-md:left-0 max-md:z-[99]
-        max-md:h-[72px] max-md:bg-[#0D0D0F] max-md:border-t max-md:border-[#FFFFFF15]"
+        className="flex items-center gap-2 shrink-0
+        max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:z-[99]
+        max-md:h-[72px] max-md:bg-[#0a0806] max-md:border-t max-md:border-[#c4943a20]
+        max-md:justify-center max-md:p-4"
       >
         <CustomChainSelect />
         {showCustomAccountDisplay ? <CustomAccountDisplay /> : <StyledConnectButton />}
