@@ -162,7 +162,7 @@ export const RPC_URLS: Record<number, string> = {
   [ChainId.ARBITRUM_SEPOLIA]: 'https://sepolia-rollup.arbitrum.io/rpc',
   [ChainId.ARBITRUM_MAINNET]: 'https://arb1.arbitrum.io/rpc',
   [ChainId.BERA_MAINNET]: 'https://rpc.berachain.com',
-  [ChainId.HYPER_EVM]: 'https://hyperliquid.drpc.org',
+  [ChainId.HYPER_EVM]: 'https://rpc.hyperliquid.xyz/evm',
   [ChainId.LINEA_MAINNET]: 'https://rpc.linea.build',
   [ChainId.SEI_MAINNET]: 'https://evm-rpc.sei-apis.com',
   [ChainId.MONAD]: 'https://rpc.monad.xyz',
