@@ -38,6 +38,20 @@ const V3_POOLS: Record<number, { pair: string; token0: { address: string; decima
   ],
 }
 
+const FACTORY_STATS = `
+  query FactoryStats($dayId: ID!) {
+    factories {
+      totalVolume
+      totalFee
+    }
+    factoryDayData(id: $dayId) {
+      tvl
+      totalVolume
+      totalFee
+    }
+  }
+`
+
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
     pairs {
@@ -79,6 +93,24 @@ export default function Pool() {
   const { chainId } = useActiveWeb3React()
   const { version, enableGraphQL } = useVersion({ chainId })
   const allTokens = useDefaultTokens(chainId)
+
+  const dayId = useMemo(() => String(Math.floor(Date.now() / 1000 / 86400) * 86400), [])
+
+  const { data: factoryData, isLoading: isLoadingFactory } = useQuery<{
+    factories: { totalVolume: number; totalFee: number }[]
+    factoryDayData: { tvl: number; totalVolume: number; totalFee: number } | null
+  }>({
+    queryKey: ['factoryStats', chainId, dayId],
+    queryFn: () =>
+      graphqlFetcher({
+        operationName: 'FactoryStats',
+        query: FACTORY_STATS,
+        variables: { chainId, dayId },
+      }),
+    enabled: enableGraphQL,
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+  })
 
   const { data, error, isLoading: isLoadingPairs } = useQuery<{
     pairs: {
@@ -255,7 +287,7 @@ export default function Pool() {
             </TitleRow>
 
             {/* Stats bar */}
-            <PoolStatsBar pairs={filteredPairs} isLoading={enableGraphQL && isLoadingPairs} />
+            <PoolStatsBar factoryData={factoryData} pairs={filteredPairs} isLoading={enableGraphQL && isLoadingFactory} />
 
             {/* Search bar */}
             <div className="relative">
@@ -296,10 +328,30 @@ export default function Pool() {
   )
 }
 
-function PoolStatsBar({ pairs, isLoading }: { pairs: PairStats[]; isLoading?: boolean }) {
-  const totalTvl = useMemo(() => pairs.reduce((sum, p) => sum + (p.tvl || 0), 0), [pairs])
-  const totalVolume24h = useMemo(() => pairs.reduce((sum, p) => sum + (p.volumeDay || 0), 0), [pairs])
-  const totalFees24h = useMemo(() => pairs.reduce((sum, p) => sum + (p.feeDay || 0), 0), [pairs])
+function PoolStatsBar({
+  factoryData,
+  pairs,
+  isLoading,
+}: {
+  factoryData?: {
+    factories: { totalVolume: number; totalFee: number }[]
+    factoryDayData: { tvl: number; totalVolume: number; totalFee: number } | null
+  }
+  pairs: PairStats[]
+  isLoading?: boolean
+}) {
+  const dayData = factoryData?.factoryDayData
+  const factory = factoryData?.factories?.[0]
+
+  // TVL: from factoryDayData, fallback to pairs sum
+  const pairsTvl = useMemo(() => pairs.reduce((sum, p) => sum + (Number(p.tvl) || 0), 0), [pairs])
+  const tvl = Number(dayData?.tvl) || pairsTvl
+  // 24h data from factoryDayData
+  const volume24h = Number(dayData?.totalVolume) || 0
+  const fees24h = Number(dayData?.totalFee) || 0
+  // All-time from factories
+  const allTimeVolume = Number(factory?.totalVolume) || 0
+  const totalFees = Number(factory?.totalFee) || 0
 
   const formatValue = (val: number) => {
     const n = Number(val) || 0
@@ -308,12 +360,14 @@ function PoolStatsBar({ pairs, isLoading }: { pairs: PairStats[]; isLoading?: bo
     return `$${n.toFixed(0)}`
   }
 
+  const hasData = !!dayData || pairs.length > 0
+
   const stats = [
-    { label: 'Total Value Locked', value: formatValue(totalTvl), sub: pairs.length > 0 ? '-1.2% this week' : 'Loading...', subColor: pairs.length > 0 ? '#27AE60' : undefined },
-    { label: '24h Volume', value: formatValue(totalVolume24h), sub: 'Across all pools' },
-    { label: '24h Fees', value: formatValue(totalFees24h), sub: 'Distributed to Lps' },
-    { label: 'Total Fees', value: formatValue(totalFees24h * 30), sub: 'Distributed to Lps' },
-    { label: 'All - Time Volume', value: formatValue(totalVolume24h * 90), sub: 'Since launch' },
+    { label: 'Total Value Locked', value: formatValue(tvl), sub: '' },
+    { label: '24h Volume', value: formatValue(volume24h), sub: 'Across all pools' },
+    { label: '24h Fees', value: formatValue(fees24h), sub: 'Distributed to Lps' },
+    { label: 'Total Fees', value: formatValue(totalFees), sub: 'Distributed to Lps' },
+    { label: 'All - Time Volume', value: formatValue(allTimeVolume), sub: 'Since launch' },
   ]
 
   return (
@@ -321,14 +375,14 @@ function PoolStatsBar({ pairs, isLoading }: { pairs: PairStats[]; isLoading?: bo
       {stats.map((stat) => (
         <div key={stat.label} className="bg-[#0d0b08] rounded-xl p-4 flex flex-col gap-1">
           <span className="text-[#8A7D66] text-xs">{stat.label}</span>
-          {isLoading && pairs.length === 0 ? (
+          {isLoading && !hasData ? (
             <span className="text-[#c4943a] text-xl font-bold animate-pulse">--</span>
           ) : (
             <span className="text-[#c4943a] text-xl font-bold">{stat.value}</span>
           )}
-          <span className={`text-xs ${stat.subColor ? '' : 'text-[#8A7D66]'}`} style={stat.subColor ? { color: stat.subColor } : undefined}>
-            {stat.sub}
-          </span>
+          {stat.sub && (
+            <span className="text-xs text-[#8A7D66]">{stat.sub}</span>
+          )}
         </div>
       ))}
     </div>
