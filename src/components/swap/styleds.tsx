@@ -6,26 +6,26 @@ import { AutoColumn } from 'components/Column'
 
 export const Wrapper = styled.div`
   position: relative;
-  padding: 0 24px;
+  padding: 0;
   ${({ theme }) => theme.mediaWidth.upToMedium`
-   padding: 0 20px
+   padding: 0
   `};
 `
 
 export const ArrowWrapper = styled.div<{ clickable: boolean }>`
-  padding: 0;
-  width: 36px;
-  height: 36px;
+  padding: 10px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #c4943a;
-  border-radius: 8px;
+  background-color: #C47736;
+  border-radius: 100px;
 
   img {
     width: 20px !important;
     height: 20px;
-    filter: brightness(0) saturate(100%);
+    filter: brightness(0) saturate(100%) invert(1);
   }
 
   ${({ clickable }) =>

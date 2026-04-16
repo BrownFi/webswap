@@ -24,17 +24,28 @@ const SwitchVersion = ({ isMobile }: Props) => {
 
   return (
     <div
-      className={`flex items-center gap-0.5 ${isMobile ? 'md:hidden' : 'max-md:hidden'}`}
+      className={`flex items-center gap-0.5 p-[4px] rounded-[12px] ${isMobile ? 'md:hidden' : 'max-md:hidden'}`}
+      style={{
+        background: 'rgba(0, 0, 0, 0.06)',
+        boxShadow: 'inset 0px 10px 14px rgba(237, 210, 188, 0.05), inset 0px 2px 16px rgba(236, 208, 186, 0.3)',
+        backdropFilter: 'blur(12px)',
+      }}
     >
       {versions.map((v) => (
         <button
           key={v}
           onClick={() => handleSelect(v)}
-          className={`px-2.5 py-1 text-xs font-bold transition-all rounded-[6px] ${
-            version === v
-              ? 'bg-[#c4943a] text-white'
-              : 'bg-transparent border border-[#c4943a40] text-[#8A7D66] hover:text-white'
-          } ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          className={`transition-all ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          style={{
+            padding: '4px 8px',
+            borderRadius: '8px',
+            border: 'none',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '16px',
+            fontWeight: version === v ? 400 : 500,
+            color: 'white',
+            background: version === v ? '#985C2A' : 'transparent',
+          }}
         >
           V{v}
         </button>

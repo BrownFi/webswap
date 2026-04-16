@@ -1,7 +1,7 @@
-import { useCallback, useContext, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { X } from 'react-feather'
 import { Text } from 'components/Rebass'
-import styled, { ThemeContext } from 'styled-components'
+import styled from 'styled-components'
 import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import { ApplicationModal } from 'state/application/actions'
 import { useModalOpen, useToggleSettingsMenu } from 'state/application/hooks'
@@ -24,13 +24,8 @@ import settings from 'assets/svg/settings.svg'
 const StyledCloseIcon = styled(X)`
   height: 20px;
   width: 20px;
-  :hover {
-    cursor: pointer;
-  }
-
-  > * {
-    stroke: ${({ theme }) => theme.text1};
-  }
+  cursor: pointer;
+  stroke: #B8ADA4;
 `
 
 const StyledMenuButton = styled.button`
@@ -74,14 +69,14 @@ const StyledMenu = styled.div`
 `
 
 const MenuFlyout = styled.span`
-  min-width: 391px;
-  background-color: #1a1510;
-  border: 1px solid #c4943a30;
-  box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.01), 0px 4px 8px rgba(0, 0, 0, 0.04), 0px 16px 24px rgba(0, 0, 0, 0.04),
-    0px 24px 32px rgba(0, 0, 0, 0.01);
-  border-radius: 12px;
+  min-width: 496px;
+  background: #1E1915;
+  border: 1px solid #2F2823;
+  border-radius: 32px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
+  gap: 32px;
   font-size: 1rem;
   position: absolute;
   top: 3rem;
@@ -122,7 +117,6 @@ export function SettingsTab() {
   const open = useModalOpen(ApplicationModal.SETTINGS)
   const toggle = useToggleSettingsMenu()
 
-  const theme = useContext(ThemeContext)
   const [userSlippageTolerance, setUserslippageTolerance] = useUserSlippageTolerance()
 
   const [ttl, setTtl] = useUserTransactionTTL()
@@ -200,8 +194,8 @@ export function SettingsTab() {
         </ModalContentWrapper>
       </Modal>
       <StyledMenuButton onClick={toggle} id="open-settings-dialog-button" aria-label="Open settings">
-        <div className="w-[36px] h-[36px] flex items-center justify-center rounded-full border border-[rgba(196,148,58,0.25)] hover:border-[rgba(196,148,58,0.5)] transition-colors">
-          <img src={settings} alt="settings" className="w-[20px] opacity-70" />
+        <div className="w-[44px] h-[44px] flex items-center justify-center rounded-[100px] transition-colors" style={{ background: '#2F2823', border: 'none', padding: '10px' }}>
+          <img src={settings} alt="settings" className="w-[20px]" style={{ filter: 'brightness(0) saturate(100%) invert(73%) sepia(5%) saturate(1000%) hue-rotate(350deg) brightness(90%) contrast(85%)' }} />
         </div>
 
         {expertMode ? (
@@ -216,13 +210,12 @@ export function SettingsTab() {
         <>
         <div className="fixed inset-0 z-[999] bg-black/75 backdrop-blur-sm" onClick={toggle} />
         <MenuFlyout>
-          <AutoColumn style={{ padding: '1rem' }} gap={'20px'}>
             <div className="flex items-center justify-between">
-              <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
+              <Text style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
                 Transaction Settings
               </Text>
-              <button onClick={toggle} className="text-white/60 hover:text-white transition p-1" aria-label="Close settings">
-                ✕
+              <button onClick={toggle} style={{ width: '24px', height: '24px', background: 'none', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }} aria-label="Close settings">
+                <X size={20} color="#B8ADA4" />
               </button>
             </div>
             <TransactionSettings
@@ -231,13 +224,13 @@ export function SettingsTab() {
               deadline={ttl}
               setDeadline={setTtl}
             />
-            <div className="w-full h-[1px] bg-[#2a2418]"></div>
-            <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
+            <div className="w-full h-[1px] bg-[#2F2823]"></div>
+            <Text style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
               Interface Settings
             </Text>
             <RowBetween>
               <RowFixed>
-                <TYPE.black fontWeight={500} fontSize={16} color={theme.white}>
+                <TYPE.black style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#CFC7C1' }}>
                   Multihops
                 </TYPE.black>
                 <QuestionHelper text="Enable swaps through multiple token pairs." />
@@ -250,7 +243,6 @@ export function SettingsTab() {
                 }}
               />
             </RowBetween>
-          </AutoColumn>
         </MenuFlyout>
         </>
       )}

@@ -19,21 +19,25 @@ enum DeadlineError {
 }
 
 const FancyButton = styled.button`
-  color: white;
+  color: #978A80;
   align-items: center;
-  height: 2rem;
-  border-radius: 0;
-  font-size: 1rem;
+  height: 48px;
+  border-radius: 12px;
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 500;
   width: auto;
   min-width: 3.5rem;
-  border: 0;
+  border: 1px solid #2F2823;
   outline: none;
-  background: #12100b;
+  background: #120F0D;
+  padding: 12px 8px;
   :hover {
-    border: 0;
+    border: 1px solid #2F2823;
+    cursor: pointer;
   }
   :focus {
-    border: 0;
+    border: 1px solid #2F2823;
   }
 `
 
@@ -42,15 +46,20 @@ const Option = styled(FancyButton)<{ active: boolean }>`
   :hover {
     cursor: pointer;
   }
-  background-color: ${({ active, theme }) => active && theme.primary1};
-  color: white;
+  background: ${({ active }) => active ? '#493E35' : '#120F0D'};
+  border: ${({ active }) => active ? '1px solid #C47736' : '1px solid #2F2823'};
+  color: ${({ active }) => active ? '#FFFFFF' : '#978A80'};
+  font-family: Inter;
   font-weight: 500;
-  height: 44px;
-  font-size: 14px;
+  height: 48px;
+  font-size: 16px;
+  border-radius: 12px;
+  padding: 12px 8px;
 `
 
 const Input = styled.input`
   background: transparent;
+  font-family: Inter;
   font-size: 16px;
   font-weight: 500;
   width: auto;
@@ -59,26 +68,27 @@ const Input = styled.input`
   &::-webkit-inner-spin-button {
     -webkit-appearance: none;
   }
-  color: ${({ theme, color }) => (color === 'red' ? theme.red1 : theme.white)};
+  color: ${({ color }) => (color === 'red' ? '#ff6871' : '#978A80')};
   text-align: right;
 `
 
 const OptionCustom = styled(FancyButton)<{ active?: boolean; warning?: boolean }>`
-  height: 44px;
+  height: 48px;
   position: relative;
-  padding: 0 0.75rem;
+  padding: 12px 16px;
   flex: 1;
-  border: ${({ theme, active, warning }) => active && `1px solid ${warning ? theme.red1 : theme.primary1}`};
+  background: #120F0D;
+  border: 1px solid ${({ warning }) => warning ? '#ff6871' : '#2F2823'};
+  border-radius: 12px;
   :hover {
-    border: ${({ theme, active, warning }) =>
-      active && `1px solid ${warning ? darken(0.1, theme.red1) : darken(0.1, theme.primary1)}`};
+    border: 1px solid ${({ warning }) => warning ? darken(0.1, '#ff6871') : '#2F2823'};
   }
 
   input {
     width: 100%;
     height: 100%;
     border: 0px;
-    border-radius: 44px;
+    border-radius: 12px;
   }
 `
 
@@ -248,7 +258,7 @@ export default function SlippageTabs({ rawSlippage, setRawSlippage, deadline, se
               aria-label="Transaction deadline in minutes"
             />
           </OptionCustom>
-          <TYPE.body style={{ paddingLeft: '8px' }} fontSize={14} fontWeight={500} color="white">
+          <TYPE.body style={{ paddingLeft: '8px', fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#978A80' }}>
             minutes
           </TYPE.body>
         </RowFixed>

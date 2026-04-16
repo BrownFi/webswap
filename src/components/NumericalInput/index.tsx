@@ -3,15 +3,18 @@ import styled from 'styled-components'
 import { escapeRegExp } from 'utils'
 
 const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: string }>`
-  color: ${({ error }) => (error ? '#ff6b6b' : '#F5F0E8')};
+  color: ${({ error }) => (error ? '#ff6b6b' : '#FEFEFE')};
   width: 0;
   position: relative;
+  font-family: 'Inter', sans-serif;
   font-weight: 500;
+  font-size: ${({ fontSize }) => fontSize ?? '36px'};
+  line-height: 44px;
+  letter-spacing: -0.02em;
   outline: none;
   border: none;
   flex: 1 1 auto;
   background-color: transparent;
-  font-size: ${({ fontSize }) => fontSize ?? '28px'};
   text-align: ${({ align }) => align && align};
   white-space: nowrap;
   overflow: hidden;

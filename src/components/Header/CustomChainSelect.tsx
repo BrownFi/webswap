@@ -17,14 +17,17 @@ const CustomChainSelect = () => {
 
   return (
     <>
-      <ButtonDropdown
-        className="!bg-transparent hover:!bg-[#c4943a15] transition-all !py-2 !px-4 h-full !min-h-10 !rounded-full !w-fit"
-        style={{ border: '1px solid rgba(196,148,58,0.4)' }}
+      <button
+        className="flex items-center gap-2.5 bg-transparent border-none hover:opacity-80 transition-all py-3 px-4 h-12 cursor-pointer"
+        style={{ fontFamily: "'Inter', sans-serif", background: 'transparent' }}
         onClick={() => setOpen(true)}
       >
-        <img className="w-5 mr-2 rounded-full" src={chain.iconUrl as string} alt={chain.name} />
-        <div className="text-sm">{chain.name}</div>
-      </ButtonDropdown>
+        <img className="w-6 rounded-full" src={chain.iconUrl as string} alt={chain.name} />
+        <span className="text-white text-[16px] font-medium">{chain.name}</span>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
 
       <ChainModal isOpen={isOpen} onClose={() => setOpen(false)} />
     </>

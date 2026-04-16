@@ -5,21 +5,26 @@ import { Flex } from 'components/Rebass'
 import SwitchVersion from 'components/SwitchVersion'
 
 const StyledSwapHeader = styled.div`
-  padding: 24px 24px 24px 24px;
+  padding: 0 0 24px 0;
   margin-bottom: -4px;
   width: 100%;
-  max-width: 500px;
+  max-width: 690px;
   color: ${({ theme }) => theme.text2};
   ${({ theme }) => theme.mediaWidth.upToMedium`
-   padding: 20px
+   padding: 0 0 20px 0
   `};
 `
 
 const StyledSwaptitle = styled.p`
-  font-size: 30px;
-  font-weight: 800;
-  color: #F5F0E8;
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 36px;
+  line-height: 44px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   flex: 1;
 `
 

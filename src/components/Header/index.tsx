@@ -30,7 +30,20 @@ const StyledConnectButton = () => {
                 return (
                   <button
                     onClick={openConnectModal}
-                    className="border border-[#c4943a80] bg-transparent text-[#F5F0E8] hover:border-[#c4943a] hover:bg-[#c4943a15] font-medium px-5 py-2 rounded-full min-h-10 transition-all text-sm"
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#FFFFFF',
+                      background: 'linear-gradient(#050505, #050505) padding-box, linear-gradient(180deg, #6B5B4E 0%, #C47736 100%) border-box',
+                      border: '2px solid transparent',
+                      boxShadow: 'inset 0px 8px 24px rgba(239, 190, 54, 0.25)',
+                      borderRadius: '12px',
+                      padding: '12px 24px',
+                      height: '48px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap' as const,
+                    }}
                   >
                     Connect wallet
                   </button>
@@ -59,19 +72,21 @@ const StyledConnectButton = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setChainModalOpen(true)}
-                    className="flex items-center gap-1.5 border border-[#c4943a60] hover:border-[#c4943a] bg-transparent hover:bg-[#c4943a15] transition-all py-2 px-4 min-h-10 rounded-full"
+                    className="flex items-center gap-2.5 bg-transparent border-none hover:opacity-80 transition-all py-3 px-4 h-12 cursor-pointer"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
                   >
                     {chain.hasIcon && chain.iconUrl && (
-                      <img src={chain.iconUrl} alt={chain.name ?? ''} className="w-5 h-5 rounded-full" />
+                      <img src={chain.iconUrl} alt={chain.name ?? ''} className="w-6 h-6 rounded-full" />
                     )}
-                    <span className="text-[#F5F0E8] text-sm">{chain.name}</span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="ml-0.5">
-                      <path d="M3 4.5L6 7.5L9 4.5" stroke="#c4943a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <span className="text-white text-[16px] font-medium">{chain.name}</span>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M5 7.5L10 12.5L15 7.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                   <button
                     onClick={() => setAccountModalOpen(true)}
-                    className="flex items-center gap-1.5 border border-[#c4943a60] hover:border-[#c4943a] bg-transparent hover:bg-[#c4943a15] transition-all py-2 px-4 min-h-10 rounded-full text-[#F5F0E8] text-sm"
+                    className="flex items-center gap-2.5 bg-transparent border-none hover:opacity-80 transition-all py-3 px-4 h-12 cursor-pointer text-white text-[16px] font-medium"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
                   >
                     {account.displayBalance && <span>{account.displayBalance}</span>}
                     <span>{account.displayName}</span>
@@ -123,12 +138,13 @@ function StyledNavLink({
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex items-center cursor-pointer no-underline
-        text-[#8A7D66] text-sm font-medium py-2 px-4
-        hover:text-[#F5F0E8] transition-colors
-        ${isActive || className?.includes('active') ? 'font-semibold !text-[#F5F0E8]' : ''}
+        `flex items-center justify-center cursor-pointer no-underline
+        text-white text-[16px] font-medium py-2 px-6 rounded-lg
+        hover:text-[#D59967] transition-colors
+        ${isActive || className?.includes('active') ? '!text-[#D59967]' : ''}
         ${className ?? ''}`
       }
+      style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
     >
       {children}
     </NavLink>
@@ -179,7 +195,15 @@ export default function Header() {
       {/* Center: Nav capsule */}
       <HamburgerMenu>
         <nav aria-label="Main navigation">
-          <div className="flex items-center bg-[#1a1510]/60 border border-[#c4943a20] rounded-full px-1 py-0.5 backdrop-blur-sm max-md:flex-col max-md:bg-transparent max-md:border-none max-md:rounded-none">
+          <div
+            className="flex items-center p-1 rounded-xl max-md:flex-col max-md:bg-transparent max-md:shadow-none max-md:backdrop-blur-none max-md:rounded-none"
+            style={{
+              background: 'rgba(0, 0, 0, 0.06)',
+              boxShadow: 'inset 0px 10px 14px rgba(237, 210, 188, 0.05), inset 0px 2px 16px rgba(236, 208, 186, 0.3)',
+              backdropFilter: 'blur(12px)',
+              borderRadius: '12px',
+            }}
+          >
             <StyledNavLink id="home-nav-link" to="/" end>
               Home
             </StyledNavLink>

@@ -17,38 +17,40 @@ import { getTokenSymbol } from 'utils'
 const InputRow = styled.div<{ selected: boolean }>`
   ${({ theme }) => theme.flexRowNoWrap}
   align-items: center;
-  padding: ${({ selected }) => (selected ? '0 20px 16px 20px' : '0 20px 16px 20px')};
+  padding: 0;
 `
 
 const CurrencySelect = styled.button<{ selected: boolean }>`
   align-items: center;
-  height: 38px;
-  min-width: 150px;
-  font-size: 20px;
+  height: auto;
+  min-width: auto;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
   font-weight: 500;
-  background-color: #1a1510;
+  background: #2F2823;
   color: white;
-  border-radius: 9999px;
+  border-radius: 8px;
+  border: 1px solid #807266;
   box-shadow: none;
   outline: none;
   cursor: pointer;
   user-select: none;
-  border: none;
-  padding: 0 12px;
+  padding: 8px 12px;
 
   :focus,
   :hover {
-    background-color: #1a1510;
+    background: #2F2823;
   }
 `
 
 const LabelRow = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
   align-items: center;
-  color: #8A7D66;
-  font-size: 0.75rem;
+  color: #CFC7C1;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
   line-height: 1rem;
-  padding: 16px 20px 20px 20px;
+  padding: 0 0 16px 0;
   span:hover {
     cursor: pointer;
     color: ${({ theme }) => darken(0.2, theme.text2)};
@@ -64,27 +66,31 @@ const Aligner = styled.span`
 const InputPanel = styled.div<{ hideInput?: boolean }>`
   ${({ theme }) => theme.flexColumnNoWrap}
   position: relative;
-  border-radius: 16px;
-  background-color: #2a2418;
+  border-radius: 24px;
+  padding: 24px;
   z-index: 1;
-  border: 1px solid transparent;
-  transition: background-color 150ms, border 150ms;
+  background: #2F2823;
+  border: 1px solid #493E35;
+  transition: background 150ms, border-color 150ms;
+
   &:focus-within {
-    background-color: #0d0b08;
-    border: 1px solid #c4943a;
+    background: #120F0D;
+    border-color: #C47736;
   }
 `
 
 const Container = styled.div<{ hideInput: boolean }>`
-  border-radius: 16px;
+  border-radius: 24px;
   border: 0;
   background-color: transparent;
 `
 
 const StyledTokenName = styled.span<{ active?: boolean }>`
   ${({ active }) => (active ? '  margin: 0 0.25rem 0 0.75rem;' : '  margin: 0 0.25rem 0 0.25rem;')}
-  font-size:  ${({ active }) => (active ? '14px' : '14px')};
-
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
 `
 
 const StyledBalanceMax = styled.button`
@@ -92,14 +98,15 @@ const StyledBalanceMax = styled.button`
   background-color: transparent;
   border: 0;
   border-radius: 0;
-  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
   padding: 0;
   font-weight: 700;
   margin-left: 8px;
 
   cursor: pointer;
   margin-right: 0.5rem;
-  color: #c4943a;
+  color: #C47736;
   :hover {
     border: 0;
     opacity: 0.8;
@@ -165,16 +172,17 @@ export function CurrencyInputPanel({
         {!hideInput && (
           <LabelRow>
             <RowBetween style={{ minHeight: 24 }}>
-              <TYPE.body color={'#8A7D66'} fontWeight={400} fontSize={13}>
+              <TYPE.body color={'#CFC7C1'} fontWeight={500} fontSize={16} fontFamily="'Inter', sans-serif">
                 {label}
               </TYPE.body>
               <div className="flex items-center text-right">
                 {account && (
                   <TYPE.body
                     onClick={onMax}
-                    color={'#8A7D66'}
+                    color={'#CFC7C1'}
                     fontWeight={400}
-                    fontSize={13}
+                    fontSize={16}
+                    fontFamily="'Inter', sans-serif"
                     style={{ display: 'inline', cursor: 'pointer' }}
                   >
                     {!hideBalance && !!currency && selectedCurrencyBalance
@@ -238,7 +246,7 @@ export function CurrencyInputPanel({
                 )}
               </div>
 
-              {!disableCurrencySelect && <img src={downIcon} alt="down" className="w-[24px]" />}
+              {!disableCurrencySelect && <img src={downIcon} alt="down" className="w-[24px]" style={{ filter: 'brightness(0) saturate(100%) invert(73%) sepia(5%) saturate(1000%) hue-rotate(350deg) brightness(90%) contrast(85%)' }} />}
             </Aligner>
           </CurrencySelect>
         </InputRow>
