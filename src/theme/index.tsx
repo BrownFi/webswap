@@ -178,13 +178,13 @@ export const TYPE = {
 
 export const FixedGlobalStyle = createGlobalStyle`
 html, input, textarea, button {
-  font-family: "Montserrat", sans-serif !important;
+  font-family: "Inter", sans-serif !important;
   font-display: fallback;
   font-weight: 500;
 }
 @supports (font-variation-settings: normal) {
   html, input, textarea, button {
-    font-family: 'Montserrat var', sans-serif;
+    font-family: 'Inter var', 'Inter', sans-serif;
     font-weight: 500;
   }
 }

@@ -13,22 +13,56 @@ export const SwitchZap = ({ enabled, onToggle, version }: SwitchZapProps) => {
   return (
     <div
       onClick={onToggle}
-      className={
-        `relative w-[88px] h-8 rounded-full transition-colors duration-300 ease-in-out flex items-center justify-between px-2 ` +
-        `${enabled ? 'bg-[#c4943a]' : 'bg-[#c4943a88]'} cursor-pointer`
-      }
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        padding: '4px',
+        background: 'rgba(0, 0, 0, 0.06)',
+        boxShadow: 'inset 0px 10px 14px rgba(237, 210, 188, 0.05), inset 0px 2px 16px rgba(236, 208, 186, 0.3)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: '100px',
+        cursor: 'pointer',
+      }}
     >
-      {enabled ? (
-        <span className="text-xs font-bold text-white select-none w-12 text-center">Zap</span>
-      ) : (
-        <span className="text-xs font-bold text-white select-none w-full text-right">Classic</span>
-      )}
       <div
-        className={
-          `absolute top-1 left-1 w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ease-in-out ` +
-          `${enabled ? 'translate-x-14' : ''} bg-white`
-        }
-      ></div>
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '4px 8px',
+          width: '80px',
+          height: '32px',
+          borderRadius: '100px',
+          background: enabled ? 'linear-gradient(105.56deg, #734117 1.68%, #D8A072 50%, #734017 98.32%)' : 'none',
+          fontFamily: 'Inter',
+          fontWeight: 500,
+          fontSize: '16px',
+          lineHeight: '24px',
+          color: enabled ? '#FFFFFF' : '#B8ADA4',
+        }}
+      >
+        Zap
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '4px 8px',
+          width: '80px',
+          height: '32px',
+          borderRadius: '100px',
+          background: !enabled ? 'linear-gradient(105.56deg, #734117 1.68%, #D8A072 50%, #734017 98.32%)' : 'none',
+          fontFamily: 'Inter',
+          fontWeight: 500,
+          fontSize: '16px',
+          lineHeight: '24px',
+          color: !enabled ? '#FFFFFF' : '#B8ADA4',
+        }}
+      >
+        Classic
+      </div>
     </div>
   )
 }

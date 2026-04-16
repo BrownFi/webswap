@@ -74,24 +74,35 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
   const dispatch = useDispatch<AppDispatch>()
 
   return (
-    <div className="flex flex-row flex-nowrap items-center rounded-[3rem] justify-evenly">
-      <RowBetween style={{ padding: isMobile ? '20px 20px 10px 20px' : '24px 24px 10px 24px' }}>
-        <div className="flex items-center">
+    <div>
+      <RowBetween style={{ padding: '0', alignItems: 'center' }}>
+        <div className="flex items-center gap-3 flex-wrap">
           <HistoryLink
             to="/pool"
             onClick={() => {
               adding && dispatch(resetMintState())
             }}
           >
-            <ChevronLeft className="text-text1 mr-3 w-6" color="white" />
+            <div style={{ width: '44px', height: '44px', background: '#2F2823', borderRadius: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ChevronLeft size={24} color="#B8ADA4" />
+            </div>
           </HistoryLink>
 
-          <Flex alignItems="center" className="gap-6">
-            <div className="font-extrabold text-[28px] text-[#F5F0E8]">
-              {creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}
-            </div>
-            <SwitchVersion />
-          </Flex>
+          <span
+            className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]"
+            style={{
+              fontFamily: 'Inter',
+              fontWeight: 600,
+              letterSpacing: '-0.02em',
+              background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            {creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}
+          </span>
+          <SwitchVersion />
         </div>
 
         <SettingsTab />

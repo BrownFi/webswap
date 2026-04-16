@@ -36,6 +36,7 @@ const CurrencySelect = styled.button<{ selected: boolean }>`
   cursor: pointer;
   user-select: none;
   padding: 8px 12px;
+  flex-shrink: 0;
 
   :focus,
   :hover {
@@ -70,13 +71,18 @@ const InputPanel = styled.div<{ hideInput?: boolean }>`
   padding: 24px;
   z-index: 1;
   background: #2F2823;
-  border: 2px solid #493E35;
+  border: 3px solid #493E35;
   transition: background 150ms, border-color 150ms;
 
   &:focus-within {
     background: #120F0D;
-    border: 3px solid #C47736;
+    border-color: #C47736;
   }
+
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    padding: 16px;
+    border-radius: 16px;
+  `};
 `
 
 const Container = styled.div<{ hideInput: boolean }>`

@@ -421,6 +421,7 @@ export default function Swap() {
               )}
             </AutoColumn>
           </AutoColumn>
+          {!swapIsUnsupported && <AdvancedSwapDetailsDropdown trade={trade} />}
           <BottomGrouping>
             {swapIsUnsupported ? (
               <ButtonError disabled>Unsupported Asset</ButtonError>
@@ -523,9 +524,7 @@ export default function Swap() {
         </Wrapper>
       </AppBody>
 
-      {!swapIsUnsupported ? (
-        <AdvancedSwapDetailsDropdown trade={trade} />
-      ) : (
+      {swapIsUnsupported && (
         <UnsupportedCurrencyFooter show={swapIsUnsupported} currencies={[currencies.INPUT, currencies.OUTPUT]} />
       )}
     </>

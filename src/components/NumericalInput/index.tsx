@@ -22,6 +22,11 @@ const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: s
   padding: 0px;
   -webkit-appearance: textfield;
 
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    font-size: 24px;
+    line-height: 32px;
+  `};
+
   ::-webkit-search-decoration {
     -webkit-appearance: none;
   }

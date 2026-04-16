@@ -1,9 +1,6 @@
 import { Trade, TradeType } from '@brownfi/sdk'
-import { useContext } from 'react'
-import { ThemeContext } from 'styled-components'
 import { Field } from 'state/swap/actions'
 import { useUserSlippageTolerance } from 'state/user/hooks'
-import { TYPE } from 'theme'
 import { computeSlippageAdjustedAmounts, warningSeveritySlippage } from 'utils/prices'
 import { AutoColumn } from 'components/Column'
 import QuestionHelper from 'components/QuestionHelper'
@@ -15,7 +12,6 @@ import { ErrorText } from './styleds'
 import { useTradingFee } from 'hooks/useTradingFee'
 
 function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippage: number }) {
-  const theme = useContext(ThemeContext)
   const { chainId } = useActiveWeb3React()
 
   const isExactIn = trade.tradeType === TradeType.EXACT_INPUT
@@ -24,52 +20,43 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
   const tradingFee = useTradingFee({ pair: trade.route.pairs[0] })
 
   return (
-    <>
-      <AutoColumn style={{ padding: '0 16px' }}>
-        <RowBetween>
-          <RowFixed>
-            <TYPE.black fontSize={14} fontWeight={400} color={theme.white}>
-              {isExactIn ? 'Minimum received' : 'Maximum sold'}
-            </TYPE.black>
-            <QuestionHelper text="Your transaction will revert if there is a large, unfavorable price movement before it is confirmed." />
-          </RowFixed>
-          <RowFixed>
-            <TYPE.black color={theme.white} fontSize={14}>
-              {isExactIn
-                ? `${slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4)} ${getTokenSymbol(
-                    trade.outputAmount?.currency,
-                    chainId,
-                  )}`
-                : `${slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4)} ${getTokenSymbol(
-                    trade.inputAmount?.currency,
-                    chainId,
-                  )}`}
-            </TYPE.black>
-          </RowFixed>
-        </RowBetween>
-        <RowBetween>
-          <RowFixed>
-            <TYPE.black fontSize={14} fontWeight={400} color={theme.white}>
-              Price Impact
-            </TYPE.black>
-            <QuestionHelper text="Price impact is the difference between your trading price and oracle price." />
-          </RowFixed>
-          <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
-            {trade ? formatStringToNumber(trade?.priceImpactK, 4) : '-'}%
-          </ErrorText>
-        </RowBetween>
-
-        <RowBetween>
-          <RowFixed>
-            <TYPE.black fontSize={14} fontWeight={500} color={theme.white}>
-              Liquidity Provider Fee
-            </TYPE.black>
-            <QuestionHelper text="A portion of each trade goes to liquidity providers as a protocol incentive." />
-          </RowFixed>
-          <TYPE.black fontSize={14}>{tradingFee}%</TYPE.black>
-        </RowBetween>
-      </AutoColumn>
-    </>
+    <AutoColumn gap="8px" style={{ padding: '0 16px' }}>
+      <RowBetween>
+        <RowFixed>
+          <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
+            {isExactIn ? 'Minimum received' : 'Maximum sold'}
+          </span>
+          <QuestionHelper text="Your transaction will revert if there is a large, unfavorable price movement before it is confirmed." />
+        </RowFixed>
+        <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
+          {isExactIn
+            ? `${slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4)} ${getTokenSymbol(trade.outputAmount?.currency, chainId)}`
+            : `${slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4)} ${getTokenSymbol(trade.inputAmount?.currency, chainId)}`}
+        </span>
+      </RowBetween>
+      <RowBetween>
+        <RowFixed>
+          <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
+            Price Impact
+          </span>
+          <QuestionHelper text="Price impact is the difference between your trading price and oracle price." />
+        </RowFixed>
+        <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
+          {trade ? formatStringToNumber(trade?.priceImpactK, 4) : '-'}%
+        </ErrorText>
+      </RowBetween>
+      <RowBetween>
+        <RowFixed>
+          <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
+            Liquidity Provider Fee
+          </span>
+          <QuestionHelper text="A portion of each trade goes to liquidity providers as a protocol incentive." />
+        </RowFixed>
+        <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
+          {tradingFee}%
+        </span>
+      </RowBetween>
+    </AutoColumn>
   )
 }
 
@@ -78,29 +65,25 @@ export interface AdvancedSwapDetailsProps {
 }
 
 export function AdvancedSwapDetails({ trade }: AdvancedSwapDetailsProps) {
-  const theme = useContext(ThemeContext)
-
   const [allowedSlippage] = useUserSlippageTolerance()
 
   const showRoute = Boolean(trade && trade.route.path.length > 2)
 
   return (
-    <AutoColumn gap="0px">
+    <AutoColumn gap="0px" style={{ width: '100%' }}>
       {trade && (
         <>
           <TradeSummary trade={trade} allowedSlippage={allowedSlippage} />
           {showRoute && (
-            <>
-              <RowBetween style={{ padding: '0 16px' }}>
-                <span style={{ display: 'flex', alignItems: 'center' }}>
-                  <TYPE.black fontSize={14} fontWeight={400} color={theme.white}>
-                    Route
-                  </TYPE.black>
-                  <QuestionHelper text="Routing through these tokens resulted in the best price for your trade." />
+            <RowBetween style={{ padding: '0 16px' }}>
+              <RowFixed>
+                <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
+                  Route
                 </span>
-                <SwapRoute trade={trade} />
-              </RowBetween>
-            </>
+                <QuestionHelper text="Routing through these tokens resulted in the best price for your trade." />
+              </RowFixed>
+              <SwapRoute trade={trade} />
+            </RowBetween>
           )}
         </>
       )}

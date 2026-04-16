@@ -5,13 +5,6 @@ import { getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 import { shouldReverse } from 'utils/pair'
 
-const Wrapper = styled.div<{ margin: boolean; sizeraw: number }>`
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  margin-right: ${({ sizeraw, margin }) => margin && (sizeraw / 3 + 8).toString() + 'px'};
-`
-
 interface DoubleCurrencyLogoProps {
   margin?: boolean
   size?: number
@@ -19,23 +12,42 @@ interface DoubleCurrencyLogoProps {
   currency1?: Currency
 }
 
-export const HigherLogo = styled(CurrencyLogo)`
-  z-index: 2;
-`
-const CoveredLogo = styled(CurrencyLogo)<{ sizeraw: number }>`
-  position: absolute;
-  left: ${({ sizeraw }) => '-' + (sizeraw / 2).toString() + 'px'} !important;
-`
+export const HigherLogo = styled(CurrencyLogo)``
+const CoveredLogo = styled(CurrencyLogo)``
 
 export function DoubleCurrencyLogo({ currency0, currency1, size = 16, margin = false }: DoubleCurrencyLogoProps) {
   const { chainId } = useActiveWeb3React()
   const symbols = [getTokenSymbol(currency0, chainId), getTokenSymbol(currency1, chainId)]
   const pair = symbols.join('/')
+  const isReversed = shouldReverse(pair)
+  const first = isReversed ? currency1 : currency0
+  const second = isReversed ? currency0 : currency1
+
+  // For large sizes (pool rows), use Figma layout: 64x60 container, 40px icons, offset
+  const isLarge = size >= 32
+  if (isLarge) {
+    return (
+      <div style={{ position: 'relative', width: '64px', height: '60px', flexShrink: 0 }}>
+        {first && (
+          <div style={{ position: 'absolute', left: 0, top: 0, width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', zIndex: 2 }}>
+            <CurrencyLogo currency={first} size="40px" />
+          </div>
+        )}
+        {second && (
+          <div style={{ position: 'absolute', left: '24px', top: '20px', width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', zIndex: 1 }}>
+            <CurrencyLogo currency={second} size="40px" />
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Small size: simple inline overlap
   return (
-    <Wrapper sizeraw={size} margin={margin} className={shouldReverse(pair) ? '!flex-row-reverse' : 'flex-row'}>
-      {currency0 && <HigherLogo currency={currency0} size={size.toString() + 'px'} />}
-      {currency1 && <CoveredLogo currency={currency1} size={size.toString() + 'px'} sizeraw={size} />}
-    </Wrapper>
+    <div style={{ position: 'relative', display: 'flex', marginRight: margin ? `${size / 3 + 8}px` : undefined }}>
+      {first && <CurrencyLogo currency={first} size={`${size}px`} style={{ zIndex: 2 }} />}
+      {second && <CurrencyLogo currency={second} size={`${size}px`} style={{ position: 'absolute', left: `${size * 0.6}px`, zIndex: 1 }} />}
+    </div>
   )
 }
 

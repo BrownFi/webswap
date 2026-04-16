@@ -48,24 +48,24 @@ function ConfirmationPendingContent({ onDismiss, pendingText }: { onDismiss: () 
         <RowBetween>
           <div />
           <span className="absolute top-[16px] right-[16px]">
-            <CloseIcon color="white" onClick={onDismiss} />
+            <CloseIcon color="#B8ADA4" onClick={onDismiss} />
           </span>
         </RowBetween>
         <ConfirmedIcon>
           <CustomLightSpinner src={Circle} alt="loader" size={'90px'} />
         </ConfirmedIcon>
         <AutoColumn gap="12px" justify={'center'}>
-          <Text fontWeight={600} fontSize={32} color={'white'}>
+          <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', lineHeight: '36px', color: '#FBFBFD', textAlign: 'center' }}>
             Waiting For Confirmation
-          </Text>
+          </span>
           <AutoColumn gap="12px" justify={'center'}>
-            <Text fontWeight={600} fontSize={14} color="white" textAlign="center">
+            <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#CFC7C1', textAlign: 'center' }}>
               {pendingText}
-            </Text>
+            </span>
           </AutoColumn>
-          <Text fontSize={12} color="#ffffff" textAlign="center" opacity={0.5}>
+          <span style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80', textAlign: 'center' }}>
             Confirm this transaction in your wallet
-          </Text>
+          </span>
         </AutoColumn>
       </Section>
     </Wrapper>
@@ -93,21 +93,21 @@ function TransactionSubmittedContent({
         <RowBetween>
           <div />
           <span className="absolute top-[16px] right-[16px]">
-            <CloseIcon color="white" onClick={onDismiss} />
+            <CloseIcon color="#B8ADA4" onClick={onDismiss} />
           </span>
         </RowBetween>
         <ConfirmedIcon className="!pb-[20px] !pt-[40px]">
           <img src={checkCircle} className="w-[100px]" alt="check" />
         </ConfirmedIcon>
         <AutoColumn gap="12px" justify={'center'}>
-          <Text fontWeight={600} fontSize={28} color="#27E39F">
+          <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', lineHeight: '36px', color: '#83CF84', textAlign: 'center' }}>
             Transaction Submitted
-          </Text>
+          </span>
           {chainId && hash && (
             <ExternalLink href={getEtherscanLink(chainId, hash, 'transaction')}>
-              <Text fontWeight={500} fontSize={14} color={'#27E39F'}>
+              <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#83CF84' }}>
                 View on {getScanText(chainId)}
-              </Text>
+              </span>
             </ExternalLink>
           )}
           {currencyToAdd && window?.ethereum?.isMetaMask && (
@@ -145,11 +145,11 @@ export function ConfirmationModalContent({
     <Wrapper className="relative">
       <Section>
         <RowBetween>
-          <Text fontWeight={500} fontSize={24} fontFamily={'Russo One'} color={'white'}>
+          <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '24px', lineHeight: '32px', color: '#FBFBFD' }}>
             {title}
-          </Text>
+          </span>
           <span className="absolute top-[16px] right-[16px]">
-            <CloseIcon color="white" onClick={onDismiss} />
+            <CloseIcon color="#B8ADA4" onClick={onDismiss} />
           </span>
         </RowBetween>
         {topContent()}
@@ -165,11 +165,11 @@ export function TransactionErrorContent({ message, onDismiss }: { message: strin
     <Wrapper className="relative">
       <Section>
         <RowBetween>
-          <Text fontWeight={600} fontSize={24} color={'white'} fontFamily={'Russo One'}>
+          <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '24px', lineHeight: '32px', color: '#FBFBFD' }}>
             Review Swap
-          </Text>
+          </span>
           <span className="absolute top-[16px] right-[16px]">
-            <CloseIcon color="white" onClick={onDismiss} />
+            <CloseIcon color="#B8ADA4" onClick={onDismiss} />
           </span>
         </RowBetween>
         <div style={{ marginTop: 40 }}>

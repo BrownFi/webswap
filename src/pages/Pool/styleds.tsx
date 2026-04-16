@@ -6,9 +6,9 @@ import styled from 'styled-components'
 
 export const Wrapper = styled.div`
   position: relative;
-  padding: 0 24px 0 24px;
+  padding: 0;
   ${({ theme }) => theme.mediaWidth.upToMedium`
-  padding: 0 20px 0 20px;
+  padding: 0;
  `};
 `
 
@@ -68,6 +68,10 @@ export const PageWrapper = styled(AutoColumn)`
   background: #1E1915;
   border: 1px solid #2F2823;
   border-radius: 32px;
+
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    border-radius: 20px;
+  `};
 `
 
 export const TitleRow = styled(RowBetween)`

@@ -201,6 +201,20 @@ export default function Pool() {
     [sortedPairs, blocklist, allowedTokenAddresses],
   )
 
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const searchFilteredPairs = useMemo(() => {
+    if (!searchQuery.trim()) return filteredPairs
+    const q = searchQuery.toLowerCase()
+    return filteredPairs.filter((pair) => {
+      const s0 = pair.token0?.symbol?.toLowerCase() || ''
+      const s1 = pair.token1?.symbol?.toLowerCase() || ''
+      const n0 = pair.token0?.name?.toLowerCase() || ''
+      const n1 = pair.token1?.name?.toLowerCase() || ''
+      return s0.includes(q) || s1.includes(q) || n0.includes(q) || n1.includes(q)
+    })
+  }, [filteredPairs, searchQuery])
+
   const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
   const [showIndexerModal, setShowIndexerModal] = useState(false)
 
@@ -275,16 +289,15 @@ export default function Pool() {
 
       <PageWrapper>
         <AutoColumn gap="lg" justify="center" className="p-[12px] pt-[24px] lg:p-[32px]">
-          <AutoColumn gap="lg" style={{ width: '100%' }}>
+          <AutoColumn style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '32px' }}>
             {/* Title row */}
             <TitleRow padding={'0'}>
               <Flex alignItems="center" className="gap-4">
                 <span
+                  className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]"
                   style={{
                     fontFamily: 'Inter',
                     fontWeight: 600,
-                    fontSize: '36px',
-                    lineHeight: '44px',
                     letterSpacing: '-0.02em',
                     background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
                     WebkitBackgroundClip: 'text',
@@ -306,8 +319,9 @@ export default function Pool() {
               <input
                 type="text"
                 placeholder="Search token"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
-                  width: '300px',
                   height: '48px',
                   background: '#120F0D',
                   border: '1px solid #2F2823',
@@ -319,33 +333,34 @@ export default function Pool() {
                   color: '#FBFBFD',
                   outline: 'none',
                 }}
-                className="placeholder-[#978A80]"
+                className="placeholder-[#978A80] w-full sm:w-[300px]"
               />
             </div>
 
             {/* Table header */}
             <div
-              className="hidden md:flex"
+              className="hidden md:flex items-center"
               style={{
-                padding: '0 16px',
+                padding: '8px 16px',
                 fontFamily: 'Inter',
                 fontWeight: 500,
                 fontSize: '16px',
                 color: '#978A80',
+                gap: '8px',
               }}
             >
-              <span style={{ flex: 1 }}>Pool</span>
-              <span style={{ flex: 1 }}>TVL</span>
-              <span style={{ flex: 1 }}>Vol 24h</span>
-              <span style={{ flex: 1 }}>Free APR</span>
-              <span style={{ flex: 1 }}>Bgt APR</span>
-              <span style={{ flex: 1 }}>Actions</span>
+              <span style={{ flex: 2 }}>Pool</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Free APR</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Bgt APR</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
             </div>
 
             {version === 3 ? (
               <V3PoolList />
             ) : shouldUseGraphQL ? (
-              <MemoizedPairList pairs={filteredPairs} chainId={chainId} version={version} />
+              <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
             ) : enableGraphQL && isLoadingPairs ? (
               <EmptyProposals>
                 <TYPE.body color={'#999'} textAlign="center">
@@ -409,13 +424,13 @@ function PoolStatsBar({
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="relative overflow-hidden flex flex-col items-start gap-[10px] h-[160px]"
+          className="relative overflow-hidden flex flex-col items-start gap-[10px] h-[130px] sm:h-[160px] p-[16px] sm:p-[24px]"
           style={{
             background: '#2F2823',
             borderRadius: '16px',
-            padding: '24px',
             isolation: 'isolate',
           }}
+
         >
           {/* Glow */}
           <div
@@ -430,20 +445,19 @@ function PoolStatsBar({
               zIndex: 0,
             }}
           />
-          <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', lineHeight: '24px', color: '#FBFBFD', zIndex: 1 }}>
+          <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '24px', color: '#FBFBFD', zIndex: 1 }}>
             {stat.label}
           </span>
           {isLoading && !hasData ? (
-            <span className="animate-pulse" style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '36px', lineHeight: '44px', letterSpacing: '-0.02em', color: '#978A80', zIndex: 2 }}>
+            <span className="animate-pulse text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80', zIndex: 2 }}>
               --
             </span>
           ) : (
             <span
+              className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]"
               style={{
                 fontFamily: 'Inter',
                 fontWeight: 700,
-                fontSize: '36px',
-                lineHeight: '44px',
                 letterSpacing: '-0.02em',
                 background: 'linear-gradient(105.56deg, #734117 1.68%, #D8A072 50%, #734017 98.32%)',
                 WebkitBackgroundClip: 'text',
@@ -456,7 +470,7 @@ function PoolStatsBar({
             </span>
           )}
           {stat.sub && (
-            <span style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: '16px', lineHeight: '24px', letterSpacing: '-0.02em', color: stat.subColor, zIndex: 3 }}>
+            <span className="text-[12px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '24px', letterSpacing: '-0.02em', color: stat.subColor, zIndex: 3 }}>
               {stat.sub}
             </span>
           )}

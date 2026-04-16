@@ -1,4 +1,5 @@
 import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Info, Settings, ExternalLink } from 'react-feather'
@@ -165,42 +166,43 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         {/* Collapsed row: matching table columns */}
         <div
           className="flex items-center cursor-pointer max-md:flex-wrap max-md:gap-2"
+          style={{ gap: '8px', minHeight: '60px' }}
           onClick={() => setShowMore(!showMore)}
         >
           {/* Pool name */}
-          <div className="flex items-center gap-2" style={{ flex: 1 }}>
-            <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer">
-              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
+          <div className="flex items-center gap-3 min-w-0 max-md:flex-1" style={{ flex: 2 }}>
+            <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0">
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={40} />
             </div>
-            <div>
-              <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>
+            <div className="min-w-0">
+              <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
                 <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
               </span>
-              <div style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: '16px', color: '#83CF84' }}>
+              <div style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: '16px', lineHeight: '24px', letterSpacing: '-0.02em', color: '#83CF84' }}>
                 {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
               </div>
             </div>
-            {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0">Beta</ButtonSecondary>}
+            {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
           </div>
           {/* TVL */}
-          <span className="max-md:hidden" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
+          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
-          <span className="max-md:hidden" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#978A80' }}>{formatPrice(volume24h)}</span>
+          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#978A80' }}>{formatPrice(volume24h)}</span>
           {/* Free APR */}
-          <span className="max-md:hidden" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#D59967' }}>
+          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#D59967' }}>
             {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
           {/* Bgt APR */}
-          <span className="max-md:hidden" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
             {enableBgt || enableMerklCampaignApr
               ? `+${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%`
               : '--'}
           </span>
           {/* Actions */}
-          <div className="flex items-center gap-2" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
             <Link
               to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-              className="no-underline whitespace-nowrap inline-flex items-center gap-1"
+              className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
               style={{
                 background: 'linear-gradient(0deg, #503016 0%, #985C2A 100%)',
                 boxShadow: 'inset 0px 0px 4px rgba(255, 255, 255, 0.8)',
@@ -234,7 +236,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         {showMore && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             {/* Left panel: Pool stats */}
-            <div style={{ border: '1px solid #493E35', borderRadius: '16px', padding: '24px', background: 'transparent' }}>
+            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '16px', background: 'transparent' }}>
               <div className="flex items-center gap-3 mb-4">
                 <span
                   style={{
@@ -274,21 +276,21 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Total LP Tokens</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatNumber(totalPoolTokens?.toSignificant(6))}</span></div>
                 <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Volume (24h)</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(volume24h)}</span></div>
                 <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Volume (7d)</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(volume7d)}</span></div>
-                <div className="flex justify-between items-center" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                <div className="flex flex-wrap justify-between items-center gap-1" onClick={() => setShowTokenPrice(!showTokenPrice)}>
                   <div className="flex items-center gap-2 cursor-pointer">
                     <CurrencyLogo currency={pair.token0} size="20px" />
                     <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{getTokenSymbol(currency0, chainId)}</span>
                   </div>
-                  <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
+                  <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
                     {formatNumber(pair.reserve0.toSignificant(4))} <span style={{ color: '#978A80' }}>({formatPrice(showTokenPrice ? token0Price : token0Price * Number(pair.reserve0.toSignificant(6)))})</span>
                   </span>
                 </div>
-                <div className="flex justify-between items-center" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                <div className="flex flex-wrap justify-between items-center gap-1" onClick={() => setShowTokenPrice(!showTokenPrice)}>
                   <div className="flex items-center gap-2 cursor-pointer">
                     <CurrencyLogo currency={pair.token1} size="20px" />
                     <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{getTokenSymbol(currency1, chainId)}</span>
                   </div>
-                  <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
+                  <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
                     {formatNumber(pair.reserve1.toSignificant(4))} <span style={{ color: '#978A80' }}>({formatPrice(showTokenPrice ? token1Price : token1Price * Number(pair.reserve1.toSignificant(6)))})</span>
                   </span>
                 </div>
@@ -296,7 +298,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
 
             {/* Right panel: Your position */}
-            <div style={{ background: '#493E35', border: '1px solid #493E35', borderRadius: '16px', padding: '24px' }}>
+            <div className="p-[16px] sm:p-[24px]" style={{ background: '#493E35', border: '1px solid #493E35', borderRadius: '16px' }}>
               <span
                 className="block mb-4"
                 style={{
@@ -324,22 +326,22 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       <Loader stroke="gray" />
                     )}
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
                       <CurrencyLogo currency={currency0} size="20px" />
-                      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Pooled {getTokenSymbol(currency0, chainId)}</span>
+                      <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>Pooled {getTokenSymbol(currency0, chainId)}</span>
                     </div>
-                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
+                    <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
                       {token0Deposited ? formatNumber(token0Deposited?.toSignificant(4)) : '-'}
                       {token0Deposited && <span style={{ color: '#978A80' }}> ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})</span>}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
                       <CurrencyLogo currency={currency1} size="20px" />
-                      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Pooled {getTokenSymbol(currency1, chainId)}</span>
+                      <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>Pooled {getTokenSymbol(currency1, chainId)}</span>
                     </div>
-                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
+                    <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
                       {token1Deposited ? formatNumber(token1Deposited?.toSignificant(4)) : '-'}
                       {token1Deposited && <span style={{ color: '#978A80' }}> ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})</span>}
                     </span>
@@ -392,8 +394,30 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   </div>
                 </div>
               ) : (
-                <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#978A80', textAlign: 'center', padding: '32px 0' }}>
-                  Connect wallet to view your position
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', gap: '16px' }}>
+                  <ConnectButton.Custom>
+                    {({ openConnectModal, mounted }) => (
+                      <button
+                        onClick={openConnectModal}
+                        disabled={!mounted}
+                        style={{
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: '16px',
+                          fontWeight: 500,
+                          color: '#FFFFFF',
+                          background: 'linear-gradient(#050505, #050505) padding-box, linear-gradient(180deg, #6B5B4E 0%, #C47736 100%) border-box',
+                          border: '2px solid transparent',
+                          boxShadow: 'inset 0px 8px 24px rgba(239, 190, 54, 0.25)',
+                          borderRadius: '12px',
+                          padding: '12px 24px',
+                          height: '48px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Connect wallet
+                      </button>
+                    )}
+                  </ConnectButton.Custom>
                 </div>
               )}
             </div>

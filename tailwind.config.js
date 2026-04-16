@@ -74,7 +74,8 @@ module.exports = {
         shadow1: 'var(--color-shadow1)',
       },
       fontFamily: {
-        montserrat: ['"Montserrat"', 'sans-serif'],
+        montserrat: ['"Inter"', 'sans-serif'],
+        inter: ['"Inter"', 'sans-serif'],
       },
       keyframes: {
         rotate360: {

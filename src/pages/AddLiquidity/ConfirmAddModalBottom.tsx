@@ -1,10 +1,8 @@
 import { Currency, CurrencyAmount, Fraction, Percent } from '@brownfi/sdk'
-import { Text } from 'components/Rebass'
 import { ButtonPrimary } from 'components/Button'
 import { RowBetween, RowFixed } from 'components/Row'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { Field } from 'state/mint/actions'
-import { TYPE } from 'theme'
 import { useActiveWeb3React } from 'hooks'
 import { getTokenSymbol } from 'utils'
 
@@ -24,46 +22,44 @@ export function ConfirmAddModalBottom({
   onAdd: () => void
 }) {
   const { chainId } = useActiveWeb3React()
+  const labelStyle = { fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' } as const
+  const valueStyle = { fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' } as const
+
   return (
     <>
       <RowBetween>
-        <TYPE.body className="!text-white">{getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} Deposited</TYPE.body>
+        <span style={labelStyle}>{getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} Deposited</span>
         <RowFixed>
           <CurrencyLogo currency={currencies[Field.CURRENCY_A]} style={{ marginRight: '8px' }} />
-          <TYPE.body className="!text-white">{parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}</TYPE.body>
+          <span style={valueStyle}>{parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}</span>
         </RowFixed>
       </RowBetween>
       <RowBetween>
-        <TYPE.body className="!text-white">{getTokenSymbol(currencies[Field.CURRENCY_B], chainId)} Deposited</TYPE.body>
+        <span style={labelStyle}>{getTokenSymbol(currencies[Field.CURRENCY_B], chainId)} Deposited</span>
         <RowFixed>
           <CurrencyLogo currency={currencies[Field.CURRENCY_B]} style={{ marginRight: '8px' }} />
-          <TYPE.body className="!text-white">{parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}</TYPE.body>
+          <span style={valueStyle}>{parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}</span>
         </RowFixed>
       </RowBetween>
       <RowBetween>
-        <TYPE.body className="!text-white">Rates</TYPE.body>
-        <TYPE.body className="!text-white">
-          {`1 ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} = ${price?.toSignificant(4)} ${getTokenSymbol(
-            currencies[Field.CURRENCY_B],
-            chainId,
-          )}`}
-        </TYPE.body>
+        <span style={labelStyle}>Rates</span>
+        <span style={valueStyle}>
+          {`1 ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} = ${price?.toSignificant(4)} ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}`}
+        </span>
       </RowBetween>
       <RowBetween style={{ justifyContent: 'flex-end' }}>
-        <TYPE.body className="!text-white">
-          {`1 ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)} = ${price
-            ?.invert()
-            .toSignificant(4)} ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)}`}
-        </TYPE.body>
+        <span style={valueStyle}>
+          {`1 ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)} = ${price?.invert().toSignificant(4)} ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)}`}
+        </span>
       </RowBetween>
       <RowBetween>
-        <TYPE.body className="!text-white">Share of Pool:</TYPE.body>
-        <TYPE.body className="!text-white">{noLiquidity ? '100' : poolTokenPercentage?.toSignificant(4)}%</TYPE.body>
+        <span style={labelStyle}>Share of Pool:</span>
+        <span style={valueStyle}>{noLiquidity ? '100' : poolTokenPercentage?.toSignificant(4)}%</span>
       </RowBetween>
       <ButtonPrimary style={{ margin: '20px 0 0 0' }} onClick={onAdd}>
-        <Text fontWeight={500} fontSize={20} className="!text-white">
+        <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#FFFFFF' }}>
           {noLiquidity ? 'Create Pool & Supply' : 'Confirm Supply'}
-        </Text>
+        </span>
       </ButtonPrimary>
     </>
   )

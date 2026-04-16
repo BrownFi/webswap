@@ -203,9 +203,9 @@ export default function AddLiquidity() {
     ) : (
       <AutoColumn gap="20px">
         <RowFlat style={{ marginTop: '20px' }}>
-          <Text fontSize="48px" fontWeight={600} lineHeight="42px" marginRight={10} color="white">
+          <span style={{ fontFamily: 'Inter', fontSize: '48px', fontWeight: 600, lineHeight: '42px', marginRight: '10px', color: '#FBFBFD' }}>
             {liquidityMinted?.toSignificant(6)}
-          </Text>
+          </span>
           <DoubleCurrencyLogo
             currency0={currencies[Field.CURRENCY_A]}
             currency1={currencies[Field.CURRENCY_B]}
@@ -213,17 +213,17 @@ export default function AddLiquidity() {
           />
         </RowFlat>
         <Row>
-          <Text fontSize="24px" color={'white'}>
+          <span style={{ fontFamily: 'Inter', fontSize: '24px', fontWeight: 600, color: '#FBFBFD' }}>
             {getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
               '/' +
               getTokenSymbol(currencies[Field.CURRENCY_B], chainId) +
               ' Pool Tokens'}
-          </Text>
+          </span>
         </Row>
-        <TYPE.italic fontSize={12} textAlign="left" padding={'8px 0 0 0 '} color={'white'} opacity={0.5}>
+        <span style={{ fontFamily: 'Inter', fontSize: '12px', fontStyle: 'italic', color: '#978A80', textAlign: 'left', padding: '8px 0 0 0' }}>
           {`Output is estimated. If the price changes by more than ${allowedSlippage /
             100}% your transaction will revert.`}
-        </TYPE.italic>
+        </span>
       </AutoColumn>
     )
   }
@@ -292,20 +292,21 @@ export default function AddLiquidity() {
   return (
     <>
       <AppBody>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         <AddRemoveTabs creating={isCreate} adding={true} />
 
-        <div className="flex flex-wrap justify-between mb-8 mt-2 px-8 gap-3">
+        <div className="flex flex-wrap justify-between items-center" style={{ padding: '0', gap: '16px' }}>
           {pair ? (
-            <div className="flex items-center gap-2 px-2">
-              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
-              <Text fontWeight={700} fontSize={20} className="text-white">
+            <div className="flex items-center gap-3">
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} margin />
+              <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
                 <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
-              </Text>
+              </span>
             </div>
           ) : (
-            <Text fontWeight={600} fontSize={20} color={theme.gray}>
+            <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#978A80' }}>
               - Invalid Pool -
-            </Text>
+            </span>
           )}
           <div className="ml-auto">
             <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} version={version} />
@@ -356,7 +357,7 @@ export default function AddLiquidity() {
                 showCommonBases
               />
               <ColumnCenter>
-                <Plus size="16" color={theme.text2} />
+                <Plus size="24" color="#493E35" />
               </ColumnCenter>
               <CurrencyInputPanel
                 value={formattedAmounts[Field.CURRENCY_B]}
@@ -441,20 +442,19 @@ export default function AddLiquidity() {
             </AutoColumn>
           </Wrapper>
         )}
-      </AppBody>
 
-      {!addIsUnsupported ? (
-        pair && !noLiquidity && pairState !== PairState.INVALID ? (
-          <AutoColumn style={{ minWidth: '20rem', width: '100%', maxWidth: '500px', marginTop: '1rem' }}>
+        {!addIsUnsupported ? (
+          pair && !noLiquidity && pairState !== PairState.INVALID ? (
             <MinimalInfoCard showUnwrapped={oneCurrencyIsWETH} pair={pair} />
-          </AutoColumn>
-        ) : null
-      ) : (
-        <UnsupportedCurrencyFooter
-          show={addIsUnsupported}
-          currencies={[currencies.CURRENCY_A, currencies.CURRENCY_B]}
-        />
-      )}
+          ) : null
+        ) : (
+          <UnsupportedCurrencyFooter
+            show={addIsUnsupported}
+            currencies={[currencies.CURRENCY_A, currencies.CURRENCY_B]}
+          />
+        )}
+        </div>
+      </AppBody>
     </>
   )
 }

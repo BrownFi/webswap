@@ -26,6 +26,11 @@ const StyledSwaptitle = styled.p`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   flex: 1;
+
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    font-size: 24px;
+    line-height: 32px;
+  `};
 `
 
 export default function SwapHeader() {

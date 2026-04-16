@@ -41,6 +41,16 @@ const BodyWrapper = styled.div`
     padding-top: 120px;
     padding-bottom: 40px;
   `};
+
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+    padding-bottom: 100px;
+  `};
+
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    padding: 8px 8px;
+    padding-top: 100px;
+    padding-bottom: 100px;
+  `};
 `
 
 

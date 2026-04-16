@@ -1,11 +1,8 @@
-import { useContext, useMemo } from 'react'
+import { useMemo } from 'react'
 import { AutoColumn } from 'components/Column'
 import { RowBetween } from 'components/Row'
-import { ThemeContext } from 'styled-components'
 import { KyberZapRouteData } from './zapHelpers'
 import { formatNumber, formatPrice } from 'utils/prices'
-import { TYPE } from 'theme'
-import { Text } from 'components/Rebass'
 import { Loader } from 'components/Loader'
 
 type ZapRoutePreviewProps = {
@@ -21,8 +18,6 @@ const formatPercent = (value?: number) => {
 }
 
 export const ZapRoutePreview = ({ routeData }: ZapRoutePreviewProps) => {
-  const theme = useContext(ThemeContext)
-
   const summary = useMemo(() => {
     if (!routeData) {
       return undefined
@@ -40,31 +35,37 @@ export const ZapRoutePreview = ({ routeData }: ZapRoutePreviewProps) => {
   }, [routeData])
 
   return (
-    <AutoColumn gap="8px">
+    <AutoColumn gap="8px" style={{ padding: '0 16px' }}>
       <RowBetween>
-        <Text className="font-medium text-white" style={{ fontFamily: 'Russo One' }}>
+        <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' }}>
           Zap route preview
-        </Text>
+        </span>
       </RowBetween>
 
       <AutoColumn gap="8px">
         <RowBetween>
-          <Text fontWeight={500} fontSize={14} color={theme.white} opacity={0.6}>
+          <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' }}>
             Initial value (USD)
-          </Text>
-          <TYPE.black fontSize={14}>{summary ? summary.initialUsd : <Loader stroke="gray" />}</TYPE.black>
+          </span>
+          <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' }}>
+            {summary ? summary.initialUsd : <Loader stroke="gray" />}
+          </span>
         </RowBetween>
         <RowBetween>
-          <Text fontWeight={500} fontSize={14} color={theme.white} opacity={0.6}>
+          <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' }}>
             Estimated value after zap
-          </Text>
-          <TYPE.black fontSize={14}>{summary ? summary.finalUsd : <Loader stroke="gray" />}</TYPE.black>
+          </span>
+          <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' }}>
+            {summary ? summary.finalUsd : <Loader stroke="gray" />}
+          </span>
         </RowBetween>
         <RowBetween>
-          <Text fontWeight={500} fontSize={14} color={theme.white} opacity={0.6}>
+          <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' }}>
             Price impact
-          </Text>
-          <TYPE.black fontSize={14}>{summary ? summary.priceImpact : <Loader stroke="gray" />}</TYPE.black>
+          </span>
+          <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A' }}>
+            {summary ? summary.priceImpact : <Loader stroke="gray" />}
+          </span>
         </RowBetween>
       </AutoColumn>
     </AutoColumn>

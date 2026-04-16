@@ -38,8 +38,8 @@ export default function SwapModalHeader({
 
   return (
     <AutoColumn gap={'md'} className="mt-[20px]">
-      <div className="bg-gray mb-[4px] py-[12px] px-[16px]">
-        <p className="text-[14px] text-white opacity-[0.5] mb-[8px]">You Pay</p>
+      <div style={{ background: '#2F2823', borderRadius: '24px', padding: '24px', marginBottom: '4px' }}>
+        <p style={{ fontFamily: 'Inter', fontSize: '16px', fontWeight: 500, color: '#CFC7C1', marginBottom: '8px' }}>You Pay</p>
         <RowBetween align="center">
           <TruncatedText
             fontSize={32}
@@ -52,8 +52,8 @@ export default function SwapModalHeader({
           <CurrencyLogo currency={trade.inputAmount?.currency} size={'32px'} style={{ marginRight: '0' }} />
         </RowBetween>
       </div>
-      <div className="bg-gray mb-[4px] py-[12px] px-[16px]">
-        <p className="text-[14px] text-white opacity-[0.5] mb-[8px]">You Receive</p>
+      <div style={{ background: '#2F2823', borderRadius: '24px', padding: '24px', marginBottom: '4px' }}>
+        <p style={{ fontFamily: 'Inter', fontSize: '16px', fontWeight: 500, color: '#CFC7C1', marginBottom: '8px' }}>You Receive</p>
         <RowBetween align="center">
           <TruncatedText
             fontSize={32}
