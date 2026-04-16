@@ -70,12 +70,12 @@ const InputPanel = styled.div<{ hideInput?: boolean }>`
   padding: 24px;
   z-index: 1;
   background: #2F2823;
-  border: 1px solid #493E35;
+  border: 2px solid #493E35;
   transition: background 150ms, border-color 150ms;
 
   &:focus-within {
     background: #120F0D;
-    border-color: #C47736;
+    border: 3px solid #C47736;
   }
 `
 

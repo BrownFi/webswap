@@ -63,12 +63,11 @@ export const Dots = styled.span`
 // Pool page
 
 export const PageWrapper = styled(AutoColumn)`
-  max-width: 990px;
+  max-width: 1280px;
   width: 100%;
-  background-color: rgba(26, 21, 16, 0.85);
-  border: 1px solid rgba(196, 148, 58, 0.25);
-  border-radius: 20px;
-  backdrop-filter: blur(8px);
+  background: #1E1915;
+  border: 1px solid #2F2823;
+  border-radius: 32px;
 `
 
 export const TitleRow = styled(RowBetween)`

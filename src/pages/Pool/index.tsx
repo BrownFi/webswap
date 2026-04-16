@@ -235,7 +235,7 @@ export default function Pool() {
       </Modal>
 
       {chainId === ChainId.BERA_MAINNET && version === 1 && (
-        <TYPE.main mb={6} color="#bb9981" className="max-w-[990px] px-2">
+        <TYPE.main mb={6} color="#bb9981" className="max-w-[1280px] px-2">
           With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and
           redeposit to V2 now to keep earning fees.{' '}
           <a
@@ -249,7 +249,7 @@ export default function Pool() {
         </TYPE.main>
       )}
       {version === 2 && (
-        <TYPE.main mb={6} color="#bb9981" className="max-w-[990px] px-2">
+        <TYPE.main mb={6} color="#bb9981" className="max-w-[1280px] px-2">
           BrownFi is a novel primitive AMM in DeFi. While audited by{' '}
           <a
             href="https://skynet.certik.com/projects/brownfi"
@@ -279,9 +279,21 @@ export default function Pool() {
             {/* Title row */}
             <TitleRow padding={'0'}>
               <Flex alignItems="center" className="gap-4">
-                <TYPE.mediumHeader style={{ fontSize: '28px', fontWeight: 800 }} color={'#F5F0E8'}>
+                <span
+                  style={{
+                    fontFamily: 'Inter',
+                    fontWeight: 600,
+                    fontSize: '36px',
+                    lineHeight: '44px',
+                    letterSpacing: '-0.02em',
+                    background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
                   Liquidity Pools
-                </TYPE.mediumHeader>
+                </span>
                 <SwitchVersion />
               </Flex>
             </TitleRow>
@@ -294,18 +306,40 @@ export default function Pool() {
               <input
                 type="text"
                 placeholder="Search token"
-                className="w-full max-w-[280px] bg-[#0d0b08] border border-[rgba(196,148,58,0.2)] rounded-lg px-4 py-2.5 text-sm text-[#F5F0E8] placeholder-[#5C5040] focus:border-[#c4943a] focus:outline-none transition-colors"
+                style={{
+                  width: '300px',
+                  height: '48px',
+                  background: '#120F0D',
+                  border: '1px solid #2F2823',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  fontFamily: 'Inter',
+                  fontWeight: 500,
+                  fontSize: '16px',
+                  color: '#FBFBFD',
+                  outline: 'none',
+                }}
+                className="placeholder-[#978A80]"
               />
             </div>
 
             {/* Table header */}
-            <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-4 text-xs text-[#8A7D66] font-medium">
-              <span>Pool</span>
-              <span>TVL</span>
-              <span>Vol 24h</span>
-              <span>Free APR</span>
-              <span>Bgt APR</span>
-              <span>Actions</span>
+            <div
+              className="hidden md:flex"
+              style={{
+                padding: '0 16px',
+                fontFamily: 'Inter',
+                fontWeight: 500,
+                fontSize: '16px',
+                color: '#978A80',
+              }}
+            >
+              <span style={{ flex: 1 }}>Pool</span>
+              <span style={{ flex: 1 }}>TVL</span>
+              <span style={{ flex: 1 }}>Vol 24h</span>
+              <span style={{ flex: 1 }}>Free APR</span>
+              <span style={{ flex: 1 }}>Bgt APR</span>
+              <span style={{ flex: 1 }}>Actions</span>
             </div>
 
             {version === 3 ? (
@@ -363,25 +397,68 @@ function PoolStatsBar({
   const hasData = !!dayData || pairs.length > 0
 
   const stats = [
-    { label: 'Total Value Locked', value: formatValue(tvl), sub: '' },
-    { label: '24h Volume', value: formatValue(volume24h), sub: 'Across all pools' },
-    { label: '24h Fees', value: formatValue(fees24h), sub: 'Distributed to Lps' },
-    { label: 'Total Fees', value: formatValue(totalFees), sub: 'Distributed to Lps' },
-    { label: 'All - Time Volume', value: formatValue(allTimeVolume), sub: 'Since launch' },
+    { label: 'Total Value Locked', value: formatValue(tvl), sub: '-1.2% this week', subColor: '#83CF84' },
+    { label: '24h Volume', value: formatValue(volume24h), sub: 'Across all pools', subColor: '#978A80' },
+    { label: '24h Fees', value: formatValue(fees24h), sub: 'Distributed to Lps', subColor: '#978A80' },
+    { label: 'Total Fees', value: formatValue(totalFees), sub: 'Distributed to Lps', subColor: '#978A80' },
+    { label: 'All - Time Volume', value: formatValue(allTimeVolume), sub: 'Since launch', subColor: '#978A80' },
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
       {stats.map((stat) => (
-        <div key={stat.label} className="bg-[#0d0b08] rounded-xl p-4 flex flex-col gap-1">
-          <span className="text-[#8A7D66] text-xs">{stat.label}</span>
+        <div
+          key={stat.label}
+          className="relative overflow-hidden flex flex-col items-start gap-[10px] h-[160px]"
+          style={{
+            background: '#2F2823',
+            borderRadius: '16px',
+            padding: '24px',
+            isolation: 'isolate',
+          }}
+        >
+          {/* Glow */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              width: '245px',
+              height: '245px',
+              left: '-181px',
+              top: '-215px',
+              background: '#985C2A',
+              filter: 'blur(94px)',
+              zIndex: 0,
+            }}
+          />
+          <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', lineHeight: '24px', color: '#FBFBFD', zIndex: 1 }}>
+            {stat.label}
+          </span>
           {isLoading && !hasData ? (
-            <span className="text-[#c4943a] text-xl font-bold animate-pulse">--</span>
+            <span className="animate-pulse" style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '36px', lineHeight: '44px', letterSpacing: '-0.02em', color: '#978A80', zIndex: 2 }}>
+              --
+            </span>
           ) : (
-            <span className="text-[#c4943a] text-xl font-bold">{stat.value}</span>
+            <span
+              style={{
+                fontFamily: 'Inter',
+                fontWeight: 700,
+                fontSize: '36px',
+                lineHeight: '44px',
+                letterSpacing: '-0.02em',
+                background: 'linear-gradient(105.56deg, #734117 1.68%, #D8A072 50%, #734017 98.32%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                zIndex: 2,
+              }}
+            >
+              {stat.value}
+            </span>
           )}
           {stat.sub && (
-            <span className="text-xs text-[#8A7D66]">{stat.sub}</span>
+            <span style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: '16px', lineHeight: '24px', letterSpacing: '-0.02em', color: stat.subColor, zIndex: 3 }}>
+              {stat.sub}
+            </span>
           )}
         </div>
       ))}

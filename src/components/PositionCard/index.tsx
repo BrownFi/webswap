@@ -45,14 +45,14 @@ export const HoverCard = styled(Card)`
     border: 1px solid ${({ theme }) => darken(0.06, theme.bg2)};
   }
 `
-const StyledPositionCard = styled.div<{ bgColor?: any }>`
+const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   position: relative;
   overflow: hidden;
-  padding: 12px 16px;
+  padding: 16px;
+  border-radius: 16px;
   transition: all 0.2s ease;
-  &:hover {
-    border-color: rgba(196, 148, 58, 0.3);
-  }
+  background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#1E1915')};
+  gap: ${({ $expanded }) => ($expanded ? '24px' : '8px')};
 `
 
 const pairBGT: Record<string, [string, string]> = {
@@ -160,55 +160,59 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   }
 
   return (
-    <StyledPositionCard
-      style={{
-        border: showMore ? '1px solid rgba(196,148,58,0.4)' : '1px solid transparent',
-        borderBottom: showMore ? '1px solid rgba(196,148,58,0.4)' : '1px solid rgba(196,148,58,0.08)',
-        background: showMore ? 'rgba(26,21,16,0.95)' : 'transparent',
-        borderRadius: showMore ? '16px' : '0',
-      }}
-    >
+    <StyledPositionCard $expanded={showMore}>
       <AutoColumn gap="0px">
         {/* Collapsed row: matching table columns */}
         <div
-          className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 items-center cursor-pointer py-2 max-md:grid-cols-2 max-md:gap-2"
+          className="flex items-center cursor-pointer max-md:flex-wrap max-md:gap-2"
           onClick={() => setShowMore(!showMore)}
         >
           {/* Pool name */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" style={{ flex: 1 }}>
             <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={24} />
             </div>
             <div>
-              <Text fontWeight={700} fontSize={16} className="text-[#F5F0E8]">
+              <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>
                 <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
-              </Text>
-              <Text fontSize={12} className="text-[#c4943a]">
+              </span>
+              <div style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: '16px', color: '#83CF84' }}>
                 {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
-              </Text>
+              </div>
             </div>
             {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0">Beta</ButtonSecondary>}
           </div>
           {/* TVL */}
-          <Text fontWeight={600} fontSize={14} className="text-[#F5F0E8] max-md:hidden">{formatPrice(tvl)}</Text>
+          <span className="max-md:hidden" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
-          <Text fontWeight={500} fontSize={14} className="text-[#F5F0E8] max-md:hidden">{formatPrice(volume24h)}</Text>
+          <span className="max-md:hidden" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#978A80' }}>{formatPrice(volume24h)}</span>
           {/* Free APR */}
-          <Text fontWeight={600} fontSize={14} className="text-[#27AE60] max-md:hidden">
+          <span className="max-md:hidden" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#D59967' }}>
             {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
-          </Text>
+          </span>
           {/* Bgt APR */}
-          <Text fontWeight={600} fontSize={14} className="text-[#27AE60] max-md:hidden">
+          <span className="max-md:hidden" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
             {enableBgt || enableMerklCampaignApr
               ? `+${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%`
               : '--'}
-          </Text>
+          </span>
           {/* Actions */}
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
             <Link
               to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-              className="text-xs bg-transparent border border-[rgba(196,148,58,0.4)] !text-[#c4943a] hover:bg-[rgba(196,148,58,0.1)] rounded-lg px-3 py-1.5 no-underline whitespace-nowrap transition-colors inline-flex items-center gap-1"
-              style={{ background: 'transparent', color: '#c4943a' }}
+              className="no-underline whitespace-nowrap inline-flex items-center gap-1"
+              style={{
+                background: 'linear-gradient(0deg, #503016 0%, #985C2A 100%)',
+                boxShadow: 'inset 0px 0px 4px rgba(255, 255, 255, 0.8)',
+                borderRadius: '12px',
+                padding: '6px 12px',
+                height: '40px',
+                fontFamily: 'Inter',
+                fontWeight: 500,
+                fontSize: '14px',
+                color: 'white',
+                border: 'none',
+              }}
             >
               + Add liquidity
             </Link>
@@ -230,9 +234,21 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         {showMore && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             {/* Left panel: Pool stats */}
-            <div className="bg-[#12100b] rounded-xl p-4">
+            <div style={{ border: '1px solid #493E35', borderRadius: '16px', padding: '24px', background: 'transparent' }}>
               <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-[18px] font-bold text-[#F5F0E8]">Pool stats</h3>
+                <span
+                  style={{
+                    fontFamily: 'Inter',
+                    fontWeight: 600,
+                    fontSize: '24px',
+                    background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  Pool stats
+                </span>
                 <a
                   href={`${getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}`}
                   target="_blank"
@@ -240,7 +256,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   rel="noreferrer"
                   title={`View on ${getScanText(chainId)}`}
                 >
-                  <Info size="16" className="text-[#8A7D66] hover:text-[#c4943a]" />
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#2F2823', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Info size="16" style={{ color: '#B8ADA4' }} />
+                  </div>
                 </a>
                 <Suspense fallback={null}>
                   <PairChartModal
@@ -251,43 +269,56 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 </Suspense>
                 {isTest && <PairFavorite pair={pair} />}
               </div>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-[#8A7D66]">TVL</span><span className="text-[#F5F0E8]">{formatPrice(tvl)}</span></div>
-                <div className="flex justify-between"><span className="text-[#8A7D66]">Total LP Tokens</span><span className="text-[#F5F0E8]">{formatNumber(totalPoolTokens?.toSignificant(6))}</span></div>
-                <div className="flex justify-between"><span className="text-[#8A7D66]">Volume (24h)</span><span className="text-[#F5F0E8]">{formatPrice(volume24h)}</span></div>
-                <div className="flex justify-between"><span className="text-[#8A7D66]">Volume (7d)</span><span className="text-[#F5F0E8]">{formatPrice(volume7d)}</span></div>
+              <div className="space-y-3">
+                <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>TVL</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(tvl)}</span></div>
+                <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Total LP Tokens</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatNumber(totalPoolTokens?.toSignificant(6))}</span></div>
+                <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Volume (24h)</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(volume24h)}</span></div>
+                <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Volume (7d)</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(volume7d)}</span></div>
                 <div className="flex justify-between items-center" onClick={() => setShowTokenPrice(!showTokenPrice)}>
                   <div className="flex items-center gap-2 cursor-pointer">
                     <CurrencyLogo currency={pair.token0} size="20px" />
-                    <span className="text-[#F5F0E8]">{getTokenSymbol(currency0, chainId)}</span>
+                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{getTokenSymbol(currency0, chainId)}</span>
                   </div>
-                  <span className="text-[#F5F0E8]">
-                    {formatNumber(pair.reserve0.toSignificant(4))} <span className="text-[#8A7D66]">({formatPrice(showTokenPrice ? token0Price : token0Price * Number(pair.reserve0.toSignificant(6)))})</span>
+                  <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
+                    {formatNumber(pair.reserve0.toSignificant(4))} <span style={{ color: '#978A80' }}>({formatPrice(showTokenPrice ? token0Price : token0Price * Number(pair.reserve0.toSignificant(6)))})</span>
                   </span>
                 </div>
                 <div className="flex justify-between items-center" onClick={() => setShowTokenPrice(!showTokenPrice)}>
                   <div className="flex items-center gap-2 cursor-pointer">
                     <CurrencyLogo currency={pair.token1} size="20px" />
-                    <span className="text-[#F5F0E8]">{getTokenSymbol(currency1, chainId)}</span>
+                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{getTokenSymbol(currency1, chainId)}</span>
                   </div>
-                  <span className="text-[#F5F0E8]">
-                    {formatNumber(pair.reserve1.toSignificant(4))} <span className="text-[#8A7D66]">({formatPrice(showTokenPrice ? token1Price : token1Price * Number(pair.reserve1.toSignificant(6)))})</span>
+                  <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
+                    {formatNumber(pair.reserve1.toSignificant(4))} <span style={{ color: '#978A80' }}>({formatPrice(showTokenPrice ? token1Price : token1Price * Number(pair.reserve1.toSignificant(6)))})</span>
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Right panel: Your position */}
-            <div className="bg-[#1a1510] border border-[rgba(196,148,58,0.15)] rounded-xl p-4">
-              <h3 className="text-[18px] font-bold text-[#F5F0E8] mb-4">Your position</h3>
+            <div style={{ background: '#493E35', border: '1px solid #493E35', borderRadius: '16px', padding: '24px' }}>
+              <span
+                className="block mb-4"
+                style={{
+                  fontFamily: 'Inter',
+                  fontWeight: 600,
+                  fontSize: '24px',
+                  background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Your position
+              </span>
 
               {account ? (
-                <div className="space-y-3 text-sm">
+                <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-[#8A7D66]">LP tokens</span>
+                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>LP tokens</span>
                     {poolTokenPercentage && userPoolBalance ? (
-                      <span className="text-[#F5F0E8]">
-                        {totalLpDisplay ?? '0'} <span className="text-[#8A7D66]">({(poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2))}%)</span>
+                      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
+                        {totalLpDisplay ?? '0'} <span style={{ color: '#978A80' }}>({(poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2))}%)</span>
                       </span>
                     ) : (
                       <Loader stroke="gray" />
@@ -296,21 +327,21 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <CurrencyLogo currency={currency0} size="20px" />
-                      <span className="text-[#8A7D66]">Pooled {getTokenSymbol(currency0, chainId)}</span>
+                      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Pooled {getTokenSymbol(currency0, chainId)}</span>
                     </div>
-                    <span className="text-[#F5F0E8]">
+                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
                       {token0Deposited ? formatNumber(token0Deposited?.toSignificant(4)) : '-'}
-                      {token0Deposited && <span className="text-[#8A7D66]"> ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})</span>}
+                      {token0Deposited && <span style={{ color: '#978A80' }}> ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})</span>}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <CurrencyLogo currency={currency1} size="20px" />
-                      <span className="text-[#8A7D66]">Pooled {getTokenSymbol(currency1, chainId)}</span>
+                      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Pooled {getTokenSymbol(currency1, chainId)}</span>
                     </div>
-                    <span className="text-[#F5F0E8]">
+                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>
                       {token1Deposited ? formatNumber(token1Deposited?.toSignificant(4)) : '-'}
-                      {token1Deposited && <span className="text-[#8A7D66]"> ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})</span>}
+                      {token1Deposited && <span style={{ color: '#978A80' }}> ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})</span>}
                     </span>
                   </div>
 
@@ -332,24 +363,36 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
                   {/* Action buttons */}
                   <div className="pt-2 space-y-2">
-                    <ButtonPrimary
-                      as={Link}
+                    <Link
                       to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-                      padding="10px"
-                      className="!text-sm"
+                      className="no-underline flex items-center justify-center"
+                      style={{
+                        width: '100%',
+                        background: 'linear-gradient(0deg, #503016 0%, #985C2A 100%)',
+                        boxShadow: 'inset 0px 0px 4px rgba(255, 255, 255, 0.8)',
+                        borderRadius: '12px',
+                        padding: '6px 12px',
+                        height: '40px',
+                        fontFamily: 'Inter',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        color: 'white',
+                        border: 'none',
+                      }}
                     >
                       + Add liquidity
-                    </ButtonPrimary>
+                    </Link>
                     <Link
                       to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
-                      className="block text-center text-sm text-[#8A7D66] hover:text-[#c4943a] no-underline transition-colors"
+                      className="block no-underline transition-colors"
+                      style={{ textAlign: 'center', fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}
                     >
                       Remove
                     </Link>
                   </div>
                 </div>
               ) : (
-                <div className="text-[#8A7D66] text-sm text-center py-8">
+                <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#978A80', textAlign: 'center', padding: '32px 0' }}>
                   Connect wallet to view your position
                 </div>
               )}
