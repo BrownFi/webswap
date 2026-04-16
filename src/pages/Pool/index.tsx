@@ -313,38 +313,45 @@ export default function Pool() {
               />
             </div>
 
-            {/* Table header */}
-            <div
-              className="hidden md:flex items-center"
-              style={{
-                padding: '8px 16px',
-                fontFamily: 'Inter',
-                fontWeight: 500,
-                fontSize: '16px',
-                color: '#978A80',
-                gap: '8px',
-              }}
-            >
-              <span style={{ flex: 2 }}>Pool</span>
-              <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
-              <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
-              <span style={{ flex: 1, textAlign: 'right' }}>Free APR</span>
-              <span style={{ flex: 1, textAlign: 'right' }}>Bgt APR</span>
-              <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
-            </div>
-
+            {/* Table header + rows */}
             {version === 3 ? (
               <V3PoolList />
-            ) : shouldUseGraphQL ? (
-              <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
+            ) : shouldUseGraphQL && searchFilteredPairs.length > 0 ? (
+              <>
+                <div
+                  className="hidden md:flex items-center"
+                  style={{
+                    padding: '8px 16px',
+                    fontFamily: 'Inter',
+                    fontWeight: 500,
+                    fontSize: '16px',
+                    color: '#978A80',
+                    gap: '8px',
+                  }}
+                >
+                  <span style={{ flex: 2 }}>Pool</span>
+                  <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
+                  <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
+                  <span style={{ flex: 1, textAlign: 'right' }}>Free APR</span>
+                  <span style={{ flex: 1, textAlign: 'right' }}>Bgt APR</span>
+                  <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
+                </div>
+                <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
+              </>
             ) : enableGraphQL && isLoadingPairs ? (
               <EmptyProposals>
-                <TYPE.body color={'#999'} textAlign="center">
+                <TYPE.body color={'#978A80'} textAlign="center">
                   <Dots>Loading pools</Dots>
                 </TYPE.body>
               </EmptyProposals>
-            ) : (
+            ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
+            ) : (
+              <EmptyProposals>
+                <TYPE.body color={'#978A80'} textAlign="center">
+                  No pools found
+                </TYPE.body>
+              </EmptyProposals>
             )}
           </AutoColumn>
         </AutoColumn>

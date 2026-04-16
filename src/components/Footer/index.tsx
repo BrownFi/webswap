@@ -68,11 +68,9 @@ const Footer = () => {
           {/* Social icons */}
           <div style={{ display: 'flex', gap: '12px' }}>
             {[
-              { icon: <InstagramIcon />, href: '#' },
               { icon: <XIcon />, href: 'https://x.com/BrownFiAMM' },
-              { icon: <FacebookIcon />, href: '#' },
-              { icon: <YoutubeIcon />, href: '#' },
-              { icon: <ThreadsIcon />, href: '#' },
+              { icon: <FacebookIcon />, href: 'https://t.me/brownfiammcommunity' },
+              { icon: <YoutubeIcon />, href: 'https://paragraph.com/@brownfi-amm' },
             ].map((item, i) => (
               <a
                 key={i}
