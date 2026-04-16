@@ -717,14 +717,11 @@ export default function RemoveLiquidity() {
             </div>
           </AutoColumn>
         </Wrapper>
+        {pair && (
+          <MinimalInfoCard showUnwrapped={oneCurrencyIsWETH} pair={pair} />
+        )}
         </div>
       </AppBody>
-
-      {pair ? (
-        <AutoColumn style={{ minWidth: '20rem', width: '100%', maxWidth: '500px', marginTop: '1rem' }}>
-          <MinimalInfoCard showUnwrapped={oneCurrencyIsWETH} pair={pair} />
-        </AutoColumn>
-      ) : null}
 
       <CurrencySearchModal
         isOpen={isZapCurrencyModalOpen}

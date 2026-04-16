@@ -1,10 +1,7 @@
 import { Trade, TradeType } from '@brownfi/sdk'
-import { useContext, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Repeat } from 'react-feather'
-import { Text } from 'components/Rebass'
-import { ThemeContext } from 'styled-components'
 import { Field } from 'state/swap/actions'
-import { TYPE } from 'theme'
 import {
   computeSlippageAdjustedAmounts,
   computeTradePriceBreakdown,
@@ -20,6 +17,9 @@ import { ErrorText, StyledBalanceMaxMini, SwapCallbackError } from './styleds'
 import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 
+const labelStyle = { fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' } as const
+const valueStyle = { fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' } as const
+
 export default function SwapModalFooter({
   trade,
   onConfirm,
@@ -33,7 +33,6 @@ export default function SwapModalFooter({
   swapErrorMessage: string | undefined
   disabledConfirm: boolean
 }) {
-  const theme = useContext(ThemeContext)
   const { chainId } = useActiveWeb3React()
 
   const slippageAdjustedAmounts = useMemo(() => computeSlippageAdjustedAmounts(trade, allowedSlippage), [
@@ -49,17 +48,12 @@ export default function SwapModalFooter({
     <>
       <AutoColumn gap="8px">
         <RowBetween align="center" className="!mb-[4px]">
-          <Text fontWeight={500} fontSize={14} color={theme.white}>
-            Price
-          </Text>
-          <Text
-            fontWeight={500}
-            fontSize={14}
-            color={'white'}
+          <span style={labelStyle}>Price</span>
+          <span
             style={{
-              justifyContent: 'center',
-              alignItems: 'center',
+              ...valueStyle,
               display: 'flex',
+              alignItems: 'center',
               textAlign: 'right',
               paddingLeft: '10px',
             }}
@@ -68,34 +62,25 @@ export default function SwapModalFooter({
             <StyledBalanceMaxMini onClick={() => setShowInverted(!showInverted)}>
               <Repeat size={14} />
             </StyledBalanceMaxMini>
-          </Text>
+          </span>
         </RowBetween>
 
         <RowBetween>
           <RowFixed>
-            <TYPE.black fontSize={14} fontWeight={500} color={theme.white}>
+            <span style={labelStyle}>
               {trade.tradeType === TradeType.EXACT_INPUT ? 'Minimum received' : 'Maximum sold'}
-            </TYPE.black>
+            </span>
             <QuestionHelper text="Your transaction will revert if there is a large, unfavorable price movement before it is confirmed." />
           </RowFixed>
-          <RowFixed>
-            <TYPE.black fontSize={14}>
-              {trade.tradeType === TradeType.EXACT_INPUT
-                ? slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4) ?? '-'
-                : slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4) ?? '-'}
-            </TYPE.black>
-            <TYPE.black fontSize={14} marginLeft={'4px'}>
-              {trade.tradeType === TradeType.EXACT_INPUT
-                ? getTokenSymbol(trade.outputAmount?.currency, chainId)
-                : getTokenSymbol(trade.inputAmount?.currency, chainId)}
-            </TYPE.black>
-          </RowFixed>
+          <span style={valueStyle}>
+            {trade.tradeType === TradeType.EXACT_INPUT
+              ? `${slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(4) ?? '-'} ${getTokenSymbol(trade.outputAmount?.currency, chainId)}`
+              : `${slippageAdjustedAmounts[Field.INPUT]?.toSignificant(4) ?? '-'} ${getTokenSymbol(trade.inputAmount?.currency, chainId)}`}
+          </span>
         </RowBetween>
         <RowBetween>
           <RowFixed>
-            <TYPE.black color={theme.white} fontSize={14} fontWeight={500}>
-              Price Impact
-            </TYPE.black>
+            <span style={labelStyle}>Price Impact</span>
             <QuestionHelper text="Price impact is the difference between your trading price and oracle price." />
           </RowFixed>
           <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
@@ -112,9 +97,9 @@ export default function SwapModalFooter({
           style={{ margin: '10px 0 0 0' }}
           id="confirm-swap-or-send"
         >
-          <Text fontSize={20} fontWeight={500}>
+          <span style={{ fontFamily: 'Inter', fontSize: '16px', fontWeight: 500, color: '#FFFFFF' }}>
             {severity > 2 ? 'Swap Anyway' : 'Confirm Swap'}
-          </Text>
+          </span>
         </ButtonError>
 
         {swapErrorMessage ? <SwapCallbackError error={swapErrorMessage} /> : null}

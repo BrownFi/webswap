@@ -66,16 +66,14 @@ export default function App() {
             <Route
               path="/swap"
               element={
-                isMainnet ? <Navigate to="/pool" replace /> : (
-                  <RouteErrorBoundary>
-                    <Swap />
-                  </RouteErrorBoundary>
-                )
+                <RouteErrorBoundary>
+                  <Swap />
+                </RouteErrorBoundary>
               }
             />
             <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
-            <Route path="/swap/:outputCurrency" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectToSwap />} />
-            <Route path="/send" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectPathToSwapOnly />} />
+            <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
+            <Route path="/send" element={<RedirectPathToSwapOnly />} />
             <Route
               path="/find"
               element={
@@ -127,7 +125,7 @@ export default function App() {
                 </RouteErrorBoundary>
               }
             />
-            <Route path="*" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectPathToSwapOnly />} />
+            <Route path="*" element={<RedirectPathToSwapOnly />} />
           </Routes>
 
         </BodyWrapper>

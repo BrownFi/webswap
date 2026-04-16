@@ -211,11 +211,9 @@ export default function Header() {
               borderRadius: '12px',
             }}
           >
-            {!isMainnet && (
-              <StyledNavLink id="swap-nav-link" to="/swap">
-                Swap
-              </StyledNavLink>
-            )}
+            <StyledNavLink id="swap-nav-link" to="/swap">
+              Swap
+            </StyledNavLink>
             <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
               Pool
             </StyledNavLink>

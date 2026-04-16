@@ -89,34 +89,34 @@ export default function SwapModalHeader({
           </RowBetween>
         </SwapShowAcceptChanges>
       ) : null}
-      <AutoColumn justify="flex-start" gap="sm" style={{ padding: '12px 0 0 0px' }}>
+      <div style={{ padding: '12px 0 0 0' }}>
         {trade.tradeType === TradeType.EXACT_INPUT ? (
-          <TYPE.italic textAlign="left" style={{ width: '100%' }} color={'white'} opacity={0.5}>
+          <span style={{ fontFamily: 'Inter', fontSize: '13px', fontStyle: 'italic', color: '#978A80', lineHeight: '20px' }}>
             {`Output is estimated. You will receive at least `}
             <b>
               {slippageAdjustedAmounts[Field.OUTPUT]?.toSignificant(6)}{' '}
               {getTokenSymbol(trade.outputAmount?.currency, chainId)}
             </b>
             {' or the transaction will revert.'}
-          </TYPE.italic>
+          </span>
         ) : (
-          <TYPE.italic textAlign="left" style={{ width: '100%' }} color={'white'} opacity={0.5}>
+          <span style={{ fontFamily: 'Inter', fontSize: '13px', fontStyle: 'italic', color: '#978A80', lineHeight: '20px' }}>
             {`Input is estimated. You will sell at most `}
             <b>
               {slippageAdjustedAmounts[Field.INPUT]?.toSignificant(6)}{' '}
               {getTokenSymbol(trade.inputAmount?.currency, chainId)}
             </b>
             {' or the transaction will revert.'}
-          </TYPE.italic>
+          </span>
         )}
-      </AutoColumn>
+      </div>
       {recipient !== null ? (
-        <AutoColumn justify="flex-start" gap="sm" style={{ padding: '12px 0 0 0px' }}>
-          <TYPE.main color={'white'} opacity={0.5}>
+        <div style={{ padding: '12px 0 0 0' }}>
+          <span style={{ fontFamily: 'Inter', fontSize: '13px', color: '#978A80' }}>
             Output will be sent to{' '}
             <b title={recipient}>{isAddress(recipient) ? shortenAddress(recipient) : recipient}</b>
-          </TYPE.main>
-        </AutoColumn>
+          </span>
+        </div>
       ) : null}
     </AutoColumn>
   )
