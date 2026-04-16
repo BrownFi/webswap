@@ -171,8 +171,8 @@ export default function Header() {
 
   return (
     <div
-      className="flex items-center justify-between w-full top-0 relative z-[2] px-4 sm:px-0"
-      style={{ padding: '16px 0', maxWidth: '1280px', margin: '0 auto' }}
+      className="flex py-4 px-2  items-center justify-between w-full top-0 relative z-[2] "
+      style={{  maxWidth: '1280px', margin: '0 auto' }}
     >
       {/* Left: Logo + Nav */}
       <div className="flex items-center gap-6 max-md:gap-3">

@@ -49,11 +49,16 @@ export const HoverCard = styled(Card)`
 const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   position: relative;
   overflow: hidden;
-  padding: 16px;
-  border-radius: 16px;
+  padding: 12px;
+  border-radius: 12px;
   transition: all 0.2s ease;
   background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#1E1915')};
-  gap: ${({ $expanded }) => ($expanded ? '24px' : '8px')};
+  gap: ${({ $expanded }) => ($expanded ? '24px' : '4px')};
+
+  @media (min-width: 720px) {
+    padding: 16px;
+    border-radius: 16px;
+  }
 `
 
 const pairBGT: Record<string, [string, string]> = {
@@ -170,19 +175,29 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           onClick={() => setShowMore(!showMore)}
         >
           {/* Pool name */}
-          <div className="flex items-center gap-3 min-w-0 max-md:flex-1" style={{ flex: 2 }}>
-            <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
+            <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0 hidden sm:block">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={40} />
             </div>
-            <div className="min-w-0">
-              <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
+            <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0 sm:hidden flex items-center">
+              <CurrencyLogo currency={currency0} size="28px" />
+              <CurrencyLogo currency={currency1} size="28px" style={{ marginLeft: '-8px' }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[16px] sm:text-[20px]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '30px', color: '#FBFBFD', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
               </span>
-              <div style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: '16px', lineHeight: '24px', letterSpacing: '-0.02em', color: '#83CF84' }}>
-                {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '24px', letterSpacing: '-0.02em', color: '#83CF84' }}>
+                  {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+                </span>
+                {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
+                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
+                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#D59967' }}>
+                  APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 1 })}%` : '--'}
+                </span>
               </div>
             </div>
-            {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
           </div>
           {/* TVL */}
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
@@ -199,7 +214,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               : '--'}
           </span>
           {/* Actions */}
-          <div className="flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
+          <div className="hidden md:flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
             <Link
               to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
               className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"

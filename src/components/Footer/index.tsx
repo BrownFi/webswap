@@ -33,14 +33,14 @@ const ThreadsIcon = () => (
 const Footer = () => {
   return (
     <footer
+      className="px-4 pt-12 pb-8 sm:px-10 sm:pt-20 md:px-20 md:pt-[120px] md:pb-12"
       style={{
         background: '#050505',
-        padding: '120px 80px 48px',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '120px',
+        gap: '60px',
         position: 'relative',
         zIndex: 2,
       }}

@@ -264,8 +264,8 @@ export default function Pool() {
       )}
 
       <PageWrapper>
-        <AutoColumn gap="lg" justify="center" className="p-[12px] pt-[24px] lg:p-[32px]">
-          <AutoColumn style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <AutoColumn gap="md" justify="center" className="p-[12px] pt-[16px] sm:pt-[24px] lg:p-[32px]">
+          <AutoColumn className="gap-4 sm:gap-8" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Title row */}
             <TitleRow padding={'0'}>
               <Flex alignItems="center" className="gap-4">

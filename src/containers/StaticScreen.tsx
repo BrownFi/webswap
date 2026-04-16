@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react'
+import { PropsWithChildren, useEffect, useState } from 'react'
 import 'rc-slider/assets/index.css'
 import 'theme/index.css'
 import styled from 'styled-components'
@@ -15,18 +15,36 @@ const AppWrapper = styled.div`
   min-height: 100vh;
 `
 
-const HeaderWrapper = styled.div`
-  ${({ theme }) => theme.flexRowNoWrap}
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  justify-content: space-between;
-  min-height: 78px;
-  z-index: 100;
-  background-color: transparent;
-`
+function HeaderWrapper({ children }: PropsWithChildren) {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexFlow: 'row nowrap',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        justifyContent: 'space-between',
+        minHeight: '78px',
+        zIndex: 100,
+        backgroundColor: scrolled ? '#050505' : 'transparent',
+        transition: 'background-color 300ms ease',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
 
 const StaticScreen = ({ children }: PropsWithChildren) => {
   return (
