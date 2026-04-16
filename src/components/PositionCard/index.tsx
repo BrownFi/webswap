@@ -289,26 +289,25 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               <div className="space-y-3">
                 <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>TVL</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(tvl)}</span></div>
                 <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Total LP Tokens</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatNumber(totalPoolTokens?.toSignificant(6))}</span></div>
+                <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Price per LP</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(iskHYPEUSDT ? lpPrice / 1e9 : lpPrice)}</span></div>
                 <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Volume (24h)</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(volume24h)}</span></div>
                 <div className="flex justify-between"><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>Volume (7d)</span><span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{formatPrice(volume7d)}</span></div>
-                <div className="flex flex-wrap justify-between items-center gap-1" onClick={() => setShowTokenPrice(!showTokenPrice)}>
-                  <div className="flex items-center gap-2 cursor-pointer">
-                    <CurrencyLogo currency={pair.token0} size="20px" />
-                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{getTokenSymbol(currency0, chainId)}</span>
-                  </div>
-                  <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
-                    {formatNumber(pair.reserve0.toSignificant(4))} <span style={{ color: '#978A80' }}>({formatPrice(showTokenPrice ? token0Price : token0Price * Number(pair.reserve0.toSignificant(6)))})</span>
-                  </span>
-                </div>
-                <div className="flex flex-wrap justify-between items-center gap-1" onClick={() => setShowTokenPrice(!showTokenPrice)}>
-                  <div className="flex items-center gap-2 cursor-pointer">
-                    <CurrencyLogo currency={pair.token1} size="20px" />
-                    <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{getTokenSymbol(currency1, chainId)}</span>
-                  </div>
-                  <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
-                    {formatNumber(pair.reserve1.toSignificant(4))} <span style={{ color: '#978A80' }}>({formatPrice(showTokenPrice ? token1Price : token1Price * Number(pair.reserve1.toSignificant(6)))})</span>
-                  </span>
-                </div>
+                {[shouldReverse ? pair.token1 : pair.token0, shouldReverse ? pair.token0 : pair.token1].map((token, idx) => {
+                  const currency = idx === 0 ? (shouldReverse ? currency1 : currency0) : (shouldReverse ? currency0 : currency1)
+                  const reserve = idx === 0 ? (shouldReverse ? pair.reserve1 : pair.reserve0) : (shouldReverse ? pair.reserve0 : pair.reserve1)
+                  const price = idx === 0 ? (shouldReverse ? token1Price : token0Price) : (shouldReverse ? token0Price : token1Price)
+                  return (
+                    <div key={token.address} className="flex flex-wrap justify-between items-center gap-1" onClick={() => setShowTokenPrice(!showTokenPrice)}>
+                      <div className="flex items-center gap-2 cursor-pointer">
+                        <CurrencyLogo currency={token} size="20px" />
+                        <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}>{getTokenSymbol(currency, chainId)}</span>
+                      </div>
+                      <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
+                        {formatNumber(reserve.toSignificant(4))} <span style={{ color: '#978A80' }}>({formatPrice(showTokenPrice ? price : price * Number(reserve.toSignificant(6)))})</span>
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
@@ -341,26 +340,21 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       <Loader stroke="gray" />
                     )}
                   </div>
-                  <div className="flex flex-wrap justify-between items-center gap-1">
-                    <div className="flex items-center gap-2">
-                      <CurrencyLogo currency={currency0} size="20px" />
-                      <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>Pooled {getTokenSymbol(currency0, chainId)}</span>
+                  {[
+                    { cur: shouldReverse ? currency1 : currency0, deposited: shouldReverse ? token1Deposited : token0Deposited, price: shouldReverse ? token1Price : token0Price },
+                    { cur: shouldReverse ? currency0 : currency1, deposited: shouldReverse ? token0Deposited : token1Deposited, price: shouldReverse ? token0Price : token1Price },
+                  ].map(({ cur, deposited, price }) => (
+                    <div key={getTokenSymbol(cur, chainId)} className="flex flex-wrap justify-between items-center gap-1">
+                      <div className="flex items-center gap-2">
+                        <CurrencyLogo currency={cur} size="20px" />
+                        <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>Pooled {getTokenSymbol(cur, chainId)}</span>
+                      </div>
+                      <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
+                        {deposited ? formatNumber(deposited?.toSignificant(4)) : '-'}
+                        {deposited && <span style={{ color: '#978A80' }}> ({formatPrice(price * Number(deposited.toSignificant(4)))})</span>}
+                      </span>
                     </div>
-                    <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
-                      {token0Deposited ? formatNumber(token0Deposited?.toSignificant(4)) : '-'}
-                      {token0Deposited && <span style={{ color: '#978A80' }}> ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})</span>}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap justify-between items-center gap-1">
-                    <div className="flex items-center gap-2">
-                      <CurrencyLogo currency={currency1} size="20px" />
-                      <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>Pooled {getTokenSymbol(currency1, chainId)}</span>
-                    </div>
-                    <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
-                      {token1Deposited ? formatNumber(token1Deposited?.toSignificant(4)) : '-'}
-                      {token1Deposited && <span style={{ color: '#978A80' }}> ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})</span>}
-                    </span>
-                  </div>
+                  ))}
 
                   {pairAccount && (
                     <>
