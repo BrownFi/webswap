@@ -24,7 +24,7 @@ const ParagraphIcon = () => (
 const Footer = () => {
   return (
     <footer
-      className="px-4 pt-12 pb-8 sm:px-10 sm:pt-20 md:px-20 md:pt-[120px] md:pb-12"
+      className="px-4 pt-12 pb-24 sm:px-10 sm:pt-20 md:px-20 md:pt-[120px] md:pb-12"
       style={{
         background: '#050505',
         width: '100%',
@@ -48,84 +48,52 @@ const Footer = () => {
           flexWrap: 'wrap',
         }}
       >
-        {/* Left: Company description */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '433px', flex: '1 1 300px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <img src={logoWhite} alt="BrownFi" style={{ width: '132px', height: '32px' }} />
-            <p style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '160%', color: '#A1A1A1', margin: 0 }}>
-              Trade beyond limits and unlock new opportunities as we redefine how the world invests, transacts, and grows in the crypto economy.
-            </p>
-          </div>
-          {/* Social icons */}
-          <div style={{ display: 'flex', gap: '12px' }}>
-            {[
-              { icon: <XIcon />, href: 'https://x.com/BrownFiAMM' },
-              { icon: <TelegramIcon />, href: 'https://t.me/brownfiammcommunity' },
-              { icon: <ParagraphIcon />, href: 'https://paragraph.com/@brownfi-amm' },
-            ].map((item, i) => (
-              <a
-                key={i}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '100px',
-                  border: '1px solid #A1A1A1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'transparent',
-                  transition: 'opacity 150ms',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-              >
-                {item.icon}
-              </a>
-            ))}
-          </div>
+        {/* Left: Logo + description */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <img src={logoWhite} alt="BrownFi" style={{ width: '132px', height: '32px' }} />
+          <p style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '160%', color: '#A1A1A1', margin: 0, maxWidth: '433px' }}>
+            High Capital Efficiency with simple LP management and optimal returns for average LPers
+          </p>
         </div>
 
-        {/* Right: Footer links */}
-        <div style={{ display: 'flex', gap: '57px', flexWrap: 'wrap' }}>
-          {/* Navigation */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '140px' }}>
-            <span style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '23px', color: '#FFFFFF' }}>Navigation</span>
-            {['Why choose us', 'Features', 'Supported Chains', 'Pricing', 'FAQ'].map((item) => (
-              <a key={item} href="#" style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textDecoration: 'none' }}>{item}</a>
-            ))}
-          </div>
-          {/* Support */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '140px' }}>
-            <span style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '23px', color: '#FFFFFF' }}>Support</span>
-            {['Resources', 'Career', 'Blog', 'Member'].map((item) => (
-              <a key={item} href="#" style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textDecoration: 'none' }}>{item}</a>
-            ))}
-          </div>
-          {/* Contact */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '140px' }}>
-            <span style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '23px', color: '#FFFFFF' }}>Contact</span>
-            <span style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '200%', color: '#A1A1A1' }}>42 Quantum Avenue,{'\n'}San Francisco, CA</span>
-            <a href="mailto:hello@credium.com" style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textDecoration: 'none' }}>hello@credium.com</a>
-            <a href="tel:+15552346678" style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textDecoration: 'none' }}>+1 (555) 234-6678</a>
-          </div>
+        {/* Right: Social icons */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {[
+            { icon: <XIcon />, href: 'https://x.com/BrownFiAMM' },
+            { icon: <TelegramIcon />, href: 'https://t.me/brownfiammcommunity' },
+            { icon: <ParagraphIcon />, href: 'https://paragraph.com/@brownfi-amm' },
+          ].map((item, i) => (
+            <a
+              key={i}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '100px',
+                border: '1px solid #A1A1A1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'transparent',
+                transition: 'opacity 150ms',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            >
+              {item.icon}
+            </a>
+          ))}
         </div>
       </div>
 
       {/* Footer bottom */}
       <div style={{ width: '100%', maxWidth: '1760px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div style={{ width: '100%', height: '1px', background: '#2F2823' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <span style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1' }}>
-            &copy;{new Date().getUTCFullYear()} BrownFi. All rights reserved.
-          </span>
-          <div style={{ display: 'flex', gap: '48px' }}>
-            <a href="#" style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#AAAAAA', textDecoration: 'none' }}>Privacy Policy</a>
-            <a href="#" style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#AAAAAA', textDecoration: 'none' }}>Term of Use</a>
-          </div>
-        </div>
+        <span style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textAlign: 'center' }}>
+          &copy;{new Date().getUTCFullYear()} BrownFi. All rights reserved.
+        </span>
       </div>
     </footer>
   )

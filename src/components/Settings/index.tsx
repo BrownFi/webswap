@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'react-feather'
 import { Text } from 'components/Rebass'
 import styled from 'styled-components'
@@ -78,16 +79,13 @@ const MenuFlyout = styled.span`
   flex-direction: column;
   gap: 32px;
   font-size: 1rem;
-  position: absolute;
-  top: 3rem;
-  right: 0rem;
-  z-index: 1000;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1002;
 
   ${({ theme }) => theme.mediaWidth.upToMedium`
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     right: auto;
     min-width: unset;
     width: calc(100% - 32px);
@@ -137,7 +135,8 @@ export function SettingsTab() {
     }
   }, [confirmText, toggleExpertMode])
 
-  useOnClickOutside(node, open ? toggle : undefined)
+  // Dismiss handled by overlay onClick — disabled useOnClickOutside since flyout is portaled
+  // useOnClickOutside(node, open ? toggle : undefined)
 
   return (
     // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30451
@@ -206,9 +205,9 @@ export function SettingsTab() {
           </EmojiWrapper>
         ) : null}
       </StyledMenuButton>
-      {open && (
+      {open && createPortal(
         <>
-        <div className="fixed inset-0 z-[999] bg-black/75 backdrop-blur-sm" onClick={toggle} />
+        <div className="fixed inset-0 z-[1001] bg-black/75 backdrop-blur-sm" onClick={toggle} />
         <MenuFlyout>
             <div className="flex items-center justify-between">
               <Text style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
@@ -244,8 +243,10 @@ export function SettingsTab() {
               />
             </RowBetween>
         </MenuFlyout>
-        </>
+        </>,
+        document.body
       )}
     </StyledMenu>
+
   )
 }

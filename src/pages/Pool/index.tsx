@@ -395,7 +395,7 @@ function PoolStatsBar({
   const hasData = !!dayData || pairs.length > 0
 
   const stats = [
-    { label: 'Total Value Locked', value: formatValue(tvl), sub: '-1.2% this week', subColor: '#83CF84' },
+    { label: 'Total Value Locked', value: formatValue(tvl), sub: '', subColor: undefined },
     { label: '24h Volume', value: formatValue(volume24h), sub: 'Across all pools', subColor: '#978A80' },
     { label: '24h Fees', value: formatValue(fees24h), sub: 'Distributed to Lps', subColor: '#978A80' },
     { label: 'Total Fees', value: formatValue(totalFees), sub: 'Distributed to Lps', subColor: '#978A80' },
