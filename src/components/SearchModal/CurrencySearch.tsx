@@ -127,7 +127,7 @@ export function CurrencySearch({
     <ContentWrapper>
       <PaddedColumn gap="16px">
         <RowBetween>
-          <Text fontWeight={500} fontSize={24} fontFamily={'Russo One'} color="white">
+          <Text fontWeight={500} fontSize={24} fontFamily={'Inter'} color="white">
             Select a token
           </Text>
           <CloseIcon onClick={onDismiss} color="white" />

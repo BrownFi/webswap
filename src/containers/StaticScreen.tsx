@@ -40,7 +40,7 @@ const StaticScreen = ({ children }: PropsWithChildren) => {
         <Header />
       </HeaderWrapper>
       {children}
-      <div className="flex-1" />
+      <div className="flex-1" style={{ minHeight: '80px' }} />
       <Footer />
     </AppWrapper>
   )

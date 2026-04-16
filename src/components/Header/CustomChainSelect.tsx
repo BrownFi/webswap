@@ -53,29 +53,33 @@ export const ChainModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-[#1a1510] m-2 w-full max-w-sm p-4 rounded-xl"
-        style={{ border: '1px solid #c4943a30' }}
+        style={{
+          background: '#1E1915',
+          border: '1px solid #2F2823',
+          borderRadius: '32px',
+          padding: '24px',
+          margin: '8px',
+          width: '100%',
+          maxWidth: '420px',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-5">
-          <h2
-            className="text-white text-lg font-[800] px-2 pt-1"
-            style={{
-              fontFamily: `SFRounded, ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
-            }}
-          >
+        <div className="flex items-center justify-between mb-6">
+          <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
             Switch Networks
-          </h2>
+          </span>
           <button
             onClick={onClose}
-            className="text-white/60 font-black hover:text-white transition p-1 w-8"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
             aria-label="Close network selector"
           >
-            ✕
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M15 5L5 15M5 5L15 15" stroke="#B8ADA4" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
           </button>
         </div>
 
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {availableChains.map((c) => {
             const isActive = chain?.id === c.id
 
@@ -88,14 +92,25 @@ export const ChainModal = ({
                   dispatch(switchChain(parsed))
                   if (onSwitchChain) onSwitchChain(c.id)
                 }}
-                className={`flex items-center justify-between w-full px-2 py-1 transition
-                  ${isActive ? 'bg-[#c4943a] text-white' : 'hover:bg-white/5 text-white/80'}
-                `}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 150ms',
+                  background: isActive ? '#985C2A' : '#120F0D',
+                  fontFamily: 'Inter',
+                  fontWeight: 600,
+                  fontSize: '16px',
+                  color: isActive ? '#FFFFFF' : '#CFC7C1',
+                }}
               >
-                <div className="flex items-center gap-3 min-h-[28px]">
-                  {c.iconUrl && <img src={c.iconUrl as string} alt={c.name} className="w-6 h-6 rounded-full" />}
-                  <span className="font-bold">{c.name}</span>
-                </div>
+                {c.iconUrl && <img src={c.iconUrl as string} alt={c.name} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />}
+                <span>{c.name}</span>
               </button>
             )
           })}

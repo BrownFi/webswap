@@ -26,7 +26,7 @@ const HeaderRow = styled.div`
     padding: 1rem;
   `};
   font-size: 24px;
-  font-family: 'Russo One';
+  font-family: 'Inter';
 `
 
 const UpperSection = styled.div`

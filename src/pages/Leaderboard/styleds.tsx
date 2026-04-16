@@ -3,24 +3,31 @@ import styled from 'styled-components'
 export const Table = styled.table`
   width: 100%;
   thead {
-    color: #949494;
-    font-weight: 700;
+    color: #978A80;
+    font-family: Inter, sans-serif;
+    font-weight: 500;
+    font-size: 14px;
     tr {
-      border-bottom: 1px solid #464444;
+      border-bottom: 1px solid #2F2823;
       td {
-        padding: 8px;
+        padding: 12px 8px;
       }
     }
   }
   tbody {
-    color: white;
+    color: #FBFBFD;
+    font-family: Inter, sans-serif;
     font-weight: 500;
+    font-size: 16px;
     tr {
-      border-bottom: 1px solid #464444;
+      border-bottom: 1px solid #2F2823;
       td {
-        padding: 8px;
-        letter-spacing: 1px;
+        padding: 12px 8px;
+        letter-spacing: 0.5px;
         height: 56px;
+      }
+      &:hover {
+        background: rgba(47, 40, 35, 0.5);
       }
     }
   }

@@ -67,7 +67,7 @@ export default function Manage({
               onClick={() => setModalView(CurrencyModalView.search)}
               color={'white'}
             />
-            <Text fontWeight={500} fontSize={24} fontFamily={'Russo One'} color={'white'}>
+            <Text fontWeight={500} fontSize={24} fontFamily={'Inter'} color={'white'}>
               Manage
             </Text>
           </div>

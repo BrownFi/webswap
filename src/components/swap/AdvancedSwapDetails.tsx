@@ -20,7 +20,7 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
   const tradingFee = useTradingFee({ pair: trade.route.pairs[0] })
 
   return (
-    <AutoColumn gap="8px" style={{ padding: '0 16px' }}>
+    <AutoColumn gap="8px" style={{ padding: '0 0px' }}>
       <RowBetween>
         <RowFixed>
           <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
@@ -75,7 +75,7 @@ export function AdvancedSwapDetails({ trade }: AdvancedSwapDetailsProps) {
         <>
           <TradeSummary trade={trade} allowedSlippage={allowedSlippage} />
           {showRoute && (
-            <RowBetween style={{ padding: '0 16px' }}>
+            <RowBetween style={{ padding: '0 0px' }}>
               <RowFixed>
                 <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
                   Route

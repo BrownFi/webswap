@@ -52,7 +52,7 @@ const Referral = () => {
   return (
     <div>
       <div className="flex items-center mb-[8px]">
-        <p className="text-[24px] font-medium text-white mr-[8px]" style={{ fontFamily: "'Russo One',sans-serif" }}>
+        <p className="text-[24px] font-medium text-white mr-[8px]" style={{ fontFamily: "'Inter',sans-serif" }}>
           Referral Link
         </p>
       </div>

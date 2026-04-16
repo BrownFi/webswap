@@ -36,13 +36,13 @@ const StyledSwaptitle = styled.p`
 export default function SwapHeader() {
   return (
     <StyledSwapHeader>
-      <RowBetween>
-        <Flex alignItems="center" className="gap-6">
-          <StyledSwaptitle>Swap Token</StyledSwaptitle>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <StyledSwaptitle>Swap Token</StyledSwaptitle>
+        <div className="flex items-center gap-3">
           <SwitchVersion />
-        </Flex>
-        <SettingsTab />
-      </RowBetween>
+          <SettingsTab />
+        </div>
+      </div>
     </StyledSwapHeader>
   )
 }

@@ -499,7 +499,7 @@ export default function RemoveLiquidity() {
           <AutoColumn gap="20px">
             <RemoveLiqudityCard>
               <AutoColumn gap="20px">
-                <Text fontWeight={500} color={'white'} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
+                <Text fontWeight={500} color={'white'} fontSize={isMobile ? 16 : 18} fontFamily={'Inter'}>
                   Amount
                 </Text>
                 <Row style={{ alignItems: 'center' }}>
@@ -556,7 +556,7 @@ export default function RemoveLiquidity() {
             <RemoveLiqudityCard>
               <AutoColumn gap="20px">
                 <div className="flex flex-wrap justify-between gap-3">
-                  <Text fontWeight={500} color={'white'} fontSize={isMobile ? 16 : 18} fontFamily={'Russo One'}>
+                  <Text fontWeight={500} color={'white'} fontSize={isMobile ? 16 : 18} fontFamily={'Inter'}>
                     Receive
                   </Text>
 

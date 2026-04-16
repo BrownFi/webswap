@@ -367,7 +367,7 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
         <Card className="md:!p-6 !p-3">
           <AutoColumn gap="lg">
             <Flex sx={{ gap: '4px' }} alignItems="flex-end">
-              <Text fontSize={18} color={'white'} fontFamily={'Russo One'}>
+              <Text fontSize={18} color={'white'} fontFamily={'Inter'}>
                 {name}
               </Text>
               {showExtendedMetrics && (
@@ -519,14 +519,14 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
 
               {isPending && (
                 <div className="absolute inset-0 flex justify-center items-center">
-                  <Text fontSize={18} color="#FFFA" fontFamily={'Russo One'}>
+                  <Text fontSize={18} color="#FFFA" fontFamily={'Inter'}>
                     Loading...
                   </Text>
                 </div>
               )}
               {!isPending && data?.pairDayDatas.length === 0 && (
                 <div className="absolute inset-0 flex justify-center items-center">
-                  <Text fontSize={18} color="#FFFA" fontFamily={'Russo One'}>
+                  <Text fontSize={18} color="#FFFA" fontFamily={'Inter'}>
                     No Data
                   </Text>
                 </div>

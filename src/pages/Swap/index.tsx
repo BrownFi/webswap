@@ -394,7 +394,7 @@ export default function Swap() {
               </>
             ) : null}
 
-            <AutoColumn gap="8px" style={{ padding: '0 16px' }}>
+            <AutoColumn gap="8px" style={{ padding: '4px 0px' }}>
               {allowedSlippage !== INITIAL_ALLOWED_SLIPPAGE && (
                 <RowBetween align="center">
                   <ClickableText fontWeight={500} fontSize={14} color={theme.text2} onClick={toggleSettings}>

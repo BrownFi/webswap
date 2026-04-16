@@ -24,7 +24,7 @@ const SwitchVersion = ({ isMobile }: Props) => {
 
   return (
     <div
-      className={`flex items-center gap-0.5 p-[4px] rounded-[12px] ${isMobile ? 'md:hidden' : 'max-md:hidden'}`}
+      className={`flex items-center gap-0.5 p-[4px] rounded-[12px] ${isMobile ? 'hidden' : ''}`}
       style={{
         background: 'rgba(0, 0, 0, 0.06)',
         boxShadow: 'inset 0px 10px 14px rgba(237, 210, 188, 0.05), inset 0px 2px 16px rgba(236, 208, 186, 0.3)',

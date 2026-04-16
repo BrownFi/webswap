@@ -74,46 +74,82 @@ export const AccountModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
       onClick={onClose}
     >
       <div
-        className="bg-[#1a1510] rounded-xl m-2 w-full max-w-sm p-4"
-        style={{ border: '1px solid #c4943a30' }}
+        style={{
+          background: '#1E1915',
+          border: '1px solid #2F2823',
+          borderRadius: '32px',
+          padding: '24px',
+          margin: '8px',
+          width: '100%',
+          maxWidth: '420px',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end mb-2">
           <button
             onClick={onClose}
-            className="text-white/60 font-black hover:text-white transition p-1 w-8"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
           >
-            ✕
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M15 5L5 15M5 5L15 15" stroke="#B8ADA4" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
           </button>
         </div>
 
-        {/* Chain list */}
-        <div className="space-y-2">
-          <div className="flex justify-center items-center w-[82px] h-[82px] bg-[#ffb35a] mx-auto text-[45px]">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+          <div style={{ width: '82px', height: '82px', background: '#2F2823', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '45px' }}>
             🤠
           </div>
-          <div className="text-center">
-            <div className="text-white font-bold text-[20px]">{shortenAddress(account!)}</div>
-            <div className="text-white/60 font-semibold">
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>{shortenAddress(account!)}</div>
+            <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80', marginTop: '4px' }}>
               {balance?.toSignificant(6)} {getTokenSymbol(balance?.currency, chainId)}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
             <button
-              className="flex flex-1 flex-col items-center  bg-white/15 hover:bg-white/25 text-white font-semibold p-2"
               onClick={handleCopy}
-            >
-              {isCopying ? <Check size={16} /> : <Copy size={16} />}
-              <div className="text-sm">{isCopying ? 'Copied!' : 'Copy Address'}</div>
-            </button>
-            <button
-              className="flex flex-1 flex-col items-center  bg-white/15 hover:bg-white/25 text-white font-semibold p-2"
-              onClick={() => {
-                disconnect()
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '12px',
+                background: '#120F0D',
+                border: '1px solid #2F2823',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontFamily: 'Inter',
+                fontWeight: 500,
+                fontSize: '14px',
+                color: '#CFC7C1',
               }}
             >
-              <LogOut size={16} />
-              <div className="text-sm">Disconnect</div>
+              {isCopying ? <Check size={16} color="#83CF84" /> : <Copy size={16} color="#B8ADA4" />}
+              <span>{isCopying ? 'Copied!' : 'Copy Address'}</span>
+            </button>
+            <button
+              onClick={() => disconnect()}
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '12px',
+                background: '#120F0D',
+                border: '1px solid #2F2823',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontFamily: 'Inter',
+                fontWeight: 500,
+                fontSize: '14px',
+                color: '#CFC7C1',
+              }}
+            >
+              <LogOut size={16} color="#B8ADA4" />
+              <span>Disconnect</span>
             </button>
           </div>
         </div>

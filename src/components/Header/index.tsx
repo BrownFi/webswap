@@ -171,29 +171,36 @@ export default function Header() {
 
   return (
     <div
-      className="flex items-center justify-between w-full top-0 relative py-4 px-6 lg:px-11 z-[2]
-      max-md:px-4
-      max-xs:py-2 max-xs:px-4"
+      className="flex items-center justify-between w-full top-0 relative z-[2] px-4 sm:px-0"
+      style={{ padding: '16px 0', maxWidth: '1280px', margin: '0 auto' }}
     >
-      {/* Left: Logo */}
-      <div className="flex items-center gap-4 shrink-0">
-        <Link to="/" className="flex items-center">
+      {/* Left: Logo + Nav */}
+      <div className="flex items-center gap-6 max-md:gap-3">
+        <Link to="/" className="flex items-center shrink-0">
           <div className="transition-transform duration-300 hover:-rotate-[5deg]">
             <img className="min-w-[120px] w-[120px] lg:w-[142px] lg:min-w-[142px]" src={Logo} alt="logo" />
           </div>
         </Link>
 
+        {!isMainnet && (
+          <span style={{
+            fontFamily: 'Inter',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#FFFFFF',
+            background: '#985C2A',
+            borderRadius: '6px',
+            padding: '2px 8px',
+            textTransform: 'uppercase',
+            flexShrink: 0,
+          }}>
+            {appEnv}
+          </span>
+        )}
+
         <SwitchVersion isMobile />
 
-        {!isMainnet && (
-          <ButtonSecondary className="!w-fit !bg-blue-500/40 !px-1 uppercase !text-xs">
-            {appEnv}
-          </ButtonSecondary>
-        )}
-      </div>
-
-      {/* Center: Nav capsule */}
-      <HamburgerMenu>
+        <HamburgerMenu>
         <nav aria-label="Main navigation">
           <div
             className="flex items-center p-1 rounded-xl max-md:flex-col max-md:bg-transparent max-md:shadow-none max-md:backdrop-blur-none max-md:rounded-none"
@@ -204,9 +211,6 @@ export default function Header() {
               borderRadius: '12px',
             }}
           >
-            <StyledNavLink id="home-nav-link" to="/" end>
-              Home
-            </StyledNavLink>
             {!isMainnet && (
               <StyledNavLink id="swap-nav-link" to="/swap">
                 Swap
@@ -218,18 +222,16 @@ export default function Header() {
             <StyledNavLink id="leaderboard-nav-link" to="/campaign/contest-1">
               Campaign
             </StyledNavLink>
-            <StyledNavLink id="faq-nav-link" to="/faq">
-              FAQ
-            </StyledNavLink>
           </div>
         </nav>
       </HamburgerMenu>
+      </div>
 
       {/* Right: Chain + Connect */}
       <div
-        className="flex items-center gap-2 shrink-0
+        className="flex items-center gap-4 shrink-0
         max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:z-[99]
-        max-md:h-[72px] max-md:bg-[#0a0806] max-md:border-t max-md:border-[#c4943a20]
+        max-md:h-[72px] max-md:bg-[#050505] max-md:border-t max-md:border-[#2F2823]
         max-md:justify-center max-md:p-4"
       >
         <CustomChainSelect />
