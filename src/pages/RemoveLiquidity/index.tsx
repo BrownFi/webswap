@@ -479,6 +479,7 @@ export default function RemoveLiquidity() {
   return (
     <>
       <AppBody>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         <AddRemoveTabs creating={false} adding={false} />
         <Wrapper>
           <TransactionConfirmationModal
@@ -675,12 +676,11 @@ export default function RemoveLiquidity() {
               {!account ? (
                 <ConnectWallet />
               ) : (
-                <RowBetween>
+                <RowBetween style={{ gap: '16px' }}>
                   <ButtonConfirmed
                     onClick={approveCallback}
                     confirmed={approval === ApprovalState.APPROVED}
                     disabled={approval !== ApprovalState.NOT_APPROVED}
-                    mr="0.5rem"
                     fontWeight={500}
                     fontSize={16}
                   >
@@ -717,6 +717,7 @@ export default function RemoveLiquidity() {
             </div>
           </AutoColumn>
         </Wrapper>
+        </div>
       </AppBody>
 
       {pair ? (

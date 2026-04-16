@@ -233,7 +233,7 @@ export function CurrencyInputPanel({
             <Aligner>
               <div className="flex items-center flex-1 gap-1">
                 {pair ? (
-                  <DoubleCurrencyLogo currency0={pair.token0} currency1={pair.token1} size={24} />
+                  <DoubleCurrencyLogo currency0={pair.token0} currency1={pair.token1} size={18} margin />
                 ) : currency ? (
                   <CurrencyLogo currency={currency} size={'24px'} />
                 ) : null}
