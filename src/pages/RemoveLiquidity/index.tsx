@@ -550,7 +550,7 @@ export default function RemoveLiquidity() {
             />
 
             <ColumnCenter>
-              <ArrowDown size="16" color={theme.text2} />
+              <ArrowDown size="20" color="#493E35" />
             </ColumnCenter>
 
             <RemoveLiqudityCard>
@@ -573,7 +573,7 @@ export default function RemoveLiquidity() {
                   <AutoColumn gap="16px">
                     <button
                       type="button"
-                      className="flex items-center justify-between w-full px-4 py-2 min-h-12 bg-[#131216] border border-white/10 hover:bg-white/10 rounded"
+                      className="flex items-center justify-between w-full px-4 py-2 min-h-12 bg-[#120F0D] border border-[#2F2823] hover:bg-[#2F2823] rounded-xl"
                       onClick={handleOpenZapCurrencyModal}
                     >
                       {zapOutCurrency ? (

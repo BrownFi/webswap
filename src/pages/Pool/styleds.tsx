@@ -19,20 +19,19 @@ export const ClickableText = styled(Text)`
   color: ${({ theme }) => theme.primary1};
 `
 export const MaxButton = styled.button<{ width: string }>`
-  padding: 0.5rem 1rem;
-  background-color: #c4943a;
-  border: 0;
-  border-radius: 0;
-  font-size: 12px;
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    padding: 0.25rem 0.5rem;
-  `};
-  font-weight: 700;
+  padding: 8px 12px;
+  background-color: #493E35;
+  border: 1px solid #493E35;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   overflow: hidden;
-  color: #0a0806;
+  color: #FFFFFF;
+  transition: background 150ms;
   :hover {
-    background-color: #d4a94f;
+    background-color: #5C5040;
   }
   :focus {
     outline: none;
