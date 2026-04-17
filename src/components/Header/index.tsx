@@ -37,7 +37,7 @@ const StyledConnectButton = () => {
                       color: '#FFFFFF',
                       background: 'linear-gradient(#050505, #050505) padding-box, linear-gradient(180deg, #6B5B4E 0%, #C47736 100%) border-box',
                       border: '2px solid transparent',
-                      boxShadow: 'inset 0px 8px 24px rgba(239, 190, 54, 0.25)',
+                      boxShadow: 'inset 0px 8px 24px rgba(239, 190, 54, 0.25), inset 0px -8px 16px rgba(196, 119, 54, 0.3)',
                       borderRadius: '12px',
                       padding: '12px 24px',
                       height: '48px',

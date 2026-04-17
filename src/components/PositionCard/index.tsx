@@ -399,7 +399,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   </div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', gap: '16px', flex: 1 }}>
                   <ConnectButton.Custom>
                     {({ openConnectModal, mounted }) => (
                       <button

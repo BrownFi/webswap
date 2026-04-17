@@ -19,7 +19,7 @@ import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween, RowFixed } from 'components/Row'
 import Toggle from 'components/Toggle'
 import TransactionSettings from 'components/TransactionSettings'
-import settings from 'assets/svg/settings.svg'
+import settings from 'assets/svg/settings-2.svg'
 
 const StyledCloseIcon = styled(X)`
   height: 20px;

@@ -26,12 +26,12 @@ const Footer = () => {
     <footer
       className="px-4 pt-8 pb-20 sm:px-10 sm:pt-20 md:px-20 md:pt-[60px] md:pb-8"
       style={{
-        background: '#050505',
+        background: 'transparent',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '60px',
+        gap: '20px',
         position: 'relative',
         zIndex: 2,
       }}
@@ -44,7 +44,7 @@ const Footer = () => {
           alignItems: 'flex-start',
           width: '100%',
           maxWidth: '1760px',
-          gap: '60px',
+          gap: '20px',
           flexWrap: 'wrap',
         }}
       >
