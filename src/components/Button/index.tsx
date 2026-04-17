@@ -48,8 +48,7 @@ const Base = styled.button<{
 `
 
 export const ButtonPrimary = styled(Base)`
-  background: linear-gradient(0deg, #503016 0%, #985C2A 100%);
-  box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8);
+  background: #985C2A;
   border-radius: 12px;
   color: #FFFFFF;
   font-family: 'Inter', sans-serif;
@@ -60,22 +59,18 @@ export const ButtonPrimary = styled(Base)`
   padding: 12px 24px;
   gap: 8px;
   &:focus {
-    box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8), 0 0 0 1pt ${darken(0.05, '#985C2A')};
-    background: linear-gradient(0deg, ${darken(0.05, '#503016')} 0%, ${darken(0.05, '#985C2A')} 100%);
+    background: ${darken(0.05, '#985C2A')};
   }
   &:hover {
-    background: linear-gradient(0deg, ${lighten(0.03, '#503016')} 0%, ${lighten(0.03, '#985C2A')} 100%);
-    box-shadow: inset 0px 0px 6px rgba(255, 255, 255, 0.9);
+    background: ${lighten(0.03, '#985C2A')};
   }
   &:active {
-    background: linear-gradient(0deg, ${darken(0.05, '#503016')} 0%, ${darken(0.05, '#985C2A')} 100%);
-    box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.6);
+    background: ${darken(0.05, '#985C2A')};
   }
   &:disabled {
-    background: linear-gradient(0deg, #503016 0%, #985C2A 100%);
+    background: #985C2A;
     color: rgba(255, 255, 255, 0.4);
     cursor: auto;
-    box-shadow: none;
     border: 1px solid transparent;
     outline: none;
     opacity: 0.5;
@@ -83,8 +78,7 @@ export const ButtonPrimary = styled(Base)`
 `
 
 export const ButtonLight = styled(Base)`
-  background: linear-gradient(0deg, #503016 0%, #985C2A 100%);
-  box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8);
+  background: #985C2A;
   border-radius: 12px;
   color: #FFFFFF;
   font-family: 'Inter', sans-serif;
@@ -92,14 +86,12 @@ export const ButtonLight = styled(Base)`
   font-weight: 500;
   height: 48px;
   &:hover {
-    background: linear-gradient(0deg, ${lighten(0.03, '#503016')} 0%, ${lighten(0.03, '#985C2A')} 100%);
-    box-shadow: inset 0px 0px 6px rgba(255, 255, 255, 0.9);
+    background: ${lighten(0.03, '#985C2A')};
   }
   :disabled {
     opacity: 0.5;
     :hover {
       cursor: auto;
-      box-shadow: none;
       border: 1px solid transparent;
       outline: none;
     }
@@ -257,15 +249,13 @@ export const ButtonWhite = styled(Base)`
 `
 
 const ButtonConfirmedStyle = styled(Base)`
-  background: linear-gradient(0deg, #1a4d2e 0%, #27AE60 100%);
-  box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.6);
+  background: #27AE60;
   border-radius: 12px;
   color: #FFFFFF;
   font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 500;
   height: 48px;
-  border: 1px solid ${({ theme }) => theme.green1};
 
   &:disabled {
     opacity: 50%;
@@ -274,8 +264,7 @@ const ButtonConfirmedStyle = styled(Base)`
 `
 
 const ButtonErrorStyle = styled(Base)`
-  background: linear-gradient(0deg, #503016 0%, #985C2A 100%);
-  box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8);
+  background: #985C2A;
   border-radius: 12px;
   color: #FFFFFF;
   font-family: 'Inter', sans-serif;
@@ -284,20 +273,17 @@ const ButtonErrorStyle = styled(Base)`
   height: 48px;
 
   &:focus {
-    box-shadow: inset 0px 0px 4px rgba(255, 255, 255, 0.8), 0 0 0 1pt ${darken(0.05, '#985C2A')};
-    background: linear-gradient(0deg, ${darken(0.05, '#503016')} 0%, ${darken(0.05, '#985C2A')} 100%);
+    background: ${darken(0.05, '#985C2A')};
   }
   &:hover {
-    background: linear-gradient(0deg, ${lighten(0.03, '#503016')} 0%, ${lighten(0.03, '#985C2A')} 100%);
-    box-shadow: inset 0px 0px 6px rgba(255, 255, 255, 0.9);
+    background: ${lighten(0.03, '#985C2A')};
   }
   &:active {
-    background: linear-gradient(0deg, ${darken(0.05, '#503016')} 0%, ${darken(0.05, '#985C2A')} 100%);
+    background: ${darken(0.05, '#985C2A')};
   }
   &:disabled {
     opacity: 50%;
     cursor: auto;
-    box-shadow: none;
   }
 `
 

@@ -35,9 +35,8 @@ const StyledConnectButton = () => {
                       fontSize: '16px',
                       fontWeight: 500,
                       color: '#FFFFFF',
-                      background: 'linear-gradient(#050505, #050505) padding-box, linear-gradient(180deg, #6B5B4E 0%, #C47736 100%) border-box',
-                      border: '2px solid transparent',
-                      boxShadow: 'inset 0px 8px 24px rgba(239, 190, 54, 0.25), inset 0px -8px 16px rgba(196, 119, 54, 0.3)',
+                      background: '#985C2A',
+                      border: 'none',
                       borderRadius: '12px',
                       padding: '12px 24px',
                       height: '48px',
@@ -203,9 +202,7 @@ export default function Header() {
           <div
             className="flex items-center p-1 rounded-xl max-md:flex-col max-md:bg-transparent max-md:shadow-none max-md:backdrop-blur-none max-md:rounded-none"
             style={{
-              background: 'rgba(0, 0, 0, 0.06)',
-              boxShadow: 'inset 0px 10px 14px rgba(237, 210, 188, 0.05), inset 0px 2px 16px rgba(236, 208, 186, 0.3)',
-              backdropFilter: 'blur(12px)',
+              background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '12px',
             }}
           >

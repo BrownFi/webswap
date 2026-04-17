@@ -92,10 +92,7 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
               fontFamily: 'Inter',
               fontWeight: 600,
               letterSpacing: '-0.02em',
-              background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              color: '#D8A072',
             }}
           >
             {creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}

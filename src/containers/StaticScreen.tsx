@@ -3,7 +3,6 @@ import 'rc-slider/assets/index.css'
 import 'theme/index.css'
 import styled from 'styled-components'
 import Footer from 'components/Footer'
-import bgGolden from 'assets/images/bg-golden.jpg'
 import Header from 'components/Header'
 
 const AppWrapper = styled.div`
@@ -11,7 +10,7 @@ const AppWrapper = styled.div`
   flex-flow: column;
   align-items: center;
   overflow-x: hidden;
-  background-color: #0a0806;
+  background-color: #050505;
   min-height: 100vh;
 `
 
@@ -52,11 +51,7 @@ const StaticScreen = ({ children }: PropsWithChildren) => {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          backgroundImage: `url(${bgGolden})`,
-          backgroundPosition: 'center top',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: '1920px auto',
-          opacity: 0.8,
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(152, 92, 42, 0.08) 0%, transparent 60%)',
         }}
       />
       <HeaderWrapper>

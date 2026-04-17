@@ -192,7 +192,7 @@ export function SettingsTab() {
         </ModalContentWrapper>
       </Modal>
       <StyledMenuButton onClick={toggle} id="open-settings-dialog-button" aria-label="Open settings">
-        <div className="w-[44px] h-[44px] flex items-center justify-center rounded-[100px] transition-colors" style={{ background: '#2F2823', border: 'none', padding: '10px' }}>
+        <div className="w-[44px] h-[44px] flex items-center justify-center rounded-[100px] transition-colors" style={{ background: 'transparent', border: 'none', padding: '10px' }}>
           <img src={settings} alt="settings" className="w-[20px]" style={{ filter: 'brightness(0) saturate(100%) invert(73%) sepia(5%) saturate(1000%) hue-rotate(350deg) brightness(90%) contrast(85%)' }} />
         </div>
 

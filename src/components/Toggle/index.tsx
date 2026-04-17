@@ -5,7 +5,7 @@ const ToggleElement = styled.span<{ isActive?: boolean; isOnSwitch?: boolean }>`
   border-radius: 100px;
   background: ${({ isActive }) =>
     isActive
-      ? 'linear-gradient(105.56deg, #734117 1.68%, #D8A072 50%, #734017 98.32%)'
+      ? '#985C2A'
       : 'none'};
   color: ${({ isActive }) =>
     isActive ? '#FFFFFF' : '#B8ADA4'};
@@ -21,9 +21,7 @@ const ToggleElement = styled.span<{ isActive?: boolean; isOnSwitch?: boolean }>`
 const StyledToggle = styled.button<{ isActive?: boolean; activeElement?: boolean }>`
   border-radius: 100px;
   border: none;
-  background: rgba(0, 0, 0, 0.06);
-  box-shadow: inset 0px 10px 14px rgba(237, 210, 188, 0.05), inset 0px 2px 16px rgba(236, 208, 186, 0.3);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   width: fit-content;
   cursor: pointer;

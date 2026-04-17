@@ -189,7 +189,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 </span>
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
-                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#D59967' }}>
+                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84' }}>
                   APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 1 })}%` : '--'}
                 </span>
               </div>
@@ -198,9 +198,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           {/* TVL */}
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#978A80' }}>{formatPrice(volume24h)}</span>
+          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
           {/* Free APR */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#D59967' }}>
+          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
             {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
           {/* Bgt APR */}
@@ -215,8 +215,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
               className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
               style={{
-                background: 'linear-gradient(0deg, #503016 0%, #985C2A 100%)',
-                boxShadow: 'inset 0px 0px 4px rgba(255, 255, 255, 0.8)',
+                background: '#985C2A',
                 borderRadius: '12px',
                 padding: '6px 12px',
                 height: '40px',
@@ -254,10 +253,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                     fontFamily: 'Inter',
                     fontWeight: 600,
                     fontSize: '24px',
-                    background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
+                    color: '#D8A072',
                   }}
                 >
                   Pool stats
@@ -308,17 +304,14 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
 
             {/* Right panel: Your position */}
-            <div className="p-[16px] sm:p-[24px]" style={{ background: '#493E35', border: '1px solid #493E35', borderRadius: '16px' }}>
+            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '16px', background: 'transparent' }}>
               <span
                 className="block mb-4"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 600,
                   fontSize: '24px',
-                  background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
+                  color: '#D8A072',
                 }}
               >
                 Your position
@@ -369,17 +362,15 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   )}
 
                   {/* Action buttons */}
-                  <div className="pt-2 space-y-2">
+                  <div className="pt-2 flex gap-3">
                     <Link
                       to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-                      className="no-underline flex items-center justify-center"
+                      className="no-underline flex items-center justify-center flex-1"
                       style={{
-                        width: '100%',
-                        background: 'linear-gradient(0deg, #503016 0%, #985C2A 100%)',
-                        boxShadow: 'inset 0px 0px 4px rgba(255, 255, 255, 0.8)',
+                        background: '#985C2A',
                         borderRadius: '12px',
-                        padding: '6px 12px',
-                        height: '40px',
+                        padding: '10px 16px',
+                        height: '44px',
                         fontFamily: 'Inter',
                         fontWeight: 500,
                         fontSize: '14px',
@@ -387,12 +378,22 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                         border: 'none',
                       }}
                     >
-                      + Add liquidity
+                      Add
                     </Link>
                     <Link
                       to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
-                      className="block no-underline transition-colors"
-                      style={{ textAlign: 'center', fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: 'white' }}
+                      className="no-underline flex items-center justify-center flex-1"
+                      style={{
+                        background: '#985C2A',
+                        borderRadius: '12px',
+                        padding: '10px 16px',
+                        height: '44px',
+                        fontFamily: 'Inter',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        color: 'white',
+                        border: 'none',
+                      }}
                     >
                       Remove
                     </Link>
@@ -410,9 +411,8 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                           fontSize: '16px',
                           fontWeight: 500,
                           color: '#FFFFFF',
-                          background: 'linear-gradient(#050505, #050505) padding-box, linear-gradient(180deg, #6B5B4E 0%, #C47736 100%) border-box',
-                          border: '2px solid transparent',
-                          boxShadow: 'inset 0px 8px 24px rgba(239, 190, 54, 0.25)',
+                          background: '#985C2A',
+                          border: 'none',
                           borderRadius: '12px',
                           padding: '12px 24px',
                           height: '48px',

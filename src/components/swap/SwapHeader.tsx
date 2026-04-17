@@ -19,10 +19,7 @@ const StyledSwaptitle = styled.p`
   font-size: 36px;
   line-height: 44px;
   letter-spacing: -0.02em;
-  background: linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #D8A072;
   flex: 1;
 
   ${({ theme }) => theme.mediaWidth.upToSmall`

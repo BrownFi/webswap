@@ -220,14 +220,10 @@ html {
 export const ThemedGlobalStyle = createGlobalStyle`
 html {
   color: ${({ theme }) => theme.text1};
-  background-color: #0a0806;
+  background-color: #050505;
 }
 
 body {
   min-height: 100vh;
-  background-position: 0 -30vh;
-  background-repeat: no-repeat;
-  background-image: radial-gradient(ellipse at 30% 40%, rgba(196,148,58,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse at 70% 60%, rgba(196,148,58,0.04) 0%, transparent 50%);
 }
 `

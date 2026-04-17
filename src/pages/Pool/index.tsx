@@ -274,10 +274,7 @@ export default function Pool() {
                     fontFamily: 'Inter',
                     fontWeight: 600,
                     letterSpacing: '-0.02em',
-                    background: 'linear-gradient(180deg, #F5E6DA 31.59%, #D08C55 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
+                    color: '#D8A072',
                   }}
                 >
                   Liquidity Pools
@@ -410,28 +407,14 @@ function PoolStatsBar({
           style={{
             background: '#2F2823',
             borderRadius: '16px',
-            isolation: 'isolate',
           }}
 
         >
-          {/* Glow */}
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              width: '245px',
-              height: '245px',
-              left: '-181px',
-              top: '-215px',
-              background: '#985C2A',
-              filter: 'blur(94px)',
-              zIndex: 0,
-            }}
-          />
-          <span className="text-[11px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD', zIndex: 1 }}>
+          <span className="text-[11px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
             {stat.label}
           </span>
           {isLoading && !hasData ? (
-            <span className="animate-pulse text-[18px] sm:text-[36px] leading-[24px] sm:leading-[44px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80', zIndex: 2 }}>
+            <span className="animate-pulse text-[18px] sm:text-[36px] leading-[24px] sm:leading-[44px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80' }}>
               --
             </span>
           ) : (
@@ -441,18 +424,14 @@ function PoolStatsBar({
                 fontFamily: 'Inter',
                 fontWeight: 700,
                 letterSpacing: '-0.02em',
-                background: 'linear-gradient(105.56deg, #734117 1.68%, #D8A072 50%, #734017 98.32%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                zIndex: 2,
+                color: '#D8A072',
               }}
             >
               {stat.value}
             </span>
           )}
           {stat.sub && (
-            <span className="text-[10px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: stat.subColor, zIndex: 3 }}>
+            <span className="text-[10px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: stat.subColor }}>
               {stat.sub}
             </span>
           )}

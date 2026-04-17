@@ -72,7 +72,7 @@ const Footer = () => {
                 width: '48px',
                 height: '48px',
                 borderRadius: '100px',
-                border: '1px solid #A1A1A1',
+                border: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
