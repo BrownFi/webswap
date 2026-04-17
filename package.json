@@ -32,7 +32,6 @@
     "cids": "^1.0.2",
     "copy-to-clipboard": "^3.2.1",
     "cross-env": "^7.0.3",
-    "cypress": "^4.11.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
@@ -74,7 +73,6 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "integration-test": "cypress run",
     "lint": "eslint src/"
   },
   "license": "GPL-3.0-or-later",
