@@ -503,7 +503,7 @@ export default function RemoveLiquidity() {
                 <Text fontWeight={500} color={'white'} fontSize={isMobile ? 16 : 18} fontFamily={'Inter'}>
                   Amount
                 </Text>
-                <Row style={{ alignItems: 'center' }}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <NumericInput
                     value={innerLiquidityPercentage}
                     onChange={(val) => {
@@ -516,21 +516,21 @@ export default function RemoveLiquidity() {
                     style={{ fontSize: 32, fontWeight: 600 }}
                   />
 
-                  <div className="flex items-center gap-3">
-                    <MaxButton onClick={() => onUserInput(Field.LIQUIDITY_PERCENT, '25')} width="57px">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <MaxButton onClick={() => onUserInput(Field.LIQUIDITY_PERCENT, '25')} width="auto">
                       25%
                     </MaxButton>
-                    <MaxButton onClick={() => onUserInput(Field.LIQUIDITY_PERCENT, '50')} width="57px">
+                    <MaxButton onClick={() => onUserInput(Field.LIQUIDITY_PERCENT, '50')} width="auto">
                       50%
                     </MaxButton>
-                    <MaxButton onClick={() => onUserInput(Field.LIQUIDITY_PERCENT, '75')} width="57px">
+                    <MaxButton onClick={() => onUserInput(Field.LIQUIDITY_PERCENT, '75')} width="auto">
                       75%
                     </MaxButton>
-                    <MaxButton onClick={() => onUserInput(Field.LIQUIDITY_PERCENT, '100')} width="57px">
+                    <MaxButton onClick={() => onUserInput(Field.LIQUIDITY_PERCENT, '100')} width="auto">
                       Max
                     </MaxButton>
                   </div>
-                </Row>
+                </div>
 
                 <Slider value={innerLiquidityPercentage} onChange={liquidityPercentChangeCallback} />
               </AutoColumn>
