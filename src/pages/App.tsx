@@ -17,8 +17,6 @@ import { RedirectOldRemoveLiquidityPathStructure } from './RemoveLiquidity/redir
 const Swap = lazy(() => import('./Swap'))
 import { OpenClaimAddressModalAndRedirectToSwap, RedirectPathToSwapOnly, RedirectToSwap } from './Swap/redirects'
 import StaticScreen from 'containers/StaticScreen'
-import { isMainnet } from 'connectors'
-import { Navigate } from 'react-router-dom'
 
 const Pool = lazy(() => import('./Pool'))
 const PoolFinder = lazy(() => import('./PoolFinder'))

@@ -1,6 +1,5 @@
 import { ChainId, JSBI, Pair, Token, TokenAmount, WETH } from '@brownfi/sdk'
 import { useContext, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { ThemeContext } from 'styled-components'
 
 import SwitchVersion from 'components/SwitchVersion'
@@ -23,7 +22,7 @@ import { graphqlFetcher } from 'utils/graphql'
 import { usePairs } from 'data/Reserves'
 import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
-import { EmptyProposals, IndexerModalContent, PageWrapper, ResponsiveButtonPrimary, TitleRow } from './styleds'
+import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
 
 // V3 hardcoded pools — temporary until V3 indexer is ready

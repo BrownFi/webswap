@@ -8,11 +8,10 @@ import { AddRemoveTabs } from 'components/NavigationTabs'
 import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row, { RowBetween, RowFlat } from 'components/Row'
 import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
-import { useCallback, useContext, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Plus } from 'react-feather'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Text } from 'components/Rebass'
-import { ThemeContext } from 'styled-components'
 
 import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
@@ -48,7 +47,6 @@ export default function AddLiquidity() {
   const { currencyIdA, currencyIdB } = useParams<{ currencyIdA?: string; currencyIdB?: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const theme = useContext(ThemeContext)
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
   const { createToast } = useToast()

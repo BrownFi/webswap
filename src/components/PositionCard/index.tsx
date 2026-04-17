@@ -1,20 +1,20 @@
-import { JSBI, Pair, TokenAmount } from '@brownfi/sdk'
+import { Pair, TokenAmount } from '@brownfi/sdk'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { ChevronDown, ChevronUp, Info, Settings, ExternalLink } from 'react-feather'
+import { Info, Settings } from 'react-feather'
 import { Link } from 'react-router-dom'
-import { Flex, Text } from 'components/Rebass'
+import { Text } from 'components/Rebass'
 import styled from 'styled-components'
 
-import { ButtonEmpty, ButtonPrimary, ButtonSecondary } from 'components/Button'
+import { ButtonSecondary } from 'components/Button'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
 import { useTokenBalance } from 'state/wallet/hooks'
 import { currencyId } from 'utils/currencyId'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 
-import { Card, LightCard } from 'components/Card'
+import { Card } from 'components/Card'
 import { AutoColumn } from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
@@ -22,10 +22,8 @@ import { Loader } from 'components/Loader'
 const PairChartModal = lazy(() => import('components/pool/PairChartModal').then((m) => ({ default: m.PairChartModal })))
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import QuestionHelper from 'components/QuestionHelper'
-import { AutoRow, RowBetween, RowFixed } from 'components/Row'
-import { MouseoverTooltip } from 'components/Tooltip'
+import { RowBetween } from 'components/Row'
 import { isMainnet } from 'connectors'
-import { BIG_INT_ZERO } from 'constants/common'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
@@ -151,8 +149,6 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   })
 
   const {
-    stakedDisplay: stakedLpDisplay,
-    walletDisplay: walletLpDisplay,
     totalDisplay: totalLpDisplay,
   } = formatLiquidityBreakdown({
     walletBalance: userPoolTokens,

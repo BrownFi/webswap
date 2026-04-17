@@ -13,7 +13,6 @@ interface DoubleCurrencyLogoProps {
 }
 
 export const HigherLogo = styled(CurrencyLogo)``
-const CoveredLogo = styled(CurrencyLogo)``
 
 export function DoubleCurrencyLogo({ currency0, currency1, size = 16, margin = false }: DoubleCurrencyLogoProps) {
   const { chainId } = useActiveWeb3React()

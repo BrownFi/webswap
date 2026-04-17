@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom'
 import { X } from 'react-feather'
 import { Text } from 'components/Rebass'
 import styled from 'styled-components'
-import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import { ApplicationModal } from 'state/application/actions'
 import { useModalOpen, useToggleSettingsMenu } from 'state/application/hooks'
 import {

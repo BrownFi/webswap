@@ -1,7 +1,11 @@
 {
   "name": "@brownfi/interface",
-  "description": "Brownfi Interface",
-  "homepage": "/",
+  "description": "BrownFi Interface — A novel primitive AMM for decentralized exchange",
+  "homepage": "https://brownfi.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BrownFi/webswap.git"
+  },
   "private": true,
   "type": "module",
   "devDependencies": {

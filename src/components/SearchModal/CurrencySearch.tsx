@@ -81,6 +81,7 @@ export function CurrencySearch({
 
   useEffect(() => {
     if (isAddressSearch) {
+      // TODO: handle address search side effects
     }
   }, [isAddressSearch])
 

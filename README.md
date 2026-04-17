@@ -1,46 +1,87 @@
-# brownfi Interface
+# BrownFi Interface
 
-An open source interface for brownfi -- a protocol for decentralized exchange
+An open source interface for BrownFi — a novel primitive AMM protocol for decentralized exchange with high capital efficiency.
 
-- Website: https://brownfi.io/
-- Twitter: https://twitter.com/BrownFidex
-- Mirror blog: https://mirror.xyz/0x64f4Fbd29b0AE2C8e18E7940CF823df5CB639bBa
+- Website: [brownfi.io](https://brownfi.io/)
+- Twitter: [x.com/BrownFiAMM](https://x.com/BrownFiAMM)
+- Telegram: [t.me/brownfiammcommunity](https://t.me/brownfiammcommunity)
+- Blog: [paragraph.com/@brownfi-amm](https://paragraph.com/@brownfi-amm)
 
+## Getting Started
 
+### Prerequisites
 
-## Development
+- Node.js >= 18
+- npm >= 9
 
 ### Install Dependencies
 
 ```bash
-yarn
+npm install
 ```
 
-### Run
+### Configure Environment
+
+Copy the example environment file:
 
 ```bash
-yarn start
+cp .env.example .env
 ```
 
-### Configuring the environment (optional)
+Environment variables:
 
-To have the interface default to a different network when a wallet is not connected:
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_API_URL` | BrownFi API endpoint | `https://api.brownfi.io` |
+| `VITE_ENVIRONMENT` | App environment (`mainnet`, `beta`, `testnet`) | `beta` |
+| `VITE_WALLETCONNECT_PROJECT_ID` | WalletConnect project ID | `your_project_id` |
+| `VITE_KYBERSWAP_ZAP_API_URL` | KyberSwap Zap API for single-token liquidity | `https://zap-api.kyberswap.com` |
 
-1. Make a copy of `.env` named `.env.local`
-2. Change `REACT_APP_NETWORK_ID` to `"{YOUR_NETWORK_ID}"`
+### Run Development Server
 
-Note that the interface only works on testnets where both
-[brownfi V2](https://brownfi.org/docs/v2/smart-contracts/factory/) and
-[multicall](https://github.com/makerdao/multicall) are deployed.
-The interface will not work on other networks.
+```bash
+npm run dev
+```
 
-## Contributions
+### Build for Production
 
-**Please open all pull requests against the `main` branch.**
-CI checks will run against all PRs.
+```bash
+npm run build
+```
 
-## Accessing brownfi Interface V1
+### Run Tests
 
-The brownfi Interface supports swapping against, and migrating or removing liquidity from brownfi V1. However,
-if you would like to use brownfi V1, the brownfi V1 interface for mainnet and testnets is accessible via IPFS gateways
-linked from the [v1.0.0 release](https://github.com/brownfi/brownfi-interface/releases/tag/v1.0.0).
+```bash
+npm run test
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## Tech Stack
+
+- **Framework**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + styled-components
+- **Web3**: wagmi + viem + RainbowKit
+- **State**: Redux Toolkit + React Query
+- **AMM SDK**: `@brownfi/sdk` (local TypeScript source at `src/lib/sdk/`)
+
+## Supported Chains
+
+- Berachain
+- Arbitrum
+- Base
+- BSC
+- Linea
+- Sei
+- HyperEVM
+- Monad
+- And more
+
+## License
+
+[GPL-3.0-or-later](./LICENSE)

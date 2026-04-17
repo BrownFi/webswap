@@ -1,4 +1,3 @@
-import { ButtonDropdown } from 'components/Button'
 import { availableChains } from 'connectors'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'

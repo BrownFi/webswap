@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import Column from 'components/Column'
-import { AppBody } from 'pages/AppBody'
 import { apiV1Service } from 'services'
 import { shortenAddress } from 'utils'
 import { Table } from './styleds'

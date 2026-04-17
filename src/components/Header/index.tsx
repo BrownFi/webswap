@@ -109,8 +109,6 @@ const StyledConnectButton = () => {
     </ConnectButton.Custom>
   )
 }
-import { ButtonSecondary } from 'components/Button'
-import Row, { RowFixed } from 'components/Row'
 import SwitchVersion from 'components/SwitchVersion'
 import { appEnv, isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
