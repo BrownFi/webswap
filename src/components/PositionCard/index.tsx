@@ -429,7 +429,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
             {/* BGT staking info */}
             {enableBgt && account && (
-              <div className="md:col-span-2 flex gap-2 justify-center items-center text-sm text-[#b2ada9]">
+              <div className="md:col-span-2 hidden sm:flex gap-2 justify-center items-center text-sm text-[#b2ada9]">
                 Stake your LP tokens on{' '}
                 <a href={pairBGT[pair.liquidityToken.address][0]} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">BeraHub</a>{' '}
                 (earn BGT), or on{' '}

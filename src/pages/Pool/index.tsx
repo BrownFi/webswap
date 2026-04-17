@@ -263,8 +263,8 @@ export default function Pool() {
       )}
 
       <PageWrapper>
-        <AutoColumn gap="md" justify="center" className="p-[12px] pt-[16px] sm:pt-[24px] lg:p-[32px]">
-          <AutoColumn className="gap-4 sm:gap-8" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+        <AutoColumn gap="md" justify="center" className="p-[12px] pt-[16px] sm:pt-[24px] lg:p-[24px]">
+          <AutoColumn className="gap-4 sm:gap-6" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Title row */}
             <TitleRow padding={'0'}>
               <Flex alignItems="center" className="gap-4">
@@ -406,7 +406,7 @@ function PoolStatsBar({
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="relative overflow-hidden flex flex-col items-start gap-[10px] h-[130px] sm:h-[160px] p-[16px] sm:p-[24px]"
+          className="relative overflow-hidden flex flex-col items-start gap-[4px] sm:gap-[10px] p-[12px] sm:p-[24px]"
           style={{
             background: '#2F2823',
             borderRadius: '16px',
@@ -427,16 +427,16 @@ function PoolStatsBar({
               zIndex: 0,
             }}
           />
-          <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '24px', color: '#FBFBFD', zIndex: 1 }}>
+          <span className="text-[11px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD', zIndex: 1 }}>
             {stat.label}
           </span>
           {isLoading && !hasData ? (
-            <span className="animate-pulse text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80', zIndex: 2 }}>
+            <span className="animate-pulse text-[18px] sm:text-[36px] leading-[24px] sm:leading-[44px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80', zIndex: 2 }}>
               --
             </span>
           ) : (
             <span
-              className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]"
+              className="text-[18px] sm:text-[36px] leading-[24px] sm:leading-[44px]"
               style={{
                 fontFamily: 'Inter',
                 fontWeight: 700,
@@ -452,7 +452,7 @@ function PoolStatsBar({
             </span>
           )}
           {stat.sub && (
-            <span className="text-[12px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '24px', letterSpacing: '-0.02em', color: stat.subColor, zIndex: 3 }}>
+            <span className="text-[10px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: stat.subColor, zIndex: 3 }}>
               {stat.sub}
             </span>
           )}

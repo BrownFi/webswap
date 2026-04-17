@@ -24,7 +24,7 @@ const ParagraphIcon = () => (
 const Footer = () => {
   return (
     <footer
-      className="px-4 pt-12 pb-24 sm:px-10 sm:pt-20 md:px-20 md:pt-[120px] md:pb-12"
+      className="px-4 pt-8 pb-20 sm:px-10 sm:pt-20 md:px-20 md:pt-[60px] md:pb-8"
       style={{
         background: '#050505',
         width: '100%',

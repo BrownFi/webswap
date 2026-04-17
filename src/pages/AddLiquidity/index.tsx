@@ -290,7 +290,7 @@ export default function AddLiquidity() {
   return (
     <>
       <AppBody>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <AddRemoveTabs creating={isCreate} adding={true} />
 
         <div className="flex flex-wrap justify-between items-center" style={{ padding: '0', gap: '16px' }}>
@@ -355,7 +355,7 @@ export default function AddLiquidity() {
                 showCommonBases
               />
               <ColumnCenter>
-                <Plus size="24" color="#493E35" />
+                <Plus size="24" color="#fff" />
               </ColumnCenter>
               <CurrencyInputPanel
                 value={formattedAmounts[Field.CURRENCY_B]}

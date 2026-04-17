@@ -76,7 +76,7 @@ const MenuFlyout = styled.span`
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
   font-size: 1rem;
   position: fixed;
   top: 50%;

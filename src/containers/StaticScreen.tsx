@@ -49,10 +49,15 @@ function HeaderWrapper({ children }: PropsWithChildren) {
 const StaticScreen = ({ children }: PropsWithChildren) => {
   return (
     <AppWrapper className="relative">
-      <img
-        src={bgGolden}
-        alt=""
-        className="fixed inset-0 w-full h-full object-cover pointer-events-none opacity-80"
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `url(${bgGolden})`,
+          backgroundPosition: 'center top',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '1920px auto',
+          opacity: 0.8,
+        }}
       />
       <HeaderWrapper>
         <Header />

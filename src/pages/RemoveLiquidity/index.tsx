@@ -479,7 +479,7 @@ export default function RemoveLiquidity() {
   return (
     <>
       <AppBody>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <AddRemoveTabs creating={false} adding={false} />
         <Wrapper>
           <TransactionConfirmationModal
@@ -551,7 +551,7 @@ export default function RemoveLiquidity() {
             />
 
             <ColumnCenter>
-              <ArrowDown size="20" color="#493E35" />
+              <ArrowDown size="20" color="#fff" />
             </ColumnCenter>
 
             <RemoveLiqudityCard>
