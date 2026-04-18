@@ -27,26 +27,29 @@ const SwitchVersion = ({ isMobile }: Props) => {
 
   return (
     <div
-      className={`flex items-center gap-0.5 p-[4px] rounded-[12px] ${isMobile ? 'hidden' : ''}`}
+      className={`inline-flex items-center gap-0.5 ${isMobile ? 'hidden' : ''}`}
       style={{
-        background: 'rgba(0, 0, 0, 0.06)',
-        boxShadow: 'inset 0px 10px 14px rgba(237, 210, 188, 0.05), inset 0px 2px 16px rgba(236, 208, 186, 0.3)',
-        backdropFilter: 'blur(12px)',
+        background: '#2F2823',
+        border: '1px solid #493E35',
+        borderRadius: '999px',
+        padding: '2px',
+        height: '30px',
       }}
     >
       {versions.map((v) => (
         <button
           key={v}
           onClick={() => handleSelect(v)}
-          className={`transition-all ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          className={`transition-colors ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
           style={{
-            padding: '4px 8px',
-            borderRadius: '8px',
+            padding: '0 10px',
+            height: '100%',
+            borderRadius: '999px',
             border: 'none',
             fontFamily: "'Inter', sans-serif",
-            fontSize: '16px',
-            fontWeight: version === v ? 400 : 500,
-            color: 'white',
+            fontSize: '12px',
+            fontWeight: 500,
+            color: version === v ? '#FFFFFF' : '#978A80',
             background: version === v ? '#985C2A' : 'transparent',
           }}
         >

@@ -14,7 +14,7 @@ import { TYPE } from 'theme'
 
 import { PairStats } from 'components/PositionCard/usePoolStats'
 import { Dots } from 'components/swap/styleds'
-import { isMainnet } from 'connectors'
+import { availableChains, isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
 import { useQuery } from '@tanstack/react-query'
@@ -271,18 +271,47 @@ export default function Pool() {
           <AutoColumn className="gap-4 sm:gap-6" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Title row */}
             <TitleRow padding={'0'}>
-              <Flex alignItems="center" className="gap-4">
+              <Flex alignItems="center" className="gap-4 flex-wrap">
                 <span
                   className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]"
                   style={{
                     fontFamily: 'Inter',
                     fontWeight: 600,
                     letterSpacing: '-0.02em',
-                    color: '#D8A072',
+                    color: '#FBFBFD',
                   }}
                 >
                   Liquidity Pools
                 </span>
+                {(() => {
+                  const chain = availableChains.find((c) => c.id === chainId)
+                  if (!chain) return null
+                  return (
+                    <span
+                      className="inline-flex items-center gap-1.5"
+                      style={{
+                        background: '#2F2823',
+                        border: '1px solid #493E35',
+                        borderRadius: '999px',
+                        padding: '0 10px 0 4px',
+                        height: '30px',
+                        fontFamily: 'Inter',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#FBFBFD',
+                      }}
+                    >
+                      {chain.iconUrl && (
+                        <img
+                          src={chain.iconUrl as string}
+                          alt={chain.name}
+                          style={{ width: '18px', height: '18px', borderRadius: '50%' }}
+                        />
+                      )}
+                      {chain.name}
+                    </span>
+                  )
+                })()}
                 <SwitchVersion />
               </Flex>
             </TitleRow>

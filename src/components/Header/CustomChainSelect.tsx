@@ -17,14 +17,19 @@ const CustomChainSelect = () => {
   return (
     <>
       <button
-        className="flex items-center gap-2.5 bg-transparent border-none hover:opacity-80 transition-all py-3 px-4 h-12 cursor-pointer"
-        style={{ fontFamily: "'Inter', sans-serif", background: 'transparent' }}
+        className="inline-flex items-center gap-2 border-none hover:opacity-80 transition-all cursor-pointer"
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          background: 'transparent',
+          padding: '6px 10px',
+          height: '36px',
+        }}
         onClick={() => setOpen(true)}
       >
-        <img className="w-6 rounded-full" src={chain.iconUrl as string} alt={chain.name} />
-        <span className="text-white text-[16px] font-medium">{chain.name}</span>
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path d="M5 7.5L10 12.5L15 7.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <img style={{ width: '18px', height: '18px', borderRadius: '50%' }} src={chain.iconUrl as string} alt={chain.name} />
+        <span style={{ color: '#FBFBFD', fontSize: '13px', fontWeight: 500 }}>{chain.name}</span>
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="#978A80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 

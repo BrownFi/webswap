@@ -206,14 +206,14 @@ export default function Header() {
               borderRadius: '12px',
             }}
           >
+            <StyledNavLink id="home-nav-link" to="/" end>
+              Home
+            </StyledNavLink>
             <StyledNavLink id="swap-nav-link" to="/swap">
               Swap
             </StyledNavLink>
             <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
               Pool
-            </StyledNavLink>
-            <StyledNavLink id="leaderboard-nav-link" to="/campaign/contest-1">
-              Campaign
             </StyledNavLink>
           </div>
         </nav>
