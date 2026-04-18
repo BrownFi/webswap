@@ -231,8 +231,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           </div>
         </div>
 
-        {!isMainnet && showMore && (
-          <div className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2">
+        {!isMainnet && (
+          <div
+            className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
             <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
             <Text>DevFee: {`${formatNumberLambda(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
