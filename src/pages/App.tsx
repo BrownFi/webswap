@@ -22,7 +22,7 @@ const Pool = lazy(() => import('./Pool'))
 const PoolFinder = lazy(() => import('./PoolFinder'))
 const AddLiquidity = lazy(() => import('./AddLiquidity'))
 const RemoveLiquidity = lazy(() => import('./RemoveLiquidity'))
-const Leaderboard = lazy(() => import('./Leaderboard'))
+const Home = lazy(() => import('./Home'))
 
 const BodyWrapper = styled.div`
   display: flex;
@@ -62,6 +62,14 @@ export default function App() {
           <Popups />
           <Routes>
             <Route
+              path="/"
+              element={
+                <RouteErrorBoundary>
+                  <Home />
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
               path="/swap"
               element={
                 <RouteErrorBoundary>
@@ -85,14 +93,6 @@ export default function App() {
               element={
                 <RouteErrorBoundary>
                   <Pool />
-                </RouteErrorBoundary>
-              }
-            />
-            <Route
-              path="/campaign/contest-1"
-              element={
-                <RouteErrorBoundary>
-                  <Leaderboard />
                 </RouteErrorBoundary>
               }
             />

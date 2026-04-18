@@ -19,7 +19,7 @@ const StyledSwaptitle = styled.p`
   font-size: 36px;
   line-height: 44px;
   letter-spacing: -0.02em;
-  color: #D8A072;
+  color: #FBFBFD;
   flex: 1;
 
   ${({ theme }) => theme.mediaWidth.upToSmall`
