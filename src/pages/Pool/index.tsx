@@ -40,13 +40,16 @@ const V3_POOLS: Record<number, { pair: string; token0: { address: string; decima
 const FACTORY_STATS = `
   query FactoryStats($dayId: ID!) {
     factories {
+      tvl
       totalVolume
       totalFee
     }
     factoryDayData(id: $dayId) {
-      tvl
-      totalVolume
-      totalFee
+      dailyVolume
+      dailyFees
+    }
+    factoryDayDatas(first: 1, orderBy: dailyTvl, orderDirection: desc) {
+      dailyTvl
     }
   }
 `
@@ -96,8 +99,9 @@ export default function Pool() {
   const dayId = useMemo(() => String(Math.floor(Date.now() / 1000 / 86400) * 86400), [])
 
   const { data: factoryData, isLoading: isLoadingFactory } = useQuery<{
-    factories: { totalVolume: number; totalFee: number }[]
-    factoryDayData: { tvl: number; totalVolume: number; totalFee: number } | null
+    factories: { tvl: number; totalVolume: number; totalFee: number }[]
+    factoryDayData: { dailyVolume: number; dailyFees: number } | null
+    factoryDayDatas: { dailyTvl: number }[]
   }>({
     queryKey: ['factoryStats', chainId, dayId],
     queryFn: () =>
@@ -284,7 +288,7 @@ export default function Pool() {
             </TitleRow>
 
             {/* Stats bar */}
-            <PoolStatsBar factoryData={factoryData} pairs={filteredPairs} isLoading={enableGraphQL && isLoadingFactory} />
+            <PoolStatsBar factoryData={factoryData} isLoading={enableGraphQL && isLoadingFactory} />
 
             {/* Search bar */}
             <div className="relative">
@@ -358,28 +362,24 @@ export default function Pool() {
 
 function PoolStatsBar({
   factoryData,
-  pairs,
   isLoading,
 }: {
   factoryData?: {
-    factories: { totalVolume: number; totalFee: number }[]
-    factoryDayData: { tvl: number; totalVolume: number; totalFee: number } | null
+    factories: { tvl: number; totalVolume: number; totalFee: number }[]
+    factoryDayData: { dailyVolume: number; dailyFees: number } | null
+    factoryDayDatas: { dailyTvl: number }[]
   }
-  pairs: PairStats[]
   isLoading?: boolean
 }) {
   const dayData = factoryData?.factoryDayData
   const factory = factoryData?.factories?.[0]
 
-  // TVL: from factoryDayData, fallback to pairs sum
-  const pairsTvl = useMemo(() => pairs.reduce((sum, p) => sum + (Number(p.tvl) || 0), 0), [pairs])
-  const tvl = Number(dayData?.tvl) || pairsTvl
-  // 24h data from factoryDayData
-  const volume24h = Number(dayData?.totalVolume) || 0
-  const fees24h = Number(dayData?.totalFee) || 0
-  // All-time from factories
+  const tvl = Number(factory?.tvl) || 0
+  const volume24h = Number(dayData?.dailyVolume) || 0
+  const fees24h = Number(dayData?.dailyFees) || 0
   const allTimeVolume = Number(factory?.totalVolume) || 0
-  const totalFees = Number(factory?.totalFee) || 0
+  const allTimeFees = Number(factory?.totalFee) || 0
+  const athTvl = Math.max(Number(factoryData?.factoryDayDatas?.[0]?.dailyTvl) || 0, tvl)
 
   const formatValue = (val: number) => {
     const n = Number(val) || 0
@@ -388,38 +388,38 @@ function PoolStatsBar({
     return `$${n.toFixed(0)}`
   }
 
-  const hasData = !!dayData || pairs.length > 0
+  const hasData = !!dayData
 
   const stats = [
-    { label: 'Total Value Locked', value: formatValue(tvl), sub: '', subColor: undefined },
-    { label: '24h Volume', value: formatValue(volume24h), sub: 'Across all pools', subColor: '#978A80' },
-    { label: '24h Fees', value: formatValue(fees24h), sub: 'Distributed to Lps', subColor: '#978A80' },
-    { label: 'Total Fees', value: formatValue(totalFees), sub: 'Distributed to Lps', subColor: '#978A80' },
+    { label: 'Total Value Locked', value: formatValue(tvl), sub: 'Current TVL', subColor: '#978A80' },
+    { label: 'Total Value Locked', value: formatValue(athTvl), sub: 'All-time high', subColor: '#978A80' },
     { label: 'All - Time Volume', value: formatValue(allTimeVolume), sub: 'Since launch', subColor: '#978A80' },
+    { label: '24h Volume', value: formatValue(volume24h), sub: 'Across all pools', subColor: '#978A80' },
+    { label: 'Total Fees', value: formatValue(allTimeFees), sub: 'Since launch', subColor: '#978A80' },
+    { label: '24h Fees', value: formatValue(fees24h), sub: 'Distributed to Lps', subColor: '#978A80' },
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      {stats.map((stat) => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {stats.map((stat, index) => (
         <div
-          key={stat.label}
-          className="relative overflow-hidden flex flex-col items-start gap-[4px] sm:gap-[10px] p-[12px] sm:p-[24px]"
+          key={`${stat.label}-${index}`}
+          className="relative overflow-hidden flex flex-col items-start gap-[4px] sm:gap-[8px] p-[12px] sm:p-[20px]"
           style={{
             background: '#2F2823',
             borderRadius: '16px',
           }}
-
         >
-          <span className="text-[11px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
+          <span className="text-[11px] sm:text-[14px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
             {stat.label}
           </span>
           {isLoading && !hasData ? (
-            <span className="animate-pulse text-[18px] sm:text-[36px] leading-[24px] sm:leading-[44px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80' }}>
+            <span className="animate-pulse text-[16px] sm:text-[22px] leading-[22px] sm:leading-[28px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80' }}>
               --
             </span>
           ) : (
             <span
-              className="text-[18px] sm:text-[36px] leading-[24px] sm:leading-[44px]"
+              className="text-[16px] sm:text-[22px] leading-[22px] sm:leading-[28px]"
               style={{
                 fontFamily: 'Inter',
                 fontWeight: 700,
@@ -431,7 +431,7 @@ function PoolStatsBar({
             </span>
           )}
           {stat.sub && (
-            <span className="text-[10px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: stat.subColor }}>
+            <span className="text-[10px] sm:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: stat.subColor }}>
               {stat.sub}
             </span>
           )}
