@@ -53,9 +53,9 @@ export default function Home() {
     <div className="w-full flex flex-col justify-center" style={{ maxWidth: '1280px', padding: '0 16px', minHeight: 'calc(100vh - 280px)' }}>
       {/* Hero: tagline + CTA on left, TVL chart on right */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="flex flex-col justify-center gap-5">
+        <div className="flex flex-col justify-between gap-5">
           <span
-            className="text-[24px] sm:text-[32px] lg:text-[36px] leading-[32px] sm:leading-[42px] lg:leading-[46px]"
+            className="text-[24px] sm:text-[32px] lg:text-[40px] leading-[32px] sm:leading-[42px] lg:leading-[46px]"
             style={{
               fontFamily: 'Inter',
               fontWeight: 600,
