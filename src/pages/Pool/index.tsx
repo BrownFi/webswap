@@ -14,11 +14,12 @@ import { TYPE } from 'theme'
 
 import { PairStats } from 'components/PositionCard/usePoolStats'
 import { Dots } from 'components/swap/styleds'
-import { availableChains, isMainnet } from 'connectors'
+import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { graphqlFetcher } from 'utils/graphql'
+import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
 import { usePairs } from 'data/Reserves'
 import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
@@ -36,23 +37,6 @@ const V3_POOLS: Record<number, { pair: string; token0: { address: string; decima
     },
   ],
 }
-
-const FACTORY_STATS = `
-  query FactoryStats($dayId: ID!) {
-    factories {
-      tvl
-      totalVolume
-      totalFee
-    }
-    factoryDayData(id: $dayId) {
-      dailyVolume
-      dailyFees
-    }
-    factoryDayDatas(first: 1, orderBy: dailyTvl, orderDirection: desc) {
-      dailyTvl
-    }
-  }
-`
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
@@ -96,23 +80,11 @@ export default function Pool() {
   const { version, enableGraphQL } = useVersion({ chainId })
   const allTokens = useDefaultTokens(chainId)
 
-  const dayId = useMemo(() => String(Math.floor(Date.now() / 1000 / 86400) * 86400), [])
-
-  const { data: factoryData, isLoading: isLoadingFactory } = useQuery<{
-    factories: { tvl: number; totalVolume: number; totalFee: number }[]
-    factoryDayData: { dailyVolume: number; dailyFees: number } | null
-    factoryDayDatas: { dailyTvl: number }[]
-  }>({
-    queryKey: ['factoryStats', chainId, dayId],
-    queryFn: () =>
-      graphqlFetcher({
-        operationName: 'FactoryStats',
-        query: FACTORY_STATS,
-        variables: { chainId, dayId },
-      }),
-    enabled: enableGraphQL,
-    refetchInterval: 60_000,
-    staleTime: 60_000,
+  const { data: protocolStats, isLoading: isLoadingStats } = useQuery<ProtocolStats>({
+    queryKey: ['protocolStats'],
+    queryFn: fetchProtocolStats,
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
   })
 
   const { data, error, isLoading: isLoadingPairs } = useQuery<{
@@ -283,41 +255,12 @@ export default function Pool() {
                 >
                   Liquidity Pools
                 </span>
-                {(() => {
-                  const chain = availableChains.find((c) => c.id === chainId)
-                  if (!chain) return null
-                  return (
-                    <span
-                      className="inline-flex items-center gap-1.5"
-                      style={{
-                        background: '#2F2823',
-                        border: '1px solid #493E35',
-                        borderRadius: '999px',
-                        padding: '0 10px 0 4px',
-                        height: '30px',
-                        fontFamily: 'Inter',
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        color: '#FBFBFD',
-                      }}
-                    >
-                      {chain.iconUrl && (
-                        <img
-                          src={chain.iconUrl as string}
-                          alt={chain.name}
-                          style={{ width: '18px', height: '18px', borderRadius: '50%' }}
-                        />
-                      )}
-                      {chain.name}
-                    </span>
-                  )
-                })()}
                 <SwitchVersion />
               </Flex>
             </TitleRow>
 
             {/* Stats bar */}
-            <PoolStatsBar factoryData={factoryData} isLoading={enableGraphQL && isLoadingFactory} />
+            <PoolStatsBar stats={protocolStats} isLoading={isLoadingStats} />
 
             {/* Search bar */}
             <div className="relative">
@@ -390,42 +333,29 @@ export default function Pool() {
 }
 
 function PoolStatsBar({
-  factoryData,
+  stats: protocolStats,
   isLoading,
 }: {
-  factoryData?: {
-    factories: { tvl: number; totalVolume: number; totalFee: number }[]
-    factoryDayData: { dailyVolume: number; dailyFees: number } | null
-    factoryDayDatas: { dailyTvl: number }[]
-  }
+  stats?: ProtocolStats
   isLoading?: boolean
 }) {
-  const dayData = factoryData?.factoryDayData
-  const factory = factoryData?.factories?.[0]
-
-  const tvl = Number(factory?.tvl) || 0
-  const volume24h = Number(dayData?.dailyVolume) || 0
-  const fees24h = Number(dayData?.dailyFees) || 0
-  const allTimeVolume = Number(factory?.totalVolume) || 0
-  const allTimeFees = Number(factory?.totalFee) || 0
-  const athTvl = Math.max(Number(factoryData?.factoryDayDatas?.[0]?.dailyTvl) || 0, tvl)
-
   const formatValue = (val: number) => {
     const n = Number(val) || 0
+    if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`
     if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
     if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
     return `$${n.toFixed(0)}`
   }
 
-  const hasData = !!dayData
+  const hasData = !!protocolStats
 
   const stats = [
-    { label: 'Total Value Locked', value: formatValue(tvl), sub: 'Current TVL', subColor: '#978A80' },
-    { label: 'Total Value Locked', value: formatValue(athTvl), sub: 'All-time high', subColor: '#978A80' },
-    { label: 'All - Time Volume', value: formatValue(allTimeVolume), sub: 'Since launch', subColor: '#978A80' },
-    { label: '24h Volume', value: formatValue(volume24h), sub: 'Across all pools', subColor: '#978A80' },
-    { label: 'Total Fees', value: formatValue(allTimeFees), sub: 'Since launch', subColor: '#978A80' },
-    { label: '24h Fees', value: formatValue(fees24h), sub: 'Distributed to Lps', subColor: '#978A80' },
+    { label: 'Total Value Locked', value: formatValue(protocolStats?.currentTvl ?? 0), sub: 'Current TVL', subColor: '#978A80' },
+    { label: 'Total Value Locked', value: formatValue(protocolStats?.athTvl ?? 0), sub: 'All-time high', subColor: '#978A80' },
+    { label: 'All - Time Volume', value: formatValue(protocolStats?.volumeAllTime ?? 0), sub: 'Since launch', subColor: '#978A80' },
+    { label: '24h Volume', value: formatValue(protocolStats?.volume24h ?? 0), sub: 'Across all pools', subColor: '#978A80' },
+    { label: 'Total Fees', value: formatValue(protocolStats?.feesAllTime ?? 0), sub: 'Since launch', subColor: '#978A80' },
+    { label: '24h Fees', value: formatValue(protocolStats?.fees24h ?? 0), sub: 'Distributed to Lps', subColor: '#978A80' },
   ]
 
   return (
