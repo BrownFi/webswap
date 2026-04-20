@@ -66,7 +66,7 @@
       "name": "Tether USD",
       "symbol": "USDT",
       "decimals": 18,
-      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/825.png"
+      "logoURI": "https://assets.coingecko.com/coins/images/31271/standard/usdt.jpeg"
     },
     {
       "chainId": 56,
@@ -170,7 +170,7 @@
       "name": "Bridged Tether USD",
       "symbol": "USDT",
       "decimals": 6,
-      "logoURI": "https://basescan.org/token/images/bridgedusdt2_ofc_64.png"
+      "logoURI": "https://assets.coingecko.com/coins/images/31271/standard/usdt.jpeg"
     },
     {
       "chainId": 1301,
@@ -250,7 +250,7 @@
       "name": "USD₮0",
       "symbol": "USDT",
       "decimals": 6,
-      "logoURI": "https://s2.coinmarketcap.com/static/img/coins/200x200/825.png"
+      "logoURI": "https://assets.coingecko.com/coins/images/31271/standard/usdt.jpeg"
     },
     {
       "chainId": 42161,
@@ -314,7 +314,7 @@
       "name": "USDT",
       "symbol": "USDT",
       "decimals": 6,
-      "logoURI": "https://lineascan.build/token/images/bridgedusdt2_ofc_64.png"
+      "logoURI": "https://assets.coingecko.com/coins/images/31271/standard/usdt.jpeg"
     },
     {
       "chainId": 59144,
