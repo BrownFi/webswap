@@ -28,8 +28,11 @@ export default function Home() {
   const { data, isLoading } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
     queryFn: fetchProtocolStats,
-    staleTime: 5 * 60_000,
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
   })
+
+  const chains = data?.chains ?? []
 
   const [range, setRange] = useState<Range>('30d')
 
@@ -98,12 +101,12 @@ export default function Home() {
               Explore Pools
             </Link>
           </div>
-          {data?.chains && data.chains.length > 0 && (
+          {chains.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>
                 Live on
               </span>
-              {data.chains.map((c) => (
+              {chains.map((c) => (
                 <span
                   key={c.name}
                   style={{
