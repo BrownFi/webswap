@@ -163,10 +163,10 @@ export default function Pool() {
   const filteredPairs = useMemo(
     () =>
       sortedPairs.filter((pair) => {
+        if (blocklist.has(pair.id.toLowerCase())) {
+          return false
+        }
         if (isMainnet) {
-          if (blocklist.has(pair.id.toLowerCase())) {
-            return false
-          }
           const token0Address = pair.token0?.id.toLowerCase()
           const token1Address = pair.token1?.id.toLowerCase()
           return allowedTokenAddresses.has(token0Address) || allowedTokenAddresses.has(token1Address)
