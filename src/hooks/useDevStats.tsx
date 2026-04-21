@@ -12,9 +12,10 @@ const Q64_DENOMINATOR = BigNumber.from(2).pow(64)
 const PROTOCOL_FEE_DENOMINATOR = BigNumber.from(10).pow(8)
 const NORMALIZE_SCALE = BigNumber.from(10).pow(6)
 
-const normalizeByDenominator = (value: BigNumber | undefined, denominator: BigNumber) => {
-  if (!value) return undefined
-  const scaled = value.mul(NORMALIZE_SCALE).div(denominator)
+const normalizeByDenominator = (value: BigNumber | number | undefined, denominator: BigNumber) => {
+  if (value === undefined || value === null) return undefined
+  const bn = typeof value === 'number' ? BigNumber.from(value) : value
+  const scaled = bn.mul(NORMALIZE_SCALE).div(denominator)
   return scaled.toNumber() / NORMALIZE_SCALE.toNumber()
 }
 
@@ -28,8 +29,8 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
   const { version } = useVersion({ chainId })
 
   const { get: getDevStats, save: saveDevStats, isAvailable } = useStorageCache({
-    key: ['devStats', pair.liquidityToken.address, `v${version}`].join('-'),
-    initValue: { lambda: 0, kappa: 0, protocolFee: 0 },
+    key: ['devStats', 'v2shape', pair.liquidityToken.address, `v${version}`].join('-'),
+    initValue: { lambda: 0, kappa: 0, fee: 0, protocolFee: 0, feeSplit: 0 },
     cacheTime: 2 * 60,
   })
 
@@ -41,6 +42,7 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
 
   const lambdaCall = useSingleCallResult(v2Contract, 'lambda', undefined, { disabled: shouldSkipV2 })
   const kappaCall = useSingleCallResult(v2Contract, 'k', undefined, { disabled: shouldSkipV2 })
+  const feeCall = useSingleCallResult(v2Contract, 'fee', undefined, { disabled: shouldSkipV2 })
   const protocolFeeCall = useSingleCallResult(v2Contract, 'protocolFee', undefined, { disabled: shouldSkipV2 })
 
   // V3: read from PairConfig contract via viem
@@ -91,17 +93,18 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
       const PREC = 100000000n
       const lambda = Number(config.lambda * 1000000n / Q64) / 1000000
       const kappa = Number(config.kB * 1000000n / Q64) / 1000000
-      const protocolFee = Number(config.fee) / Number(PREC)
+      const fee = Number(config.fee) / Number(PREC)
+      const feeSplit = Number(config.feeSplit) / Number(PREC)
 
-      saveDevStats({ lambda, kappa, protocolFee })
-      return { lambda, kappa, protocolFee }
+      saveDevStats({ lambda, kappa, fee, protocolFee: 0, feeSplit })
+      return { lambda, kappa, fee, feeSplit }
     },
     enabled: enabled && version === 3 && !hasCache,
     staleTime: 2 * 60 * 1000,
   })
 
   const stableSave = useCallback(
-    (data: { lambda: number; kappa: number; protocolFee: number }) => saveDevStats(data),
+    (data: { lambda: number; kappa: number; fee: number; protocolFee: number; feeSplit: number }) => saveDevStats(data),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [pair.liquidityToken.address],
   )
@@ -112,12 +115,13 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
 
     const lambda = normalizeByDenominator(lambdaCall.result?.[0], Q64_DENOMINATOR)
     const kappa = normalizeByDenominator(kappaCall.result?.[0], Q64_DENOMINATOR)
+    const fee = normalizeByDenominator(feeCall.result?.[0], PROTOCOL_FEE_DENOMINATOR)
     const protocolFee = normalizeByDenominator(protocolFeeCall.result?.[0], PROTOCOL_FEE_DENOMINATOR)
 
-    if (lambda === undefined || kappa === undefined || protocolFee === undefined) return
+    if (lambda === undefined || kappa === undefined || fee === undefined || protocolFee === undefined) return
 
-    stableSave({ lambda, kappa, protocolFee })
-  }, [shouldSkipV2, version, lambdaCall.result, kappaCall.result, protocolFeeCall.result, stableSave])
+    stableSave({ lambda, kappa, fee, protocolFee, feeSplit: 0 })
+  }, [shouldSkipV2, version, lambdaCall.result, kappaCall.result, feeCall.result, protocolFeeCall.result, stableSave])
 
   return getDevStats()
 }

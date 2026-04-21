@@ -82,7 +82,7 @@ interface PositionCardProps {
 
 export default function FullPositionCard({ pair, pairStats, border }: PositionCardProps) {
   const { account, chainId } = useActiveWeb3React()
-  const { isTest, isBeta } = useVersion({ chainId, pair })
+  const { isTest, isBeta, version } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
   const enableBgt = !!pairBGT[pair.liquidityToken.address]
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
@@ -238,7 +238,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           >
             <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
             <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
-            <Text>DevFee: {`${formatNumberLambda(devStats.protocolFee, { maximumFractionDigits: 4 })}`}</Text>
+            <Text>Fee: {formatNumberLambda(devStats.fee, { maximumFractionDigits: 4 })}</Text>
+            <Text>
+              {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+              {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+            </Text>
             {canEditSettings && (
               <Settings size="14" className="cursor-pointer text-[#c4943a] hover:text-[#d4a94f]" onClick={() => setShowSettings(true)} />
             )}

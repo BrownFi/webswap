@@ -679,5 +679,85 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenA",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "tokenB",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "kB",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "kQ",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint64",
+            "name": "lambda",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint32",
+            "name": "fee",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "feeSplit",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint8",
+            "name": "maxOut",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint32",
+            "name": "compress",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "sSell",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "sBuy",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "fixS",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "disThreshold",
+            "type": "uint32"
+          }
+        ],
+        "internalType": "struct IBrownFiV3PairConfig.Config",
+        "name": "config",
+        "type": "tuple"
+      }
+    ],
+    "name": "setConfigOfPair",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]
