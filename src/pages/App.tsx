@@ -98,7 +98,7 @@ export default function App() {
               }
             />
             <Route
-              path="/pool/:pairAddress"
+              path="/pool/:chainId/:pairAddress"
               element={
                 <RouteErrorBoundary fallbackPath="/pool">
                   <PoolDetail />

@@ -1,23 +1,31 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { Suspense, lazy, useMemo } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
+import { Settings } from 'react-feather'
 import { Address, checksumAddress } from 'viem'
-import dayjs from 'dayjs'
 
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
+import { useDevStats } from 'hooks/useDevStats'
 import { useVersion } from 'hooks/useVersion'
 import { graphqlFetcher } from 'utils/graphql'
-import { formatNumber, formatPrice } from 'utils/prices'
-import { getTokenSymbol, shortenAddress } from 'utils'
-import { currencyId } from 'utils/currencyId'
+import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
+import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
+import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
 
-const PairChartModal = lazy(() =>
-  import('components/pool/PairChartModal').then((m) => ({ default: m.PairChartModal })),
+const PairChartTV = lazy(() =>
+  import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
+)
+const YourPositionCard = lazy(() =>
+  import('components/pool/YourPositionCard').then((m) => ({ default: m.YourPositionCard })),
+)
+const PairSettingsModal = lazy(() =>
+  import('components/PositionCard/PairSettingsModal').then((m) => ({ default: m.PairSettingsModal })),
 )
 
 const GET_PAIR = `
@@ -41,28 +49,12 @@ const GET_PAIR = `
   }
 `
 
-const GET_TRANSACTIONS = `
-  query PairTransactions($pair: String) {
-    transactions(
-      first: 50
-      where: { pair: $pair }
-      orderBy: timestamp
-      orderDirection: desc
-    ) {
-      id
-      from
-      amount0In
-      amount1In
-      amount0Out
-      amount1Out
-      reserve0USD
-      reserve1USD
-      lpMint
-      lpBurn
-      timestamp
-    }
-  }
-`
+function secondsToAgo(seconds: number) {
+  if (seconds < 60) return `${Math.floor(seconds)}s`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`
+  return `${Math.floor(seconds / 86400)}d`
+}
 
 type PairRaw = {
   id: string
@@ -81,39 +73,11 @@ type PairRaw = {
   token1: PairStats['token1']
 }
 
-type Txn = {
-  id: string
-  from: string
-  amount0In: number
-  amount1In: number
-  amount0Out: number
-  amount1Out: number
-  reserve0USD: number
-  reserve1USD: number
-  lpMint: number
-  lpBurn: number
-  timestamp: number
-}
-
-function describeTx(tx: Txn, symbol0: string, symbol1: string) {
-  if (tx.lpMint > 0) return { type: 'Add', color: '#83CF84' }
-  if (tx.lpBurn > 0) return { type: 'Remove', color: '#EE4B2B' }
-  if (tx.amount0In > 0) return { type: `Sell ${symbol0}`, color: '#EE4B2B' }
-  return { type: `Sell ${symbol1}`, color: '#EE4B2B' }
-}
-
-function timeAgo(unix: number) {
-  const diff = dayjs().diff(dayjs.unix(unix), 'second')
-  if (diff < 60) return `${diff}s`
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`
-  return `${Math.floor(diff / 86400)}d`
-}
 
 export default function PoolDetail() {
-  const { pairAddress } = useParams<{ pairAddress: string }>()
-  const { chainId } = useActiveWeb3React()
-  const { version, isBeta } = useVersion({ chainId })
+  const { pairAddress, chainId: chainIdParam } = useParams<{ pairAddress: string; chainId: string }>()
+  const chainId = Number(chainIdParam)
+  const { version } = useVersion({ chainId })
 
   const { data: pairRes, isLoading } = useQuery<{ pair: PairRaw | null }>({
     queryKey: ['pairDetail', chainId, pairAddress],
@@ -123,21 +87,8 @@ export default function PoolDetail() {
         query: GET_PAIR,
         variables: { chainId, id: pairAddress?.toLowerCase() },
       }),
-    enabled: !!pairAddress,
+    enabled: !!pairAddress && !!chainId,
     staleTime: 60_000,
-  })
-
-  const { data: txRes } = useQuery<{ transactions: Txn[] }>({
-    queryKey: ['pairTxs', chainId, pairAddress],
-    queryFn: () =>
-      graphqlFetcher({
-        operationName: 'PairTransactions',
-        query: GET_TRANSACTIONS,
-        variables: { chainId, pair: pairAddress?.toLowerCase() },
-      }),
-    enabled: !!pairAddress,
-    refetchInterval: 30_000,
-    staleTime: 15_000,
   })
 
   const pairRaw = pairRes?.pair
@@ -158,22 +109,6 @@ export default function PoolDetail() {
     )
   }, [pairRaw, chainId, version])
 
-  const pairStats: PairStats | undefined = pairRaw as unknown as PairStats | undefined
-
-  const { tradingFee, volume24h, feeAPR, bgtAPR, merklCampaignApr } = usePoolStats({
-    pair: pair ?? ({} as Pair),
-    pairStats,
-    enableFetchDetail: true,
-  })
-
-  const totalApr = (feeAPR || 0) + (bgtAPR || 0) + (merklCampaignApr || 0)
-
-  const currency0 = pair ? unwrappedToken(pair.token0) : null
-  const currency1 = pair ? unwrappedToken(pair.token1) : null
-
-  const symbol0 = (currency0 ? getTokenSymbol(currency0, chainId) : '?') ?? '?'
-  const symbol1 = (currency1 ? getTokenSymbol(currency1, chainId) : '?') ?? '?'
-
   return (
     <div className="w-full" style={{ maxWidth: '1280px', padding: '0 16px' }}>
       <Link to="/pool" style={{ color: '#978A80', fontFamily: 'Inter', fontSize: '14px', textDecoration: 'none' }}>
@@ -190,10 +125,84 @@ export default function PoolDetail() {
         </div>
       )}
 
-      {pair && currency0 && currency1 && (
+      {pair && pairRaw && pairAddress && (
+        <PoolDetailInner pair={pair} pairRaw={pairRaw} pairAddress={pairAddress} chainId={chainId} />
+      )}
+    </div>
+  )
+}
+
+function PoolDetailInner({
+  pair,
+  pairRaw,
+  pairAddress,
+  chainId,
+}: {
+  pair: Pair
+  pairRaw: PairRaw
+  pairAddress: string
+  chainId: number
+}) {
+  const { chainId: walletChainId, account } = useActiveWeb3React()
+  const { version, isBeta } = useVersion({ chainId })
+
+  const { data: userTxs, isLoading: userTxsLoading } = useQuery<OnchainTxn[]>({
+    queryKey: ['userPairTxs', chainId, pairAddress, account, pair.token0.decimals, pair.token1.decimals],
+    queryFn: () =>
+      fetchOnchainPairTransactions({
+        chainId,
+        pairAddress,
+        decimals0: pair.token0.decimals,
+        decimals1: pair.token1.decimals,
+        user: account!,
+        lookbackBlocks: 5000,
+        limit: 10,
+      }),
+    enabled: !!account && chainId === walletChainId,
+    retry: false,
+    staleTime: 2 * 60_000,
+  })
+
+  const pairStats: PairStats | undefined = pairRaw as unknown as PairStats | undefined
+
+  const { tradingFee, volume24h, feeAPR, bgtAPR, merklCampaignApr } = usePoolStats({
+    pair,
+    pairStats,
+    enableFetchDetail: true,
+  })
+
+  const devStats = useDevStats({ pair, enabled: !isMainnet })
+  const [showSettings, setShowSettings] = useState(false)
+
+  const totalApr = (feeAPR || 0) + (bgtAPR || 0) + (merklCampaignApr || 0)
+
+  const currency0 = unwrappedToken(pair.token0)
+  const currency1 = unwrappedToken(pair.token1)
+
+  const symbol0 = (getTokenSymbol(currency0, chainId) ?? '?')
+  const symbol1 = (getTokenSymbol(currency1, chainId) ?? '?')
+
+  const chainMismatch = walletChainId && walletChainId !== chainId
+
+  return (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
           {/* Left column */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-5 order-2 lg:order-1">
+            {chainMismatch && (
+              <div
+                className="px-4 py-3"
+                style={{
+                  background: '#2F2823',
+                  border: '1px solid #493E35',
+                  borderRadius: '12px',
+                  fontFamily: 'Inter',
+                  fontSize: '13px',
+                  color: '#D8A072',
+                }}
+              >
+                This pool is on a different chain than your connected wallet. Switch wallet chain to use Swap / Add / Remove.
+              </div>
+            )}
             {/* Header */}
             <div className="flex items-center gap-3 flex-wrap">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} />
@@ -233,106 +242,136 @@ export default function PoolDetail() {
                   Beta
                 </span>
               )}
-              <span style={{ fontFamily: 'Inter', fontSize: '13px', color: '#978A80', marginLeft: 'auto' }}>
+              <a
+                href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline inline-flex items-center gap-1"
+                style={{ fontFamily: 'Inter', fontSize: '13px', color: '#978A80', marginLeft: 'auto' }}
+                title="View on explorer"
+              >
                 {shortenAddress(pair.liquidityToken.address)}
-              </span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
             </div>
+
+            {/* Dev stats — non-mainnet only */}
+            {!isMainnet && (
+              <div
+                className="flex flex-wrap items-center gap-3"
+                style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
+              >
+                <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
+                <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
+                <span>Fee: {formatNumberLambda(devStats.fee, { maximumFractionDigits: 4 })}</span>
+                <span>
+                  {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                  {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                </span>
+                {account && (
+                  <Settings
+                    size="14"
+                    className="cursor-pointer"
+                    style={{ color: '#c4943a' }}
+                    onClick={() => setShowSettings(true)}
+                  />
+                )}
+              </div>
+            )}
+
+            {showSettings && (
+              <Suspense fallback={null}>
+                <PairSettingsModal
+                  isOpen={showSettings}
+                  onDismiss={() => setShowSettings(false)}
+                  pair={pair}
+                  currentValues={devStats}
+                />
+              </Suspense>
+            )}
 
             {/* Chart */}
-            <Suspense fallback={<div style={{ height: 400, background: '#1E1915', borderRadius: '16px' }} />}>
-              <PairChartModal
-                pair={pair}
-                name={<span style={{ color: '#FBFBFD' }}>{symbol0} / {symbol1}</span>}
-                enableAdvancedZoom
-                inline
-              />
+            <Suspense fallback={<div style={{ height: 460, background: '#1E1915', borderRadius: '16px' }} />}>
+              <PairChartTV pair={pair} />
             </Suspense>
 
-            {/* Transactions */}
-            <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD', marginBottom: '12px' }}>
-                Transactions
-              </div>
-              <div className="overflow-x-auto">
-                <table style={{ width: '100%', fontFamily: 'Inter', fontSize: '13px', color: '#CFC7C1' }}>
-                  <thead style={{ color: '#978A80' }}>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Time</th>
-                      <th style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Type</th>
-                      <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>USD</th>
-                      <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol0}</th>
-                      <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol1}</th>
-                      <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>Wallet</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(txRes?.transactions ?? []).map((tx) => {
-                      const desc = describeTx(tx, symbol0, symbol1)
-                      const usd = tx.amount0In > 0 ? tx.reserve0USD : tx.reserve1USD
-                      const amt0 = tx.amount0In + tx.amount0Out
-                      const amt1 = tx.amount1In + tx.amount1Out
-                      return (
-                        <tr key={tx.id} style={{ borderTop: '1px solid #2F2823' }}>
-                          <td style={{ padding: '10px 8px' }}>{timeAgo(tx.timestamp)}</td>
-                          <td style={{ padding: '10px 8px', color: desc.color, fontWeight: 500 }}>{desc.type}</td>
-                          <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatPrice(usd)}</td>
-                          <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt0, { maximumFractionDigits: 4 })}</td>
-                          <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt1, { maximumFractionDigits: 4 })}</td>
-                          <td style={{ padding: '10px 8px', textAlign: 'right', color: '#978A80' }}>{shortenAddress(tx.from)}</td>
-                        </tr>
-                      )
-                    })}
-                    {txRes && txRes.transactions.length === 0 && (
+            {/* Your recent activity — only shown when wallet is connected on this pool's chain */}
+            {account && chainId === walletChainId && (
+              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+                <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD', marginBottom: '12px' }}>
+                  Your recent activity
+                </div>
+                <div className="overflow-x-auto">
+                  <table style={{ width: '100%', fontFamily: 'Inter', fontSize: '13px', color: '#CFC7C1' }}>
+                    <thead style={{ color: '#978A80' }}>
                       <tr>
-                        <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#978A80' }}>
-                          No transactions yet.
-                        </td>
+                        <th style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Time</th>
+                        <th style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Type</th>
+                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol0}</th>
+                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol1}</th>
+                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>Tx</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {(userTxs ?? []).map((tx) => {
+                        const desc =
+                          tx.kind === 'Mint'
+                            ? { type: 'Add', color: '#83CF84' }
+                            : tx.kind === 'Burn'
+                            ? { type: 'Remove', color: '#E57373' }
+                            : tx.amount0In > 0
+                            ? { type: `Swap ${symbol0} → ${symbol1}`, color: '#D8A072' }
+                            : { type: `Swap ${symbol1} → ${symbol0}`, color: '#D8A072' }
+                        const amt0 = tx.amount0In + tx.amount0Out
+                        const amt1 = tx.amount1In + tx.amount1Out
+                        return (
+                          <tr key={tx.id} style={{ borderTop: '1px solid #2F2823' }}>
+                            <td style={{ padding: '10px 8px' }}>{secondsToAgo(tx.secondsAgo)}</td>
+                            <td style={{ padding: '10px 8px', color: desc.color, fontWeight: 500 }}>{desc.type}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt0, { maximumFractionDigits: 4 })}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt1, { maximumFractionDigits: 4 })}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+                              <a
+                                href={getEtherscanLink(chainId, tx.transactionHash, 'transaction')}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:underline"
+                                style={{ color: '#978A80' }}
+                              >
+                                View
+                              </a>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                      {userTxsLoading && (
+                        <tr>
+                          <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#978A80' }}>
+                            Loading your activity…
+                          </td>
+                        </tr>
+                      )}
+                      {!userTxsLoading && userTxs && userTxs.length === 0 && (
+                        <tr>
+                          <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#978A80' }}>
+                            No recent activity from your wallet on this pool.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right sidebar */}
-          <div className="flex flex-col gap-4">
-            {/* CTA buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                to={`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`}
-                className="inline-flex items-center justify-center no-underline"
-                style={{
-                  background: '#2F2823',
-                  border: '1px solid #493E35',
-                  borderRadius: '12px',
-                  padding: '12px',
-                  fontFamily: 'Inter',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  color: '#FBFBFD',
-                }}
-              >
-                Swap
-              </Link>
-              <Link
-                to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-                className="inline-flex items-center justify-center no-underline"
-                style={{
-                  background: '#985C2A',
-                  borderRadius: '12px',
-                  padding: '12px',
-                  fontFamily: 'Inter',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  color: '#FFFFFF',
-                }}
-              >
-                + Add liquidity
-              </Link>
-            </div>
-
-            {/* Total APR */}
+          <div className="flex flex-col gap-4 order-1 lg:order-2">
+            {/* Total APR (top) */}
             <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>Total APR</div>
               <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#83CF84', marginTop: '4px' }}>
@@ -363,9 +402,12 @@ export default function PoolDetail() {
               <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
               <StatRow label="24H fees" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
             </div>
+
+            {/* Your position (bottom) */}
+            <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
+              <YourPositionCard pair={pair} pairStats={pairStats} />
+            </Suspense>
           </div>
-        </div>
-      )}
     </div>
   )
 }
