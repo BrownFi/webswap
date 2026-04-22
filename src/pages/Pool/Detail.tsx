@@ -110,7 +110,7 @@ export default function PoolDetail() {
   }, [pairRaw, chainId, version])
 
   return (
-    <div className="w-full" style={{ maxWidth: '1280px', padding: '0 16px' }}>
+    <div className="w-full" style={{ maxWidth: '1280px', padding: '0 8px' }}>
       <Link to="/pool" style={{ color: '#978A80', fontFamily: 'Inter', fontSize: '14px', textDecoration: 'none' }}>
         ← Back to pools
       </Link>
@@ -172,7 +172,9 @@ function PoolDetailInner({
   const devStats = useDevStats({ pair, enabled: !isMainnet })
   const [showSettings, setShowSettings] = useState(false)
 
-  const totalApr = (feeAPR || 0) + (bgtAPR || 0) + (merklCampaignApr || 0)
+  const feeApr = feeAPR || 0
+  const bonusApr = (bgtAPR || 0) + (merklCampaignApr || 0)
+  const bonusLabel = bgtAPR ? 'BGT APR' : merklCampaignApr ? 'Campaign APR' : 'Bonus APR'
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -548,13 +550,23 @@ function PoolDetailInner({
 
           {/* Right sidebar */}
           <div className="flex flex-col gap-4 order-1 lg:order-2">
-            {/* Total APR (top) */}
+            {/* Fee APR (always) */}
             <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
-              <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>Total APR</div>
+              <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>Fee APR</div>
               <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#83CF84', marginTop: '4px' }}>
-                {totalApr ? `${formatNumber(totalApr, { maximumFractionDigits: 2 })}%` : '—'}
+                {feeApr ? `${formatNumber(feeApr, { maximumFractionDigits: 2 })}%` : '—'}
               </div>
             </div>
+
+            {/* Bonus APR (only if > 0) */}
+            {bonusApr > 0 && (
+              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
+                <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>{bonusLabel}</div>
+                <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#83CF84', marginTop: '4px' }}>
+                  +{formatNumber(bonusApr, { maximumFractionDigits: 2 })}%
+                </div>
+              </div>
+            )}
 
             {/* Stats */}
             <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
