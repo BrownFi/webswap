@@ -184,7 +184,137 @@ function PoolDetailInner({
 
   const chainMismatch = walletChainId && walletChainId !== chainId
 
+  // Spot price from reserves + USD values from pair stats
+  const reserve0Num = Number(pair.reserve0.toSignificant(8)) || 0
+  const reserve1Num = Number(pair.reserve1.toSignificant(8)) || 0
+  const price0 = Number(pairRaw.token0?.price) || 0
+  const price1 = Number(pairRaw.token1?.price) || 0
+  const rate0To1 = reserve0Num > 0 ? reserve1Num / reserve0Num : 0
+  const rate1To0 = reserve1Num > 0 ? reserve0Num / reserve1Num : 0
+  const value0 = reserve0Num * price0
+  const value1 = reserve1Num * price1
+  const totalValue = value0 + value1
+  const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
+  const pct1 = 100 - pct0
+  const [flipRate, setFlipRate] = useState(false)
+
   return (
+        <>
+        {/* Mobile-only section: pair title + dev stats + rate, always on top */}
+        <div className="lg:hidden flex flex-col gap-3 mt-4 mb-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={36} />
+            <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '22px', color: '#FBFBFD' }}>
+              {symbol0} / {symbol1}
+            </span>
+            <span
+              style={{
+                background: '#2F2823',
+                border: '1px solid #493E35',
+                borderRadius: '999px',
+                padding: '3px 8px',
+                fontFamily: 'Inter',
+                fontSize: '11px',
+                fontWeight: 500,
+                color: '#FBFBFD',
+              }}
+            >
+              v{version}
+            </span>
+            <span
+              style={{
+                background: '#2F2823',
+                border: '1px solid #493E35',
+                borderRadius: '999px',
+                padding: '3px 8px',
+                fontFamily: 'Inter',
+                fontSize: '11px',
+                fontWeight: 500,
+                color: '#83CF84',
+              }}
+            >
+              {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+            </span>
+            {isBeta && (
+              <span style={{ background: '#f97316', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', color: '#fff' }}>
+                Beta
+              </span>
+            )}
+            <a
+              href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline inline-flex items-center gap-1"
+              style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80', marginLeft: 'auto' }}
+            >
+              {shortenAddress(pair.liquidityToken.address)}
+            </a>
+          </div>
+
+          {!isMainnet && (
+            <div
+              className="flex flex-wrap items-center gap-3"
+              style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
+            >
+              <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
+              <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
+              <span>Fee: {formatNumberLambda(devStats.fee, { maximumFractionDigits: 4 })}</span>
+              <span>
+                {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+              </span>
+              {account && (
+                <Settings
+                  size="14"
+                  className="cursor-pointer"
+                  style={{ color: '#c4943a' }}
+                  onClick={() => setShowSettings(true)}
+                />
+              )}
+            </div>
+          )}
+
+          {(rate0To1 > 0 || rate1To0 > 0) && (
+            <button
+              onClick={() => setFlipRate((v) => !v)}
+              className="inline-flex items-center gap-2 self-start cursor-pointer"
+              style={{
+                background: '#2F2823',
+                border: '1px solid #493E35',
+                borderRadius: '10px',
+                padding: '8px 12px',
+                fontFamily: 'Inter',
+                fontSize: '13px',
+                color: '#FBFBFD',
+              }}
+            >
+              {flipRate ? (
+                <>
+                  <span>1 {symbol1} ={' '}</span>
+                  <span style={{ color: '#D8A072', fontWeight: 600 }}>
+                    {formatNumber(rate1To0, { maximumFractionDigits: 6 })} {symbol0}
+                  </span>
+                  {price1 > 0 && <span style={{ color: '#978A80' }}>({formatPrice(price1)})</span>}
+                </>
+              ) : (
+                <>
+                  <span>1 {symbol0} ={' '}</span>
+                  <span style={{ color: '#D8A072', fontWeight: 600 }}>
+                    {formatNumber(rate0To1, { maximumFractionDigits: 6 })} {symbol1}
+                  </span>
+                  {price0 > 0 && <span style={{ color: '#978A80' }}>({formatPrice(price0)})</span>}
+                </>
+              )}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+                <polyline points="17 1 21 5 17 9" />
+                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                <polyline points="7 23 3 19 7 15" />
+                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+              </svg>
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
           {/* Left column */}
           <div className="flex flex-col gap-5 order-2 lg:order-1">
@@ -203,8 +333,8 @@ function PoolDetailInner({
                 This pool is on a different chain than your connected wallet. Switch wallet chain to use Swap / Add / Remove.
               </div>
             )}
-            {/* Header */}
-            <div className="flex items-center gap-3 flex-wrap">
+            {/* Header — shown on desktop only; mobile header is above the grid */}
+            <div className="hidden lg:flex items-center gap-3 flex-wrap">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} />
               <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', color: '#FBFBFD' }}>
                 {symbol0} / {symbol1}
@@ -259,10 +389,10 @@ function PoolDetailInner({
               </a>
             </div>
 
-            {/* Dev stats — non-mainnet only */}
+            {/* Dev stats — non-mainnet only (above the rate) — desktop only */}
             {!isMainnet && (
               <div
-                className="flex flex-wrap items-center gap-3"
+                className="hidden lg:flex flex-wrap items-center gap-3"
                 style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
               >
                 <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
@@ -283,6 +413,48 @@ function PoolDetailInner({
               </div>
             )}
 
+            {/* Current price + flip — desktop only */}
+            {(rate0To1 > 0 || rate1To0 > 0) && (
+              <button
+                onClick={() => setFlipRate((v) => !v)}
+                className="hidden lg:inline-flex items-center gap-2 self-start cursor-pointer"
+                style={{
+                  background: '#2F2823',
+                  border: '1px solid #493E35',
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  fontFamily: 'Inter',
+                  fontSize: '13px',
+                  color: '#FBFBFD',
+                }}
+                title="Flip"
+              >
+                {flipRate ? (
+                  <>
+                    <span>1 {symbol1} ={' '}</span>
+                    <span style={{ color: '#D8A072', fontWeight: 600 }}>
+                      {formatNumber(rate1To0, { maximumFractionDigits: 6 })} {symbol0}
+                    </span>
+                    {price1 > 0 && <span style={{ color: '#978A80' }}>({formatPrice(price1)})</span>}
+                  </>
+                ) : (
+                  <>
+                    <span>1 {symbol0} ={' '}</span>
+                    <span style={{ color: '#D8A072', fontWeight: 600 }}>
+                      {formatNumber(rate0To1, { maximumFractionDigits: 6 })} {symbol1}
+                    </span>
+                    {price0 > 0 && <span style={{ color: '#978A80' }}>({formatPrice(price0)})</span>}
+                  </>
+                )}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+              </button>
+            )}
+
             {showSettings && (
               <Suspense fallback={null}>
                 <PairSettingsModal
@@ -298,6 +470,13 @@ function PoolDetailInner({
             <Suspense fallback={<div style={{ height: 460, background: '#1E1915', borderRadius: '16px' }} />}>
               <PairChartTV pair={pair} />
             </Suspense>
+
+            {/* Your position — mobile only, above activity */}
+            <div className="lg:hidden">
+              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
+                <YourPositionCard pair={pair} pairStats={pairStats} />
+              </Suspense>
+            </div>
 
             {/* Your recent activity — only shown when wallet is connected on this pool's chain */}
             {account && chainId === walletChainId && (
@@ -396,6 +575,26 @@ function PoolDetailInner({
                     <CurrencyLogo currency={currency1} size="16px" />
                   </span>
                 </div>
+                {totalValue > 0 && (
+                  <div style={{ marginTop: '8px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        height: '6px',
+                        borderRadius: '3px',
+                        overflow: 'hidden',
+                        background: '#2F2823',
+                      }}
+                    >
+                      <div style={{ width: `${pct0}%`, background: '#D8A072' }} />
+                      <div style={{ width: `${pct1}%`, background: '#6FB3E6' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '11px', color: '#978A80', marginTop: '4px' }}>
+                      <span>{pct0.toFixed(1)}%</span>
+                      <span>{pct1.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                )}
               </StatRow>
 
               <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
@@ -403,12 +602,15 @@ function PoolDetailInner({
               <StatRow label="24H fees" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
             </div>
 
-            {/* Your position (bottom) */}
-            <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
-              <YourPositionCard pair={pair} pairStats={pairStats} />
-            </Suspense>
+            {/* Your position (bottom) — desktop only; mobile renders it below the chart */}
+            <div className="hidden lg:block">
+              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
+                <YourPositionCard pair={pair} pairStats={pairStats} />
+              </Suspense>
+            </div>
           </div>
     </div>
+    </>
   )
 }
 
