@@ -3,7 +3,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Info, Settings } from 'react-feather'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Text } from 'components/Rebass'
 import styled from 'styled-components'
 
@@ -81,6 +81,7 @@ interface PositionCardProps {
 }
 
 export default function FullPositionCard({ pair, pairStats, border }: PositionCardProps) {
+  const navigate = useNavigate()
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
@@ -88,7 +89,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
   const devStats = useDevStats({ pair, enabled: !isMainnet })
 
-  const [showMore, setShowMore] = useState(isFavorite)
+  const [showMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
 
   const canEditSettings = !isMainnet && !!account
@@ -168,7 +169,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         <div
           className="flex items-center cursor-pointer max-md:flex-wrap max-md:gap-2"
           style={{ gap: '8px', minHeight: '60px' }}
-          onClick={() => setShowMore(!showMore)}
+          onClick={() => navigate(`/pool/${pair.liquidityToken.address}`)}
         >
           {/* Pool name */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>

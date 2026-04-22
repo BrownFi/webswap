@@ -50,9 +50,10 @@ type Props = {
   pair: Pair
   name: ReactNode
   enableAdvancedZoom?: boolean
+  inline?: boolean
 }
 
-const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
+const PairChartModalInner = ({ pair, name, enableAdvancedZoom, inline }: Props) => {
   const [isOpen, setOpen] = useState(false)
   const [zoomRange, setZoomRange] = useState<{ startIndex: number; endIndex: number } | null>(null)
   const [selection, setSelection] = useState<{ startIndex: number; endIndex: number } | null>(null)
@@ -76,7 +77,7 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
         query: GET_PAIR_STATS,
         variables: { chainId: pair.chainId, pair: pair.liquidityToken.address.toLowerCase() },
       }),
-    enabled: isOpen,
+    enabled: inline || isOpen,
     refetchInterval: 60_000,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
@@ -357,27 +358,21 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
     }
   }, [chartData, selection, enableAdvancedZoom])
 
-  return (
-    <>
-      <div title="View chart" className="cursor-pointer" onClick={() => setOpen(true)}>
-        <BarChart2 size="20" style={{ color: '#c4943a' }} />
-      </div>
+  const chartBody = (
+    <Card className="md:!p-6 !p-3">
+      <AutoColumn gap="lg">
+        <Flex sx={{ gap: '4px' }} alignItems="flex-end">
+          <Text fontSize={18} color={'white'} fontFamily={'Inter'}>
+            {name}
+          </Text>
+          {showExtendedMetrics && (
+            <QuestionHelper
+              text={`This analysis benchmarks the overall performance of the pool (not individual users). By tokenizing both the liquidity provision (LP) position and the passive holding two tokens (HODL) strategy, the chart tracks the LP token's value relative to a synthetic 'HODL' token.`}
+            />
+          )}
+        </Flex>
 
-      <Modal isOpen={isOpen} onDismiss={() => setOpen(false)} maxWidth={800}>
-        <Card className="md:!p-6 !p-3">
-          <AutoColumn gap="lg">
-            <Flex sx={{ gap: '4px' }} alignItems="flex-end">
-              <Text fontSize={18} color={'white'} fontFamily={'Inter'}>
-                {name}
-              </Text>
-              {showExtendedMetrics && (
-                <QuestionHelper
-                  text={`This analysis benchmarks the overall performance of the pool (not individual users). By tokenizing both the liquidity provision (LP) position and the passive holding two tokens (HODL) strategy, the chart tracks the LP token's value relative to a synthetic 'HODL' token.`}
-                />
-              )}
-            </Flex>
-
-            <div className="w-full h-[400px] relative">
+        <div className="w-full h-[400px] relative">
               {enableAdvancedZoom && (
                 <div className="absolute right-3 top-3 flex gap-2 z-10">
                   <button
@@ -517,23 +512,36 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom }: Props) => {
                 </ComposedChart>
               </ResponsiveContainer>
 
-              {isPending && (
-                <div className="absolute inset-0 flex justify-center items-center">
-                  <Text fontSize={18} color="#FFFA" fontFamily={'Inter'}>
-                    Loading...
-                  </Text>
-                </div>
-              )}
-              {!isPending && data?.pairDayDatas.length === 0 && (
-                <div className="absolute inset-0 flex justify-center items-center">
-                  <Text fontSize={18} color="#FFFA" fontFamily={'Inter'}>
-                    No Data
-                  </Text>
-                </div>
-              )}
+          {isPending && (
+            <div className="absolute inset-0 flex justify-center items-center">
+              <Text fontSize={18} color="#FFFA" fontFamily={'Inter'}>
+                Loading...
+              </Text>
             </div>
-          </AutoColumn>
-        </Card>
+          )}
+          {!isPending && data?.pairDayDatas.length === 0 && (
+            <div className="absolute inset-0 flex justify-center items-center">
+              <Text fontSize={18} color="#FFFA" fontFamily={'Inter'}>
+                No Data
+              </Text>
+            </div>
+          )}
+        </div>
+      </AutoColumn>
+    </Card>
+  )
+
+  if (inline) {
+    return chartBody
+  }
+
+  return (
+    <>
+      <div title="View chart" className="cursor-pointer" onClick={() => setOpen(true)}>
+        <BarChart2 size="20" style={{ color: '#c4943a' }} />
+      </div>
+      <Modal isOpen={isOpen} onDismiss={() => setOpen(false)} maxWidth={800}>
+        {chartBody}
       </Modal>
     </>
   )
@@ -543,7 +551,8 @@ const PairChartModal = memo(PairChartModalInner, (prev, next) => {
   return (
     prev.pair.liquidityToken.address === next.pair.liquidityToken.address &&
     prev.pair.chainId === next.pair.chainId &&
-    prev.enableAdvancedZoom === next.enableAdvancedZoom
+    prev.enableAdvancedZoom === next.enableAdvancedZoom &&
+    prev.inline === next.inline
   )
 })
 
