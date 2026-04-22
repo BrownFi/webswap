@@ -115,9 +115,7 @@ export default function PoolDetail() {
         ← Back to pools
       </Link>
 
-      {isLoading && (
-        <div style={{ padding: '80px 0', textAlign: 'center', color: '#978A80', fontFamily: 'Inter' }}>Loading pool…</div>
-      )}
+      {isLoading && <PoolDetailSkeleton />}
 
       {!isLoading && !pair && (
         <div style={{ padding: '80px 0', textAlign: 'center', color: '#978A80', fontFamily: 'Inter' }}>
@@ -633,5 +631,130 @@ function StatRow({
       )}
       {children}
     </div>
+  )
+}
+
+function SkeletonBar({ w, h, rounded = 'rounded' }: { w: number | string; h: number; rounded?: string }) {
+  return (
+    <div
+      className={`animate-pulse ${rounded}`}
+      style={{
+        background: '#493E35',
+        height: h,
+        width: typeof w === 'number' ? `${w}px` : w,
+      }}
+    />
+  )
+}
+
+function PoolDetailSkeleton() {
+  const Card = ({ children }: { children?: React.ReactNode }) => (
+    <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+      {children}
+    </div>
+  )
+
+  return (
+    <>
+      {/* Mobile-only top block: header + dev stats + rate */}
+      <div className="lg:hidden flex flex-col gap-3 mt-4 mb-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="animate-pulse rounded-full" style={{ background: '#493E35', width: 36, height: 36 }} />
+          <SkeletonBar w={140} h={22} />
+          <SkeletonBar w={36} h={18} rounded="rounded-full" />
+          <SkeletonBar w={44} h={18} rounded="rounded-full" />
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <SkeletonBar w={80} h={14} />
+          <SkeletonBar w={80} h={14} />
+          <SkeletonBar w={80} h={14} />
+          <SkeletonBar w={110} h={14} />
+        </div>
+        <SkeletonBar w={220} h={36} rounded="rounded-[10px]" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
+        {/* Left column */}
+        <div className="flex flex-col gap-5 order-2 lg:order-1">
+          {/* Desktop-only header */}
+          <div className="hidden lg:flex items-center gap-3 flex-wrap">
+            <div className="animate-pulse rounded-full" style={{ background: '#493E35', width: 44, height: 44 }} />
+            <SkeletonBar w={180} h={32} />
+            <SkeletonBar w={42} h={24} rounded="rounded-full" />
+            <SkeletonBar w={54} h={24} rounded="rounded-full" />
+          </div>
+
+          {/* Desktop-only dev stats + rate */}
+          <div className="hidden lg:flex flex-wrap items-center gap-3">
+            <SkeletonBar w={90} h={14} />
+            <SkeletonBar w={90} h={14} />
+            <SkeletonBar w={90} h={14} />
+            <SkeletonBar w={120} h={14} />
+          </div>
+          <div className="hidden lg:block"><SkeletonBar w={240} h={36} rounded="rounded-[10px]" /></div>
+
+          {/* Chart card — matches real structure (range selector + chart + legend) */}
+          <div className="p-[12px] sm:p-[16px]" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
+            <div className="flex items-center justify-end mb-3">
+              <SkeletonBar w={180} h={30} rounded="rounded-[10px]" />
+            </div>
+            <div className="h-[260px] sm:h-[320px] lg:h-[400px] animate-pulse rounded" style={{ background: '#2F2823' }} />
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-3">
+              <SkeletonBar w={80} h={14} />
+              <SkeletonBar w={100} h={14} />
+              <SkeletonBar w={90} h={14} />
+              <SkeletonBar w={100} h={14} />
+              <SkeletonBar w={90} h={14} />
+            </div>
+          </div>
+        </div>
+
+        {/* Right sidebar */}
+        <div className="flex flex-col gap-4 order-1 lg:order-2">
+          <Card>
+            <div className="mb-2"><SkeletonBar w={80} h={14} /></div>
+            <SkeletonBar w={140} h={36} />
+          </Card>
+          <Card>
+            <div className="mb-4"><SkeletonBar w={60} h={18} /></div>
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex justify-between"><SkeletonBar w="45%" h={16} /><SkeletonBar w="45%" h={16} /></div>
+              <SkeletonBar w="100%" h={6} rounded="rounded-full" />
+              <div className="flex justify-between"><SkeletonBar w={60} h={14} /><SkeletonBar w={60} h={14} /></div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div><SkeletonBar w={60} h={14} /><div className="mt-1"><SkeletonBar w={100} h={22} /></div></div>
+              <div><SkeletonBar w={80} h={14} /><div className="mt-1"><SkeletonBar w={100} h={22} /></div></div>
+              <div><SkeletonBar w={70} h={14} /><div className="mt-1"><SkeletonBar w={100} h={22} /></div></div>
+            </div>
+          </Card>
+          {/* Your position (desktop sidebar) */}
+          <div className="hidden lg:block">
+            <Card>
+              <div className="mb-4"><SkeletonBar w={100} h={18} /></div>
+              <div className="flex flex-col gap-3">
+                <SkeletonBar w="100%" h={16} />
+                <SkeletonBar w="100%" h={16} />
+                <SkeletonBar w="100%" h={16} />
+                <SkeletonBar w="100%" h={36} rounded="rounded-[10px]" />
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* Your position (mobile — matches loaded state position below the chart) */}
+        <div className="lg:hidden order-3">
+          <Card>
+            <div className="mb-4"><SkeletonBar w={100} h={18} /></div>
+            <div className="flex flex-col gap-3">
+              <SkeletonBar w="100%" h={16} />
+              <SkeletonBar w="100%" h={16} />
+              <SkeletonBar w="100%" h={16} />
+              <SkeletonBar w="100%" h={36} rounded="rounded-[10px]" />
+            </div>
+          </Card>
+        </div>
+      </div>
+    </>
   )
 }
