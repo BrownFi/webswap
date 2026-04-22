@@ -369,30 +369,34 @@ function PoolStatsBar({
             borderRadius: '16px',
           }}
         >
-          <span className="text-[11px] sm:text-[14px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
-            {stat.label}
-          </span>
           {isLoading && !hasData ? (
-            <span className="animate-pulse text-[16px] sm:text-[22px] leading-[22px] sm:leading-[28px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80' }}>
-              --
-            </span>
+            <>
+              <div className="animate-pulse rounded h-[16px] sm:h-[20px] w-[60%]" style={{ background: '#493E35' }} />
+              <div className="animate-pulse rounded h-[22px] sm:h-[28px] w-[80%]" style={{ background: '#493E35' }} />
+              <div className="animate-pulse rounded h-[14px] sm:h-[18px] w-[50%]" style={{ background: '#493E35' }} />
+            </>
           ) : (
-            <span
-              className="text-[16px] sm:text-[22px] leading-[22px] sm:leading-[28px]"
-              style={{
-                fontFamily: 'Inter',
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                color: '#D8A072',
-              }}
-            >
-              {stat.value}
-            </span>
-          )}
-          {stat.sub && (
-            <span className="text-[10px] sm:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: stat.subColor }}>
-              {stat.sub}
-            </span>
+            <>
+              <span className="text-[11px] sm:text-[14px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
+                {stat.label}
+              </span>
+              <span
+                className="text-[16px] sm:text-[22px] leading-[22px] sm:leading-[28px]"
+                style={{
+                  fontFamily: 'Inter',
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  color: '#D8A072',
+                }}
+              >
+                {stat.value}
+              </span>
+              {stat.sub && (
+                <span className="text-[10px] sm:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: stat.subColor }}>
+                  {stat.sub}
+                </span>
+              )}
+            </>
           )}
         </div>
       ))}

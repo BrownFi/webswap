@@ -162,7 +162,15 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <div style={{ width: '100%', height: 260 }}>
+          <div style={{ width: '100%', height: 260, position: 'relative' }}>
+            {isLoading && !data && (
+              <div
+                className="absolute inset-0 flex flex-col gap-2 p-2 animate-pulse"
+                style={{ background: 'transparent' }}
+              >
+                <div className="rounded" style={{ background: '#493E35', height: '100%', opacity: 0.5 }} />
+              </div>
+            )}
             <ResponsiveContainer>
               <AreaChart data={filteredHistory} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <defs>
@@ -220,21 +228,25 @@ export default function Home() {
             className="relative overflow-hidden flex flex-col items-start gap-[2px] sm:gap-[4px] p-[10px] sm:p-[16px]"
             style={{ background: '#2F2823', borderRadius: '14px' }}
           >
-            <span className="text-[11px] sm:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
-              {stat.label}
-            </span>
             {isLoading && !data ? (
-              <span className="animate-pulse text-[16px] sm:text-[20px] leading-[22px] sm:leading-[26px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#978A80' }}>
-                --
-              </span>
+              <>
+                <div className="animate-pulse rounded h-[16px] sm:h-[18px] w-[60%]" style={{ background: '#493E35' }} />
+                <div className="animate-pulse rounded h-[22px] sm:h-[26px] w-[80%]" style={{ background: '#493E35' }} />
+                <div className="animate-pulse rounded h-[14px] sm:h-[17px] w-[50%]" style={{ background: '#493E35' }} />
+              </>
             ) : (
-              <span className="text-[16px] sm:text-[20px] leading-[22px] sm:leading-[26px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#D8A072' }}>
-                {stat.value}
-              </span>
+              <>
+                <span className="text-[11px] sm:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
+                  {stat.label}
+                </span>
+                <span className="text-[16px] sm:text-[20px] leading-[22px] sm:leading-[26px]" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#D8A072' }}>
+                  {stat.value}
+                </span>
+                <span className="text-[10px] sm:text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: '#978A80' }}>
+                  {stat.sub}
+                </span>
+              </>
             )}
-            <span className="text-[10px] sm:text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: '#978A80' }}>
-              {stat.sub}
-            </span>
           </div>
         ))}
       </div>
