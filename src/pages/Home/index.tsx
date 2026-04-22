@@ -24,6 +24,13 @@ const formatValue = (val: number) => {
 const formatDate = (unix: number) =>
   new Date(unix * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
+// Friendly display names overriding DefiLlama's slugs.
+const CHAIN_DISPLAY_NAME: Record<string, string> = {
+  Berachain: 'Bera',
+  'Hyperliquid L1': 'HyperEVM',
+  Binance: 'BNB Chain',
+}
+
 export default function Home() {
   const { data, isLoading } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
@@ -45,11 +52,10 @@ export default function Home() {
 
   const stats: { label: string; value: string; sub: string }[] = [
     { label: 'Total Value Locked', value: formatValue(data?.currentTvl ?? 0), sub: 'Current TVL' },
-    { label: 'Total Value Locked', value: formatValue(data?.athTvl ?? 0), sub: 'All-time high' },
     { label: 'All - Time Volume', value: formatValue(data?.volumeAllTime ?? 0), sub: 'Since launch' },
     { label: '24h Volume', value: formatValue(data?.volume24h ?? 0), sub: 'Across all chains' },
     { label: 'Total Fees', value: formatValue(data?.feesAllTime ?? 0), sub: 'Since launch' },
-    { label: '24h Fees', value: formatValue(data?.fees24h ?? 0), sub: 'Distributed to Lps' },
+    { label: '24h Fees', value: formatValue(data?.fees24h ?? 0), sub: 'Auto-compound' },
   ]
 
   return (
@@ -119,7 +125,7 @@ export default function Home() {
                     color: '#FBFBFD',
                   }}
                 >
-                  {c.name}
+                  {CHAIN_DISPLAY_NAME[c.name] ?? c.name}
                 </span>
               ))}
             </div>
@@ -220,12 +226,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-10 pb-5">
+      {/* Stats bar — mobile: TVL full row, then 2 cards per row; lg: 5 cards in a single row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-10 pb-5">
         {stats.map((stat, index) => (
           <div
             key={`${stat.label}-${index}`}
-            className="relative overflow-hidden flex flex-col items-start gap-[2px] sm:gap-[4px] p-[10px] sm:p-[16px]"
+            className={`relative overflow-hidden flex flex-col gap-[2px] sm:gap-[4px] p-[10px] sm:p-[16px] ${
+              index === 0 ? 'col-span-2 md:col-span-1 items-center md:items-start text-center md:text-left' : 'items-start'
+            }`}
             style={{ background: '#2F2823', borderRadius: '14px' }}
           >
             {isLoading && !data ? (

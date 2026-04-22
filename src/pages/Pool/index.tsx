@@ -304,8 +304,8 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Free APR</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Bgt APR</span>
+                  <span style={{ flex: 1, textAlign: 'right' }}>24h Fee / TVL</span>
+                  <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
                 </div>
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
@@ -347,19 +347,20 @@ function PoolStatsBar({
 
   const stats = [
     { label: 'Total Value Locked', value: formatValue(protocolStats?.currentTvl ?? 0), sub: 'Current TVL', subColor: '#978A80' },
-    { label: 'Total Value Locked', value: formatValue(protocolStats?.athTvl ?? 0), sub: 'All-time high', subColor: '#978A80' },
     { label: 'All - Time Volume', value: formatValue(protocolStats?.volumeAllTime ?? 0), sub: 'Since launch', subColor: '#978A80' },
     { label: '24h Volume', value: formatValue(protocolStats?.volume24h ?? 0), sub: 'Across all pools', subColor: '#978A80' },
     { label: 'Total Fees', value: formatValue(protocolStats?.feesAllTime ?? 0), sub: 'Since launch', subColor: '#978A80' },
-    { label: '24h Fees', value: formatValue(protocolStats?.fees24h ?? 0), sub: 'Distributed to Lps', subColor: '#978A80' },
+    { label: '24h Fees', value: formatValue(protocolStats?.fees24h ?? 0), sub: 'Auto-compound', subColor: '#978A80' },
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {stats.map((stat, index) => (
         <div
           key={`${stat.label}-${index}`}
-          className="relative overflow-hidden flex flex-col items-start gap-[4px] sm:gap-[8px] p-[12px] sm:p-[20px]"
+          className={`relative overflow-hidden flex flex-col gap-[4px] sm:gap-[8px] p-[12px] sm:p-[20px] ${
+            index === 0 ? 'col-span-2 md:col-span-1 items-center md:items-start text-center md:text-left' : 'items-start'
+          }`}
           style={{
             background: '#2F2823',
             borderRadius: '16px',
@@ -418,8 +419,8 @@ function PairListSkeleton() {
         <span style={{ flex: 2 }}>Pool</span>
         <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Free APR</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Bgt APR</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>24h Fee / TVL</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
       </div>
       {[0, 1, 2, 3, 4].map((i) => (
