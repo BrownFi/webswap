@@ -23,6 +23,7 @@ const PoolFinder = lazy(() => import('./PoolFinder'))
 const AddLiquidity = lazy(() => import('./AddLiquidity'))
 const RemoveLiquidity = lazy(() => import('./RemoveLiquidity'))
 const Home = lazy(() => import('./Home'))
+const PoolDetail = lazy(() => import('./Pool/Detail'))
 
 const BodyWrapper = styled.div`
   display: flex;
@@ -93,6 +94,14 @@ export default function App() {
               element={
                 <RouteErrorBoundary>
                   <Pool />
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path="/pool/:chainId/:pairAddress"
+              element={
+                <RouteErrorBoundary fallbackPath="/pool">
+                  <PoolDetail />
                 </RouteErrorBoundary>
               }
             />

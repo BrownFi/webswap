@@ -1,11 +1,11 @@
 import { Web3Provider } from '@ethersproject/providers'
 import { ChainId } from '@brownfi/sdk'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { availableChains } from 'connectors'
 import { useAccount, useWalletClient } from 'wagmi'
-import { useSelector } from 'react-redux'
-import { chainSelector } from 'state/chainSlice'
+import { useDispatch, useSelector } from 'react-redux'
+import { chainSelector, switchChain } from 'state/chainSlice'
 import { isAddress } from 'utils'
 import { walletClientToProvider, getReadOnlyProvider } from 'utils/ethersAdapter'
 
@@ -18,7 +18,7 @@ const mockAccounts: Record<string, string> =
     : {}
 
 export function useActiveWeb3React(): { library: Web3Provider; account?: string | null; chainId: ChainId } {
-  const { address, chainId: networkChainId, isConnected } = useAccount()
+  const { address, chainId: networkChainId, isConnected, status } = useAccount()
   const { data: walletClient } = useWalletClient()
 
   const { search } = useLocation()
@@ -32,8 +32,26 @@ export function useActiveWeb3React(): { library: Web3Provider; account?: string 
   }, [search])
 
   const currentChain = useSelector(chainSelector)
+  const dispatch = useDispatch()
   const isWrongNetwork = availableChains.every((chain) => chain.id !== networkChainId)
-  const chainId = (isConnected && !isWrongNetwork ? networkChainId : currentChain.id) as ChainId
+  // While wagmi is connecting/reconnecting, networkChainId may briefly be undefined.
+  // Keep currentChain.id during that window so we don't flicker.
+  const isSettling = status === 'connecting' || status === 'reconnecting'
+  const chainId = (isConnected && !isWrongNetwork
+    ? networkChainId
+    : isSettling
+    ? currentChain.id
+    : currentChain.id) as ChainId
+
+  // Keep Redux-selected chain in sync with the wallet's active chain
+  // so disconnect doesn't fall back to a stale persisted chain.
+  useEffect(() => {
+    if (!isConnected || isWrongNetwork) return
+    if (networkChainId && networkChainId !== currentChain.id) {
+      const next = availableChains.find((c) => c.id === networkChainId)
+      if (next) dispatch(switchChain(JSON.parse(JSON.stringify(next))))
+    }
+  }, [isConnected, isWrongNetwork, networkChainId, currentChain.id, dispatch])
 
   const library = useMemo(() => {
     if (walletClient && isConnected && !isWrongNetwork) {

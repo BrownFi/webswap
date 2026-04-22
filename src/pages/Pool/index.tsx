@@ -311,11 +311,7 @@ export default function Pool() {
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
             ) : enableGraphQL && isLoadingPairs ? (
-              <EmptyProposals>
-                <TYPE.body color={'#978A80'} textAlign="center">
-                  <Dots>Loading pools</Dots>
-                </TYPE.body>
-              </EmptyProposals>
+              <PairListSkeleton />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -401,6 +397,61 @@ function PoolStatsBar({
         </div>
       ))}
     </div>
+  )
+}
+
+function PairListSkeleton() {
+  return (
+    <>
+      {/* Table header */}
+      <div
+        className="hidden md:flex items-center"
+        style={{
+          padding: '8px 16px',
+          fontFamily: 'Inter',
+          fontWeight: 500,
+          fontSize: '16px',
+          color: '#978A80',
+          gap: '8px',
+        }}
+      >
+        <span style={{ flex: 2 }}>Pool</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>Free APR</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>Bgt APR</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
+      </div>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="flex items-center max-md:flex-wrap max-md:gap-2"
+          style={{
+            padding: '16px',
+            gap: '8px',
+            minHeight: '60px',
+            background: '#1E1915',
+            borderRadius: '12px',
+            marginBottom: '8px',
+          }}
+        >
+          {/* Pool name */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
+            <div className="animate-pulse rounded-full shrink-0" style={{ background: '#493E35', width: 40, height: 40 }} />
+            <div className="flex flex-col gap-1.5 flex-1">
+              <div className="animate-pulse rounded" style={{ background: '#493E35', height: 18, width: '60%' }} />
+              <div className="animate-pulse rounded" style={{ background: '#493E35', height: 14, width: '35%' }} />
+            </div>
+          </div>
+          {/* Desktop-only columns */}
+          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 40, background: '#493E35' }} />
+        </div>
+      ))}
+    </>
   )
 }
 
