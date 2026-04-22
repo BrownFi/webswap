@@ -231,8 +231,8 @@ export default function Home() {
         {stats.map((stat, index) => (
           <div
             key={`${stat.label}-${index}`}
-            className={`relative overflow-hidden flex flex-col gap-[2px] sm:gap-[4px] p-[10px] sm:p-[16px] ${
-              index === 0 ? 'col-span-2 md:col-span-1 items-center md:items-start text-center md:text-left' : 'items-start'
+            className={`relative overflow-hidden flex flex-col gap-[2px] sm:gap-[4px] p-[10px] sm:p-[16px] items-center md:items-start text-center md:text-left ${
+              index === 0 ? 'col-span-2 md:col-span-1' : ''
             }`}
             style={{ background: '#2F2823', borderRadius: '14px' }}
           >

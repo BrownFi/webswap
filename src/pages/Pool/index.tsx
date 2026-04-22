@@ -304,7 +304,7 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>24h Fee / TVL</span>
+                  <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
                 </div>
@@ -358,8 +358,8 @@ function PoolStatsBar({
       {stats.map((stat, index) => (
         <div
           key={`${stat.label}-${index}`}
-          className={`relative overflow-hidden flex flex-col gap-[4px] sm:gap-[8px] p-[12px] sm:p-[20px] ${
-            index === 0 ? 'col-span-2 md:col-span-1 items-center md:items-start text-center md:text-left' : 'items-start'
+          className={`relative overflow-hidden flex flex-col gap-[4px] sm:gap-[8px] p-[12px] sm:p-[20px] items-center md:items-start text-center md:text-left ${
+            index === 0 ? 'col-span-2 md:col-span-1' : ''
           }`}
           style={{
             background: '#2F2823',
@@ -419,7 +419,7 @@ function PairListSkeleton() {
         <span style={{ flex: 2 }}>Pool</span>
         <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>24h Fee / TVL</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
       </div>
