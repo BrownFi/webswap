@@ -133,7 +133,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
     const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(6)) || 1)
-    // 24h Fee / TVL — simple daily ratio, no annualization
+    // 24h Fees / TVL — simple daily ratio, no annualization
     const feeDay = Number(pairStats?.feeDay) || 0
     const feeOverTvl = tvl > 0 ? (feeDay / tvl) * 100 : 0
     return { tvl, lpPrice, feeOverTvl }
@@ -190,7 +190,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD' }}>
-                  24h Fee / TVL: {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
+                  24h Fees / TVL: {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
                 </span>
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
@@ -207,7 +207,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
-          {/* 24h Fee / TVL (white) */}
+          {/* 24h Fees / TVL (white) */}
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
             {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
           </span>

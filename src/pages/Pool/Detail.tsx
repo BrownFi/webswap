@@ -556,9 +556,9 @@ function PoolDetailInner({
 
           {/* Right sidebar */}
           <div className="flex flex-col gap-4 order-1 lg:order-2">
-            {/* 24h Fee / TVL (always, white) */}
+            {/* 24h Fees / TVL (always, white) */}
             <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
-              <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>24h Fee / TVL</div>
+              <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>24h Fees / TVL</div>
               <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#FBFBFD', marginTop: '4px' }}>
                 {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '—'}
               </div>
