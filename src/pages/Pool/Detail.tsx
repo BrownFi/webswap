@@ -549,7 +549,7 @@ function PoolDetailInner({
           {/* Right sidebar */}
           <div className="flex flex-col gap-4 order-1 lg:order-2">
             {/* Total APR (top) */}
-            <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+            <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>Total APR</div>
               <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#83CF84', marginTop: '4px' }}>
                 {totalApr ? `${formatNumber(totalApr, { maximumFractionDigits: 2 })}%` : '—'}

@@ -287,6 +287,7 @@ const PairChartTVInner = ({ pair }: Props) => {
         borderRadius: '16px',
       }}
     >
+      
       {/* Range selector */}
       <div className="flex items-center justify-end mb-3">
         <div
@@ -375,9 +376,7 @@ const PairChartTVInner = ({ pair }: Props) => {
         ))}
       </div>
 
-      <div style={{ fontFamily: 'Inter', fontSize: 11, color: '#978A80', marginTop: 8, textAlign: 'right' }}>
-        Daily snapshots · {chartData.length} days · chart by TradingView
-      </div>
+    
     </div>
   )
 }
