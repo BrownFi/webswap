@@ -1,5 +1,4 @@
 import {
-  viction as victionChain,
   sepolia as sepoliaChain,
   berachain as berachainChain,
   arbitrum as arbitrumChain,
@@ -12,8 +11,6 @@ import {
 
 import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
 
-import u2uIcon from 'assets/images/u2u.jpg'
-import victionIcon from 'assets/images/viction.png'
 import hyperevmIcon from 'assets/images/hyperevm.png'
 import ethereumIcon from 'assets/images/ethereum-logo.png'
 import beraIcon from 'assets/images/w-bera.png'
@@ -40,30 +37,6 @@ const overrideChain = ({
     },
   },
   iconUrl,
-})
-
-const u2uMainnet: Chain = {
-  id: 39,
-  name: 'U2U Network',
-  nativeCurrency: { decimals: 18, name: 'U2U', symbol: 'U2U' },
-  rpcUrls: {
-    default: {
-      http: ['https://rpc-mainnet.u2u.xyz'],
-    },
-  },
-  blockExplorers: {
-    default: { name: 'U2U Scan', url: 'https://u2uscan.xyz' },
-  },
-  iconUrl: u2uIcon,
-}
-
-const viction = overrideChain({
-  chain: victionChain,
-  iconUrl: victionIcon,
-  fallbackRpcs: [
-    //
-    'https://viction.drpc.org',
-  ],
 })
 
 const hyperEVM: Chain = {
@@ -167,8 +140,6 @@ const mainChains: readonly [Chain, ...Chain[]] = [
   linea,
   sei,
   monad,
-  viction,
-  u2uMainnet,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
@@ -179,8 +150,6 @@ const betaChains: readonly [Chain, ...Chain[]] = [
   linea,
   sei,
   monad,
-  viction,
-  u2uMainnet,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 

@@ -100,11 +100,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const {
     tradingFee,
     totalSupply: totalPoolTokens,
-    feeAPR: feeAPRIndexer,
     bgtAPR,
     volume24h,
     volume7d,
-    shouldUseIndexer,
     pairAccount,
     merklCampaignApr,
   } = usePoolStats({
@@ -130,15 +128,16 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  const { tvl, lpPrice, feeAPR } = useMemo(() => {
+  const { tvl, lpPrice, feeOverTvl } = useMemo(() => {
     const r0 = token0Price * Number(pair.reserve0.toSignificant(6))
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
     const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(6)) || 1)
-    const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
-    const feeAPR = shouldUseIndexer ? feeAPRIndexer : feeAPRFallback
-    return { tvl, lpPrice, feeAPR }
-  }, [token0Price, token1Price, pair, totalPoolTokens, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
+    // 24h Fee / TVL — simple daily ratio, no annualization
+    const feeDay = Number(pairStats?.feeDay) || 0
+    const feeOverTvl = tvl > 0 ? (feeDay / tvl) * 100 : 0
+    return { tvl, lpPrice, feeOverTvl }
+  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats?.feeDay])
 
   const stakedLiquidityTokenAmount = parseStakeLpAmount(pairAccount?.stakeLP, pair.liquidityToken)
 
@@ -190,13 +189,16 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 </span>
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
-                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84' }}>
-                  Free APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 1 })}%` : '--'}
+                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD' }}>
+                  24h Fee / TVL: {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
                 </span>
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
-                <div className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
-                  Bgt APR: +{formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%
+                <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
+                  Incentive APR: +{formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%
+                  {enableBgt && (
+                    <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 14, height: 14, borderRadius: '50%' }} />
+                  )}
                 </div>
               )}
             </div>
@@ -205,15 +207,22 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
-          {/* Free APR */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
-            {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
+          {/* 24h Fee / TVL (white) */}
+          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
+            {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
           </span>
-          {/* Bgt APR */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
-            {enableBgt || enableMerklCampaignApr
-              ? `+${formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%`
-              : '--'}
+          {/* Incentive APR (green with BGT icon when applicable) */}
+          <span className="max-md:hidden text-right inline-flex items-center justify-end gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+            {enableBgt || enableMerklCampaignApr ? (
+              <>
+                +{formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%
+                {enableBgt && (
+                  <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 16, height: 16, borderRadius: '50%' }} />
+                )}
+              </>
+            ) : (
+              '--'
+            )}
           </span>
           {/* Actions */}
           <div className="hidden md:flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
