@@ -2,7 +2,7 @@ import { JSBI, Pair, Percent } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
 import { useActiveWeb3React } from 'hooks'
 import { useTotalSupply } from 'data/TotalSupply'
-import { useTokenBalance } from 'state/wallet/hooks'
+import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { Loader } from 'components/Loader'
 import { isMainnet } from 'connectors'
@@ -25,7 +25,11 @@ export function YourPositionCard({ pair, pairStats }: Props) {
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
 
-  const userPoolBalance = useTokenBalance(account ?? undefined, pair.liquidityToken)
+  const [balanceMap] = useTokenBalancesWithLoadingIndicator(
+    account ?? undefined,
+    [pair.liquidityToken],
+  )
+  const userPoolBalance = balanceMap[pair.liquidityToken.address]
   const totalPoolTokens = useTotalSupply(pair.liquidityToken)
 
   const poolTokenPercentage =
@@ -61,8 +65,15 @@ export function YourPositionCard({ pair, pairStats }: Props) {
   const symbol0 = getTokenSymbol(currency0, chainId) ?? '?'
   const symbol1 = getTokenSymbol(currency1, chainId) ?? '?'
 
+  const poolChainId = pair.liquidityToken.chainId
+  const chainMismatch = !!account && chainId !== poolChainId
+
   const hasLiquidity =
     userPoolBalance && JSBI.greaterThan(userPoolBalance.raw, JSBI.BigInt(0))
+  // `userPoolBalance === undefined` means the multicall hasn't completed yet.
+  // A completed call — even for a true-zero balance — produces a defined TokenAmount,
+  // so this is a reliable gate that covers both the pre-register frame and in-flight fetch.
+  const balanceUnknown = !!account && !chainMismatch && userPoolBalance === undefined
 
   return (
     <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
@@ -72,6 +83,16 @@ export function YourPositionCard({ pair, pairStats }: Props) {
 
       {!account ? (
         <ConnectWallet />
+      ) : chainMismatch ? (
+        <div style={{ fontFamily: 'Inter', fontSize: '13px', color: '#978A80', lineHeight: '20px' }}>
+          Switch your wallet network to view your position in this pool.
+        </div>
+      ) : balanceUnknown ? (
+        <div className="space-y-3">
+          <PositionSkeletonRow w={120} />
+          <PositionSkeletonRow w={140} />
+          <PositionSkeletonRow w={140} />
+        </div>
       ) : !hasLiquidity ? (
         <>
           <div style={{ fontFamily: 'Inter', fontSize: '13px', color: '#978A80', lineHeight: '20px', marginBottom: '12px' }}>
@@ -196,6 +217,21 @@ export function YourPositionCard({ pair, pairStats }: Props) {
           </Link>
         </div>
       )}
+    </div>
+  )
+}
+
+function PositionSkeletonRow({ w }: { w: number }) {
+  return (
+    <div className="flex justify-between items-center">
+      <div
+        className="animate-pulse rounded"
+        style={{ background: '#493E35', height: 12, width: 90 }}
+      />
+      <div
+        className="animate-pulse rounded"
+        style={{ background: '#493E35', height: 12, width: w }}
+      />
     </div>
   )
 }
