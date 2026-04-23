@@ -293,7 +293,7 @@ function PoolDetailInner({
             </div>
           )}
 
-          {(rate0To1 > 0 || rate1To0 > 0) && (
+          {!isMainnet && (rate0To1 > 0 || rate1To0 > 0) && (
             <button
               onClick={() => setFlipRate((v) => !v)}
               className="inline-flex items-center gap-2 self-start cursor-pointer"
@@ -432,8 +432,8 @@ function PoolDetailInner({
               </div>
             )}
 
-            {/* Current price + flip — desktop only */}
-            {(rate0To1 > 0 || rate1To0 > 0) && (
+            {/* Current price + flip — desktop only, beta only */}
+            {!isMainnet && (rate0To1 > 0 || rate1To0 > 0) && (
               <button
                 onClick={() => setFlipRate((v) => !v)}
                 className="hidden lg:inline-flex items-center gap-2 self-start cursor-pointer"
