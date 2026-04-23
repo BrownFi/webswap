@@ -301,6 +301,26 @@ export default function AddLiquidity() {
                 <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
               </span>
             </div>
+          ) : pairState === PairState.LOADING ? (
+            <div className="flex items-center gap-3">
+              {currencies[Field.CURRENCY_A] && currencies[Field.CURRENCY_B] && (
+                <DoubleCurrencyLogo currency0={currencies[Field.CURRENCY_A]} currency1={currencies[Field.CURRENCY_B]} size={24} margin />
+              )}
+              <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#978A80' }}>
+                {currencies[Field.CURRENCY_A] && currencies[Field.CURRENCY_B] ? (
+                  <DoubleCurrencySymbol currency0={currencies[Field.CURRENCY_A]} currency1={currencies[Field.CURRENCY_B]} />
+                ) : (
+                  'Loading pool...'
+                )}
+              </span>
+            </div>
+          ) : pairState === PairState.NOT_EXISTS && currencies[Field.CURRENCY_A] && currencies[Field.CURRENCY_B] ? (
+            <div className="flex items-center gap-3">
+              <DoubleCurrencyLogo currency0={currencies[Field.CURRENCY_A]} currency1={currencies[Field.CURRENCY_B]} size={24} margin />
+              <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
+                <DoubleCurrencySymbol currency0={currencies[Field.CURRENCY_A]} currency1={currencies[Field.CURRENCY_B]} />
+              </span>
+            </div>
           ) : (
             <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#978A80' }}>
               - Invalid Pool -
