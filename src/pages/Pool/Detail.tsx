@@ -1,7 +1,7 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
-import { Suspense, lazy, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Settings } from 'react-feather'
 import { Address, checksumAddress } from 'viem'
 
@@ -143,6 +143,19 @@ function PoolDetailInner({
 }) {
   const { chainId: walletChainId, account } = useActiveWeb3React()
   const { version, isBeta } = useVersion({ chainId })
+  const navigate = useNavigate()
+
+  // Detect wallet chain CHANGE (not initial mismatch). If user actively
+  // switches to a chain that doesn't match this pool, send them to /pool
+  // so they can browse pools on the new chain.
+  const prevWalletChainRef = useRef(walletChainId)
+  useEffect(() => {
+    const prev = prevWalletChainRef.current
+    prevWalletChainRef.current = walletChainId
+    if (prev !== undefined && walletChainId !== undefined && prev !== walletChainId && walletChainId !== chainId) {
+      navigate('/pool', { replace: true })
+    }
+  }, [walletChainId, chainId, navigate])
 
   const { data: userTxs, isLoading: userTxsLoading } = useQuery<OnchainTxn[]>({
     queryKey: ['userPairTxs', chainId, pairAddress, account, pair.token0.decimals, pair.token1.decimals],
@@ -163,7 +176,7 @@ function PoolDetailInner({
 
   const pairStats: PairStats | undefined = pairRaw as unknown as PairStats | undefined
 
-  const { tradingFee, volume24h, bgtAPR, merklCampaignApr } = usePoolStats({
+  const { tradingFee, volume24h, feeAPR, bgtAPR, merklCampaignApr } = usePoolStats({
     pair,
     pairStats,
     enableFetchDetail: true,
@@ -556,6 +569,16 @@ function PoolDetailInner({
 
           {/* Right sidebar */}
           <div className="flex flex-col gap-4 order-1 lg:order-2">
+            {/* APR — beta/non-mainnet only */}
+            {!isMainnet && (
+              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
+                <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>APR</div>
+                <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#83CF84', marginTop: '4px' }}>
+                  {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '—'}
+                </div>
+              </div>
+            )}
+
             {/* 24h Fees / TVL (always, white) */}
             <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>24h Fees / TVL</div>

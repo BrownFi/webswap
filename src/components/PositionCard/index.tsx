@@ -100,9 +100,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const {
     tradingFee,
     totalSupply: totalPoolTokens,
+    feeAPR: feeAPRIndexer,
     bgtAPR,
     volume24h,
     volume7d,
+    shouldUseIndexer,
     pairAccount,
     merklCampaignApr,
   } = usePoolStats({
@@ -128,7 +130,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  const { tvl, lpPrice, feeOverTvl } = useMemo(() => {
+  const { tvl, lpPrice, feeOverTvl, feeAPR } = useMemo(() => {
     const r0 = token0Price * Number(pair.reserve0.toSignificant(6))
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
@@ -136,8 +138,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     // 24h Fees / TVL — simple daily ratio, no annualization
     const feeDay = Number(pairStats?.feeDay) || 0
     const feeOverTvl = tvl > 0 ? (feeDay / tvl) * 100 : 0
-    return { tvl, lpPrice, feeOverTvl }
-  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats?.feeDay])
+    // Annualized fee APR (LP share)
+    const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
+    const feeAPR = shouldUseIndexer ? feeAPRIndexer : feeAPRFallback
+    return { tvl, lpPrice, feeOverTvl, feeAPR }
+  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats?.feeDay, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
 
   const stakedLiquidityTokenAmount = parseStakeLpAmount(pairAccount?.stakeLP, pair.liquidityToken)
 
@@ -192,6 +197,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD' }}>
                   24h Fees / TVL: {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
                 </span>
+                {!isMainnet && (
+                  <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84' }}>
+                    APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 1 })}%` : '--'}
+                  </span>
+                )}
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
@@ -211,6 +221,12 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
             {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
           </span>
+          {/* APR (annualized, LP share) — beta/non-mainnet only */}
+          {!isMainnet && (
+            <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+              {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
+            </span>
+          )}
           {/* Incentive APR (green with BGT icon when applicable) */}
           <span className="max-md:hidden text-right inline-flex items-center justify-end gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
             {enableBgt || enableMerklCampaignApr ? (

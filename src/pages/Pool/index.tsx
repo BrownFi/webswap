@@ -305,6 +305,7 @@ export default function Pool() {
                   <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
+                  {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>APR</span>}
                   <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
                   <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
                 </div>
@@ -420,6 +421,7 @@ function PairListSkeleton() {
         <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
         <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
+        {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>APR</span>}
         <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
       </div>
@@ -448,6 +450,7 @@ function PairListSkeleton() {
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+          {!isMainnet && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 40, background: '#493E35' }} />
         </div>
