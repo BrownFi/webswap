@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import logoWhite from 'assets/svg/logo_white.svg'
 
 const XIcon = () => (
@@ -50,7 +51,9 @@ const Footer = () => {
       >
         {/* Left: Logo + description */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <img src={logoWhite} alt="BrownFi" style={{ width: '132px', height: '32px' }} />
+          <Link to="/home" className="inline-block">
+            <img src={logoWhite} alt="BrownFi" style={{ width: '132px', height: '32px' }} />
+          </Link>
           {/* <p style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '160%', color: '#A1A1A1', margin: 0, maxWidth: '433px' }}>
             High Capital Efficiency with simple LP management and optimal returns for average LPers
           </p> */}

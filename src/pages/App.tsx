@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { isMainnet } from 'connectors'
 import 'rc-slider/assets/index.css'
 import 'theme/index.css'
 import styled from 'styled-components'
@@ -62,24 +63,33 @@ export default function App() {
         <BodyWrapper>
           <Popups />
           <Routes>
+            <Route path="/" element={<Navigate to="/pool" replace />} />
             <Route
-              path="/"
+              path="/home"
               element={
-                <RouteErrorBoundary>
-                  <Home />
-                </RouteErrorBoundary>
+                isMainnet ? (
+                  <Navigate to="/pool" replace />
+                ) : (
+                  <RouteErrorBoundary>
+                    <Home />
+                  </RouteErrorBoundary>
+                )
               }
             />
             <Route
               path="/swap"
               element={
-                <RouteErrorBoundary>
-                  <Swap />
-                </RouteErrorBoundary>
+                isMainnet ? (
+                  <Navigate to="/pool" replace />
+                ) : (
+                  <RouteErrorBoundary>
+                    <Swap />
+                  </RouteErrorBoundary>
+                )
               }
             />
             <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
-            <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
+            <Route path="/swap/:outputCurrency" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectToSwap />} />
             <Route path="/send" element={<RedirectPathToSwapOnly />} />
             <Route
               path="/find"
@@ -132,7 +142,7 @@ export default function App() {
                 </RouteErrorBoundary>
               }
             />
-            <Route path="*" element={<RedirectPathToSwapOnly />} />
+            <Route path="*" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectPathToSwapOnly />} />
           </Routes>
 
         </BodyWrapper>

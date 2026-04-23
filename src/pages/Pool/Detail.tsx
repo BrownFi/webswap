@@ -643,7 +643,7 @@ function PoolDetailInner({
 
               <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
               <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
-              <StatRow label="24H fees" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+              <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
             </div>
 
             {/* Your position (bottom) — desktop only; mobile renders it below the chart */}
