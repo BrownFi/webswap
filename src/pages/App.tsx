@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { isMainnet } from 'connectors'
 import 'rc-slider/assets/index.css'
 import 'theme/index.css'
 import styled from 'styled-components'
@@ -63,33 +62,25 @@ export default function App() {
         <BodyWrapper>
           <Popups />
           <Routes>
-            <Route path="/" element={<Navigate to="/pool" replace />} />
+            <Route path="/" element={<Navigate to="/swap" replace />} />
             <Route
               path="/home"
               element={
-                isMainnet ? (
-                  <Navigate to="/pool" replace />
-                ) : (
-                  <RouteErrorBoundary>
-                    <Home />
-                  </RouteErrorBoundary>
-                )
+                <RouteErrorBoundary>
+                  <Home />
+                </RouteErrorBoundary>
               }
             />
             <Route
               path="/swap"
               element={
-                isMainnet ? (
-                  <Navigate to="/pool" replace />
-                ) : (
-                  <RouteErrorBoundary>
-                    <Swap />
-                  </RouteErrorBoundary>
-                )
+                <RouteErrorBoundary>
+                  <Swap />
+                </RouteErrorBoundary>
               }
             />
             <Route path="/claim" element={<OpenClaimAddressModalAndRedirectToSwap />} />
-            <Route path="/swap/:outputCurrency" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectToSwap />} />
+            <Route path="/swap/:outputCurrency" element={<RedirectToSwap />} />
             <Route path="/send" element={<RedirectPathToSwapOnly />} />
             <Route
               path="/find"
@@ -142,7 +133,7 @@ export default function App() {
                 </RouteErrorBoundary>
               }
             />
-            <Route path="*" element={isMainnet ? <Navigate to="/pool" replace /> : <RedirectPathToSwapOnly />} />
+            <Route path="*" element={<RedirectPathToSwapOnly />} />
           </Routes>
 
         </BodyWrapper>
