@@ -148,6 +148,41 @@ function StyledNavLink({
   )
 }
 
+function ExternalNavLink({
+  id,
+  href,
+  disabled,
+  children,
+}: {
+  id: string
+  href: string
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  const common = `flex items-center justify-center no-underline text-white text-[16px] font-medium py-2 px-6 rounded-lg transition-colors ${
+    disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:text-[#D59967]'
+  }`
+  if (disabled) {
+    return (
+      <span id={id} className={common} style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}>
+        {children}
+      </span>
+    )
+  }
+  return (
+    <a
+      id={id}
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={common}
+      style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
+    >
+      {children}
+    </a>
+  )
+}
+
 export const StyledMenuButton = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
     className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-lg
@@ -173,7 +208,7 @@ export default function Header() {
     >
       {/* Left: Logo + Nav */}
       <div className="flex items-center gap-6 max-md:gap-3">
-        <Link to="/" className="flex items-center shrink-0">
+        <Link to="/home" className="flex items-center shrink-0">
           <div className="transition-transform duration-300 hover:-rotate-[5deg]">
             <img className="min-w-[120px] w-[120px] lg:w-[142px] lg:min-w-[142px]" src={Logo} alt="logo" />
           </div>
@@ -206,15 +241,20 @@ export default function Header() {
               borderRadius: '12px',
             }}
           >
-            <StyledNavLink id="home-nav-link" to="/" end>
-              Home
-            </StyledNavLink>
-            <StyledNavLink id="swap-nav-link" to="/swap">
-              Swap
-            </StyledNavLink>
+            {!isMainnet && (
+              <StyledNavLink id="swap-nav-link" to="/swap">
+                Swap
+              </StyledNavLink>
+            )}
             <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
               Pool
             </StyledNavLink>
+            <ExternalNavLink id="blog-nav-link" href="https://paragraph.com/@brownfi-amm">
+              Blog
+            </ExternalNavLink>
+            <ExternalNavLink id="docs-nav-link" href="#" disabled>
+              Docs
+            </ExternalNavLink>
           </div>
         </nav>
       </HamburgerMenu>
