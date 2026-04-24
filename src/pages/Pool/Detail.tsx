@@ -17,6 +17,7 @@ import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
 import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
+import { getV3PoolConfig } from 'constants/v3Pools'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -79,7 +80,9 @@ export default function PoolDetail() {
   const chainId = Number(chainIdParam)
   const { version } = useVersion({ chainId })
 
-  const { data: pairRes, isLoading } = useQuery<{ pair: PairRaw | null }>({
+  const v3Config = useMemo(() => getV3PoolConfig(chainId, pairAddress), [chainId, pairAddress])
+
+  const { data: pairRes, isLoading: isLoadingGraphQL } = useQuery<{ pair: PairRaw | null }>({
     queryKey: ['pairDetail', chainId, pairAddress],
     queryFn: () =>
       graphqlFetcher({
@@ -87,16 +90,83 @@ export default function PoolDetail() {
         query: GET_PAIR,
         variables: { chainId, id: pairAddress?.toLowerCase() },
       }),
-    enabled: !!pairAddress && !!chainId,
+    // Skip GraphQL entirely when we already know this is a hardcoded V3 pool —
+    // the indexer doesn't track V3 yet, so the call would just return null.
+    enabled: !!pairAddress && !!chainId && !v3Config,
     staleTime: 60_000,
   })
 
-  const pairRaw = pairRes?.pair
+  // V3 fallback: read reserves on-chain and build a synthetic pairRaw.
+  // Indexer-only fields (tvl, volume, fees, apr) default to 0 until the V3
+  // indexer comes online.
+  const { data: v3PairRaw, isLoading: isLoadingV3 } = useQuery<PairRaw | null>({
+    queryKey: ['pairDetailV3', chainId, pairAddress],
+    queryFn: async () => {
+      if (!v3Config || !chainId) return null
+      const { createPublicClient, http } = await import('viem')
+      const { RPC_URLS } = await import('lib/sdk/constants/addresses')
+      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+      const [reserves, totalSupplyRaw] = await Promise.all([
+        client.readContract({
+          address: v3Config.pair as Address,
+          abi: [{ inputs: [], name: 'getReserves', outputs: [{ type: 'uint112' }, { type: 'uint112' }, { type: 'uint32' }], stateMutability: 'view', type: 'function' }] as const,
+          functionName: 'getReserves',
+        }),
+        client
+          .readContract({
+            address: v3Config.pair as Address,
+            abi: [{ inputs: [], name: 'totalSupply', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,
+            functionName: 'totalSupply',
+          })
+          .catch(() => 0n),
+      ])
+      const reserve0 = Number(reserves[0]) / 10 ** v3Config.token0.decimals
+      const reserve1 = Number(reserves[1]) / 10 ** v3Config.token1.decimals
+      return {
+        id: v3Config.pair,
+        fee: 0,
+        protocolFee: 0,
+        feeDay: 0,
+        totalSupply: Number(totalSupplyRaw) / 1e18,
+        reserve0,
+        reserve1,
+        tvl: 0,
+        apr: 0,
+        volumeDay: 0,
+        volume7Day: 0,
+        updatedAt: Math.floor(Date.now() / 1000),
+        token0: {
+          id: v3Config.token0.address,
+          decimals: v3Config.token0.decimals,
+          symbol: v3Config.token0.symbol,
+          name: v3Config.token0.name,
+          price: 0,
+          priceFeedId: '',
+          totalSupply: 0,
+        },
+        token1: {
+          id: v3Config.token1.address,
+          decimals: v3Config.token1.decimals,
+          symbol: v3Config.token1.symbol,
+          name: v3Config.token1.name,
+          price: 0,
+          priceFeedId: '',
+          totalSupply: 0,
+        },
+      } as PairRaw
+    },
+    enabled: !!v3Config && !!chainId,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+  })
+
+  const pairRaw = v3Config ? v3PairRaw : pairRes?.pair
+  const isLoading = v3Config ? isLoadingV3 : isLoadingGraphQL
   const pair = useMemo(() => {
     if (!pairRaw || !chainId) return null
     const t0 = pairRaw.token0
     const t1 = pairRaw.token1
-    return new Pair(
+    const built = new Pair(
       new TokenAmount(
         new Token(chainId, checksumAddress(t0!.id as Address), t0!.decimals, t0?.symbol, t0?.name),
         JSBI.BigInt(Math.round(pairRaw.reserve0 * 10 ** t0!.decimals)),
@@ -107,7 +177,14 @@ export default function PoolDetail() {
       ),
       version,
     )
-  }, [pairRaw, chainId, version])
+    // V3 uses a factory registry rather than CREATE2, so SDK-computed
+    // liquidityToken address is wrong. Override with the real pair address
+    // so balanceOf reads hit the right contract.
+    if (version === 3 && pairAddress) {
+      ;(built as any).liquidityToken = new Token(chainId, checksumAddress(pairAddress as Address), 18, 'BF-V3', 'BrownFi V3')
+    }
+    return built
+  }, [pairRaw, chainId, version, pairAddress])
 
   return (
     <div className="w-full" style={{ maxWidth: '1280px', padding: '0 8px' }}>
