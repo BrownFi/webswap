@@ -25,18 +25,7 @@ import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
-
-// V3 hardcoded pools — temporary until V3 indexer is ready
-// Update pair addresses after creating pools on new V3 factory
-const V3_POOLS: Record<number, { pair: string; token0: { address: string; decimals: number; symbol: string; name: string }; token1: { address: string; decimals: number; symbol: string; name: string } }[]> = {
-  [ChainId.BERA_MAINNET]: [
-    {
-      pair: '0x8c177a248011b31ebe6c8e0aac0571ee0a08f8c3',
-      token0: { address: '0x6969696969696969696969696969696969696969', decimals: 18, symbol: 'WBERA', name: 'Wrapped Bera' },
-      token1: { address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', decimals: 18, symbol: 'HONEY', name: 'Honey' },
-    },
-  ],
-}
+import { V3_POOLS } from 'constants/v3Pools'
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
