@@ -148,6 +148,7 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
         deadline: BigNumber.from(deadline.toString()),
         updateData,
         isNativeETH,
+        slippageBps: slippage,
       })
 
       setIsSubmitting(false)
