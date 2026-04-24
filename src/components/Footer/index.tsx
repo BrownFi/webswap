@@ -51,7 +51,7 @@ const Footer = () => {
       >
         {/* Left: Logo + description */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <Link to="/home" className="inline-block">
+          <Link to="/swap" className="inline-block">
             <img src={logoWhite} alt="BrownFi" style={{ width: '132px', height: '32px' }} />
           </Link>
           {/* <p style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '160%', color: '#A1A1A1', margin: 0, maxWidth: '433px' }}>

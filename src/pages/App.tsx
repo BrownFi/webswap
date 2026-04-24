@@ -22,7 +22,6 @@ const Pool = lazy(() => import('./Pool'))
 const PoolFinder = lazy(() => import('./PoolFinder'))
 const AddLiquidity = lazy(() => import('./AddLiquidity'))
 const RemoveLiquidity = lazy(() => import('./RemoveLiquidity'))
-const Home = lazy(() => import('./Home'))
 const PoolDetail = lazy(() => import('./Pool/Detail'))
 
 const BodyWrapper = styled.div`
@@ -63,14 +62,7 @@ export default function App() {
           <Popups />
           <Routes>
             <Route path="/" element={<Navigate to="/swap" replace />} />
-            <Route
-              path="/home"
-              element={
-                <RouteErrorBoundary>
-                  <Home />
-                </RouteErrorBoundary>
-              }
-            />
+            <Route path="/home" element={<Navigate to="/swap" replace />} />
             <Route
               path="/swap"
               element={

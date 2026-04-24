@@ -208,7 +208,7 @@ export default function Header() {
     >
       {/* Left: Logo + Nav */}
       <div className="flex items-center gap-6 max-md:gap-3">
-        <Link to="/home" className="flex items-center shrink-0">
+        <Link to="/swap" className="flex items-center shrink-0">
           <div className="transition-transform duration-300 hover:-rotate-[5deg]">
             <img className="min-w-[120px] w-[120px] lg:w-[142px] lg:min-w-[142px]" src={Logo} alt="logo" />
           </div>
