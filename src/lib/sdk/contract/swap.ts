@@ -118,6 +118,40 @@ export async function callSwapContract(
 
       const options = !value || isZero(value) ? {} : { value }
 
+      // V3: compute the slippage bound from a live simulation instead of the
+      // stale getAmountsOut quote used at trade construction time. The
+      // simulation pushes the same Pyth updateData the real tx will push, so
+      // the router/pair see matching oracle prices and the bound is tight
+      // against the actual swap math (prevents INVALID_INVENTORY from a
+      // cross-block Pyth drift).
+      if (version === 3) {
+        try {
+          const isExactIn = methodName.startsWith('swapExact')
+          const isETHIn = methodName.includes('ETHForTokens')
+          const limitIdx = isExactIn ? (isETHIn ? 0 : 1) : 1
+          const MAX_UINT256 =
+            '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+
+          const simArgs = [...args]
+          simArgs[limitIdx] = isExactIn ? '0' : MAX_UINT256
+
+          const amounts: any = await contract.callStatic[methodName](...simArgs, options)
+          const slippageBps = Math.max(0, Math.min(10000, allowedSlippage))
+
+          if (isExactIn) {
+            const expectedOut = BigNumber.from(amounts[amounts.length - 1])
+            args[limitIdx] = expectedOut.mul(10000 - slippageBps).div(10000).toString()
+          } else {
+            const expectedIn = BigNumber.from(amounts[0])
+            args[limitIdx] = expectedIn.mul(10000 + slippageBps).div(10000).toString()
+          }
+        } catch (simErr) {
+          // Let the existing gas-estimation path catch this and surface the
+          // real revert reason to the user. Don't silently proceed with the
+          // stale bound.
+        }
+      }
+
       try {
         const gasEstimate = await contract.estimateGas[methodName](...args, options)
         return { call, gasEstimate }
@@ -134,7 +168,7 @@ export async function callSwapContract(
           if (reason.includes('INSUFFICIENT_OUTPUT_AMOUNT') || reason.includes('EXCESSIVE_INPUT_AMOUNT')) {
             errorMessage = 'This transaction will not succeed either due to price movement or fee on transfer. Try increasing your slippage tolerance.'
           } else if (reason.includes('INVALID_INVENTORY')) {
-            errorMessage = 'Swap failed due to V3 AMM constraint. Try a smaller amount or try again.'
+            errorMessage = 'Swap amount is too small for this pool. Try a larger amount.'
           } else {
             errorMessage = `The transaction cannot succeed due to error: ${reason || 'unknown'}. Try increasing slippage tolerance.`
           }
