@@ -21,6 +21,7 @@ import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { Loader } from 'components/Loader'
 const PairChartModal = lazy(() => import('components/pool/PairChartModal').then((m) => ({ default: m.PairChartModal })))
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
+import { PoolBalanceBar } from 'components/pool/PoolBalanceBar'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween } from 'components/Row'
 import { isMainnet } from 'connectors'
@@ -211,6 +212,21 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   )}
                 </div>
               )}
+              {!isMainnet && (
+                <div className="mt-1.5" onClick={(e) => e.stopPropagation()}>
+                  <PoolBalanceBar
+                    compact
+                    currency0={shouldReverse ? currency1 : currency0}
+                    currency1={shouldReverse ? currency0 : currency1}
+                    symbol0={getTokenSymbol(shouldReverse ? currency1 : currency0, chainId) ?? ''}
+                    symbol1={getTokenSymbol(shouldReverse ? currency0 : currency1, chainId) ?? ''}
+                    reserve0={Number((shouldReverse ? pair.reserve1 : pair.reserve0).toSignificant(6))}
+                    reserve1={Number((shouldReverse ? pair.reserve0 : pair.reserve1).toSignificant(6))}
+                    price0={shouldReverse ? token1Price : token0Price}
+                    price1={shouldReverse ? token0Price : token1Price}
+                  />
+                </div>
+              )}
             </div>
           </div>
           {/* TVL */}
@@ -264,12 +280,12 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
         {!isMainnet && (
           <div
-            className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2"
+            className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2 justify-center md:justify-start"
             onClick={(e) => e.stopPropagation()}
           >
             <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
             <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
-            <Text>Fee: {formatNumberLambda(devStats.fee, { maximumFractionDigits: 4 })}</Text>
+            {/* Fee is already shown in green under the pair name — drop it here */}
             <Text>
               {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
               {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
