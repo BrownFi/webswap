@@ -1,4 +1,4 @@
-import { JSBI, Pair, Percent } from '@brownfi/sdk'
+import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
 import { useActiveWeb3React } from 'hooks'
 import { useTotalSupply } from 'data/TotalSupply'
@@ -11,6 +11,7 @@ import { currencyId } from 'utils/currencyId'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { usePythPrices } from 'hooks/usePythPrices'
+import { useRestakedPositions } from 'hooks/useRestakedPositions'
 import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
 import ConnectWallet from 'components/ConnectWallet'
 
@@ -32,16 +33,29 @@ export function YourPositionCard({ pair, pairStats }: Props) {
   const userPoolBalance = balanceMap[pair.liquidityToken.address]
   const totalPoolTokens = useTotalSupply(pair.liquidityToken)
 
+  const restakedPositions = useRestakedPositions({ chainId, pair, account })
+  const activeRestaked = restakedPositions.filter(
+    (p) => p.balance && JSBI.greaterThan(p.balance.raw, JSBI.BigInt(0)),
+  )
+
+  const totalLpRaw = JSBI.add(
+    userPoolBalance?.raw ?? JSBI.BigInt(0),
+    activeRestaked.reduce((acc, p) => JSBI.add(acc, p.balance!.raw), JSBI.BigInt(0)),
+  )
+  const totalLp = JSBI.greaterThan(totalLpRaw, JSBI.BigInt(0))
+    ? new TokenAmount(pair.liquidityToken, totalLpRaw)
+    : undefined
+
   const poolTokenPercentage =
-    !!userPoolBalance && !!totalPoolTokens && JSBI.greaterThanOrEqual(totalPoolTokens.raw, userPoolBalance.raw)
-      ? new Percent(userPoolBalance.raw, totalPoolTokens.raw)
+    !!totalLp && !!totalPoolTokens && JSBI.greaterThanOrEqual(totalPoolTokens.raw, totalLp.raw)
+      ? new Percent(totalLp.raw, totalPoolTokens.raw)
       : undefined
 
   const [token0Deposited, token1Deposited] =
-    !!totalPoolTokens && !!userPoolBalance && JSBI.greaterThanOrEqual(totalPoolTokens.raw, userPoolBalance.raw)
+    !!totalPoolTokens && !!totalLp && JSBI.greaterThanOrEqual(totalPoolTokens.raw, totalLp.raw)
       ? [
-          pair.getLiquidityValue(pair.token0, totalPoolTokens, userPoolBalance, false),
-          pair.getLiquidityValue(pair.token1, totalPoolTokens, userPoolBalance, false),
+          pair.getLiquidityValue(pair.token0, totalPoolTokens, totalLp, false),
+          pair.getLiquidityValue(pair.token1, totalPoolTokens, totalLp, false),
         ]
       : [undefined, undefined]
 
@@ -68,8 +82,10 @@ export function YourPositionCard({ pair, pairStats }: Props) {
   const poolChainId = pair.liquidityToken.chainId
   const chainMismatch = !!account && chainId !== poolChainId
 
-  const hasLiquidity =
-    userPoolBalance && JSBI.greaterThan(userPoolBalance.raw, JSBI.BigInt(0))
+  const hasWalletLp =
+    !!userPoolBalance && JSBI.greaterThan(userPoolBalance.raw, JSBI.BigInt(0))
+  const hasStakedLp = activeRestaked.length > 0
+  const hasLiquidity = !!totalLp
   // `userPoolBalance === undefined` means the multicall hasn't completed yet.
   // A completed call — even for a true-zero balance — produces a defined TokenAmount,
   // so this is a reliable gate that covers both the pre-register frame and in-flight fetch.
@@ -116,10 +132,10 @@ export function YourPositionCard({ pair, pairStats }: Props) {
         </>
       ) : (
         <div className="space-y-3">
-          <Row label="LP tokens">
-            {poolTokenPercentage ? (
+          <Row label="Total LP">
+            {poolTokenPercentage && totalLp ? (
               <span>
-                {userPoolBalance ? formatNumber(userPoolBalance.toSignificant(6)) : '0'}
+                {formatNumber(totalLp.toSignificant(6))}
                 <span style={{ color: '#978A80', marginLeft: 6 }}>
                   ({poolTokenPercentage.toFixed(2) === '0.00' ? '0' : poolTokenPercentage.toFixed(2)}%)
                 </span>
@@ -128,6 +144,26 @@ export function YourPositionCard({ pair, pairStats }: Props) {
               <Loader stroke="gray" />
             )}
           </Row>
+
+          {(hasStakedLp || hasWalletLp) && (
+            <div className="pl-3" style={{ borderLeft: '1px solid #2F2823' }}>
+              <div className="space-y-2">
+                {hasWalletLp && (
+                  <SubRow label="In wallet" amount={userPoolBalance!} />
+                )}
+                {activeRestaked.map((p) => (
+                  <SubRow
+                    key={p.config.vaultAddress}
+                    label={`Staked on ${p.config.platform}`}
+                    amount={p.balance!}
+                    actionLabel="Manage ↗"
+                    actionHref={p.config.stakePageUrl}
+                    iconUrl={p.config.iconUrl}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           <Row label={
             <span className="inline-flex items-center gap-1.5">
@@ -183,40 +219,118 @@ export function YourPositionCard({ pair, pairStats }: Props) {
       )}
 
       {account && hasLiquidity && (
-        <div className="pt-3 flex gap-2">
-          <Link
-            to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-            className="no-underline inline-flex items-center justify-center flex-1"
-            style={{
-              background: '#985C2A',
-              borderRadius: '10px',
-              padding: '10px',
-              fontFamily: 'Inter',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#FFFFFF',
-            }}
-          >
-            Add
-          </Link>
-          <Link
-            to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
-            className="no-underline inline-flex items-center justify-center flex-1"
-            style={{
-              background: 'transparent',
-              border: '1px solid #493E35',
-              borderRadius: '10px',
-              padding: '10px',
-              fontFamily: 'Inter',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#FBFBFD',
-            }}
-          >
-            Remove
-          </Link>
+        <div className="pt-3 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Link
+              to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+              className="no-underline inline-flex items-center justify-center flex-1"
+              style={{
+                background: '#985C2A',
+                borderRadius: '10px',
+                padding: '10px',
+                fontFamily: 'Inter',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#FFFFFF',
+              }}
+            >
+              Add
+            </Link>
+            {hasWalletLp ? (
+              <Link
+                to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
+                className="no-underline inline-flex items-center justify-center flex-1"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #493E35',
+                  borderRadius: '10px',
+                  padding: '10px',
+                  fontFamily: 'Inter',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#FBFBFD',
+                }}
+              >
+                Remove
+              </Link>
+            ) : (
+              <span
+                title="Your LP is staked. Unstake on the platform below first, then return here to remove liquidity."
+                className="inline-flex items-center justify-center flex-1 cursor-not-allowed"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #2F2823',
+                  borderRadius: '10px',
+                  padding: '10px',
+                  fontFamily: 'Inter',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#6B6059',
+                }}
+              >
+                Remove
+              </span>
+            )}
+          </div>
+          {!hasWalletLp && hasStakedLp && (
+            <div
+              className="text-center"
+              style={{
+                fontFamily: 'Inter',
+                fontSize: '11px',
+                color: '#978A80',
+                lineHeight: '16px',
+              }}
+            >
+              Unstake your LP first to enable Remove.
+            </div>
+          )}
         </div>
       )}
+    </div>
+  )
+}
+
+function SubRow({
+  label,
+  amount,
+  actionLabel,
+  actionHref,
+  iconUrl,
+}: {
+  label: string
+  amount: TokenAmount
+  actionLabel?: string
+  actionHref?: string
+  iconUrl?: string
+}) {
+  return (
+    <div className="flex justify-between items-center" style={{ fontFamily: 'Inter', fontSize: '12px' }}>
+      <span className="inline-flex items-center gap-1.5" style={{ color: '#978A80' }}>
+        {iconUrl && (
+          <img src={iconUrl} alt="" style={{ width: 14, height: 14, borderRadius: 4 }} />
+        )}
+        {label}
+      </span>
+      <span className="inline-flex items-center gap-2" style={{ color: '#FBFBFD' }}>
+        {formatNumber(amount.toSignificant(6))}
+        {actionHref && (
+          <a
+            href={actionHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="no-underline hover:opacity-80"
+            style={{
+              fontFamily: 'Inter',
+              fontSize: '11px',
+              fontWeight: 500,
+              color: '#D8A072',
+            }}
+          >
+            {actionLabel ?? 'Manage ↗'}
+          </a>
+        )}
+      </span>
     </div>
   )
 }
