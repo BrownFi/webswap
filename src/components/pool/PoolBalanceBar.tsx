@@ -47,17 +47,13 @@ export function PoolBalanceBar({
             style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 11, color: '#978A80' }}
           >
             <CurrencyLogo currency={currency0} size="12px" />
-            <span className="truncate">
-              {formatNumber(reserve0, { maximumFractionDigits: 2 })} {symbol0}
-            </span>
+            <span className="truncate">{pct0.toFixed(1)}%</span>
           </span>
           <span
             className="inline-flex items-center gap-1 min-w-0 justify-end"
             style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 11, color: '#978A80' }}
           >
-            <span className="truncate">
-              {formatNumber(reserve1, { maximumFractionDigits: 2 })} {symbol1}
-            </span>
+            <span className="truncate">{pct1.toFixed(1)}%</span>
             <CurrencyLogo currency={currency1} size="12px" />
           </span>
         </div>
