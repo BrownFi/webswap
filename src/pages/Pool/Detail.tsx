@@ -203,19 +203,16 @@ function PoolDetailInner({
 
   const chainMismatch = walletChainId && walletChainId !== chainId
 
-  // Spot price from reserves + USD values from pair stats
+  // USD value breakdown for the pool balance bar
   const reserve0Num = Number(pair.reserve0.toSignificant(8)) || 0
   const reserve1Num = Number(pair.reserve1.toSignificant(8)) || 0
   const price0 = Number(pairRaw.token0?.price) || 0
   const price1 = Number(pairRaw.token1?.price) || 0
-  const rate0To1 = reserve0Num > 0 ? reserve1Num / reserve0Num : 0
-  const rate1To0 = reserve1Num > 0 ? reserve0Num / reserve1Num : 0
   const value0 = reserve0Num * price0
   const value1 = reserve1Num * price1
   const totalValue = value0 + value1
   const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
   const pct1 = 100 - pct0
-  const [flipRate, setFlipRate] = useState(false)
 
   return (
         <>
@@ -293,45 +290,6 @@ function PoolDetailInner({
             </div>
           )}
 
-          {!isMainnet && (rate0To1 > 0 || rate1To0 > 0) && (
-            <button
-              onClick={() => setFlipRate((v) => !v)}
-              className="inline-flex items-center gap-2 self-start cursor-pointer"
-              style={{
-                background: '#2F2823',
-                border: '1px solid #493E35',
-                borderRadius: '10px',
-                padding: '8px 12px',
-                fontFamily: 'Inter',
-                fontSize: '13px',
-                color: '#FBFBFD',
-              }}
-            >
-              {flipRate ? (
-                <>
-                  <span>1 {symbol1} ={' '}</span>
-                  <span style={{ color: '#D8A072', fontWeight: 600 }}>
-                    {formatNumber(rate1To0, { maximumFractionDigits: 6 })} {symbol0}
-                  </span>
-                  {price1 > 0 && <span style={{ color: '#978A80' }}>({formatPrice(price1)})</span>}
-                </>
-              ) : (
-                <>
-                  <span>1 {symbol0} ={' '}</span>
-                  <span style={{ color: '#D8A072', fontWeight: 600 }}>
-                    {formatNumber(rate0To1, { maximumFractionDigits: 6 })} {symbol1}
-                  </span>
-                  {price0 > 0 && <span style={{ color: '#978A80' }}>({formatPrice(price0)})</span>}
-                </>
-              )}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-                <polyline points="17 1 21 5 17 9" />
-                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                <polyline points="7 23 3 19 7 15" />
-                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-              </svg>
-            </button>
-          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
@@ -430,48 +388,6 @@ function PoolDetailInner({
                   />
                 )}
               </div>
-            )}
-
-            {/* Current price + flip — desktop only, beta only */}
-            {!isMainnet && (rate0To1 > 0 || rate1To0 > 0) && (
-              <button
-                onClick={() => setFlipRate((v) => !v)}
-                className="hidden lg:inline-flex items-center gap-2 self-start cursor-pointer"
-                style={{
-                  background: '#2F2823',
-                  border: '1px solid #493E35',
-                  borderRadius: '10px',
-                  padding: '8px 12px',
-                  fontFamily: 'Inter',
-                  fontSize: '13px',
-                  color: '#FBFBFD',
-                }}
-                title="Flip"
-              >
-                {flipRate ? (
-                  <>
-                    <span>1 {symbol1} ={' '}</span>
-                    <span style={{ color: '#D8A072', fontWeight: 600 }}>
-                      {formatNumber(rate1To0, { maximumFractionDigits: 6 })} {symbol0}
-                    </span>
-                    {price1 > 0 && <span style={{ color: '#978A80' }}>({formatPrice(price1)})</span>}
-                  </>
-                ) : (
-                  <>
-                    <span>1 {symbol0} ={' '}</span>
-                    <span style={{ color: '#D8A072', fontWeight: 600 }}>
-                      {formatNumber(rate0To1, { maximumFractionDigits: 6 })} {symbol1}
-                    </span>
-                    {price0 > 0 && <span style={{ color: '#978A80' }}>({formatPrice(price0)})</span>}
-                  </>
-                )}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-                  <polyline points="17 1 21 5 17 9" />
-                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                  <polyline points="7 23 3 19 7 15" />
-                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                </svg>
-              </button>
             )}
 
             {showSettings && (
