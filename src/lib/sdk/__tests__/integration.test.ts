@@ -322,7 +322,7 @@ describe('API Integration: GraphQL Indexer', () => {
 
 describe('SDK Constants: Address validity', () => {
   it('all FACTORY_ADDRESS entries are valid addresses', () => {
-    for (const [chainId, address] of Object.entries(FACTORY_ADDRESS)) {
+    for (const [, address] of Object.entries(FACTORY_ADDRESS)) {
       if (!address) continue // skip chains with empty placeholder
       expect(address.startsWith('0x')).toBe(true)
       expect(address.length).toBeGreaterThanOrEqual(42)
@@ -330,7 +330,7 @@ describe('SDK Constants: Address validity', () => {
   })
 
   it('all ROUTER_ADDRESS entries are valid addresses', () => {
-    for (const [chainId, address] of Object.entries(ROUTER_ADDRESS)) {
+    for (const [, address] of Object.entries(ROUTER_ADDRESS)) {
       if (!address) continue // skip chains with empty placeholder
       expect(address.startsWith('0x')).toBe(true)
       expect(address.length).toBeGreaterThanOrEqual(42)
@@ -338,13 +338,13 @@ describe('SDK Constants: Address validity', () => {
   })
 
   it('all RPC_URLS are valid URLs', () => {
-    for (const [chainId, url] of Object.entries(RPC_URLS)) {
+    for (const [, url] of Object.entries(RPC_URLS)) {
       expect(url.startsWith('http')).toBe(true)
     }
   })
 
   it('all WETH tokens have valid addresses', () => {
-    for (const [chainId, token] of Object.entries(WETH)) {
+    for (const [, token] of Object.entries(WETH)) {
       if (token) {
         expect(token.address.startsWith('0x')).toBe(true)
         expect(token.decimals).toBe(18)

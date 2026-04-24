@@ -23,7 +23,7 @@ describe('utils', () => {
       expect(getEtherscanLink(1, 'abc', 'address')).toEqual('https://etherscan.io/address/abc')
     })
     it('unrecognized chain id defaults to mainnet', () => {
-      expect(getEtherscanLink(2, 'abc', 'address')).toEqual('https://etherscan.io/address/abc')
+      expect(getEtherscanLink(2 as ChainId, 'abc', 'address')).toEqual('https://etherscan.io/address/abc')
     })
     it('sepolia', () => {
       expect(getEtherscanLink(ChainId.SEPOLIA, 'abc', 'address')).toEqual('https://sepolia.etherscan.io/address/abc')
