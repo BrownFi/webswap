@@ -299,6 +299,9 @@ export async function addLiquidity(
       amountMaxOther.raw.toString(),
       amountsMin[tokenBIsETH ? Field.CURRENCY_A : Field.CURRENCY_B].toString(),
       amountsMin[tokenBIsETH ? Field.CURRENCY_B : Field.CURRENCY_A].toString(),
+      // V3 router takes an extra minLiquidity before `to`. We don't expose
+      // a minimum LP value yet, so pass 0 to match the "no minimum" semantics.
+      ...(version === 3 ? ['0'] : []),
       account,
       deadline.toHexString(),
     ]
@@ -334,6 +337,8 @@ export async function addLiquidity(
       amountMaxB.raw.toString(),
       amountsMin[Field.CURRENCY_A].toString(),
       amountsMin[Field.CURRENCY_B].toString(),
+      // V3 router takes an extra minLiquidity before `to`; see note above.
+      ...(version === 3 ? ['0'] : []),
       account,
       deadline.toHexString(),
     ]
@@ -349,6 +354,34 @@ export async function addLiquidity(
       args.push(updateData)
     }
     value = null
+  }
+
+  // V3 slippage protection on the LP output. Simulate with minLiquidity=0
+  // (the slot we just reserved in args), read the expected LP, then enforce
+  // `(1 - allowedSlippage)` on it. Pyth prices move between simulation and
+  // inclusion, so this prevents the user from receiving fewer LP tokens than
+  // they bargained for — same model `amountAMin` uses for the inputs.
+  if (version === 3) {
+    const isEthPair = currencyA === ETHER || currencyB === ETHER
+    const methodName = isEthPair ? 'addLiquidityETH' : 'addLiquidity'
+    // Slot of minLiquidity in args (right before `to`).
+    const minLpIndex = isEthPair ? 4 : 6
+    try {
+      const sim = await router.callStatic[methodName](
+        ...args,
+        ...(value ? [{ value }] : [{}]),
+      )
+      // Return tuple: [amountA/Token, amountB/ETH, liquidity]
+      const expectedLp: BigNumber = BigNumber.from(sim?.liquidity ?? sim?.[2] ?? 0)
+      const slippageBpsSafe = Math.max(0, Math.min(10000, allowedSlippage))
+      const minLp = expectedLp.mul(10000 - slippageBpsSafe).div(10000)
+      args[minLpIndex] = minLp.toString()
+    } catch (e) {
+      // If simulation fails, the real tx will too — surface the same error
+      // rather than silently shipping a 0-minimum tx that might mint bad LP.
+      console.error('addLiquidity simulation failed:', e)
+      throw e
+    }
   }
 
   try {

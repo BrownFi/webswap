@@ -10,13 +10,14 @@ import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } fro
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
 import { ROUTER_ADDRESS_V3, RPC_URLS } from 'lib/sdk/constants/addresses'
 
-// V3 Router ABI — zap + quote functions only
+// V3 Router ABI — zap + quote functions only (updated for the new V3 router:
+// zapIn/zapInETH added `minLiquidity`, zapOut/zapOutETH added `updateData`).
 const V3_ZAP_ABI = [
   { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }], name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function' },
-  { inputs: [{ name: 'tokenIn', type: 'address' }, { name: 'tokenOther', type: 'address' }, { name: 'amountIn', type: 'uint256' }, { name: 'amountOtherMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapIn', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
-  { inputs: [{ name: 'token', type: 'address' }, { name: 'amountTokenMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapInETH', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'payable', type: 'function' },
-  { inputs: [{ name: 'tokenA', type: 'address' }, { name: 'tokenB', type: 'address' }, { name: 'tokenOut', type: 'address' }, { name: 'liquidity', type: 'uint256' }, { name: 'amountMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }], name: 'zapOut', outputs: [{ name: 'amount', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
-  { inputs: [{ name: 'token', type: 'address' }, { name: 'liquidity', type: 'uint256' }, { name: 'amountMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }], name: 'zapOutETH', outputs: [{ name: 'amountETH', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
+  { inputs: [{ name: 'tokenIn', type: 'address' }, { name: 'tokenOther', type: 'address' }, { name: 'amountIn', type: 'uint256' }, { name: 'amountOtherMin', type: 'uint256' }, { name: 'minLiquidity', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapIn', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
+  { inputs: [{ name: 'token', type: 'address' }, { name: 'amountTokenMin', type: 'uint256' }, { name: 'minLiquidity', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapInETH', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'payable', type: 'function' },
+  { inputs: [{ name: 'tokenA', type: 'address' }, { name: 'tokenB', type: 'address' }, { name: 'tokenOut', type: 'address' }, { name: 'liquidity', type: 'uint256' }, { name: 'amountMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapOut', outputs: [{ name: 'amount', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
+  { inputs: [{ name: 'token', type: 'address' }, { name: 'liquidity', type: 'uint256' }, { name: 'amountMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapOutETH', outputs: [{ name: 'amountETH', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
 ] as const
 
 /**
@@ -130,6 +131,7 @@ export async function executeV3ZapIn({
   deadline,
   updateData,
   isNativeETH,
+  slippageBps = 50,
 }: {
   chainId: ChainId
   library: any
@@ -141,30 +143,43 @@ export async function executeV3ZapIn({
   deadline: BigNumber
   updateData: string
   isNativeETH: boolean
+  slippageBps?: number
 }): Promise<TransactionResponse> {
   const routerAddress = getRouterAddress(chainId, 3)
   const signer = getSigner(library, account)
   if (!signer) throw new Error('No signer available')
 
   const router = new Contract(routerAddress, V3_ZAP_ABI, signer)
+  const slippageSafe = Math.max(0, Math.min(10000, slippageBps))
+  const applySlip = (expected: BigNumber) => expected.mul(10000 - slippageSafe).div(10000)
 
   if (isNativeETH) {
-    // zapInETH(token, amountTokenMin, to, deadline, updateData) payable
+    // zapInETH(token, amountTokenMin, minLiquidity, to, deadline, updateData) payable
+    // Simulate with minLiquidity=0 to learn the actual LP out, then enforce slippage.
+    const simLp: BigNumber = await router.callStatic.zapInETH(
+      tokenOther, amountOtherMin, '0', account, deadline.toHexString(), updateData,
+      { value: amountIn },
+    )
+    const minLp = applySlip(BigNumber.from(simLp)).toString()
     const gas = await router.estimateGas.zapInETH(
-      tokenOther, amountOtherMin, account, deadline.toHexString(), updateData,
+      tokenOther, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
       { value: amountIn }
     )
     return router.zapInETH(
-      tokenOther, amountOtherMin, account, deadline.toHexString(), updateData,
+      tokenOther, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
       { value: amountIn, gasLimit: addGasMargin(gas) }
     )
   } else {
-    // zapIn(tokenIn, tokenOther, amountIn, amountOtherMin, to, deadline, updateData)
+    // zapIn(tokenIn, tokenOther, amountIn, amountOtherMin, minLiquidity, to, deadline, updateData)
+    const simLp: BigNumber = await router.callStatic.zapIn(
+      tokenIn, tokenOther, amountIn, amountOtherMin, '0', account, deadline.toHexString(), updateData,
+    )
+    const minLp = applySlip(BigNumber.from(simLp)).toString()
     const gas = await router.estimateGas.zapIn(
-      tokenIn, tokenOther, amountIn, amountOtherMin, account, deadline.toHexString(), updateData,
+      tokenIn, tokenOther, amountIn, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
     )
     return router.zapIn(
-      tokenIn, tokenOther, amountIn, amountOtherMin, account, deadline.toHexString(), updateData,
+      tokenIn, tokenOther, amountIn, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
       { gasLimit: addGasMargin(gas) }
     )
   }
@@ -202,15 +217,18 @@ export async function executeV3ZapOut({
 
   const router = new Contract(routerAddress, V3_ZAP_ABI, signer)
 
+  // zapOut/zapOutETH now require Pyth updateData — build a fresh blob for both tokens.
+  const updateData = await buildV3UpdateData([tokenA, tokenB], chainId)
+
   if (isNativeETH) {
-    // zapOutETH(token, liquidity, amountMin, to, deadline)
+    // zapOutETH(token, liquidity, amountMin, to, deadline, updateData)
     // token = the non-ETH token in the pair
     const token = tokenA === WETH[chainId]?.address ? tokenB : tokenA
-    const gas = await router.estimateGas.zapOutETH(token, liquidity, amountMin, account, deadline.toHexString())
-    return router.zapOutETH(token, liquidity, amountMin, account, deadline.toHexString(), { gasLimit: addGasMargin(gas) })
+    const gas = await router.estimateGas.zapOutETH(token, liquidity, amountMin, account, deadline.toHexString(), updateData)
+    return router.zapOutETH(token, liquidity, amountMin, account, deadline.toHexString(), updateData, { gasLimit: addGasMargin(gas) })
   } else {
-    // zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, to, deadline)
-    const gas = await router.estimateGas.zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString())
-    return router.zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), { gasLimit: addGasMargin(gas) })
+    // zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, to, deadline, updateData)
+    const gas = await router.estimateGas.zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData)
+    return router.zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData, { gasLimit: addGasMargin(gas) })
   }
 }

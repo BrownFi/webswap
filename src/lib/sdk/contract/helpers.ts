@@ -10,9 +10,11 @@ import { CurrencyAmount } from '../entities/fractions/currencyAmount'
 // ABI stubs - Phase B will add real ABIs
 import IRouterABI from 'constants/abis/IRouter.json'
 import IRouterV3ABI from 'constants/abis/IRouterV3.json'
+import IRouterV3LatestABI from 'constants/abis/IRouterV3Latest.json'
 const IRouterV1: any[] = IRouterABI
 const IRouterV2: any[] = IRouterV3ABI  // V2 router also has updateData param on swap/liquidity functions
-const IRouterV3: any[] = IRouterV3ABI
+// V3 router got a new minLiquidity param on add[Liquidity/ETH] — use a distinct ABI.
+const IRouterV3: any[] = IRouterV3LatestABI
 const IRouterWithPrice: any[] = IRouterABI
 
 export function isZero(hexNumberString: string): boolean {
