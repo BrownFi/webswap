@@ -53,37 +53,45 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
   }
 
   const isBeta = useMemo(() => {
-    const isNotPairBeta = ([
+    // Pairs that have graduated out of "beta" — promoted production pools.
+    // Addresses are normalized to lowercase for case-insensitive comparison;
+    // pair addresses arrive in mixed casing depending on source (CREATE2,
+    // checksum, indexer, URL param), and the previous `Array.includes` check
+    // was silently case-sensitive — same pair was beta on the list but not on
+    // the detail page (or vice-versa) depending on which path built it.
+    const promoted = new Set([
       // Bera Mainnet
-      '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C', // WBERA/HONEY
-      '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc', // USDC.e/WBERA
-      '0x8AD2af4375245A260EE13aD5FfA7A8cD14ecBB99', // WETH/HONEY
-      '0x85061AA68F32B9176784dbD57a2A3d17e6F88Ac9', // WETH/WBERA
-      '0xdc33131c0DDfD4f551879fBF20449975f1BE6f97', // WBTC/WETH
-      '0xC118dFd4ceEea0A10C79AeA77921BAebe9B259A5', // WBTC/HONEY
-      '0x1C84a73ed3918EA5Ca18564A8206a28119082d9F', // WBTC/WBERA
-      '0xFC5b86437A50e9B4ae0f20Ef9B50f8D79B053121', // WBERA/LBGT
+      '0xd932c344e21ef6c3a94971bf4d4cc71304e2a66c', // WBERA/HONEY
+      '0xd57da672354905b9e42df077df77e554dc5fd1cc', // USDC.e/WBERA
+      '0x8ad2af4375245a260ee13ad5ffa7a8cd14ecbb99', // WETH/HONEY
+      '0x85061aa68f32b9176784dbd57a2a3d17e6f88ac9', // WETH/WBERA
+      '0xdc33131c0ddfd4f551879fbf20449975f1be6f97', // WBTC/WETH
+      '0xc118dfd4ceeea0a10c79aea77921baebe9b259a5', // WBTC/HONEY
+      '0x1c84a73ed3918ea5ca18564a8206a28119082d9f', // WBTC/WBERA
+      '0xfc5b86437a50e9b4ae0f20ef9b50f8d79b053121', // WBERA/LBGT
       // Base Mainnet
-      '0xdC46421B43688FdDBB6030aaE761385782e84905', // WETH/USDC
+      '0xdc46421b43688fddbb6030aae761385782e84905', // WETH/USDC
       // Hyper EVM Mainnet
-      '0x122524E1c403739bd33Ec54d606DDc287117B0A6', // WHYPE/USDT
-      '0x73F341882dba17841d268D10c968855672F99000', // WHYPE/UETH
-      '0x4AEc17532B4Cb741B515E5bD4D031390A3d82318', // WHYPE/UBTC
-      '0xcc920076d4DC3EEA5CA173414AB9135963b00F67', // WHYPE/USDC
+      '0x122524e1c403739bd33ec54d606ddc287117b0a6', // WHYPE/USDT
+      '0x73f341882dba17841d268d10c968855672f99000', // WHYPE/UETH
+      '0x4aec17532b4cb741b515e5bd4d031390a3d82318', // WHYPE/UBTC
+      '0xcc920076d4dc3eea5ca173414ab9135963b00f67', // WHYPE/USDC
       // LINEA Mainnet
-      '0xA87E2c65F2b79164bab690Ec6808431D8c419598', // USDC/WETH
-      '0xeC029CED99314ff39d59a121b60aDfd1FDde4604', // USDC/LINEA
-      '0xaFDbF57C83c55B1813a140b087C502d47fb469A4', // USDT/WETH
-      '0xA3805eb1b8FAD35c2cFc6C148073493F316e3489', // LINEA/WETH
-      '0x679e84FB0b5F922AaaA9e1d06cb044110A603852', // WBTC/WETH
-      '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT
-      // Arbritrum Mainnet
-      '0x9106eeF158990574f13fF631b730D5Bf16d99139', // WETH/USDC
-      '0xcA138f5755225d887655B30961e1E3D8C2010A0f', // WETH/USDT
-    ] as string[]).includes(pair?.liquidityToken.address as string)
+      '0xa87e2c65f2b79164bab690ec6808431d8c419598', // USDC/WETH
+      '0xec029ced99314ff39d59a121b60adfd1fdde4604', // USDC/LINEA
+      '0xafdbf57c83c55b1813a140b087c502d47fb469a4', // USDT/WETH
+      '0xa3805eb1b8fad35c2cfc6c148073493f316e3489', // LINEA/WETH
+      '0x679e84fb0b5f922aaaa9e1d06cb044110a603852', // WBTC/WETH
+      '0x4ede02365c2564422ff3fc297000fab082453d7c', // USDC/USDT
+      // Arbitrum Mainnet
+      '0x9106eef158990574f13ff631b730d5bf16d99139', // WETH/USDC
+      '0xca138f5755225d887655b30961e1e3d8c2010a0f', // WETH/USDT
+    ])
+    const pairAddr = pair?.liquidityToken.address?.toLowerCase()
+    const isPromoted = pairAddr ? promoted.has(pairAddr) : false
 
-    return (version === 2 || version === 3) && !isNotPairBeta
-  }, [chainId, pair?.liquidityToken.address, version])
+    return (version === 2 || version === 3) && !isPromoted
+  }, [pair?.liquidityToken.address, version])
 
   const enableGraphQL = useMemo(() => {
     return (

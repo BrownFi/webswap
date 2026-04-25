@@ -219,7 +219,7 @@ function PoolDetailInner({
   chainId: number
 }) {
   const { chainId: walletChainId, account } = useActiveWeb3React()
-  const { version, isBeta } = useVersion({ chainId })
+  const { version, isBeta } = useVersion({ chainId, pair })
   const navigate = useNavigate()
 
   // Detect wallet chain CHANGE (not initial mismatch). If user actively
@@ -295,9 +295,9 @@ function PoolDetailInner({
         <>
         {/* Mobile-only section: pair title + dev stats + rate, always on top */}
         <div className="lg:hidden flex flex-col gap-3 mt-4 mb-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={36} />
-            <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '22px', color: '#FBFBFD' }}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={26} margin />
+            <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>
               {symbol0} / {symbol1}
             </span>
             <span
@@ -337,10 +337,17 @@ function PoolDetailInner({
               href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
               target="_blank"
               rel="noreferrer"
-              className="hover:underline inline-flex items-center gap-1"
-              style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80', marginLeft: 'auto' }}
+              className="hover:underline inline-flex items-center gap-1 ml-auto"
+              style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80' }}
+              title={`View ${shortenAddress(pair.liquidityToken.address)} on explorer`}
             >
-              {shortenAddress(pair.liquidityToken.address)}
+              {/* Address text hidden on mobile — icon-only carries the link */}
+              <span className="hidden sm:inline">{shortenAddress(pair.liquidityToken.address)}</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
             </a>
           </div>
 
@@ -421,7 +428,19 @@ function PoolDetailInner({
                 {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
               </span>
               {isBeta && (
-                <span style={{ background: '#f97316', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', color: '#fff' }}>
+                <span
+                  style={{
+                    background: '#985C2A',
+                    border: '1px solid #B47140',
+                    borderRadius: '999px',
+                    padding: '3px 10px',
+                    fontFamily: 'Inter',
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: '#FBFBFD',
+                    letterSpacing: '0.04em',
+                  }}
+                >
                   Beta
                 </span>
               )}
@@ -499,7 +518,7 @@ function PoolDetailInner({
                     <thead style={{ color: '#978A80' }}>
                       <tr>
                         <th style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Time</th>
-                        <th style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Type</th>
+                        <th className="hidden md:table-cell" style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Type</th>
                         <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol0}</th>
                         <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol1}</th>
                         <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>Tx</th>
@@ -509,18 +528,39 @@ function PoolDetailInner({
                       {(userTxs ?? []).map((tx) => {
                         const desc =
                           tx.kind === 'Mint'
-                            ? { type: 'Add', color: '#83CF84' }
+                            ? { type: 'Add', icon: '+', color: '#83CF84' }
                             : tx.kind === 'Burn'
-                            ? { type: 'Remove', color: '#E57373' }
+                            ? { type: 'Remove', icon: '−', color: '#E57373' }
                             : tx.amount0In > 0
-                            ? { type: `Swap ${symbol0} → ${symbol1}`, color: '#D8A072' }
-                            : { type: `Swap ${symbol1} → ${symbol0}`, color: '#D8A072' }
+                            ? { type: `Swap ${symbol0} → ${symbol1}`, icon: '↔', color: '#D8A072' }
+                            : { type: `Swap ${symbol1} → ${symbol0}`, icon: '↔', color: '#D8A072' }
                         const amt0 = tx.amount0In + tx.amount0Out
                         const amt1 = tx.amount1In + tx.amount1Out
                         return (
                           <tr key={tx.id} style={{ borderTop: '1px solid #2F2823' }}>
-                            <td style={{ padding: '10px 8px' }}>{secondsToAgo(tx.secondsAgo)}</td>
-                            <td style={{ padding: '10px 8px', color: desc.color, fontWeight: 500 }}>{desc.type}</td>
+                            <td style={{ padding: '10px 8px' }}>
+                              <span className="inline-flex items-center gap-1.5">
+                                {/* Mobile-only type icon — desktop has its own column */}
+                                <span
+                                  className="md:hidden inline-flex items-center justify-center"
+                                  title={desc.type}
+                                  style={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '50%',
+                                    background: `${desc.color}22`,
+                                    color: desc.color,
+                                    fontWeight: 700,
+                                    fontSize: 12,
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  {desc.icon}
+                                </span>
+                                {secondsToAgo(tx.secondsAgo)}
+                              </span>
+                            </td>
+                            <td className="hidden md:table-cell" style={{ padding: '10px 8px', color: desc.color, fontWeight: 500 }}>{desc.type}</td>
                             <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt0, { maximumFractionDigits: 4 })}</td>
                             <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt1, { maximumFractionDigits: 4 })}</td>
                             <td style={{ padding: '10px 8px', textAlign: 'right' }}>
