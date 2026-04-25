@@ -186,9 +186,26 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               <CurrencyLogo currency={currency1} size="28px" style={{ marginLeft: '-8px' }} />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-[16px] sm:text-[20px]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '30px', color: '#FBFBFD', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
-              </span>
+              <div className="inline-flex items-center gap-2.5 max-w-full">
+                <span className="text-[16px] sm:text-[20px]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '30px', color: '#FBFBFD', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
+                </span>
+                <a
+                  href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="hover:opacity-80 shrink-0 inline-flex items-center"
+                  style={{ color: '#978A80' }}
+                  title={`View pair on ${getScanText(chainId)}`}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '24px', letterSpacing: '-0.02em', color: '#83CF84' }}>
                   {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
