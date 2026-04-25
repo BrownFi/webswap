@@ -351,7 +351,6 @@ function PoolDetailInner({
             >
               <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
               <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
-              <span>Fee: {formatNumberLambda(devStats.fee, { maximumFractionDigits: 4 })}</span>
               <span>
                 {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
                 {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
@@ -451,8 +450,7 @@ function PoolDetailInner({
               >
                 <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
                 <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
-                <span>Fee: {formatNumberLambda(devStats.fee, { maximumFractionDigits: 4 })}</span>
-                <span>
+                  <span>
                   {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
                   {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
                 </span>
@@ -562,41 +560,75 @@ function PoolDetailInner({
 
           {/* Right sidebar */}
           <div className="flex flex-col gap-4 order-1 lg:order-2">
-            {/* APR — beta/non-mainnet only */}
-            {!isMainnet && (
-              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
-                <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>APR</div>
-                <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#83CF84', marginTop: '4px' }}>
-                  {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '—'}
-                </div>
-              </div>
-            )}
+            {(() => {
+              const cardBase = 'p-4 lg:p-[23px] text-center lg:text-left'
+              const cardStyle = { background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' } as const
+              const labelCls = 'text-[13px] lg:text-[14px]'
+              const valueCls = 'text-[22px] lg:text-[32px]'
 
-            {/* 24h Fees / TVL (always, white) */}
-            <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
-              <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>24h Fees / TVL</div>
-              <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#FBFBFD', marginTop: '4px' }}>
-                {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '—'}
-              </div>
-            </div>
+              const aprCard = !isMainnet ? (
+                <div key="apr" className={cardBase} style={cardStyle}>
+                  <div className={labelCls} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>APR</div>
+                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '4px' }}>
+                    {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '—'}
+                  </div>
+                </div>
+              ) : null
 
-            {/* Incentive APR (only if > 0) */}
-            {incentiveApr > 0 && (
-              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '23px' }}>
-                <div className="flex items-center gap-2" style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80' }}>
-                  Incentive APR
-                  {incentiveIcon && (
-                    <img src={incentiveIcon} alt="BGT" style={{ width: '18px', height: '18px', borderRadius: '50%' }} />
-                  )}
+              const feesTvlCard = (
+                <div key="fees" className={cardBase} style={cardStyle}>
+                  <div className={labelCls} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>24h Fees / TVL</div>
+                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '4px' }}>
+                    {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '—'}
+                  </div>
                 </div>
-                <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '32px', color: '#83CF84', marginTop: '4px' }}>
-                  +{formatNumber(incentiveApr, { maximumFractionDigits: 2 })}%
+              )
+
+              const incentiveCard = incentiveApr > 0 ? (
+                <div key="incentive" className={cardBase} style={cardStyle}>
+                  <div className={`flex items-center justify-center lg:justify-start gap-2 ${labelCls}`} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                    Incentive APR
+                    {incentiveIcon && (
+                      <img src={incentiveIcon} alt="BGT" style={{ width: '18px', height: '18px', borderRadius: '50%' }} />
+                    )}
+                  </div>
+                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '4px' }}>
+                    +{formatNumber(incentiveApr, { maximumFractionDigits: 2 })}%
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : null
+
+              const count = 1 + (aprCard ? 1 : 0) + (incentiveCard ? 1 : 0)
+
+              // Layout rule (mobile; desktop keeps vertical stack via lg:contents):
+              //   1 card  → full width
+              //   2 cards → side by side in a 2-col grid
+              //   3 cards → 24h Fees/TVL on its own row, APR + Incentive side by side
+              if (count === 3) {
+                return (
+                  <>
+                    {feesTvlCard}
+                    <div className="grid grid-cols-2 gap-4 lg:contents">
+                      {aprCard}
+                      {incentiveCard}
+                    </div>
+                  </>
+                )
+              }
+              if (count === 2) {
+                return (
+                  <div className="grid grid-cols-2 gap-4 lg:contents">
+                    {aprCard}
+                    {feesTvlCard}
+                    {incentiveCard}
+                  </div>
+                )
+              }
+              return feesTvlCard
+            })()}
 
             {/* Stats */}
-            <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
                 Stats
               </div>
@@ -661,10 +693,10 @@ function StatRow({
   children?: React.ReactNode
 }) {
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <div style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>{label}</div>
+    <div className="mb-3 lg:mb-4">
+      <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>{label}</div>
       {value !== undefined && (
-        <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '22px', color: '#FBFBFD', marginTop: '2px' }}>
+        <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
           {value}
         </div>
       )}
