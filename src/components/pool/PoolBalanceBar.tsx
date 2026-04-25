@@ -47,13 +47,13 @@ export function PoolBalanceBar({
             style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 11, color: '#978A80' }}
           >
             <CurrencyLogo currency={currency0} size="12px" />
-            <span className="truncate">{pct0.toFixed(1)}%</span>
+            <span className="truncate">{pct0.toFixed(2)}%</span>
           </span>
           <span
             className="inline-flex items-center gap-1 min-w-0 justify-end"
             style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 11, color: '#978A80' }}
           >
-            <span className="truncate">{pct1.toFixed(1)}%</span>
+            <span className="truncate">{pct1.toFixed(2)}%</span>
             <CurrencyLogo currency={currency1} size="12px" />
           </span>
         </div>
@@ -99,10 +99,10 @@ export function PoolBalanceBar({
 
       <div className="flex items-center justify-between">
         <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 12, color: '#D8A072' }}>
-          {pct0.toFixed(1)}%
+          {pct0.toFixed(2)}%
         </span>
         <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 12, color: '#6FB3E6' }}>
-          {pct1.toFixed(1)}%
+          {pct1.toFixed(2)}%
         </span>
       </div>
     </div>

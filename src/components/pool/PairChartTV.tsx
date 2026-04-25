@@ -140,7 +140,21 @@ const PairChartTVInner = ({ pair }: Props) => {
     const container = containerRef.current
     if (!container) return
 
+    // Smart Y-axis formatter — abbreviate large magnitudes (K/M/B), keep
+    // small prices (e.g. 0.45) readable with 2-4 decimals.
+    const priceFormatter = (price: number) => {
+      const abs = Math.abs(price)
+      const sign = price < 0 ? '-' : ''
+      if (abs >= 1_000_000_000) return `${sign}${(abs / 1e9).toFixed(2)}B`
+      if (abs >= 1_000_000) return `${sign}${(abs / 1e6).toFixed(2)}M`
+      if (abs >= 1_000) return `${sign}${(abs / 1e3).toFixed(2)}K`
+      if (abs >= 1) return `${sign}${abs.toFixed(2)}`
+      if (abs === 0) return '0'
+      return `${sign}${abs.toFixed(3)}`
+    }
+
     const chart = createChart(container, {
+      localization: { priceFormatter },
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#CFC7C1',
@@ -186,7 +200,7 @@ const PairChartTVInner = ({ pair }: Props) => {
           ...commonNoLabels,
           color: meta.color,
           priceScaleId: meta.priceScaleId,
-          priceFormat: { type: 'volume' },
+          priceFormat: { type: 'custom', formatter: priceFormatter, minMove: 0.01 },
         })
       } else if (meta.type === 'area') {
         series = chart.addSeries(AreaSeries, {
@@ -367,9 +381,11 @@ const PairChartTVInner = ({ pair }: Props) => {
             </span>
             {visible[meta.key] && getLegendValue(meta.key) !== undefined && (
               <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#978A80' }}>
-                {meta.key === 'volume'
+                {/* USD totals (TVL, Net PnL, Volume) → whole dollars.
+                    Token prices (LP Price, HODL Price) → 3 decimals. */}
+                {meta.key === 'tvl' || meta.key === 'netPnL' || meta.key === 'volume'
                   ? formatPrice(getLegendValue(meta.key) ?? 0, { maximumFractionDigits: 0 })
-                  : formatPrice(getLegendValue(meta.key) ?? 0, { maximumFractionDigits: isMainnet ? 2 : 5 })}
+                  : formatPrice(getLegendValue(meta.key) ?? 0, { maximumFractionDigits: 3 })}
               </span>
             )}
           </button>

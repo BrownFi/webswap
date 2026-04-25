@@ -196,17 +196,17 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD' }}>
-                  24h Fees / TVL: {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
+                  24h Fees / TVL: {feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--'}
                 </span>
                 {!isMainnet && (
                   <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84' }}>
-                    APR: {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 1 })}%` : '--'}
+                    APR: {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
                   </span>
                 )}
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
-                  Incentive APR: +{formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%
+                  Incentive APR: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
                   {enableBgt && (
                     <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 14, height: 14, borderRadius: '50%' }} />
                   )}
@@ -235,19 +235,19 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
           {/* 24h Fees / TVL (white) */}
           <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
-            {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '--'}
+            {feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
           {/* APR (annualized, LP share) — beta/non-mainnet only */}
           {!isMainnet && (
             <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
-              {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
+              {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
             </span>
           )}
           {/* Incentive APR (green with BGT icon when applicable) */}
           <span className="max-md:hidden text-right inline-flex items-center justify-end gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
             {enableBgt || enableMerklCampaignApr ? (
               <>
-                +{formatNumber(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 1 })}%
+                +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
                 {enableBgt && (
                   <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 16, height: 16, borderRadius: '50%' }} />
                 )}
