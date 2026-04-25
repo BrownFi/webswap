@@ -570,7 +570,7 @@ function PoolDetailInner({
                 <div key="apr" className={cardBase} style={cardStyle}>
                   <div className={labelCls} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>APR</div>
                   <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '4px' }}>
-                    {feeAPR ? `${formatNumber(feeAPR, { maximumFractionDigits: 2 })}%` : '—'}
+                    {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '—'}
                   </div>
                 </div>
               ) : null
@@ -579,7 +579,7 @@ function PoolDetailInner({
                 <div key="fees" className={cardBase} style={cardStyle}>
                   <div className={labelCls} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>24h Fees / TVL</div>
                   <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '4px' }}>
-                    {feeOverTvl ? `${formatNumber(feeOverTvl, { maximumFractionDigits: 4 })}%` : '—'}
+                    {feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '—'}
                   </div>
                 </div>
               )
@@ -593,7 +593,7 @@ function PoolDetailInner({
                     )}
                   </div>
                   <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '4px' }}>
-                    +{formatNumber(incentiveApr, { maximumFractionDigits: 2 })}%
+                    +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%
                   </div>
                 </div>
               ) : null
@@ -659,16 +659,24 @@ function PoolDetailInner({
                       <div style={{ width: `${pct1}%`, background: '#6FB3E6' }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '11px', color: '#978A80', marginTop: '4px' }}>
-                      <span>{pct0.toFixed(1)}%</span>
-                      <span>{pct1.toFixed(1)}%</span>
+                      <span>{pct0.toFixed(2)}%</span>
+                      <span>{pct1.toFixed(2)}%</span>
                     </div>
                   </div>
                 )}
               </StatRow>
 
-              <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
-              <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
-              <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+              {/* Mobile: one row per stat, label + value inline. Desktop: stacked. */}
+              <div className="flex flex-col gap-2 lg:hidden">
+                <StatInline label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
+                <StatInline label="24H volume" value={formatPrice(volume24h ?? 0)} />
+                <StatInline label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+              </div>
+              <div className="hidden lg:block">
+                <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
+                <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
+                <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+              </div>
             </div>
 
             {/* Your position (bottom) — desktop only; mobile renders it below the chart */}
@@ -701,6 +709,19 @@ function StatRow({
         </div>
       )}
       {children}
+    </div>
+  )
+}
+
+function StatInline({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>
+        {label}
+      </span>
+      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', color: '#FBFBFD' }}>
+        {value}
+      </span>
     </div>
   )
 }
