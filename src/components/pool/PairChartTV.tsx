@@ -295,12 +295,6 @@ const PairChartTVInner = ({ pair }: Props) => {
     })
   }, [visible, availableSeries])
 
-  const last = chartData[chartData.length - 1]
-  const getLegendValue = (key: SeriesKey) => {
-    if (hovered && hovered[key] !== undefined) return hovered[key] as number
-    return last ? (last[key] as number) : undefined
-  }
-
   return (
     <div
       className="p-[12px] sm:p-[16px]"
@@ -362,8 +356,8 @@ const PairChartTVInner = ({ pair }: Props) => {
         )}
 
         {/* Floating tooltip — TradingView style: anchored diagonally above-
-            and-right of the cursor, flipping sides when near edges. Hidden on
-            mobile (no hover). */}
+            and-right of the cursor (or tap point on mobile), flipping sides
+            when near edges. */}
         {tip && hovered && (() => {
           const containerW = containerRef.current?.clientWidth ?? 0
           const containerH = containerRef.current?.clientHeight ?? 0
@@ -385,7 +379,7 @@ const PairChartTVInner = ({ pair }: Props) => {
           const dateStr = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
           return (
             <div
-              className="hidden md:block pointer-events-none"
+              className="pointer-events-none"
               style={{
                 position: 'absolute',
                 top,
@@ -454,15 +448,8 @@ const PairChartTVInner = ({ pair }: Props) => {
             <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>
               {meta.label}
             </span>
-            {/* On desktop the floating tooltip already shows the values, so
-                hide them here. Keep on mobile (no hover → tooltip never shows). */}
-            {visible[meta.key] && getLegendValue(meta.key) !== undefined && (
-              <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', color: '#978A80' }}>
-                {meta.key === 'tvl' || meta.key === 'netPnL' || meta.key === 'volume'
-                  ? formatPrice(getLegendValue(meta.key) ?? 0, { maximumFractionDigits: 0 })
-                  : formatPrice(getLegendValue(meta.key) ?? 0, { maximumFractionDigits: 3 })}
-              </span>
-            )}
+            {/* Values live in the floating tooltip on both desktop (hover) and
+                mobile (tap) — no need to duplicate them here. */}
           </button>
         ))}
       </div>
