@@ -11,7 +11,7 @@ export type V3PoolConfig = {
 export const V3_POOLS: Record<number, V3PoolConfig[]> = {
   [ChainId.BERA_MAINNET]: [
     {
-      pair: '0x6e4b34568cad6c1440274b13d44a3cd67b441e7d',
+      pair: '0x6c2d07C31341eb30126a40655B1D488CC69fd3Ae',
       token0: { address: '0x6969696969696969696969696969696969696969', decimals: 18, symbol: 'WBERA', name: 'Wrapped Bera' },
       token1: { address: '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', decimals: 18, symbol: 'HONEY', name: 'Honey' },
     },
