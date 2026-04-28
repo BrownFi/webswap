@@ -186,8 +186,11 @@ const PairChartTVInner = ({ pair }: Props) => {
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: '#978A80', style: LineStyle.Dashed, labelBackgroundColor: '#985C2A' },
-        horzLine: { color: '#978A80', style: LineStyle.Dashed, labelBackgroundColor: '#985C2A' },
+        // Keep the vertical line + date badge on the time axis. Hide the
+        // horizontal line entirely — the tooltip already shows per-series
+        // values, so a y-axis price badge is redundant.
+        vertLine: { color: '#978A80', style: LineStyle.Dashed, labelBackgroundColor: '#985C2A', labelVisible: true },
+        horzLine: { visible: false, labelVisible: false },
       },
       width: container.clientWidth,
       height: container.clientHeight || 400,
@@ -358,20 +361,26 @@ const PairChartTVInner = ({ pair }: Props) => {
           </div>
         )}
 
-        {/* Floating tooltip — TradingView style: positioned on the same
-            horizontal line as the cursor, to the right by default, flipping to
-            the left near the right edge. Wide horizontal gap so the cursor
-            stays clear of the card. Hidden on mobile (no hover). */}
+        {/* Floating tooltip — TradingView style: anchored diagonally above-
+            and-right of the cursor, flipping sides when near edges. Hidden on
+            mobile (no hover). */}
         {tip && hovered && (() => {
           const containerW = containerRef.current?.clientWidth ?? 0
           const containerH = containerRef.current?.clientHeight ?? 0
-          const TIP_W = 200
-          const TIP_H_EST = 110
-          const GAP = 24 // horizontal gap between cursor and tooltip edge
-          const wantsRight = tip.x + GAP + TIP_W <= containerW
-          const left = wantsRight ? tip.x + GAP : Math.max(8, tip.x - GAP - TIP_W)
-          // Vertically center on the cursor; clamp inside the chart bounds.
-          const top = Math.max(8, Math.min(tip.y - TIP_H_EST / 2, containerH - TIP_H_EST - 8))
+          const TIP_W = 196
+          const TIP_H_EST = 132
+          const HGAP = 14
+          const VGAP = 14
+          // Default: upper-right of the cursor. Flip horizontally near the
+          // right edge, flip vertically (below cursor) when too close to top.
+          const wantsRight = tip.x + HGAP + TIP_W <= containerW
+          const left = wantsRight
+            ? tip.x + HGAP
+            : Math.max(8, tip.x - HGAP - TIP_W)
+          const wantsAbove = tip.y - VGAP - TIP_H_EST >= 8
+          const top = wantsAbove
+            ? tip.y - VGAP - TIP_H_EST
+            : Math.min(tip.y + VGAP, containerH - TIP_H_EST - 8)
           const date = new Date(tip.time * 1000)
           const dateStr = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
           return (
@@ -382,16 +391,17 @@ const PairChartTVInner = ({ pair }: Props) => {
                 top,
                 left,
                 width: TIP_W,
-                background: 'rgba(18, 15, 13, 0.92)',
+                background: 'rgba(20, 16, 14, 0.95)',
                 border: '1px solid #2F2823',
-                borderRadius: 10,
-                padding: '8px 10px',
+                borderRadius: 8,
+                padding: '6px 8px',
                 fontFamily: 'Inter',
                 backdropFilter: 'blur(4px)',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
                 zIndex: 5,
               }}
             >
-              <div style={{ fontSize: 11, color: '#978A80', marginBottom: 6 }}>{dateStr}</div>
+              <div style={{ fontSize: 10, color: '#978A80', marginBottom: 4, letterSpacing: '0.02em' }}>{dateStr}</div>
               {availableSeries
                 .filter((meta) => visible[meta.key] && hovered[meta.key] !== undefined)
                 .map((meta) => {
@@ -403,13 +413,13 @@ const PairChartTVInner = ({ pair }: Props) => {
                   return (
                     <div
                       key={meta.key}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 12, lineHeight: '18px' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, fontSize: 11, lineHeight: '16px' }}
                     >
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#CFC7C1' }}>
-                        <span style={{ width: 8, height: 8, background: meta.color, borderRadius: 2, display: 'inline-block' }} />
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#CFC7C1' }}>
+                        <span style={{ width: 7, height: 7, background: meta.color, borderRadius: 2, display: 'inline-block' }} />
                         {meta.label}
                       </span>
-                      <span style={{ color: '#FBFBFD', fontWeight: 500 }}>{formatted}</span>
+                      <span style={{ color: '#FBFBFD', fontWeight: 600 }}>{formatted}</span>
                     </div>
                   )
                 })}
