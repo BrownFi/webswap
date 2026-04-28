@@ -134,6 +134,9 @@ const PairChartTVInner = ({ pair }: Props) => {
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRefs = useRef<Partial<Record<SeriesKey, ISeriesApi<any>>>>({})
   const [hovered, setHovered] = useState<Partial<Record<SeriesKey, number>> | null>(null)
+  // Floating tooltip state — anchor x/y in container-relative pixels.
+  // null when cursor is outside the plot area.
+  const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
 
   // Create chart once
   useEffect(() => {
@@ -229,13 +232,15 @@ const PairChartTVInner = ({ pair }: Props) => {
       })
     }
 
-    // Live-update legend as the user hovers the chart
+    // Live-update legend + floating tooltip as the user hovers the chart
     const crosshairHandler = (param: {
+      time?: number
       seriesData: Map<ISeriesApi<any>, { value?: number } | undefined>
       point?: { x: number; y: number }
     }) => {
-      if (!param.point) {
+      if (!param.point || param.time === undefined) {
         setHovered(null)
+        setTip(null)
         return
       }
       const next: Partial<Record<SeriesKey, number>> = {}
@@ -248,6 +253,7 @@ const PairChartTVInner = ({ pair }: Props) => {
         }
       })
       setHovered(next)
+      setTip({ x: param.point.x, y: param.point.y, time: Number(param.time) })
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
@@ -351,6 +357,65 @@ const PairChartTVInner = ({ pair }: Props) => {
             No data
           </div>
         )}
+
+        {/* Floating tooltip — TradingView style: positioned on the same
+            horizontal line as the cursor, to the right by default, flipping to
+            the left near the right edge. Wide horizontal gap so the cursor
+            stays clear of the card. Hidden on mobile (no hover). */}
+        {tip && hovered && (() => {
+          const containerW = containerRef.current?.clientWidth ?? 0
+          const containerH = containerRef.current?.clientHeight ?? 0
+          const TIP_W = 200
+          const TIP_H_EST = 110
+          const GAP = 24 // horizontal gap between cursor and tooltip edge
+          const wantsRight = tip.x + GAP + TIP_W <= containerW
+          const left = wantsRight ? tip.x + GAP : Math.max(8, tip.x - GAP - TIP_W)
+          // Vertically center on the cursor; clamp inside the chart bounds.
+          const top = Math.max(8, Math.min(tip.y - TIP_H_EST / 2, containerH - TIP_H_EST - 8))
+          const date = new Date(tip.time * 1000)
+          const dateStr = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+          return (
+            <div
+              className="hidden md:block pointer-events-none"
+              style={{
+                position: 'absolute',
+                top,
+                left,
+                width: TIP_W,
+                background: 'rgba(18, 15, 13, 0.92)',
+                border: '1px solid #2F2823',
+                borderRadius: 10,
+                padding: '8px 10px',
+                fontFamily: 'Inter',
+                backdropFilter: 'blur(4px)',
+                zIndex: 5,
+              }}
+            >
+              <div style={{ fontSize: 11, color: '#978A80', marginBottom: 6 }}>{dateStr}</div>
+              {availableSeries
+                .filter((meta) => visible[meta.key] && hovered[meta.key] !== undefined)
+                .map((meta) => {
+                  const v = hovered[meta.key] as number
+                  const formatted =
+                    meta.key === 'tvl' || meta.key === 'netPnL' || meta.key === 'volume'
+                      ? formatPrice(v, { maximumFractionDigits: 0 })
+                      : formatPrice(v, { maximumFractionDigits: 3 })
+                  return (
+                    <div
+                      key={meta.key}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 12, lineHeight: '18px' }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#CFC7C1' }}>
+                        <span style={{ width: 8, height: 8, background: meta.color, borderRadius: 2, display: 'inline-block' }} />
+                        {meta.label}
+                      </span>
+                      <span style={{ color: '#FBFBFD', fontWeight: 500 }}>{formatted}</span>
+                    </div>
+                  )
+                })}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Legend + toggles (bottom) */}
@@ -379,10 +444,10 @@ const PairChartTVInner = ({ pair }: Props) => {
             <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>
               {meta.label}
             </span>
+            {/* On desktop the floating tooltip already shows the values, so
+                hide them here. Keep on mobile (no hover → tooltip never shows). */}
             {visible[meta.key] && getLegendValue(meta.key) !== undefined && (
-              <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#978A80' }}>
-                {/* USD totals (TVL, Net PnL, Volume) → whole dollars.
-                    Token prices (LP Price, HODL Price) → 3 decimals. */}
+              <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', color: '#978A80' }}>
                 {meta.key === 'tvl' || meta.key === 'netPnL' || meta.key === 'volume'
                   ? formatPrice(getLegendValue(meta.key) ?? 0, { maximumFractionDigits: 0 })
                   : formatPrice(getLegendValue(meta.key) ?? 0, { maximumFractionDigits: 3 })}
