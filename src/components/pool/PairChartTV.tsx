@@ -35,6 +35,27 @@ const GET_PAIR_STATS = `
   }
 `
 
+// 1H mode: last 24 hourly buckets for "intraday today" view. Same metrics as
+// day data, just keyed by hourStartUnix.
+const GET_PAIR_STATS_HOUR = `
+  query PairStatsHour($pair: String) {
+    pairHourDatas(
+      first: 24
+      where: {pair: $pair}
+      orderBy: hourStartUnix
+      orderDirection: desc
+    ) {
+      hourStartUnix
+      tvl
+      totalVolume
+      totalFee
+      apr
+      lpPrice
+      bnhPrice
+    }
+  }
+`
+
 type DayData = {
   dayStartUnix: number
   tvl: number
@@ -44,6 +65,8 @@ type DayData = {
   lpPrice: number
   bnhPrice: number
 }
+
+type HourData = Omit<DayData, 'dayStartUnix'> & { hourStartUnix: number }
 
 type SeriesKey = 'lpPrice' | 'bnhPrice' | 'tvl' | 'netPnL' | 'volume'
 
@@ -87,13 +110,16 @@ const PairChartTVInner = ({ pair }: Props) => {
     volume: true,
   }))
 
-  type Range = '7d' | '1m' | '3m' | '1y' | 'all'
-  const RANGE_DAYS: Record<Range, number | null> = { '7d': 7, '1m': 30, '3m': 90, '1y': 365, all: null }
+  // '1h' = today's intraday (24 hourly buckets, separate query). The rest are
+  // daily-aggregated ranges that slice the same `pairDayDatas` series.
+  type Range = '1h' | '7d' | '1m' | '3m' | '1y' | 'all'
+  const RANGE_DAYS: Record<Exclude<Range, '1h'>, number | null> = { '7d': 7, '1m': 30, '3m': 90, '1y': 365, all: null }
   const [range, setRange] = useState<Range>('1m')
+  const isHourly = range === '1h'
 
   const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3'
 
-  const { data, isPending } = useQuery<{ pairDayDatas: DayData[] }>({
+  const { data: dayResp, isPending: isPendingDay } = useQuery<{ pairDayDatas: DayData[] }>({
     queryKey: ['pairStats', pair.chainId, pair.liquidityToken.address],
     queryFn: () =>
       graphqlFetcher({
@@ -104,31 +130,56 @@ const PairChartTVInner = ({ pair }: Props) => {
     refetchInterval: 60_000,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+    enabled: !isHourly,
   })
 
+  const { data: hourResp, isPending: isPendingHour } = useQuery<{ pairHourDatas: HourData[] }>({
+    queryKey: ['pairStatsHour', pair.chainId, pair.liquidityToken.address],
+    queryFn: () =>
+      graphqlFetcher({
+        operationName: 'PairStatsHour',
+        query: GET_PAIR_STATS_HOUR,
+        variables: { chainId: pair.chainId, pair: pair.liquidityToken.address.toLowerCase() },
+      }),
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    enabled: isHourly,
+  })
+
+  const isPending = isHourly ? isPendingHour : isPendingDay
+  const data = isHourly ? hourResp : dayResp
+
   const fullChartData = useMemo(() => {
-    if (!data?.pairDayDatas) return []
-    return data.pairDayDatas.map((d) => {
-      const lpRaw = Number(d.lpPrice) || 0
-      const bnhRaw = Number(d.bnhPrice) || 0
-      const tvlRaw = Number(d.tvl) || 0
-      const volRaw = Number(d.totalVolume) || 0
-      return {
-        time: Number(d.dayStartUnix),
-        lpPrice: iskHYPEUSDT ? lpRaw / 1e9 : lpRaw,
-        bnhPrice: iskHYPEUSDT ? bnhRaw / 1e9 : bnhRaw,
-        tvl: tvlRaw,
-        netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
-        volume: volRaw,
-      }
+    const toPoint = (lpRaw: number, bnhRaw: number, tvlRaw: number, volRaw: number, time: number) => ({
+      time,
+      lpPrice: iskHYPEUSDT ? lpRaw / 1e9 : lpRaw,
+      bnhPrice: iskHYPEUSDT ? bnhRaw / 1e9 : bnhRaw,
+      tvl: tvlRaw,
+      netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
+      volume: volRaw,
     })
-  }, [data, iskHYPEUSDT])
+    if (isHourly) {
+      const rows = (data as { pairHourDatas?: HourData[] } | undefined)?.pairHourDatas
+      if (!rows) return []
+      // Hourly query is desc — flip to asc so the chart renders left→right.
+      return [...rows]
+        .sort((a, b) => Number(a.hourStartUnix) - Number(b.hourStartUnix))
+        .map((d) => toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.hourStartUnix)))
+    }
+    const rows = (data as { pairDayDatas?: DayData[] } | undefined)?.pairDayDatas
+    if (!rows) return []
+    return rows.map((d) =>
+      toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
+    )
+  }, [data, isHourly, iskHYPEUSDT])
 
   const chartData = useMemo(() => {
-    const days = RANGE_DAYS[range]
+    if (isHourly) return fullChartData // already capped to 24 by the query
+    const days = RANGE_DAYS[range as Exclude<Range, '1h'>]
     if (!days || fullChartData.length <= days) return fullChartData
     return fullChartData.slice(-days)
-  }, [fullChartData, range])
+  }, [fullChartData, range, isHourly])
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -268,6 +319,14 @@ const PairChartTVInner = ({ pair }: Props) => {
     }
   }, [availableSeries])
 
+  // Toggle x-axis time labels when switching between hourly and daily modes.
+  useEffect(() => {
+    chartRef.current?.applyOptions({
+      timeScale: { timeVisible: isHourly, secondsVisible: false },
+    })
+    chartRef.current?.timeScale().fitContent()
+  }, [isHourly])
+
   // Push data into series
   useEffect(() => {
     const refs = seriesRefs.current
@@ -311,7 +370,7 @@ const PairChartTVInner = ({ pair }: Props) => {
           className="inline-flex items-center gap-0.5 sm:gap-1"
           style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 10, padding: 2 }}
         >
-          {(['7d', '1m', '3m', '1y', 'all'] as Range[]).map((r) => (
+          {(['1h', '7d', '1m', '3m', '1y', 'all'] as Range[]).map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
@@ -376,7 +435,9 @@ const PairChartTVInner = ({ pair }: Props) => {
             ? tip.y - VGAP - TIP_H_EST
             : Math.min(tip.y + VGAP, containerH - TIP_H_EST - 8)
           const date = new Date(tip.time * 1000)
-          const dateStr = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+          const dateStr = isHourly
+            ? date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
           return (
             <div
               className="pointer-events-none"
