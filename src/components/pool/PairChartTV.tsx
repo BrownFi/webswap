@@ -1,4 +1,4 @@
-import { Pair } from '@brownfi/sdk'
+import { ChainId, Pair } from '@brownfi/sdk'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { isMainnet } from 'connectors'
 import {
@@ -16,6 +16,15 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatPrice } from 'utils/prices'
 
+// `uniV2Price` is only indexed for chains that have a Uniswap V2 reference
+// pool. As of 2026-05-08, only Base (8453) does. Including the field in the
+// query for any other chain triggers a GraphQL validation error, so we gate
+// it per chain and strip the field from the query string when unsupported.
+const CHAINS_WITH_UNIV2_PRICE = new Set<number>([ChainId.BASE_MAINNET])
+const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
+const buildQuery = (template: string, chainId: number) =>
+  hasUniV2Price(chainId) ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
+
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {
     pairDayDatas(
@@ -31,6 +40,7 @@ const GET_PAIR_STATS = `
       apr
       lpPrice
       bnhPrice
+      uniV2Price
     }
   }
 `
@@ -52,6 +62,7 @@ const GET_PAIR_STATS_HOUR = `
       apr
       lpPrice
       bnhPrice
+      uniV2Price
     }
   }
 `
@@ -64,11 +75,12 @@ type DayData = {
   apr: number
   lpPrice: number
   bnhPrice: number
+  uniV2Price: number
 }
 
 type HourData = Omit<DayData, 'dayStartUnix'> & { hourStartUnix: number }
 
-type SeriesKey = 'lpPrice' | 'bnhPrice' | 'tvl' | 'netPnL' | 'volume'
+type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'tvl' | 'netPnL' | 'volume'
 
 type SeriesMeta = {
   key: SeriesKey
@@ -84,11 +96,12 @@ type SeriesMeta = {
 // Volume occupies the bottom 20% as an overlay histogram.
 // Colors pulled from the BrownFi palette (warm brown/gold + accents).
 const SERIES_ALL: SeriesMeta[] = [
-  { key: 'lpPrice',  label: 'LP Price',   color: '#D8A072', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice', label: 'HODL Price', color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'tvl',      label: 'TVL',        color: '#B47AAE', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
-  { key: 'netPnL',   label: 'Net PnL',    color: '#E57373', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
-  { key: 'volume',   label: 'Volume',     color: '#83CF84', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
+  { key: 'lpPrice',    label: 'LP Price',    color: '#D8A072', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
+  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
+  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E0C97A', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
+  { key: 'tvl',        label: 'TVL',         color: '#B47AAE', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
+  { key: 'netPnL',     label: 'Net PnL',     color: '#E57373', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
+  { key: 'volume',     label: 'Volume',      color: '#83CF84', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
 type Props = {
@@ -97,14 +110,16 @@ type Props = {
 
 const PairChartTVInner = ({ pair }: Props) => {
   const showExtendedMetrics = !isMainnet
-  const availableSeries = useMemo(
-    () => (showExtendedMetrics ? SERIES_ALL : SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')),
-    [showExtendedMetrics],
-  )
+  const supportsUniV2 = hasUniV2Price(pair.chainId)
+  const availableSeries = useMemo(() => {
+    if (!showExtendedMetrics) return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
+    return supportsUniV2 ? SERIES_ALL : SERIES_ALL.filter((s) => s.key !== 'uniV2Price')
+  }, [showExtendedMetrics, supportsUniV2])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
     lpPrice: true,
     bnhPrice: showExtendedMetrics,
+    uniV2Price: showExtendedMetrics,
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
     volume: true,
@@ -124,7 +139,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: GET_PAIR_STATS,
+        query: buildQuery(GET_PAIR_STATS, pair.chainId),
         variables: { chainId: pair.chainId, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -138,7 +153,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStatsHour',
-        query: GET_PAIR_STATS_HOUR,
+        query: buildQuery(GET_PAIR_STATS_HOUR, pair.chainId),
         variables: { chainId: pair.chainId, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -151,10 +166,11 @@ const PairChartTVInner = ({ pair }: Props) => {
   const data = isHourly ? hourResp : dayResp
 
   const fullChartData = useMemo(() => {
-    const toPoint = (lpRaw: number, bnhRaw: number, tvlRaw: number, volRaw: number, time: number) => ({
+    const toPoint = (lpRaw: number, bnhRaw: number, uniRaw: number, tvlRaw: number, volRaw: number, time: number) => ({
       time,
       lpPrice: iskHYPEUSDT ? lpRaw / 1e9 : lpRaw,
       bnhPrice: iskHYPEUSDT ? bnhRaw / 1e9 : bnhRaw,
+      uniV2Price: iskHYPEUSDT ? uniRaw / 1e9 : uniRaw,
       tvl: tvlRaw,
       netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
       volume: volRaw,
@@ -165,12 +181,12 @@ const PairChartTVInner = ({ pair }: Props) => {
       // Hourly query is desc — flip to asc so the chart renders left→right.
       return [...rows]
         .sort((a, b) => Number(a.hourStartUnix) - Number(b.hourStartUnix))
-        .map((d) => toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.hourStartUnix)))
+        .map((d) => toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.hourStartUnix)))
     }
     const rows = (data as { pairDayDatas?: DayData[] } | undefined)?.pairDayDatas
     if (!rows) return []
     return rows.map((d) =>
-      toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
+      toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
     )
   }, [data, isHourly, iskHYPEUSDT])
 
