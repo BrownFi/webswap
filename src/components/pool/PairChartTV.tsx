@@ -16,11 +16,21 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatPrice } from 'utils/prices'
 
-// `uniV2Price` is only indexed for chains that have a Uniswap V2 reference
-// pool. As of 2026-05-08, only Base (8453) does. Including the field in the
-// query for any other chain triggers a GraphQL validation error, so we gate
-// it per chain and strip the field from the query string when unsupported.
-const CHAINS_WITH_UNIV2_PRICE = new Set<number>([ChainId.BASE_MAINNET])
+// `uniV2Price` is indexed per chain. Verified on bf-v2-api-beta.brownfi.io
+// on 2026-05-12: every chain currently on the indexer supports the field.
+// Kept as an explicit allowlist so a future chain stays gated until verified
+// (querying the field on an unsupported chain returns a GraphQL validation
+// error and breaks the chart).
+const CHAINS_WITH_UNIV2_PRICE = new Set<number>([
+  ChainId.BASE_MAINNET,
+  ChainId.BERA_MAINNET,
+  ChainId.BSC_MAINNET,
+  ChainId.ARBITRUM_MAINNET,
+  ChainId.LINEA_MAINNET,
+  ChainId.SEI_MAINNET,
+  ChainId.HYPER_EVM,
+  ChainId.MONAD,
+])
 const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
 const buildQuery = (template: string, chainId: number) =>
   hasUniV2Price(chainId) ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
