@@ -1,6 +1,7 @@
 import { Pair } from '@brownfi/sdk'
 import { TransactionResponse } from '@ethersproject/providers'
-import { useState } from 'react'
+import { Contract } from '@ethersproject/contracts'
+import { useMemo, useState } from 'react'
 import { Text } from 'components/Rebass'
 
 import { ButtonPrimary } from 'components/Button'
@@ -12,281 +13,452 @@ import { useFactoryContract } from 'hooks/useContract'
 import { useVersion } from 'hooks/useVersion'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { CloseIcon } from 'theme/components'
+import { FACTORY_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
 
-type FieldKey = 'k' | 'lambda' | 'fee' | 'protocolFee'
+// V3-only setters live on the new V3 factory but aren't in IBrownFiV2Factory.json
+// (the JSON only carries the V2 surface + `setConfigOfPair`). Define the V3
+// setter signatures inline so we can build an ethers Contract directly for V3
+// admin writes — no need to extend the shared ABI artifact.
+const V3_FACTORY_SETTERS_ABI = [
+  'function setKappaOfPair(address tokenA, address tokenB, uint256 kB, uint256 kQ)',
+  'function setLambdaOfPair(address tokenA, address tokenB, uint64 lambda)',
+  'function setFeeOfPair(address tokenA, address tokenB, uint32 fee)',
+  'function setFeeSplitOfPair(address tokenA, address tokenB, uint32 feeSplit)',
+  'function setSpreadOfPair(address tokenA, address tokenB, uint32 compress, uint32 sSell, uint32 sBuy)',
+  'function setFixSpreadOfPair(address tokenA, address tokenB, uint32 fixS)',
+  'function setDisThresholdOfPair(address tokenA, address tokenB, uint32 disThreshold)',
+  'function setSboundOfPair(address tokenA, address tokenB, uint32 sBound)',
+  'function setPythWeightOfPair(address tokenA, address tokenB, uint32 pythWeight)',
+  'function setGammaOfPair(address tokenA, address tokenB, uint32 gamma)',
+] as const
+
+// V2: 4 rows. V3: 11 rows. The V3-only rows live below the shared ones and
+// each maps to one factory setter — see `submit*` handlers below.
+type FieldKey =
+  | 'k'
+  | 'kappa' // V3 — sets kB + kQ together
+  | 'lambda'
+  | 'fee'
+  | 'protocolFee'
+  | 'spread' // V3 — compress + sSell + sBuy
+  | 'fixS'
+  | 'disThreshold'
+  | 'sBound'
+  | 'pythWeight'
+  | 'gamma'
+
+type DevStatsLike = {
+  lambda?: number
+  kappa?: number
+  fee?: number
+  protocolFee?: number
+  feeSplit?: number
+  // V3 extras
+  kB?: number
+  kQ?: number
+  compress?: number
+  sSell?: number
+  sBuy?: number
+  fixS?: number
+  disThreshold?: number
+  sBound?: number
+  pythWeight?: number
+  gamma?: number
+}
 
 type Props = {
   isOpen: boolean
   onDismiss: () => void
   pair: Pair
-  currentValues?: { lambda?: number; kappa?: number; fee?: number; protocolFee?: number; feeSplit?: number }
+  currentValues?: DevStatsLike
 }
 
-const sanitizeUintInput = (value: string) => value.trim()
+const sanitize = (value: string) => value.trim()
+const round = (v: number) => parseFloat((Math.round(v * 1e6) / 1e6).toFixed(6)).toString()
+const toQ64 = (v: string) => Math.floor(Number(v) * 2 ** 64).toString()
+const toPREC = (v: string) => Math.floor(Number(v) * 10 ** 8).toString()
+
+// Row component MUST live outside the parent — declaring it inside causes
+// React to remount the <input> on every render (new function identity ⇒ new
+// component type), which makes the input lose focus after each keystroke.
+function SettingsRow({
+  label,
+  value,
+  setValue,
+  placeholder,
+  onSubmit,
+  busy,
+}: {
+  label: string
+  value: string
+  setValue: (v: string) => void
+  placeholder?: string
+  onSubmit: () => void
+  busy: boolean
+}) {
+  return (
+    <div>
+      <Text fontSize={12} color="#b2ada9" className="mb-1">{label}</Text>
+      <div className="flex gap-2">
+        <input
+          value={value}
+          onChange={(e) => setValue(sanitize(e.target.value))}
+          placeholder={placeholder}
+          className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
+          inputMode="decimal"
+        />
+        <ButtonPrimary onClick={onSubmit} disabled={busy} className="!w-[100px] !py-2 shrink-0">
+          {busy ? '...' : 'Submit'}
+        </ButtonPrimary>
+      </div>
+    </div>
+  )
+}
 
 export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Props) {
-  const { account, chainId } = useActiveWeb3React()
+  const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
   const isV3 = version === 3
   const { createToast } = useToast()
   const factoryContract = useFactoryContract(true, { readonly: false })
   const addTransaction = useTransactionAdder()
 
+  // V3 setters aren't in IBrownFiV2Factory.json — build a tiny Contract from
+  // the inline ABI above so the V3 admin writes resolve at call time. V2
+  // continues to use `factoryContract` from the shared hook (which has the
+  // legacy V2 setter surface).
+  const factoryV3 = useMemo(() => {
+    if (!isV3 || !library || !account || !chainId) return null
+    const addr = FACTORY_ADDRESS_V3[chainId]
+    if (!addr) return null
+    const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : library
+    return new Contract(addr, V3_FACTORY_SETTERS_ABI, signer)
+  }, [isV3, library, account, chainId])
+
+  // Inputs — one per row (kappa + spread are paired sub-inputs)
   const [kInput, setKInput] = useState('')
+  const [kBInput, setKBInput] = useState('')
+  const [kQInput, setKQInput] = useState('')
   const [lambdaInput, setLambdaInput] = useState('')
   const [feeInput, setFeeInput] = useState('')
   const [protocolFeeInput, setProtocolFeeInput] = useState('')
+  const [compressInput, setCompressInput] = useState('')
+  const [sSellInput, setSSellInput] = useState('')
+  const [sBuyInput, setSBuyInput] = useState('')
+  const [fixSInput, setFixSInput] = useState('')
+  const [disThresholdInput, setDisThresholdInput] = useState('')
+  const [sBoundInput, setSBoundInput] = useState('')
+  const [pythWeightInput, setPythWeightInput] = useState('')
+  const [gammaInput, setGammaInput] = useState('')
 
   const protocolFeeValue = isV3 ? currentValues?.feeSplit : currentValues?.protocolFee
 
-  // Pre-fill inputs with current on-chain values when modal opens
-  const round = (v: number) => parseFloat((Math.round(v * 1e4) / 1e4).toFixed(4)).toString()
+  // Pre-fill on open (one-shot — wiping state on close)
   const [initialized, setInitialized] = useState(false)
   if (isOpen && !initialized && currentValues) {
     if (currentValues.kappa !== undefined) setKInput(round(currentValues.kappa))
+    if (currentValues.kB !== undefined) setKBInput(round(currentValues.kB))
+    if (currentValues.kQ !== undefined) setKQInput(round(currentValues.kQ))
     if (currentValues.lambda !== undefined) setLambdaInput(round(currentValues.lambda))
     if (currentValues.fee !== undefined) setFeeInput(round(currentValues.fee))
     if (protocolFeeValue !== undefined) setProtocolFeeInput(round(protocolFeeValue))
+    if (currentValues.compress !== undefined) setCompressInput(round(currentValues.compress))
+    if (currentValues.sSell !== undefined) setSSellInput(round(currentValues.sSell))
+    if (currentValues.sBuy !== undefined) setSBuyInput(round(currentValues.sBuy))
+    if (currentValues.fixS !== undefined) setFixSInput(round(currentValues.fixS))
+    if (currentValues.disThreshold !== undefined) setDisThresholdInput(round(currentValues.disThreshold))
+    if (currentValues.sBound !== undefined) setSBoundInput(round(currentValues.sBound))
+    if (currentValues.pythWeight !== undefined) setPythWeightInput(round(currentValues.pythWeight))
+    if (currentValues.gamma !== undefined) setGammaInput(round(currentValues.gamma))
     setInitialized(true)
   }
   if (!isOpen && initialized) setInitialized(false)
 
   const [submitting, setSubmitting] = useState<Record<FieldKey, boolean>>({
-    k: false,
-    lambda: false,
-    fee: false,
-    protocolFee: false,
+    k: false, kappa: false, lambda: false, fee: false, protocolFee: false,
+    spread: false, fixS: false, disThreshold: false, sBound: false, pythWeight: false, gamma: false,
   })
 
-  const handleDismiss = () => {
-    onDismiss()
+  const handleDismiss = () => onDismiss()
+
+  // Common error-→-toast mapper so each submitter doesn't re-do it. The
+  // contract reverts with a `PairConfig:` prefix for bound violations (e.g.
+  // `PairConfig: GAMMA_TOO_HIGH`) vs `restricted` modifier for missing role.
+  const handleSubmitError = (submitError: unknown) => {
+    console.error(submitError)
+    const err = submitError as { code?: string | number; message?: string; reason?: string }
+    const raw = `${err?.reason ?? ''} ${err?.message ?? ''}`.toLowerCase()
+    const isReverted =
+      err?.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+      raw.includes('execution reverted') ||
+      raw.includes('unpredictable_gas_limit')
+    const isRejected = err?.code === 4001 || raw.includes('user rejected') || raw.includes('user denied')
+    const isBoundError = raw.includes('pairconfig:') || raw.includes('factory:')
+    if (isRejected) createToast('Transaction rejected in wallet', 'error')
+    else if (isBoundError) createToast('Reverted — value is out of the contract-allowed range. Check field bounds.', 'error')
+    else if (isReverted) createToast('Reverted — this wallet is not authorized (admin role required)', 'error')
+    else createToast('Failed to send transaction', 'error')
   }
 
-  const submitField = async (field: FieldKey) => {
-    if (!factoryContract || !account) {
+  // Runs `op` with submitting state + toast handling. Centralizes the
+  // common boilerplate so each field row stays a one-liner. `requireContract`
+  // selects which contract is needed (V2 path uses `factoryContract`, V3 path
+  // uses `factoryV3` for the dedicated setters).
+  const runSubmit = async (
+    field: FieldKey,
+    summary: string,
+    op: () => Promise<TransactionResponse>,
+    needs: 'v2' | 'v3' = 'v2',
+  ) => {
+    const ctr = needs === 'v3' ? factoryV3 : factoryContract
+    if (!ctr || !account) {
       createToast('Wallet not connected', 'error')
       return
     }
-
-    const tokenA = pair.token0.address
-    const tokenB = pair.token1.address
-    const inputValue =
-      field === 'k' ? kInput : field === 'lambda' ? lambdaInput : field === 'fee' ? feeInput : protocolFeeInput
-
-    if (!inputValue) {
-      createToast('Enter value before submit', 'error')
-      return
-    }
-
     setSubmitting((prev) => ({ ...prev, [field]: true }))
     try {
-      let response: TransactionResponse
-      if (field === 'k') {
-        response = await factoryContract.setKOfPair(tokenA, tokenB, Math.floor(Number(inputValue) * 2 ** 64).toString())
-        addTransaction(response, {
-          summary: `Set K for ${pair.token0.symbol}/${pair.token1.symbol}`,
-        })
-      } else if (field === 'lambda') {
-        response = await factoryContract.setLambdaOfPair(
-          tokenA,
-          tokenB,
-          Math.floor(Number(inputValue) * 2 ** 64).toString(),
-        )
-        addTransaction(response, {
-          summary: `Set Lambda for ${pair.token0.symbol}/${pair.token1.symbol}`,
-        })
-      } else if (field === 'fee') {
-        response = await factoryContract.setFeeOfPair(
-          tokenA,
-          tokenB,
-          Math.floor(Number(inputValue) * 10 ** 8).toString(),
-        )
-        addTransaction(response, {
-          summary: `Set Fee for ${pair.token0.symbol}/${pair.token1.symbol}`,
-        })
-      } else {
-        if (isV3) {
-          const { createPublicClient, http } = await import('viem')
-          const { RPC_URLS, FACTORY_ADDRESS_V3 } = await import('lib/sdk/constants/addresses')
-          const client = createPublicClient({ transport: http(RPC_URLS[chainId!]) })
-          const factoryAddr = FACTORY_ADDRESS_V3[chainId!]
-          const configAddr = await client.readContract({
-            address: factoryAddr as `0x${string}`,
-            abi: [{ inputs: [], name: 'pairConfig', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' }] as const,
-            functionName: 'pairConfig',
-          })
-          const configTuple = [
-            { name: 'kB', type: 'uint256' },
-            { name: 'kQ', type: 'uint256' },
-            { name: 'lambda', type: 'uint64' },
-            { name: 'fee', type: 'uint32' },
-            { name: 'feeSplit', type: 'uint32' },
-            { name: 'compress', type: 'uint32' },
-            { name: 'sSell', type: 'uint32' },
-            { name: 'sBuy', type: 'uint32' },
-            { name: 'fixS', type: 'uint32' },
-            { name: 'disThreshold', type: 'uint32' },
-            { name: 'sBound', type: 'uint32' },
-            { name: 'pythWeight', type: 'uint32' },
-            { name: 'gamma', type: 'uint32' },
-          ] as const
-          const current = await client.readContract({
-            address: configAddr as `0x${string}`,
-            abi: [{
-              inputs: [{ type: 'address' }],
-              name: 'getConfig',
-              outputs: [{ components: configTuple, type: 'tuple' }],
-              stateMutability: 'view',
-              type: 'function',
-            }] as const,
-            functionName: 'getConfig',
-            args: [pair.liquidityToken.address as `0x${string}`],
-          })
-          const nextConfig = {
-            kB: current.kB,
-            kQ: current.kQ,
-            lambda: current.lambda,
-            fee: current.fee,
-            feeSplit: Math.floor(Number(inputValue) * 10 ** 8),
-            compress: current.compress,
-            sSell: current.sSell,
-            sBuy: current.sBuy,
-            fixS: current.fixS,
-            disThreshold: current.disThreshold,
-            sBound: current.sBound,
-            pythWeight: current.pythWeight,
-            gamma: current.gamma,
-          }
-          response = await factoryContract.setConfigOfPair(tokenA, tokenB, nextConfig)
-          addTransaction(response, {
-            summary: `Set FeeSplit for ${pair.token0.symbol}/${pair.token1.symbol}`,
-          })
-        } else {
-          response = await factoryContract.setProtocolFeeOfPair(
-            tokenA,
-            tokenB,
-            Math.floor(Number(inputValue) * 10 ** 8).toString(),
-          )
-          addTransaction(response, {
-            summary: `Set Protocol Fee for ${pair.token0.symbol}/${pair.token1.symbol}`,
-          })
-        }
-      }
-    } catch (submitError) {
-      console.error(submitError)
-      const err = submitError as { code?: string | number; message?: string; reason?: string }
-      const raw = `${err?.reason ?? ''} ${err?.message ?? ''}`.toLowerCase()
-      const isReverted =
-        err?.code === 'UNPREDICTABLE_GAS_LIMIT' ||
-        raw.includes('execution reverted') ||
-        raw.includes('unpredictable_gas_limit')
-      const isRejected = err?.code === 4001 || raw.includes('user rejected') || raw.includes('user denied')
-      if (isRejected) {
-        createToast('Transaction rejected in wallet', 'error')
-      } else if (isReverted) {
-        createToast('Reverted — this wallet is not authorized (admin role required)', 'error')
-      } else {
-        createToast('Failed to send transaction', 'error')
-      }
+      const response = await op()
+      addTransaction(response, { summary: `${summary} for ${pair.token0.symbol}/${pair.token1.symbol}` })
+    } catch (err) {
+      handleSubmitError(err)
     } finally {
       setSubmitting((prev) => ({ ...prev, [field]: false }))
     }
   }
 
+  const tokenA = pair.token0.address
+  const tokenB = pair.token1.address
+
+  // ─── Submitters (one per row) ─────────────────────────────────────────────
+  // V2 path uses `factoryContract` (legacy V2 ABI). V3 path uses `factoryV3`
+  // (inline ABI, dedicated setters). V3 lambda/fee both have dedicated
+  // setters too — share names with V2 but the contract is different.
+  const submitK = () =>
+    runSubmit('k', 'Set K', () => factoryContract!.setKOfPair(tokenA, tokenB, toQ64(kInput)), 'v2')
+
+  const submitKappa = () => {
+    // Each input falls back to its current on-chain value (so user can set
+    // just kQ without re-typing kB). Refuse to send if either side is empty
+    // and we have no current value — silently sending 0 would brick the pool.
+    const kB = kBInput || (currentValues?.kB !== undefined ? round(currentValues.kB) : '')
+    const kQ = kQInput || (currentValues?.kQ !== undefined ? round(currentValues.kQ) : '')
+    if (!kB || !kQ) return createToast('Enter both kB and kQ (or open this modal on an existing pool to inherit)', 'error')
+    return runSubmit(
+      'kappa', 'Set Kappa',
+      () => factoryV3!.setKappaOfPair(tokenA, tokenB, toQ64(kB), toQ64(kQ)),
+      'v3',
+    )
+  }
+
+  const submitLambda = () =>
+    isV3
+      ? runSubmit('lambda', 'Set Lambda', () => factoryV3!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v3')
+      : runSubmit('lambda', 'Set Lambda', () => factoryContract!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v2')
+
+  const submitFee = () =>
+    isV3
+      ? runSubmit('fee', 'Set Fee', () => factoryV3!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v3')
+      : runSubmit('fee', 'Set Fee', () => factoryContract!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v2')
+
+  const submitProtocolFee = () => {
+    if (isV3) {
+      return runSubmit(
+        'protocolFee', 'Set FeeSplit',
+        () => factoryV3!.setFeeSplitOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
+        'v3',
+      )
+    }
+    return runSubmit(
+      'protocolFee', 'Set Protocol Fee',
+      () => factoryContract!.setProtocolFeeOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
+      'v2',
+    )
+  }
+
+  const submitSpread = () => {
+    // Each sub-input falls back to its current on-chain value. Refuse to
+    // send if any field has neither input nor current value — sending 0 for
+    // missing fields would silently flatten the spread curve.
+    const compress = compressInput || (currentValues?.compress !== undefined ? round(currentValues.compress) : '')
+    const sSell = sSellInput || (currentValues?.sSell !== undefined ? round(currentValues.sSell) : '')
+    const sBuy = sBuyInput || (currentValues?.sBuy !== undefined ? round(currentValues.sBuy) : '')
+    if (compress === '' || sSell === '' || sBuy === '') {
+      return createToast('Spread requires compress, sSell and sBuy — fill all three (or inherit from current)', 'error')
+    }
+    return runSubmit(
+      'spread', 'Set Spread',
+      () => factoryV3!.setSpreadOfPair(tokenA, tokenB, toPREC(compress), toPREC(sSell), toPREC(sBuy)),
+      'v3',
+    )
+  }
+
+  const submitFixS = () =>
+    runSubmit('fixS', 'Set fixS', () => factoryV3!.setFixSpreadOfPair(tokenA, tokenB, toPREC(fixSInput)), 'v3')
+  const submitDisThreshold = () =>
+    runSubmit('disThreshold', 'Set disThreshold', () => factoryV3!.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)), 'v3')
+  const submitSBound = () =>
+    runSubmit('sBound', 'Set sBound', () => factoryV3!.setSboundOfPair(tokenA, tokenB, toPREC(sBoundInput)), 'v3')
+  const submitPythWeight = () =>
+    runSubmit('pythWeight', 'Set pythWeight', () => factoryV3!.setPythWeightOfPair(tokenA, tokenB, toPREC(pythWeightInput)), 'v3')
+  const submitGamma = () =>
+    runSubmit('gamma', 'Set gamma', () => factoryV3!.setGammaOfPair(tokenA, tokenB, toPREC(gammaInput)), 'v3')
+
   return (
     <Modal isOpen={isOpen} onDismiss={handleDismiss}>
-      <div className="flex flex-col gap-6 p-4 text-white w-full">
+      <div className="flex flex-col gap-4 p-4 text-white w-full max-h-[80vh] overflow-y-auto">
         <RowBetween>
-          <Text fontSize={18} fontWeight={600}>
-            Pair settings
-          </Text>
+          <Text fontSize={18} fontWeight={600}>Pair settings</Text>
           <CloseIcon onClick={handleDismiss} />
         </RowBetween>
 
         <div className="space-y-3">
-          <div>
-            <Text fontSize={12} color="#b2ada9" className="mb-1">
-              setKOfPair (uint256)
-            </Text>
-            <div className="flex gap-2">
-              <input
-                value={kInput}
-                onChange={(event) => setKInput(sanitizeUintInput(event.target.value))}
-                placeholder={currentValues?.kappa !== undefined ? `Current: ${round(currentValues.kappa)}` : 'K'}
-                className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
-                inputMode="numeric"
-                pattern="[0-9]*"
-              />
-              <ButtonPrimary onClick={() => submitField('k')} disabled={submitting.k} className="!w-[100px] !py-2">
-                {submitting.k ? '...' : 'Submit'}
-              </ButtonPrimary>
+          {/* Kappa — single Q64 on V2, paired (kB + kQ) on V3 */}
+          {isV3 ? (
+            <div>
+              <Text fontSize={12} color="#b2ada9" className="mb-1">setKappaOfPair (kB, kQ — Q64)</Text>
+              <div className="flex gap-2">
+                <input
+                  value={kBInput}
+                  onChange={(e) => setKBInput(sanitize(e.target.value))}
+                  placeholder={currentValues?.kB !== undefined ? `kB: ${round(currentValues.kB)}` : 'kB'}
+                  className="flex-1 min-w-0 bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
+                  inputMode="decimal"
+                />
+                <input
+                  value={kQInput}
+                  onChange={(e) => setKQInput(sanitize(e.target.value))}
+                  placeholder={currentValues?.kQ !== undefined ? `kQ: ${round(currentValues.kQ)}` : 'kQ'}
+                  className="flex-1 min-w-0 bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
+                  inputMode="decimal"
+                />
+                <ButtonPrimary onClick={submitKappa} disabled={submitting.kappa} className="!w-[100px] !py-2 shrink-0">
+                  {submitting.kappa ? '...' : 'Submit'}
+                </ButtonPrimary>
+              </div>
             </div>
-          </div>
+          ) : (
+            <SettingsRow
+              label="setKOfPair (uint256)"
+              value={kInput}
+              setValue={setKInput}
+              placeholder={currentValues?.kappa !== undefined ? `Current: ${round(currentValues.kappa)}` : 'K'}
+              onSubmit={submitK}
+              busy={submitting.k}
+            />
+          )}
 
-          <div>
-            <Text fontSize={12} color="#b2ada9" className="mb-1">
-              setLambdaOfPair (uint64)
-            </Text>
-            <div className="flex gap-2">
-              <input
-                value={lambdaInput}
-                onChange={(event) => setLambdaInput(sanitizeUintInput(event.target.value))}
-                placeholder={currentValues?.lambda !== undefined ? `Current: ${round(currentValues.lambda)}` : 'Lambda'}
-                className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
-                inputMode="numeric"
-                pattern="[0-9]*"
-              />
-              <ButtonPrimary
-                onClick={() => submitField('lambda')}
-                disabled={submitting.lambda}
-                className="!w-[100px] !py-2"
-              >
-                {submitting.lambda ? '...' : 'Submit'}
-              </ButtonPrimary>
-            </div>
-          </div>
+          <SettingsRow
+            label="setLambdaOfPair (uint64)"
+            value={lambdaInput}
+            setValue={setLambdaInput}
+            placeholder={currentValues?.lambda !== undefined ? `Current: ${round(currentValues.lambda)}` : 'Lambda'}
+            onSubmit={submitLambda}
+            busy={submitting.lambda}
+          />
 
-          <div>
-            <Text fontSize={12} color="#b2ada9" className="mb-1">
-              setFeeOfPair (uint32)
-            </Text>
-            <div className="flex gap-2">
-              <input
-                value={feeInput}
-                onChange={(event) => setFeeInput(sanitizeUintInput(event.target.value))}
-                placeholder={currentValues?.fee !== undefined ? `Current: ${round(currentValues.fee)}` : 'Fee'}
-                className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
-                inputMode="numeric"
-                pattern="[0-9]*"
-              />
-              <ButtonPrimary onClick={() => submitField('fee')} disabled={submitting.fee} className="!w-[100px] !py-2">
-                {submitting.fee ? '...' : 'Submit'}
-              </ButtonPrimary>
-            </div>
-          </div>
+          <SettingsRow
+            label="setFeeOfPair (uint32)"
+            value={feeInput}
+            setValue={setFeeInput}
+            placeholder={currentValues?.fee !== undefined ? `Current: ${round(currentValues.fee)}` : 'Fee'}
+            onSubmit={submitFee}
+            busy={submitting.fee}
+          />
 
-          <div>
-            <Text fontSize={12} color="#b2ada9" className="mb-1">
-              {isV3 ? 'feeSplit (uint32) — set via setConfigOfPair' : 'setProtocolFeeOfPair (uint32)'}
-            </Text>
-            <div className="flex gap-2">
-              <input
-                value={protocolFeeInput}
-                onChange={(event) => setProtocolFeeInput(sanitizeUintInput(event.target.value))}
-                placeholder={protocolFeeValue !== undefined ? `Current: ${round(protocolFeeValue)}` : 'Protocol Fee'}
-                className="w-full bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
-                inputMode="numeric"
-                pattern="[0-9]*"
+          <SettingsRow
+            label={isV3 ? 'setFeeSplitOfPair (uint32)' : 'setProtocolFeeOfPair (uint32)'}
+            value={protocolFeeInput}
+            setValue={setProtocolFeeInput}
+            placeholder={protocolFeeValue !== undefined ? `Current: ${round(protocolFeeValue)}` : 'Protocol Fee'}
+            onSubmit={submitProtocolFee}
+            busy={submitting.protocolFee}
+          />
+
+          {/* V3-only rows */}
+          {isV3 && (
+            <>
+              <div>
+                <Text fontSize={12} color="#b2ada9" className="mb-1">setSpreadOfPair (compress, sSell, sBuy — uint32)</Text>
+                <div className="flex gap-2">
+                  <input
+                    value={compressInput}
+                    onChange={(e) => setCompressInput(sanitize(e.target.value))}
+                    placeholder={currentValues?.compress !== undefined ? `${round(currentValues.compress)}` : 'compress'}
+                    className="flex-1 min-w-0 bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
+                    inputMode="decimal"
+                  />
+                  <input
+                    value={sSellInput}
+                    onChange={(e) => setSSellInput(sanitize(e.target.value))}
+                    placeholder={currentValues?.sSell !== undefined ? `${round(currentValues.sSell)}` : 'sSell'}
+                    className="flex-1 min-w-0 bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
+                    inputMode="decimal"
+                  />
+                  <input
+                    value={sBuyInput}
+                    onChange={(e) => setSBuyInput(sanitize(e.target.value))}
+                    placeholder={currentValues?.sBuy !== undefined ? `${round(currentValues.sBuy)}` : 'sBuy'}
+                    className="flex-1 min-w-0 bg-[#1d1c21] text-white px-3 py-2 border border-[#3b3a41] focus:outline-none"
+                    inputMode="decimal"
+                  />
+                  <ButtonPrimary onClick={submitSpread} disabled={submitting.spread} className="!w-[100px] !py-2 shrink-0">
+                    {submitting.spread ? '...' : 'Submit'}
+                  </ButtonPrimary>
+                </div>
+              </div>
+
+              <SettingsRow
+                label="setFixSpreadOfPair (fixS — uint32)"
+                value={fixSInput}
+                setValue={setFixSInput}
+                placeholder={currentValues?.fixS !== undefined ? `Current: ${round(currentValues.fixS)}` : 'fixS'}
+                onSubmit={submitFixS}
+                busy={submitting.fixS}
               />
-              <ButtonPrimary
-                onClick={() => submitField('protocolFee')}
-                disabled={submitting.protocolFee}
-                className="!w-[100px] !py-2"
-              >
-                {submitting.protocolFee ? '...' : 'Submit'}
-              </ButtonPrimary>
-            </div>
-          </div>
+
+              <SettingsRow
+                label="setDisThresholdOfPair (uint32)"
+                value={disThresholdInput}
+                setValue={setDisThresholdInput}
+                placeholder={
+                  currentValues?.disThreshold !== undefined
+                    ? `Current: ${round(currentValues.disThreshold)}`
+                    : 'disThreshold'
+                }
+                onSubmit={submitDisThreshold}
+                busy={submitting.disThreshold}
+              />
+
+              <SettingsRow
+                label="setSboundOfPair (uint32)"
+                value={sBoundInput}
+                setValue={setSBoundInput}
+                placeholder={currentValues?.sBound !== undefined ? `Current: ${round(currentValues.sBound)}` : 'sBound'}
+                onSubmit={submitSBound}
+                busy={submitting.sBound}
+              />
+
+              <SettingsRow
+                label="setPythWeightOfPair (uint32)"
+                value={pythWeightInput}
+                setValue={setPythWeightInput}
+                placeholder={
+                  currentValues?.pythWeight !== undefined ? `Current: ${round(currentValues.pythWeight)}` : 'pythWeight'
+                }
+                onSubmit={submitPythWeight}
+                busy={submitting.pythWeight}
+              />
+
+              <SettingsRow
+                label="setGammaOfPair (uint32)"
+                value={gammaInput}
+                setValue={setGammaInput}
+                placeholder={currentValues?.gamma !== undefined ? `Current: ${round(currentValues.gamma)}` : 'gamma'}
+                onSubmit={submitGamma}
+                busy={submitting.gamma}
+              />
+            </>
+          )}
         </div>
       </div>
     </Modal>
