@@ -168,7 +168,12 @@ export async function callSwapContract(
           if (reason.includes('INSUFFICIENT_OUTPUT_AMOUNT') || reason.includes('EXCESSIVE_INPUT_AMOUNT')) {
             errorMessage = 'This transaction will not succeed either due to price movement or fee on transfer. Try increasing your slippage tolerance.'
           } else if (reason.includes('INVALID_INVENTORY')) {
-            errorMessage = 'Swap amount is too small for this pool. Try a larger amount.'
+            // BrownFi V3 rejects trades whose post-state would extract more
+            // pool value than the curve's κ-weighted slack allows. In
+            // practice this fires when the trade is large relative to pool
+            // reserves, or when the pool TVL is too thin to absorb any
+            // meaningful trade. Either way the user fix is the same.
+            errorMessage = 'This trade is too large for the pool. Try a smaller amount or wait for more liquidity.'
           } else {
             errorMessage = `The transaction cannot succeed due to error: ${reason || 'unknown'}. Try increasing slippage tolerance.`
           }
