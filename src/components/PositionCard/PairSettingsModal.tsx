@@ -121,12 +121,14 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
             { name: 'lambda', type: 'uint64' },
             { name: 'fee', type: 'uint32' },
             { name: 'feeSplit', type: 'uint32' },
-            { name: 'maxOut', type: 'uint8' },
             { name: 'compress', type: 'uint32' },
             { name: 'sSell', type: 'uint32' },
             { name: 'sBuy', type: 'uint32' },
             { name: 'fixS', type: 'uint32' },
             { name: 'disThreshold', type: 'uint32' },
+            { name: 'sBound', type: 'uint32' },
+            { name: 'pythWeight', type: 'uint32' },
+            { name: 'gamma', type: 'uint32' },
           ] as const
           const current = await client.readContract({
             address: configAddr as `0x${string}`,
@@ -146,12 +148,14 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
             lambda: current.lambda,
             fee: current.fee,
             feeSplit: Math.floor(Number(inputValue) * 10 ** 8),
-            maxOut: current.maxOut,
             compress: current.compress,
             sSell: current.sSell,
             sBuy: current.sBuy,
             fixS: current.fixS,
             disThreshold: current.disThreshold,
+            sBound: current.sBound,
+            pythWeight: current.pythWeight,
+            gamma: current.gamma,
           }
           response = await factoryContract.setConfigOfPair(tokenA, tokenB, nextConfig)
           addTransaction(response, {

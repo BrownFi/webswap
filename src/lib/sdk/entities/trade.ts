@@ -13,6 +13,16 @@ import { TokenAmount } from './fractions/tokenAmount'
 import { Fraction } from './fractions/fraction'
 import { Percent } from './fractions/percent'
 import { sortedInsert } from '../utils'
+import { InsufficientReservesError, InsufficientInputAmountError } from '../errors'
+
+// Expected business-as-usual rejections when a candidate pool can't satisfy
+// the requested amount — happens on every thin pool and shouldn't pollute the
+// console. We surface only unexpected errors.
+const isExpectedTradeError = (error: unknown): boolean =>
+  error instanceof InsufficientReservesError ||
+  error instanceof InsufficientInputAmountError ||
+  (!!error && typeof (error as any).isInsufficientReservesError === 'boolean') ||
+  (!!error && typeof (error as any).isInsufficientInputAmountError === 'boolean')
 
 /**
  * Returns the wrapped version of a CurrencyAmount for use within the SDK
@@ -313,7 +323,9 @@ export class Trade {
         )
         amountOut = result[0]
       } catch (error) {
-        console.warn('======= getOutputAmountAsync error', error)
+        if (!isExpectedTradeError(error)) {
+          console.warn('======= getOutputAmountAsync error', error)
+        }
         return
       }
 
@@ -391,7 +403,9 @@ export class Trade {
         )
         amountIn = result[0]
       } catch (error) {
-        console.error('======= getInputAmountAsync error', error)
+        if (!isExpectedTradeError(error)) {
+          console.error('======= getInputAmountAsync error', error)
+        }
         continue
       }
 

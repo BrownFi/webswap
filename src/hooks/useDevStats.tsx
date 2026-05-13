@@ -29,8 +29,25 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
   const { version } = useVersion({ chainId })
 
   const { get: getDevStats, save: saveDevStats, isAvailable } = useStorageCache({
-    key: ['devStats', 'v2shape', pair.liquidityToken.address, `v${version}`].join('-'),
-    initValue: { lambda: 0, kappa: 0, fee: 0, protocolFee: 0, feeSplit: 0 },
+    key: ['devStats', 'v3shape', pair.liquidityToken.address, `v${version}`].join('-'),
+    initValue: {
+      lambda: 0,
+      kappa: 0,
+      fee: 0,
+      protocolFee: 0,
+      feeSplit: 0,
+      // V3 extras — undefined on V2 pools
+      kB: undefined as number | undefined,
+      kQ: undefined as number | undefined,
+      compress: undefined as number | undefined,
+      sSell: undefined as number | undefined,
+      sBuy: undefined as number | undefined,
+      fixS: undefined as number | undefined,
+      disThreshold: undefined as number | undefined,
+      sBound: undefined as number | undefined,
+      pythWeight: undefined as number | undefined,
+      gamma: undefined as number | undefined,
+    },
     cacheTime: 2 * 60,
   })
 
@@ -73,12 +90,14 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
               { name: 'lambda', type: 'uint64' },
               { name: 'fee', type: 'uint32' },
               { name: 'feeSplit', type: 'uint32' },
-              { name: 'maxOut', type: 'uint8' },
               { name: 'compress', type: 'uint32' },
               { name: 'sSell', type: 'uint32' },
               { name: 'sBuy', type: 'uint32' },
               { name: 'fixS', type: 'uint32' },
               { name: 'disThreshold', type: 'uint32' },
+              { name: 'sBound', type: 'uint32' },
+              { name: 'pythWeight', type: 'uint32' },
+              { name: 'gamma', type: 'uint32' },
             ],
             type: 'tuple',
           }],
@@ -91,13 +110,30 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
 
       const Q64 = 2n ** 64n
       const PREC = 100000000n
-      const lambda = Number(config.lambda * 1000000n / Q64) / 1000000
-      const kappa = Number(config.kB * 1000000n / Q64) / 1000000
-      const fee = Number(config.fee) / Number(PREC)
-      const feeSplit = Number(config.feeSplit) / Number(PREC)
+      const fromQ64 = (v: bigint) => Number((v * 1000000n) / Q64) / 1000000
+      const fromPrec = (v: number | bigint) => Number(v) / Number(PREC)
 
-      saveDevStats({ lambda, kappa, fee, protocolFee: 0, feeSplit })
-      return { lambda, kappa, fee, feeSplit }
+      const kB = fromQ64(config.kB)
+      const kQ = fromQ64(config.kQ)
+      const lambda = fromQ64(config.lambda)
+      const kappa = kB // legacy alias; existing UI reads `kappa`
+      const fee = fromPrec(config.fee)
+      const feeSplit = fromPrec(config.feeSplit)
+      const compress = fromPrec(config.compress)
+      const sSell = fromPrec(config.sSell)
+      const sBuy = fromPrec(config.sBuy)
+      const fixS = fromPrec(config.fixS)
+      const disThreshold = fromPrec(config.disThreshold)
+      const sBound = fromPrec(config.sBound)
+      const pythWeight = fromPrec(config.pythWeight)
+      const gamma = fromPrec(config.gamma)
+
+      const next = {
+        lambda, kappa, fee, protocolFee: 0, feeSplit,
+        kB, kQ, compress, sSell, sBuy, fixS, disThreshold, sBound, pythWeight, gamma,
+      }
+      saveDevStats(next)
+      return next
     },
     enabled: enabled && version === 3 && !hasCache,
     staleTime: 2 * 60 * 1000,

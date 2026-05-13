@@ -7,6 +7,7 @@ import { Address, checksumAddress } from 'viem'
 
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
@@ -353,7 +354,7 @@ function PoolDetailInner({
 
           {!isMainnet && (
             <div
-              className="flex flex-wrap items-center gap-3"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1"
               style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
             >
               <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
@@ -362,6 +363,7 @@ function PoolDetailInner({
                 {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
                 {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
               </span>
+              {version === 3 && <V3ExtraParams devStats={devStats} />}
               {account && (
                 <Settings
                   size="14"
@@ -464,7 +466,7 @@ function PoolDetailInner({
             {/* Dev stats — non-mainnet only (above the rate) — desktop only */}
             {!isMainnet && (
               <div
-                className="hidden lg:flex flex-wrap items-center gap-3"
+                className="hidden lg:flex flex-wrap items-center gap-x-3 gap-y-1"
                 style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
               >
                 <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
@@ -473,6 +475,7 @@ function PoolDetailInner({
                   {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
                   {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
                 </span>
+                {version === 3 && <V3ExtraParams devStats={devStats} />}
                 {account && (
                   <Settings
                     size="14"

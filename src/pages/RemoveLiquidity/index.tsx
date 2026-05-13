@@ -213,6 +213,11 @@ export default function RemoveLiquidity() {
       const swapAmount = isToken0Out ? amount1 : amount0
       const swapTokenIn = isToken0Out ? pair.token1.address : pair.token0.address
       const swapTokenOut = zapOutToken.address
+      // Use the actual token decimals — hardcoding 1e18 breaks any pair with a
+      // non-18-decimal token (e.g. USDC.e at 6 dec → router would see a swap
+      // size ~1e12× larger than reality and revert the quote).
+      const swapInDecimals = isToken0Out ? pair.token1.decimals : pair.token0.decimals
+      const swapOutDecimals = zapOutToken.decimals
 
       if (swapAmount <= 0) return directAmount
 
@@ -229,13 +234,13 @@ export default function RemoveLiquidity() {
         }] as const,
         functionName: 'quoteAmountsOutWithUpdate',
         args: [
-          BigInt(Math.floor(swapAmount * 1e18).toString()),
+          BigInt(Math.floor(swapAmount * 10 ** swapInDecimals).toString()),
           [swapTokenIn as `0x${string}`, swapTokenOut as `0x${string}`],
           updateData as `0x${string}`,
         ],
       })
 
-      const swapOut = Number(result[result.length - 1]) / 1e18
+      const swapOut = Number(result[result.length - 1]) / 10 ** swapOutDecimals
       return directAmount + swapOut
     },
     enabled: Boolean(supportsZapV3 && useZap && pair && zapOutToken && chainId &&

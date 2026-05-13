@@ -240,7 +240,7 @@ export function useDerivedSwapInfo(): {
 
   if (tradeOut.isInsufficient || tradeIn.isInsufficient) {
     if (!isInputEmpty && !tradeIn.loadingExactIn && !tradeOut.loadingExactOut) {
-      inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
+      inputError = 'Insufficient pool liquidity for this trade. Try a smaller amount.'
     }
   }
 

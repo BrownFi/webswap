@@ -22,6 +22,7 @@ import { Loader } from 'components/Loader'
 const PairChartModal = lazy(() => import('components/pool/PairChartModal').then((m) => ({ default: m.PairChartModal })))
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import { PoolBalanceBar } from 'components/pool/PoolBalanceBar'
+import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween } from 'components/Row'
 import { isMainnet } from 'connectors'
@@ -297,7 +298,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
         {!isMainnet && (
           <div
-            className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2 justify-center md:justify-start"
+            className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2 justify-start"
             onClick={(e) => e.stopPropagation()}
           >
             <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
@@ -307,6 +308,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
               {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
             </Text>
+            {version === 3 && <V3ExtraParams devStats={devStats} />}
             {canEditSettings && (
               <Settings size="14" className="cursor-pointer text-[#c4943a] hover:text-[#d4a94f]" onClick={() => setShowSettings(true)} />
             )}

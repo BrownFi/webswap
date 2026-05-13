@@ -123,6 +123,9 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
           })
           if (!stale) {
             const foundTrade = bestTradeIn?.[0] ?? null
+            // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
+            // have pairs but no trade found, the pool is too thin → flag it.
+            if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
             setTrade(foundTrade)
             setLoading(false)
           }
@@ -144,6 +147,7 @@ export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?:
         })
         if (!stale) {
           const foundTrade = bestTradeIn?.[0] ?? null
+          if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
           setTrade(foundTrade)
           setLoading(false)
         }
@@ -220,6 +224,9 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
           })
           if (!stale) {
             const foundTrade = bestTradeOut?.[0] ?? null
+            // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
+            // have pairs but no trade found, the pool is too thin → flag it.
+            if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
             setTrade(foundTrade)
             setLoading(false)
           }
@@ -242,6 +249,7 @@ export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: Curr
         })
         if (!stale) {
           const foundTrade = bestTradeOut?.[0] ?? null
+          if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
           setTrade(foundTrade)
           setLoading(false)
         }
