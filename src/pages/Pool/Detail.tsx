@@ -272,11 +272,8 @@ function PoolDetailInner({
   const incentiveIcon = bgtAPR
     ? 'https://furthermore.app/icons/bgt.svg'
     : null
-  // BGT click-through to first registered restaker vault. Hoisted here so the
-  // Stats card rows below can use it without recomputing.
   const restakers = getRestakers(chainId, pair.liquidityToken.address)
   const isBgt = bgtAPR > 0
-  const stakeUrl = restakers[0]?.stakePageUrl
   const incentiveLabel = isBgt ? 'BGT APR' : 'Incentive APR'
 
   const currency0 = unwrappedToken(pair.token0)
@@ -669,13 +666,33 @@ function PoolDetailInner({
                 {!isMainnet && <StatInline label="Fee APR" value={`${formatNumberLambda(feeAPR ?? 0, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />}
                 <StatInline label="24h Fees / TVL" value={`${formatNumberLambda(feeOverTvl ?? 0, { maximumFractionDigits: 2 })}%`} />
                 {incentiveApr > 0 && (
-                  stakeUrl ? (
-                    <a href={stakeUrl} target="_blank" rel="noreferrer" className="block no-underline hover:opacity-90">
-                      <StatInline label={`${incentiveLabel} ↗`} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
-                    </a>
-                  ) : (
+                  <div>
                     <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
-                  )
+                    {restakers.length > 0 && (
+                      <div className="inline-flex items-center gap-x-3 gap-y-1 flex-wrap" style={{ marginTop: '4px' }}>
+                        <span style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80' }}>Stake on</span>
+                        {restakers.map((r) => (
+                          <a
+                            key={r.vaultAddress}
+                            href={r.stakePageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 hover:opacity-80"
+                            style={{
+                              fontFamily: 'Inter',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: '#D8A072',
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            {r.iconUrl && <img src={r.iconUrl} alt="" style={{ width: 14, height: 14, borderRadius: 4 }} />}
+                            {r.platform}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -683,43 +700,57 @@ function PoolDetailInner({
               <div className="hidden lg:block">
                 {!isMainnet && (
                   <div className="mb-3 lg:mb-4">
-                    <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                    <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
                       Fee APR
-                      <QuestionHelper text="Annualized fee yield based on 24h volume." />
                     </div>
                     <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
                       {`${formatNumberLambda(feeAPR ?? 0, { maximumFractionDigits: 2 })}%`}
                     </div>
                   </div>
                 )}
-                <StatRow label="24h Fees / TVL" value={`${formatNumberLambda(feeOverTvl ?? 0, { maximumFractionDigits: 2 })}%`} />
+                <div className="mb-3 lg:mb-4">
+                  <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                    24h Fees / TVL
+                    <QuestionHelper text="Last 24h fees as a percentage of current TVL — the pool's daily fee yield." />
+                  </div>
+                  <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
+                    {`${formatNumberLambda(feeOverTvl ?? 0, { maximumFractionDigits: 2 })}%`}
+                  </div>
+                </div>
                 {incentiveApr > 0 && (
                   <div className="mb-3 lg:mb-4">
-                    <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                    <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
                       {incentiveLabel}
                       {incentiveIcon && <img src={incentiveIcon} alt="BGT" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
-                      {isBgt && <QuestionHelper text="Stake your LP token on Infrared / BeraHub to earn BGT." />}
-                      {stakeUrl && (
-                        <a
-                          href={stakeUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label="Open vault"
-                          title="Open vault"
-                          className="inline-flex items-center hover:opacity-80"
-                          style={{ color: '#978A80', textDecoration: 'none' }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                            <polyline points="15 3 21 3 21 9" />
-                            <line x1="10" y1="14" x2="21" y2="3" />
-                          </svg>
-                        </a>
-                      )}
+                      {isBgt && <QuestionHelper text="Stake your LP token on a restaker vault to earn BGT." />}
                     </div>
                     <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
                       +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%
                     </div>
+                    {restakers.length > 0 && (
+                      <div className="inline-flex items-center gap-x-3 gap-y-1 flex-wrap" style={{ marginTop: '6px' }}>
+                        <span style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80' }}>Stake on</span>
+                        {restakers.map((r) => (
+                          <a
+                            key={r.vaultAddress}
+                            href={r.stakePageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 hover:opacity-80"
+                            style={{
+                              fontFamily: 'Inter',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: '#D8A072',
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            {r.iconUrl && <img src={r.iconUrl} alt="" style={{ width: 14, height: 14, borderRadius: 4 }} />}
+                            {r.platform}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

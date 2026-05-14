@@ -14,8 +14,11 @@ import MetaMaskLogo from 'assets/images/metamask.png'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 import useAddTokenToMetamask from 'hooks/useAddTokenToMetamask'
+import { useAllTransactions } from 'state/transactions/hooks'
 import checkCircle from 'assets/svg/check_circle.svg'
 import cancel from 'assets/svg/cancel.svg'
+
+type TxState = 'pending' | 'success' | 'failed'
 
 const Wrapper = styled.div`
   width: 100%;
@@ -77,15 +80,57 @@ function TransactionSubmittedContent({
   chainId,
   hash,
   currencyToAdd,
+  submittedText,
+  txState,
 }: {
   onDismiss: () => void
   hash: string | undefined
   chainId: ChainId
   currencyToAdd?: Currency | undefined
+  submittedText?: string
+  txState: TxState
 }) {
   const theme = useContext(ThemeContext)
-
   const { addToken, success } = useAddTokenToMetamask(currencyToAdd)
+
+  // Failed receipt — Uniswap/Aerodrome-style "Transaction Failed" view.
+  // Keeps the explorer link so the user can inspect the revert reason.
+  if (txState === 'failed') {
+    return (
+      <Wrapper className="relative">
+        <Section>
+          <RowBetween>
+            <div />
+            <span className="absolute top-[16px] right-[16px]">
+              <CloseIcon color="#B8ADA4" onClick={onDismiss} />
+            </span>
+          </RowBetween>
+          <ConfirmedIcon className="!pb-[20px] !pt-[40px]">
+            <img src={cancel} className="w-[100px]" alt="failed" />
+          </ConfirmedIcon>
+          <AutoColumn gap="12px" justify={'center'}>
+            <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', lineHeight: '36px', color: '#FF3B6A', textAlign: 'center' }}>
+              Transaction Failed
+            </span>
+            {chainId && hash && (
+              <ExternalLink href={getEtherscanLink(chainId, hash, 'transaction')}>
+                <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#FF3B6A' }}>
+                  View on {getScanText(chainId)}
+                </span>
+              </ExternalLink>
+            )}
+            <ButtonPrimary padding="6px 12px" width="100%" style={{ marginTop: '12px' }} onClick={onDismiss}>
+              Dismiss
+            </ButtonPrimary>
+          </AutoColumn>
+        </Section>
+      </Wrapper>
+    )
+  }
+
+  // Pending: hash exists but receipt hasn't arrived. Success: mined OK.
+  const isPending = txState === 'pending'
+  const title = isPending ? 'Transaction Submitted' : 'Transaction Confirmed'
 
   return (
     <Wrapper className="relative">
@@ -97,12 +142,21 @@ function TransactionSubmittedContent({
           </span>
         </RowBetween>
         <ConfirmedIcon className="!pb-[20px] !pt-[40px]">
-          <img src={checkCircle} className="w-[100px]" alt="check" />
+          {isPending ? (
+            <CustomLightSpinner src={Circle} alt="mining" size={'90px'} />
+          ) : (
+            <img src={checkCircle} className="w-[100px]" alt="check" />
+          )}
         </ConfirmedIcon>
         <AutoColumn gap="12px" justify={'center'}>
           <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', lineHeight: '36px', color: '#83CF84', textAlign: 'center' }}>
-            Transaction Submitted
+            {title}
           </span>
+          {submittedText && (
+            <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#CFC7C1', textAlign: 'center' }}>
+              {submittedText}
+            </span>
+          )}
           {chainId && hash && (
             <ExternalLink href={getEtherscanLink(chainId, hash, 'transaction')}>
               <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#83CF84' }}>
@@ -110,7 +164,7 @@ function TransactionSubmittedContent({
               </span>
             </ExternalLink>
           )}
-          {currencyToAdd && window?.ethereum?.isMetaMask && (
+          {!isPending && currencyToAdd && window?.ethereum?.isMetaMask && (
             <ButtonPrimary padding="6px 12px" width="100%" style={{ marginTop: '12px' }} onClick={addToken}>
               {!success ? (
                 <RowFixed>
@@ -197,6 +251,7 @@ interface ConfirmationModalProps {
   content: () => React.ReactNode
   attemptingTxn: boolean
   pendingText: string
+  submittedText?: string
   currencyToAdd?: Currency | undefined
 }
 
@@ -206,10 +261,16 @@ export function TransactionConfirmationModal({
   attemptingTxn,
   hash,
   pendingText,
+  submittedText,
   content,
   currencyToAdd,
 }: ConfirmationModalProps) {
   const { chainId } = useActiveWeb3React()
+  const allTxns = useAllTransactions()
+  // Watch the finalized receipt for the current hash. Updater.tsx polls and
+  // fills `receipt` once the tx is mined; status 1 = success, 0 = revert.
+  const receipt = hash ? allTxns[hash]?.receipt : undefined
+  const txState: TxState = !receipt ? 'pending' : receipt.status === 1 ? 'success' : 'failed'
 
   if (!chainId) return null
 
@@ -224,6 +285,8 @@ export function TransactionConfirmationModal({
           hash={hash}
           onDismiss={onDismiss}
           currencyToAdd={currencyToAdd}
+          submittedText={submittedText}
+          txState={txState}
         />
       ) : (
         content()

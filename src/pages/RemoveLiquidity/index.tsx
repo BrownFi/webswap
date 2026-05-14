@@ -37,6 +37,7 @@ import { useParams } from 'react-router-dom'
 import { Text } from 'components/Rebass'
 import { Field } from 'state/burn/actions'
 import { useBurnActionHandlers, useBurnState, useDerivedBurnInfo } from 'state/burn/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { ThemeContext } from 'styled-components'
 import { TYPE } from 'theme'
@@ -55,6 +56,7 @@ export default function RemoveLiquidity() {
 
   const { createToast } = useToast()
   const queryClient = useQueryClient()
+  const addTransaction = useTransactionAdder()
   const supportsZapV2 = useMemo(() => isZapSupportedOnChain(chainId), [chainId])
   const supportsZapV3 = useMemo(() => isV3ZapSupported(chainId, version), [chainId, version])
   const supportsZap = supportsZapV2 || supportsZapV3
@@ -301,6 +303,7 @@ export default function RemoveLiquidity() {
         setAttemptingTxn(false)
         if (response) {
           setTxHash(response.hash)
+          addTransaction(response, { summary: submittedText })
         }
       } else if (useZap && supportsZap) {
         if (!zapOutRouteData) {
@@ -317,6 +320,7 @@ export default function RemoveLiquidity() {
         setAttemptingTxn(false)
         if (response) {
           setTxHash(response.hash)
+          addTransaction(response, { summary: submittedText })
         }
       } else {
         const response = await removeLiquidity(
@@ -334,6 +338,7 @@ export default function RemoveLiquidity() {
         setAttemptingTxn(false)
         if (response) {
           setTxHash(response.hash)
+          addTransaction(response, { summary: submittedText })
           setTimeout(() => queryClient.invalidateQueries(), 5000)
         }
       }
@@ -458,6 +463,12 @@ export default function RemoveLiquidity() {
       : `Removing ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}` +
         ` ${getTokenSymbol(currencyA, chainId)} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}` +
         ` ${getTokenSymbol(currencyB, chainId)}`
+  const submittedText =
+    useZap && zapOutSymbol
+      ? `Removed liquidity into ${zapOutSymbol}`
+      : `Removed ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}` +
+        ` ${getTokenSymbol(currencyA, chainId)} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}` +
+        ` ${getTokenSymbol(currencyB, chainId)}`
 
   const liquidityPercentChangeCallback = useCallback(
     (value: number) => {
@@ -501,6 +512,7 @@ export default function RemoveLiquidity() {
               />
             )}
             pendingText={pendingText}
+            submittedText={submittedText}
           />
           <AutoColumn gap="20px">
             <RemoveLiqudityCard>

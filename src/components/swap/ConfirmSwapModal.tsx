@@ -86,6 +86,13 @@ export default function ConfirmSwapModal({
     chainId,
   )} for ${trade?.outputAmount?.toSignificant(6)} ${getTokenSymbol(trade?.outputAmount?.currency, chainId)}`
 
+  // Echo the swap amounts on the success screen so users can confirm what
+  // they just signed without scrolling the explorer page.
+  const submittedText = `Swapped ${trade?.inputAmount?.toSignificant(6)} ${getTokenSymbol(
+    trade?.inputAmount?.currency,
+    chainId,
+  )} for ${trade?.outputAmount?.toSignificant(6)} ${getTokenSymbol(trade?.outputAmount?.currency, chainId)}`
+
   const confirmationContent = useCallback(
     () =>
       swapErrorMessage ? (
@@ -109,6 +116,7 @@ export default function ConfirmSwapModal({
       hash={txHash}
       content={confirmationContent}
       pendingText={pendingText}
+      submittedText={submittedText}
       currencyToAdd={trade?.outputAmount?.currency}
     />
   )

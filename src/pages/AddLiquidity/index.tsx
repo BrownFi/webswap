@@ -20,6 +20,7 @@ import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { Field } from 'state/mint/actions'
 import { useDerivedMintInfo, useMintActionHandlers, useMintState } from 'state/mint/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 
 import ConnectWallet from 'components/ConnectWallet'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
@@ -51,6 +52,7 @@ export default function AddLiquidity() {
   const { version } = useVersion({ chainId })
   const { createToast } = useToast()
   const queryClient = useQueryClient()
+  const addTransaction = useTransactionAdder()
 
   const [useZap, setUseZap] = useState(false)
 
@@ -167,6 +169,9 @@ export default function AddLiquidity() {
       if (response) {
         setAttemptingTxn(false)
         setTxHash(response.hash)
+        addTransaction(response, {
+          summary: `Add ${parsedAmountA?.toSignificant(3)} ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} and ${parsedAmountB?.toSignificant(3)} ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}`,
+        })
         setTimeout(() => queryClient.invalidateQueries(), 5000)
       }
     } catch (error) {
@@ -240,6 +245,10 @@ export default function AddLiquidity() {
   }
 
   const pendingText = `Supplying ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)} ${getTokenSymbol(
+    currencies[Field.CURRENCY_A],
+    chainId,
+  )} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)} ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}`
+  const submittedText = `Supplied ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)} ${getTokenSymbol(
     currencies[Field.CURRENCY_A],
     chainId,
   )} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)} ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}`
@@ -355,6 +364,7 @@ export default function AddLiquidity() {
                 />
               )}
               pendingText={pendingText}
+              submittedText={submittedText}
               currencyToAdd={pair?.liquidityToken}
             />
             <AutoColumn gap="20px">
