@@ -10,7 +10,11 @@ async function fetchJson<T>(path: string, options?: { params?: Record<string, an
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), options?.timeout ?? 10_000)
   try {
-    const response = await fetch(url.toString(), { signal: controller.signal, credentials: 'include' })
+    // Public read-only endpoints — no cookies, no auth. Sending
+    // `credentials: 'include'` against the API's `Access-Control-Allow-Origin:
+    // *` + `Allow-Credentials: true` headers is forbidden by the CORS spec
+    // and was causing intermittent failures in non-incognito browsers.
+    const response = await fetch(url.toString(), { signal: controller.signal })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     return response.json()
   } finally {
