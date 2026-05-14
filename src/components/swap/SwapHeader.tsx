@@ -32,7 +32,7 @@ export default function SwapHeader() {
   return (
     <StyledSwapHeader>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <StyledSwaptitle>Swap Token</StyledSwaptitle>
+        <StyledSwaptitle>Swap</StyledSwaptitle>
         <div className="flex items-center gap-3">
           <SwitchVersion />
           <SettingsTab />

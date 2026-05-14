@@ -66,8 +66,12 @@ export function CurrencySearch({
 
   // refs for fixed size lists
   const fixedList = useRef<FixedSizeList>()
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const [searchQuery] = useState<string>('')
+  // Search input — was previously wired but never given an input element. The
+  // `filterTokens` helper at `./filtering` already handles name/symbol/address
+  // matching, so once we send real keystrokes here the whole list filters.
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const debouncedQuery = useDebounce(searchQuery, 200)
 
   const [invertSearchOrder] = useState<boolean>(false)
@@ -110,9 +114,13 @@ export function CurrencySearch({
     [onDismiss, onCurrencySelect],
   )
 
-  // clear the input on open
+  // Clear the input on open + focus the search box for instant typing.
   useEffect(() => {
-    if (isOpen) { /* searchQuery is always empty */ }
+    if (isOpen) {
+      setSearchQuery('')
+      // Slight delay so the modal mount transition doesn't steal focus.
+      setTimeout(() => inputRef.current?.focus(), 50)
+    }
   }, [isOpen])
 
   // menu ui
@@ -133,6 +141,30 @@ export function CurrencySearch({
           </Text>
           <CloseIcon onClick={onDismiss} color="white" />
         </RowBetween>
+        {/* Search box — matches Uniswap/Kodiak/CowSwap. Supports name, symbol,
+            and contract address (the existing filterTokens helper handles all
+            three). */}
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Search name, symbol or paste address"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+          style={{
+            width: '100%',
+            height: 44,
+            background: '#120F0D',
+            border: '1px solid #2F2823',
+            borderRadius: 12,
+            padding: '0 16px',
+            fontFamily: 'Inter',
+            fontSize: 14,
+            color: '#FBFBFD',
+            outline: 'none',
+          }}
+        />
         {showCommonBases && (
           <CommonBases chainId={chainId} onSelect={handleCurrencySelect} selectedCurrency={selectedCurrency} />
         )}

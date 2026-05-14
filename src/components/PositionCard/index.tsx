@@ -224,7 +224,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
-                  Incentive APR: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
+                  {enableBgt ? 'BGT APR' : 'Incentive APR'}: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
                   {enableBgt && (
                     <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 14, height: 14, borderRadius: '50%' }} />
                   )}

@@ -229,9 +229,9 @@ export function SettingsTab() {
             <RowBetween>
               <RowFixed>
                 <TYPE.black style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#CFC7C1' }}>
-                  Multihops
+                  Smart routing
                 </TYPE.black>
-                <QuestionHelper text="Enable swaps through multiple token pairs." />
+                <QuestionHelper text="Auto-route swaps through multiple pools to get the best price." />
               </RowFixed>
               <Toggle
                 id="toggle-disable-multihop-button"

@@ -16,7 +16,10 @@ import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
+import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
+import QuestionHelper from 'components/QuestionHelper'
+import { getRestakers } from 'constants/restakers'
 import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
 
 const PairChartTV = lazy(() =>
@@ -269,6 +272,12 @@ function PoolDetailInner({
   const incentiveIcon = bgtAPR
     ? 'https://furthermore.app/icons/bgt.svg'
     : null
+  // BGT click-through to first registered restaker vault. Hoisted here so the
+  // Stats card rows below can use it without recomputing.
+  const restakers = getRestakers(chainId, pair.liquidityToken.address)
+  const isBgt = bgtAPR > 0
+  const stakeUrl = restakers[0]?.stakePageUrl
+  const incentiveLabel = isBgt ? 'BGT APR' : 'Incentive APR'
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -324,7 +333,7 @@ function PoolDetailInner({
                 color: '#83CF84',
               }}
             >
-              {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+              Fee {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
             </span>
             {isBeta && (
               <span style={{ background: '#f97316', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', color: '#fff' }}>
@@ -337,10 +346,10 @@ function PoolDetailInner({
               rel="noreferrer"
               className="hover:underline inline-flex items-center gap-1 ml-auto"
               style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80' }}
-              title={`View ${shortenAddress(pair.liquidityToken.address)} on explorer`}
+              title={`View pair contract ${pair.liquidityToken.address} on explorer`}
             >
               {/* Address text hidden on mobile — icon-only carries the link */}
-              <span className="hidden sm:inline">{shortenAddress(pair.liquidityToken.address)}</span>
+              <span className="hidden sm:inline">Pair {shortenAddress(pair.liquidityToken.address)}</span>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                 <polyline points="15 3 21 3 21 9" />
@@ -424,7 +433,7 @@ function PoolDetailInner({
                   color: '#83CF84',
                 }}
               >
-                {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+                Fee {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
               </span>
               {isBeta && (
                 <span
@@ -449,9 +458,9 @@ function PoolDetailInner({
                 rel="noreferrer"
                 className="hover:underline inline-flex items-center gap-1"
                 style={{ fontFamily: 'Inter', fontSize: '13px', color: '#978A80', marginLeft: 'auto' }}
-                title="View on explorer"
+                title={`View pair contract ${pair.liquidityToken.address} on explorer`}
               >
-                {shortenAddress(pair.liquidityToken.address)}
+                Pair {shortenAddress(pair.liquidityToken.address)}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                   <polyline points="15 3 21 3 21 9" />
@@ -600,72 +609,121 @@ function PoolDetailInner({
 
           {/* Right sidebar */}
           <div className="flex flex-col gap-4 order-1 lg:order-2">
-            {(() => {
-              const cardBase = 'p-4 lg:p-[23px] text-center lg:text-left'
-              const cardStyle = { background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' } as const
-              const labelCls = 'text-[13px] lg:text-[14px]'
-              const valueCls = 'text-[22px] lg:text-[32px]'
+            {/* Primary actions — thin button strip, no surrounding card. Two
+                inline buttons side-by-side so they stay above the fold without
+                eating vertical space. */}
+            <div className="hidden lg:grid grid-cols-2 gap-2">
+              <Link
+                to={`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`}
+                className="no-underline inline-flex items-center justify-center"
+                style={{
+                  // Match the Remove button (secondary outline) in
+                  // YourPositionCard so the two action sets read consistently.
+                  background: 'transparent',
+                  border: '1px solid #493E35',
+                  borderRadius: '10px',
+                  padding: '10px',
+                  fontFamily: 'Inter',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#FBFBFD',
+                }}
+              >
+                Swap
+              </Link>
+              <Link
+                to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+                className="no-underline inline-flex items-center justify-center"
+                style={{
+                  background: '#985C2A',
+                  borderRadius: '10px',
+                  padding: '10px',
+                  fontFamily: 'Inter',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#FFFFFF',
+                }}
+              >
+                + Add liquidity
+              </Link>
+            </div>
 
-              const aprCard = !isMainnet ? (
-                <div key="apr" className={cardBase} style={cardStyle}>
-                  <div className={labelCls} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>APR</div>
-                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '4px' }}>
-                    {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '—'}
-                  </div>
-                </div>
-              ) : null
+            {/* Your position — collapsible; sits above Stats so a return
+                visitor sees their state above the fold. */}
+            <div className="hidden lg:block">
+              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
+                <YourPositionCard pair={pair} pairStats={pairStats} />
+              </Suspense>
+            </div>
 
-              const feesTvlCard = (
-                <div key="fees" className={cardBase} style={cardStyle}>
-                  <div className={labelCls} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>24h Fees / TVL</div>
-                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '4px' }}>
-                    {feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '—'}
-                  </div>
-                </div>
-              )
+            {/* APR — the three yield metrics combined into a single card
+                (Fee APR, 24h Fees / TVL, BGT/Incentive APR). Visual treatment
+                mirrors Stats so the rail reads as a consistent stack. */}
+            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
+              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
+                APR
+              </div>
 
-              const incentiveCard = incentiveApr > 0 ? (
-                <div key="incentive" className={cardBase} style={cardStyle}>
-                  <div className={`flex items-center justify-center lg:justify-start gap-2 ${labelCls}`} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                    Incentive APR
-                    {incentiveIcon && (
-                      <img src={incentiveIcon} alt="BGT" style={{ width: '18px', height: '18px', borderRadius: '50%' }} />
-                    )}
-                  </div>
-                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '4px' }}>
-                    +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%
-                  </div>
-                </div>
-              ) : null
+              {/* Mobile: inline rows. */}
+              <div className="flex flex-col gap-2 lg:hidden">
+                {!isMainnet && <StatInline label="Fee APR" value={`${formatNumberLambda(feeAPR ?? 0, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />}
+                <StatInline label="24h Fees / TVL" value={`${formatNumberLambda(feeOverTvl ?? 0, { maximumFractionDigits: 2 })}%`} />
+                {incentiveApr > 0 && (
+                  stakeUrl ? (
+                    <a href={stakeUrl} target="_blank" rel="noreferrer" className="block no-underline hover:opacity-90">
+                      <StatInline label={`${incentiveLabel} ↗`} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
+                    </a>
+                  ) : (
+                    <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
+                  )
+                )}
+              </div>
 
-              const count = 1 + (aprCard ? 1 : 0) + (incentiveCard ? 1 : 0)
-
-              // Layout rule (mobile; desktop keeps vertical stack via lg:contents):
-              //   1 card  → full width
-              //   2 cards → side by side in a 2-col grid
-              //   3 cards → 24h Fees/TVL on its own row, APR + Incentive side by side
-              if (count === 3) {
-                return (
-                  <>
-                    {feesTvlCard}
-                    <div className="grid grid-cols-2 gap-4 lg:contents">
-                      {aprCard}
-                      {incentiveCard}
+              {/* Desktop: stacked label/value rows matching Stats. */}
+              <div className="hidden lg:block">
+                {!isMainnet && (
+                  <div className="mb-3 lg:mb-4">
+                    <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                      Fee APR
+                      <QuestionHelper text="Annualized fee yield based on 24h volume." />
                     </div>
-                  </>
-                )
-              }
-              if (count === 2) {
-                return (
-                  <div className="grid grid-cols-2 gap-4 lg:contents">
-                    {aprCard}
-                    {feesTvlCard}
-                    {incentiveCard}
+                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
+                      {`${formatNumberLambda(feeAPR ?? 0, { maximumFractionDigits: 2 })}%`}
+                    </div>
                   </div>
-                )
-              }
-              return feesTvlCard
-            })()}
+                )}
+                <StatRow label="24h Fees / TVL" value={`${formatNumberLambda(feeOverTvl ?? 0, { maximumFractionDigits: 2 })}%`} />
+                {incentiveApr > 0 && (
+                  <div className="mb-3 lg:mb-4">
+                    <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                      {incentiveLabel}
+                      {incentiveIcon && <img src={incentiveIcon} alt="BGT" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
+                      {isBgt && <QuestionHelper text="Stake your LP token on Infrared / BeraHub to earn BGT." />}
+                      {stakeUrl && (
+                        <a
+                          href={stakeUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Open vault"
+                          title="Open vault"
+                          className="inline-flex items-center hover:opacity-80"
+                          style={{ color: '#978A80', textDecoration: 'none' }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                        </a>
+                      )}
+                    </div>
+                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
+                      +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Stats */}
             <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
@@ -719,12 +777,9 @@ function PoolDetailInner({
               </div>
             </div>
 
-            {/* Your position (bottom) — desktop only; mobile renders it below the chart */}
-            <div className="hidden lg:block">
-              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
-                <YourPositionCard pair={pair} pairStats={pairStats} />
-              </Suspense>
-            </div>
+            {/* Your position used to render here at the bottom of the rail —
+                now pinned to the top (above Stats / APR cards) so it's visible
+                above the fold on 14" laptops. */}
           </div>
     </div>
     </>
@@ -753,13 +808,13 @@ function StatRow({
   )
 }
 
-function StatInline({ label, value }: { label: string; value: string }) {
+function StatInline({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <div className="flex items-center justify-between">
       <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>
         {label}
       </span>
-      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', color: '#FBFBFD' }}>
+      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', color: valueColor ?? '#FBFBFD' }}>
         {value}
       </span>
     </div>

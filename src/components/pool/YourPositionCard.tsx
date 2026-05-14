@@ -1,5 +1,6 @@
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useActiveWeb3React } from 'hooks'
 import { useTotalSupply } from 'data/TotalSupply'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
@@ -22,6 +23,12 @@ type Props = {
 
 export function YourPositionCard({ pair, pairStats }: Props) {
   const { account, chainId } = useActiveWeb3React()
+
+  // Collapsed by default so the stats row above stays above the fold; user
+  // expands when they actually want the LP/portfolio breakdown. We only
+  // collapse the *details* block — the Total LP summary line and the
+  // Add/Remove buttons stay visible so the card still acts as a CTA.
+  const [expanded, setExpanded] = useState(false)
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -91,11 +98,47 @@ export function YourPositionCard({ pair, pairStats }: Props) {
   // so this is a reliable gate that covers both the pre-register frame and in-flight fetch.
   const balanceUnknown = !!account && !chainMismatch && userPoolBalance === undefined
 
+  // Only render the chevron when there's actually something to expand into —
+  // i.e., the user has a position. In the empty/connect/loading states the
+  // body is already tiny so a toggle would be useless noise.
+  const showToggle = !!account && !chainMismatch && hasLiquidity
+
   return (
     <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
-      <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
-        Your position
-      </div>
+      <button
+        type="button"
+        onClick={() => showToggle && setExpanded((v) => !v)}
+        className={`flex items-center justify-between w-full ${showToggle ? 'cursor-pointer' : 'cursor-default'}`}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          marginBottom: '16px',
+          fontFamily: 'Inter',
+          fontWeight: 600,
+          fontSize: '16px',
+          color: '#FBFBFD',
+          textAlign: 'left',
+        }}
+      >
+        <span>Your position</span>
+        {showToggle && (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: '#978A80', transition: 'transform 150ms', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            aria-hidden="true"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        )}
+      </button>
 
       {!account ? (
         <ConnectWallet />
@@ -132,6 +175,9 @@ export function YourPositionCard({ pair, pairStats }: Props) {
         </>
       ) : (
         <div className="space-y-3">
+          {/* Total LP — always visible (collapsed-state summary). Add/Remove
+              buttons are hidden when collapsed because the rail already shows
+              Swap + Add liquidity CTAs at the very top. */}
           <Row label="Total LP">
             {poolTokenPercentage && totalLp ? (
               <span>
@@ -145,7 +191,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
             )}
           </Row>
 
-          {(hasStakedLp || hasWalletLp) && (
+          {expanded && (hasStakedLp || hasWalletLp) && (
             <div className="pl-3" style={{ borderLeft: '1px solid #2F2823' }}>
               <div className="space-y-2">
                 {hasWalletLp && (
@@ -165,52 +211,56 @@ export function YourPositionCard({ pair, pairStats }: Props) {
             </div>
           )}
 
-          <Row label={
-            <span className="inline-flex items-center gap-1.5">
-              <CurrencyLogo currency={currency0} size="16px" /> Pooled {symbol0}
-            </span>
-          }>
-            {token0Deposited ? (
-              <span>
-                {formatNumber(token0Deposited.toSignificant(4))}
-                {token0Price > 0 && (
-                  <span style={{ color: '#978A80', marginLeft: 6 }}>
-                    ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})
-                  </span>
-                )}
-              </span>
-            ) : '—'}
-          </Row>
-
-          <Row label={
-            <span className="inline-flex items-center gap-1.5">
-              <CurrencyLogo currency={currency1} size="16px" /> Pooled {symbol1}
-            </span>
-          }>
-            {token1Deposited ? (
-              <span>
-                {formatNumber(token1Deposited.toSignificant(4))}
-                {token1Price > 0 && (
-                  <span style={{ color: '#978A80', marginLeft: 6 }}>
-                    ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})
-                  </span>
-                )}
-              </span>
-            ) : '—'}
-          </Row>
-
-          {pairAccount && (
+          {expanded && (
             <>
-              <div style={{ borderTop: '1px solid #2F2823', margin: '4px 0' }} />
-              <PortfolioRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
-              {!isMainnet && (
-                <PortfolioRow label="HODL portfolio" value={pairAccount.bnhPortfolio} />
-              )}
-              <PortfolioRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} base={pairAccount.basePortfolio} />
-              {!isMainnet && (
+              <Row label={
+                <span className="inline-flex items-center gap-1.5">
+                  <CurrencyLogo currency={currency0} size="16px" /> Pooled {symbol0}
+                </span>
+              }>
+                {token0Deposited ? (
+                  <span>
+                    {formatNumber(token0Deposited.toSignificant(4))}
+                    {token0Price > 0 && (
+                      <span style={{ color: '#978A80', marginLeft: 6 }}>
+                        ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})
+                      </span>
+                    )}
+                  </span>
+                ) : '—'}
+              </Row>
+
+              <Row label={
+                <span className="inline-flex items-center gap-1.5">
+                  <CurrencyLogo currency={currency1} size="16px" /> Pooled {symbol1}
+                </span>
+              }>
+                {token1Deposited ? (
+                  <span>
+                    {formatNumber(token1Deposited.toSignificant(4))}
+                    {token1Price > 0 && (
+                      <span style={{ color: '#978A80', marginLeft: 6 }}>
+                        ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})
+                      </span>
+                    )}
+                  </span>
+                ) : '—'}
+              </Row>
+
+              {pairAccount && (
                 <>
-                  <PortfolioRow colored label="HODL PnL" value={pairAccount.bnhPortfolio - pairAccount.basePortfolio} base={pairAccount.basePortfolio} />
-                  <PortfolioRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio} />
+                  <div style={{ borderTop: '1px solid #2F2823', margin: '4px 0' }} />
+                  <PortfolioRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
+                  {!isMainnet && (
+                    <PortfolioRow label="HODL portfolio" value={pairAccount.bnhPortfolio} />
+                  )}
+                  <PortfolioRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} base={pairAccount.basePortfolio} />
+                  {!isMainnet && (
+                    <>
+                      <PortfolioRow colored label="HODL PnL" value={pairAccount.bnhPortfolio - pairAccount.basePortfolio} base={pairAccount.basePortfolio} />
+                      <PortfolioRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio} />
+                    </>
+                  )}
                 </>
               )}
             </>
@@ -218,7 +268,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
         </div>
       )}
 
-      {account && hasLiquidity && (
+      {account && hasLiquidity && expanded && (
         <div className="pt-3 flex flex-col gap-2">
           <div className="flex gap-2">
             <Link

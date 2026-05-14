@@ -85,6 +85,17 @@ export default createReducer(initialState, (builder) =>
         state.userDeadline = DEFAULT_DEADLINE_FROM_NOW
       }
 
+      // One-time migration: existing users who never customized their slippage
+      // / deadline carried the old unsafe defaults (10% slippage, 20m deadline)
+      // in their persisted Redux state. Move them onto the new safer defaults
+      // (0.5% / 10m). Users who explicitly set a different value keep it.
+      if (state.userSlippageTolerance === 1000) {
+        state.userSlippageTolerance = INITIAL_ALLOWED_SLIPPAGE
+      }
+      if (state.userDeadline === 60 * 20) {
+        state.userDeadline = DEFAULT_DEADLINE_FROM_NOW
+      }
+
       state.lastUpdateVersionTimestamp = currentTimestamp()
     })
     .addCase(updateUserDarkMode, (state, action) => {

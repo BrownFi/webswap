@@ -17,8 +17,9 @@ import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { graphqlFetcher } from 'utils/graphql'
+import { apiV2Service } from 'services'
 import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
 import { usePairs } from 'data/Reserves'
 import { useDefaultTokens } from 'state/lists/hooks'
@@ -132,6 +133,45 @@ export default function Pool() {
   // V3 indexer ships `feeSplit` / `kB` (not `protocolFee` / `k`). Alias them
   // client-side so downstream code (PositionCard, devStats, etc.) stays
   // version-agnostic. Extra V3 fields pass through unchanged.
+  // Sortable columns. Default: TVL desc. Fee APR uses indexer's `apr`. The
+  // 24h-Fees/TVL and BGT APR columns are computed client-side below.
+  type SortKey = 'tvl' | 'volumeDay' | 'feeOverTvl' | 'apr' | 'bgtAPR'
+  type SortDir = 'asc' | 'desc'
+  const [sortKey, setSortKey] = useState<SortKey>('tvl')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
+    } else {
+      setSortKey(key)
+      setSortDir('desc')
+    }
+  }
+
+  // BGT APR isn't on the pair entity — it comes from apiV2Service per pair.
+  // Fire one query per pair address; cheap because the list is short and the
+  // service caches. We only fetch on Bera (only chain with BGT vaults).
+  const pairAddresses = useMemo(
+    () => (data?.pairs ?? []).map((p) => p.id),
+    [data?.pairs],
+  )
+  const bgtAprQueries = useQueries({
+    queries: pairAddresses.map((addr) => ({
+      queryKey: ['getBgtApr', addr],
+      queryFn: () => apiV2Service.getPoolBgt({ address: addr }),
+      enabled: chainId === ChainId.BERA_MAINNET && !!addr,
+      staleTime: 5 * 60_000,
+    })),
+  })
+  const bgtAprByAddr = useMemo(() => {
+    const m: Record<string, number> = {}
+    pairAddresses.forEach((addr, i) => {
+      const apr = (bgtAprQueries[i]?.data as any)?.apr
+      if (typeof apr === 'number' && apr > 0) m[addr.toLowerCase()] = apr * 100
+    })
+    return m
+  }, [pairAddresses, bgtAprQueries])
+
   const sortedPairs = useMemo(() => {
     const raw = data?.pairs ?? []
     const normalized: PairStats[] = version === 3
@@ -141,8 +181,20 @@ export default function Pool() {
           k: p.k ?? p.kB,
         }))
       : raw
-    return normalized.slice().sort((a, b) => b.tvl - a.tvl)
-  }, [data?.pairs, version])
+    const dir = sortDir === 'desc' ? 1 : -1
+    const valueOf = (p: PairStats): number => {
+      if (sortKey === 'feeOverTvl') {
+        const t = Number(p.tvl) || 0
+        const f = Number(p.feeDay) || 0
+        return t > 0 ? (f / t) * 100 : 0
+      }
+      if (sortKey === 'bgtAPR') {
+        return bgtAprByAddr[p.id.toLowerCase()] ?? 0
+      }
+      return Number((p as any)[sortKey]) || 0
+    }
+    return normalized.slice().sort((a, b) => (valueOf(b) - valueOf(a)) * dir)
+  }, [data?.pairs, version, sortKey, sortDir, bgtAprByAddr])
 
   const blocklist = useMemo(
     () =>
@@ -308,12 +360,14 @@ export default function Pool() {
                   }}
                 >
                   <span style={{ flex: 2 }}>Pool</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
-                  {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>APR</span>}
-                  <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
+                  <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
+                  <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
+                  <SortHeader label="24h Fees / TVL" active={sortKey === 'feeOverTvl'} dir={sortDir} onClick={() => handleSort('feeOverTvl')} />
+                  {!isMainnet && (
+                    <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  )}
+                  <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                  <span style={{ flex: 1, textAlign: 'right' }} />
                 </div>
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
@@ -408,6 +462,67 @@ function PoolStatsBar({
   )
 }
 
+// Clickable header column with sort indicator. Used in the pool list header
+// for TVL / 24h Volume / Fee APR. Highlights the active column and shows ▼/▲
+// per the current direction.
+function SortHeader({
+  label,
+  active,
+  dir,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  dir: 'asc' | 'desc'
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center justify-end gap-1 cursor-pointer hover:text-[#FBFBFD] transition-colors"
+      style={{
+        flex: 1,
+        background: 'transparent',
+        border: 'none',
+        padding: 0,
+        fontFamily: 'inherit',
+        fontWeight: 'inherit',
+        fontSize: 'inherit',
+        color: active ? '#FBFBFD' : 'inherit',
+        textAlign: 'right',
+      }}
+    >
+      <span>{label}</span>
+      {/* DefiLlama-style sort indicator: ↕ on every clickable column so users
+          know they're sortable; flips to ↓/↑ on the active one. SVG instead
+          of unicode so all three states render at identical dimensions. */}
+      <SortIcon state={active ? (dir === 'desc' ? 'down' : 'up') : 'both'} />
+    </button>
+  )
+}
+
+function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
+  const active = state !== 'both'
+  return (
+    <svg
+      width="10"
+      height="12"
+      viewBox="0 0 10 12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ opacity: active ? 1 : 0.45, flexShrink: 0 }}
+      aria-hidden="true"
+    >
+      {state !== 'down' && <polyline points="3,4 5,1.5 7,4" />}
+      {state !== 'up' && <polyline points="3,8 5,10.5 7,8" />}
+    </svg>
+  )
+}
+
 function PairListSkeleton() {
   return (
     <>
@@ -425,11 +540,11 @@ function PairListSkeleton() {
       >
         <span style={{ flex: 2 }}>Pool</span>
         <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>24h Volume</span>
         <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
-        {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>APR</span>}
-        <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
+        {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>Fee APR</span>}
+        <span style={{ flex: 1, textAlign: 'right' }}>BGT APR</span>
+        <span style={{ flex: 1, textAlign: 'right' }} />
       </div>
       {[0, 1, 2, 3, 4].map((i) => (
         <div

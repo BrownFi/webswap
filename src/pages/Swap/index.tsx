@@ -224,6 +224,16 @@ export default function Swap() {
     swapCallback()
       .then((hash) => {
         setSwapState({ attemptingTxn: false, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: hash })
+        // Submission toast — matches the Uniswap/Kodiak pattern: short
+        // confirmation with token-in / token-out so users can verify what
+        // they just signed without re-opening the modal.
+        if (trade?.inputAmount && trade?.outputAmount) {
+          const inAmt = trade.inputAmount.toSignificant(4)
+          const outAmt = trade.outputAmount.toSignificant(4)
+          const inSym = trade.inputAmount.currency.symbol
+          const outSym = trade.outputAmount.currency.symbol
+          createToast(`Swapped ${inAmt} ${inSym} for ${outAmt} ${outSym}`, 'success')
+        }
         // Refresh RainbowKit/wagmi balance display after swap
         setTimeout(() => queryClient.invalidateQueries(), 5000)
       })
