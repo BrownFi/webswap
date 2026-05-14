@@ -48,6 +48,10 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0xa244C6d127Ec19689f0DEf715417736c7f6cf0C4',
 }
 
+// ⚠️ Rollout contract: adding a chain here also enables V3 GraphQL queries
+// (useVersion's enableGraphQL derives V3 support from this map). Do NOT add a
+// chain until the V3 indexer is live at bf-v2-api-beta.brownfi.io/indexer/v3
+// for it — otherwise the FE will throw HTTP 500 on every V3 pool query.
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x1073854BA596789049A83aDb72F527a2dc5c09B4',
 }
