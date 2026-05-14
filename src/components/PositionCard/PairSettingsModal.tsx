@@ -305,7 +305,16 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
 
   return (
     <Modal isOpen={isOpen} onDismiss={handleDismiss}>
-      <div className="flex flex-col gap-4 p-4 text-white w-full max-h-[80vh] overflow-y-auto">
+      <div
+        className="flex flex-col gap-4 p-4 text-white w-full max-h-[80vh] overflow-y-auto pair-settings-scroll"
+        style={{
+          // Hide scrollbar visually but keep scrolling functional. The list is
+          // tall on V3 (11 rows) and the default scrollbar looked noisy.
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none' as any, // legacy IE/Edge
+        }}
+      >
+        <style>{`.pair-settings-scroll::-webkit-scrollbar { display: none; }`}</style>
         <RowBetween>
           <Text fontSize={18} fontWeight={600}>Pair settings</Text>
           <CloseIcon onClick={handleDismiss} />
