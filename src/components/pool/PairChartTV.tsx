@@ -145,12 +145,12 @@ const PairChartTVInner = ({ pair }: Props) => {
   const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3'
 
   const { data: dayResp, isPending: isPendingDay } = useQuery<{ pairDayDatas: DayData[] }>({
-    queryKey: ['pairStats', pair.chainId, pair.liquidityToken.address],
+    queryKey: ['pairStats', pair.chainId, pair.liquidityToken.address, pair.version],
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
         query: buildQuery(GET_PAIR_STATS, pair.chainId),
-        variables: { chainId: pair.chainId, pair: pair.liquidityToken.address.toLowerCase() },
+        variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
     staleTime: 60_000,
@@ -159,12 +159,12 @@ const PairChartTVInner = ({ pair }: Props) => {
   })
 
   const { data: hourResp, isPending: isPendingHour } = useQuery<{ pairHourDatas: HourData[] }>({
-    queryKey: ['pairStatsHour', pair.chainId, pair.liquidityToken.address],
+    queryKey: ['pairStatsHour', pair.chainId, pair.liquidityToken.address, pair.version],
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStatsHour',
         query: buildQuery(GET_PAIR_STATS_HOUR, pair.chainId),
-        variables: { chainId: pair.chainId, pair: pair.liquidityToken.address.toLowerCase() },
+        variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
     staleTime: 60_000,

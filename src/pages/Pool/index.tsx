@@ -25,7 +25,6 @@ import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
-import { V3_POOLS } from 'constants/v3Pools'
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
@@ -42,6 +41,8 @@ const LIST_ALL_PAIRS = `
       volumeDay
       volume7Day
       updatedAt
+      lambda
+      k
       token0 {
         id
         decimals
@@ -64,6 +65,43 @@ const LIST_ALL_PAIRS = `
   }
 `
 
+// V3 indexer has a different schema: `protocolFee` → `feeSplit`, `k` → `kB`+`kQ`,
+// plus all the V3-only config (spread/skew/blend) and a uni-v2 reference price.
+// We map feeSplit→protocolFee and kB→k client-side so consumers don't have to
+// fork their code paths.
+const LIST_ALL_PAIRS_V3 = `
+  query PairListV3($chainId: Int) {
+    pairs {
+      id
+      fee
+      feeSplit
+      feeDay
+      totalSupply
+      reserve0
+      reserve1
+      tvl
+      apr
+      volumeDay
+      volume7Day
+      updatedAt
+      lambda
+      kB
+      kQ
+      compress
+      sSell
+      sBuy
+      fixS
+      disThreshold
+      sBound
+      pythWeight
+      gamma
+      uniV2Price
+      token0 { id decimals name price priceFeedId symbol totalSupply }
+      token1 { id decimals name price priceFeedId symbol totalSupply }
+    }
+  }
+`
+
 export default function Pool() {
   const { chainId } = useActiveWeb3React()
   const { version, enableGraphQL } = useVersion({ chainId })
@@ -76,56 +114,35 @@ export default function Pool() {
     gcTime: 30 * 60_000,
   })
 
-  const { data, error, isLoading: isLoadingPairs } = useQuery<{
-    pairs: {
-      id: string
-      fee: number
-      protocolFee: number
-      feeDay: number
-      totalSupply: number
-      reserve0: number
-      reserve1: number
-      tvl: number
-      apr: number
-      volumeDay: number
-      volume7Day: number
-      updatedAt: number
-      token0: {
-        id: string
-        decimals: number
-        name: string
-        price: number
-        priceFeedId: string
-        symbol: string
-        totalSupply: number
-      }
-      token1: {
-        id: string
-        decimals: number
-        name: string
-        price: number
-        priceFeedId: string
-        symbol: string
-        totalSupply: number
-      }
-    }[]
-  }>({
-    queryKey: ['pairList', chainId],
+  // Version-aware list query: V2 hits /indexer, V3 hits /indexer/v3 with the
+  // V3 schema (kB/kQ/feeSplit/etc.). The fetcher routes by `variables.version`.
+  const { data, error, isLoading: isLoadingPairs } = useQuery<{ pairs: PairStats[] }>({
+    queryKey: ['pairList', chainId, version],
     queryFn: () =>
       graphqlFetcher({
-        operationName: 'PairList',
-        query: LIST_ALL_PAIRS,
-        variables: { chainId },
+        operationName: version === 3 ? 'PairListV3' : 'PairList',
+        query: version === 3 ? LIST_ALL_PAIRS_V3 : LIST_ALL_PAIRS,
+        variables: { chainId, version },
       }),
     enabled: enableGraphQL,
     refetchInterval: 60_000,
     staleTime: 60_000,
   })
 
-  const sortedPairs = useMemo(
-    () => (data?.pairs ?? []).slice().sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl),
-    [data?.pairs],
-  )
+  // V3 indexer ships `feeSplit` / `kB` (not `protocolFee` / `k`). Alias them
+  // client-side so downstream code (PositionCard, devStats, etc.) stays
+  // version-agnostic. Extra V3 fields pass through unchanged.
+  const sortedPairs = useMemo(() => {
+    const raw = data?.pairs ?? []
+    const normalized: PairStats[] = version === 3
+      ? raw.map((p: any) => ({
+          ...p,
+          protocolFee: p.protocolFee ?? p.feeSplit ?? 0,
+          k: p.k ?? p.kB,
+        }))
+      : raw
+    return normalized.slice().sort((a, b) => b.tvl - a.tvl)
+  }, [data?.pairs, version])
 
   const blocklist = useMemo(
     () =>
@@ -156,8 +173,8 @@ export default function Pool() {
           return false
         }
         if (isMainnet) {
-          const token0Address = pair.token0?.id.toLowerCase()
-          const token1Address = pair.token1?.id.toLowerCase()
+          const token0Address = pair.token0?.id.toLowerCase() ?? ''
+          const token1Address = pair.token1?.id.toLowerCase() ?? ''
           return allowedTokenAddresses.has(token0Address) || allowedTokenAddresses.has(token1Address)
         }
         return true
@@ -274,10 +291,10 @@ export default function Pool() {
               />
             </div>
 
-            {/* Table header + rows */}
-            {version === 3 ? (
-              <V3PoolList />
-            ) : shouldUseGraphQL && searchFilteredPairs.length > 0 ? (
+            {/* Table header + rows. V3 used to go through V3PoolList (on-chain
+                reads, hardcoded pool list) — now both V2 and V3 share the same
+                indexer-backed path via MemoizedPairList. */}
+            {shouldUseGraphQL && searchFilteredPairs.length > 0 ? (
               <>
                 <div
                   className="hidden md:flex items-center"
@@ -472,6 +489,18 @@ function MemoizedPairList({
           ),
           version,
         )
+        // V3 pools live in a factory registry rather than at a CREATE2 address,
+        // so SDK's computed `liquidityToken` is wrong. Use the indexer's pair
+        // id (== the real pair address) instead.
+        if (version === 3) {
+          ;(pair as any).liquidityToken = new Token(
+            chainId,
+            checksumAddress(item.id as Address),
+            18,
+            'BF-V3',
+            'BrownFi V3',
+          )
+        }
         return { pair, stats: item }
       }),
     [pairs, chainId, version],
@@ -481,75 +510,6 @@ function MemoizedPairList({
     <>
       {pairsWithObjects.map(({ pair, stats }) => (
         <FullPositionCard key={pair.liquidityToken.address} pair={pair} pairStats={stats} />
-      ))}
-    </>
-  )
-}
-
-function V3PoolList() {
-  const { chainId } = useActiveWeb3React()
-  const pools = V3_POOLS[chainId] ?? []
-
-  const { data: v3Pairs, isLoading } = useQuery({
-    queryKey: ['v3Pools', chainId],
-    queryFn: async () => {
-      const { createPublicClient, http } = await import('viem')
-      const { RPC_URLS } = await import('lib/sdk/constants/addresses')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-
-      const results = await Promise.all(
-        pools.map(async (pool) => {
-          try {
-            const reserves = await client.readContract({
-              address: pool.pair as `0x${string}`,
-              abi: [{ inputs: [], name: 'getReserves', outputs: [{ type: 'uint112' }, { type: 'uint112' }, { type: 'uint32' }], stateMutability: 'view', type: 'function' }] as const,
-              functionName: 'getReserves',
-            })
-            const token0 = new Token(chainId, pool.token0.address, pool.token0.decimals, pool.token0.symbol, pool.token0.name)
-            const token1 = new Token(chainId, pool.token1.address, pool.token1.decimals, pool.token1.symbol, pool.token1.name)
-            const pair = new Pair(
-              new TokenAmount(token0, reserves[0].toString()),
-              new TokenAmount(token1, reserves[1].toString()),
-              3,
-            )
-            // V3 uses factory.getPair() not CREATE2 — override LP token with real pair address
-            ;(pair as any).liquidityToken = new Token(chainId, pool.pair, 18, 'BF-V3', 'BrownFi V3')
-            return pair
-          } catch {
-            return null
-          }
-        }),
-      )
-      return results.filter((p): p is Pair => p !== null)
-    },
-    enabled: pools.length > 0,
-    refetchInterval: 30_000,
-  })
-
-  if (isLoading) {
-    return (
-      <EmptyProposals>
-        <TYPE.body color={'#999'} textAlign="center">
-          <Dots>Loading V3 pools</Dots>
-        </TYPE.body>
-      </EmptyProposals>
-    )
-  }
-
-  if (!v3Pairs || v3Pairs.length === 0) {
-    return (
-      <EmptyProposals>
-        <TYPE.body color={'#999'} textAlign="center">
-          No V3 pools found.
-        </TYPE.body>
-      </EmptyProposals>
-    )
-  }
-
-  return (
-    <>
-      {v3Pairs.map((pair) => (
-        <FullPositionCard key={pair.liquidityToken.address} pair={pair} />
       ))}
     </>
   )

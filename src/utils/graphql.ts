@@ -7,13 +7,16 @@ export const graphqlFetcher = async ({
 }: {
   operationName: string
   query: string
+  // `variables.version` (optional) routes the query: version === 3 → /indexer/v3,
+  // otherwise → /indexer. Both `chainId` and `version` are stripped before send.
   variables: object
 }) => {
-  const { chainId, ...restVar } = variables as { chainId: number }
+  const { chainId, version, ...restVar } = variables as { chainId: number; version?: number }
   if (chainId !== ChainId.BERA_MAINNET) {
     query = query.replace(/stakeLP/g, '')
   }
-  const url = `${import.meta.env.VITE_API_URL}/indexer?chainId=${chainId}`
+  const path = version === 3 ? '/indexer/v3' : '/indexer'
+  const url = `${import.meta.env.VITE_API_URL}${path}?chainId=${chainId}`
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10_000)
   try {

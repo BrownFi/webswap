@@ -94,19 +94,23 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
   }, [pair?.liquidityToken.address, version])
 
   const enableGraphQL = useMemo(() => {
-    return (
-      [
-        //
-        ChainId.BERA_MAINNET,
-        ChainId.ARBITRUM_MAINNET,
-        ChainId.BASE_MAINNET,
-        ChainId.BSC_MAINNET,
-        ChainId.HYPER_EVM,
-        ChainId.LINEA_MAINNET,
-        ChainId.SEI_MAINNET,
-        ChainId.MONAD,
-      ].includes(chainId as number) && version === 2
-    )
+    // V2 indexer covers the chains below. V3 indexer (separate endpoint) is
+    // currently only on Bera. Both run through the same fetcher gated by this
+    // flag — the fetcher routes the actual request based on `version`.
+    const v2Chains = [
+      ChainId.BERA_MAINNET,
+      ChainId.ARBITRUM_MAINNET,
+      ChainId.BASE_MAINNET,
+      ChainId.BSC_MAINNET,
+      ChainId.HYPER_EVM,
+      ChainId.LINEA_MAINNET,
+      ChainId.SEI_MAINNET,
+      ChainId.MONAD,
+    ]
+    const v3Chains = [ChainId.BERA_MAINNET]
+    if (version === 2) return v2Chains.includes(chainId as number)
+    if (version === 3) return v3Chains.includes(chainId as number)
+    return false
   }, [chainId, version])
 
   return {

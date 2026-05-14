@@ -1,7 +1,7 @@
 import { useActiveWeb3React } from 'hooks'
 import { useVersion } from 'hooks/useVersion'
 import { isMainnet } from 'connectors'
-import { ROUTER_ADDRESS_V1, ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
 
 type Props = {
   isMobile?: boolean
@@ -11,9 +11,9 @@ const SwitchVersion = ({ isMobile }: Props) => {
   const { chainId } = useActiveWeb3React()
   const { appVersion: version, isDisabled, switchVersion } = useVersion({ chainId })
 
-  const hasV1 = !!ROUTER_ADDRESS_V1[chainId]
+  // V1 has been retired — toggle only exposes V2 (and V3 where available).
   const hasV3 = !!ROUTER_ADDRESS_V3[chainId]
-  const versions = [hasV1 ? 1 : null, 2, hasV3 ? 3 : null].filter((v): v is number => v !== null)
+  const versions = [2, hasV3 ? 3 : null].filter((v): v is number => v !== null)
 
   const handleSelect = (v: number) => {
     if (isDisabled || v === version) return

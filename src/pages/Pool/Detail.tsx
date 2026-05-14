@@ -18,7 +18,6 @@ import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
 import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
-import { getV3PoolConfig } from 'constants/v3Pools'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -45,6 +44,45 @@ const GET_PAIR = `
       volumeDay
       volume7Day
       updatedAt
+      lambda
+      k
+      token0 { id decimals name price priceFeedId symbol totalSupply }
+      token1 { id decimals name price priceFeedId symbol totalSupply }
+    }
+  }
+`
+
+// V3 indexer schema: feeSplit instead of protocolFee, kB/kQ instead of k, plus
+// the spread/skew/blend config and uniV2 reference price. We alias feeSplit→
+// protocolFee and kB→k client-side so the rest of this page stays version-
+// agnostic.
+const GET_PAIR_V3 = `
+  query PairDetailV3($id: ID!) {
+    pair(id: $id) {
+      id
+      fee
+      feeSplit
+      feeDay
+      totalSupply
+      reserve0
+      reserve1
+      tvl
+      apr
+      volumeDay
+      volume7Day
+      updatedAt
+      lambda
+      kB
+      kQ
+      compress
+      sSell
+      sBuy
+      fixS
+      disThreshold
+      sBound
+      pythWeight
+      gamma
+      uniV2Price
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
     }
@@ -71,6 +109,21 @@ type PairRaw = {
   volumeDay: number
   volume7Day: number
   updatedAt: number
+  lambda?: number
+  k?: number
+  // V3 extras (undefined on V2). Aliased from feeSplit/kB by the loader below.
+  kB?: number
+  kQ?: number
+  feeSplit?: number
+  compress?: number
+  sSell?: number
+  sBuy?: number
+  fixS?: number
+  disThreshold?: number
+  sBound?: number
+  pythWeight?: number
+  gamma?: number
+  uniV2Price?: number
   token0: PairStats['token0']
   token1: PairStats['token1']
 }
@@ -81,88 +134,32 @@ export default function PoolDetail() {
   const chainId = Number(chainIdParam)
   const { version } = useVersion({ chainId })
 
-  const v3Config = useMemo(() => getV3PoolConfig(chainId, pairAddress), [chainId, pairAddress])
-
-  const { data: pairRes, isLoading: isLoadingGraphQL } = useQuery<{ pair: PairRaw | null }>({
-    queryKey: ['pairDetail', chainId, pairAddress],
+  // Version-aware query. V3 hits /indexer/v3 with the V3 schema; the V2 path is
+  // unchanged. Aliasing (feeSplit→protocolFee, kB→k) happens after the fetch so
+  // every consumer downstream sees a uniform shape.
+  const { data: pairRes, isLoading } = useQuery<{ pair: PairRaw | null }>({
+    queryKey: ['pairDetail', chainId, pairAddress, version],
     queryFn: () =>
       graphqlFetcher({
-        operationName: 'PairDetail',
-        query: GET_PAIR,
-        variables: { chainId, id: pairAddress?.toLowerCase() },
+        operationName: version === 3 ? 'PairDetailV3' : 'PairDetail',
+        query: version === 3 ? GET_PAIR_V3 : GET_PAIR,
+        variables: { chainId, version, id: pairAddress?.toLowerCase() },
       }),
-    // Skip GraphQL entirely when we already know this is a hardcoded V3 pool —
-    // the indexer doesn't track V3 yet, so the call would just return null.
-    enabled: !!pairAddress && !!chainId && !v3Config,
+    enabled: !!pairAddress && !!chainId,
     staleTime: 60_000,
   })
 
-  // V3 fallback: read reserves on-chain and build a synthetic pairRaw.
-  // Indexer-only fields (tvl, volume, fees, apr) default to 0 until the V3
-  // indexer comes online.
-  const { data: v3PairRaw, isLoading: isLoadingV3 } = useQuery<PairRaw | null>({
-    queryKey: ['pairDetailV3', chainId, pairAddress],
-    queryFn: async () => {
-      if (!v3Config || !chainId) return null
-      const { createPublicClient, http } = await import('viem')
-      const { RPC_URLS } = await import('lib/sdk/constants/addresses')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-      const [reserves, totalSupplyRaw] = await Promise.all([
-        client.readContract({
-          address: v3Config.pair as Address,
-          abi: [{ inputs: [], name: 'getReserves', outputs: [{ type: 'uint112' }, { type: 'uint112' }, { type: 'uint32' }], stateMutability: 'view', type: 'function' }] as const,
-          functionName: 'getReserves',
-        }),
-        client
-          .readContract({
-            address: v3Config.pair as Address,
-            abi: [{ inputs: [], name: 'totalSupply', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,
-            functionName: 'totalSupply',
-          })
-          .catch(() => 0n),
-      ])
-      const reserve0 = Number(reserves[0]) / 10 ** v3Config.token0.decimals
-      const reserve1 = Number(reserves[1]) / 10 ** v3Config.token1.decimals
-      return {
-        id: v3Config.pair,
-        fee: 0,
-        protocolFee: 0,
-        feeDay: 0,
-        totalSupply: Number(totalSupplyRaw) / 1e18,
-        reserve0,
-        reserve1,
-        tvl: 0,
-        apr: 0,
-        volumeDay: 0,
-        volume7Day: 0,
-        updatedAt: Math.floor(Date.now() / 1000),
-        token0: {
-          id: v3Config.token0.address,
-          decimals: v3Config.token0.decimals,
-          symbol: v3Config.token0.symbol,
-          name: v3Config.token0.name,
-          price: 0,
-          priceFeedId: '',
-          totalSupply: 0,
-        },
-        token1: {
-          id: v3Config.token1.address,
-          decimals: v3Config.token1.decimals,
-          symbol: v3Config.token1.symbol,
-          name: v3Config.token1.name,
-          price: 0,
-          priceFeedId: '',
-          totalSupply: 0,
-        },
-      } as PairRaw
-    },
-    enabled: !!v3Config && !!chainId,
-    staleTime: 30_000,
-    refetchInterval: 30_000,
-  })
-
-  const pairRaw = v3Config ? v3PairRaw : pairRes?.pair
-  const isLoading = v3Config ? isLoadingV3 : isLoadingGraphQL
+  const pairRaw = useMemo(() => {
+    const p = pairRes?.pair
+    if (!p) return null
+    if (version !== 3) return p
+    // V3 → unify field names with V2 expectations
+    return {
+      ...p,
+      protocolFee: p.protocolFee ?? p.feeSplit ?? 0,
+      k: p.k ?? p.kB,
+    }
+  }, [pairRes, version])
   const pair = useMemo(() => {
     if (!pairRaw || !chainId) return null
     const t0 = pairRaw.token0

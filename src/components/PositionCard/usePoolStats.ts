@@ -33,6 +33,25 @@ export type PairStats = {
   volumeDay: number
   volume7Day: number
   updatedAt: number
+  // V2 indexer ships `k` (single kappa). V3 indexer ships kB+kQ; we alias
+  // kB → k below for backward compat with consumers that read `pairStats.k`.
+  lambda?: number
+  k?: number
+  // V3-only extras (undefined on V2). Indexer queries select these for V3
+  // pools so the FE can show all 13 config params + uni reference price
+  // without an extra on-chain call.
+  kB?: number
+  kQ?: number
+  feeSplit?: number
+  compress?: number
+  sSell?: number
+  sBuy?: number
+  fixS?: number
+  disThreshold?: number
+  sBound?: number
+  pythWeight?: number
+  gamma?: number
+  uniV2Price?: number
   token0?: Token | null
   token1?: Token | null
 }
@@ -84,13 +103,14 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       unrealizedBnHPnL: number
     }
   }>({
-    queryKey: ['PairAccount', pair?.chainId, pair?.liquidityToken.address, account],
+    queryKey: ['PairAccount', pair?.chainId, pair?.liquidityToken.address, account, pair?.version],
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairAccount',
         query: GET_PAIR_ACCOUNT,
         variables: {
           chainId: pair.chainId,
+          version: pair.version,
           id: `${account!.toLowerCase()}-${pair.liquidityToken.address.toLowerCase()}`,
         },
       }),
