@@ -34,7 +34,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useToggleSettingsMenu } from 'state/application/hooks'
 import { Field } from 'state/swap/actions'
 import { useDefaultsFromURLSearch, useDerivedSwapInfo, useSwapActionHandlers, useSwapState } from 'state/swap/hooks'
-import { useExpertModeManager, useUserSlippageTolerance, useUserSingleHopOnly } from 'state/user/hooks'
+import {
+  useExpertModeManager,
+  useUserSlippageTolerance,
+  useUserSingleHopOnly,
+  useSelectedAggregator,
+} from 'state/user/hooks'
 import { LinkStyledButton } from 'theme'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { computeTradePriceBreakdown, warningSeverity } from 'utils/prices'
@@ -217,6 +222,13 @@ export default function Swap() {
     deadline: deadline ? deadline.toNumber() : Math.floor(Date.now() / 1000) + 600,
   })
   const isAggregatorRoute = !!best && best.source !== 'native'
+  const [selectedAggregator] = useSelectedAggregator()
+  // User manually picked a specific aggregator, but orchestration fell back
+  // to native (the chosen aggregator returned no route for this pair on
+  // this chain). Surface this so the user understands why their selection
+  // isn't being honored.
+  const aggregatorFallbackNotice =
+    selectedAggregator !== 'auto' && selectedAggregator !== 'native' && best?.source === 'native'
 
   // When an aggregator quote wins, its amountOut overrides the native
   // trade's outputAmount in the OUTPUT field. Only applies on exact-in
@@ -394,6 +406,9 @@ export default function Swap() {
             onConfirm={handleSwap}
             swapErrorMessage={swapErrorMessage}
             onDismiss={handleConfirmDismiss}
+            bestRoute={best}
+            inputAmount={parsedAmounts[Field.INPUT]}
+            outputCurrency={currencies[Field.OUTPUT]}
           />
 
           <AutoColumn gap={'8px'}>
@@ -494,6 +509,33 @@ export default function Swap() {
                 </RowBetween>
               ) : (
                 <div className="h-[22px]"></div>
+              )}
+              {/* Forced-aggregator-no-route notice. User picked a specific
+                  aggregator in Settings but it has no route here, so
+                  orchestration fell back to BrownFi native. */}
+              {aggregatorFallbackNotice && (
+                <RowBetween align="center">
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '4px 10px',
+                      borderRadius: 8,
+                      background: 'rgba(216, 160, 114, 0.08)',
+                      border: '1px solid rgba(216, 160, 114, 0.30)',
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: '#D8A072',
+                    }}
+                  >
+                    No route via{' '}
+                    {String(selectedAggregator).charAt(0).toUpperCase() +
+                      String(selectedAggregator).slice(1)}{' '}
+                    for this pair — using BrownFi
+                  </span>
+                </RowBetween>
               )}
               {/* Aggregator badge — surfaces which source the chosen route
                   came from when it isn't BrownFi-native. Matches the same
