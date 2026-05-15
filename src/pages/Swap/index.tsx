@@ -1,5 +1,5 @@
 import { Currency, CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown } from 'react-feather'
 import { Text } from 'components/Rebass'
 import { ThemeContext } from 'styled-components'
@@ -265,37 +265,104 @@ export default function Swap() {
   }, [isAggregatorRoute, isExactIn, best, currencies])
   const rawDisplayedOutput = aggregatorOutputDisplay ?? formattedAmounts[Field.OUTPUT]
 
-  // Hold the OUTPUT field stable until ALL quote sources (native V2/V3
-  // multicall + every aggregator HTTP query) have resolved. Without
-  // this gating, V2/V3 quotes (fast multicall, ~100-300ms) appear in
-  // the field first and then Kyber (~300-500ms HTTP) overwrites them,
-  // producing a visible flicker between two different values. We
-  // freeze the field at empty during loading; the existing `loading`
-  // prop renders the spinner. Only applies on exact-in — exact-out
-  // shows the user's typed value, no gating needed.
+  // Hold the OUTPUT field stable until quotes for the CURRENT input
+  // have actually arrived. The pipeline has cascading delays:
+  //   useDebounce(typedValue, 300) → useTradeExactIn setTimeout(300)
+  //   → multicall RPC.
+  // Between those stages, the per-source loading flags briefly dip
+  // to false even though the trade still reflects the PREVIOUS input.
+  // To eliminate every gap we combine two checks:
   //
-  // `typingPending`: useDerivedSwapInfo debounces typedValue by 300ms
-  // before parsing it / firing trades. During that window the trade-
-  // loading flags are still false (no fetch yet), so without this
-  // we'd briefly render the PREVIOUS quote with no spinner. Track a
-  // 350ms window after every typedValue change and treat it as
-  // loading so the UI never shows stale info.
+  // 1) `typingPending` — set SYNCHRONOUSLY when typedValue changes
+  //    (via the render-time guard pattern, so it's in effect on the
+  //    same render as the new typedValue, no 1-frame flash). Held
+  //    for 700ms which covers the full debounce + setTimeout chain.
+  //
+  // 2) `stable.forInput` — records which typedValue produced the
+  //    currently-visible value. We only update it via the stable-
+  //    update effect, which depends on `rawDisplayedOutput` /
+  //    `isQuoteLoading` but NOT on typedValue. The latest typedValue
+  //    is read via ref so a typedValue change can't prematurely
+  //    "claim" old rawDisplayedOutput as fresh.
+  // Fingerprint of every input that affects quote output. Whenever any
+  // of these changes (user typed, swapped tokens, switched chains via
+  // currency change), the existing quote becomes stale. We engage the
+  // loading state until fresh data lands.
+  const inputFingerprint = useMemo(() => {
+    const inSym = currencies[Field.INPUT] instanceof Token
+      ? (currencies[Field.INPUT] as Token).address
+      : currencies[Field.INPUT]?.symbol ?? ''
+    const outSym = currencies[Field.OUTPUT] instanceof Token
+      ? (currencies[Field.OUTPUT] as Token).address
+      : currencies[Field.OUTPUT]?.symbol ?? ''
+    return `${typedValue}|${inSym}|${outSym}|${independentField}`
+  }, [typedValue, currencies, independentField])
+
+  const fingerprintRef = useRef(inputFingerprint)
+  fingerprintRef.current = inputFingerprint
+
   const [typingPending, setTypingPending] = useState(false)
-  useEffect(() => {
+  const [trackedFingerprint, setTrackedFingerprint] = useState(inputFingerprint)
+  // `hasSeenLoading` flips true once the per-source loading flags
+  // engaged at least once after the last input change. We use this
+  // to clear `typingPending` only AFTER the pipeline has actually
+  // started a fetch — otherwise on first-input-after-token-select,
+  // typingPending could expire before useTradeExactIn's setTimeout
+  // fires (which itself waits for usePairs to finish multicalling
+  // pool reserves), leaving a gap where stale data flashes.
+  const [hasSeenLoading, setHasSeenLoading] = useState(false)
+  if (trackedFingerprint !== inputFingerprint) {
+    setTrackedFingerprint(inputFingerprint)
     setTypingPending(true)
-    const t = setTimeout(() => setTypingPending(false), 350)
-    return () => clearTimeout(t)
-  }, [typedValue])
-  const isQuoteLoading = bestLoading || loadingExactIn || loadingExactOut || typingPending
-  const [stableOutput, setStableOutput] = useState('')
+    setHasSeenLoading(false)
+  }
   useEffect(() => {
-    if (!isQuoteLoading) setStableOutput(rawDisplayedOutput)
+    if (bestLoading || loadingExactIn || loadingExactOut) {
+      setHasSeenLoading(true)
+    }
+  }, [bestLoading, loadingExactIn, loadingExactOut])
+  useEffect(() => {
+    if (!typingPending) return
+    // Two-stage clear: (a) hard cap at 2000ms as a safety so we don't
+    // hang on a wedged pipeline; (b) early-clear once we've observed
+    // the per-source loading flags engage AND then settle (handover
+    // to the real loading flags happens cleanly).
+    const hardCap = setTimeout(() => setTypingPending(false), 2000)
+    return () => clearTimeout(hardCap)
+  }, [typingPending, trackedFingerprint])
+  useEffect(() => {
+    if (!typingPending) return
+    if (!hasSeenLoading) return
+    if (bestLoading || loadingExactIn || loadingExactOut) return
+    // We've seen loading engage and now settle — safe to hand off to
+    // the regular loading flags (which will be false right now, but
+    // any new fetch will flip them back on if needed).
+    setTypingPending(false)
+  }, [typingPending, hasSeenLoading, bestLoading, loadingExactIn, loadingExactOut])
+
+  const isQuoteLoading =
+    bestLoading || loadingExactIn || loadingExactOut || typingPending
+
+  const [stable, setStable] = useState<{ value: string; forInput: string }>({
+    value: '',
+    forInput: '',
+  })
+  useEffect(() => {
+    if (!isQuoteLoading) {
+      // Read fingerprint from the ref so an input change alone doesn't
+      // trigger this effect — only an actual data update
+      // (rawDisplayedOutput change) or a loading transition does.
+      setStable({ value: rawDisplayedOutput, forInput: fingerprintRef.current })
+    }
   }, [rawDisplayedOutput, isQuoteLoading])
+
+  const isStableFresh = stable.forInput === inputFingerprint
+  const isLoadingOrStale = isQuoteLoading || !isStableFresh
   const displayedOutput = !isExactIn
     ? rawDisplayedOutput
-    : isQuoteLoading
+    : isLoadingOrStale
     ? ''
-    : stableOutput
+    : stable.value
 
   // Both approval paths are called unconditionally per Hook rules. We pick
   // the one that matches the chosen route's source below. For aggregator
@@ -537,7 +604,7 @@ export default function Swap() {
                 onSelect={setSelectedAggregator}
                 outputCurrency={currencies[Field.OUTPUT]}
                 outputSymbol={getTokenSymbol(currencies[Field.OUTPUT], chainId) ?? ''}
-                isLoading={isQuoteLoading}
+                isLoading={isLoadingOrStale}
               />
             )}
 
@@ -570,7 +637,11 @@ export default function Swap() {
                   </ClickableText>
                 </RowBetween>
               )}
-              {trade ? (
+              {/* Hide the Price row while quotes are loading so the
+                  user doesn't see the previous trade's executionPrice
+                  bleeding into the new input. Reserved height keeps
+                  the layout stable. */}
+              {trade && !isLoadingOrStale ? (
                 <RowBetween align="center">
                   <Text fontWeight={500} fontSize={14} color={theme.text2}>
                     Price
@@ -613,7 +684,11 @@ export default function Swap() {
               )}
             </AutoColumn>
           </AutoColumn>
-          {!swapIsUnsupported && <AdvancedSwapDetailsDropdown trade={trade} />}
+          {/* Same loading gate as the Price row — AdvancedSwapDetails
+              renders Minimum Received / Price Impact / LP Fee / Route
+              from `trade`, all of which would otherwise show stale
+              values from the previous input while the new one resolves. */}
+          {!swapIsUnsupported && !isLoadingOrStale && <AdvancedSwapDetailsDropdown trade={trade} />}
           <BottomGrouping>
             {swapIsUnsupported ? (
               <ButtonError disabled>Unsupported Asset</ButtonError>
