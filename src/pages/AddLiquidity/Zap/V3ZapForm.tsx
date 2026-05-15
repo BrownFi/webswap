@@ -4,7 +4,7 @@ import { ButtonError, ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { Dots } from 'components/swap/styleds'
-import { useToast } from 'containers/ToastProvider'
+import { TransactionConfirmationModal, TransactionErrorContent } from 'components/TransactionConfirmationModal'
 import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
@@ -13,6 +13,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Field } from 'state/mint/actions'
 import { tryParseAmount } from 'state/swap/hooks'
 import { useCurrencyBalance } from 'state/wallet/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
@@ -32,15 +33,18 @@ type V3ZapFormProps = {
 
 export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3ZapFormProps) {
   const { account, chainId, library } = useActiveWeb3React()
-  const { createToast } = useToast()
   const deadline = useTransactionDeadline()
   const [slippage] = useUserSlippageTolerance()
+  const addTransaction = useTransactionAdder()
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | undefined>(
     currencies[Field.CURRENCY_A] ?? undefined,
   )
   const [amount, setAmount] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [txHash, setTxHash] = useState<string>('')
+  const [errorMessage, setErrorMessage] = useState<string | undefined>()
 
   const balance = useCurrencyBalance(account ?? undefined, selectedCurrency)
   const parsedAmount = useMemo(() => tryParseAmount(amount, selectedCurrency), [amount, selectedCurrency])
@@ -124,12 +128,34 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
     setAmount('')
   }, [])
 
+  const summaryAmount = parsedAmount?.toSignificant(6)
+  const pendingText = useMemo(
+    () => `Zapping ${summaryAmount ?? ''} ${symbol ?? ''} into ${otherSymbol ? `${symbol}/${otherSymbol}` : 'pool'}`,
+    [summaryAmount, symbol, otherSymbol],
+  )
+  const submittedText = useMemo(
+    () => `Zapped ${summaryAmount ?? ''} ${symbol ?? ''} into ${otherSymbol ? `${symbol}/${otherSymbol}` : 'pool'}`,
+    [summaryAmount, symbol, otherSymbol],
+  )
+
+  const handleDismissConfirm = useCallback(() => {
+    setShowConfirm(false)
+    // Clear the input on close after a successful submission so the form is
+    // ready for the next action; pre-submit errors leave the form intact.
+    if (txHash) setAmount('')
+    setTxHash('')
+    setErrorMessage(undefined)
+  }, [txHash])
+
   const handleSubmit = useCallback(async () => {
     if (!chainId || !account || !library || !parsedAmount || !wrappedTokenIn || !wrappedTokenOther || !deadline) return
 
-    try {
-      setIsSubmitting(true)
+    setErrorMessage(undefined)
+    setTxHash('')
+    setShowConfirm(true)
+    setIsSubmitting(true)
 
+    try {
       const updateData = await buildV3UpdateData(
         [wrappedTokenIn.address, wrappedTokenOther.address],
         chainId,
@@ -152,17 +178,33 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
       })
 
       setIsSubmitting(false)
-      setAmount('')
       if (response) {
-        createToast('Zap Successful', 'success')
+        setTxHash(response.hash)
+        addTransaction(response, { summary: submittedText })
       }
     } catch (err) {
       setIsSubmitting(false)
-      if (isUserRejection(err as any)) return
       console.error('V3 Zap transaction failed:', err)
-      createToast(parseZapError(err), 'error')
+      if (isUserRejection(err as any)) {
+        setShowConfirm(false)
+        return
+      }
+      setErrorMessage(parseZapError(err))
     }
-  }, [chainId, account, library, parsedAmount, wrappedTokenIn, wrappedTokenOther, deadline, estimatedOutput, isNativeETH, createToast])
+  }, [
+    chainId,
+    account,
+    library,
+    parsedAmount,
+    wrappedTokenIn,
+    wrappedTokenOther,
+    deadline,
+    estimatedOutput,
+    isNativeETH,
+    slippage,
+    addTransaction,
+    submittedText,
+  ])
 
   const halfAmount = parsedAmount ? Number(parsedAmount.toExact()) / 2 : 0
   const estimatedOther = estimatedOutput
@@ -171,6 +213,21 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
 
   return (
     <AutoColumn gap="20px">
+      <TransactionConfirmationModal
+        isOpen={showConfirm}
+        onDismiss={handleDismissConfirm}
+        attemptingTxn={isSubmitting}
+        hash={txHash}
+        pendingText={pendingText}
+        submittedText={submittedText}
+        content={() =>
+          errorMessage ? (
+            <TransactionErrorContent onDismiss={handleDismissConfirm} message={errorMessage} />
+          ) : (
+            <div />
+          )
+        }
+      />
       <CurrencyInputPanel
         value={amount}
         onUserInput={setAmount}

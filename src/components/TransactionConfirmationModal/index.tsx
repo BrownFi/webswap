@@ -10,21 +10,54 @@ import { CheckCircle } from 'react-feather'
 import { ButtonPrimary } from 'components/Button'
 import { AutoColumn, ColumnCenter } from 'components/Column'
 import Circle from 'assets/images/blue-loader.svg'
-import MetaMaskLogo from 'assets/images/metamask.png'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 import useAddTokenToMetamask from 'hooks/useAddTokenToMetamask'
 import { useAllTransactions } from 'state/transactions/hooks'
-import checkCircle from 'assets/svg/check_circle.svg'
-import cancel from 'assets/svg/cancel.svg'
 
 type TxState = 'pending' | 'success' | 'failed'
+
+// Outlined status icons matched to the dark/brown palette — soft tinted fill
+// plus a thin ring and clean stroke, rather than the cartoonish solid badges.
+function SuccessIcon({ size = 88 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 96 96" fill="none" aria-hidden="true">
+      <circle cx="48" cy="48" r="44" stroke="#83CF84" strokeWidth="1.5" />
+      <circle cx="48" cy="48" r="36" fill="#83CF84" fillOpacity="0.12" />
+      <path
+        d="M32 49.5L43 60L65 36"
+        stroke="#83CF84"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function FailedIcon({ size = 88 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 96 96" fill="none" aria-hidden="true">
+      <circle cx="48" cy="48" r="44" stroke="#FF3B6A" strokeWidth="1.5" />
+      <circle cx="48" cy="48" r="36" fill="#FF3B6A" fillOpacity="0.12" />
+      <path
+        d="M34 34L62 62M62 34L34 62"
+        stroke="#FF3B6A"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
 
 const Wrapper = styled.div`
   width: 100%;
 `
 const Section = styled(AutoColumn)`
   padding: 32px 40px;
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    padding: 24px 20px;
+  `}
 `
 
 const BottomSection = styled(Section)`
@@ -36,12 +69,6 @@ const BottomSection = styled(Section)`
 
 const ConfirmedIcon = styled(ColumnCenter)`
   padding: 60px 0;
-`
-
-const StyledLogo = styled.img`
-  height: 16px;
-  width: 16px;
-  margin-left: 6px;
 `
 
 function ConfirmationPendingContent({ onDismiss, pendingText }: { onDismiss: () => void; pendingText: string }) {
@@ -106,7 +133,7 @@ function TransactionSubmittedContent({
             </span>
           </RowBetween>
           <ConfirmedIcon className="!pb-[20px] !pt-[40px]">
-            <img src={cancel} className="w-[100px]" alt="failed" />
+            <FailedIcon />
           </ConfirmedIcon>
           <AutoColumn gap="12px" justify={'center'}>
             <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', lineHeight: '36px', color: '#FF3B6A', textAlign: 'center' }}>
@@ -142,11 +169,7 @@ function TransactionSubmittedContent({
           </span>
         </RowBetween>
         <ConfirmedIcon className="!pb-[20px] !pt-[40px]">
-          {isPending ? (
-            <CustomLightSpinner src={Circle} alt="mining" size={'90px'} />
-          ) : (
-            <img src={checkCircle} className="w-[100px]" alt="check" />
-          )}
+          {isPending ? <CustomLightSpinner src={Circle} alt="mining" size={'90px'} /> : <SuccessIcon />}
         </ConfirmedIcon>
         <AutoColumn gap="12px" justify={'center'}>
           <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', lineHeight: '36px', color: '#83CF84', textAlign: 'center' }}>
@@ -164,19 +187,35 @@ function TransactionSubmittedContent({
               </span>
             </ExternalLink>
           )}
-          {!isPending && currencyToAdd && window?.ethereum?.isMetaMask && (
-            <ButtonPrimary padding="6px 12px" width="100%" style={{ marginTop: '12px' }} onClick={addToken}>
-              {!success ? (
-                <RowFixed>
-                  Add {getTokenSymbol(currencyToAdd, chainId)} to Metamask <StyledLogo src={MetaMaskLogo} />
-                </RowFixed>
-              ) : (
-                <RowFixed>
-                  Added {getTokenSymbol(currencyToAdd, chainId)}{' '}
-                  <CheckCircle size={'16px'} stroke={theme.green1} style={{ marginLeft: '6px' }} />
-                </RowFixed>
+          {!isPending && (
+            // Stack on mobile to avoid the longer "Add SYMBOL to wallet" label
+            // overflowing in a flex:1 column. Side-by-side from sm: up.
+            <div className="flex flex-col sm:flex-row gap-2 w-full" style={{ marginTop: '12px' }}>
+              {currencyToAdd && !!window?.ethereum && (
+                <ButtonPrimary padding="6px 12px" style={{ flex: 1 }} onClick={addToken}>
+                  {!success ? (
+                    <RowFixed>Add {getTokenSymbol(currencyToAdd, chainId)} to wallet</RowFixed>
+                  ) : (
+                    <RowFixed>
+                      Added {getTokenSymbol(currencyToAdd, chainId)}{' '}
+                      <CheckCircle size={'16px'} stroke={theme.green1} style={{ marginLeft: '6px' }} />
+                    </RowFixed>
+                  )}
+                </ButtonPrimary>
               )}
-            </ButtonPrimary>
+              <ButtonPrimary
+                padding="6px 12px"
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: '1px solid #493E35',
+                  color: '#FBFBFD',
+                }}
+                onClick={onDismiss}
+              >
+                Close
+              </ButtonPrimary>
+            </div>
           )}
         </AutoColumn>
       </Section>
@@ -228,7 +267,7 @@ export function TransactionErrorContent({ message, onDismiss }: { message: strin
         </RowBetween>
         <div style={{ marginTop: 40 }}>
           <div className="flex justify-center mb-[20px]">
-            <img src={cancel} className="w-[100px]" alt="Transaction failed" />
+            <FailedIcon />
           </div>
           <p className="text-[32px] font-semibold text-[#FF3B6A] text-center mb-[20px]">Swap fail</p>
 

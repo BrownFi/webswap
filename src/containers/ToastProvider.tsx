@@ -71,7 +71,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={useMemo(() => ({ createToast }), [createToast])}>
       {children}
-      <div className="fixed top-20 right-8 space-y-2 z-50">
+      <div className="fixed top-24 right-4 sm:right-8 space-y-2 z-[200]">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={handleRemove} />
         ))}

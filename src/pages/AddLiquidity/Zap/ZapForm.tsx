@@ -5,7 +5,7 @@ import { AutoColumn } from 'components/Column'
 import { RowBetween } from 'components/Row'
 import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 import { Dots } from 'components/swap/styleds'
-import { useToast } from 'containers/ToastProvider'
+import { TransactionConfirmationModal, TransactionErrorContent } from 'components/TransactionConfirmationModal'
 import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { ApprovalState } from 'hooks/useApproveCallback'
@@ -14,6 +14,7 @@ import { Plus } from 'react-feather'
 import { Field } from 'state/mint/actions'
 import { tryParseAmount } from 'state/swap/hooks'
 import { useCurrencyBalances } from 'state/wallet/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 import { ThemeContext } from 'styled-components'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
@@ -45,9 +46,12 @@ type ZapFormProps = {
 export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFormProps) {
   const theme = useContext(ThemeContext)
   const { account, chainId, library } = useActiveWeb3React()
-  const { createToast } = useToast()
+  const addTransaction = useTransactionAdder()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [txHash, setTxHash] = useState<string>('')
+  const [errorMessage, setErrorMessage] = useState<string | undefined>()
   const idRef = useRef(0)
   const previousPairAddress = useRef<string | undefined>()
 
@@ -292,35 +296,82 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
     [createInput],
   )
 
+  // Modal text — describe the tokens going in. Aggregated so the modal stays
+  // readable even when the user is zapping 3+ inputs.
+  const inputsSummary = useMemo(() => {
+    const parts = validInputs.map(
+      (i) =>
+        `${i.parsedAmount?.toSignificant(6) ?? ''} ${getTokenSymbol(i.currency ?? undefined, chainId ?? undefined) ?? ''}`.trim(),
+    )
+    return parts.join(' + ')
+  }, [validInputs, chainId])
+  const pairLabel = useMemo(() => {
+    if (!pair || !chainId) return 'pool'
+    return `${getTokenSymbol(pair.token0, chainId)}/${getTokenSymbol(pair.token1, chainId)}`
+  }, [pair, chainId])
+  const pendingText = `Zapping ${inputsSummary} into ${pairLabel}`
+  const submittedText = `Zapped ${inputsSummary} into ${pairLabel}`
+
+  const handleDismissConfirm = useCallback(() => {
+    setShowConfirm(false)
+    if (txHash) {
+      setInputs((prev) => prev.map((input) => ({ ...input, amount: '' })))
+    }
+    setTxHash('')
+    setErrorMessage(undefined)
+  }, [txHash])
+
   const handleSubmit = useCallback(async () => {
     if (!chainId || !account || !library || !zapRouteData) {
       return
     }
 
-    try {
-      setIsSubmitting(true)
+    setErrorMessage(undefined)
+    setTxHash('')
+    setShowConfirm(true)
+    setIsSubmitting(true)
 
-      await executeKyberZapTransaction({
+    try {
+      const response = await executeKyberZapTransaction({
         chainId,
         account,
         routeData: zapRouteData,
         library,
       })
 
-      setInputs((prev) => prev.map((input) => ({ ...input, amount: '' })))
       setIsSubmitting(false)
-
-      createToast('Zap Successful', 'success')
+      if (response) {
+        setTxHash(response.hash)
+        addTransaction(response, { summary: submittedText })
+      }
     } catch (error) {
       setIsSubmitting(false)
-      if (isUserRejection(error as any)) return
       console.error('Zap transaction failed:', error)
-      createToast(parseZapError(error), 'error')
+      if (isUserRejection(error as any)) {
+        setShowConfirm(false)
+        return
+      }
+      setErrorMessage(parseZapError(error))
     }
-  }, [chainId, account, library, zapRouteData])
+  }, [chainId, account, library, zapRouteData, addTransaction, submittedText])
 
   return (
     <AutoColumn gap="20px">
+      <TransactionConfirmationModal
+        isOpen={showConfirm}
+        onDismiss={handleDismissConfirm}
+        attemptingTxn={isSubmitting}
+        hash={txHash}
+        pendingText={pendingText}
+        submittedText={submittedText}
+        content={() =>
+          errorMessage ? (
+            <TransactionErrorContent onDismiss={handleDismissConfirm} message={errorMessage} />
+          ) : (
+            <div />
+          )
+        }
+      />
       <AutoColumn gap="24px">
         {parsedInputs.map((input, index) => {
           return (

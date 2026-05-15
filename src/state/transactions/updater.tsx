@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useActiveWeb3React } from 'hooks'
-import { useAddPopup, useBlockNumber } from 'state/application/hooks'
+import { useBlockNumber } from 'state/application/hooks'
 import { AppDispatch, AppState } from 'state'
 import { checkedTransaction, finalizeTransaction, SerializableTransactionReceipt } from './actions'
 
@@ -37,8 +37,6 @@ export default function Updater(): null {
   const transactions = chainId ? state[chainId] ?? {} : {}
 
   // show popup on confirm
-  const addPopup = useAddPopup()
-
   useEffect(() => {
     if (!chainId || !library || !lastBlockNumber) return
 
@@ -49,6 +47,9 @@ export default function Updater(): null {
           .getTransactionReceipt(hash)
           .then((receipt) => {
             if (receipt) {
+              // Mobile popup notification used to fire here via addPopup —
+              // dropped so the TransactionConfirmationModal is the single
+              // source of truth for tx feedback on both desktop and mobile.
               dispatch(
                 finalizeTransaction({
                   chainId,
@@ -65,17 +66,6 @@ export default function Updater(): null {
                   },
                 }),
               )
-
-              addPopup(
-                {
-                  txn: {
-                    hash,
-                    success: receipt.status === 1,
-                    summary: transactions[hash]?.summary,
-                  },
-                },
-                hash,
-              )
             } else {
               dispatch(checkedTransaction({ chainId, hash, blockNumber: lastBlockNumber }))
             }
@@ -84,7 +74,7 @@ export default function Updater(): null {
             console.error('Failed to check transaction hash', error)
           })
       })
-  }, [chainId, library, transactions, lastBlockNumber, dispatch, addPopup])
+  }, [chainId, library, transactions, lastBlockNumber, dispatch])
 
   return null
 }
