@@ -7,6 +7,7 @@ import { AddressInputPanel } from 'components/AddressInputPanel'
 import { ButtonError, ButtonPrimary, ButtonConfirmed } from 'components/Button'
 import Column, { AutoColumn } from 'components/Column'
 import ConfirmSwapModal from 'components/swap/ConfirmSwapModal'
+import { RouteComparison } from 'components/swap/RouteComparison'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { AutoRow, RowBetween } from 'components/Row'
 import AdvancedSwapDetailsDropdown from 'components/swap/AdvancedSwapDetailsDropdown'
@@ -209,6 +210,7 @@ export default function Swap() {
   }, [parsedAmounts])
   const {
     best,
+    candidates: routeCandidates,
     isLoading: bestLoading,
     isStale: bestIsStale,
     refetchAll: refetchBest,
@@ -222,7 +224,7 @@ export default function Swap() {
     deadline: deadline ? deadline.toNumber() : Math.floor(Date.now() / 1000) + 600,
   })
   const isAggregatorRoute = !!best && best.source !== 'native'
-  const [selectedAggregator] = useSelectedAggregator()
+  const [selectedAggregator, setSelectedAggregator] = useSelectedAggregator()
   // User manually picked a specific aggregator, but orchestration fell back
   // to native (the chosen aggregator returned no route for this pair on
   // this chain). Surface this so the user understands why their selection
@@ -466,6 +468,20 @@ export default function Swap() {
               id="swap-currency-output"
               showCommonBases={true}
             />
+
+            {/* Inline route picker — only renders when there are 2+
+                candidates (native + at least one aggregator quote). Lets
+                users see both quotes side by side and click to force a
+                specific source. Persists to selectedAggregator. */}
+            {routeCandidates.length >= 2 && !showWrap && (
+              <RouteComparison
+                candidates={routeCandidates}
+                selected={selectedAggregator}
+                onSelect={setSelectedAggregator}
+                outputCurrency={currencies[Field.OUTPUT]}
+                outputSymbol={getTokenSymbol(currencies[Field.OUTPUT], chainId) ?? ''}
+              />
+            )}
 
             {recipient !== null && !showWrap ? (
               <>
