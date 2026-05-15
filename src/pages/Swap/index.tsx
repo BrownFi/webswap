@@ -20,9 +20,13 @@ import SwapHeader from 'components/swap/SwapHeader'
 import { INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
 import { useActiveWeb3React } from 'hooks'
 import { useCurrency, useAllTokens } from 'hooks/Tokens'
-import { ApprovalState, useApproveCallbackFromTrade } from 'hooks/useApproveCallback'
+import { ApprovalState, useApproveCallback, useApproveCallbackFromTrade } from 'hooks/useApproveCallback'
 import useENSAddress from 'hooks/useENSAddress'
 import { useSwapCallback } from 'hooks/useSwapCallback'
+import { useAggregatorSwapCallback } from 'hooks/useAggregatorSwapCallback'
+import { useBestSwapRoute } from 'hooks/useBestSwapRoute'
+import useTransactionDeadline from 'hooks/useTransactionDeadline'
+import { BigNumber } from '@ethersproject/bignumber'
 import useToggledVersion, { DEFAULT_VERSION, Version } from 'hooks/useToggledVersion'
 import useWrapCallback, { WrapType } from 'hooks/useWrapCallback'
 import { useToast } from 'containers/ToastProvider'
@@ -190,8 +194,57 @@ export default function Swap() {
   )
   const noRoute = !route
 
-  // check whether the user has approved the router on the input token
-  const [approval, approveCallback] = useApproveCallbackFromTrade(trade, allowedSlippage)
+  // Multi-aggregator orchestration. Compares the BrownFi-native trade with
+  // every supported aggregator's quote and picks a winner per the user's
+  // selectedAggregator preference (Auto / Native / specific aggregator).
+  const deadline = useTransactionDeadline()
+  const amountInBig = useMemo(() => {
+    const raw = parsedAmounts[Field.INPUT]?.raw?.toString()
+    return raw ? BigNumber.from(raw) : undefined
+  }, [parsedAmounts])
+  const {
+    best,
+    isLoading: bestLoading,
+    isStale: bestIsStale,
+    refetchAll: refetchBest,
+  } = useBestSwapRoute({
+    nativeTrade: trade,
+    tokenIn: currencies[Field.INPUT],
+    tokenOut: currencies[Field.OUTPUT],
+    amountIn: amountInBig,
+    account: account ?? undefined,
+    slippageBps: allowedSlippage,
+    deadline: deadline ? deadline.toNumber() : Math.floor(Date.now() / 1000) + 600,
+  })
+  const isAggregatorRoute = !!best && best.source !== 'native'
+
+  // When an aggregator quote wins, its amountOut overrides the native
+  // trade's outputAmount in the OUTPUT field. Only applies on exact-in
+  // (user typing INPUT — OUTPUT field reflects the aggregator's quote).
+  const isExactIn = independentField === Field.INPUT
+  const aggregatorOutputDisplay = useMemo(() => {
+    if (!isAggregatorRoute || !isExactIn) return undefined
+    if (!best?.amountOut || !currencies[Field.OUTPUT]) return undefined
+    const decimals =
+      currencies[Field.OUTPUT] instanceof Token ? (currencies[Field.OUTPUT] as Token).decimals : 18
+    const num = Number(best.amountOut.toString()) / 10 ** decimals
+    if (!isFinite(num) || num === 0) return '0'
+    if (num < 0.000001) return num.toExponential(2)
+    return Number(num.toPrecision(6)).toString()
+  }, [isAggregatorRoute, isExactIn, best, currencies])
+  const displayedOutput = aggregatorOutputDisplay ?? formattedAmounts[Field.OUTPUT]
+
+  // Both approval paths are called unconditionally per Hook rules. We pick
+  // the one that matches the chosen route's source below. For aggregator
+  // routes the spender is the aggregator's own router (e.g. Kyber Meta
+  // Aggregation Router), not BrownFi's.
+  const [nativeApproval, nativeApproveCallback] = useApproveCallbackFromTrade(trade, allowedSlippage)
+  const [aggregatorApproval, aggregatorApproveCallback] = useApproveCallback(
+    parsedAmounts[Field.INPUT],
+    isAggregatorRoute ? best?.aggregatorQuote?.routerAddress : undefined,
+  )
+  const approval = isAggregatorRoute ? aggregatorApproval : nativeApproval
+  const approveCallback = isAggregatorRoute ? aggregatorApproveCallback : nativeApproveCallback
 
   // check if user has gone through approval process, used to show two step buttons, reset on token change
   const [approvalSubmitted, setApprovalSubmitted] = useState<boolean>(false)
@@ -207,7 +260,21 @@ export default function Swap() {
   const atMaxAmountInput = Boolean(maxAmountInput && parsedAmounts[Field.INPUT]?.equalTo(maxAmountInput))
 
   // the callback to execute the swap
-  const { callback: swapCallback, error: swapCallbackError } = useSwapCallback(trade, allowedSlippage, recipient)
+  // Native swap callback (BrownFi router). Always called per Hook rules.
+  const { callback: nativeSwapCallback, error: nativeSwapCallbackError } = useSwapCallback(
+    trade,
+    allowedSlippage,
+    recipient,
+  )
+  // Aggregator swap callback. Always called per Hook rules — short-circuits
+  // when `best` is null or native.
+  const { callback: aggregatorCallback, error: aggregatorCallbackError } = useAggregatorSwapCallback(
+    best,
+    allowedSlippage,
+    deadline ? deadline.toNumber() : Math.floor(Date.now() / 1000) + 600,
+  )
+  const swapCallback = isAggregatorRoute ? aggregatorCallback : nativeSwapCallback
+  const swapCallbackError = isAggregatorRoute ? aggregatorCallbackError : nativeSwapCallbackError
 
   const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
 
@@ -218,6 +285,13 @@ export default function Swap() {
       return
     }
     if (!swapCallback) {
+      return
+    }
+    // Stale aggregator quote — refetch before signing rather than build
+    // calldata against an expired route. The user re-clicks Swap once the
+    // fresh quote lands.
+    if (bestIsStale) {
+      refetchBest()
       return
     }
     setSwapState({ attemptingTxn: true, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: undefined })
@@ -247,6 +321,8 @@ export default function Swap() {
     account,
     trade,
     singleHopOnly,
+    bestIsStale,
+    refetchBest,
   ])
 
   // errors
@@ -364,9 +440,9 @@ export default function Swap() {
               </AutoRow>
             </AutoColumn>
             <CurrencyInputPanel
-              value={formattedAmounts[Field.OUTPUT]}
+              value={displayedOutput}
               onUserInput={handleTypeOutput}
-              loading={loadingExactIn}
+              loading={loadingExactIn || bestLoading}
               label={'Your Receive'}
               showMaxButton={false}
               currency={currencies[Field.OUTPUT]}
@@ -418,6 +494,33 @@ export default function Swap() {
                 </RowBetween>
               ) : (
                 <div className="h-[22px]"></div>
+              )}
+              {/* Aggregator badge — surfaces which source the chosen route
+                  came from when it isn't BrownFi-native. Matches the same
+                  pattern Uniswap / 1inch use for "via X" attribution. */}
+              {isAggregatorRoute && best && (
+                <RowBetween align="center">
+                  <Text fontWeight={500} fontSize={14} color={theme.text2}>
+                    Route
+                  </Text>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '2px 8px',
+                      borderRadius: 8,
+                      background: 'rgba(216, 160, 114, 0.12)',
+                      border: '1px solid rgba(216, 160, 114, 0.35)',
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: '#D8A072',
+                    }}
+                  >
+                    via {best.sourceName}
+                  </span>
+                </RowBetween>
               )}
             </AutoColumn>
           </AutoColumn>
