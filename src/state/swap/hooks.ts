@@ -16,6 +16,7 @@ import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies
 import { SwapState } from './reducer'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { computeSlippageAdjustedAmounts } from 'utils/prices'
+import { ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
 
 export function useSwapState(): AppState['swap'] {
   return useSelector<AppState, AppState['swap']>((state) => state.swap)
@@ -117,6 +118,10 @@ export function useDerivedSwapInfo(): {
    *  Surfaced separately so the Swap page can decide whether to block —
    *  only relevant when the chosen route is V2. */
   v2AmountOutExceedsReserve: boolean
+  /** Both BrownFi V2 and V3 have insufficient pool liquidity for this
+   *  trade. Surfaced separately so the Swap page can still allow the
+   *  swap if an aggregator route exists. */
+  nativePoolLiquidityInsufficient: boolean
   loadingExactIn: boolean
   loadingExactOut: boolean
 } {
@@ -151,21 +156,39 @@ export function useDerivedSwapInfo(): {
   // longer pinned to one version — each call passes its target version
   // explicitly so the global versionSelector (used by Add/Remove Liquidity)
   // doesn't leak into the Swap surface.
+  //
+  // V3 is gated by whether a V3 router is deployed on this chain. Hook
+  // call order stays stable (we still call useTradeExactIn/Out for V3) —
+  // we just feed `undefined` for the amount so the underlying pipeline
+  // short-circuits and skips the multicall.
+  const chainSupportsV3 = !!chainId && !!ROUTER_ADDRESS_V3[chainId]
   const tradeInV2 = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 2)
   const tradeOutV2 = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined, 2)
-  const tradeInV3 = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 3)
-  const tradeOutV3 = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined, 3)
+  const tradeInV3 = useTradeExactIn(
+    isExactIn && chainSupportsV3 ? parsedAmount : undefined,
+    outputCurrency ?? undefined,
+    3,
+  )
+  const tradeOutV3 = useTradeExactOut(
+    inputCurrency ?? undefined,
+    !isExactIn && chainSupportsV3 ? parsedAmount : undefined,
+    3,
+  )
 
   const v2Trade = isExactIn ? tradeInV2.trade : tradeOutV2.trade
   const v3Trade = isExactIn ? tradeInV3.trade : tradeOutV3.trade
 
   // Loading + insufficient flags are unioned across both versions so the UI
   // doesn't get stuck on "Insufficient liquidity" when only V3 has the pool.
-  const loadingExactIn = tradeInV2.loadingExactIn || tradeInV3.loadingExactIn
-  const loadingExactOut = tradeOutV2.loadingExactOut || tradeOutV3.loadingExactOut
-  const isInsufficient =
-    (tradeInV2.isInsufficient && tradeInV3.isInsufficient) ||
-    (tradeOutV2.isInsufficient && tradeOutV3.isInsufficient)
+  // On chains without V3 deployed, V3 pipelines are inert (undefined input)
+  // so their loading/insufficient flags must be ignored — otherwise the V2
+  // "insufficient" verdict would be masked by an idle V3 returning false.
+  const loadingExactIn = tradeInV2.loadingExactIn || (chainSupportsV3 && tradeInV3.loadingExactIn)
+  const loadingExactOut = tradeOutV2.loadingExactOut || (chainSupportsV3 && tradeOutV3.loadingExactOut)
+  const isInsufficient = chainSupportsV3
+    ? (tradeInV2.isInsufficient && tradeInV3.isInsufficient) ||
+      (tradeOutV2.isInsufficient && tradeOutV3.isInsufficient)
+    : tradeInV2.isInsufficient || tradeOutV2.isInsufficient
 
   // Keep tradeIn/tradeOut for the rest of the function — these are
   // V2-backed values used by the existing inputError + balance-check logic
@@ -248,14 +271,12 @@ export function useDerivedSwapInfo(): {
     amountOut && compareOut && +amountOut?.toExact() > +compareOut.toExact() * 0.9
   )
 
-  // Only show "Insufficient pool liquidity" when BOTH V2 and V3 lack a
-  // trade — if either version has a route, the smart router will surface
-  // it as a candidate in RouteComparison.
-  if (isInsufficient && !v2Trade && !v3Trade) {
-    if (!isInputEmpty && !loadingExactIn && !loadingExactOut) {
-      inputError = 'Insufficient pool liquidity for this trade. Try a smaller amount.'
-    }
-  }
+  // BrownFi-native pool liquidity flag: true when neither V2 nor V3 has
+  // a route and the SDK signaled insufficient reserves. Surfaced as a
+  // separate flag so the Swap page can combine it with aggregator-route
+  // availability before deciding to block the swap.
+  const nativePoolLiquidityInsufficient =
+    !!isInsufficient && !v2Trade && !v3Trade && !isInputEmpty && !loadingExactIn && !loadingExactOut
 
   return {
     currencies,
@@ -265,6 +286,7 @@ export function useDerivedSwapInfo(): {
     v3Trade: v3Trade ?? undefined,
     inputError,
     v2AmountOutExceedsReserve,
+    nativePoolLiquidityInsufficient,
     loadingExactIn,
     loadingExactOut,
   }

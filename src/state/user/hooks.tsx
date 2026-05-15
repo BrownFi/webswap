@@ -102,9 +102,14 @@ export function useUserSingleHopOnly(): [boolean, (newSingleHopOnly: boolean) =>
 
 export function useSelectedAggregator(): [AggregatorChoice, (next: AggregatorChoice) => void] {
   const dispatch = useDispatch<AppDispatch>()
-  const selected = useSelector<AppState, AggregatorChoice>(
-    (state) => state.user.selectedAggregator ?? 'auto',
-  )
+  const selected = useSelector<AppState, AggregatorChoice>((state) => {
+    const raw = state.user.selectedAggregator ?? 'auto'
+    // Legacy persisted value: pre-rename, 'native' meant "auto-pick best
+    // native route." The reducer's updateVersion migrates it on boot, but
+    // belt-and-suspenders the runtime path so stale subscriptions can't
+    // leak the legacy string into downstream comparisons.
+    return (raw as unknown as string) === 'native' ? 'auto' : raw
+  })
   const setSelected = useCallback(
     (next: AggregatorChoice) => {
       dispatch(updateSelectedAggregator({ selectedAggregator: next }))

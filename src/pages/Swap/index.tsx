@@ -24,7 +24,7 @@ import { ApprovalState, useApproveCallback, useApproveCallbackFromTrade } from '
 import useENSAddress from 'hooks/useENSAddress'
 import { useSwapCallback } from 'hooks/useSwapCallback'
 import { useAggregatorSwapCallback } from 'hooks/useAggregatorSwapCallback'
-import { useBestSwapRoute } from 'hooks/useBestSwapRoute'
+import { useBestSwapRoute, type UnifiedRoute } from 'hooks/useBestSwapRoute'
 import { isBrownFiSource } from 'services/aggregators/types'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { BigNumber } from '@ethersproject/bignumber'
@@ -98,6 +98,7 @@ export default function Swap() {
     currencies,
     inputError: rawSwapInputError,
     v2AmountOutExceedsReserve,
+    nativePoolLiquidityInsufficient,
     loadingExactIn,
     loadingExactOut,
   } = useDerivedSwapInfo()
@@ -163,15 +164,20 @@ export default function Swap() {
     navigate('/swap/')
   }, [navigate])
 
-  const [{ showConfirm, tradeToConfirm, swapErrorMessage, attemptingTxn, txHash }, setSwapState] = useState<{
+  const [{ showConfirm, tradeToConfirm, routeToConfirm, swapErrorMessage, attemptingTxn, txHash }, setSwapState] = useState<{
     showConfirm: boolean
     tradeToConfirm: Trade | undefined
+    /** Snapshot of `best` taken when the confirm modal opens. Kyber's
+     *  20s refetch can update `best` while the modal is up; signing
+     *  must use the snapshot the user actually saw. */
+    routeToConfirm: UnifiedRoute | undefined
     attemptingTxn: boolean
     swapErrorMessage: string | undefined
     txHash: string | undefined
   }>({
     showConfirm: false,
     tradeToConfirm: undefined,
+    routeToConfirm: undefined,
     attemptingTxn: false,
     swapErrorMessage: undefined,
     txHash: undefined,
@@ -187,20 +193,31 @@ export default function Swap() {
     [independentField, dependentField, typedValue, showWrap, parsedAmounts],
   )
 
-  const route = trade?.route
   const userHasSpecifiedInputOutput = Boolean(
     currencies[Field.INPUT] && currencies[Field.OUTPUT] && parsedAmounts[independentField]?.greaterThan(JSBI.BigInt(0)),
   )
-  const noRoute = !route
+  // "No route" is true only when NO source — BrownFi-native or aggregator —
+  // has a quote. With the smart router, an aggregator might cover a pair
+  // that V2 doesn't, so checking `!route` (V2-only) would hide a perfectly
+  // executable Kyber route behind a "no route" message.
+  // Computed below after `best` is in scope.
 
   // Multi-aggregator orchestration. Compares the BrownFi-native trade with
   // every supported aggregator's quote and picks a winner per the user's
   // selectedAggregator preference (Auto / Native / specific aggregator).
   const deadline = useTransactionDeadline()
+  // Kyber's aggregator API only quotes by amountIn (exact-in). On
+  // exact-out, the user's intent is amountOut, and we'd have to back-
+  // solve to an amountIn — V2's slippage-adjusted estimate would be
+  // wrong for Kyber. Skip aggregator candidates on exact-out by
+  // withholding amountIn from the orchestration; aggregator queries
+  // are gated on amountIn being defined, so they simply don't fire.
+  // Adapters that support exact-out can opt in later.
   const amountInBig = useMemo(() => {
+    if (independentField !== Field.INPUT) return undefined
     const raw = parsedAmounts[Field.INPUT]?.raw?.toString()
     return raw ? BigNumber.from(raw) : undefined
-  }, [parsedAmounts])
+  }, [parsedAmounts, independentField])
   const {
     best,
     candidates: routeCandidates,
@@ -218,12 +235,17 @@ export default function Swap() {
     slippageBps: allowedSlippage,
     deadline: deadline ? deadline.toNumber() : Math.floor(Date.now() / 1000) + 600,
   })
+  // When the confirm modal is open, freeze on the snapshot taken at open
+  // time so signing uses what the user actually saw — Kyber's 20s
+  // refetch interval can otherwise change `best` underneath them.
+  const activeBest = showConfirm && routeToConfirm ? routeToConfirm : best
   // The "active trade" the rest of the page (approval, swap callback,
   // tooltip, advanced details) operates on is whichever BrownFi-native
   // candidate the smart router picked. For aggregator routes this is
   // undefined and the aggregator path takes over.
-  const activeNativeTrade = best?.nativeTrade
-  const isAggregatorRoute = !!best && !isBrownFiSource(best.source)
+  const activeNativeTrade = activeBest?.nativeTrade
+  const isAggregatorRoute = !!activeBest && !isBrownFiSource(activeBest.source)
+  const noRoute = !best
   const [selectedAggregator, setSelectedAggregator] = useSelectedAggregator()
 
   // The "amount-out exceeds 90% of pool reserve" check is V2-pool-specific.
@@ -235,8 +257,13 @@ export default function Swap() {
     if (v2AmountOutExceedsReserve && best?.source === 'brownfi-v2') {
       return 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
     }
+    // Both BrownFi versions lack a route — but if an aggregator has one,
+    // the user can still swap. Only block when no source has a route.
+    if (nativePoolLiquidityInsufficient && !best) {
+      return 'Insufficient pool liquidity for this trade. Try a smaller amount.'
+    }
     return undefined
-  }, [rawSwapInputError, v2AmountOutExceedsReserve, best?.source])
+  }, [rawSwapInputError, v2AmountOutExceedsReserve, best, nativePoolLiquidityInsufficient])
   const isValid = !swapInputError
   // User manually picked a specific aggregator, but orchestration fell back
   // to native (the chosen aggregator returned no route for this pair on
@@ -313,7 +340,16 @@ export default function Swap() {
   const [hasSeenLoading, setHasSeenLoading] = useState(false)
   if (trackedFingerprint !== inputFingerprint) {
     setTrackedFingerprint(inputFingerprint)
-    setTypingPending(true)
+    // Only engage the spinner when there's actually a quote to wait
+    // for. If typedValue is empty / both currencies are missing / there's
+    // nothing fetchable, the per-source loading flags will never fire
+    // and `hasSeenLoading` will never flip — typingPending would sit
+    // at the 2000ms hard cap for nothing.
+    const willFetch = !!typedValue &&
+      Number(typedValue) > 0 &&
+      !!currencies[Field.INPUT] &&
+      !!currencies[Field.OUTPUT]
+    setTypingPending(willFetch)
     setHasSeenLoading(false)
   }
   useEffect(() => {
@@ -377,7 +413,7 @@ export default function Swap() {
   )
   const [aggregatorApproval, aggregatorApproveCallback] = useApproveCallback(
     parsedAmounts[Field.INPUT],
-    isAggregatorRoute ? best?.aggregatorQuote?.routerAddress : undefined,
+    isAggregatorRoute ? activeBest?.aggregatorQuote?.routerAddress : undefined,
   )
   const approval = isAggregatorRoute ? aggregatorApproval : nativeApproval
   const approveCallback = isAggregatorRoute ? aggregatorApproveCallback : nativeApproveCallback
@@ -407,14 +443,23 @@ export default function Swap() {
   // Aggregator swap callback. Always called per Hook rules — short-circuits
   // when `best` is null or native.
   const { callback: aggregatorCallback, error: aggregatorCallbackError } = useAggregatorSwapCallback(
-    best,
+    activeBest,
     allowedSlippage,
     deadline ? deadline.toNumber() : Math.floor(Date.now() / 1000) + 600,
   )
   const swapCallback = isAggregatorRoute ? aggregatorCallback : nativeSwapCallback
   const swapCallbackError = isAggregatorRoute ? aggregatorCallbackError : nativeSwapCallbackError
 
-  const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
+  // Price impact derives from BrownFi's V2 trade. When the chosen route is
+  // an aggregator (Kyber), V2's impact is irrelevant to the actual swap —
+  // we'd be warning about a quote we're not executing. Treat impact as
+  // undefined for aggregator routes (no severity warning, no disable).
+  // V3 will need its own breakdown once concentrated-liquidity impact is
+  // computable; for now V3 also bypasses the V2 warning.
+  const { priceImpactWithoutFee } = useMemo(() => {
+    if (!best || best.source !== 'brownfi-v2') return { priceImpactWithoutFee: undefined }
+    return computeTradePriceBreakdown(trade)
+  }, [trade, best])
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
@@ -432,10 +477,10 @@ export default function Swap() {
       refetchBest()
       return
     }
-    setSwapState({ attemptingTxn: true, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: undefined })
+    setSwapState({ attemptingTxn: true, tradeToConfirm, routeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: undefined })
     swapCallback()
       .then((hash) => {
-        setSwapState({ attemptingTxn: false, tradeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: hash })
+        setSwapState({ attemptingTxn: false, tradeToConfirm, routeToConfirm, showConfirm, swapErrorMessage: undefined, txHash: hash })
         // Refresh RainbowKit/wagmi balance display after swap
         setTimeout(() => queryClient.invalidateQueries(), 5000)
       })
@@ -443,6 +488,7 @@ export default function Swap() {
         setSwapState({
           attemptingTxn: false,
           tradeToConfirm,
+          routeToConfirm,
           showConfirm,
           swapErrorMessage:
             error.message?.indexOf('user rejected transaction') !== -1 ? 'User rejected transaction' : error.message,
@@ -479,7 +525,7 @@ export default function Swap() {
     !(priceImpactSeverity > 3 && !isExpertMode)
 
   const handleConfirmDismiss = useCallback(() => {
-    setSwapState({ showConfirm: false, tradeToConfirm, attemptingTxn, swapErrorMessage, txHash })
+    setSwapState({ showConfirm: false, tradeToConfirm, routeToConfirm: undefined, attemptingTxn, swapErrorMessage, txHash })
     // if there was a tx hash, we want to clear the input
     if (txHash) {
       onUserInput(Field.INPUT, '')
@@ -487,8 +533,8 @@ export default function Swap() {
   }, [attemptingTxn, onUserInput, swapErrorMessage, tradeToConfirm, txHash])
 
   const handleAcceptChanges = useCallback(() => {
-    setSwapState({ tradeToConfirm: trade, swapErrorMessage, txHash, attemptingTxn, showConfirm })
-  }, [attemptingTxn, showConfirm, swapErrorMessage, trade, txHash])
+    setSwapState({ tradeToConfirm: trade, routeToConfirm: best ?? undefined, swapErrorMessage, txHash, attemptingTxn, showConfirm })
+  }, [attemptingTxn, showConfirm, swapErrorMessage, trade, txHash, best])
 
   const handleInputSelect = useCallback(
     (inputCurrency: Currency) => {
@@ -731,6 +777,7 @@ export default function Swap() {
                     } else {
                       setSwapState({
                         tradeToConfirm: trade,
+                        routeToConfirm: best ?? undefined,
                         attemptingTxn: false,
                         swapErrorMessage: undefined,
                         showConfirm: true,
@@ -758,6 +805,7 @@ export default function Swap() {
                   } else {
                     setSwapState({
                       tradeToConfirm: trade,
+                      routeToConfirm: best ?? undefined,
                       attemptingTxn: false,
                       swapErrorMessage: undefined,
                       showConfirm: true,
