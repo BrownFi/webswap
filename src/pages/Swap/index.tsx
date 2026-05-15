@@ -11,7 +11,6 @@ import { RouteComparison } from 'components/swap/RouteComparison'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { AutoRow, RowBetween } from 'components/Row'
 import AdvancedSwapDetailsDropdown from 'components/swap/AdvancedSwapDetailsDropdown'
-import BetterTradeLink, { DefaultVersionLink } from 'components/swap/BetterTradeLink'
 import confirmPriceImpactWithoutFee from 'components/swap/confirmPriceImpactWithoutFee'
 import { ArrowWrapper, BottomGrouping, SwapCallbackError, Wrapper } from 'components/swap/styleds'
 import TradePrice from 'components/swap/TradePrice'
@@ -28,7 +27,6 @@ import { useAggregatorSwapCallback } from 'hooks/useAggregatorSwapCallback'
 import { useBestSwapRoute } from 'hooks/useBestSwapRoute'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { BigNumber } from '@ethersproject/bignumber'
-import useToggledVersion, { DEFAULT_VERSION, Version } from 'hooks/useToggledVersion'
 import useWrapCallback, { WrapType } from 'hooks/useWrapCallback'
 import { useToast } from 'containers/ToastProvider'
 import { useQueryClient } from '@tanstack/react-query'
@@ -48,7 +46,6 @@ import { AppBody } from 'pages/AppBody'
 import { ClickableText, Dots } from 'pages/Pool/styleds'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
-import { isTradeBetter } from 'utils/trades'
 import { useNavigate } from 'react-router-dom'
 import switchIcon from 'assets/svg/switch.svg'
 import { getTokenSymbol } from 'utils'
@@ -93,7 +90,6 @@ export default function Swap() {
   // swap state
   const { independentField, typedValue, recipient } = useSwapState()
   const {
-    v1Trade,
     v2Trade,
     currencyBalances,
     parsedAmount,
@@ -123,19 +119,11 @@ export default function Swap() {
 
   const showWrap: boolean = wrapType !== WrapType.NOT_APPLICABLE
   const { address: recipientAddress } = useENSAddress(recipient)
-  const toggledVersion = useToggledVersion()
-  const tradesByVersion = useMemo(
-    () => ({
-      [Version.v1]: v1Trade,
-      [Version.v2]: v2Trade,
-    }),
-    [v1Trade, v2Trade],
-  )
-  const trade = showWrap ? undefined : tradesByVersion[toggledVersion]
-  const defaultTrade = showWrap ? undefined : tradesByVersion[DEFAULT_VERSION]
-
-  const betterTradeLinkV2: Version | undefined =
-    toggledVersion === Version.v1 && isTradeBetter(v1Trade, v2Trade) ? Version.v2 : undefined
+  // BrownFi-native trade. Smart routing in useBestSwapRoute compares this
+  // candidate against every supported aggregator and picks the best
+  // amountOut — no V1/V2 toggle in the UI anymore (Add/Remove Liquidity
+  // still surface the version split because the protocols differ).
+  const trade = showWrap ? undefined : v2Trade
 
   const parsedAmounts = showWrap
     ? {
@@ -649,11 +637,6 @@ export default function Swap() {
               </Column>
             )}
             {isExpertMode && swapErrorMessage ? <SwapCallbackError error={swapErrorMessage} /> : null}
-            {betterTradeLinkV2 && !swapIsUnsupported && toggledVersion === Version.v1 ? (
-              <BetterTradeLink version={betterTradeLinkV2} />
-            ) : toggledVersion !== DEFAULT_VERSION && defaultTrade ? (
-              <DefaultVersionLink />
-            ) : null}
           </BottomGrouping>
         </Wrapper>
       </AppBody>
