@@ -25,6 +25,7 @@ import useENSAddress from 'hooks/useENSAddress'
 import { useSwapCallback } from 'hooks/useSwapCallback'
 import { useAggregatorSwapCallback } from 'hooks/useAggregatorSwapCallback'
 import { useBestSwapRoute } from 'hooks/useBestSwapRoute'
+import { isBrownFiSource } from 'services/aggregators/types'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { BigNumber } from '@ethersproject/bignumber'
 import useWrapCallback, { WrapType } from 'hooks/useWrapCallback'
@@ -91,6 +92,7 @@ export default function Swap() {
   const { independentField, typedValue, recipient } = useSwapState()
   const {
     v2Trade,
+    v3Trade,
     currencyBalances,
     parsedAmount,
     currencies,
@@ -203,7 +205,8 @@ export default function Swap() {
     isStale: bestIsStale,
     refetchAll: refetchBest,
   } = useBestSwapRoute({
-    nativeTrade: trade,
+    v2Trade: showWrap ? undefined : v2Trade,
+    v3Trade: showWrap ? undefined : v3Trade,
     tokenIn: currencies[Field.INPUT],
     tokenOut: currencies[Field.OUTPUT],
     amountIn: amountInBig,
@@ -211,14 +214,23 @@ export default function Swap() {
     slippageBps: allowedSlippage,
     deadline: deadline ? deadline.toNumber() : Math.floor(Date.now() / 1000) + 600,
   })
-  const isAggregatorRoute = !!best && best.source !== 'native'
+  // The "active trade" the rest of the page (approval, swap callback,
+  // tooltip, advanced details) operates on is whichever BrownFi-native
+  // candidate the smart router picked. For aggregator routes this is
+  // undefined and the aggregator path takes over.
+  const activeNativeTrade = best?.nativeTrade
+  const isAggregatorRoute = !!best && !isBrownFiSource(best.source)
   const [selectedAggregator, setSelectedAggregator] = useSelectedAggregator()
   // User manually picked a specific aggregator, but orchestration fell back
   // to native (the chosen aggregator returned no route for this pair on
   // this chain). Surface this so the user understands why their selection
   // isn't being honored.
   const aggregatorFallbackNotice =
-    selectedAggregator !== 'auto' && selectedAggregator !== 'native' && best?.source === 'native'
+    selectedAggregator !== 'auto' &&
+    selectedAggregator !== 'native' &&
+    !isBrownFiSource(selectedAggregator) &&
+    !!best &&
+    isBrownFiSource(best.source)
 
   // When an aggregator quote wins, its amountOut overrides the native
   // trade's outputAmount in the OUTPUT field. Only applies on exact-in
@@ -239,8 +251,14 @@ export default function Swap() {
   // Both approval paths are called unconditionally per Hook rules. We pick
   // the one that matches the chosen route's source below. For aggregator
   // routes the spender is the aggregator's own router (e.g. Kyber Meta
-  // Aggregation Router), not BrownFi's.
-  const [nativeApproval, nativeApproveCallback] = useApproveCallbackFromTrade(trade, allowedSlippage)
+  // Aggregation Router), not BrownFi's. For BrownFi-native routes we feed
+  // the SELECTED trade so V3 trades approve the V3 router (and V2 trades
+  // approve V2). useApproveCallbackFromTrade derives the router from
+  // trade.route.pairs[0].version after the Phase 7.1 fix.
+  const [nativeApproval, nativeApproveCallback] = useApproveCallbackFromTrade(
+    activeNativeTrade,
+    allowedSlippage,
+  )
   const [aggregatorApproval, aggregatorApproveCallback] = useApproveCallback(
     parsedAmounts[Field.INPUT],
     isAggregatorRoute ? best?.aggregatorQuote?.routerAddress : undefined,
@@ -262,9 +280,11 @@ export default function Swap() {
   const atMaxAmountInput = Boolean(maxAmountInput && parsedAmounts[Field.INPUT]?.equalTo(maxAmountInput))
 
   // the callback to execute the swap
-  // Native swap callback (BrownFi router). Always called per Hook rules.
+  // BrownFi-native swap callback. Feeds the SELECTED native trade (V2 OR
+  // V3) — useSwapCallback dispatches to the correct router internally via
+  // callSwapContract which reads trade.route.pairs[0].version.
   const { callback: nativeSwapCallback, error: nativeSwapCallbackError } = useSwapCallback(
-    trade,
+    activeNativeTrade,
     allowedSlippage,
     recipient,
   )

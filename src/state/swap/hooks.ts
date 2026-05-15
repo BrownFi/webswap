@@ -109,6 +109,9 @@ export function useDerivedSwapInfo(): {
   currencyBalances: { [field in Field]?: CurrencyAmount }
   parsedAmount: CurrencyAmount | undefined
   v2Trade: Trade | undefined
+  /** V3 BrownFi trade, when the V3 pool indexer has liquidity for this pair.
+   *  Quoted in parallel with V2 so the smart router can compare them. */
+  v3Trade: Trade | undefined
   inputError?: string
   loadingExactIn: boolean
   loadingExactOut: boolean
@@ -138,26 +141,35 @@ export function useDerivedSwapInfo(): {
   const parsedAmount = tryParseAmount(debouncedTypedValue, (isExactIn ? inputCurrency : outputCurrency) ?? undefined)
   const isInputEmpty = !(+debouncedTypedValue > 0)
 
-  // Swap is V2-only post-unified-router refactor. We pin the version here so
-  // the trade pipeline doesn't accidentally pick up a stale V3 selection
-  // from the global versionSelector (Add/Remove Liquidity still toggle that
-  // for their own use). V3 BrownFi will land as a separate adapter source
-  // alongside Kyber when it ships.
-  const SWAP_VERSION = 2
-  const tradeIn = useTradeExactIn(
-    isExactIn ? parsedAmount : undefined,
-    outputCurrency ?? undefined,
-    SWAP_VERSION,
-  )
-  const tradeOut = useTradeExactOut(
-    inputCurrency ?? undefined,
-    !isExactIn ? parsedAmount : undefined,
-    SWAP_VERSION,
-  )
+  // Dual-quote both BrownFi versions in parallel. useBestSwapRoute will
+  // compare them against each other AND against every supported external
+  // aggregator (Kyber, …) and pick the winner. The trade pipeline is no
+  // longer pinned to one version — each call passes its target version
+  // explicitly so the global versionSelector (used by Add/Remove Liquidity)
+  // doesn't leak into the Swap surface.
+  const tradeInV2 = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 2)
+  const tradeOutV2 = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined, 2)
+  const tradeInV3 = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 3)
+  const tradeOutV3 = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined, 3)
+
+  const v2Trade = isExactIn ? tradeInV2.trade : tradeOutV2.trade
+  const v3Trade = isExactIn ? tradeInV3.trade : tradeOutV3.trade
+
+  // Loading + insufficient flags are unioned across both versions so the UI
+  // doesn't get stuck on "Insufficient liquidity" when only V3 has the pool.
+  const loadingExactIn = tradeInV2.loadingExactIn || tradeInV3.loadingExactIn
+  const loadingExactOut = tradeOutV2.loadingExactOut || tradeOutV3.loadingExactOut
+  const isInsufficient =
+    (tradeInV2.isInsufficient && tradeInV3.isInsufficient) ||
+    (tradeOutV2.isInsufficient && tradeOutV3.isInsufficient)
+
+  // Keep tradeIn/tradeOut for the rest of the function — these are
+  // V2-backed values used by the existing inputError + balance-check logic
+  // below. Real winner selection happens in useBestSwapRoute.
+  const tradeIn = tradeInV2
+  const tradeOut = tradeOutV2
   const bestTradeExactIn = tradeIn.trade
   const bestTradeExactOut = tradeOut.trade
-
-  const v2Trade = isExactIn ? bestTradeExactIn : bestTradeExactOut
 
   const currencyBalances = {
     [Field.INPUT]: relevantTokenBalances[0],
@@ -228,8 +240,11 @@ export function useDerivedSwapInfo(): {
     inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
   }
 
-  if (tradeOut.isInsufficient || tradeIn.isInsufficient) {
-    if (!isInputEmpty && !tradeIn.loadingExactIn && !tradeOut.loadingExactOut) {
+  // Only show "Insufficient pool liquidity" when BOTH V2 and V3 lack a
+  // trade — if either version has a route, the smart router will surface
+  // it as a candidate in RouteComparison.
+  if (isInsufficient && !v2Trade && !v3Trade) {
+    if (!isInputEmpty && !loadingExactIn && !loadingExactOut) {
       inputError = 'Insufficient pool liquidity for this trade. Try a smaller amount.'
     }
   }
@@ -239,9 +254,10 @@ export function useDerivedSwapInfo(): {
     currencyBalances,
     parsedAmount,
     v2Trade: v2Trade ?? undefined,
+    v3Trade: v3Trade ?? undefined,
     inputError,
-    loadingExactIn: tradeIn.loadingExactIn,
-    loadingExactOut: tradeOut.loadingExactOut,
+    loadingExactIn,
+    loadingExactOut,
   }
 }
 

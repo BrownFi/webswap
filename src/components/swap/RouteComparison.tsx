@@ -1,27 +1,29 @@
 /**
- * Inline route picker shown above the price row on the Swap page.
+ * Route picker shown above the price row on the Swap page.
  *
- * Lets the user see every available route side-by-side (BrownFi native +
- * each aggregator that returned a quote) and click to pin a specific
- * source. No "Auto" row — the Best badge already encodes the winner.
+ * Collapsed by default — the trigger shows the currently-active route
+ * (Best by default; user's pin if they clicked one). Click the trigger
+ * to expand the comparison panel with all candidates. Click any row to
+ * pin that source and auto-collapse.
  *
  * Selection semantics:
- * - selectedAggregator === 'auto' (initial state) → the row with the
- *   Best badge is visually active. Quotes refresh, badge + active row
- *   follow the new winner automatically.
- * - User clicks any row → selectedAggregator is pinned to that source.
+ * - selectedAggregator === 'auto' (initial state) → the active row is
+ *   whichever currently has the highest amountOut. Quote refreshes track
+ *   the winner automatically.
+ * - User clicks a row → selectedAggregator is pinned to that source.
  *   Subsequent quote refreshes don't change the selection.
  *
  * Rendering rules:
- * - Hidden when there are fewer than 2 candidates (no choice to make).
- * - Each row's amountOut is formatted by the output token's decimals.
- * - The winning candidate gets a "Best" badge.
- * - Active row has a radio-style filled dot + copper border.
+ * - Hidden when there are zero candidates (no route at all).
+ * - When there's only one candidate the trigger renders but is
+ *   non-interactive (nothing to compare).
+ * - The winning candidate gets a "Best" badge in the expanded panel.
  */
 import { Currency, Token } from '@brownfi/sdk'
-import { useMemo } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { UnifiedRoute } from 'hooks/useBestSwapRoute'
 import type { AggregatorChoice } from 'services/aggregators/types'
+import { useOnClickOutside } from 'hooks/useOnClickOutside'
 
 interface Props {
   candidates: UnifiedRoute[]
@@ -40,151 +42,280 @@ function formatAmount(rawBig: { toString(): string }, currency: Currency | undef
   return Number(num.toPrecision(6)).toString()
 }
 
-export function RouteComparison({ candidates, selected, onSelect, outputCurrency, outputSymbol }: Props) {
-  // Sort already done upstream (highest amountOut first). Hide when there's
-  // nothing to compare.
-  const winnerKey = candidates[0]?.source
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 20 20"
+      fill="none"
+      style={{
+        transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        transition: 'transform 150ms',
+        flexShrink: 0,
+      }}
+    >
+      <path d="M5 7.5L10 12.5L15 7.5" stroke="#978A80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
-  // When the user hasn't pinned a source yet (selectedAggregator === 'auto'),
-  // the active row is whichever currently has the highest amountOut. This
-  // lets the highlight track the winner as quotes refresh.
-  const activeKey: AggregatorChoice = selected === 'auto' ? (winnerKey ?? 'native') : selected
+export function RouteComparison({ candidates, selected, onSelect, outputCurrency, outputSymbol }: Props) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+  useOnClickOutside(ref, () => setOpen(false))
+
+  const winnerKey = candidates[0]?.source
+  const activeKey: AggregatorChoice =
+    selected === 'auto' ? ((winnerKey ?? 'brownfi-v2') as AggregatorChoice) : selected
 
   const rows = useMemo(() => {
     return candidates.map((c) => ({
-      key: c.source === 'native' ? ('native' as AggregatorChoice) : (c.source as AggregatorChoice),
+      key: c.source as AggregatorChoice,
       label: c.sourceName,
       amountOut: formatAmount(c.amountOut, outputCurrency),
       isBest: c.source === winnerKey,
     }))
   }, [candidates, outputCurrency, winnerKey])
 
-  // Show whenever we have at least one candidate. Even with a single
-  // source (e.g., aggregator returned no route for this pair) the user
-  // sees which source is active and can verify why no comparison is
-  // available — better UX than the card silently disappearing.
   if (candidates.length < 1) return null
+  const activeRow = rows.find((r) => r.key === activeKey) ?? rows[0]
+  const hasMultiple = candidates.length > 1
+  const isAuto = selected === 'auto'
+
+  const handleSelect = (key: AggregatorChoice) => {
+    // Clicking the currently-Best row means "stay on best" — drop the
+    // pin and re-enter auto-track mode. Clicking any other row pins
+    // explicitly to that source. This is how users escape an accidental
+    // pin without needing a separate "Auto" row or "Reset" affordance.
+    if (key === winnerKey) {
+      onSelect('auto')
+    } else {
+      onSelect(key)
+    }
+    setOpen(false)
+  }
 
   return (
     <div
+      ref={ref}
       style={{
-        background: '#1E1915',
-        border: '1px solid #2F2823',
-        borderRadius: '16px',
-        padding: '16px',
+        position: 'relative',
         marginTop: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
       }}
     >
-      <div
+      {/* Trigger — always renders; click to expand if there's more than
+          one candidate. With a single candidate the chevron is hidden
+          and click is a no-op (nothing to compare to). */}
+      <button
+        type="button"
+        onClick={() => hasMultiple && setOpen((v) => !v)}
+        disabled={!hasMultiple}
         style={{
-          fontFamily: 'Inter',
-          fontSize: '13px',
-          fontWeight: 600,
-          color: '#978A80',
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
-          marginBottom: '4px',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          borderRadius: '14px',
+          background: '#1E1915',
+          border: '1px solid #2F2823',
+          cursor: hasMultiple ? 'pointer' : 'default',
+          textAlign: 'left',
         }}
       >
-        Route
-      </div>
-
-      {rows.map((row) => {
-        const active = activeKey === row.key
-        return (
-          <button
-            key={row.key}
-            type="button"
-            onClick={() => onSelect(row.key)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 12px',
-              borderRadius: '12px',
-              border: `1px solid ${active ? '#985C2A' : 'transparent'}`,
-              background: active ? 'rgba(152, 92, 42, 0.10)' : 'transparent',
-              cursor: 'pointer',
-              transition: 'background 150ms, border-color 150ms',
-              textAlign: 'left',
-            }}
-            onMouseEnter={(e) => {
-              if (!active) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
-            }}
-            onMouseLeave={(e) => {
-              if (!active) e.currentTarget.style.background = 'transparent'
+              fontFamily: 'Inter',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#978A80',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {/* Radio indicator */}
-              <span
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: '50%',
-                  border: `1.5px solid ${active ? '#D8A072' : '#493E35'}`,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                {active && (
-                  <span
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: '50%',
-                      background: '#D8A072',
-                    }}
-                  />
-                )}
-              </span>
-              <span
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: active ? '#FBFBFD' : '#CFC7C1',
-                }}
-              >
-                {row.label}
-              </span>
-              {row.isBest && (
-                <span
-                  style={{
-                    padding: '2px 6px',
-                    borderRadius: '6px',
-                    background: 'rgba(131, 207, 132, 0.12)',
-                    border: '1px solid rgba(131, 207, 132, 0.35)',
-                    fontFamily: 'Inter',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    color: '#83CF84',
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Best
-                </span>
-              )}
-            </div>
+            Route
+          </span>
+          <span
+            style={{
+              fontFamily: 'Inter',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#FBFBFD',
+            }}
+          >
+            {activeRow.label}
+          </span>
+          {isAuto ? (
+            // Auto-track mode: highlight tracks the winner as quotes
+            // refresh. Show this instead of Best so users can tell at a
+            // glance "the system is picking for me" vs "I pinned this".
             <span
               style={{
+                padding: '2px 6px',
+                borderRadius: '6px',
+                background: 'rgba(216, 160, 114, 0.12)',
+                border: '1px solid rgba(216, 160, 114, 0.35)',
                 fontFamily: 'Inter',
-                fontSize: '14px',
+                fontSize: '10px',
                 fontWeight: 600,
-                color: active ? '#FBFBFD' : '#CFC7C1',
+                color: '#D8A072',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
               }}
             >
-              {row.amountOut} {outputSymbol}
+              Auto
             </span>
-          </button>
-        )
-      })}
+          ) : activeRow.isBest ? (
+            <span
+              style={{
+                padding: '2px 6px',
+                borderRadius: '6px',
+                background: 'rgba(131, 207, 132, 0.12)',
+                border: '1px solid rgba(131, 207, 132, 0.35)',
+                fontFamily: 'Inter',
+                fontSize: '10px',
+                fontWeight: 600,
+                color: '#83CF84',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Best
+            </span>
+          ) : null}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span
+            style={{
+              fontFamily: 'Inter',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#FBFBFD',
+            }}
+          >
+            {activeRow.amountOut} {outputSymbol}
+          </span>
+          {hasMultiple && <ChevronIcon open={open} />}
+        </div>
+      </button>
+
+      {/* Expanded panel — absolute-positioned below the trigger so it
+          doesn't push the swap button down. Slight margin-top so the
+          drop animation reads as a panel, not a tooltip. */}
+      {open && hasMultiple && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            right: 0,
+            background: '#1E1915',
+            border: '1px solid #2F2823',
+            borderRadius: '14px',
+            padding: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4)',
+            zIndex: 20,
+          }}
+        >
+          {rows.map((row) => {
+            const active = activeKey === row.key
+            return (
+              <button
+                key={row.key}
+                type="button"
+                onClick={() => handleSelect(row.key)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: `1px solid ${active ? '#985C2A' : 'transparent'}`,
+                  background: active ? 'rgba(152, 92, 42, 0.10)' : 'transparent',
+                  cursor: 'pointer',
+                  transition: 'background 150ms, border-color 150ms',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span
+                    style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: '50%',
+                      border: `1.5px solid ${active ? '#D8A072' : '#493E35'}`,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {active && (
+                      <span
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: '50%',
+                          background: '#D8A072',
+                        }}
+                      />
+                    )}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'Inter',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: active ? '#FBFBFD' : '#CFC7C1',
+                    }}
+                  >
+                    {row.label}
+                  </span>
+                  {row.isBest && (
+                    <span
+                      style={{
+                        padding: '2px 6px',
+                        borderRadius: '6px',
+                        background: 'rgba(131, 207, 132, 0.12)',
+                        border: '1px solid rgba(131, 207, 132, 0.35)',
+                        fontFamily: 'Inter',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: '#83CF84',
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      Best
+                    </span>
+                  )}
+                </div>
+                <span
+                  style={{
+                    fontFamily: 'Inter',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: active ? '#FBFBFD' : '#CFC7C1',
+                  }}
+                >
+                  {row.amountOut} {outputSymbol}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

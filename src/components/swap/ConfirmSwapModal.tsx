@@ -11,6 +11,7 @@ import { ButtonError } from 'components/Button'
 import { useActiveWeb3React } from 'hooks'
 import { getTokenSymbol } from 'utils'
 import type { UnifiedRoute } from 'hooks/useBestSwapRoute'
+import { isBrownFiSource } from 'services/aggregators/types'
 
 function formatBigByDecimals(rawBig: { toString(): string }, currency: Currency | undefined): string {
   const decimals = currency instanceof Token ? currency.decimals : 18
@@ -70,7 +71,7 @@ export default function ConfirmSwapModal({
   outputCurrency?: Currency
 }) {
   const { chainId } = useActiveWeb3React()
-  const isAggregator = !!bestRoute && bestRoute.source !== 'native'
+  const isAggregator = !!bestRoute && !isBrownFiSource(bestRoute.source)
   const showAcceptChanges = useMemo(
     () => Boolean(trade && originalTrade && tradeMeaningfullyDiffers(trade, originalTrade)),
     [originalTrade, trade],

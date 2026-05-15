@@ -11,6 +11,7 @@ import { SwapCallbackState } from '@brownfi/sdk'
 import { useMemo } from 'react'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { getAggregatorById } from 'services/aggregators'
+import { isBrownFiSource } from 'services/aggregators/types'
 import type { UnifiedRoute } from './useBestSwapRoute'
 import { useActiveWeb3React } from './index'
 
@@ -31,8 +32,8 @@ export function useAggregatorSwapCallback(
   const addTransaction = useTransactionAdder()
 
   return useMemo<AggregatorSwapCallback>(() => {
-    // Only handle aggregator routes. Native routes go through useSwapCallback.
-    if (!route || route.source === 'native' || !route.aggregatorQuote) {
+    // Only handle aggregator routes. BrownFi-native routes go through useSwapCallback.
+    if (!route || isBrownFiSource(route.source) || !route.aggregatorQuote) {
       return { state: SwapCallbackState.INVALID, callback: null, error: null }
     }
     if (!account || !chainId || !library) {

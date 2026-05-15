@@ -98,11 +98,14 @@ export default createReducer(initialState, (builder) =>
         state.userDeadline = DEFAULT_DEADLINE_FROM_NOW
       }
 
-      // Aggregator selector is a newer field — hydrate defaults for users
-      // whose persisted state predates it.
-      if (typeof state.selectedAggregator !== 'string') {
-        state.selectedAggregator = 'auto'
-      }
+      // Smart-router policy: ALWAYS reset to 'auto' on app boot.
+      // updateVersion fires once on store init (state/index.ts), so this
+      // gives the user a fresh auto-tracking session every page load —
+      // a stale pin from yesterday won't silently route them through a
+      // worse-amountOut source today. The pin still works within a
+      // session (click a row to override for this swap), it just
+      // doesn't survive a reload.
+      state.selectedAggregator = 'auto'
 
       // One-time migration: existing users who never customized their slippage
       // / deadline carried the old unsafe defaults (10% slippage, 20m deadline)

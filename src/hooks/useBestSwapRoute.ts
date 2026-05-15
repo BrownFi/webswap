@@ -26,31 +26,34 @@ import { useVersion } from 'hooks/useVersion'
 import { useSelectedAggregator } from 'state/user/hooks'
 import { getAggregatorsFor } from 'services/aggregators'
 import type {
-  AggregatorId,
   AggregatorQuote,
   BrownFiVersion,
   QuoteParams,
+  RouteSource,
 } from 'services/aggregators/types'
 
-export type RouteSource = 'native' | AggregatorId
+export type { RouteSource } from 'services/aggregators/types'
 
 export interface UnifiedRoute {
   source: RouteSource
-  /** Display name: "BrownFi" for native, aggregator's `name` otherwise. */
+  /** Display name: "BrownFi V2" / "BrownFi V3" for native, aggregator's `name` otherwise. */
   sourceName: string
   amountOut: BigNumber
   amountOutMin: BigNumber
   gasEstimate?: BigNumber
   priceImpact?: number
-  /** Populated when source === 'native'. */
+  /** Populated when source is BrownFi (v2 or v3). */
   nativeTrade?: Trade
   /** Populated for aggregator routes; opaque to the orchestrator. */
   aggregatorQuote?: AggregatorQuote<unknown>
 }
 
 export interface UseBestSwapRouteParams {
-  /** The BrownFi-native trade as already resolved by useDerivedSwapInfo. */
-  nativeTrade: Trade | undefined
+  /** BrownFi V2 trade from useDerivedSwapInfo. */
+  v2Trade: Trade | undefined
+  /** BrownFi V3 trade from useDerivedSwapInfo. Optional — V3 indexer may
+   *  not have routes for every pair yet. */
+  v3Trade: Trade | undefined
   tokenIn: Currency | undefined
   tokenOut: Currency | undefined
   amountIn: BigNumber | undefined
@@ -84,7 +87,12 @@ function deriveAmountOutMin(amountOut: BigNumber, slippageBps: number): BigNumbe
   return amountOut.mul(10_000 - slippageBps).div(10_000)
 }
 
-function nativeRouteFromTrade(trade: Trade, slippageBps: number): UnifiedRoute | null {
+function brownfiRouteFromTrade(
+  trade: Trade,
+  source: 'brownfi-v2' | 'brownfi-v3',
+  sourceName: string,
+  slippageBps: number,
+): UnifiedRoute | null {
   // BrownFi SDK's Trade exposes outputAmount as a CurrencyAmount. Use raw
   // (JSBI → string) so we can wrap it in BigNumber consistently with the
   // aggregator side. Defensive: SDK types outputAmount as possibly
@@ -92,8 +100,8 @@ function nativeRouteFromTrade(trade: Trade, slippageBps: number): UnifiedRoute |
   if (!trade.outputAmount) return null
   const amountOut = BigNumber.from(trade.outputAmount.raw.toString())
   return {
-    source: 'native',
-    sourceName: 'BrownFi',
+    source,
+    sourceName,
     amountOut,
     amountOutMin: deriveAmountOutMin(amountOut, slippageBps),
     nativeTrade: trade,
@@ -101,7 +109,7 @@ function nativeRouteFromTrade(trade: Trade, slippageBps: number): UnifiedRoute |
 }
 
 export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRouteResult {
-  const { nativeTrade, tokenIn, tokenOut, amountIn, account, slippageBps, deadline } = params
+  const { v2Trade, v3Trade, tokenIn, tokenOut, amountIn, account, slippageBps, deadline } = params
 
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
@@ -154,13 +162,16 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
   return useMemo(() => {
     const candidates: UnifiedRoute[] = []
 
-    // Native (BrownFi) — always a candidate. The user's `selected` choice
-    // is honored at pick time, not by hiding the candidate. This way a
-    // forced-aggregator selection can transparently fall back to native if
-    // the chosen aggregator has no route for this pair.
-    if (nativeTrade) {
-      const native = nativeRouteFromTrade(nativeTrade, slippageBps)
-      if (native) candidates.push(native)
+    // BrownFi V2 + V3 — surfaced as separate candidates so the user can
+    // compare them side-by-side in RouteComparison. The user's `selected`
+    // choice is honored at pick time, not by hiding candidates.
+    if (v2Trade) {
+      const r = brownfiRouteFromTrade(v2Trade, 'brownfi-v2', 'BrownFi V2', slippageBps)
+      if (r) candidates.push(r)
+    }
+    if (v3Trade) {
+      const r = brownfiRouteFromTrade(v3Trade, 'brownfi-v3', 'BrownFi V3', slippageBps)
+      if (r) candidates.push(r)
     }
 
     // Each aggregator that returned a quote.
@@ -180,11 +191,12 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
     })
 
     // Sort by amountOut desc so the UI gets a "best on top" comparison.
-    // Tie-break: native first (it's cheaper gas — no external router hop).
+    // Tie-break: BrownFi-native first (no external router hop, lower gas).
+    const isBrownFi = (s: string) => s === 'brownfi-v2' || s === 'brownfi-v3'
     const sorted = [...candidates].sort((a, b) => {
       if (a.amountOut.eq(b.amountOut)) {
-        if (a.source === 'native') return -1
-        if (b.source === 'native') return 1
+        if (isBrownFi(a.source) && !isBrownFi(b.source)) return -1
+        if (isBrownFi(b.source) && !isBrownFi(a.source)) return 1
         return 0
       }
       return b.amountOut.gt(a.amountOut) ? 1 : -1
@@ -192,29 +204,30 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
 
     // Pick the winning route based on user preference.
     let best: UnifiedRoute | null = null
-    if (selected === 'native') {
-      best = sorted.find((r) => r.source === 'native') ?? null
-    } else if (selected !== 'auto') {
-      // Specific aggregator selected. Prefer it; fall back to native if it
-      // has no route (e.g., user is on a chain Kyber doesn't cover today).
+    if (selected === 'auto' || selected === 'native') {
+      // 'native' is a legacy persisted value — the reducer migrates it on
+      // boot but we belt-and-suspenders the runtime path too. Either way
+      // it means "best amountOut among all sources".
+      best = sorted[0] ?? null
+    } else {
+      // Specific source selected. Prefer it; fall back to the best
+      // available BrownFi candidate if that source has no route (e.g.,
+      // user pinned Kyber but Kyber returned nothing for this pair).
       best =
         sorted.find((r) => r.source === selected) ??
-        sorted.find((r) => r.source === 'native') ??
-        null
-    } else {
-      // Auto — best amountOut wins (sorted[0]).
-      best = sorted[0] ?? null
+        sorted.find((r) => isBrownFi(r.source)) ??
+        sorted[0] ?? null
     }
 
     const isLoading = queries.some((q) => q.isFetching)
-    // Aggregator stale-quote protection. Native has no TTL; only aggregator
-    // routes get a `validUntil`. If the chosen route has expired we let the
-    // UI flag it and refetch.
+    // Aggregator stale-quote protection. BrownFi-native has no TTL; only
+    // aggregator routes get a `validUntil`. If the chosen route has
+    // expired we let the UI flag it and refetch.
     const now = Math.floor(Date.now() / 1000)
     const isStale = !!best?.aggregatorQuote && now > best.aggregatorQuote.validUntil
 
     const refetchAll = () => queries.forEach((q) => q.refetch())
 
     return { best, candidates: sorted, isLoading, isStale, refetchAll }
-  }, [aggregators, nativeTrade, queries, selected, slippageBps])
+  }, [aggregators, v2Trade, v3Trade, queries, selected, slippageBps])
 }

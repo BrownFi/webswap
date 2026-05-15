@@ -3,12 +3,15 @@ import type { BrownFiVersion } from '../types'
 
 /**
  * Kyber's Aggregator API uses a chain-slug-based URL path
- * (e.g. /berachain/api/v1/routes), and its router contract is deployed per
- * chain. We keep both the slug and a "BrownFi version × chain" support matrix
- * here so the adapter is just plumbing.
- *
- * V3 support intentionally false on every chain for now — Kyber's indexer is
- * still being onboarded onto BrownFi V3 pools. Flip on per chain once live.
+ * (e.g. /berachain/api/v1/routes) and its router contract is deployed per
+ * chain. Kyber routes through every DEX it knows about on that chain —
+ * it does NOT need a per-BrownFi-version gate. The `version` param of
+ * `isKyberSupported` is accepted to satisfy the AggregatorAdapter
+ * interface but is intentionally ignored: chain support is the only
+ * gate. (Earlier versions of this file had a KYBER_V2 / KYBER_V3 split
+ * that conflated BrownFi pool versions with Kyber product versions and
+ * caused Kyber quotes to silently disappear when the global useVersion
+ * state was 3.)
  */
 export const KYBER_AGGREGATOR_CHAIN_SLUG: Partial<Record<ChainId, string>> = {
   [ChainId.MAINNET]: 'ethereum',
@@ -19,22 +22,7 @@ export const KYBER_AGGREGATOR_CHAIN_SLUG: Partial<Record<ChainId, string>> = {
   [ChainId.BERA_MAINNET]: 'berachain',
 }
 
-const KYBER_V2_CHAINS: ReadonlySet<ChainId> = new Set([
-  ChainId.MAINNET,
-  ChainId.BSC_MAINNET,
-  ChainId.BASE_MAINNET,
-  ChainId.ARBITRUM_MAINNET,
-  ChainId.LINEA_MAINNET,
-  ChainId.BERA_MAINNET,
-])
-
-const KYBER_V3_CHAINS: ReadonlySet<ChainId> = new Set<ChainId>([
-  // empty for now — flip on per chain when Kyber adds BrownFi V3 to its DEX list
-])
-
-export function isKyberSupported(chainId: ChainId, version: BrownFiVersion): boolean {
-  if (!KYBER_AGGREGATOR_CHAIN_SLUG[chainId]) return false
-  if (version === 2) return KYBER_V2_CHAINS.has(chainId)
-  if (version === 3) return KYBER_V3_CHAINS.has(chainId)
-  return false
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function isKyberSupported(chainId: ChainId, _version: BrownFiVersion): boolean {
+  return !!KYBER_AGGREGATOR_CHAIN_SLUG[chainId]
 }
