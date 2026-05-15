@@ -102,15 +102,18 @@ type SeriesMeta = {
   /** When set, overrides the default LineSeries stroke (2px). Reference
    *  lines use 1px so the LP series visually dominates. */
   lineWidth?: 1 | 2 | 3 | 4
+  /** When set, overrides the default solid line style. Reference lines
+   *  use Dashed to read as benchmarks. */
+  lineStyle?: LineStyle
 }
 
-// Original BrownFi palette restored. The only visual hierarchy added on
-// top is a 1px stroke for the two reference benchmark lines (HODL +
-// UniV2) so they read as secondary vs LP Price's default 2px.
+// Original BrownFi palette. HODL + UniV2 reference benchmarks render
+// 1px + dashed (LineStyle.Dashed) so they read clearly as references
+// vs LP Price's default 2px solid.
 const SERIES_ALL: SeriesMeta[] = [
   { key: 'lpPrice',    label: 'LP Price',    color: '#D8A072', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1 },
-  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E0C97A', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1 },
+  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dashed },
+  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E0C97A', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dashed },
   { key: 'tvl',        label: 'TVL',         color: '#B47AAE', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
   { key: 'netPnL',     label: 'Net PnL',     color: '#E57373', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
   { key: 'volume',     label: 'Volume',      color: '#83CF84', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
@@ -302,6 +305,7 @@ const PairChartTVInner = ({ pair }: Props) => {
           color: meta.color,
           priceScaleId: meta.priceScaleId,
           lineWidth: meta.lineWidth ?? 2,
+          ...(meta.lineStyle !== undefined ? { lineStyle: meta.lineStyle } : {}),
         })
       }
       seriesRefs.current[meta.key] = series
