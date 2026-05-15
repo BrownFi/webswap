@@ -99,19 +99,30 @@ type SeriesMeta = {
   type: 'line' | 'area' | 'histogram'
   priceScaleId: string
   yAxis: 'left' | 'right' | 'hidden'
+  /** When set, overrides the default LineSeries stroke (2px). Reference
+   *  lines use 1px so the LP series visually dominates. */
+  lineWidth?: 1 | 2 | 3 | 4
+  /** When set, overrides the default solid line style. Reference lines
+   *  use Dashed to read as benchmarks. */
+  lineStyle?: LineStyle
 }
 
-// LP+HODL share the right y-axis (same unit: token price).
-// TVL+PnL share the left y-axis (same unit: USD).
-// Volume occupies the bottom 20% as an overlay histogram.
-// Colors pulled from the BrownFi palette (warm brown/gold + accents).
+// Original BrownFi palette. HODL + UniV2 reference benchmarks render
+// 1px + dotted (LineStyle.Dotted) so they read clearly as references
+// vs LP Price's default 2px solid. UniV2 uses red to distinguish it
+// from HODL's blue.
+//
+// Net PnL and Volume are both green but in clearly different shades:
+// Net PnL = #83CF84 (light pastel green, line) and Volume = #16A34A
+// (deep saturated green, histogram). The hue distance + render-type
+// difference keeps them visually separable on the same chart.
 const SERIES_ALL: SeriesMeta[] = [
   { key: 'lpPrice',    label: 'LP Price',    color: '#D8A072', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E0C97A', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
+  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E04848', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',        label: 'TVL',         color: '#B47AAE', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
-  { key: 'netPnL',     label: 'Net PnL',     color: '#E57373', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
-  { key: 'volume',     label: 'Volume',      color: '#83CF84', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
+  { key: 'netPnL',     label: 'Net PnL',     color: '#83CF84', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
+  { key: 'volume',     label: 'Volume',      color: '#16A34A', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
 type Props = {
@@ -299,7 +310,8 @@ const PairChartTVInner = ({ pair }: Props) => {
           ...commonNoLabels,
           color: meta.color,
           priceScaleId: meta.priceScaleId,
-          lineWidth: 2,
+          lineWidth: meta.lineWidth ?? 2,
+          ...(meta.lineStyle !== undefined ? { lineStyle: meta.lineStyle } : {}),
         })
       }
       seriesRefs.current[meta.key] = series
@@ -364,7 +376,10 @@ const PairChartTVInner = ({ pair }: Props) => {
         .map((p) => ({
           time: p.time as any,
           value: p[meta.key] as number,
-          ...(meta.key === 'volume' ? { color: '#83CF8488' } : {}),
+          // Volume bars get a per-point color so we can fade them via alpha
+          // independently of the series-level color. Derived from meta.color
+          // + 88 alpha so changing the palette entry propagates here.
+          ...(meta.key === 'volume' ? { color: `${meta.color}88` } : {}),
         }))
         .filter((p) => Number.isFinite(p.value))
       s.setData(mapped)
@@ -420,7 +435,7 @@ const PairChartTVInner = ({ pair }: Props) => {
       {/* Chart container */}
       <div
         ref={containerRef}
-        className="h-[260px] sm:h-[320px] lg:h-[400px]"
+        className="h-[220px] sm:h-[260px] lg:h-[320px]"
         style={{ width: '100%', position: 'relative' }}
       >
         {isPending && !data && (

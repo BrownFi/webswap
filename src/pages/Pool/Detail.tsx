@@ -502,7 +502,7 @@ function PoolDetailInner({
             )}
 
             {/* Chart */}
-            <Suspense fallback={<div style={{ height: 460, background: '#1E1915', borderRadius: '16px' }} />}>
+            <Suspense fallback={<div style={{ height: 380, background: '#1E1915', borderRadius: '16px' }} />}>
               <PairChartTV pair={pair} />
             </Suspense>
 
