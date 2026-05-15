@@ -113,6 +113,10 @@ export function useDerivedSwapInfo(): {
    *  Quoted in parallel with V2 so the smart router can compare them. */
   v3Trade: Trade | undefined
   inputError?: string
+  /** BrownFi-V2-specific constraint: amount-out > 90% of pool reserve.
+   *  Surfaced separately so the Swap page can decide whether to block —
+   *  only relevant when the chosen route is V2. */
+  v2AmountOutExceedsReserve: boolean
   loadingExactIn: boolean
   loadingExactOut: boolean
 } {
@@ -230,15 +234,19 @@ export function useDerivedSwapInfo(): {
     inputError = 'Insufficient ' + symbol + ' balance'
   }
 
+  // 90%-of-reserve constraint is a BrownFi-V2-pool-specific check. We
+  // expose it as a separate field rather than baking it into inputError
+  // so the Swap page can decide whether to block: if the smart router's
+  // best route isn't V2 (e.g., it's Kyber or V3), this constraint is
+  // irrelevant — the swap can proceed through the other source.
   const compareOut =
     outputCurrency?.symbol === reserve1?.token.symbol ||
     (outputCurrency === ETHER && isNativeCurrency(reserve1?.token.symbol))
       ? reserve1
       : reserve0
-
-  if (amountOut && compareOut && +amountOut?.toExact() > +compareOut.toExact() * 0.9) {
-    inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
-  }
+  const v2AmountOutExceedsReserve = !!(
+    amountOut && compareOut && +amountOut?.toExact() > +compareOut.toExact() * 0.9
+  )
 
   // Only show "Insufficient pool liquidity" when BOTH V2 and V3 lack a
   // trade — if either version has a route, the smart router will surface
@@ -256,6 +264,7 @@ export function useDerivedSwapInfo(): {
     v2Trade: v2Trade ?? undefined,
     v3Trade: v3Trade ?? undefined,
     inputError,
+    v2AmountOutExceedsReserve,
     loadingExactIn,
     loadingExactOut,
   }

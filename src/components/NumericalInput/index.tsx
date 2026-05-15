@@ -45,6 +45,20 @@ const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: s
   }
 `
 
+// Wrapper matches StyledInput's vertical footprint (line-height 44px
+// desktop / 32px mobile) so swapping between input and loader doesn't
+// shrink the row — the spinner just sits centered inside the same
+// 44px-tall band.
+const LoaderWrapper = styled.div`
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  flex: 1 1 auto;
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    height: 32px;
+  `};
+`
+
 const Loader = styled.div`
   border-width: 0.3rem;
   border-style: solid;
@@ -55,7 +69,6 @@ const Loader = styled.div`
   position: relative;
   -webkit-animation: spin 2s infinite;
   animation: spin 2s infinite;
-  margin-right: auto;
 
   &:before,
   &:after {
@@ -112,7 +125,11 @@ export const Input = React.memo(function InnerInput({
   }
 
   if (loading) {
-    return <Loader />
+    return (
+      <LoaderWrapper>
+        <Loader />
+      </LoaderWrapper>
+    )
   }
 
   return (

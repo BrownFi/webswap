@@ -46,6 +46,11 @@ export interface UnifiedRoute {
   nativeTrade?: Trade
   /** Populated for aggregator routes; opaque to the orchestrator. */
   aggregatorQuote?: AggregatorQuote<unknown>
+  /** When set, the route exists (a quote returned) but can't be used —
+   *  e.g., BrownFi V2 amount-out exceeds 90% pool reserve. The route
+   *  still appears in the candidates list (so the picker can show it
+   *  dimmed) but is never selected as `best`. */
+  unavailable?: { reason: string }
 }
 
 export interface UseBestSwapRouteParams {
@@ -54,6 +59,10 @@ export interface UseBestSwapRouteParams {
   /** BrownFi V3 trade from useDerivedSwapInfo. Optional — V3 indexer may
    *  not have routes for every pair yet. */
   v3Trade: Trade | undefined
+  /** V2 trade exists but amount-out exceeds 90% pool reserve. Surfaced
+   *  as a candidate (dimmed) but excluded from `best` selection so
+   *  swaps don't route through a pool that can't fulfill them. */
+  v2Unavailable?: boolean
   tokenIn: Currency | undefined
   tokenOut: Currency | undefined
   amountIn: BigNumber | undefined
@@ -109,7 +118,17 @@ function brownfiRouteFromTrade(
 }
 
 export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRouteResult {
-  const { v2Trade, v3Trade, tokenIn, tokenOut, amountIn, account, slippageBps, deadline } = params
+  const {
+    v2Trade,
+    v3Trade,
+    v2Unavailable,
+    tokenIn,
+    tokenOut,
+    amountIn,
+    account,
+    slippageBps,
+    deadline,
+  } = params
 
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
@@ -164,10 +183,17 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
 
     // BrownFi V2 + V3 — surfaced as separate candidates so the user can
     // compare them side-by-side in RouteComparison. The user's `selected`
-    // choice is honored at pick time, not by hiding candidates.
+    // choice is honored at pick time, not by hiding candidates. V2 with
+    // a reserve issue is included but marked `unavailable` so the picker
+    // can dim it; selection logic skips unavailable routes.
     if (v2Trade) {
       const r = brownfiRouteFromTrade(v2Trade, 'brownfi-v2', 'BrownFi V2', slippageBps)
-      if (r) candidates.push(r)
+      if (r) {
+        if (v2Unavailable) {
+          r.unavailable = { reason: 'Amount exceeds 90% of pool reserve' }
+        }
+        candidates.push(r)
+      }
     }
     if (v3Trade) {
       const r = brownfiRouteFromTrade(v3Trade, 'brownfi-v3', 'BrownFi V3', slippageBps)
@@ -201,6 +227,9 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
       }
       return b.amountOut.gt(a.amountOut) ? 1 : -1
     })
+    // Selection ignores unavailable routes — the picker still shows
+    // them (dimmed) but `best` is always something executable.
+    const selectable = sorted.filter((r) => !r.unavailable)
 
     // Pick the winning route based on user preference.
     let best: UnifiedRoute | null = null
@@ -208,15 +237,17 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
       // 'native' is a legacy persisted value — the reducer migrates it on
       // boot but we belt-and-suspenders the runtime path too. Either way
       // it means "best amountOut among all sources".
-      best = sorted[0] ?? null
+      best = selectable[0] ?? null
     } else {
-      // Specific source selected. Prefer it; fall back to the best
-      // available BrownFi candidate if that source has no route (e.g.,
-      // user pinned Kyber but Kyber returned nothing for this pair).
+      // Specific source selected. Prefer it (must be selectable);
+      // fall back to the best available BrownFi candidate if that
+      // source has no route OR is unavailable (e.g., user pinned V2
+      // but V2 hit the 90%-reserve cap → fall through to the best
+      // working route).
       best =
-        sorted.find((r) => r.source === selected) ??
-        sorted.find((r) => isBrownFi(r.source)) ??
-        sorted[0] ?? null
+        selectable.find((r) => r.source === selected) ??
+        selectable.find((r) => isBrownFi(r.source)) ??
+        selectable[0] ?? null
     }
 
     const isLoading = queries.some((q) => q.isFetching)
@@ -229,5 +260,5 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
     const refetchAll = () => queries.forEach((q) => q.refetch())
 
     return { best, candidates: sorted, isLoading, isStale, refetchAll }
-  }, [aggregators, v2Trade, v3Trade, queries, selected, slippageBps])
+  }, [aggregators, v2Trade, v3Trade, v2Unavailable, queries, selected, slippageBps])
 }

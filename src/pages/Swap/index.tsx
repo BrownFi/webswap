@@ -96,7 +96,8 @@ export default function Swap() {
     currencyBalances,
     parsedAmount,
     currencies,
-    inputError: swapInputError,
+    inputError: rawSwapInputError,
+    v2AmountOutExceedsReserve,
     loadingExactIn,
     loadingExactOut,
   } = useDerivedSwapInfo()
@@ -138,7 +139,9 @@ export default function Swap() {
       }
 
   const { onSwitchTokens, onCurrencySelection, onUserInput, onChangeRecipient } = useSwapActionHandlers()
-  const isValid = !swapInputError
+  // isValid moved below — it depends on swapInputError which is computed
+  // after useBestSwapRoute resolves so the V2-only reserve error can be
+  // conditionally suppressed when the chosen route is an aggregator or V3.
   const dependentField: Field = independentField === Field.INPUT ? Field.OUTPUT : Field.INPUT
 
   const handleTypeInput = useCallback(
@@ -207,6 +210,7 @@ export default function Swap() {
   } = useBestSwapRoute({
     v2Trade: showWrap ? undefined : v2Trade,
     v3Trade: showWrap ? undefined : v3Trade,
+    v2Unavailable: v2AmountOutExceedsReserve,
     tokenIn: currencies[Field.INPUT],
     tokenOut: currencies[Field.OUTPUT],
     amountIn: amountInBig,
@@ -221,6 +225,19 @@ export default function Swap() {
   const activeNativeTrade = best?.nativeTrade
   const isAggregatorRoute = !!best && !isBrownFiSource(best.source)
   const [selectedAggregator, setSelectedAggregator] = useSelectedAggregator()
+
+  // The "amount-out exceeds 90% of pool reserve" check is V2-pool-specific.
+  // Only block the swap when the smart router's chosen route is actually
+  // BrownFi V2 — if the user is going to swap through Kyber or V3 instead,
+  // the V2 reserve constraint doesn't apply.
+  const swapInputError = useMemo(() => {
+    if (rawSwapInputError) return rawSwapInputError
+    if (v2AmountOutExceedsReserve && best?.source === 'brownfi-v2') {
+      return 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
+    }
+    return undefined
+  }, [rawSwapInputError, v2AmountOutExceedsReserve, best?.source])
+  const isValid = !swapInputError
   // User manually picked a specific aggregator, but orchestration fell back
   // to native (the chosen aggregator returned no route for this pair on
   // this chain). Surface this so the user understands why their selection
@@ -246,7 +263,39 @@ export default function Swap() {
     if (num < 0.000001) return num.toExponential(2)
     return Number(num.toPrecision(6)).toString()
   }, [isAggregatorRoute, isExactIn, best, currencies])
-  const displayedOutput = aggregatorOutputDisplay ?? formattedAmounts[Field.OUTPUT]
+  const rawDisplayedOutput = aggregatorOutputDisplay ?? formattedAmounts[Field.OUTPUT]
+
+  // Hold the OUTPUT field stable until ALL quote sources (native V2/V3
+  // multicall + every aggregator HTTP query) have resolved. Without
+  // this gating, V2/V3 quotes (fast multicall, ~100-300ms) appear in
+  // the field first and then Kyber (~300-500ms HTTP) overwrites them,
+  // producing a visible flicker between two different values. We
+  // freeze the field at empty during loading; the existing `loading`
+  // prop renders the spinner. Only applies on exact-in — exact-out
+  // shows the user's typed value, no gating needed.
+  //
+  // `typingPending`: useDerivedSwapInfo debounces typedValue by 300ms
+  // before parsing it / firing trades. During that window the trade-
+  // loading flags are still false (no fetch yet), so without this
+  // we'd briefly render the PREVIOUS quote with no spinner. Track a
+  // 350ms window after every typedValue change and treat it as
+  // loading so the UI never shows stale info.
+  const [typingPending, setTypingPending] = useState(false)
+  useEffect(() => {
+    setTypingPending(true)
+    const t = setTimeout(() => setTypingPending(false), 350)
+    return () => clearTimeout(t)
+  }, [typedValue])
+  const isQuoteLoading = bestLoading || loadingExactIn || loadingExactOut || typingPending
+  const [stableOutput, setStableOutput] = useState('')
+  useEffect(() => {
+    if (!isQuoteLoading) setStableOutput(rawDisplayedOutput)
+  }, [rawDisplayedOutput, isQuoteLoading])
+  const displayedOutput = !isExactIn
+    ? rawDisplayedOutput
+    : isQuoteLoading
+    ? ''
+    : stableOutput
 
   // Both approval paths are called unconditionally per Hook rules. We pick
   // the one that matches the chosen route's source below. For aggregator
@@ -488,6 +537,7 @@ export default function Swap() {
                 onSelect={setSelectedAggregator}
                 outputCurrency={currencies[Field.OUTPUT]}
                 outputSymbol={getTokenSymbol(currencies[Field.OUTPUT], chainId) ?? ''}
+                isLoading={isQuoteLoading}
               />
             )}
 
