@@ -1,0 +1,77 @@
+/**
+ * Shared types for the multi-aggregator swap pipeline.
+ *
+ * Adding a new aggregator means: implement AggregatorAdapter, declare its
+ * chain × version matrix, push it into the registry. The Swap page itself
+ * doesn't import any specific aggregator — it consumes only the registry +
+ * orchestration hook.
+ */
+import { ChainId, Currency } from '@brownfi/sdk'
+import { BigNumber } from '@ethersproject/bignumber'
+
+export type AggregatorId = 'kyber' | '1inch' | 'paraswap' | 'okx'
+
+/** The Swap page surfaces this to the user as the aggregator selector. */
+export type AggregatorChoice = 'auto' | 'native' | AggregatorId
+
+/** BrownFi pool version that the aggregator's BrownFi liquidity feed knows about. */
+export type BrownFiVersion = 2 | 3
+
+export interface QuoteParams {
+  chainId: ChainId
+  /** BrownFi pool version the user is interacting with, used to gate adapters. */
+  version: BrownFiVersion
+  tokenIn: Currency
+  tokenOut: Currency
+  amountIn: BigNumber
+  /** wallet that signs + receives. The recipient defaults to this. */
+  account: string
+  /** in basis points, e.g. 50 = 0.5% */
+  slippageBps: number
+  /** unix seconds */
+  deadline: number
+}
+
+/**
+ * Normalized aggregator quote. `routeSummary` is intentionally opaque — each
+ * adapter passes it back into `buildSwap` to materialize callData.
+ */
+export interface AggregatorQuote {
+  aggregatorId: AggregatorId
+  amountOut: BigNumber
+  amountOutMin: BigNumber
+  /** raw gas units the adapter estimates; orchestration may compare with native. */
+  gasEstimate?: BigNumber
+  /** percentage, e.g. 0.42 = 0.42% */
+  priceImpact?: number
+  routerAddress: string
+  routeSummary: unknown
+}
+
+export interface BuildSwapParams {
+  chainId: ChainId
+  account: string
+  /** the quote previously returned by `quote()`. */
+  quote: AggregatorQuote
+  slippageBps: number
+  deadline: number
+}
+
+export interface BuildSwapResult {
+  to: string
+  data: string
+  value?: BigNumber
+  gasLimit?: BigNumber
+}
+
+export interface AggregatorAdapter {
+  id: AggregatorId
+  /** Display name for UI ("Kyber", "1inch"). */
+  name: string
+  /** True when this aggregator can quote on the given chain × BrownFi version. */
+  isSupported(chainId: ChainId, version: BrownFiVersion): boolean
+  /** Resolves null when the aggregator has no route (treat as "skip this adapter"). */
+  quote(params: QuoteParams): Promise<AggregatorQuote | null>
+  /** Builds the on-chain calldata for the previously-returned quote. */
+  buildSwap(params: BuildSwapParams): Promise<BuildSwapResult>
+}
