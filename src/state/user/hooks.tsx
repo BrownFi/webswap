@@ -17,7 +17,9 @@ import {
   updateUserSlippageTolerance,
   toggleURLWarning,
   updateUserSingleHopOnly,
+  updateSelectedAggregator,
 } from './actions'
+import type { AggregatorChoice } from 'services/aggregators/types'
 import { isMainnet } from 'connectors'
 
 function serializeToken(token: Token): SerializedToken {
@@ -96,6 +98,20 @@ export function useUserSingleHopOnly(): [boolean, (newSingleHopOnly: boolean) =>
   )
 
   return [singleHopOnly, setSingleHopOnly]
+}
+
+export function useSelectedAggregator(): [AggregatorChoice, (next: AggregatorChoice) => void] {
+  const dispatch = useDispatch<AppDispatch>()
+  const selected = useSelector<AppState, AggregatorChoice>(
+    (state) => state.user.selectedAggregator ?? 'auto',
+  )
+  const setSelected = useCallback(
+    (next: AggregatorChoice) => {
+      dispatch(updateSelectedAggregator({ selectedAggregator: next }))
+    },
+    [dispatch],
+  )
+  return [selected, setSelected]
 }
 
 export function useUserSlippageTolerance(): [number, (slippage: number) => void] {

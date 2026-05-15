@@ -1,4 +1,5 @@
 import { createAction } from '@reduxjs/toolkit'
+import type { AggregatorChoice } from 'services/aggregators/types'
 
 export interface SerializedToken {
   chainId: number
@@ -28,3 +29,6 @@ export const removeSerializedPair = createAction<{ chainId: number; tokenAAddres
   'user/removeSerializedPair',
 )
 export const toggleURLWarning = createAction<void>('app/toggleURLWarning')
+export const updateSelectedAggregator = createAction<{ selectedAggregator: AggregatorChoice }>(
+  'user/updateSelectedAggregator',
+)

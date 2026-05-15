@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'react-feather'
 import { Text } from 'components/Rebass'
@@ -10,7 +10,12 @@ import {
   useUserTransactionTTL,
   useUserSlippageTolerance,
   useUserSingleHopOnly,
+  useSelectedAggregator,
 } from 'state/user/hooks'
+import { useActiveWeb3React } from 'hooks'
+import { useVersion } from 'hooks/useVersion'
+import { listAllAggregators } from 'services/aggregators'
+import type { AggregatorChoice } from 'services/aggregators/types'
 import { TYPE } from 'theme'
 import { ButtonError } from 'components/Button'
 import { AutoColumn } from 'components/Column'
@@ -121,6 +126,27 @@ export function SettingsTab() {
   const [expertMode, toggleExpertMode] = useExpertModeManager()
 
   const [singleHopOnly, setSingleHopOnly] = useUserSingleHopOnly()
+
+  const [selectedAggregator, setSelectedAggregator] = useSelectedAggregator()
+  const { chainId } = useActiveWeb3React()
+  const { version } = useVersion({ chainId })
+
+  // Build the segmented-control options. Auto + Native are always present;
+  // each registered aggregator appears with its support flag so unsupported
+  // ones on the current chain × version render disabled instead of hidden
+  // (so users see what's coming).
+  const aggregatorOptions = useMemo(() => {
+    const all = listAllAggregators()
+    return [
+      { value: 'auto' as AggregatorChoice, label: 'Auto', supported: true },
+      { value: 'native' as AggregatorChoice, label: 'Native', supported: true },
+      ...all.map((a) => ({
+        value: a.id as AggregatorChoice,
+        label: a.name,
+        supported: chainId ? a.isSupported(chainId, version as 2 | 3) : false,
+      })),
+    ]
+  }, [chainId, version])
 
   // show confirmation view before turning on
   const [showConfirmation, setShowConfirmation] = useState(false)
@@ -241,6 +267,50 @@ export function SettingsTab() {
                 }}
               />
             </RowBetween>
+
+            {/* Aggregator selector — Auto compares native + every supported
+                aggregator and picks the best amountOut; Native forces BrownFi
+                pools only; selecting a specific aggregator forces it (falls
+                back to native if no route). */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <RowFixed>
+                <TYPE.black style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#CFC7C1' }}>
+                  Aggregator
+                </TYPE.black>
+                <QuestionHelper text="Choose where swap quotes come from. Auto = best amountOut across all sources." />
+              </RowFixed>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {aggregatorOptions.map((opt) => {
+                  const active = selectedAggregator === opt.value
+                  const disabled = !opt.supported
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => !disabled && setSelectedAggregator(opt.value)}
+                      title={disabled ? 'Not supported on this chain yet' : undefined}
+                      style={{
+                        flex: '1 1 auto',
+                        minWidth: '72px',
+                        padding: '8px 16px',
+                        borderRadius: '10px',
+                        fontFamily: 'Inter',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        background: active ? '#985C2A' : 'transparent',
+                        border: `1px solid ${active ? '#985C2A' : '#493E35'}`,
+                        color: active ? '#FFFFFF' : disabled ? '#5F564E' : '#CFC7C1',
+                        transition: 'background 150ms, color 150ms',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
         </MenuFlyout>
         </>,
         document.body
