@@ -7,17 +7,20 @@ import { AutoColumn } from 'components/Column'
 import { RowBetween, RowFixed, AutoRow } from 'components/Row'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { ArrowLeft, AlertTriangle } from 'react-feather'
-import { transparentize } from 'polished'
 import useTheme from 'hooks/useTheme'
 import { ButtonPrimary } from 'components/Button'
-// import { SectionBreak } from 'components/swap/styleds'
 import { useAddUserToken } from 'state/user/hooks'
 import { getEtherscanLink } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 import { ExternalLink } from 'theme/components'
 import { useCombinedInactiveList } from 'state/lists/hooks'
 import ListLogo from 'components/ListLogo'
-import { PaddedColumn, Checkbox } from './styleds'
+import { PaddedColumn } from './styleds'
+
+// BrownFi red. Slightly muted vs the default theme `red1` so it sits cleanly
+// against the dark/brown surface without screaming.
+const BRAND_RED = '#FF3B6A'
+const BRAND_YELLOW = '#D8A072'
 
 const Wrapper = styled.div`
   position: relative;
@@ -25,15 +28,44 @@ const Wrapper = styled.div`
   overflow: auto;
 `
 
-const WarningWrapper = styled(Card)<{ highWarning: boolean }>`
-  background-color: ${({ theme, highWarning }) =>
-    highWarning ? transparentize(0.8, theme.red1) : transparentize(0.8, theme.yellow2)};
-  width: fit-content;
+// Inline "Unknown Source" pill — thin red border + dark surface, matching
+// the rest of the dark UI rather than the old red-tinted fill.
+const UnknownSourceBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 59, 106, 0.35);
+  background: rgba(255, 59, 106, 0.08);
+  color: ${BRAND_RED};
+  font-size: 11px;
+  font-weight: 500;
+`
+
+// Soft-warning wrapper for the "Trade at your own risk" panel. Dark surface
+// with a tinted border, body text in white/gray for readability. Only the
+// title + small icon carry the red emphasis.
+const WarningPanel = styled.div<{ severe: boolean }>`
+  background: #1e1915;
+  border: 1px solid ${({ severe }) => (severe ? 'rgba(255, 59, 106, 0.35)' : 'rgba(216, 160, 114, 0.35)')};
+  border-radius: 12px;
+  padding: 20px;
+`
+
+// Copper-tinted checkbox so the agreement step matches the BrownFi accent.
+const BrandCheckbox = styled.input`
+  width: 18px;
+  height: 18px;
+  accent-color: #985c2a;
+  cursor: pointer;
+  margin: 0;
 `
 
 const AddressText = styled(TYPE.blue)`
   font-size: 12px;
-  color: ${({ theme }) => theme.greenMain};
+  color: ${BRAND_YELLOW};
+  word-break: break-all;
   ${({ theme }) => theme.mediaWidth.upToSmall`
     font-size: 10px;
 `}
@@ -103,52 +135,47 @@ export function ImportToken({ tokens, onBack, onDismiss, handleCurrencySelect }:
                     </TYPE.small>
                   </RowFixed>
                 ) : (
-                  <WarningWrapper borderRadius="4px" padding="4px" highWarning={true}>
-                    <RowFixed>
-                      <AlertTriangle stroke={theme.red1} size="10px" />
-                      <TYPE.body color={theme.red1} ml="4px" fontSize="10px" fontWeight={500}>
-                        Unknown Source
-                      </TYPE.body>
-                    </RowFixed>
-                  </WarningWrapper>
+                  <UnknownSourceBadge>
+                    <AlertTriangle stroke={BRAND_RED} size={11} />
+                    Unknown Source
+                  </UnknownSourceBadge>
                 )}
               </AutoColumn>
             </Card>
           )
         })}
 
-        <Card
-          style={{ backgroundColor: fromLists ? transparentize(0.8, theme.yellow2) : transparentize(0.8, theme.red1) }}
-        >
-          <AutoColumn justify="center" style={{ textAlign: 'center', gap: '16px', marginBottom: '12px' }}>
-            <AlertTriangle stroke={fromLists ? theme.yellow2 : theme.red1} size={32} />
-            <TYPE.body fontWeight={600} fontSize={20} color={fromLists ? theme.yellow2 : theme.red1}>
+        <WarningPanel severe={!fromLists}>
+          <AutoColumn justify="center" style={{ textAlign: 'center', gap: '12px', marginBottom: '16px' }}>
+            <AlertTriangle stroke={fromLists ? BRAND_YELLOW : BRAND_RED} size={28} />
+            <TYPE.body fontWeight={600} fontSize={18} color={fromLists ? BRAND_YELLOW : BRAND_RED}>
               Trade at your own risk!
             </TYPE.body>
           </AutoColumn>
 
-          <AutoColumn style={{ textAlign: 'center', gap: '16px', marginBottom: '12px' }}>
-            <TYPE.body fontWeight={400} color={fromLists ? theme.yellow2 : theme.red1}>
+          <AutoColumn style={{ textAlign: 'center', gap: '12px', marginBottom: '16px' }}>
+            <TYPE.body fontWeight={400} fontSize={13} color={'#CFC7C1'}>
               Anyone can create a token, including creating fake versions of existing tokens that claim to represent
               projects.
             </TYPE.body>
-            <TYPE.body fontWeight={600} color={fromLists ? theme.yellow2 : theme.red1}>
+            <TYPE.body fontWeight={600} fontSize={13} color={'#FBFBFD'}>
               If you purchase this token, you may not be able to sell it back.
             </TYPE.body>
           </AutoColumn>
-          <AutoRow justify="center" style={{ cursor: 'pointer' }} onClick={() => setConfirmed(!confirmed)}>
-            <Checkbox
+
+          <AutoRow justify="center" style={{ cursor: 'pointer', gap: '10px' }} onClick={() => setConfirmed(!confirmed)}>
+            <BrandCheckbox
               className=".understand-checkbox"
               name="confirmed"
               type="checkbox"
               checked={confirmed}
               onChange={() => setConfirmed(!confirmed)}
             />
-            <TYPE.body ml="10px" fontSize="16px" color={fromLists ? theme.yellow2 : theme.red1} fontWeight={500}>
+            <TYPE.body fontSize="14px" color={'#FBFBFD'} fontWeight={500}>
               I understand
             </TYPE.body>
           </AutoRow>
-        </Card>
+        </WarningPanel>
         <ButtonPrimary
           disabled={!confirmed}
           altDisabledStyle={true}
