@@ -2,16 +2,21 @@
  * Inline route picker shown above the price row on the Swap page.
  *
  * Lets the user see every available route side-by-side (BrownFi native +
- * each aggregator that returned a quote) and click to force a specific
- * source. The top row is "Auto" — picks best amountOut, the default for
- * most users.
+ * each aggregator that returned a quote) and click to pin a specific
+ * source. No "Auto" row — the Best badge already encodes the winner.
+ *
+ * Selection semantics:
+ * - selectedAggregator === 'auto' (initial state) → the row with the
+ *   Best badge is visually active. Quotes refresh, badge + active row
+ *   follow the new winner automatically.
+ * - User clicks any row → selectedAggregator is pinned to that source.
+ *   Subsequent quote refreshes don't change the selection.
  *
  * Rendering rules:
  * - Hidden when there are fewer than 2 candidates (no choice to make).
  * - Each row's amountOut is formatted by the output token's decimals.
  * - The winning candidate gets a "Best" badge.
- * - The currently-selected option (Auto by default) has a radio-style
- *   filled dot + copper border.
+ * - Active row has a radio-style filled dot + copper border.
  */
 import { Currency, Token } from '@brownfi/sdk'
 import { useMemo } from 'react'
@@ -40,34 +45,18 @@ export function RouteComparison({ candidates, selected, onSelect, outputCurrency
   // nothing to compare.
   const winnerKey = candidates[0]?.source
 
-  // Synthesize the "Auto" row at the top — it always tracks the winning
-  // candidate (candidates[0]) since orchestration's auto pick = highest
-  // amountOut.
-  const rows = useMemo(() => {
-    const list: Array<{
-      key: AggregatorChoice
-      label: string
-      amountOut: string
-      isBest: boolean
-    }> = []
+  // When the user hasn't pinned a source yet (selectedAggregator === 'auto'),
+  // the active row is whichever currently has the highest amountOut. This
+  // lets the highlight track the winner as quotes refresh.
+  const activeKey: AggregatorChoice = selected === 'auto' ? (winnerKey ?? 'native') : selected
 
-    if (candidates.length > 0) {
-      list.push({
-        key: 'auto',
-        label: `Auto · via ${candidates[0].sourceName}`,
-        amountOut: formatAmount(candidates[0].amountOut, outputCurrency),
-        isBest: false,
-      })
-    }
-    candidates.forEach((c) => {
-      list.push({
-        key: c.source === 'native' ? 'native' : c.source,
-        label: c.sourceName,
-        amountOut: formatAmount(c.amountOut, outputCurrency),
-        isBest: c.source === winnerKey,
-      })
-    })
-    return list
+  const rows = useMemo(() => {
+    return candidates.map((c) => ({
+      key: c.source === 'native' ? ('native' as AggregatorChoice) : (c.source as AggregatorChoice),
+      label: c.sourceName,
+      amountOut: formatAmount(c.amountOut, outputCurrency),
+      isBest: c.source === winnerKey,
+    }))
   }, [candidates, outputCurrency, winnerKey])
 
   if (candidates.length < 2) return null
@@ -100,7 +89,7 @@ export function RouteComparison({ candidates, selected, onSelect, outputCurrency
       </div>
 
       {rows.map((row) => {
-        const active = selected === row.key
+        const active = activeKey === row.key
         return (
           <button
             key={row.key}
