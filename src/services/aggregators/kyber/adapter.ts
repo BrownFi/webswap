@@ -19,6 +19,11 @@ import type {
 import { isKyberSupported } from './chains'
 import { buildRoute, getRoutes, KyberRouteSummary } from './api'
 
+// Kyber doesn't return an explicit quote TTL. Production routes typically
+// stay valid for ~30–60s; we mark them stale at 30s to refetch before sign
+// rather than risk a build call against an expired route.
+const KYBER_QUOTE_TTL_SECONDS = 30
+
 // Kyber expects the native sentinel for ETH/BERA/etc.
 const NATIVE_SENTINEL = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 
@@ -33,7 +38,7 @@ function applySlippage(amountOut: BigNumber, slippageBps: number): BigNumber {
   return amountOut.mul(10_000 - slippageBps).div(10_000)
 }
 
-export const kyberAggregator: AggregatorAdapter = {
+export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
   id: 'kyber',
   name: 'Kyber',
 
@@ -41,7 +46,7 @@ export const kyberAggregator: AggregatorAdapter = {
     return isKyberSupported(chainId, version)
   },
 
-  async quote(params: QuoteParams): Promise<AggregatorQuote | null> {
+  async quote(params: QuoteParams): Promise<AggregatorQuote<KyberRouteSummary> | null> {
     const tokenIn = currencyToAddress(params.tokenIn)
     const tokenOut = currencyToAddress(params.tokenOut)
     if (!tokenIn || !tokenOut) return null
@@ -80,10 +85,11 @@ export const kyberAggregator: AggregatorAdapter = {
       priceImpact: undefined,
       routerAddress,
       routeSummary: summary,
+      validUntil: Math.floor(Date.now() / 1000) + KYBER_QUOTE_TTL_SECONDS,
     }
   },
 
-  async buildSwap(params: BuildSwapParams): Promise<BuildSwapResult> {
+  async buildSwap(params: BuildSwapParams<KyberRouteSummary>): Promise<BuildSwapResult> {
     const res = await buildRoute({
       chainId: params.chainId,
       routeSummary: params.quote.routeSummary,

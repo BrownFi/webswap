@@ -33,10 +33,12 @@ export interface QuoteParams {
 }
 
 /**
- * Normalized aggregator quote. `routeSummary` is intentionally opaque — each
- * adapter passes it back into `buildSwap` to materialize callData.
+ * Normalized aggregator quote. `routeSummary` is the adapter-specific blob
+ * each aggregator hands back to its own `buildSwap`. The generic `R` makes
+ * it strongly-typed inside each adapter while still letting orchestration
+ * juggle multiple types as `AggregatorQuote<unknown>`.
  */
-export interface AggregatorQuote {
+export interface AggregatorQuote<R = unknown> {
   aggregatorId: AggregatorId
   amountOut: BigNumber
   amountOutMin: BigNumber
@@ -45,14 +47,20 @@ export interface AggregatorQuote {
   /** percentage, e.g. 0.42 = 0.42% */
   priceImpact?: number
   routerAddress: string
-  routeSummary: unknown
+  routeSummary: R
+  /**
+   * Unix seconds. Quote is stale after this — orchestration must refetch
+   * before signing rather than build calldata from an expired route.
+   * Adapters that don't get an upstream TTL default to a conservative window.
+   */
+  validUntil: number
 }
 
-export interface BuildSwapParams {
+export interface BuildSwapParams<R = unknown> {
   chainId: ChainId
   account: string
   /** the quote previously returned by `quote()`. */
-  quote: AggregatorQuote
+  quote: AggregatorQuote<R>
   slippageBps: number
   deadline: number
 }
@@ -64,14 +72,14 @@ export interface BuildSwapResult {
   gasLimit?: BigNumber
 }
 
-export interface AggregatorAdapter {
+export interface AggregatorAdapter<R = unknown> {
   id: AggregatorId
   /** Display name for UI ("Kyber", "1inch"). */
   name: string
   /** True when this aggregator can quote on the given chain × BrownFi version. */
   isSupported(chainId: ChainId, version: BrownFiVersion): boolean
   /** Resolves null when the aggregator has no route (treat as "skip this adapter"). */
-  quote(params: QuoteParams): Promise<AggregatorQuote | null>
+  quote(params: QuoteParams): Promise<AggregatorQuote<R> | null>
   /** Builds the on-chain calldata for the previously-returned quote. */
-  buildSwap(params: BuildSwapParams): Promise<BuildSwapResult>
+  buildSwap(params: BuildSwapParams<R>): Promise<BuildSwapResult>
 }
