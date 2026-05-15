@@ -553,33 +553,6 @@ export default function Swap() {
                   </span>
                 </RowBetween>
               )}
-              {/* Aggregator badge — surfaces which source the chosen route
-                  came from when it isn't BrownFi-native. Matches the same
-                  pattern Uniswap / 1inch use for "via X" attribution. */}
-              {isAggregatorRoute && best && (
-                <RowBetween align="center">
-                  <Text fontWeight={500} fontSize={14} color={theme.text2}>
-                    Route
-                  </Text>
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '2px 8px',
-                      borderRadius: 8,
-                      background: 'rgba(216, 160, 114, 0.12)',
-                      border: '1px solid rgba(216, 160, 114, 0.35)',
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: '#D8A072',
-                    }}
-                  >
-                    via {best.sourceName}
-                  </span>
-                </RowBetween>
-              )}
             </AutoColumn>
           </AutoColumn>
           {!swapIsUnsupported && <AdvancedSwapDetailsDropdown trade={trade} />}
