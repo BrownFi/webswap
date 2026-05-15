@@ -108,15 +108,21 @@ type SeriesMeta = {
 }
 
 // Original BrownFi palette. HODL + UniV2 reference benchmarks render
-// 1px + dashed (LineStyle.Dashed) so they read clearly as references
-// vs LP Price's default 2px solid.
+// 1px + dotted (LineStyle.Dotted) so they read clearly as references
+// vs LP Price's default 2px solid. UniV2 uses red to distinguish it
+// from HODL's blue.
+//
+// Net PnL and Volume are both green but in clearly different shades:
+// Net PnL = #83CF84 (light pastel green, line) and Volume = #16A34A
+// (deep saturated green, histogram). The hue distance + render-type
+// difference keeps them visually separable on the same chart.
 const SERIES_ALL: SeriesMeta[] = [
   { key: 'lpPrice',    label: 'LP Price',    color: '#D8A072', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dashed },
-  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E0C97A', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dashed },
+  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E04848', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',        label: 'TVL',         color: '#B47AAE', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
-  { key: 'netPnL',     label: 'Net PnL',     color: '#E57373', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
-  { key: 'volume',     label: 'Volume',      color: '#83CF84', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
+  { key: 'netPnL',     label: 'Net PnL',     color: '#83CF84', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
+  { key: 'volume',     label: 'Volume',      color: '#16A34A', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
 type Props = {
