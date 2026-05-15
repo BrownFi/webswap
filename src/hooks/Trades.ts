@@ -9,7 +9,7 @@ import { useActiveWeb3React } from './index'
 import { useUnsupportedTokens } from './Tokens'
 import { useUserSingleHopOnly } from 'state/user/hooks'
 
-function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
+function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency, versionOverride?: number): Pair[] {
   const { chainId } = useActiveWeb3React()
 
   const [tokenA, tokenB] = chainId
@@ -64,7 +64,7 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
     [tokenA, tokenB, bases, basePairs, chainId],
   )
 
-  const allPairs = usePairs(allPairCombinations)
+  const allPairs = usePairs(allPairCombinations, versionOverride)
 
   // only pass along valid pairs, non-duplicated pairs
   return useMemo(
@@ -91,12 +91,16 @@ type TradeExactIn = {
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
  */
-export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?: Currency): TradeExactIn {
+export function useTradeExactIn(
+  currencyAmountIn?: CurrencyAmount,
+  currencyOut?: Currency,
+  versionOverride?: number,
+): TradeExactIn {
   const [trade, setTrade] = useState<Trade | null>(null)
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
 
-  const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut)
+  const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut, versionOverride)
   const { account } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()
@@ -185,12 +189,16 @@ type TradeExactOut = {
 /**
  * Returns the best trade for the token in to the exact amount of token out
  */
-export function useTradeExactOut(currencyIn?: Currency, currencyAmountOut?: CurrencyAmount): TradeExactOut {
+export function useTradeExactOut(
+  currencyIn?: Currency,
+  currencyAmountOut?: CurrencyAmount,
+  versionOverride?: number,
+): TradeExactOut {
   const [trade, setTrade] = useState<Trade | null>(null)
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
 
-  const allowedPairs = useAllCommonPairs(currencyIn, currencyAmountOut?.currency)
+  const allowedPairs = useAllCommonPairs(currencyIn, currencyAmountOut?.currency, versionOverride)
   const { account } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()

@@ -138,8 +138,22 @@ export function useDerivedSwapInfo(): {
   const parsedAmount = tryParseAmount(debouncedTypedValue, (isExactIn ? inputCurrency : outputCurrency) ?? undefined)
   const isInputEmpty = !(+debouncedTypedValue > 0)
 
-  const tradeIn = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined)
-  const tradeOut = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined)
+  // Swap is V2-only post-unified-router refactor. We pin the version here so
+  // the trade pipeline doesn't accidentally pick up a stale V3 selection
+  // from the global versionSelector (Add/Remove Liquidity still toggle that
+  // for their own use). V3 BrownFi will land as a separate adapter source
+  // alongside Kyber when it ships.
+  const SWAP_VERSION = 2
+  const tradeIn = useTradeExactIn(
+    isExactIn ? parsedAmount : undefined,
+    outputCurrency ?? undefined,
+    SWAP_VERSION,
+  )
+  const tradeOut = useTradeExactOut(
+    inputCurrency ?? undefined,
+    !isExactIn ? parsedAmount : undefined,
+    SWAP_VERSION,
+  )
   const bestTradeExactIn = tradeIn.trade
   const bestTradeExactOut = tradeOut.trade
 
