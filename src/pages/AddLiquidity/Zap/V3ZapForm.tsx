@@ -177,11 +177,14 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
         slippageBps: slippage,
       })
 
-      setIsSubmitting(false)
+      // Set hash first so the modal moves Pending → Submitted in one render
+      // and never falls through to the `content()` fallback (which would be
+      // a blank div when there's no error).
       if (response) {
         setTxHash(response.hash)
         addTransaction(response, { summary: submittedText })
       }
+      setIsSubmitting(false)
     } catch (err) {
       setIsSubmitting(false)
       console.error('V3 Zap transaction failed:', err)

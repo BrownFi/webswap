@@ -23,6 +23,11 @@ export interface UserState {
   // the timestamp of the last updateVersion action
   lastUpdateVersionTimestamp?: number
 
+  // One-shot flag for the 10%→0.5% slippage / 20m→10m deadline migration.
+  // updateVersion fires on every app load, so we need a persisted marker to
+  // avoid overwriting users who deliberately set 10% slippage themselves.
+  safeDefaultsMigrated?: boolean
+
   userDarkMode: boolean | null // the user's choice for dark mode or light mode
   matchesDarkMode: boolean // whether the dark mode media query matches
 
@@ -88,12 +93,16 @@ export default createReducer(initialState, (builder) =>
       // One-time migration: existing users who never customized their slippage
       // / deadline carried the old unsafe defaults (10% slippage, 20m deadline)
       // in their persisted Redux state. Move them onto the new safer defaults
-      // (0.5% / 10m). Users who explicitly set a different value keep it.
-      if (state.userSlippageTolerance === 1000) {
-        state.userSlippageTolerance = INITIAL_ALLOWED_SLIPPAGE
-      }
-      if (state.userDeadline === 60 * 20) {
-        state.userDeadline = DEFAULT_DEADLINE_FROM_NOW
+      // (0.5% / 10m), ONCE. After this runs we flip safeDefaultsMigrated so a
+      // user who deliberately re-selects 10% won't get reset on next reload.
+      if (!state.safeDefaultsMigrated) {
+        if (state.userSlippageTolerance === 1000) {
+          state.userSlippageTolerance = INITIAL_ALLOWED_SLIPPAGE
+        }
+        if (state.userDeadline === 60 * 20) {
+          state.userDeadline = DEFAULT_DEADLINE_FROM_NOW
+        }
+        state.safeDefaultsMigrated = true
       }
 
       state.lastUpdateVersionTimestamp = currentTimestamp()

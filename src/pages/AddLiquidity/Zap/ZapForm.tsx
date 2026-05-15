@@ -339,11 +339,13 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
         library,
       })
 
-      setIsSubmitting(false)
+      // Set hash first so the modal moves Pending → Submitted in one render
+      // and never falls through to the `content()` fallback (blank div).
       if (response) {
         setTxHash(response.hash)
         addTransaction(response, { summary: submittedText })
       }
+      setIsSubmitting(false)
     } catch (error) {
       setIsSubmitting(false)
       console.error('Zap transaction failed:', error)

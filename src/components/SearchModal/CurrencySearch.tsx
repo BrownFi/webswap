@@ -115,11 +115,17 @@ export function CurrencySearch({
   )
 
   // Clear the input on open + focus the search box for instant typing.
+  // Skip the focus on touch devices — pulling up the soft keyboard hides the
+  // suggested-bases chips and "Your tokens" section users want to tap.
   useEffect(() => {
     if (isOpen) {
       setSearchQuery('')
-      // Slight delay so the modal mount transition doesn't steal focus.
-      setTimeout(() => inputRef.current?.focus(), 50)
+      const isPointerDevice =
+        typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)')?.matches
+      if (isPointerDevice) {
+        // Slight delay so the modal mount transition doesn't steal focus.
+        setTimeout(() => inputRef.current?.focus(), 50)
+      }
     }
   }, [isOpen])
 
