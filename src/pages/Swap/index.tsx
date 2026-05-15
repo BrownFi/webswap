@@ -457,11 +457,11 @@ export default function Swap() {
               showCommonBases={true}
             />
 
-            {/* Inline route picker — only renders when there are 2+
-                candidates (native + at least one aggregator quote). Lets
-                users see both quotes side by side and click to force a
-                specific source. Persists to selectedAggregator. */}
-            {routeCandidates.length >= 2 && !showWrap && (
+            {/* Inline route picker — renders whenever at least one
+                source returned a quote (BrownFi V2 native and/or any
+                aggregator). Click a row to pin that source. Persists to
+                selectedAggregator. */}
+            {routeCandidates.length >= 1 && !showWrap && (
               <RouteComparison
                 candidates={routeCandidates}
                 selected={selectedAggregator}

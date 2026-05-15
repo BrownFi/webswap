@@ -59,7 +59,11 @@ export function RouteComparison({ candidates, selected, onSelect, outputCurrency
     }))
   }, [candidates, outputCurrency, winnerKey])
 
-  if (candidates.length < 2) return null
+  // Show whenever we have at least one candidate. Even with a single
+  // source (e.g., aggregator returned no route for this pair) the user
+  // sees which source is active and can verify why no comparison is
+  // available — better UX than the card silently disappearing.
+  if (candidates.length < 1) return null
 
   return (
     <div

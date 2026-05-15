@@ -114,15 +114,17 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
     return getAggregatorsFor(chainId, version as BrownFiVersion)
   }, [chainId, version])
 
-  // Stable cache key — null when we shouldn't fire (missing inputs or user
-  // forced native). We never quote aggregators when native is forced.
+  // Stable cache key — null when we shouldn't fire (missing inputs). We
+  // ALWAYS quote every supported aggregator (even when the user has pinned
+  // 'native') so the route picker can always show the full comparison.
+  // Skipping queries based on the user's pinned selection would make the
+  // picker disappear once they click BrownFi.
   const baseKey = useMemo(() => {
-    if (selected === 'native') return null
     if (!chainId || !account) return null
     if (!tokenIn || !tokenOut) return null
     if (!amountIn || amountIn.lte(0)) return null
     return [chainId, tokenAddress(tokenIn), tokenAddress(tokenOut), amountIn.toString(), slippageBps]
-  }, [selected, chainId, account, tokenIn, tokenOut, amountIn, slippageBps])
+  }, [chainId, account, tokenIn, tokenOut, amountIn, slippageBps])
 
   // One useQueries call quotes every supported aggregator in parallel.
   const queries = useQueries({
