@@ -103,12 +103,20 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
       throw new Error(`Kyber build returned no calldata (code=${res.code})`)
     }
 
+    // Native-in swaps must attach msg.value = amountIn. Kyber's route
+    // summary stores `tokenIn` as the native sentinel (0xeee…eee) in that
+    // case; pull amountIn from the summary so we don't need the original
+    // input back at this layer.
+    const summary = params.quote.routeSummary
+    const isNativeIn = summary.tokenIn?.toLowerCase() === NATIVE_SENTINEL
+    const value = isNativeIn && summary.amountIn ? BigNumber.from(summary.amountIn) : undefined
+
     return {
       to: res.data.routerAddress,
       data: res.data.data,
-      // Native-in swaps need msg.value = amountIn. The aggregator emits the
-      // gas estimate too — add a 30% buffer (matches the Kyber zap path).
-      value: undefined,
+      value,
+      // Add a 30% buffer to Kyber's gas estimate to reduce out-of-gas risk
+      // on complex routes (matches the Kyber zap path).
       gasLimit: res.data.gas ? BigNumber.from(res.data.gas).mul(130).div(100) : undefined,
     }
   },
