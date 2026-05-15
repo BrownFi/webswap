@@ -46,9 +46,9 @@ const UnknownSourceBadge = styled.div`
 // Soft-warning wrapper for the "Trade at your own risk" panel. Dark surface
 // with a tinted border, body text in white/gray for readability. Only the
 // title + small icon carry the red emphasis.
-const WarningPanel = styled.div<{ severe: boolean }>`
+const WarningPanel = styled.div<{ $severe: boolean }>`
   background: #1e1915;
-  border: 1px solid ${({ severe }) => (severe ? 'rgba(255, 59, 106, 0.35)' : 'rgba(216, 160, 114, 0.35)')};
+  border: 1px solid ${({ $severe }) => ($severe ? 'rgba(255, 59, 106, 0.35)' : 'rgba(216, 160, 114, 0.35)')};
   border-radius: 12px;
   padding: 20px;
 `
@@ -145,7 +145,7 @@ export function ImportToken({ tokens, onBack, onDismiss, handleCurrencySelect }:
           )
         })}
 
-        <WarningPanel severe={!fromLists}>
+        <WarningPanel $severe={!fromLists}>
           <AutoColumn justify="center" style={{ textAlign: 'center', gap: '12px', marginBottom: '16px' }}>
             <AlertTriangle stroke={fromLists ? BRAND_YELLOW : BRAND_RED} size={28} />
             <TYPE.body fontWeight={600} fontSize={18} color={fromLists ? BRAND_YELLOW : BRAND_RED}>
