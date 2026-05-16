@@ -437,8 +437,11 @@ export default function Swap() {
   // errors
   const [showInverted, setShowInverted] = useState<boolean>(false)
 
-  // warnings on slippage
-  const priceImpactSeverity = warningSeverity(priceImpactWithoutFee)
+  // warnings on slippage. When price impact is unknown (e.g. aggregator
+  // route — we only compute impact for BrownFi V2) treat as severity 0
+  // rather than letting warningSeverity's undefined-handling default to
+  // 4 ("Price Impact Too High") and block the swap.
+  const priceImpactSeverity = priceImpactWithoutFee ? warningSeverity(priceImpactWithoutFee) : 0
 
   // show approve flow when: no error on inputs, not approved or pending, or approved in current session
   // never show if price impact is above threshold in non expert mode
