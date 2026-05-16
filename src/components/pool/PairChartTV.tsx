@@ -1,6 +1,6 @@
 import { ChainId, Pair } from '@brownfi/sdk'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { isMainnet } from 'connectors'
+import { isMainnet, isV3Enabled } from 'connectors'
 import {
   AreaSeries,
   ColorType,
@@ -22,12 +22,13 @@ import { formatPrice } from 'utils/prices'
 // (querying the field on an unsupported chain returns a GraphQL validation
 // error and breaks the chart).
 //
-// Empty on mainnet: production `api.brownfi.io` doesn't have `uniV2Price` on
-// its PairDayData/PairHourData schema yet (only beta does). Requesting it
-// against prod returns a GraphQL validation error and breaks the chart on
-// every chain in the allowlist. Switch the env var `VITE_ENVIRONMENT=beta`
-// to enable the field, or wait for the backend to roll it to production.
-const CHAINS_WITH_UNIV2_PRICE = isMainnet
+// Empty when pointing at the production API (`api.brownfi.io`) since it
+// doesn't expose `uniV2Price` on PairDayData/PairHourData yet — only the
+// beta API does. Requesting the field against prod returns a GraphQL
+// validation error and breaks the chart. Capability follows the API URL,
+// not the env name: a beta-branded deployment that talks to prod API also
+// needs the field stripped.
+const CHAINS_WITH_UNIV2_PRICE = !isV3Enabled
   ? new Set<number>()
   : new Set<number>([
       ChainId.BASE_MAINNET,

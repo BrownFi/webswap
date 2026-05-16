@@ -1,6 +1,6 @@
 import { useActiveWeb3React } from 'hooks'
 import { useVersion } from 'hooks/useVersion'
-import { isMainnet } from 'connectors'
+import { isV3Enabled } from 'connectors'
 import { ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
 
 type Props = {
@@ -21,8 +21,10 @@ const SwitchVersion = ({ isMobile }: Props) => {
     setTimeout(() => location.reload(), 200)
   }
 
-  // Hide on mainnet — production shows V2 only
-  if (isMainnet) return null
+  // Hide when V3 isn't available (production API doesn't have /indexer/v3).
+  // Beta-branded deployments pointing at prod API also hit this — capability
+  // follows VITE_API_URL, not VITE_ENVIRONMENT.
+  if (!isV3Enabled) return null
   if (isDisabled || versions.length <= 1) return null
 
   return (
