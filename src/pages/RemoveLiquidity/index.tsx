@@ -591,7 +591,7 @@ export default function RemoveLiquidity() {
                   <AutoColumn gap="16px">
                     <button
                       type="button"
-                      className="flex items-center justify-between w-full px-4 py-2 min-h-12 bg-[#120F0D] border border-[#2F2823] hover:bg-[#2F2823] rounded-xl"
+                      className="flex items-center justify-between w-full px-4 py-2 min-h-12 bg-[#120F0D] border border-[#2F2823] hover:bg-[#2F2823] rounded-lg"
                       onClick={handleOpenZapCurrencyModal}
                     >
                       {zapOutCurrency ? (

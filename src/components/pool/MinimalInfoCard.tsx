@@ -55,7 +55,7 @@ export function MinimalInfoCard({ pair, showUnwrapped = false }: PositionCardPro
   return (
     <>
       {userPoolBalance && JSBI.greaterThan(userPoolBalance.raw, JSBI.BigInt(0)) ? (
-        <div style={{ background: '#2F2823', borderRadius: '24px', padding: '24px' }}>
+        <div style={{ background: '#2F2823', borderRadius: '18px', padding: '24px' }}>
           <AutoColumn gap="16px">
             <span
               style={{
@@ -96,7 +96,7 @@ export function MinimalInfoCard({ pair, showUnwrapped = false }: PositionCardPro
           </AutoColumn>
         </div>
       ) : (
-        <div style={{ background: '#2F2823', borderRadius: '24px', padding: '24px' }}>
+        <div style={{ background: '#2F2823', borderRadius: '18px', padding: '24px' }}>
           <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#C4B89A', textAlign: 'center', display: 'block' }}>
             By adding liquidity you&apos;ll earn {tradingFee}% of all trades on this pair proportional to your share of
             the pool. Fees are added to the pool, accrue in real time and can be claimed by withdrawing your liquidity.

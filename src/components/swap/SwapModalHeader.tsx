@@ -38,7 +38,7 @@ export default function SwapModalHeader({
 
   return (
     <AutoColumn gap={'md'} className="mt-[20px]">
-      <div style={{ background: '#2F2823', borderRadius: '24px', padding: '24px', marginBottom: '4px' }}>
+      <div style={{ background: '#2F2823', borderRadius: '18px', padding: '24px', marginBottom: '4px' }}>
         <p style={{ fontFamily: 'Inter', fontSize: '16px', fontWeight: 500, color: '#CFC7C1', marginBottom: '8px' }}>You Pay</p>
         <RowBetween align="center">
           <TruncatedText
@@ -52,7 +52,7 @@ export default function SwapModalHeader({
           <CurrencyLogo currency={trade.inputAmount?.currency} size={'32px'} style={{ marginRight: '0' }} />
         </RowBetween>
       </div>
-      <div style={{ background: '#2F2823', borderRadius: '24px', padding: '24px', marginBottom: '4px' }}>
+      <div style={{ background: '#2F2823', borderRadius: '18px', padding: '24px', marginBottom: '4px' }}>
         <p style={{ fontFamily: 'Inter', fontSize: '16px', fontWeight: 500, color: '#CFC7C1', marginBottom: '8px' }}>You Receive</p>
         <RowBetween align="center">
           <TruncatedText
@@ -81,7 +81,7 @@ export default function SwapModalHeader({
               <TYPE.main color={theme.primary1}> Price Updated</TYPE.main>
             </RowFixed>
             <ButtonPrimary
-              style={{ padding: '.5rem', width: 'fit-content', fontSize: '0.825rem', borderRadius: '12px' }}
+              style={{ padding: '.5rem', width: 'fit-content', fontSize: '0.825rem', borderRadius: '8px' }}
               onClick={onAcceptChanges}
             >
               Accept

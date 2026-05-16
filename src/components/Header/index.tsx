@@ -37,7 +37,7 @@ const StyledConnectButton = () => {
                       color: '#FFFFFF',
                       background: '#985C2A',
                       border: 'none',
-                      borderRadius: '12px',
+                      borderRadius: '8px',
                       padding: '12px 24px',
                       height: '48px',
                       cursor: 'pointer',
@@ -136,7 +136,7 @@ function StyledNavLink({
       end={end}
       className={({ isActive }) =>
         `flex items-center justify-center cursor-pointer no-underline
-        text-white text-[16px] font-medium py-2 px-6 rounded-lg
+        text-white text-[16px] font-medium py-2 px-6 rounded-md
         hover:text-[#D59967] transition-colors
         ${isActive || className?.includes('active') ? '!text-[#D59967]' : ''}
         ${className ?? ''}`
@@ -150,7 +150,7 @@ function StyledNavLink({
 
 export const StyledMenuButton = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
-    className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-lg
+    className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-md
       h-[35px] hover:cursor-pointer hover:bg-bg4 focus:cursor-pointer focus:outline-none focus:bg-bg4
       [&>*]:stroke-text1 [&_svg]:mt-0.5 ${className ?? ''}`}
     {...props}
@@ -200,10 +200,10 @@ export default function Header() {
         <HamburgerMenu>
         <nav aria-label="Main navigation">
           <div
-            className="flex items-center p-1 rounded-xl max-md:flex-col max-md:bg-transparent max-md:shadow-none max-md:backdrop-blur-none max-md:rounded-none"
+            className="flex items-center p-1 rounded-lg max-md:flex-col max-md:bg-transparent max-md:shadow-none max-md:backdrop-blur-none max-md:rounded-none"
             style={{
               background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '12px',
+              borderRadius: '8px',
             }}
           >
             <StyledNavLink id="swap-nav-link" to="/swap">

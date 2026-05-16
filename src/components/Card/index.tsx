@@ -14,7 +14,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={classNames('w-full rounded-[12px] p-2', className)}
+        className={classNames('w-full rounded-[8px] p-2', className)}
         style={{
           width: width ?? undefined,
           padding: padding ?? undefined,
@@ -83,7 +83,7 @@ export const BlueCard = React.forwardRef<HTMLDivElement, CardProps>(({ children,
   return (
     <Card
       ref={ref}
-      className={classNames('w-fit rounded-[12px] bg-[rgba(196,148,58,0.1)] text-primary1', className)}
+      className={classNames('w-fit rounded-[8px] bg-[rgba(196,148,58,0.1)] text-primary1', className)}
       {...rest}
     >
       <span className="text-xs font-medium text-greenMain">{children}</span>

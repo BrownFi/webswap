@@ -401,7 +401,7 @@ const PairChartTVInner = ({ pair }: Props) => {
       style={{
         background: '#1E1915',
         border: '1px solid #2F2823',
-        borderRadius: '16px',
+        borderRadius: '12px',
       }}
     >
       
@@ -409,7 +409,7 @@ const PairChartTVInner = ({ pair }: Props) => {
       <div className="flex items-center justify-end mb-3">
         <div
           className="inline-flex items-center gap-0.5 sm:gap-1"
-          style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 10, padding: 2 }}
+          style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 8, padding: 2 }}
         >
           {(['1h', '7d', '1m', '3m', '1y', 'all'] as Range[]).map((r) => (
             <button
@@ -489,7 +489,7 @@ const PairChartTVInner = ({ pair }: Props) => {
                 width: TIP_W,
                 background: 'rgba(20, 16, 14, 0.95)',
                 border: '1px solid #2F2823',
-                borderRadius: 8,
+                borderRadius: 6,
                 padding: '6px 8px',
                 fontFamily: 'Inter',
                 backdropFilter: 'blur(4px)',

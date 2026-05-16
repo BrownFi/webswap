@@ -50,14 +50,14 @@ const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   position: relative;
   overflow: hidden;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 8px;
   transition: all 0.2s ease;
   background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#1E1915')};
   gap: ${({ $expanded }) => ($expanded ? '24px' : '4px')};
 
   @media (min-width: 720px) {
     padding: 16px;
-    border-radius: 16px;
+    border-radius: 12px;
   }
 `
 
@@ -281,7 +281,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
               style={{
                 background: '#985C2A',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 padding: '6px 12px',
                 height: '40px',
                 fontFamily: 'Inter',
@@ -319,7 +319,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         {showMore && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             {/* Left panel: Pool stats */}
-            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '16px', background: 'transparent' }}>
+            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '12px', background: 'transparent' }}>
               <div className="flex items-center gap-3 mb-4">
                 <span
                   style={{
@@ -377,7 +377,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
 
             {/* Right panel: Your position */}
-            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '16px', background: 'transparent' }}>
+            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '12px', background: 'transparent' }}>
               <span
                 className="block mb-4"
                 style={{
@@ -441,7 +441,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       className="no-underline flex items-center justify-center flex-1"
                       style={{
                         background: '#985C2A',
-                        borderRadius: '12px',
+                        borderRadius: '8px',
                         padding: '10px 16px',
                         height: '44px',
                         fontFamily: 'Inter',
@@ -458,7 +458,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       className="no-underline flex items-center justify-center flex-1"
                       style={{
                         background: '#985C2A',
-                        borderRadius: '12px',
+                        borderRadius: '8px',
                         padding: '10px 16px',
                         height: '44px',
                         fontFamily: 'Inter',
@@ -486,7 +486,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                           color: '#FFFFFF',
                           background: '#985C2A',
                           border: 'none',
-                          borderRadius: '12px',
+                          borderRadius: '8px',
                           padding: '12px 24px',
                           height: '48px',
                           cursor: 'pointer',

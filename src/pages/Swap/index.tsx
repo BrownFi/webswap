@@ -640,7 +640,7 @@ export default function Swap() {
                       alignItems: 'center',
                       gap: 6,
                       padding: '4px 10px',
-                      borderRadius: 8,
+                      borderRadius: 6,
                       background: 'rgba(216, 160, 114, 0.08)',
                       border: '1px solid rgba(216, 160, 114, 0.30)',
                       fontFamily: 'Inter',

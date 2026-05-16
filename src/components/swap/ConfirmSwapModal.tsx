@@ -121,7 +121,7 @@ export default function ConfirmSwapModal({
             style={{
               display: 'inline-flex',
               padding: '2px 8px',
-              borderRadius: 8,
+              borderRadius: 6,
               background: 'rgba(216, 160, 114, 0.12)',
               border: '1px solid rgba(216, 160, 114, 0.35)',
               fontSize: 12,

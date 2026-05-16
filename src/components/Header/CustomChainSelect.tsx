@@ -60,7 +60,7 @@ export const ChainModal = ({
         style={{
           background: '#1E1915',
           border: '1px solid #2F2823',
-          borderRadius: '32px',
+          borderRadius: '24px',
           padding: '24px',
           margin: '8px',
           width: '100%',
@@ -102,7 +102,7 @@ export const ChainModal = ({
                   gap: '12px',
                   width: '100%',
                   padding: '12px 16px',
-                  borderRadius: '12px',
+                  borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background 150ms',
