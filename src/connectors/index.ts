@@ -140,8 +140,16 @@ export const isMainnet = appEnv === 'mainnet'
 //     doesn't.
 // A beta-branded deployment can point at production API to mirror prod data,
 // in which case V3 + uniV2Price must be disabled even though env !== 'mainnet'.
-export const isBetaApi = (import.meta.env.VITE_API_URL ?? '').includes('bf-v2-api-beta')
-// V3 indexer (/indexer/v3) and uniV2Price field only exist on beta API today.
+//
+// Match both URLs that point at the dev backend:
+//   - bf-v2-api-beta.brownfi.io  (legacy alias)
+//   - dev-api.brownfi.io         (new alias)
+// Both serve the same DB. Production aliases (api.brownfi.io,
+// beta-api.brownfi.io) currently lack V3 + uniV2Price, so they don't match.
+export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi)/.test(
+  import.meta.env.VITE_API_URL ?? '',
+)
+// V3 indexer (/indexer/v3) and uniV2Price field only exist on the dev API today.
 export const isV3Enabled = isBetaApi
 
 const mainChains: readonly [Chain, ...Chain[]] = [
