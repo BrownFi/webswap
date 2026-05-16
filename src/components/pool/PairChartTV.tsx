@@ -21,16 +21,24 @@ import { formatPrice } from 'utils/prices'
 // Kept as an explicit allowlist so a future chain stays gated until verified
 // (querying the field on an unsupported chain returns a GraphQL validation
 // error and breaks the chart).
-const CHAINS_WITH_UNIV2_PRICE = new Set<number>([
-  ChainId.BASE_MAINNET,
-  ChainId.BERA_MAINNET,
-  ChainId.BSC_MAINNET,
-  ChainId.ARBITRUM_MAINNET,
-  ChainId.LINEA_MAINNET,
-  ChainId.SEI_MAINNET,
-  ChainId.HYPER_EVM,
-  ChainId.MONAD,
-])
+//
+// Empty on mainnet: production `api.brownfi.io` doesn't have `uniV2Price` on
+// its PairDayData/PairHourData schema yet (only beta does). Requesting it
+// against prod returns a GraphQL validation error and breaks the chart on
+// every chain in the allowlist. Switch the env var `VITE_ENVIRONMENT=beta`
+// to enable the field, or wait for the backend to roll it to production.
+const CHAINS_WITH_UNIV2_PRICE = isMainnet
+  ? new Set<number>()
+  : new Set<number>([
+      ChainId.BASE_MAINNET,
+      ChainId.BERA_MAINNET,
+      ChainId.BSC_MAINNET,
+      ChainId.ARBITRUM_MAINNET,
+      ChainId.LINEA_MAINNET,
+      ChainId.SEI_MAINNET,
+      ChainId.HYPER_EVM,
+      ChainId.MONAD,
+    ])
 const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
 const buildQuery = (template: string, chainId: number) =>
   hasUniV2Price(chainId) ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
