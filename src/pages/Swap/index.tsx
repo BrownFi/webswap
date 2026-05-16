@@ -506,7 +506,7 @@ export default function Swap() {
             onConfirm={handleSwap}
             swapErrorMessage={swapErrorMessage}
             onDismiss={handleConfirmDismiss}
-            bestRoute={best}
+            bestRoute={activeBest}
             inputAmount={parsedAmounts[Field.INPUT]}
             outputCurrency={currencies[Field.OUTPUT]}
           />
@@ -523,7 +523,11 @@ export default function Swap() {
               otherCurrency={currencies[Field.OUTPUT]}
               id="swap-currency-input"
               showCommonBases={true}
-              loading={loadingExactOut}
+              // Pulse only when this field is the DEPENDENT side (user is
+              // typing OUTPUT). `pendingQuote` is the synchronous bridge
+              // that engages before the real loading flag, so a field
+              // user types into never pulses underneath them.
+              loading={loadingExactOut || (independentField === Field.OUTPUT && pendingQuote)}
             />
             <AutoColumn justify="space-between" className="relative">
               <AutoRow
@@ -557,7 +561,7 @@ export default function Swap() {
             <CurrencyInputPanel
               value={displayedOutput}
               onUserInput={handleTypeOutput}
-              loading={loadingExactIn || bestLoading}
+              loading={loadingExactIn || bestLoading || (independentField === Field.INPUT && pendingQuote)}
               label={'Your Receive'}
               showMaxButton={false}
               currency={currencies[Field.OUTPUT]}
