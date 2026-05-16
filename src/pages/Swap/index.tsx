@@ -1,5 +1,5 @@
 import { Currency, CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ArrowDown } from 'react-feather'
 import { Text } from 'components/Rebass'
 import { ThemeContext } from 'styled-components'
@@ -292,29 +292,14 @@ export default function Swap() {
   }, [isAggregatorRoute, isExactIn, best, currencies])
   const rawDisplayedOutput = aggregatorOutputDisplay ?? formattedAmounts[Field.OUTPUT]
 
-  // Hold the OUTPUT field stable until quotes for the CURRENT input
-  // have actually arrived. The pipeline has cascading delays:
-  //   useDebounce(typedValue, 300) → useTradeExactIn setTimeout(300)
-  //   → multicall RPC.
-  // Between those stages, the per-source loading flags briefly dip
-  // to false even though the trade still reflects the PREVIOUS input.
-  // To eliminate every gap we combine two checks:
-  //
-  // 1) `typingPending` — set SYNCHRONOUSLY when typedValue changes
-  //    (via the render-time guard pattern, so it's in effect on the
-  //    same render as the new typedValue, no 1-frame flash). Held
-  //    for 700ms which covers the full debounce + setTimeout chain.
-  //
-  // 2) `stable.forInput` — records which typedValue produced the
-  //    currently-visible value. We only update it via the stable-
-  //    update effect, which depends on `rawDisplayedOutput` /
-  //    `isQuoteLoading` but NOT on typedValue. The latest typedValue
-  //    is read via ref so a typedValue change can't prematurely
-  //    "claim" old rawDisplayedOutput as fresh.
-  // Fingerprint of every input that affects quote output. Whenever any
-  // of these changes (user typed, swapped tokens, switched chains via
-  // currency change), the existing quote becomes stale. We engage the
-  // loading state until fresh data lands.
+  // Synchronous bridge between keystroke and the per-source loading flags.
+  // useDebounce(300) + useTradeExactIn's setTimeout(300) + multicall create
+  // a sub-second gap where the user typed but no `loading` flag is true
+  // yet — and the OUTPUT field is still showing the previous quote. We
+  // engage `pendingQuote` on the same render the inputs change (render-
+  // time setState pattern), then hand off to the real loading flags as
+  // soon as they fire. NumericalInput keeps the previous value visible
+  // and pulses while any loading flag is true, so there's no flicker.
   const inputFingerprint = useMemo(() => {
     const inSym = currencies[Field.INPUT] instanceof Token
       ? (currencies[Field.INPUT] as Token).address
@@ -325,80 +310,20 @@ export default function Swap() {
     return `${typedValue}|${inSym}|${outSym}|${independentField}`
   }, [typedValue, currencies, independentField])
 
-  const fingerprintRef = useRef(inputFingerprint)
-  fingerprintRef.current = inputFingerprint
-
-  const [typingPending, setTypingPending] = useState(false)
   const [trackedFingerprint, setTrackedFingerprint] = useState(inputFingerprint)
-  // `hasSeenLoading` flips true once the per-source loading flags
-  // engaged at least once after the last input change. We use this
-  // to clear `typingPending` only AFTER the pipeline has actually
-  // started a fetch — otherwise on first-input-after-token-select,
-  // typingPending could expire before useTradeExactIn's setTimeout
-  // fires (which itself waits for usePairs to finish multicalling
-  // pool reserves), leaving a gap where stale data flashes.
-  const [hasSeenLoading, setHasSeenLoading] = useState(false)
+  const [pendingQuote, setPendingQuote] = useState(false)
   if (trackedFingerprint !== inputFingerprint) {
     setTrackedFingerprint(inputFingerprint)
-    // Only engage the spinner when there's actually a quote to wait
-    // for. If typedValue is empty / both currencies are missing / there's
-    // nothing fetchable, the per-source loading flags will never fire
-    // and `hasSeenLoading` will never flip — typingPending would sit
-    // at the 2000ms hard cap for nothing.
-    const willFetch = !!typedValue &&
-      Number(typedValue) > 0 &&
-      !!currencies[Field.INPUT] &&
-      !!currencies[Field.OUTPUT]
-    setTypingPending(willFetch)
-    setHasSeenLoading(false)
+    const willFetch =
+      !!typedValue && Number(typedValue) > 0 && !!currencies[Field.INPUT] && !!currencies[Field.OUTPUT]
+    setPendingQuote(willFetch)
   }
   useEffect(() => {
-    if (bestLoading || loadingExactIn || loadingExactOut) {
-      setHasSeenLoading(true)
-    }
+    if (bestLoading || loadingExactIn || loadingExactOut) setPendingQuote(false)
   }, [bestLoading, loadingExactIn, loadingExactOut])
-  useEffect(() => {
-    if (!typingPending) return
-    // Two-stage clear: (a) hard cap at 2000ms as a safety so we don't
-    // hang on a wedged pipeline; (b) early-clear once we've observed
-    // the per-source loading flags engage AND then settle (handover
-    // to the real loading flags happens cleanly).
-    const hardCap = setTimeout(() => setTypingPending(false), 2000)
-    return () => clearTimeout(hardCap)
-  }, [typingPending, trackedFingerprint])
-  useEffect(() => {
-    if (!typingPending) return
-    if (!hasSeenLoading) return
-    if (bestLoading || loadingExactIn || loadingExactOut) return
-    // We've seen loading engage and now settle — safe to hand off to
-    // the regular loading flags (which will be false right now, but
-    // any new fetch will flip them back on if needed).
-    setTypingPending(false)
-  }, [typingPending, hasSeenLoading, bestLoading, loadingExactIn, loadingExactOut])
 
-  const isQuoteLoading =
-    bestLoading || loadingExactIn || loadingExactOut || typingPending
-
-  const [stable, setStable] = useState<{ value: string; forInput: string }>({
-    value: '',
-    forInput: '',
-  })
-  useEffect(() => {
-    if (!isQuoteLoading) {
-      // Read fingerprint from the ref so an input change alone doesn't
-      // trigger this effect — only an actual data update
-      // (rawDisplayedOutput change) or a loading transition does.
-      setStable({ value: rawDisplayedOutput, forInput: fingerprintRef.current })
-    }
-  }, [rawDisplayedOutput, isQuoteLoading])
-
-  const isStableFresh = stable.forInput === inputFingerprint
-  const isLoadingOrStale = isQuoteLoading || !isStableFresh
-  const displayedOutput = !isExactIn
-    ? rawDisplayedOutput
-    : isLoadingOrStale
-    ? ''
-    : stable.value
+  const isLoadingOrStale = bestLoading || loadingExactIn || loadingExactOut || pendingQuote
+  const displayedOutput = rawDisplayedOutput
 
   // Both approval paths are called unconditionally per Hook rules. We pick
   // the one that matches the chosen route's source below. For aggregator
