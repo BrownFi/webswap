@@ -131,6 +131,19 @@ const monad = overrideChain({
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
+// Feature capability derived from the API URL, NOT the env name. The two are
+// orthogonal:
+//   - VITE_ENVIRONMENT controls deployment identity (mainnet/beta/testnet).
+//     Used for dev-only UI gates (admin stats, edit-pool, etc.).
+//   - VITE_API_URL controls which indexer the FE talks to. Only the beta API
+//     currently exposes V3 schema + uniV2Price; production api.brownfi.io
+//     doesn't.
+// A beta-branded deployment can point at production API to mirror prod data,
+// in which case V3 + uniV2Price must be disabled even though env !== 'mainnet'.
+export const isBetaApi = (import.meta.env.VITE_API_URL ?? '').includes('bf-v2-api-beta')
+// V3 indexer (/indexer/v3) and uniV2Price field only exist on beta API today.
+export const isV3Enabled = isBetaApi
+
 const mainChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,

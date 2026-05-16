@@ -3,7 +3,7 @@ import { ChainId, Pair } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
-import { isMainnet } from 'connectors'
+import { isMainnet, isV3Enabled } from 'connectors'
 import { ROUTER_ADDRESS_V1, ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
 
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
@@ -19,11 +19,14 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
   }, [location.search])
 
   const [version, isDisabled] = useMemo(() => {
-    // Mainnet: lock specific chains to their version
+    // V3 not available when API doesn't support /indexer/v3 (prod API today).
+    // Mainnet keeps its per-chain lock list because the V1 chains (Viction,
+    // U2U) live on mainnet only.
     if (isMainnet) {
       if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
         return [1, true]
       }
+      // Mainnet locks to V2 across the V2-deployed chain set.
       if (
         [
           ChainId.ARBITRUM_MAINNET,
@@ -41,12 +44,15 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       }
       return [2, false]
     }
-    // Beta/testnet: allow version switching, but validate stored version has a router
+    // Non-mainnet env (beta/testnet). If the API doesn't have V3 (e.g. beta
+    // deployment pointing at prod API), force V2 to prevent /indexer/v3
+    // 404s. Otherwise honour the user's stored version selection.
+    if (!isV3Enabled) return [2, true]
     const selectedVersion = stableVersion
     if (selectedVersion === 1 && !ROUTER_ADDRESS_V1[chainId as number]) return [2, false]
     if (selectedVersion === 3 && !ROUTER_ADDRESS_V3[chainId as number]) return [2, false]
     return [selectedVersion, false]
-  }, [isMainnet, chainId, stableVersion])
+  }, [chainId, stableVersion])
 
   const dispatchSwitchVersion = (version: number) => {
     dispatch(switchVersion(version))
