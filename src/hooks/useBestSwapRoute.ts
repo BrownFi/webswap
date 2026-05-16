@@ -250,7 +250,14 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
         selectable[0] ?? null
     }
 
-    const isLoading = queries.some((q) => q.isFetching)
+    // Use `isLoading` (initial fetch only) — NOT `isFetching` (any
+    // in-flight). Background refetches every 20s keep the quote fresh
+    // without flipping this flag, so the UI doesn't pulse on every
+    // refresh tick. If a refetch changes the amountOut the next render
+    // picks it up silently; that's fine because the pulse is meant to
+    // signal "you triggered a recalculation", not "data is refreshing
+    // in the background."
+    const isLoading = queries.some((q) => q.isLoading)
     // Aggregator stale-quote protection. BrownFi-native has no TTL; only
     // aggregator routes get a `validUntil`. If the chosen route has
     // expired we let the UI flag it and refetch.

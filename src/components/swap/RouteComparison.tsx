@@ -112,12 +112,23 @@ export function RouteComparison({
     // route (e.g., V2 with the 90%-reserve issue) might top the sorted
     // list by amountOut but it can't be the "Best" since you can't use
     // it. Shift the Best badge to the first selectable row.
-    const firstSelectable = candidates.find((c) => !c.unavailable)?.source
+    const firstSelectable = candidates.find((c) => !c.unavailable)
+    const bestAmount = firstSelectable?.amountOut
+    // Per-row delta vs best. Pure BigNumber arithmetic on data we
+    // already have — no extra queries, no hooks. Expressed in bps
+    // (basis points, 1/100 of a percent) so a -21 means -0.21%.
+    const deltaBpsFor = (c: UnifiedRoute): number | undefined => {
+      if (!bestAmount || c.source === firstSelectable?.source) return undefined
+      if (c.unavailable) return undefined
+      if (bestAmount.isZero()) return undefined
+      return Number(c.amountOut.sub(bestAmount).mul(10000).div(bestAmount).toString())
+    }
     return candidates.map((c) => ({
       key: c.source as AggregatorChoice,
       label: c.sourceName,
       amountOut: formatAmount(c.amountOut, outputCurrency),
-      isBest: c.source === firstSelectable,
+      deltaBps: deltaBpsFor(c),
+      isBest: c.source === firstSelectable?.source,
       unavailable: c.unavailable,
     }))
   }, [candidates, outputCurrency])
@@ -308,7 +319,7 @@ export function RouteComparison({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '10px 12px',
-                    borderRadius: '10px',
+                    borderRadius: '8px',
                     border: `1px solid ${active ? '#985C2A' : 'transparent'}`,
                     background: active ? 'rgba(152, 92, 42, 0.10)' : 'transparent',
                     cursor: disabled ? 'not-allowed' : 'pointer',
@@ -394,16 +405,35 @@ export function RouteComparison({
                       </span>
                     )}
                   </div>
-                  <span
-                    style={{
-                      fontFamily: 'Inter',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: active ? '#FBFBFD' : '#CFC7C1',
-                    }}
-                  >
-                    {row.amountOut} {outputSymbol}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                    <span
+                      style={{
+                        fontFamily: 'Inter',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: active ? '#FBFBFD' : '#CFC7C1',
+                      }}
+                    >
+                      {row.amountOut} {outputSymbol}
+                    </span>
+                    {row.deltaBps !== undefined && (
+                      <span
+                        style={{
+                          fontFamily: 'Inter',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          // Negative delta is the typical case (worse than
+                          // best). Use muted amber so it reads as "info,
+                          // not error" — a pinned non-best route is a
+                          // valid choice, not a problem.
+                          color: row.deltaBps < 0 ? '#D8A072' : '#83CF84',
+                        }}
+                      >
+                        {row.deltaBps > 0 ? '+' : ''}
+                        {(row.deltaBps / 100).toFixed(2)}%
+                      </span>
+                    )}
+                  </div>
                 </button>
               )
             })}
