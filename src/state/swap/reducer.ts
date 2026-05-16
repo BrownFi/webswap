@@ -63,9 +63,14 @@ export default createReducer<SwapState>(initialState, (builder) =>
       }
     })
     .addCase(switchCurrencies, (state) => {
+      // Aggregator-first revert semantics: swap the two currencyIds but
+      // KEEP `independentField` as-is so the typed amount stays an INPUT
+      // value (exact-in) — Kyber/most aggregators only support exact-in,
+      // so flipping to exact-out would silently drop aggregator routes.
+      // UX read: "what token I'm working with" rather than the classic
+      // Uniswap "I send → I receive" flip.
       return {
         ...state,
-        independentField: state.independentField === Field.INPUT ? Field.OUTPUT : Field.INPUT,
         [Field.INPUT]: { currencyId: state[Field.OUTPUT].currencyId },
         [Field.OUTPUT]: { currencyId: state[Field.INPUT].currencyId },
       }
