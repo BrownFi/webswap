@@ -331,7 +331,7 @@ export default function Pool() {
                   height: '48px',
                   background: '#120F0D',
                   border: '1px solid #2F2823',
-                  borderRadius: '12px',
+                  borderRadius: '8px',
                   padding: '12px 16px',
                   fontFamily: 'Inter',
                   fontWeight: 500,
@@ -424,7 +424,7 @@ function PoolStatsBar({
           }`}
           style={{
             background: '#2F2823',
-            borderRadius: '16px',
+            borderRadius: '12px',
           }}
         >
           {isLoading && !hasData ? (
@@ -555,7 +555,7 @@ function PairListSkeleton() {
             gap: '8px',
             minHeight: '60px',
             background: '#1E1915',
-            borderRadius: '12px',
+            borderRadius: '8px',
             marginBottom: '8px',
           }}
         >

@@ -104,7 +104,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
   const showToggle = !!account && !chainMismatch && hasLiquidity
 
   return (
-    <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+    <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
       <button
         type="button"
         onClick={() => showToggle && setExpanded((v) => !v)}
@@ -162,7 +162,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
             className="no-underline inline-flex items-center justify-center w-full"
             style={{
               background: '#985C2A',
-              borderRadius: '10px',
+              borderRadius: '8px',
               padding: '10px',
               fontFamily: 'Inter',
               fontSize: '14px',
@@ -276,7 +276,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
               className="no-underline inline-flex items-center justify-center flex-1"
               style={{
                 background: '#985C2A',
-                borderRadius: '10px',
+                borderRadius: '8px',
                 padding: '10px',
                 fontFamily: 'Inter',
                 fontSize: '14px',
@@ -293,7 +293,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                 style={{
                   background: 'transparent',
                   border: '1px solid #493E35',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   padding: '10px',
                   fontFamily: 'Inter',
                   fontSize: '14px',
@@ -310,7 +310,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                 style={{
                   background: 'transparent',
                   border: '1px solid #2F2823',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   padding: '10px',
                   fontFamily: 'Inter',
                   fontSize: '14px',

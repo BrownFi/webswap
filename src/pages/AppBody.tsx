@@ -6,7 +6,7 @@ export const BodyWrapper = React.forwardRef<HTMLDivElement, React.HTMLAttributes
     <div
       ref={ref}
       className={classNames(
-        'relative w-full max-w-[690px] bg-[#1E1915] rounded-[20px] sm:rounded-[32px] p-[16px] sm:p-[24px] border border-[#2F2823]',
+        'relative w-full max-w-[690px] bg-[#1E1915] rounded-[16px] sm:rounded-[24px] p-[16px] sm:p-[24px] border border-[#2F2823]',
         'shadow-[0px_0px_1px_rgba(0,0,0,0.01),0px_4px_8px_rgba(0,0,0,0.04),0px_16px_24px_rgba(0,0,0,0.04),0px_24px_24px_rgba(0,0,0,0.01)]',
         className,
       )}

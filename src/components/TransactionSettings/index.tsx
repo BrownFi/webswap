@@ -22,7 +22,7 @@ const FancyButton = styled.button`
   color: #978A80;
   align-items: center;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-family: Inter;
   font-size: 16px;
   font-weight: 500;
@@ -53,7 +53,7 @@ const Option = styled(FancyButton)<{ active: boolean }>`
   font-weight: 500;
   height: 48px;
   font-size: 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 12px 8px;
 `
 
@@ -79,7 +79,7 @@ const OptionCustom = styled(FancyButton)<{ active?: boolean; warning?: boolean }
   flex: 1;
   background: #120F0D;
   border: 1px solid ${({ warning }) => warning ? '#ff6871' : '#2F2823'};
-  border-radius: 12px;
+  border-radius: 8px;
   :hover {
     border: 1px solid ${({ warning }) => warning ? darken(0.1, '#ff6871') : '#2F2823'};
   }
@@ -88,7 +88,7 @@ const OptionCustom = styled(FancyButton)<{ active?: boolean; warning?: boolean }
     width: 100%;
     height: 100%;
     border: 0px;
-    border-radius: 12px;
+    border-radius: 8px;
   }
 `
 

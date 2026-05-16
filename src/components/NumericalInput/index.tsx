@@ -1,8 +1,18 @@
-import React from 'react'
-import styled from 'styled-components'
+import React, { useEffect, useRef } from 'react'
+import styled, { keyframes, css } from 'styled-components'
 import { escapeRegExp } from 'utils'
 
-const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: string }>`
+// Subtle opacity pulse used while a quote is in-flight. Sits on the SAME
+// input element rather than swapping in a spinner — keeps the value
+// visible, prevents layout shift, and reads as "this is updating"
+// instead of "this is gone."
+const pulseKeyframes = keyframes`
+  0% { opacity: 1; }
+  50% { opacity: 0.45; }
+  100% { opacity: 1; }
+`
+
+const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: string; $loading?: boolean }>`
   color: ${({ error }) => (error ? '#ff6b6b' : '#FEFEFE')};
   width: 0;
   position: relative;
@@ -21,6 +31,12 @@ const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: s
   text-overflow: ellipsis;
   padding: 0px;
   -webkit-appearance: textfield;
+
+  ${({ $loading }) =>
+    $loading &&
+    css`
+      animation: ${pulseKeyframes} 1.1s ease-in-out infinite;
+    `};
 
   ${({ theme }) => theme.mediaWidth.upToSmall`
     font-size: 24px;
@@ -42,44 +58,6 @@ const StyledInput = styled.input<{ error?: boolean; fontSize?: string; align?: s
 
   ::placeholder {
     color: ${({ theme }) => theme.text4};
-  }
-`
-
-const Loader = styled.div`
-  border-width: 0.3rem;
-  border-style: solid;
-  border-color: silver silver silver transparent;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-  position: relative;
-  -webkit-animation: spin 2s infinite;
-  animation: spin 2s infinite;
-  margin-right: auto;
-
-  &:before,
-  &:after {
-    content: '';
-    width: 0.1rem;
-    height: 0.1rem;
-    border-radius: 50%;
-    background: black;
-    position: absolute;
-    left: 0.125rem;
-  }
-
-  &:before {
-    top: 0.063rem;
-  }
-
-  &:after {
-    bottom: 0.063rem;
-  }
-
-  @keyframes spin {
-    100% {
-      transform: rotate(360deg);
-    }
   }
 `
 
@@ -111,14 +89,26 @@ export const Input = React.memo(function InnerInput({
     }
   }
 
-  if (loading) {
-    return <Loader />
-  }
+  // Last-good value retention. While loading, the parent often briefly
+  // passes "" between quote refetches; we keep showing the previous value
+  // so the field never blanks. When the user explicitly clears (value=""
+  // AND !loading), the ref clears too.
+  const refValue = useRef<string | number>(value)
+  useEffect(() => {
+    if (value !== refValue.current && value !== '') {
+      refValue.current = value
+    } else if (value === '' && !loading) {
+      refValue.current = ''
+    }
+  }, [value, loading])
+
+  const displayedValue = value === '' && loading ? refValue.current : value
 
   return (
     <StyledInput
       {...rest}
-      value={value}
+      $loading={loading}
+      value={displayedValue}
       onChange={(event) => {
         // replace commas with periods, because uniswap exclusively uses period as the decimal separator
         enforcer(event.target.value.replace(/,/g, '.'))

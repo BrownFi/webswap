@@ -29,7 +29,7 @@ const CurrencySelect = styled.button<{ selected: boolean }>`
   font-weight: 500;
   background: #2F2823;
   color: white;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #807266;
   box-shadow: none;
   outline: none;
@@ -67,7 +67,7 @@ const Aligner = styled.span`
 const InputPanel = styled.div<{ hideInput?: boolean }>`
   ${({ theme }) => theme.flexColumnNoWrap}
   position: relative;
-  border-radius: 24px;
+  border-radius: 18px;
   padding: 24px;
   z-index: 1;
   background: #2F2823;
@@ -81,12 +81,12 @@ const InputPanel = styled.div<{ hideInput?: boolean }>`
 
   ${({ theme }) => theme.mediaWidth.upToSmall`
     padding: 16px;
-    border-radius: 16px;
+    border-radius: 12px;
   `};
 `
 
 const Container = styled.div<{ hideInput: boolean }>`
-  border-radius: 24px;
+  border-radius: 18px;
   border: 0;
   background-color: transparent;
 `
@@ -205,7 +205,7 @@ export function CurrencyInputPanel({
             </RowBetween>
           </LabelRow>
         )}
-        <InputRow style={hideInput ? { padding: '0', borderRadius: '8px' } : {}} selected={disableCurrencySelect}>
+        <InputRow style={hideInput ? { padding: '0', borderRadius: '6px' } : {}} selected={disableCurrencySelect}>
           {!hideInput && (
             <>
               <NumericalInput

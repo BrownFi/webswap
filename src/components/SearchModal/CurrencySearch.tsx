@@ -30,7 +30,7 @@ const ContentWrapper = styled(Column)`
 
 const Footer = styled.div`
   width: 100%;
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 20px;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
@@ -163,7 +163,7 @@ export function CurrencySearch({
             height: 44,
             background: '#120F0D',
             border: '1px solid #2F2823',
-            borderRadius: 12,
+            borderRadius: 8,
             padding: '0 16px',
             fontFamily: 'Inter',
             fontSize: 14,

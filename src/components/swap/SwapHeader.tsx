@@ -1,6 +1,5 @@
 import styled from 'styled-components'
 import { SettingsTab } from 'components/Settings'
-import SwitchVersion from 'components/SwitchVersion'
 
 const StyledSwapHeader = styled.div`
   padding: 0 0 24px 0;
@@ -34,7 +33,6 @@ export default function SwapHeader() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <StyledSwaptitle>Swap</StyledSwaptitle>
         <div className="flex items-center gap-3">
-          <SwitchVersion />
           <SettingsTab />
         </div>
       </div>

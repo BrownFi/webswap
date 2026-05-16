@@ -19,7 +19,6 @@ import { computeSlippageAdjustedAmounts } from 'utils/prices'
 import { useActiveWeb3React } from './index'
 import { useTokenContract } from './useContract'
 import { Version } from './useToggledVersion'
-import { useVersion } from './useVersion'
 
 export enum ApprovalState {
   UNKNOWN,
@@ -92,10 +91,13 @@ export function useApproveCallback(
   return [approvalState, approve]
 }
 
-// wraps useApproveCallback in the context of a swap
+// wraps useApproveCallback in the context of a swap. The approval target
+// (router address) is derived from the trade's own pair version, not the
+// global useVersion state — that way a V3 trade always approves the V3
+// router even when the global state is pinned to V2 (and vice versa).
+// Without this, the Phase 7 dual V2+V3 quoting would mis-approve.
 export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) {
   const { chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
 
   const amountToApprove = useMemo(
     () => (trade ? computeSlippageAdjustedAmounts(trade, allowedSlippage)[Field.INPUT] : undefined),
@@ -104,14 +106,18 @@ export function useApproveCallbackFromTrade(trade?: Trade, allowedSlippage = 0) 
   const tradeIsV1 = getTradeVersion(trade) === Version.v1
   const v1ExchangeAddress = useV1TradeExchangeAddress(trade)
 
+  // Trade.route.pairs[0].version is the actual pool version the swap will
+  // hit; fall back to 2 when the trade is undefined (no approval needed).
+  const tradePoolVersion: number = trade?.route?.pairs?.[0]?.version ?? 2
+
   return useApproveCallback(
     amountToApprove,
     tradeIsV1
       ? v1ExchangeAddress
       : chainId
-      ? version === 1
+      ? tradePoolVersion === 1
         ? ROUTER_ADDRESS_WITH_PRICE[chainId] || ROUTER_ADDRESS_V1[chainId]
-        : getRouterAddress(chainId, version)
+        : getRouterAddress(chainId, tradePoolVersion)
       : '',
   )
 }
