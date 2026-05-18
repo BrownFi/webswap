@@ -1,8 +1,9 @@
 /**
  * Route picker — inline accordion.
  *
- * Collapsed: a single row card showing the active route, an Auto/Best
- * badge, the amountOut, and a chevron. Click anywhere on the row to
+ * Collapsed: a single row card showing the active route, a Best badge
+ * (only when the active row is the best), the amountOut, and a chevron.
+ * Click anywhere on the row to
  * expand; the comparison panel slides down inline (pushing the swap
  * button below it). Click the chevron again to collapse.
  *
@@ -160,7 +161,6 @@ export function RouteComparison({
   if (candidates.length < 1) return null
   const activeRow = rows.find((r) => r.key === activeKey) ?? rows[0]
   const hasMultiple = candidates.length > 1
-  const isAuto = selected === 'auto'
 
   const handleSelect = (key: AggregatorChoice) => {
     // Clicking the currently-Best row means "stay on best" — drop the
@@ -250,24 +250,7 @@ export function RouteComparison({
               >
                 {activeRow.label}
               </span>
-              {isAuto ? (
-                <span
-                  style={{
-                    padding: '2px 6px',
-                    borderRadius: '6px',
-                    background: 'rgba(216, 160, 114, 0.12)',
-                    border: '1px solid rgba(216, 160, 114, 0.35)',
-                    fontFamily: 'Inter',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    color: '#D8A072',
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Auto
-                </span>
-              ) : activeRow.isBest ? (
+              {activeRow.isBest && (
                 <span
                   style={{
                     padding: '2px 6px',
@@ -284,7 +267,7 @@ export function RouteComparison({
                 >
                   Best
                 </span>
-              ) : null}
+              )}
             </>
           )}
         </div>
