@@ -52,6 +52,81 @@ import { useNavigate } from 'react-router-dom'
 import switchIcon from 'assets/svg/switch.svg'
 import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
+import { Repeat } from 'react-feather'
+import { StyledBalanceMaxMini } from 'components/swap/styleds'
+import QuestionHelper from 'components/QuestionHelper'
+
+// Aggregator-route Price ratio renderer — mirrors TradePrice's invert toggle
+// but derives the ratio from amountIn / amountOut directly instead of the V2
+// trade's Price object. Used when the active route is Kyber (or any future
+// aggregator), since V2's executionPrice doesn't reflect what's being signed.
+function AggregatorPriceRow({
+  amountInRaw,
+  inputDecimals,
+  inputSymbol,
+  amountOut,
+  outputDecimals,
+  outputSymbol,
+  showInverted,
+  setShowInverted,
+}: {
+  amountInRaw: string | undefined
+  inputDecimals: number
+  inputSymbol: string
+  amountOut: { toString(): string }
+  outputDecimals: number
+  outputSymbol: string
+  showInverted: boolean
+  setShowInverted: (v: boolean) => void
+}) {
+  const inNum = amountInRaw ? Number(amountInRaw) / 10 ** inputDecimals : 0
+  const outNum = Number(amountOut.toString()) / 10 ** outputDecimals
+  if (!isFinite(inNum) || !isFinite(outNum) || inNum === 0 || outNum === 0) return <span style={{ color: '#C4B89A', fontSize: 14 }}>-</span>
+  const forward = outNum / inNum
+  const inverted = inNum / outNum
+  const value = showInverted ? inverted : forward
+  const label = showInverted ? `${inputSymbol} per ${outputSymbol}` : `${outputSymbol} per ${inputSymbol}`
+  return (
+    <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 500, color: '#C4B89A', display: 'inline-flex', alignItems: 'center' }}>
+      {Number(value.toPrecision(6))} {label}
+      <StyledBalanceMaxMini onClick={() => setShowInverted(!showInverted)}>
+        <Repeat size={14} />
+      </StyledBalanceMaxMini>
+    </span>
+  )
+}
+
+// Aggregator-route details panel. Replaces AdvancedSwapDetails (which is
+// V2-trade-specific). We only render Minimum received here — Price Impact
+// and LP Fee aren't applicable for aggregator routes (Kyber's fee is built
+// into the quote, not exposed as a separate LP fee).
+function AggregatorDetails({
+  amountOutMin,
+  outputDecimals,
+  outputSymbol,
+}: {
+  amountOutMin: { toString(): string }
+  outputDecimals: number
+  outputSymbol: string
+}) {
+  const num = Number(amountOutMin.toString()) / 10 ** outputDecimals
+  const formatted = !isFinite(num) || num === 0 ? '0' : num < 0.000001 ? num.toExponential(2) : Number(num.toPrecision(6)).toString()
+  return (
+    <div style={{ width: '100%', padding: '0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 500, color: '#C4B89A' }}>
+            Minimum received
+          </span>
+          <QuestionHelper text="Your transaction will revert if there is a large, unfavorable price movement before it is confirmed." />
+        </span>
+        <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 500, color: '#C4B89A' }}>
+          {formatted} {outputSymbol}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 export default function Swap() {
   const navigate = useNavigate()
@@ -627,11 +702,29 @@ export default function Swap() {
                   </ClickableText>
                 </RowBetween>
               )}
-              {/* Hide the Price row while quotes are loading so the
-                  user doesn't see the previous trade's executionPrice
-                  bleeding into the new input. Reserved height keeps
-                  the layout stable. */}
-              {trade && !isLoadingOrStale ? (
+              {/* Price row — route-aware. For BrownFi-native we use the
+                  V2 trade's executionPrice (the existing TradePrice).
+                  For aggregator routes the V2 trade's price doesn't
+                  reflect what's actually being signed, so derive the
+                  ratio from activeBest's amountOut + the user's input
+                  amount. Hide while loading either way. */}
+              {!isLoadingOrStale && isAggregatorRoute && activeBest && parsedAmounts[Field.INPUT] ? (
+                <RowBetween align="center">
+                  <Text fontWeight={500} fontSize={14} color={theme.text2}>
+                    Price
+                  </Text>
+                  <AggregatorPriceRow
+                    amountInRaw={parsedAmounts[Field.INPUT]?.raw.toString()}
+                    inputDecimals={currencies[Field.INPUT] instanceof Token ? (currencies[Field.INPUT] as Token).decimals : 18}
+                    inputSymbol={getTokenSymbol(currencies[Field.INPUT], chainId) ?? ''}
+                    amountOut={activeBest.amountOut}
+                    outputDecimals={currencies[Field.OUTPUT] instanceof Token ? (currencies[Field.OUTPUT] as Token).decimals : 18}
+                    outputSymbol={getTokenSymbol(currencies[Field.OUTPUT], chainId) ?? ''}
+                    showInverted={showInverted}
+                    setShowInverted={setShowInverted}
+                  />
+                </RowBetween>
+              ) : trade && !isLoadingOrStale ? (
                 <RowBetween align="center">
                   <Text fontWeight={500} fontSize={14} color={theme.text2}>
                     Price
@@ -674,11 +767,23 @@ export default function Swap() {
               )}
             </AutoColumn>
           </AutoColumn>
-          {/* Same loading gate as the Price row — AdvancedSwapDetails
-              renders Minimum Received / Price Impact / LP Fee / Route
-              from `trade`, all of which would otherwise show stale
-              values from the previous input while the new one resolves. */}
-          {!swapIsUnsupported && !isLoadingOrStale && <AdvancedSwapDetailsDropdown trade={trade} />}
+          {/* Route-aware details panel. Native routes render V2's full
+              detail (Min received / Price Impact / LP Fee / Route) from
+              the SDK Trade. Aggregator routes (Kyber) don't have those
+              same semantics — Kyber's fee is baked into the quote, not
+              an LP fee — so we render only Minimum received from the
+              activeBest snapshot. Hidden during loading either way. */}
+          {!swapIsUnsupported && !isLoadingOrStale && (
+            isAggregatorRoute && activeBest ? (
+              <AggregatorDetails
+                amountOutMin={activeBest.amountOutMin}
+                outputDecimals={currencies[Field.OUTPUT] instanceof Token ? (currencies[Field.OUTPUT] as Token).decimals : 18}
+                outputSymbol={getTokenSymbol(currencies[Field.OUTPUT], chainId) ?? ''}
+              />
+            ) : (
+              <AdvancedSwapDetailsDropdown trade={trade} />
+            )
+          )}
           <BottomGrouping>
             {swapIsUnsupported ? (
               <ButtonError disabled>Unsupported Asset</ButtonError>
