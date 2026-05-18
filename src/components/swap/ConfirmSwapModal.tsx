@@ -139,7 +139,7 @@ export default function ConfirmSwapModal({
           // Hidden entirely when fee config is absent or zero.
           const fee = getKyberFeeConfig()
           if (!fee) return null
-          const pct = (fee.feeAmount / 100).toFixed(fee.feeAmount < 10 ? 2 : 2)
+          const pct = (fee.feeAmount / 100).toFixed(2)
           return (
             <div className="flex justify-between items-center" style={{ fontFamily: 'Inter', fontSize: 13, color: '#978A80' }}>
               <span>BrownFi Fee</span>

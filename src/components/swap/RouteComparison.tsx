@@ -167,12 +167,16 @@ export function RouteComparison({
     // pin and re-enter auto-track mode. Clicking any other row pins
     // explicitly. This is how users escape an accidental pin without
     // needing a separate "Auto" row or "Reset" affordance.
+    //
+    // Don't auto-close the accordion — users want to see the result of
+    // their choice (which row is now active, the new delta highlights)
+    // without re-expanding. Closing only happens via the chevron click
+    // on the trigger row.
     if (key === winnerKey) {
       onSelect('auto')
     } else {
       onSelect(key)
     }
-    setOpen(false)
   }
 
   return (

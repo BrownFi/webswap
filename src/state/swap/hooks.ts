@@ -242,15 +242,25 @@ export function useDerivedSwapInfo(): {
 
   const slippageAdjustedAmounts = v2Trade && allowedSlippage && computeSlippageAdjustedAmounts(v2Trade, allowedSlippage)
 
-  // compare input balance to max input
-  const [balanceIn, amountIn, amountOut] = [
-    currencyBalances[Field.INPUT],
-    slippageAdjustedAmounts ? slippageAdjustedAmounts[Field.INPUT] : null,
-    slippageAdjustedAmounts ? slippageAdjustedAmounts[Field.OUTPUT] : null,
-  ]
+  // Compare input balance to required input. Two cases:
+  //  - Exact-in (user typed INPUT): input amount = parsedAmount. This works
+  //    REGARDLESS of which route source wins (V2 / V3 / Kyber), so we don't
+  //    gate on v2Trade existing. Earlier we only checked when v2Trade was
+  //    present, which silently left the Swap button enabled for aggregator-
+  //    only pairs even with zero balance.
+  //  - Exact-out (user typed OUTPUT): the required input is the trade's
+  //    maximumAmountIn (with slippage). Falls back to V2 since aggregators
+  //    don't quote exact-out today.
+  const balanceIn = currencyBalances[Field.INPUT]
+  const requiredIn = isExactIn
+    ? parsedAmount
+    : slippageAdjustedAmounts
+      ? slippageAdjustedAmounts[Field.INPUT]
+      : null
+  const amountOut = slippageAdjustedAmounts ? slippageAdjustedAmounts[Field.OUTPUT] : null
 
-  if (balanceIn && amountIn && balanceIn.lessThan(amountIn)) {
-    let symbol = amountIn.currency.symbol
+  if (balanceIn && requiredIn && balanceIn.lessThan(requiredIn)) {
+    let symbol = requiredIn.currency.symbol
     if (chainId && symbol === ETHER.symbol) {
       symbol = getNativeToken(chainId)
     }
