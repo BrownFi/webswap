@@ -6,6 +6,12 @@ interface ImportMetaEnv {
   readonly VITE_KYBERSWAP_ZAP_API_URL: string
   readonly VITE_WALLETCONNECT_PROJECT_ID: string
   readonly VITE_ENVIRONMENT: 'mainnet' | 'beta' | 'testnet'
+  // Kyber affiliate fee (optional — all three required together to engage).
+  readonly VITE_KYBER_FEE_RECEIVER?: string
+  readonly VITE_KYBER_FEE_BPS?: string
+  readonly VITE_KYBER_FEE_SIDE?: 'currency_in' | 'currency_out'
+  readonly VITE_KYBERSWAP_AGG_API_URL?: string
+  readonly VITE_KYBERSWAP_AGG_API_KEY?: string
 }
 
 interface ImportMeta {

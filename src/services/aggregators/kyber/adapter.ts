@@ -27,6 +27,26 @@ const KYBER_QUOTE_TTL_SECONDS = 30
 // Kyber expects the native sentinel for ETH/BERA/etc.
 const NATIVE_SENTINEL = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 
+// Affiliate fee config — env-driven so it can be set per deployment in
+// Vercel without touching code. Empty defaults = no fee, no behavior
+// change. When VITE_KYBER_FEE_RECEIVER is set, every Kyber build call
+// includes the fee fields and Kyber's router skims the configured bps
+// from the chosen side and forwards them to the receiver wallet.
+const KYBER_FEE_RECEIVER = (import.meta.env.VITE_KYBER_FEE_RECEIVER as string | undefined) ?? ''
+const KYBER_FEE_BPS = Number(import.meta.env.VITE_KYBER_FEE_BPS ?? '0')
+const KYBER_FEE_SIDE =
+  (import.meta.env.VITE_KYBER_FEE_SIDE as 'currency_in' | 'currency_out' | undefined) ?? 'currency_out'
+
+export function getKyberFeeConfig() {
+  if (!KYBER_FEE_RECEIVER || !KYBER_FEE_BPS || KYBER_FEE_BPS <= 0) return undefined
+  return {
+    feeReceiver: KYBER_FEE_RECEIVER,
+    feeAmount: KYBER_FEE_BPS,
+    chargeFeeBy: KYBER_FEE_SIDE,
+    isInBps: true as const,
+  }
+}
+
 function currencyToAddress(currency: QuoteParams['tokenIn']): string {
   if (currency === ETHER) return NATIVE_SENTINEL
   if (currency instanceof Token) return currency.address
@@ -90,6 +110,7 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
   },
 
   async buildSwap(params: BuildSwapParams<KyberRouteSummary>): Promise<BuildSwapResult> {
+    const fee = getKyberFeeConfig()
     const res = await buildRoute({
       chainId: params.chainId,
       routeSummary: params.quote.routeSummary,
@@ -97,6 +118,14 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
       recipient: params.account,
       slippageBps: params.slippageBps,
       deadline: params.deadline,
+      ...(fee
+        ? {
+            feeReceiver: fee.feeReceiver,
+            feeAmount: fee.feeAmount,
+            chargeFeeBy: fee.chargeFeeBy,
+            isInBps: fee.isInBps,
+          }
+        : {}),
     })
 
     if (!res.data?.data || !res.data?.routerAddress) {

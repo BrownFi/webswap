@@ -12,6 +12,7 @@ import { useActiveWeb3React } from 'hooks'
 import { getTokenSymbol } from 'utils'
 import type { UnifiedRoute } from 'hooks/useBestSwapRoute'
 import { isBrownFiSource } from 'services/aggregators/types'
+import { getKyberFeeConfig } from 'services/aggregators/kyber/adapter'
 
 function formatBigByDecimals(rawBig: { toString(): string }, currency: Currency | undefined): string {
   const decimals = currency instanceof Token ? currency.decimals : 18
@@ -132,6 +133,20 @@ export default function ConfirmSwapModal({
             via {bestRoute?.sourceName}
           </span>
         </div>
+        {(() => {
+          // Transparency line — when an affiliate fee is configured, show it
+          // so the user understands the routed amount has a small skim.
+          // Hidden entirely when fee config is absent or zero.
+          const fee = getKyberFeeConfig()
+          if (!fee) return null
+          const pct = (fee.feeAmount / 100).toFixed(fee.feeAmount < 10 ? 2 : 2)
+          return (
+            <div className="flex justify-between items-center" style={{ fontFamily: 'Inter', fontSize: 13, color: '#978A80' }}>
+              <span>BrownFi Fee</span>
+              <span style={{ color: '#CFC7C1' }}>{pct}%</span>
+            </div>
+          )
+        })()}
       </div>
     )
   }, [

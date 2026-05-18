@@ -100,6 +100,19 @@ export interface KyberBuildParams {
   slippageBps: number
   /** unix seconds */
   deadline: number
+  /** Optional affiliate fee config. When `feeReceiver` is set, Kyber's
+   *  router skims `feeAmount` (in bps when `isInBps=true`) from the
+   *  trade's input or output side and forwards it to the receiver.
+   *  All three fields are required together — leaving `feeReceiver`
+   *  unset = no fee, no behavior change. */
+  feeReceiver?: string
+  /** 'currency_in' (skim from amount user pays) or 'currency_out' (skim
+   *  from amount user receives). Output side is the cleaner UX choice. */
+  chargeFeeBy?: 'currency_in' | 'currency_out'
+  /** When `isInBps=true`, expressed in basis points (50 = 0.5%). */
+  feeAmount?: number
+  /** Defaults to true — express feeAmount as bps rather than raw amount. */
+  isInBps?: boolean
 }
 
 export interface KyberBuildResponse {
@@ -120,13 +133,22 @@ export interface KyberBuildResponse {
 
 export async function buildRoute(params: KyberBuildParams): Promise<KyberBuildResponse> {
   const url = `${BASE_URL}/${chainPath(params.chainId)}/api/v1/route/build`
-  const body = {
+  const body: Record<string, unknown> = {
     routeSummary: params.routeSummary,
     sender: params.sender,
     recipient: params.recipient,
     slippageTolerance: params.slippageBps,
     deadline: params.deadline,
     source: CLIENT_ID,
+  }
+  // Only include fee fields when a receiver is configured. Kyber rejects
+  // partial fee configs (feeAmount without feeReceiver, etc.) — easier to
+  // gate the whole block on the receiver presence so omitted = no fee.
+  if (params.feeReceiver && params.feeAmount && params.feeAmount > 0) {
+    body.feeReceiver = params.feeReceiver
+    body.chargeFeeBy = params.chargeFeeBy ?? 'currency_out'
+    body.feeAmount = String(params.feeAmount)
+    body.isInBps = params.isInBps ?? true
   }
   const res = await timedFetch(url, {
     method: 'POST',
