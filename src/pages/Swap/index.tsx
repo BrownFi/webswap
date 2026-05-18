@@ -1,4 +1,4 @@
-import { Currency, CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
+import { ChainId, Currency, CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ArrowDown } from 'react-feather'
 import { Text } from 'components/Rebass'
@@ -19,6 +19,7 @@ import { ProgressCircles } from 'components/ProgressSteps'
 import SwapHeader from 'components/swap/SwapHeader'
 import { INITIAL_ALLOWED_SLIPPAGE } from 'constants/common'
 import { useActiveWeb3React } from 'hooks'
+import { usePythPrices } from 'hooks/usePythPrices'
 import { useCurrency, useAllTokens } from 'hooks/Tokens'
 import { ApprovalState, useApproveCallback, useApproveCallbackFromTrade } from 'hooks/useApproveCallback'
 import useENSAddress from 'hooks/useENSAddress'
@@ -102,6 +103,16 @@ export default function Swap() {
     loadingExactIn,
     loadingExactOut,
   } = useDerivedSwapInfo()
+
+  // Single fetch per pair (cached, 60s refresh) — used by RouteComparison to
+  // display USD value alongside each row's amountOut. Output side is what
+  // matters for routing decisions; input USD isn't shown today.
+  const pythPrices = usePythPrices({
+    chainId: chainId as ChainId,
+    currencyA: currencies[Field.INPUT],
+    currencyB: currencies[Field.OUTPUT],
+  })
+  const outputUsdPrice = pythPrices.CURRENCY_B || undefined
 
   const { wrapType, execute: onWrap, inputError: wrapInputError } = useWrapCallback(
     currencies[Field.INPUT],
@@ -582,6 +593,7 @@ export default function Swap() {
                 onSelect={setSelectedAggregator}
                 outputCurrency={currencies[Field.OUTPUT]}
                 outputSymbol={getTokenSymbol(currencies[Field.OUTPUT], chainId) ?? ''}
+                outputUsdPrice={outputUsdPrice}
                 isLoading={isLoadingOrStale}
               />
             )}

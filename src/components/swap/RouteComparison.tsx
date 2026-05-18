@@ -35,6 +35,11 @@ interface Props {
   outputCurrency: Currency | undefined
   /** Symbol of the output token for the row labels. */
   outputSymbol: string
+  /** USD price of the OUTPUT token (1 token = $X). When present, each row
+   *  renders `≈ $Y` next to its amountOut. Single price applies to all
+   *  rows since they all output the same token. Undefined when Pyth +
+   *  indexer both fail — display falls back to token-only. */
+  outputUsdPrice?: number
   /** True while any quote source (native multicall or aggregator HTTP)
    *  is still in-flight. The picker renders a loading state in its
    *  trigger so the "Best" winner isn't shown until every source has
@@ -48,6 +53,15 @@ function formatAmount(rawBig: { toString(): string }, currency: Currency | undef
   if (!isFinite(num) || num === 0) return '0'
   if (num < 0.000001) return num.toExponential(2)
   return Number(num.toPrecision(6)).toString()
+}
+
+function formatUsd(amount: number): string {
+  if (!isFinite(amount) || amount <= 0) return ''
+  if (amount < 0.01) return '< $0.01'
+  if (amount < 1) return `$${amount.toFixed(3)}`
+  if (amount < 1000) return `$${amount.toFixed(2)}`
+  if (amount < 1_000_000) return `$${(amount / 1000).toFixed(2)}K`
+  return `$${(amount / 1_000_000).toFixed(2)}M`
 }
 
 function ChevronIcon({ open, dim = false }: { open: boolean; dim?: boolean }) {
@@ -97,6 +111,7 @@ export function RouteComparison({
   onSelect,
   outputCurrency,
   outputSymbol,
+  outputUsdPrice,
   isLoading = false,
 }: Props) {
   const [open, setOpen] = useState(false)
@@ -123,15 +138,24 @@ export function RouteComparison({
       if (bestAmount.isZero()) return undefined
       return Number(c.amountOut.sub(bestAmount).mul(10000).div(bestAmount).toString())
     }
-    return candidates.map((c) => ({
-      key: c.source as AggregatorChoice,
-      label: c.sourceName,
-      amountOut: formatAmount(c.amountOut, outputCurrency),
-      deltaBps: deltaBpsFor(c),
-      isBest: c.source === firstSelectable?.source,
-      unavailable: c.unavailable,
-    }))
-  }, [candidates, outputCurrency])
+    return candidates.map((c) => {
+      const decimals = outputCurrency instanceof Token ? outputCurrency.decimals : 18
+      const numeric = Number(c.amountOut.toString()) / 10 ** decimals
+      const usd =
+        outputUsdPrice && isFinite(numeric) && numeric > 0
+          ? formatUsd(numeric * outputUsdPrice)
+          : ''
+      return {
+        key: c.source as AggregatorChoice,
+        label: c.sourceName,
+        amountOut: formatAmount(c.amountOut, outputCurrency),
+        usd,
+        deltaBps: deltaBpsFor(c),
+        isBest: c.source === firstSelectable?.source,
+        unavailable: c.unavailable,
+      }
+    })
+  }, [candidates, outputCurrency, outputUsdPrice])
 
   if (candidates.length < 1) return null
   const activeRow = rows.find((r) => r.key === activeKey) ?? rows[0]
@@ -277,6 +301,11 @@ export function RouteComparison({
               }}
             >
               {activeRow.amountOut} {outputSymbol}
+              {activeRow.usd && (
+                <span style={{ color: '#978A80', fontWeight: 500, marginLeft: '6px' }}>
+                  ≈ {activeRow.usd}
+                </span>
+              )}
             </span>
           )}
           {hasMultiple && <ChevronIcon open={open && !isLoading} dim={isLoading} />}
@@ -415,6 +444,11 @@ export function RouteComparison({
                       }}
                     >
                       {row.amountOut} {outputSymbol}
+                      {row.usd && (
+                        <span style={{ color: '#978A80', fontWeight: 500, marginLeft: '6px' }}>
+                          ≈ {row.usd}
+                        </span>
+                      )}
                     </span>
                     {row.deltaBps !== undefined && (
                       <span
