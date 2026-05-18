@@ -187,6 +187,7 @@ export default function Swap() {
     currencyA: currencies[Field.INPUT],
     currencyB: currencies[Field.OUTPUT],
   })
+  const inputUsdPrice = pythPrices.CURRENCY_A || undefined
   const outputUsdPrice = pythPrices.CURRENCY_B || undefined
 
   const { wrapType, execute: onWrap, inputError: wrapInputError } = useWrapCallback(
@@ -609,6 +610,7 @@ export default function Swap() {
               otherCurrency={currencies[Field.OUTPUT]}
               id="swap-currency-input"
               showCommonBases={true}
+              balanceUsdPrice={inputUsdPrice}
               // Pulse only when this field is the DEPENDENT side (user is
               // typing OUTPUT). `pendingQuote` is the synchronous bridge
               // that engages before the real loading flag, so a field
@@ -655,6 +657,7 @@ export default function Swap() {
               otherCurrency={currencies[Field.INPUT]}
               id="swap-currency-output"
               showCommonBases={true}
+              balanceUsdPrice={outputUsdPrice}
             />
 
             {/* Inline route picker — renders whenever at least one

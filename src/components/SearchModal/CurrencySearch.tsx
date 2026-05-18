@@ -21,6 +21,8 @@ import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import useTheme from 'hooks/useTheme'
 import ImportRow from './ImportRow'
 import useDebounce from 'hooks/useDebounce'
+import { useRecentTokens } from 'hooks/useRecentTokens'
+import RecentTokens from './RecentTokens'
 
 const ContentWrapper = styled(Column)`
   width: 100%;
@@ -106,12 +108,14 @@ export function CurrencySearch({
 
   const filteredSortedTokens = useSortedTokensByQuery(sortedTokens, debouncedQuery)
 
+  const { recent: recentAddresses, trackSelection } = useRecentTokens(chainId)
   const handleCurrencySelect = useCallback(
     (currency: Currency) => {
+      trackSelection(currency)
       onCurrencySelect(currency)
       onDismiss()
     },
-    [onDismiss, onCurrencySelect],
+    [onDismiss, onCurrencySelect, trackSelection],
   )
 
   // Clear the input on open + focus the search box for instant typing.
@@ -173,6 +177,14 @@ export function CurrencySearch({
         />
         {showCommonBases && (
           <CommonBases chainId={chainId} onSelect={handleCurrencySelect} selectedCurrency={selectedCurrency} />
+        )}
+        {recentAddresses.length > 0 && (
+          <RecentTokens
+            addresses={recentAddresses}
+            allTokens={allTokens}
+            onSelect={handleCurrencySelect}
+            selectedCurrency={selectedCurrency}
+          />
         )}
       </PaddedColumn>
 
