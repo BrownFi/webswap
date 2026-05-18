@@ -48,6 +48,17 @@ export interface KyberRoutesParams {
   /** native gas estimation flag — we pass 'true' so the gas field comes back. */
   gasInclude?: boolean
   saveGas?: boolean
+  /** Affiliate fee config (all four together). When set, Kyber computes a
+   *  fee-aware quote — `amountOut` accounts for the skim on the chosen
+   *  side. The returned `routeSummary` embeds `extraFee`, which is then
+   *  passed through to /route/build unchanged. Per Kyber docs, fee params
+   *  belong on /routes (the quote), NOT /route/build (the calldata) —
+   *  passing them at build time gets silently ignored OR the router
+   *  reverts with "Exceeded desc.amount". */
+  feeReceiver?: string
+  feeAmount?: number
+  chargeFeeBy?: 'currency_in' | 'currency_out'
+  isInBps?: boolean
 }
 
 export interface KyberRouteSummary {
@@ -83,6 +94,15 @@ export async function getRoutes(params: KyberRoutesParams): Promise<KyberRoutesR
     gasInclude: String(params.gasInclude ?? true),
     saveGas: String(params.saveGas ?? false),
   })
+  // Fee fields go on the QUOTE call so amountIn/amountOut reflect the
+  // post-fee economics. Kyber embeds the config into routeSummary.extraFee
+  // in the response, which travels through to /route/build unchanged.
+  if (params.feeReceiver && params.feeAmount && params.feeAmount > 0) {
+    search.set('feeReceiver', params.feeReceiver)
+    search.set('feeAmount', String(params.feeAmount))
+    search.set('chargeFeeBy', params.chargeFeeBy ?? 'currency_out')
+    search.set('isInBps', String(params.isInBps ?? true))
+  }
   const url = `${BASE_URL}/${chainPath(params.chainId)}/api/v1/routes?${search.toString()}`
   const res = await timedFetch(url, { headers: headers() })
   if (!res.ok) throw new Error(`Kyber /routes HTTP ${res.status}`)
@@ -100,19 +120,9 @@ export interface KyberBuildParams {
   slippageBps: number
   /** unix seconds */
   deadline: number
-  /** Optional affiliate fee config. When `feeReceiver` is set, Kyber's
-   *  router skims `feeAmount` (in bps when `isInBps=true`) from the
-   *  trade's input or output side and forwards it to the receiver.
-   *  All three fields are required together — leaving `feeReceiver`
-   *  unset = no fee, no behavior change. */
-  feeReceiver?: string
-  /** 'currency_in' (skim from amount user pays) or 'currency_out' (skim
-   *  from amount user receives). Output side is the cleaner UX choice. */
-  chargeFeeBy?: 'currency_in' | 'currency_out'
-  /** When `isInBps=true`, expressed in basis points (50 = 0.5%). */
-  feeAmount?: number
-  /** Defaults to true — express feeAmount as bps rather than raw amount. */
-  isInBps?: boolean
+  // NOTE: no fee fields here. Per Kyber docs, affiliate fee config lives
+  // on the /routes (quote) call and is embedded into routeSummary.extraFee
+  // by Kyber's server. /route/build just consumes the routeSummary as-is.
 }
 
 export interface KyberBuildResponse {
@@ -133,6 +143,10 @@ export interface KyberBuildResponse {
 
 export async function buildRoute(params: KyberBuildParams): Promise<KyberBuildResponse> {
   const url = `${BASE_URL}/${chainPath(params.chainId)}/api/v1/route/build`
+  // Fee is already embedded in routeSummary.extraFee from the /routes call.
+  // Re-passing fee fields at this layer triggers "Exceeded desc.amount"
+  // on-chain because the router's amount-consistency check would see the
+  // fee applied twice.
   const body: Record<string, unknown> = {
     routeSummary: params.routeSummary,
     sender: params.sender,
@@ -140,15 +154,6 @@ export async function buildRoute(params: KyberBuildParams): Promise<KyberBuildRe
     slippageTolerance: params.slippageBps,
     deadline: params.deadline,
     source: CLIENT_ID,
-  }
-  // Only include fee fields when a receiver is configured. Kyber rejects
-  // partial fee configs (feeAmount without feeReceiver, etc.) — easier to
-  // gate the whole block on the receiver presence so omitted = no fee.
-  if (params.feeReceiver && params.feeAmount && params.feeAmount > 0) {
-    body.feeReceiver = params.feeReceiver
-    body.chargeFeeBy = params.chargeFeeBy ?? 'currency_out'
-    body.feeAmount = String(params.feeAmount)
-    body.isInBps = params.isInBps ?? true
   }
   const res = await timedFetch(url, {
     method: 'POST',

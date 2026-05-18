@@ -72,6 +72,7 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
     if (!tokenIn || !tokenOut) return null
     if (params.amountIn.lte(0)) return null
 
+    const fee = getKyberFeeConfig()
     let res
     try {
       res = await getRoutes({
@@ -80,6 +81,14 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
         tokenOut,
         amountIn: params.amountIn.toString(),
         gasInclude: true,
+        ...(fee
+          ? {
+              feeReceiver: fee.feeReceiver,
+              feeAmount: fee.feeAmount,
+              chargeFeeBy: fee.chargeFeeBy,
+              isInBps: fee.isInBps,
+            }
+          : {}),
       })
     } catch {
       // Network / 4xx / 5xx — treat as "no route" and let orchestration
@@ -110,7 +119,9 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
   },
 
   async buildSwap(params: BuildSwapParams<KyberRouteSummary>): Promise<BuildSwapResult> {
-    const fee = getKyberFeeConfig()
+    // Fee was already applied at quote time and embedded into
+    // routeSummary.extraFee. /route/build only needs the routeSummary +
+    // sender/recipient/slippage/deadline.
     const res = await buildRoute({
       chainId: params.chainId,
       routeSummary: params.quote.routeSummary,
@@ -118,14 +129,6 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
       recipient: params.account,
       slippageBps: params.slippageBps,
       deadline: params.deadline,
-      ...(fee
-        ? {
-            feeReceiver: fee.feeReceiver,
-            feeAmount: fee.feeAmount,
-            chargeFeeBy: fee.chargeFeeBy,
-            isInBps: fee.isInBps,
-          }
-        : {}),
     })
 
     if (!res.data?.data || !res.data?.routerAddress) {
