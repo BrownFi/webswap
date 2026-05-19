@@ -415,9 +415,22 @@ export default function Swap() {
       !!typedValue && Number(typedValue) > 0 && !!currencies[Field.INPUT] && !!currencies[Field.OUTPUT]
     setPendingQuote(willFetch)
   }
+  // Clear pendingQuote only when ALL source loading flags are quiet AND a
+  // short grace period elapses. This bridges the timing gap where Kyber's
+  // HTTP returns (~T+500ms) BEFORE V2/V3's trade pipeline even engages its
+  // loading flag (~T+600ms, because useTradeExactIn has its own internal
+  // setTimeout before firing multicall). Without the grace, the picker
+  // briefly flashes "settled" between Kyber settling and V2 engaging.
+  //
+  // Cleanup cancels the timer if any source re-engages within the window,
+  // so loading state stays sticky across the entire fetch cycle. A 350ms
+  // grace handles the worst observed Kyber→V2 gap with margin.
   useEffect(() => {
-    if (bestLoading || loadingExactIn || loadingExactOut) setPendingQuote(false)
-  }, [bestLoading, loadingExactIn, loadingExactOut])
+    if (!pendingQuote) return
+    if (bestLoading || loadingExactIn || loadingExactOut) return
+    const t = setTimeout(() => setPendingQuote(false), 350)
+    return () => clearTimeout(t)
+  }, [pendingQuote, bestLoading, loadingExactIn, loadingExactOut])
 
   const isLoadingOrStale = bestLoading || loadingExactIn || loadingExactOut || pendingQuote
   const displayedOutput = rawDisplayedOutput
