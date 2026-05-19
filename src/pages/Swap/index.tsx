@@ -1,6 +1,6 @@
 import { ChainId, Currency, CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { ArrowDown } from 'react-feather'
+import { ArrowDown, Repeat } from 'react-feather'
 import { Text } from 'components/Rebass'
 import { ThemeContext } from 'styled-components'
 import { AddressInputPanel } from 'components/AddressInputPanel'
@@ -52,7 +52,6 @@ import { useNavigate } from 'react-router-dom'
 import switchIcon from 'assets/svg/switch.svg'
 import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
-import { Repeat } from 'react-feather'
 import { StyledBalanceMaxMini } from 'components/swap/styleds'
 import QuestionHelper from 'components/QuestionHelper'
 
@@ -316,11 +315,6 @@ export default function Swap() {
   // active native trade exists (e.g., aggregator route wins — in that
   // case the V2/V3 detail panel isn't rendered anyway).
   const displayTrade = activeNativeTrade ?? (showWrap ? undefined : v2Trade)
-  // Legacy alias — `trade` was previously the v2-only orchestration trade.
-  // Now it always reflects the ACTIVE native trade (V2 or V3 depending on
-  // the user's pin / auto-winner), so LP fee / executionPrice / dependent-
-  // side display amounts all match what's being signed.
-  const trade = displayTrade
 
   // parsedAmounts maps INPUT/OUTPUT → CurrencyAmount. The dependent side
   // (the one the user didn't type) is sourced from the active trade —
@@ -486,8 +480,8 @@ export default function Swap() {
   // computable; for now V3 also bypasses the V2 warning.
   const { priceImpactWithoutFee } = useMemo(() => {
     if (!best || best.source !== 'brownfi-v2') return { priceImpactWithoutFee: undefined }
-    return computeTradePriceBreakdown(trade)
-  }, [trade, best])
+    return computeTradePriceBreakdown(displayTrade)
+  }, [displayTrade, best])
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
@@ -531,7 +525,7 @@ export default function Swap() {
     recipient,
     recipientAddress,
     account,
-    trade,
+    displayTrade,
     singleHopOnly,
     bestIsStale,
     refetchBest,
@@ -564,8 +558,8 @@ export default function Swap() {
   }, [attemptingTxn, onUserInput, swapErrorMessage, tradeToConfirm, txHash])
 
   const handleAcceptChanges = useCallback(() => {
-    setSwapState({ tradeToConfirm: trade, routeToConfirm: best ?? undefined, swapErrorMessage, txHash, attemptingTxn, showConfirm })
-  }, [attemptingTxn, showConfirm, swapErrorMessage, trade, txHash, best])
+    setSwapState({ tradeToConfirm: displayTrade, routeToConfirm: best ?? undefined, swapErrorMessage, txHash, attemptingTxn, showConfirm })
+  }, [attemptingTxn, showConfirm, swapErrorMessage, displayTrade, txHash, best])
 
   const handleInputSelect = useCallback(
     (inputCurrency: Currency) => {
@@ -844,7 +838,7 @@ export default function Swap() {
                       handleSwap()
                     } else {
                       setSwapState({
-                        tradeToConfirm: trade,
+                        tradeToConfirm: displayTrade,
                         routeToConfirm: best ?? undefined,
                         attemptingTxn: false,
                         swapErrorMessage: undefined,
@@ -872,7 +866,7 @@ export default function Swap() {
                     handleSwap()
                   } else {
                     setSwapState({
-                      tradeToConfirm: trade,
+                      tradeToConfirm: displayTrade,
                       routeToConfirm: best ?? undefined,
                       attemptingTxn: false,
                       swapErrorMessage: undefined,
