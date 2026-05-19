@@ -214,18 +214,6 @@ export default function Swap() {
   // candidate against every supported aggregator and picks the best
   // amountOut — no V1/V2 toggle in the UI anymore (Add/Remove Liquidity
   // still surface the version split because the protocols differ).
-  const trade = showWrap ? undefined : v2Trade
-
-  const parsedAmounts = showWrap
-    ? {
-        [Field.INPUT]: parsedAmount,
-        [Field.OUTPUT]: parsedAmount,
-      }
-    : {
-        [Field.INPUT]: independentField === Field.INPUT ? parsedAmount : trade?.inputAmount,
-        [Field.OUTPUT]: independentField === Field.OUTPUT ? parsedAmount : trade?.outputAmount,
-      }
-
   const { onSwitchTokens, onCurrencySelection, onUserInput, onChangeRecipient } = useSwapActionHandlers()
   // isValid moved below — it depends on swapInputError which is computed
   // after useBestSwapRoute resolves so the V2-only reserve error can be
@@ -270,19 +258,6 @@ export default function Swap() {
     txHash: undefined,
   })
 
-  const formattedAmounts = useMemo(
-    () => ({
-      [independentField]: typedValue,
-      [dependentField]: showWrap
-        ? parsedAmounts[independentField]?.toExact() ?? ''
-        : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
-    }),
-    [independentField, dependentField, typedValue, showWrap, parsedAmounts],
-  )
-
-  const userHasSpecifiedInputOutput = Boolean(
-    currencies[Field.INPUT] && currencies[Field.OUTPUT] && parsedAmounts[independentField]?.greaterThan(JSBI.BigInt(0)),
-  )
   // "No route" is true only when NO source — BrownFi-native or aggregator —
   // has a quote. With the smart router, an aggregator might cover a pair
   // that V2 doesn't, so checking `!route` (V2-only) would hide a perfectly
@@ -300,11 +275,15 @@ export default function Swap() {
   // withholding amountIn from the orchestration; aggregator queries
   // are gated on amountIn being defined, so they simply don't fire.
   // Adapters that support exact-out can opt in later.
+  // Use parsedAmount directly rather than parsedAmounts[INPUT]: on exact-in
+  // they're identical, and on exact-out amountInBig returns undefined
+  // anyway. Decoupling lets `parsedAmounts` be computed AFTER displayTrade
+  // (V2 vs V3) so the dependent-side display reflects the active route.
   const amountInBig = useMemo(() => {
     if (independentField !== Field.INPUT) return undefined
-    const raw = parsedAmounts[Field.INPUT]?.raw?.toString()
+    const raw = parsedAmount?.raw?.toString()
     return raw ? BigNumber.from(raw) : undefined
-  }, [parsedAmounts, independentField])
+  }, [parsedAmount, independentField])
   const {
     best,
     candidates: routeCandidates,
@@ -331,6 +310,43 @@ export default function Swap() {
   // candidate the smart router picked. For aggregator routes this is
   // undefined and the aggregator path takes over.
   const activeNativeTrade = activeBest?.nativeTrade
+  // Trade shown in the detail panel + confirm modal. Reflects the user's
+  // ACTIVE native route (V2 or V3) so LP fee, executionPrice, and route
+  // pairs all match what's being signed. Falls back to v2Trade when no
+  // active native trade exists (e.g., aggregator route wins — in that
+  // case the V2/V3 detail panel isn't rendered anyway).
+  const displayTrade = activeNativeTrade ?? (showWrap ? undefined : v2Trade)
+  // Legacy alias — `trade` was previously the v2-only orchestration trade.
+  // Now it always reflects the ACTIVE native trade (V2 or V3 depending on
+  // the user's pin / auto-winner), so LP fee / executionPrice / dependent-
+  // side display amounts all match what's being signed.
+  const trade = displayTrade
+
+  // parsedAmounts maps INPUT/OUTPUT → CurrencyAmount. The dependent side
+  // (the one the user didn't type) is sourced from the active trade —
+  // V3 if pinned, V2 otherwise, undefined for Kyber-only pairs. Declared
+  // here (after displayTrade) rather than before useBestSwapRoute so it
+  // doesn't get stuck on V2 when V3 is active.
+  const parsedAmounts = showWrap
+    ? {
+        [Field.INPUT]: parsedAmount,
+        [Field.OUTPUT]: parsedAmount,
+      }
+    : {
+        [Field.INPUT]: independentField === Field.INPUT ? parsedAmount : displayTrade?.inputAmount,
+        [Field.OUTPUT]: independentField === Field.OUTPUT ? parsedAmount : displayTrade?.outputAmount,
+      }
+
+  const formattedAmounts = {
+    [independentField]: typedValue,
+    [dependentField]: showWrap
+      ? parsedAmounts[independentField]?.toExact() ?? ''
+      : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
+  }
+
+  const userHasSpecifiedInputOutput = Boolean(
+    currencies[Field.INPUT] && currencies[Field.OUTPUT] && parsedAmounts[independentField]?.greaterThan(JSBI.BigInt(0)),
+  )
   const isAggregatorRoute = !!activeBest && !isBrownFiSource(activeBest.source)
   const noRoute = !best
   const [selectedAggregator, setSelectedAggregator] = useSelectedAggregator()
@@ -583,7 +599,7 @@ export default function Swap() {
         <Wrapper id="swap-page">
           <ConfirmSwapModal
             isOpen={showConfirm}
-            trade={trade}
+            trade={displayTrade}
             originalTrade={tradeToConfirm}
             onAcceptChanges={handleAcceptChanges}
             attemptingTxn={attemptingTxn}
@@ -727,13 +743,13 @@ export default function Swap() {
                     setShowInverted={setShowInverted}
                   />
                 </RowBetween>
-              ) : trade && !isLoadingOrStale ? (
+              ) : displayTrade && !isLoadingOrStale ? (
                 <RowBetween align="center">
                   <Text fontWeight={500} fontSize={14} color={theme.text2}>
                     Price
                   </Text>
                   <TradePrice
-                    price={trade.executionPrice}
+                    price={displayTrade.executionPrice}
                     showInverted={showInverted}
                     setShowInverted={setShowInverted}
                   />
@@ -784,7 +800,7 @@ export default function Swap() {
                 outputSymbol={getTokenSymbol(currencies[Field.OUTPUT], chainId) ?? ''}
               />
             ) : (
-              <AdvancedSwapDetailsDropdown trade={trade} />
+              <AdvancedSwapDetailsDropdown trade={displayTrade} />
             )
           )}
           <BottomGrouping>
