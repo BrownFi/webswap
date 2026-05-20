@@ -292,11 +292,22 @@ export class Trade {
     const amountIn = wrappedAmount(currencyAmountIn, chainId!)
     const tokenOut = wrappedCurrency(currencyOut, chainId!)
 
+    const wrappedOriginalIn = wrappedCurrency(originalAmountIn.currency, chainId!)
+
     await asyncForTo(pairs, async (i) => {
       const pair = pairs[i]
 
       if (!pair.token0.equals(amountIn.token) && !pair.token1.equals(amountIn.token)) return
       if (pair.reserve0.equalTo(ZERO) || pair.reserve1.equalTo(ZERO)) return
+
+      // Cycle guard: skip if this pair would route the path back to the original
+      // input token (e.g., A→B→C→A→...). getComputePair would build Pair(X,X) and
+      // throw the 'ADDRESSES' invariant, killing the whole search — even paths
+      // that were already accumulated. Such loops are never optimal anyway.
+      if (currentPairs.length > 0) {
+        const otherToken = pair.token0.equals(amountIn.token) ? pair.token1 : pair.token0
+        if (otherToken.equals(wrappedOriginalIn) && !otherToken.equals(tokenOut)) return
+      }
 
       const path = Trade.getPath(originalAmountIn.currency, [...currentPairs, pair])
       const oAmountIn = wrappedAmount(originalAmountIn, chainId!)
@@ -370,11 +381,19 @@ export class Trade {
     const amountOut = wrappedAmount(currencyAmountOut, chainId!)
     const tokenIn = wrappedCurrency(currencyIn, chainId!)
 
+    const wrappedOriginalOut = wrappedCurrency(originalAmountOut.currency, chainId!)
+
     for (let i = 0; i < (pairs?.length ?? 0); i++) {
       const pair = pairs[i]
 
       if (!pair?.token0.equals(amountOut.token) && !pair?.token1.equals(amountOut.token)) continue
       if (pair.reserve0.equalTo(ZERO) || pair.reserve1.equalTo(ZERO)) continue
+
+      // Cycle guard (see bestTradeExactIn).
+      if (currentPairs.length > 0) {
+        const otherToken = pair.token0.equals(amountOut.token) ? pair.token1 : pair.token0
+        if (otherToken.equals(wrappedOriginalOut) && !otherToken.equals(tokenIn)) continue
+      }
 
       const path = Trade.getPath(originalAmountOut.currency, [...currentPairs, pair]).reverse()
       const oAmountOut = wrappedAmount(originalAmountOut, chainId!)
