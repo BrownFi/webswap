@@ -1,5 +1,4 @@
-import { Currency, ETHER, Pair, getRouterAddress } from '@brownfi/sdk'
-import { useQuery } from '@tanstack/react-query'
+import { Currency, ETHER, Pair } from '@brownfi/sdk'
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
@@ -9,16 +8,16 @@ import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
+import { useBestZapInRoute } from 'hooks/useBestZapRoute'
 import { useCallback, useMemo, useState } from 'react'
 import { Field } from 'state/mint/actions'
 import { tryParseAmount } from 'state/swap/hooks'
 import { useCurrencyBalance } from 'state/wallet/hooks'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { useUserSlippageTolerance } from 'state/user/hooks'
+import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
-import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { getV3ZapEstimate, buildV3UpdateData, executeV3ZapIn } from 'utils/v3Zap'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
 import { Text } from 'components/Rebass'
 import { BigNumber } from '@ethersproject/bignumber'
@@ -31,7 +30,18 @@ type V3ZapFormProps = {
   allowedSlippage: number
 }
 
-export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3ZapFormProps) {
+// LP tokens are always 18 decimals on BrownFi V3, same as V2. Keep this
+// local so the comparison card stays self-contained.
+const LP_DECIMALS = 18
+
+function formatLpAmount(lp: BigNumber | undefined): string {
+  if (!lp || lp.isZero()) return '-'
+  const human = Number(lp.toString()) / 10 ** LP_DECIMALS
+  if (!Number.isFinite(human)) return '-'
+  return formatNumber(human, { maximumFractionDigits: 6 })
+}
+
+export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   const { account, chainId, library } = useActiveWeb3React()
   const deadline = useTransactionDeadline()
   const [slippage] = useUserSlippageTolerance()
@@ -50,71 +60,48 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
   const parsedAmount = useMemo(() => tryParseAmount(amount, selectedCurrency), [amount, selectedCurrency])
 
   const isNativeETH = selectedCurrency === ETHER
-
-  const wrappedTokenIn = useMemo(
-    () => wrappedCurrency(selectedCurrency, chainId ?? undefined),
-    [selectedCurrency, chainId],
-  )
-
-  // Determine the "other" token in the pair
-  const wrappedTokenOther = useMemo(() => {
-    if (!pair || !wrappedTokenIn) return undefined
-    if (pair.token0.address === wrappedTokenIn.address) return pair.token1
-    if (pair.token1.address === wrappedTokenIn.address) return pair.token0
-    return undefined
-  }, [pair, wrappedTokenIn])
-
   const symbol = useMemo(() => getTokenSymbol(selectedCurrency, chainId ?? undefined), [selectedCurrency, chainId])
-  const otherSymbol = useMemo(() => {
-    if (!wrappedTokenOther) return ''
-    return wrappedTokenOther.symbol ?? ''
-  }, [wrappedTokenOther])
 
-  // Approval to V3 router
-  const routerAddress = useMemo(() => (chainId ? getRouterAddress(chainId, 3) : undefined), [chainId])
-  const [approval, approveCallback] = useApproveCallback(parsedAmount, routerAddress)
-  const needsApproval = !isNativeETH && approval !== ApprovalState.APPROVED
+  // Hand the orchestration hook a stable inputs array — useMemo so identity
+  // changes only when the underlying amount/token changes, not on every render.
+  const zapInputs = useMemo(() => {
+    if (!selectedCurrency || !parsedAmount) return []
+    return [{ currency: selectedCurrency, amountRaw: parsedAmount.raw.toString() }]
+  }, [selectedCurrency, parsedAmount])
 
-  // Fetch V3 zap estimate
-  const estimateQueryKey = useMemo(
-    () => [
-      'v3ZapEstimate',
-      chainId,
-      wrappedTokenIn?.address,
-      wrappedTokenOther?.address,
-      parsedAmount?.raw.toString(),
-      slippage,
-    ],
-    [chainId, wrappedTokenIn, wrappedTokenOther, parsedAmount, slippage],
-  )
+  const deadlineSeconds = useMemo(() => (deadline ? Number(deadline.toString()) : 0), [deadline])
 
-  const isEstimateEnabled = Boolean(
-    chainId && wrappedTokenIn && wrappedTokenOther && parsedAmount?.greaterThan('0'),
-  )
-
-  const { data: estimatedOutput, isFetching: isFetchingEstimate } = useQuery({
-    queryKey: estimateQueryKey,
-    queryFn: () =>
-      getV3ZapEstimate(
-        chainId!,
-        wrappedTokenIn!.address,
-        wrappedTokenOther!.address,
-        parsedAmount!.raw.toString(),
-        slippage,
-      ),
-    enabled: isEstimateEnabled,
-    refetchInterval: 15_000,
+  // Fans out native + Kyber zap quotes in parallel; returns the winner +
+  // alternative candidates. Adapters that can't handle this pair (e.g.
+  // native when token isn't in the pool) silently return null and drop out.
+  const { best, candidates, isLoading: isLoadingRoutes } = useBestZapInRoute({
+    pair,
+    inputs: zapInputs,
+    account: account ?? undefined,
+    slippageBps: slippage,
+    deadline: deadlineSeconds,
   })
 
-  // Validation
+  const alternative = useMemo(
+    () => (best ? candidates.find((c) => c.source !== best.source) : undefined),
+    [best, candidates],
+  )
+
+  // Approval target moves with the chosen engine. Native = V3 router;
+  // Kyber = Kyber's router. If the winner flips across refetches and
+  // the user already approved the previous one, useApproveCallback will
+  // surface the new approval state automatically.
+  const [approval, approveCallback] = useApproveCallback(parsedAmount, best?.routerAddress)
+  const needsApproval = !isNativeETH && approval !== ApprovalState.APPROVED
+
   const error = useMemo(() => {
     if (!chainId || !account || !library) return 'Connect Wallet'
     if (!selectedCurrency) return 'Select a token'
     if (!parsedAmount || !parsedAmount.greaterThan('0')) return 'Enter an amount'
-    if (!wrappedTokenOther) return 'Token not in this pool'
     if (balance && parsedAmount.greaterThan(balance)) return `Insufficient ${symbol ?? ''} balance`.trim()
+    if (!isLoadingRoutes && !best) return 'No zap route'
     return undefined
-  }, [chainId, account, library, selectedCurrency, parsedAmount, wrappedTokenOther, balance, symbol])
+  }, [chainId, account, library, selectedCurrency, parsedAmount, balance, symbol, isLoadingRoutes, best])
 
   const isValid = !error
 
@@ -129,26 +116,28 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
   }, [])
 
   const summaryAmount = parsedAmount?.toSignificant(6)
+  const pairLabel = useMemo(
+    () => (pair ? `${pair.token0.symbol ?? '?'}/${pair.token1.symbol ?? '?'}` : 'pool'),
+    [pair],
+  )
   const pendingText = useMemo(
-    () => `Zapping ${summaryAmount ?? ''} ${symbol ?? ''} into ${otherSymbol ? `${symbol}/${otherSymbol}` : 'pool'}`,
-    [summaryAmount, symbol, otherSymbol],
+    () => `Zapping ${summaryAmount ?? ''} ${symbol ?? ''} into ${pairLabel}`,
+    [summaryAmount, symbol, pairLabel],
   )
   const submittedText = useMemo(
-    () => `Zapped ${summaryAmount ?? ''} ${symbol ?? ''} into ${otherSymbol ? `${symbol}/${otherSymbol}` : 'pool'}`,
-    [summaryAmount, symbol, otherSymbol],
+    () => `Zapped ${summaryAmount ?? ''} ${symbol ?? ''} into ${pairLabel}`,
+    [summaryAmount, symbol, pairLabel],
   )
 
   const handleDismissConfirm = useCallback(() => {
     setShowConfirm(false)
-    // Clear the input on close after a successful submission so the form is
-    // ready for the next action; pre-submit errors leave the form intact.
     if (txHash) setAmount('')
     setTxHash('')
     setErrorMessage(undefined)
   }, [txHash])
 
   const handleSubmit = useCallback(async () => {
-    if (!chainId || !account || !library || !parsedAmount || !wrappedTokenIn || !wrappedTokenOther || !deadline) return
+    if (!chainId || !account || !library || !best || !deadline) return
 
     setErrorMessage(undefined)
     setTxHash('')
@@ -156,34 +145,32 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
     setIsSubmitting(true)
 
     try {
-      const updateData = await buildV3UpdateData(
-        [wrappedTokenIn.address, wrappedTokenOther.address],
-        chainId,
-      )
+      // Look up the adapter that produced this quote and ask it to build
+      // calldata. The orchestration hook keeps `quote` opaque — only the
+      // adapter knows how to translate its own routeSummary back into a tx.
+      const adapter = getZapAggregatorById(best.source)
+      if (!adapter) throw new Error(`Zap adapter ${best.source} not registered`)
 
-      const amountOtherMin = estimatedOutput?.amountOtherMin?.toString() ?? '0'
-
-      const response = await executeV3ZapIn({
+      const built = await adapter.buildZapIn({
         chainId,
-        library,
         account,
-        tokenIn: wrappedTokenIn.address,
-        tokenOther: wrappedTokenOther.address,
-        amountIn: parsedAmount.raw.toString(),
-        amountOtherMin,
-        deadline: BigNumber.from(deadline.toString()),
-        updateData,
-        isNativeETH,
+        quote: best.quote,
         slippageBps: slippage,
+        deadline: deadlineSeconds,
       })
 
-      // Set hash first so the modal moves Pending → Submitted in one render
-      // and never falls through to the `content()` fallback (which would be
-      // a blank div when there's no error).
-      if (response) {
-        setTxHash(response.hash)
-        addTransaction(response, { summary: submittedText })
-      }
+      const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : undefined
+      if (!signer) throw new Error('No signer available')
+
+      const tx = await signer.sendTransaction({
+        to: built.to,
+        data: built.data,
+        ...(built.value ? { value: built.value } : {}),
+        ...(built.gasLimit ? { gasLimit: built.gasLimit } : {}),
+      })
+
+      setTxHash(tx.hash)
+      addTransaction(tx, { summary: submittedText })
       setIsSubmitting(false)
     } catch (err) {
       setIsSubmitting(false)
@@ -194,25 +181,9 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
       }
       setErrorMessage(parseZapError(err))
     }
-  }, [
-    chainId,
-    account,
-    library,
-    parsedAmount,
-    wrappedTokenIn,
-    wrappedTokenOther,
-    deadline,
-    estimatedOutput,
-    isNativeETH,
-    slippage,
-    addTransaction,
-    submittedText,
-  ])
+  }, [chainId, account, library, best, deadline, deadlineSeconds, slippage, addTransaction, submittedText])
 
-  const halfAmount = parsedAmount ? Number(parsedAmount.toExact()) / 2 : 0
-  const estimatedOther = estimatedOutput
-    ? Number(estimatedOutput.amountOut) / Math.pow(10, wrappedTokenOther?.decimals ?? 18)
-    : 0
+  const showRoutesCard = Boolean(parsedAmount?.greaterThan('0') && pair)
 
   return (
     <AutoColumn gap="20px">
@@ -231,6 +202,7 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
           )
         }
       />
+
       <CurrencyInputPanel
         value={amount}
         onUserInput={setAmount}
@@ -243,35 +215,38 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
         label="You Pay"
       />
 
-      {isEstimateEnabled && (isFetchingEstimate || estimatedOutput) && (
+      {showRoutesCard && (
         <div className="px-4 py-3 rounded-md bg-white/5 text-sm text-white/70">
-          {isFetchingEstimate ? (
-            <Dots>Fetching estimate</Dots>
-          ) : estimatedOutput ? (
+          {isLoadingRoutes ? (
+            <Dots>Fetching routes</Dots>
+          ) : best ? (
             <>
-              <Text fontSize={13} color="white" opacity={0.7}>
-                Estimated: swap {formatNumber(halfAmount)} {symbol} &rarr; {formatNumber(estimatedOther)} {otherSymbol}
+              <Text fontSize={13} color="white" opacity={0.85}>
+                Using <b>{best.sourceName}</b> &middot; ≈ {formatLpAmount(best.lpOut)} LP
               </Text>
-              <Text fontSize={12} color="white" opacity={0.5} style={{ marginTop: 4 }}>
-                Then add liquidity with both tokens
-              </Text>
+              {alternative && (
+                <Text fontSize={12} color="white" opacity={0.5} style={{ marginTop: 4 }}>
+                  {alternative.sourceName}: ≈ {formatLpAmount(alternative.lpOut)} LP
+                </Text>
+              )}
             </>
-          ) : null}
+          ) : (
+            <Text fontSize={13} color="white" opacity={0.6}>
+              No route available for this pair
+            </Text>
+          )}
         </div>
       )}
 
       {needsApproval && isValid && (
-        <ButtonPrimary
-          onClick={approveCallback}
-          disabled={approval === ApprovalState.PENDING}
-        >
+        <ButtonPrimary onClick={approveCallback} disabled={approval === ApprovalState.PENDING}>
           {approval === ApprovalState.PENDING ? <Dots>Approving {symbol}</Dots> : `Approve ${symbol}`}
         </ButtonPrimary>
       )}
 
       <ButtonError
         onClick={handleSubmit}
-        disabled={!isValid || (needsApproval && !isNativeETH) || isSubmitting || (!estimatedOutput && isEstimateEnabled)}
+        disabled={!isValid || (needsApproval && !isNativeETH) || isSubmitting || isLoadingRoutes}
         error={Boolean(error && parsedAmount?.greaterThan('0'))}
       >
         {error ?? (isSubmitting ? <Dots>Submitting</Dots> : 'Zap & Supply')}
