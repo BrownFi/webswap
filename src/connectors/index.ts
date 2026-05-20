@@ -135,21 +135,25 @@ export const isMainnet = appEnv === 'mainnet'
 // orthogonal:
 //   - VITE_ENVIRONMENT controls deployment identity (mainnet/beta/testnet).
 //     Used for dev-only UI gates (admin stats, edit-pool, etc.).
-//   - VITE_API_URL controls which indexer the FE talks to. Only the beta API
-//     currently exposes V3 schema + uniV2Price; production api.brownfi.io
-//     doesn't.
-// A beta-branded deployment can point at production API to mirror prod data,
-// in which case V3 + uniV2Price must be disabled even though env !== 'mainnet'.
+//   - VITE_API_URL controls which indexer the FE talks to. The V3 indexer
+//     (/indexer/v3) and the uniV2Price field landed on the non-prod APIs
+//     first; production api.brownfi.io doesn't have them yet.
 //
-// Match both URLs that point at the dev backend:
-//   - bf-v2-api-beta.brownfi.io  (legacy alias)
-//   - dev-api.brownfi.io         (new alias)
-// Both serve the same DB. Production aliases (api.brownfi.io,
-// beta-api.brownfi.io) currently lack V3 + uniV2Price, so they don't match.
-export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi)/.test(
+// Match all non-prod API aliases:
+//   - bf-v2-api-beta.brownfi.io  (legacy)
+//   - dev-api.brownfi.io          (current dev alias)
+//   - beta-api.brownfi.io         (current beta alias — V3 + uniV2Price wired 2026-05-20)
+// All three serve the V3 schema + uniV2Price. Only api.brownfi.io (true
+// production) lacks them, so it's the only one that doesn't match.
+//
+// V3 contracts are still per-chain (currently Berachain-only via
+// ROUTER_ADDRESS_V3) so even with this flag true, useVersion + SwitchVersion
+// only expose V3 on chains where the router is deployed. The flag here is
+// only about API capability, not per-chain readiness.
+export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.test(
   import.meta.env.VITE_API_URL ?? '',
 )
-// V3 indexer (/indexer/v3) and uniV2Price field only exist on the dev API today.
+// V3 indexer (/indexer/v3) and uniV2Price field only exist on the non-prod APIs.
 export const isV3Enabled = isBetaApi
 
 const mainChains: readonly [Chain, ...Chain[]] = [
