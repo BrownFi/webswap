@@ -98,6 +98,24 @@ export async function buildV3UpdateData(
     )
   )
 
+  // Bail early if ANY token lacks a registered Pyth feed (factory returns
+  // 0x0…0). Sending that to Pyth Hermes either 4xx's or returns malformed
+  // data, which kicks React Query into a 30+ second retry loop before
+  // silently giving up. Surface a typed error so the caller can show a
+  // useful message instead of an indefinite spinner. Also note: even if
+  // the FE worked around this, the on-chain V3 pool would still revert on
+  // swap — the contract needs the Pyth feed to price every token.
+  const missingIdx = priceFeedIds.findIndex((id) => !id || /^0x0+$/.test(id))
+  if (missingIdx !== -1) {
+    const err: any = new Error(
+      `Token ${tokenAddresses[missingIdx]} has no Pyth price feed registered on the V3 factory. ` +
+      `Admin must call setOracleOf(token, feedId) before this pool can be used.`,
+    )
+    err.code = 'V3_FEED_NOT_REGISTERED'
+    err.tokenAddress = tokenAddresses[missingIdx]
+    throw err
+  }
+
   const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
   priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
   const response = await fetch(pythUrl.toString())
