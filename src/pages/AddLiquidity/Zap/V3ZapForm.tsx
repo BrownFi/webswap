@@ -72,20 +72,16 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   const deadlineSeconds = useMemo(() => (deadline ? Number(deadline.toString()) : 0), [deadline])
 
   // Fans out native + Kyber zap quotes in parallel; returns the winner +
-  // alternative candidates. Adapters that can't handle this pair (e.g.
-  // native when token isn't in the pool) silently return null and drop out.
-  const { best, candidates, isLoading: isLoadingRoutes } = useBestZapInRoute({
+  // every adapter's status (success / no-route / loading). The form
+  // renders all attempts so the user can see why an engine didn't show
+  // up (e.g. Kyber doesn't index V3 pools yet) instead of guessing.
+  const { best, attempts, isLoading: isLoadingRoutes } = useBestZapInRoute({
     pair,
     inputs: zapInputs,
     account: account ?? undefined,
     slippageBps: slippage,
     deadline: deadlineSeconds,
   })
-
-  const alternative = useMemo(
-    () => (best ? candidates.find((c) => c.source !== best.source) : undefined),
-    [best, candidates],
-  )
 
   // Approval target moves with the chosen engine. Native = V3 router;
   // Kyber = Kyber's router. If the winner flips across refetches and
@@ -216,24 +212,36 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
       />
 
       {showRoutesCard && (
-        <div className="px-4 py-3 rounded-md bg-white/5 text-sm text-white/70">
-          {isLoadingRoutes ? (
+        <div className="px-4 py-3 rounded-md bg-white/5 text-sm text-white/70 flex flex-col gap-1">
+          {isLoadingRoutes && attempts.every((a) => a.status === 'loading') ? (
             <Dots>Fetching routes</Dots>
-          ) : best ? (
+          ) : (
             <>
-              <Text fontSize={13} color="white" opacity={0.85}>
-                Using <b>{best.sourceName}</b> &middot; ≈ {formatLpAmount(best.lpOut)} LP
-              </Text>
-              {alternative && (
-                <Text fontSize={12} color="white" opacity={0.5} style={{ marginTop: 4 }}>
-                  {alternative.sourceName}: ≈ {formatLpAmount(alternative.lpOut)} LP
+              {best ? (
+                <Text fontSize={13} color="white" opacity={0.85}>
+                  Using <b>{best.sourceName}</b> &middot; ≈ {formatLpAmount(best.lpOut)} LP
+                </Text>
+              ) : (
+                <Text fontSize={13} color="white" opacity={0.6}>
+                  No route available for this pair
                 </Text>
               )}
+              {/* Always render the other engines so it's clear what was
+                  considered. Skip the winner (already shown above). */}
+              {attempts
+                .filter((a) => a.source !== best?.source)
+                .map((a) => {
+                  let detail: string
+                  if (a.status === 'loading') detail = 'fetching…'
+                  else if (a.status === 'success' && a.candidate) detail = `≈ ${formatLpAmount(a.candidate.lpOut)} LP`
+                  else detail = 'no route'
+                  return (
+                    <Text key={a.source} fontSize={12} color="white" opacity={0.5}>
+                      {a.sourceName}: {detail}
+                    </Text>
+                  )
+                })}
             </>
-          ) : (
-            <Text fontSize={13} color="white" opacity={0.6}>
-              No route available for this pair
-            </Text>
           )}
         </div>
       )}

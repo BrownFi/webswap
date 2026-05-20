@@ -135,7 +135,7 @@ export default function RemoveLiquidity() {
   // version, sorts by amountOut desc with native tie-break, and returns
   // the winner. For V2 today, only Kyber registers; for V3 both native and
   // Kyber compete.
-  const { best, isLoading: isLoadingZapRoute } = useBestZapOutRoute({
+  const { best, attempts: zapAttempts, isLoading: isLoadingZapRoute } = useBestZapOutRoute({
     pair: pair ?? undefined,
     liquidityRaw: useZap && Number(amountOut) > 0 ? amountOut : undefined,
     tokenOut: useZap ? zapOutCurrency ?? undefined : undefined,
@@ -580,6 +580,34 @@ export default function RemoveLiquidity() {
                     })() : kyberRouteSummary ? (
                       <ZapRoutePreview routeData={kyberRouteSummary} />
                     ) : null}
+                    {/* Per-adapter status strip — only renders when more than
+                        one adapter is even possible on this chain/version, so
+                        V2 (Kyber-only) stays uncluttered. Mirrors the strip
+                        in V3ZapForm so users can see exactly what was tried. */}
+                    {zapAttempts.length > 1 && (
+                      <div className="flex flex-col gap-1 text-xs text-white/50 px-1 pt-1">
+                        {zapAttempts.map((a) => {
+                          let detail: string
+                          if (a.status === 'loading') detail = 'fetching…'
+                          else if (a.status === 'success' && a.candidate && zapOutToken)
+                            detail = `≈ ${formatNumber(
+                              Number(a.candidate.amountOut.toString()) / 10 ** zapOutToken.decimals,
+                              { maximumFractionDigits: 4 },
+                            )} ${zapOutToken.symbol ?? ''}`
+                          else detail = 'no route'
+                          const winner = best?.source === a.source
+                          return (
+                            <div key={a.source} className="flex justify-between">
+                              <span className={winner ? 'text-white' : ''}>
+                                {a.sourceName}
+                                {winner ? ' (using)' : ''}
+                              </span>
+                              <span className={winner ? 'text-white' : ''}>{detail}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </AutoColumn>
                 ) : (
                   <AutoColumn gap="10px">

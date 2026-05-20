@@ -36,6 +36,31 @@ import type { BrownFiVersion } from 'services/aggregators/types'
 /** Auto = pick best metric across all adapters. Explicit id pins that one. */
 export type ZapChoice = 'auto' | ZapAggregatorId
 
+/**
+ * Per-adapter result for the routes UI. Lets the form render every
+ * supported adapter regardless of outcome — successful quotes show their
+ * amount; failed quotes show "no route" instead of being silently hidden.
+ * That way users can tell that Kyber was tried but didn't have a route
+ * (e.g. V3 pool not indexed by Kyber's zap product yet) vs being absent
+ * because the chain doesn't support it at all.
+ */
+export type ZapAdapterStatus = 'loading' | 'success' | 'no-route'
+
+export interface ZapInAdapterAttempt {
+  source: ZapAggregatorId
+  sourceName: string
+  status: ZapAdapterStatus
+  /** Populated only when status === 'success'. */
+  candidate?: UnifiedZapInRoute
+}
+
+export interface ZapOutAdapterAttempt {
+  source: ZapAggregatorId
+  sourceName: string
+  status: ZapAdapterStatus
+  candidate?: UnifiedZapOutRoute
+}
+
 export interface UnifiedZapInRoute {
   source: ZapAggregatorId
   sourceName: string
@@ -76,6 +101,9 @@ export interface UseBestZapInRouteResult {
   best: UnifiedZapInRoute | null
   /** Every adapter that returned a quote, sorted by lpOut desc (native tie-break). */
   candidates: UnifiedZapInRoute[]
+  /** Every supported adapter on this chain × version, success or not. UI iterates
+   *  this to render the full set so the user can see what was tried. */
+  attempts: ZapInAdapterAttempt[]
   isLoading: boolean
   isStale: boolean
   refetchAll: () => void
@@ -96,6 +124,8 @@ export interface UseBestZapOutRouteParams {
 export interface UseBestZapOutRouteResult {
   best: UnifiedZapOutRoute | null
   candidates: UnifiedZapOutRoute[]
+  /** Every supported adapter on this chain × version, success or not. */
+  attempts: ZapOutAdapterAttempt[]
   isLoading: boolean
   isStale: boolean
   refetchAll: () => void
@@ -161,21 +191,32 @@ export function useBestZapInRoute(params: UseBestZapInRouteParams): UseBestZapIn
 
   return useMemo(() => {
     const candidates: UnifiedZapInRoute[] = []
+    const attempts: ZapInAdapterAttempt[] = []
 
     queries.forEach((q, i) => {
-      const data = q.data
-      if (!data) return
       const adapter = aggregators[i]
-      candidates.push({
-        source: adapter.id,
-        sourceName: adapter.name,
-        lpOut: data.lpOut,
-        lpOutMin: data.lpOutMin,
-        routerAddress: data.routerAddress,
-        gasEstimate: data.gasEstimate,
-        priceImpact: data.priceImpact,
-        quote: data,
-      })
+      const data = q.data
+      if (data) {
+        const route: UnifiedZapInRoute = {
+          source: adapter.id,
+          sourceName: adapter.name,
+          lpOut: data.lpOut,
+          lpOutMin: data.lpOutMin,
+          routerAddress: data.routerAddress,
+          gasEstimate: data.gasEstimate,
+          priceImpact: data.priceImpact,
+          quote: data,
+        }
+        candidates.push(route)
+        attempts.push({ source: adapter.id, sourceName: adapter.name, status: 'success', candidate: route })
+      } else if (q.isLoading) {
+        attempts.push({ source: adapter.id, sourceName: adapter.name, status: 'loading' })
+      } else {
+        // Query settled (success: false branch above didn't fire) — adapter
+        // returned null. Surface so the UI can show "no route" instead of
+        // silently dropping the adapter.
+        attempts.push({ source: adapter.id, sourceName: adapter.name, status: 'no-route' })
+      }
     })
 
     const sorted = [...candidates].sort((a, b) => {
@@ -196,7 +237,7 @@ export function useBestZapInRoute(params: UseBestZapInRouteParams): UseBestZapIn
 
     const refetchAll = () => queries.forEach((q) => q.refetch())
 
-    return { best, candidates: sorted, isLoading, isStale, refetchAll }
+    return { best, candidates: sorted, attempts, isLoading, isStale, refetchAll }
   }, [aggregators, queries, selected])
 }
 
@@ -250,21 +291,29 @@ export function useBestZapOutRoute(params: UseBestZapOutRouteParams): UseBestZap
 
   return useMemo(() => {
     const candidates: UnifiedZapOutRoute[] = []
+    const attempts: ZapOutAdapterAttempt[] = []
 
     queries.forEach((q, i) => {
-      const data = q.data
-      if (!data) return
       const adapter = aggregators[i]
-      candidates.push({
-        source: adapter.id,
-        sourceName: adapter.name,
-        amountOut: data.amountOut,
-        amountOutMin: data.amountOutMin,
-        routerAddress: data.routerAddress,
-        gasEstimate: data.gasEstimate,
-        priceImpact: data.priceImpact,
-        quote: data,
-      })
+      const data = q.data
+      if (data) {
+        const route: UnifiedZapOutRoute = {
+          source: adapter.id,
+          sourceName: adapter.name,
+          amountOut: data.amountOut,
+          amountOutMin: data.amountOutMin,
+          routerAddress: data.routerAddress,
+          gasEstimate: data.gasEstimate,
+          priceImpact: data.priceImpact,
+          quote: data,
+        }
+        candidates.push(route)
+        attempts.push({ source: adapter.id, sourceName: adapter.name, status: 'success', candidate: route })
+      } else if (q.isLoading) {
+        attempts.push({ source: adapter.id, sourceName: adapter.name, status: 'loading' })
+      } else {
+        attempts.push({ source: adapter.id, sourceName: adapter.name, status: 'no-route' })
+      }
     })
 
     const sorted = [...candidates].sort((a, b) => {
@@ -285,6 +334,6 @@ export function useBestZapOutRoute(params: UseBestZapOutRouteParams): UseBestZap
 
     const refetchAll = () => queries.forEach((q) => q.refetch())
 
-    return { best, candidates: sorted, isLoading, isStale, refetchAll }
+    return { best, candidates: sorted, attempts, isLoading, isStale, refetchAll }
   }, [aggregators, queries, selected])
 }
