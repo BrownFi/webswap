@@ -184,9 +184,12 @@ type KyberZapRouteResponse = {
 type KyberZapRouteParams = {
   chainId: ChainId
   poolId: string
-  poolToken0: string
-  poolToken1: string
-  positionId?: string
+  // Verified empirically against the live API: when `position.id` is the
+  // user's wallet address (V2-style pools have no NFT position), the route
+  // succeeds without `pool.token0` / `pool.token1`. The earlier impl sent
+  // them but the response is byte-identical without — keep the surface
+  // narrow so future Kyber changes don't bite us through stale params.
+  positionId: string
   tokensIn: OneOrMany<string>
   amountsIn: OneOrMany<string>
   slippage: string
@@ -195,8 +198,6 @@ type KyberZapRouteParams = {
 const getKyberZapInRoute = async ({
   chainId,
   poolId,
-  poolToken0,
-  poolToken1,
   positionId,
   tokensIn,
   amountsIn,
@@ -208,8 +209,6 @@ const getKyberZapInRoute = async ({
     params: {
       dex: KYBER_ZAP_DEX_ID,
       'pool.id': poolId,
-      'pool.token0': poolToken0,
-      'pool.token1': poolToken1,
       'position.id': positionId,
       tokensIn: toArray(tokensIn).join(','),
       amountsIn: toArray(amountsIn).join(','),
@@ -269,6 +268,12 @@ type KyberBuildZapRouteRequest = {
   sender: string
   recipient: string
   route: string
+  /** Unix seconds. When omitted, Kyber applies an internal default; verified
+   *  empirically that supplying it changes the embedded calldata (offset
+   *  ~4160), so the user's slippage/deadline preference is now honored
+   *  end-to-end instead of silently dropped. A past timestamp makes the
+   *  API reject the build outright, so always pass a future value. */
+  deadline?: number
 }
 
 const buildKyberZapInRoute = async ({
@@ -276,6 +281,7 @@ const buildKyberZapInRoute = async ({
   recipient,
   sender,
   route,
+  deadline,
 }: KyberBuildZapRouteRequest): Promise<KyberBuildZapRouteData> => {
   const chainName = chainMap[chainId]
 
@@ -284,6 +290,7 @@ const buildKyberZapInRoute = async ({
     sender,
     route,
     source: KYBER_ZAP_CLIENT_ID,
+    ...(typeof deadline === 'number' && deadline > 0 ? { deadline } : {}),
   })
 
   return response.data
@@ -294,6 +301,7 @@ const buildKyberZapOutRoute = async ({
   recipient,
   sender,
   route,
+  deadline,
 }: KyberBuildZapRouteRequest): Promise<KyberBuildZapRouteData> => {
   const chainName = chainMap[chainId]
 
@@ -302,6 +310,7 @@ const buildKyberZapOutRoute = async ({
     sender,
     route,
     source: KYBER_ZAP_CLIENT_ID,
+    ...(typeof deadline === 'number' && deadline > 0 ? { deadline } : {}),
   })
 
   return response.data

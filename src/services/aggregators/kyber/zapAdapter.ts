@@ -95,13 +95,10 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
       route = await kyberZapService.getKyberZapInRoute({
         chainId: params.chainId,
         poolId: params.pair.liquidityToken.address,
-        poolToken0: params.pair.token0.address,
-        poolToken1: params.pair.token1.address,
         positionId: params.account,
         tokensIn,
         amountsIn,
-        // Existing zapHelpers passes slippage as a string of basis points.
-        // The Kyber API expects bps directly, so just stringify.
+        // Kyber expects slippage in basis points as a string.
         slippage: String(params.slippageBps),
       })
     } catch {
@@ -190,6 +187,9 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
       sender: params.account,
       recipient: params.account,
       route: params.quote.routeSummary.route,
+      // Pass through the user's deadline so it's embedded in the calldata
+      // rather than letting Kyber substitute its own implicit default.
+      deadline: params.deadline,
     })
 
     if (!built?.callData || !built?.routerAddress) {
@@ -210,6 +210,7 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
       sender: params.account,
       recipient: params.account,
       route: params.quote.routeSummary.route,
+      deadline: params.deadline,
     })
 
     if (!built?.callData || !built?.routerAddress) {
