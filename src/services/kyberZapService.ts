@@ -1,4 +1,5 @@
 import { ChainId } from '@brownfi/sdk'
+import { KYBER_ZAP_CHAIN_SLUG } from './aggregators/kyber/chains'
 
 type OneOrMany<T> = T | T[]
 
@@ -6,10 +7,10 @@ const KYBER_ZAP_CLIENT_ID = 'BrownFi'
 const KYBER_ZAP_DEX_ID = 'DEX_BROWNFI'
 const BASE_URL = import.meta.env.VITE_KYBERSWAP_ZAP_API_URL
 
-const chainMap: Partial<Record<ChainId, string>> = {
-  [ChainId.BERA_MAINNET]: 'berachain',
-  [ChainId.LINEA_MAINNET]: 'linea',
-}
+// Re-use the slug map declared in the aggregator folder so adapter + legacy
+// callers stay in lockstep when new chains turn zap on. The aggregator folder
+// is the source of truth.
+const chainMap = KYBER_ZAP_CHAIN_SLUG
 
 async function fetchJson<T>(path: string, options?: { params?: Record<string, any>; timeout?: number; retries?: number }): Promise<T> {
   const maxRetries = options?.retries ?? 1
