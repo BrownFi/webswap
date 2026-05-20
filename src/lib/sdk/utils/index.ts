@@ -170,6 +170,13 @@ export async function getPythPrice(address: string, chainId: number, version: nu
 
     const priceFeedId = await getCachedPriceFeedId(client, factoryAddr, address)
 
+    // Token isn't registered with a Pyth feed on this factory — return 0
+    // instead of calling getPriceUnsafe(0x0…0), which guaranteed-reverts
+    // and spams the console. Common case: zap into a pair where one
+    // token lacks a feed, or a user-imported ERC20 the factory doesn't
+    // know about. Callers already handle a 0 return as "no price."
+    if (!priceFeedId || /^0x0+$/.test(priceFeedId)) return 0
+
     // Cached price lookup (5s TTL)
     const priceKey = `${chainId}:${priceFeedId}`
     const cached = _priceCache.get(priceKey)
@@ -297,20 +304,34 @@ export async function getPythPricePair(pair: any, chainId: number): Promise<[num
       }),
     ])
 
+    // Either side may be the zero hash on pairs whose tokens aren't fully
+    // registered with Pyth. Calling getPriceUnsafe(0x0…0) reverts and
+    // pollutes the console. Return 0 for the missing side so callers can
+    // gracefully fall back to indexer / API prices.
+    const isZeroHash = (h: string) => !h || /^0x0+$/.test(h)
     const [priceUnsafe0, priceUnsafe1] = await Promise.all([
-      client.readContract({
-        address: PYTH_ADDRESS[chainId] as `0x${string}`,
-        abi: ABI_PYTH_UPGRADABLE,
-        functionName: 'getPriceUnsafe',
-        args: [basePriceId],
-      }),
-      client.readContract({
-        address: PYTH_ADDRESS[chainId] as `0x${string}`,
-        abi: ABI_PYTH_UPGRADABLE,
-        functionName: 'getPriceUnsafe',
-        args: [quotePriceId],
-      }),
+      isZeroHash(basePriceId as string)
+        ? null
+        : client.readContract({
+            address: PYTH_ADDRESS[chainId] as `0x${string}`,
+            abi: ABI_PYTH_UPGRADABLE,
+            functionName: 'getPriceUnsafe',
+            args: [basePriceId],
+          }),
+      isZeroHash(quotePriceId as string)
+        ? null
+        : client.readContract({
+            address: PYTH_ADDRESS[chainId] as `0x${string}`,
+            abi: ABI_PYTH_UPGRADABLE,
+            functionName: 'getPriceUnsafe',
+            args: [quotePriceId],
+          }),
     ])
+    if (!priceUnsafe0 || !priceUnsafe1) {
+      const p0 = priceUnsafe0 ? getPriceFromUnsafe(priceUnsafe0) : 0
+      const p1 = priceUnsafe1 ? getPriceFromUnsafe(priceUnsafe1) : 0
+      return Number(qti) === 0 ? [p1, p0] : [p0, p1]
+    }
 
     const prices: [number, number] = [getPriceFromUnsafe(priceUnsafe0), getPriceFromUnsafe(priceUnsafe1)]
     return Number(qti) === 0 ? (prices.reverse() as [number, number]) : prices
