@@ -53,7 +53,7 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 // chain until the V3 indexer is live at bf-v2-api-beta.brownfi.io/indexer/v3
 // for it — otherwise the FE will throw HTTP 500 on every V3 pool query.
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
-  [ChainId.BERA_MAINNET]: '0x1073854BA596789049A83aDb72F527a2dc5c09B4',
+  [ChainId.BERA_MAINNET]: '0xFB473aEAe9b0d03c6974BCf5f2B67dA4AF7F6043',
 }
 
 export const FACTORY_ADDRESS_V3: Record<number, string> = {
