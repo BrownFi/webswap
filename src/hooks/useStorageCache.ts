@@ -32,12 +32,12 @@ export const useStorageCache = ({ key, initValue, cacheTime }: Props) => {
     return value?.expireTime ? value.expireTime > Date.now() : false
   }
 
-  const get = () => {
-    if (isExpired()) {
-      return initValue
-    }
-    return value.data
-  }
+  // Return cached data when present, even past expireTime. The expiry only
+  // gates whether a refetch fires (via isAvailable). Returning initValue here
+  // would flash the UI back to zeros/undefined every time the cache window
+  // ends, while the refetch is still in flight. Falling through to initValue
+  // only happens when the cache was never written (first-ever visit).
+  const get = () => value?.data ?? initValue
 
   return { save, get, isAvailable }
 }

@@ -301,13 +301,19 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2 justify-start"
             onClick={(e) => e.stopPropagation()}
           >
-            <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
-            <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
+            {devStats.lambda !== undefined && (
+              <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
+            )}
+            {devStats.kappa !== undefined && (
+              <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
+            )}
             {/* Fee is already shown in green under the pair name — drop it here */}
-            <Text>
-              {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-              {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
-            </Text>
+            {(version === 3 ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+              <Text>
+                {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+              </Text>
+            )}
             {version === 3 && <V3ExtraParams devStats={devStats} />}
             {canEditSettings && (
               <Settings size="14" className="cursor-pointer text-[#c4943a] hover:text-[#d4a94f]" onClick={() => setShowSettings(true)} />
