@@ -1,10 +1,11 @@
 /**
- * V3 Zap — direct contract calls to BrownFiV3Router02.
- * Replaces Kyber API for zap operations on V3 chains.
+ * V3 Zap primitives — quote estimate, Pyth updateData builder, and calldata
+ * builders for the BrownFi V3 router. The execution layer is the native zap
+ * adapter (services/aggregators/native/zapAdapter); these helpers stay here
+ * because they're also useful standalone (zap estimate previews, etc.).
  */
 import { ChainId, WETH } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
-import { TransactionResponse } from '@ethersproject/providers'
 import { Contract } from '@ethersproject/contracts'
 import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
@@ -125,16 +126,6 @@ export async function buildV3UpdateData(
   return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
 }
 
-// Helper: get ethers signer
-function getSigner(library: any, account: string) {
-  return typeof library?.getSigner === 'function' ? library.getSigner(account) : undefined
-}
-
-// Helper: gas margin (30%)
-function addGasMargin(gas: BigNumber): BigNumber {
-  return gas.mul(130).div(100)
-}
-
 // Shape returned by the build* helpers below. Matches the swap aggregator's
 // BuildSwapResult so a future zap orchestration hook can send either kind of
 // tx with the same code path (`signer.sendTransaction({to, data, value, gasLimit})`).
@@ -252,120 +243,4 @@ export async function buildV3ZapOutTx({
     tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData,
   )
   return { to: populated.to ?? routerAddress, data: populated.data ?? '0x' }
-}
-
-/**
- * Execute V3 Zap In transaction.
- */
-export async function executeV3ZapIn({
-  chainId,
-  library,
-  account,
-  tokenIn,
-  tokenOther,
-  amountIn,
-  amountOtherMin,
-  deadline,
-  updateData,
-  isNativeETH,
-  slippageBps = 50,
-}: {
-  chainId: ChainId
-  library: any
-  account: string
-  tokenIn: string
-  tokenOther: string
-  amountIn: string
-  amountOtherMin: string
-  deadline: BigNumber
-  updateData: string
-  isNativeETH: boolean
-  slippageBps?: number
-}): Promise<TransactionResponse> {
-  const routerAddress = getRouterAddress(chainId, 3)
-  const signer = getSigner(library, account)
-  if (!signer) throw new Error('No signer available')
-
-  const router = new Contract(routerAddress, V3_ZAP_ABI, signer)
-  const slippageSafe = Math.max(0, Math.min(10000, slippageBps))
-  const applySlip = (expected: BigNumber) => expected.mul(10000 - slippageSafe).div(10000)
-
-  if (isNativeETH) {
-    // zapInETH(token, amountTokenMin, minLiquidity, to, deadline, updateData) payable
-    // Simulate with minLiquidity=0 to learn the actual LP out, then enforce slippage.
-    const simLp: BigNumber = await router.callStatic.zapInETH(
-      tokenOther, amountOtherMin, '0', account, deadline.toHexString(), updateData,
-      { value: amountIn },
-    )
-    const minLp = applySlip(BigNumber.from(simLp)).toString()
-    const gas = await router.estimateGas.zapInETH(
-      tokenOther, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
-      { value: amountIn }
-    )
-    return router.zapInETH(
-      tokenOther, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
-      { value: amountIn, gasLimit: addGasMargin(gas) }
-    )
-  } else {
-    // zapIn(tokenIn, tokenOther, amountIn, amountOtherMin, minLiquidity, to, deadline, updateData)
-    const simLp: BigNumber = await router.callStatic.zapIn(
-      tokenIn, tokenOther, amountIn, amountOtherMin, '0', account, deadline.toHexString(), updateData,
-    )
-    const minLp = applySlip(BigNumber.from(simLp)).toString()
-    const gas = await router.estimateGas.zapIn(
-      tokenIn, tokenOther, amountIn, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
-    )
-    return router.zapIn(
-      tokenIn, tokenOther, amountIn, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
-      { gasLimit: addGasMargin(gas) }
-    )
-  }
-}
-
-/**
- * Execute V3 Zap Out transaction.
- */
-export async function executeV3ZapOut({
-  chainId,
-  library,
-  account,
-  tokenA,
-  tokenB,
-  tokenOut,
-  liquidity,
-  amountMin,
-  deadline,
-  isNativeETH,
-}: {
-  chainId: ChainId
-  library: any
-  account: string
-  tokenA: string
-  tokenB: string
-  tokenOut: string
-  liquidity: string
-  amountMin: string
-  deadline: BigNumber
-  isNativeETH: boolean
-}): Promise<TransactionResponse> {
-  const routerAddress = getRouterAddress(chainId, 3)
-  const signer = getSigner(library, account)
-  if (!signer) throw new Error('No signer available')
-
-  const router = new Contract(routerAddress, V3_ZAP_ABI, signer)
-
-  // zapOut/zapOutETH now require Pyth updateData — build a fresh blob for both tokens.
-  const updateData = await buildV3UpdateData([tokenA, tokenB], chainId)
-
-  if (isNativeETH) {
-    // zapOutETH(token, liquidity, amountMin, to, deadline, updateData)
-    // token = the non-ETH token in the pair
-    const token = tokenA === WETH[chainId]?.address ? tokenB : tokenA
-    const gas = await router.estimateGas.zapOutETH(token, liquidity, amountMin, account, deadline.toHexString(), updateData)
-    return router.zapOutETH(token, liquidity, amountMin, account, deadline.toHexString(), updateData, { gasLimit: addGasMargin(gas) })
-  } else {
-    // zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, to, deadline, updateData)
-    const gas = await router.estimateGas.zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData)
-    return router.zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData, { gasLimit: addGasMargin(gas) })
-  }
 }

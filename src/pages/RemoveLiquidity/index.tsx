@@ -127,14 +127,12 @@ export default function RemoveLiquidity() {
 
   const deadlineSeconds = useMemo(() => (deadline ? Number(deadline.toString()) : 0), [deadline])
 
-  // One orchestration call replaces three separate code paths:
-  // - V2 Kyber route (useQuery → getKyberZapOutRouteData)
-  // - V3 native route (executeV3ZapOut + a custom quoteAmountsOutWithUpdate query)
-  // - the proportional/swap math that derived an estimated token-out figure
+  // One orchestration call replaces three separate code paths that used to
+  // live here (V2 Kyber route, V3 native quote via quoteAmountsOutWithUpdate,
+  // plus the proportional/swap math for the estimated token-out figure).
   // The hook fans out every registered adapter that supports this chain ×
-  // version, sorts by amountOut desc with native tie-break, and returns
-  // the winner. For V2 today, only Kyber registers; for V3 both native and
-  // Kyber compete.
+  // version, sorts by amountOut desc with native tie-break, and returns the
+  // winner. V2 today = Kyber-only; V3 = both native and Kyber compete.
   const { best, attempts: zapAttempts, isLoading: isLoadingZapRoute } = useBestZapOutRoute({
     pair: pair ?? undefined,
     liquidityRaw: useZap && Number(amountOut) > 0 ? amountOut : undefined,
