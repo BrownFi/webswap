@@ -342,23 +342,31 @@ export class Trade {
 
       if (!amountOut) return
 
-      if (amountOut.token.equals(tokenOut)) {
-        const newRoute = new Route([...currentPairs, pair], originalAmountIn.currency, currencyOut)
-        const newTrade = new Trade(newRoute, originalAmountIn, TradeType.EXACT_INPUT)
-        await newTrade.computeAmount({ value: originalAmountIn, from: account })
-        sortedInsert(bestTrades, newTrade, maxNumResults, tradeComparator)
-      } else if (maxHops > 1 && pairs.length > 1) {
-        const pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1, pairs.length))
-        await Trade.bestTradeExactIn(
-          account,
-          pairsExcludingThisPair,
-          amountOut,
-          currencyOut,
-          { maxNumResults, maxHops: maxHops - 1 },
-          [...currentPairs, pair],
-          originalAmountIn,
-          bestTrades
-        )
+      // Defensive catch around match + recursion: a throw here (Pyth race making
+      // computeAmount revert with MAX_80, an unforeseen invariant, etc.) must
+      // not nuke trades already accumulated in bestTrades for other paths.
+      try {
+        if (amountOut.token.equals(tokenOut)) {
+          const newRoute = new Route([...currentPairs, pair], originalAmountIn.currency, currencyOut)
+          const newTrade = new Trade(newRoute, originalAmountIn, TradeType.EXACT_INPUT)
+          await newTrade.computeAmount({ value: originalAmountIn, from: account })
+          sortedInsert(bestTrades, newTrade, maxNumResults, tradeComparator)
+        } else if (maxHops > 1 && pairs.length > 1) {
+          const pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1, pairs.length))
+          await Trade.bestTradeExactIn(
+            account,
+            pairsExcludingThisPair,
+            amountOut,
+            currencyOut,
+            { maxNumResults, maxHops: maxHops - 1 },
+            [...currentPairs, pair],
+            originalAmountIn,
+            bestTrades
+          )
+        }
+      } catch (error) {
+        console.warn('======= bestTradeExactIn iteration error', error)
+        return
       }
     })
 
@@ -430,23 +438,29 @@ export class Trade {
 
       if (!amountIn) continue
 
-      if (amountIn.token.equals(tokenIn)) {
-        const newRoute = new Route([pair, ...currentPairs], currencyIn, originalAmountOut.currency)
-        const newTrade = new Trade(newRoute, originalAmountOut, TradeType.EXACT_OUTPUT)
-        await newTrade.computeAmount({ value: originalAmountOut, from: account })
-        sortedInsert(bestTrades, newTrade, maxNumResults, tradeComparator)
-      } else if (maxHops > 1 && pairs.length > 1) {
-        const pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1, pairs.length))
-        await Trade.bestTradeExactOut(
-          account,
-          pairsExcludingThisPair,
-          currencyIn,
-          amountIn,
-          { maxNumResults, maxHops: maxHops - 1 },
-          [pair, ...currentPairs],
-          originalAmountOut,
-          bestTrades
-        )
+      // Defensive catch (see bestTradeExactIn).
+      try {
+        if (amountIn.token.equals(tokenIn)) {
+          const newRoute = new Route([pair, ...currentPairs], currencyIn, originalAmountOut.currency)
+          const newTrade = new Trade(newRoute, originalAmountOut, TradeType.EXACT_OUTPUT)
+          await newTrade.computeAmount({ value: originalAmountOut, from: account })
+          sortedInsert(bestTrades, newTrade, maxNumResults, tradeComparator)
+        } else if (maxHops > 1 && pairs.length > 1) {
+          const pairsExcludingThisPair = pairs.slice(0, i).concat(pairs.slice(i + 1, pairs.length))
+          await Trade.bestTradeExactOut(
+            account,
+            pairsExcludingThisPair,
+            currencyIn,
+            amountIn,
+            { maxNumResults, maxHops: maxHops - 1 },
+            [pair, ...currentPairs],
+            originalAmountOut,
+            bestTrades
+          )
+        }
+      } catch (error) {
+        console.warn('======= bestTradeExactOut iteration error', error)
+        continue
       }
     }
 
