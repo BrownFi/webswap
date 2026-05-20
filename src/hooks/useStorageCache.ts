@@ -22,12 +22,6 @@ export const useStorageCache = ({ key, initValue, cacheTime }: Props) => {
     return data
   }
 
-  const isExpired = () => {
-    if (!value || !value.expireTime) return true
-    const expired = value.expireTime < Date.now()
-    return expired
-  }
-
   const isAvailable = () => {
     return value?.expireTime ? value.expireTime > Date.now() : false
   }

@@ -89,7 +89,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const [{ isFavorite }] = usePairStorage({ pair })
   const enableBgt = !!pairBGT[pair.liquidityToken.address]
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
-  const devStats = useDevStats({ pair, enabled: !isMainnet })
+  const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
 
   const [showMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)

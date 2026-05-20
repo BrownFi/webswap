@@ -260,7 +260,7 @@ function PoolDetailInner({
     enableFetchDetail: true,
   })
 
-  const devStats = useDevStats({ pair, enabled: !isMainnet })
+  const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
   const [showSettings, setShowSettings] = useState(false)
 
   // 24h fee / TVL (simple ratio, no annualization)

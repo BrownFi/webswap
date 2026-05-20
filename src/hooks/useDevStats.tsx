@@ -1,9 +1,10 @@
 import { Pair } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
 import { useActiveWeb3React } from 'hooks'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSingleCallResult } from 'state/multicall/hooks'
+import type { PairStats } from 'components/PositionCard/usePoolStats'
 import { usePairV2Contract } from './useContract'
 import { useStorageCache } from './useStorageCache'
 import { useVersion } from './useVersion'
@@ -21,12 +22,59 @@ const normalizeByDenominator = (value: BigNumber | number | undefined, denominat
 
 type Props = {
   pair: Pair
+  // Indexer-sourced stats for this pair. When present and populated, every
+  // dev-param is read straight from here — no RPC fires. The pool list and
+  // pool detail both already fetch this via GraphQL, so the cards on screen
+  // get fresh values on each F5 with a single backend call instead of N
+  // (one per pool) on-chain reads.
+  pairStats?: PairStats
   enabled?: boolean
 }
 
-export const useDevStats = ({ pair, enabled = true }: Props) => {
+export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
+
+  // Indexer-first projection. Returns undefined when pairStats is absent
+  // (pair newly deployed, indexer down, caller didn't pass it) so the RPC
+  // fallback kicks in. Format matches the RPC path: lambda/kappa already
+  // normalized to decimal fractions; fee is a fraction (e.g. 0.0005 = 0.05%).
+  const fromIndexer = useMemo(() => {
+    if (!pairStats) return undefined
+    if (version === 3) {
+      if (pairStats.lambda === undefined && pairStats.kB === undefined) return undefined
+      return {
+        lambda: pairStats.lambda,
+        kappa: pairStats.kB, // legacy alias
+        kB: pairStats.kB,
+        kQ: pairStats.kQ,
+        fee: pairStats.fee,
+        feeSplit: pairStats.feeSplit,
+        protocolFee: 0,
+        compress: pairStats.compress,
+        sSell: pairStats.sSell,
+        sBuy: pairStats.sBuy,
+        fixS: pairStats.fixS,
+        disThreshold: pairStats.disThreshold,
+        sBound: pairStats.sBound,
+        pythWeight: pairStats.pythWeight,
+        gamma: pairStats.gamma,
+      }
+    }
+    if (version === 2) {
+      if (pairStats.lambda === undefined && pairStats.k === undefined) return undefined
+      return {
+        lambda: pairStats.lambda,
+        kappa: pairStats.k,
+        fee: pairStats.fee,
+        protocolFee: pairStats.protocolFee,
+        feeSplit: 0,
+      }
+    }
+    return undefined
+  }, [pairStats, version])
+
+  const hasIndexerData = fromIndexer !== undefined
 
   // All params start undefined so the UI skips them on first load instead of
   // flashing zeros (the previous lambda:0 / kappa:0 / fee:0 placeholders
@@ -34,7 +82,7 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
   // the full V3 set — looked broken). Consumers must guard each field.
   // cacheTime bumped to 5 min so navigations within that window are flicker-
   // free; a refetch still fires silently in the background past expiry.
-  const { get: getDevStats, save: saveDevStats, isAvailable } = useStorageCache({
+  const { get: getDevStats, save: saveDevStats } = useStorageCache({
     key: ['devStats', 'v3shape', pair.liquidityToken.address, `v${version}`].join('-'),
     initValue: {
       lambda: undefined as number | undefined,
@@ -56,16 +104,20 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
     cacheTime: 5 * 60,
   })
 
-  // V2: read from pair contract directly
+  // V2: read from pair contract directly. Multicall stays enabled whenever
+  // the contract is available — stale-while-revalidate, not cache-gated. The
+  // localStorage value is what renders right now (set via getDevStats below);
+  // multicall fires in the background and the V2 useEffect updates the cache
+  // when fresh values arrive. This way an admin's setLambdaOfPair / etc. is
+  // picked up on the next F5, not on the next cache expiry.
   const pairContract = usePairV2Contract(pair.liquidityToken.address)
   const v2Contract = enabled && version === 2 ? pairContract : null
-  const hasCache = isAvailable()
-  const shouldSkipV2 = hasCache || !v2Contract
+  const v2Disabled = !v2Contract || hasIndexerData
 
-  const lambdaCall = useSingleCallResult(v2Contract, 'lambda', undefined, { disabled: shouldSkipV2 })
-  const kappaCall = useSingleCallResult(v2Contract, 'k', undefined, { disabled: shouldSkipV2 })
-  const feeCall = useSingleCallResult(v2Contract, 'fee', undefined, { disabled: shouldSkipV2 })
-  const protocolFeeCall = useSingleCallResult(v2Contract, 'protocolFee', undefined, { disabled: shouldSkipV2 })
+  const lambdaCall = useSingleCallResult(v2Contract, 'lambda', undefined, { disabled: v2Disabled })
+  const kappaCall = useSingleCallResult(v2Contract, 'k', undefined, { disabled: v2Disabled })
+  const feeCall = useSingleCallResult(v2Contract, 'fee', undefined, { disabled: v2Disabled })
+  const protocolFeeCall = useSingleCallResult(v2Contract, 'protocolFee', undefined, { disabled: v2Disabled })
 
   // V3: read from PairConfig contract via viem
   useQuery({
@@ -140,7 +192,10 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
       saveDevStats(next)
       return next
     },
-    enabled: enabled && version === 3 && !hasCache,
+    // Fallback only — fires when the indexer hasn't shipped this pair yet
+    // (just deployed, or backend down). When pairStats is healthy this stays
+    // disabled and the entire pool list runs on a single GraphQL request.
+    enabled: enabled && version === 3 && !hasIndexerData,
     staleTime: 5 * 60 * 1000,
   })
 
@@ -150,9 +205,10 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
     [pair.liquidityToken.address],
   )
 
-  // V2 effect: save when multicall results arrive
+  // V2 effect: save when multicall results arrive. Skipped when indexer data
+  // is in use — there's nothing to save (we render fromIndexer directly).
   useEffect(() => {
-    if (shouldSkipV2 || version !== 2) return
+    if (version !== 2 || !v2Contract || hasIndexerData) return
 
     const lambda = normalizeByDenominator(lambdaCall.result?.[0], Q64_DENOMINATOR)
     const kappa = normalizeByDenominator(kappaCall.result?.[0], Q64_DENOMINATOR)
@@ -162,7 +218,7 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
     if (lambda === undefined || kappa === undefined || fee === undefined || protocolFee === undefined) return
 
     stableSave({ lambda, kappa, fee, protocolFee, feeSplit: 0 })
-  }, [shouldSkipV2, version, lambdaCall.result, kappaCall.result, feeCall.result, protocolFeeCall.result, stableSave])
+  }, [version, v2Contract, hasIndexerData, lambdaCall.result, kappaCall.result, feeCall.result, protocolFeeCall.result, stableSave])
 
-  return getDevStats()
+  return fromIndexer ?? getDevStats()
 }
