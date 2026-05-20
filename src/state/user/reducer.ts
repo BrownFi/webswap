@@ -1,6 +1,7 @@
 import { INITIAL_ALLOWED_SLIPPAGE, DEFAULT_DEADLINE_FROM_NOW } from 'constants/common'
 import { createReducer } from '@reduxjs/toolkit'
 import { updateVersion } from 'state/global/actions'
+import type { AggregatorChoice } from 'services/aggregators/types'
 import {
   addSerializedPair,
   addSerializedToken,
@@ -15,6 +16,7 @@ import {
   updateUserDeadline,
   toggleURLWarning,
   updateUserSingleHopOnly,
+  updateSelectedAggregator,
 } from './actions'
 
 const currentTimestamp = () => new Date().getTime()
@@ -40,6 +42,11 @@ export interface UserState {
 
   // deadline set by user in minutes, used in all txns
   userDeadline: number
+
+  // Smart-router preference. 'auto' = pick best amountOut among native +
+  // every supported aggregator; 'native' = force BrownFi pools only; any
+  // AggregatorId = force that aggregator (falls back to native if no route).
+  selectedAggregator: AggregatorChoice
 
   tokens: {
     [chainId: number]: {
@@ -69,6 +76,7 @@ export const initialState: UserState = {
   userSingleHopOnly: false,
   userSlippageTolerance: INITIAL_ALLOWED_SLIPPAGE,
   userDeadline: DEFAULT_DEADLINE_FROM_NOW,
+  selectedAggregator: 'auto',
   tokens: {},
   pairs: {},
   timestamp: currentTimestamp(),
@@ -89,6 +97,15 @@ export default createReducer(initialState, (builder) =>
       if (typeof state.userDeadline !== 'number') {
         state.userDeadline = DEFAULT_DEADLINE_FROM_NOW
       }
+
+      // Smart-router policy: ALWAYS reset to 'auto' on app boot.
+      // updateVersion fires once on store init (state/index.ts), so this
+      // gives the user a fresh auto-tracking session every page load —
+      // a stale pin from yesterday won't silently route them through a
+      // worse-amountOut source today. The pin still works within a
+      // session (click a row to override for this swap), it just
+      // doesn't survive a reload.
+      state.selectedAggregator = 'auto'
 
       // One-time migration: existing users who never customized their slippage
       // / deadline carried the old unsafe defaults (10% slippage, 20m deadline)
@@ -168,5 +185,9 @@ export default createReducer(initialState, (builder) =>
     })
     .addCase(toggleURLWarning, (state) => {
       state.URLWarningVisible = !state.URLWarningVisible
+    })
+    .addCase(updateSelectedAggregator, (state, action) => {
+      state.selectedAggregator = action.payload.selectedAggregator
+      state.timestamp = currentTimestamp()
     }),
 )

@@ -244,7 +244,7 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
       />
 
       {isEstimateEnabled && (isFetchingEstimate || estimatedOutput) && (
-        <div className="px-4 py-3 rounded-lg bg-white/5 text-sm text-white/70">
+        <div className="px-4 py-3 rounded-md bg-white/5 text-sm text-white/70">
           {isFetchingEstimate ? (
             <Dots>Fetching estimate</Dots>
           ) : estimatedOutput ? (

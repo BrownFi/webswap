@@ -25,7 +25,7 @@ const Base = styled.button<{
   width: ${({ width }) => (width ? width : '100%')};
   font-weight: 500;
   text-align: center;
-  border-radius: 12px;
+  border-radius: 8px;
   border-radius: ${({ borderRadius }) => borderRadius && borderRadius};
   outline: none;
   border: 1px solid transparent;
@@ -49,7 +49,7 @@ const Base = styled.button<{
 
 export const ButtonPrimary = styled(Base)`
   background: #985C2A;
-  border-radius: 12px;
+  border-radius: 8px;
   color: #FFFFFF;
   font-family: 'Inter', sans-serif;
   font-weight: 500;
@@ -79,7 +79,7 @@ export const ButtonPrimary = styled(Base)`
 
 export const ButtonLight = styled(Base)`
   background: #985C2A;
-  border-radius: 12px;
+  border-radius: 8px;
   color: #FFFFFF;
   font-family: 'Inter', sans-serif;
   font-size: 16px;
@@ -250,7 +250,7 @@ export const ButtonWhite = styled(Base)`
 
 const ButtonConfirmedStyle = styled(Base)`
   background: #27AE60;
-  border-radius: 12px;
+  border-radius: 8px;
   color: #FFFFFF;
   font-family: 'Inter', sans-serif;
   font-size: 16px;
@@ -265,7 +265,7 @@ const ButtonConfirmedStyle = styled(Base)`
 
 const ButtonErrorStyle = styled(Base)`
   background: #985C2A;
-  border-radius: 12px;
+  border-radius: 8px;
   color: #FFFFFF;
   font-family: 'Inter', sans-serif;
   font-size: 16px;
@@ -320,7 +320,7 @@ export function ButtonDropdown({ disabled = false, children, ...rest }: { disabl
 
 export function ButtonDropdownGrey({ disabled = false, children, ...rest }: { disabled?: boolean } & ButtonProps) {
   return (
-    <ButtonGray {...rest} disabled={disabled} style={{ borderRadius: '20px' }}>
+    <ButtonGray {...rest} disabled={disabled} style={{ borderRadius: '16px' }}>
       <RowBetween>
         <div style={{ display: 'flex', alignItems: 'center' }}>{children}</div>
         <ChevronDown size={24} />

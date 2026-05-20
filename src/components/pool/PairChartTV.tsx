@@ -117,18 +117,18 @@ type SeriesMeta = {
 }
 
 // Original BrownFi palette. HODL + UniV2 reference benchmarks render
-// 1px + dotted (LineStyle.Dotted) so they read clearly as references
-// vs LP Price's default 2px solid. UniV2 uses red to distinguish it
-// from HODL's blue.
+// 1px + dotted (LineStyle.Dotted) AND at ~60% opacity (alpha `99` ≈ 0.6)
+// so they read as muted references vs LP Price's default 2px solid.
+// UniV2 uses red to distinguish it from HODL's blue.
 //
 // Net PnL and Volume are both green but in clearly different shades:
 // Net PnL = #83CF84 (light pastel green, line) and Volume = #16A34A
 // (deep saturated green, histogram). The hue distance + render-type
 // difference keeps them visually separable on the same chart.
 const SERIES_ALL: SeriesMeta[] = [
-  { key: 'lpPrice',    label: 'LP Price',    color: '#D8A072', type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E6', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E04848', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'lpPrice',    label: 'LP Price',    color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
+  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E699', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E0484899', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',        label: 'TVL',         color: '#B47AAE', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
   { key: 'netPnL',     label: 'Net PnL',     color: '#83CF84', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
   { key: 'volume',     label: 'Volume',      color: '#16A34A', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
@@ -410,7 +410,7 @@ const PairChartTVInner = ({ pair }: Props) => {
       style={{
         background: '#1E1915',
         border: '1px solid #2F2823',
-        borderRadius: '16px',
+        borderRadius: '12px',
       }}
     >
       
@@ -418,7 +418,7 @@ const PairChartTVInner = ({ pair }: Props) => {
       <div className="flex items-center justify-end mb-3">
         <div
           className="inline-flex items-center gap-0.5 sm:gap-1"
-          style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 10, padding: 2 }}
+          style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 8, padding: 2 }}
         >
           {(['1h', '7d', '1m', '3m', '1y', 'all'] as Range[]).map((r) => (
             <button
@@ -498,7 +498,7 @@ const PairChartTVInner = ({ pair }: Props) => {
                 width: TIP_W,
                 background: 'rgba(20, 16, 14, 0.95)',
                 border: '1px solid #2F2823',
-                borderRadius: 8,
+                borderRadius: 6,
                 padding: '6px 8px',
                 fontFamily: 'Inter',
                 backdropFilter: 'blur(4px)',

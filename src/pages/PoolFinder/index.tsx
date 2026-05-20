@@ -136,7 +136,7 @@ export default function PoolFinder() {
 
         {hasPosition && (
           <ColumnCenter
-            style={{ justifyItems: 'center', backgroundColor: '', padding: '12px 0px', borderRadius: '12px' }}
+            style={{ justifyItems: 'center', backgroundColor: '', padding: '12px 0px', borderRadius: '8px' }}
           >
             <Text textAlign="center" fontWeight={500}>
               Pool Found!

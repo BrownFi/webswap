@@ -49,7 +49,7 @@ const UnknownSourceBadge = styled.div`
 const WarningPanel = styled.div<{ $severe: boolean }>`
   background: #1e1915;
   border: 1px solid ${({ $severe }) => ($severe ? 'rgba(255, 59, 106, 0.35)' : 'rgba(216, 160, 114, 0.35)')};
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 20px;
 `
 

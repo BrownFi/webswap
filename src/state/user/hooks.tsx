@@ -17,7 +17,9 @@ import {
   updateUserSlippageTolerance,
   toggleURLWarning,
   updateUserSingleHopOnly,
+  updateSelectedAggregator,
 } from './actions'
+import type { AggregatorChoice } from 'services/aggregators/types'
 import { isMainnet } from 'connectors'
 
 function serializeToken(token: Token): SerializedToken {
@@ -96,6 +98,25 @@ export function useUserSingleHopOnly(): [boolean, (newSingleHopOnly: boolean) =>
   )
 
   return [singleHopOnly, setSingleHopOnly]
+}
+
+export function useSelectedAggregator(): [AggregatorChoice, (next: AggregatorChoice) => void] {
+  const dispatch = useDispatch<AppDispatch>()
+  const selected = useSelector<AppState, AggregatorChoice>((state) => {
+    const raw = state.user.selectedAggregator ?? 'auto'
+    // Legacy persisted value: pre-rename, 'native' meant "auto-pick best
+    // native route." The reducer's updateVersion migrates it on boot, but
+    // belt-and-suspenders the runtime path so stale subscriptions can't
+    // leak the legacy string into downstream comparisons.
+    return (raw as unknown as string) === 'native' ? 'auto' : raw
+  })
+  const setSelected = useCallback(
+    (next: AggregatorChoice) => {
+      dispatch(updateSelectedAggregator({ selectedAggregator: next }))
+    },
+    [dispatch],
+  )
+  return [selected, setSelected]
 }
 
 export function useUserSlippageTolerance(): [number, (slippage: number) => void] {

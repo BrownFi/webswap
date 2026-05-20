@@ -389,7 +389,7 @@ function PoolDetailInner({
                 style={{
                   background: '#2F2823',
                   border: '1px solid #493E35',
-                  borderRadius: '12px',
+                  borderRadius: '8px',
                   fontFamily: 'Inter',
                   fontSize: '13px',
                   color: '#D8A072',
@@ -502,20 +502,20 @@ function PoolDetailInner({
             )}
 
             {/* Chart */}
-            <Suspense fallback={<div style={{ height: 380, background: '#1E1915', borderRadius: '16px' }} />}>
+            <Suspense fallback={<div style={{ height: 380, background: '#1E1915', borderRadius: '12px' }} />}>
               <PairChartTV pair={pair} />
             </Suspense>
 
             {/* Your position — mobile only, above activity */}
             <div className="lg:hidden">
-              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
+              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }} />}>
                 <YourPositionCard pair={pair} pairStats={pairStats} />
               </Suspense>
             </div>
 
             {/* Your recent activity — only shown when wallet is connected on this pool's chain */}
             {account && chainId === walletChainId && (
-              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
                 <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD', marginBottom: '12px' }}>
                   Your recent activity
                 </div>
@@ -618,7 +618,7 @@ function PoolDetailInner({
                   // YourPositionCard so the two action sets read consistently.
                   background: 'transparent',
                   border: '1px solid #493E35',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   padding: '10px',
                   fontFamily: 'Inter',
                   fontSize: '14px',
@@ -633,7 +633,7 @@ function PoolDetailInner({
                 className="no-underline inline-flex items-center justify-center"
                 style={{
                   background: '#985C2A',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   padding: '10px',
                   fontFamily: 'Inter',
                   fontSize: '14px',
@@ -648,7 +648,7 @@ function PoolDetailInner({
             {/* Your position — collapsible; sits above Stats so a return
                 visitor sees their state above the fold. */}
             <div className="hidden lg:block">
-              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
+              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }} />}>
                 <YourPositionCard pair={pair} pairStats={pairStats} />
               </Suspense>
             </div>
@@ -656,7 +656,7 @@ function PoolDetailInner({
             {/* APR — the three yield metrics combined into a single card
                 (Fee APR, 24h Fees / TVL, BGT/Incentive APR). Visual treatment
                 mirrors Stats so the rail reads as a consistent stack. */}
-            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
+            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
                 APR
               </div>
@@ -757,7 +757,7 @@ function PoolDetailInner({
             </div>
 
             {/* Stats */}
-            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
+            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
                 Stats
               </div>
@@ -867,7 +867,7 @@ function SkeletonBar({ w, h, rounded = 'rounded' }: { w: number | string; h: num
 
 function PoolDetailSkeleton() {
   const Card = ({ children }: { children?: React.ReactNode }) => (
-    <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+    <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
       {children}
     </div>
   )
@@ -888,7 +888,7 @@ function PoolDetailSkeleton() {
           <SkeletonBar w={80} h={14} />
           <SkeletonBar w={110} h={14} />
         </div>
-        <SkeletonBar w={220} h={36} rounded="rounded-[10px]" />
+        <SkeletonBar w={220} h={36} rounded="rounded-[8px]" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
@@ -909,12 +909,12 @@ function PoolDetailSkeleton() {
             <SkeletonBar w={90} h={14} />
             <SkeletonBar w={120} h={14} />
           </div>
-          <div className="hidden lg:block"><SkeletonBar w={240} h={36} rounded="rounded-[10px]" /></div>
+          <div className="hidden lg:block"><SkeletonBar w={240} h={36} rounded="rounded-[8px]" /></div>
 
           {/* Chart card — matches real structure (range selector + chart + legend) */}
-          <div className="p-[12px] sm:p-[16px]" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
+          <div className="p-[12px] sm:p-[16px]" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
             <div className="flex items-center justify-end mb-3">
-              <SkeletonBar w={180} h={30} rounded="rounded-[10px]" />
+              <SkeletonBar w={180} h={30} rounded="rounded-[8px]" />
             </div>
             <div className="h-[260px] sm:h-[320px] lg:h-[400px] animate-pulse rounded" style={{ background: '#2F2823' }} />
             <div className="flex flex-wrap items-center justify-center gap-4 mt-3">
@@ -954,7 +954,7 @@ function PoolDetailSkeleton() {
                 <SkeletonBar w="100%" h={16} />
                 <SkeletonBar w="100%" h={16} />
                 <SkeletonBar w="100%" h={16} />
-                <SkeletonBar w="100%" h={36} rounded="rounded-[10px]" />
+                <SkeletonBar w="100%" h={36} rounded="rounded-[8px]" />
               </div>
             </Card>
           </div>
@@ -968,7 +968,7 @@ function PoolDetailSkeleton() {
               <SkeletonBar w="100%" h={16} />
               <SkeletonBar w="100%" h={16} />
               <SkeletonBar w="100%" h={16} />
-              <SkeletonBar w="100%" h={36} rounded="rounded-[10px]" />
+              <SkeletonBar w="100%" h={36} rounded="rounded-[8px]" />
             </div>
           </Card>
         </div>

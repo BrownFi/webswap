@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useSingleCallResult } from 'state/multicall/hooks'
 import { usePairV2Contract } from './useContract'
 import { useStorageCache } from './useStorageCache'
-import { useVersion } from './useVersion'
 
 type Props = {
   pair: Pair
@@ -13,7 +12,14 @@ type Props = {
 
 export const useTradingFee = ({ pair }: Props) => {
   const { chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
+  // Read version from the PAIR, not the global useVersion store. The global
+  // store reflects the user's "default version" preference (V2/V3 toggle on
+  // Add/Remove Liquidity), which has nothing to do with the source of the
+  // current swap. Smart routing means a swap can hit a V3 pair even when
+  // the user's stored default is V2 — using global state here meant we'd
+  // query the V2 fee selector on a V3 pool address and silently get 0.
+  // Mirror the fix already applied in useApproveCallback / contract/swap.
+  const version = pair.version ?? 2
 
   const { get: getTradingFee, save: saveTradingFee, isAvailable } = useStorageCache({
     key: ['tradingFee', 'v2shape', pair.liquidityToken.address, `v${version}`].join('-'),

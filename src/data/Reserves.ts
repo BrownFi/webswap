@@ -62,9 +62,19 @@ function useV3PairAddresses(
   return addresses
 }
 
-export function usePairs(currencies: [Currency | undefined, Currency | undefined][]): [PairState, Pair | null][] {
+export function usePairs(
+  currencies: [Currency | undefined, Currency | undefined][],
+  /**
+   * Optional version override. The Swap surface is V2-only post-unified-
+   * router refactor, so it passes 2 here regardless of what the global
+   * version state says (which still tracks the Add/Remove Liquidity
+   * surface's V2/V3 toggle).
+   */
+  versionOverride?: number,
+): [PairState, Pair | null][] {
   const { chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
+  const { version: appVersion } = useVersion({ chainId })
+  const version = versionOverride ?? appVersion
 
   const tokens = useMemo(
     () =>

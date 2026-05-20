@@ -41,7 +41,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
 
   return (
     <div
-      className={`flex items-center gap-2 px-4 py-2 min-h-12 rounded-lg shadow-lg text-sm transition-all duration-300 ${
+      className={`flex items-center gap-2 px-4 py-2 min-h-12 rounded-md shadow-lg text-sm transition-all duration-300 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-5'
       } ${
         toast.type === 'success' ? 'bg-green-600 text-white dark:bg-green-500' : 'bg-red-600 text-white dark:bg-red-500'
