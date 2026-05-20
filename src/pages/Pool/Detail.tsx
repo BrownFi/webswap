@@ -360,12 +360,18 @@ function PoolDetailInner({
               className="flex flex-wrap items-center gap-x-3 gap-y-1"
               style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
             >
-              <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
-              <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
-              <span>
-                {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-                {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
-              </span>
+              {devStats.lambda !== undefined && (
+                <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
+              )}
+              {devStats.kappa !== undefined && (
+                <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
+              )}
+              {(version === 3 ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+                <span>
+                  {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                  {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                </span>
+              )}
               {version === 3 && <V3ExtraParams devStats={devStats} />}
               {account && (
                 <Settings
@@ -472,12 +478,18 @@ function PoolDetailInner({
                 className="hidden lg:flex flex-wrap items-center gap-x-3 gap-y-1"
                 style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
               >
-                <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
-                <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
+                {devStats.lambda !== undefined && (
+                  <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
+                )}
+                {devStats.kappa !== undefined && (
+                  <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
+                )}
+                {(version === 3 ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
                   <span>
-                  {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-                  {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
-                </span>
+                    {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                    {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                  </span>
+                )}
                 {version === 3 && <V3ExtraParams devStats={devStats} />}
                 {account && (
                   <Settings

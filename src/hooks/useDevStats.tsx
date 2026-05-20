@@ -28,15 +28,20 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
   const { chainId } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
 
+  // All params start undefined so the UI skips them on first load instead of
+  // flashing zeros (the previous lambda:0 / kappa:0 / fee:0 placeholders
+  // rendered as visible "3 values" before the RPC resolved, then jumped to
+  // the full V3 set — looked broken). Consumers must guard each field.
+  // cacheTime bumped to 5 min so navigations within that window are flicker-
+  // free; a refetch still fires silently in the background past expiry.
   const { get: getDevStats, save: saveDevStats, isAvailable } = useStorageCache({
     key: ['devStats', 'v3shape', pair.liquidityToken.address, `v${version}`].join('-'),
     initValue: {
-      lambda: 0,
-      kappa: 0,
-      fee: 0,
-      protocolFee: 0,
-      feeSplit: 0,
-      // V3 extras — undefined on V2 pools
+      lambda: undefined as number | undefined,
+      kappa: undefined as number | undefined,
+      fee: undefined as number | undefined,
+      protocolFee: undefined as number | undefined,
+      feeSplit: undefined as number | undefined,
       kB: undefined as number | undefined,
       kQ: undefined as number | undefined,
       compress: undefined as number | undefined,
@@ -48,7 +53,7 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
       pythWeight: undefined as number | undefined,
       gamma: undefined as number | undefined,
     },
-    cacheTime: 2 * 60,
+    cacheTime: 5 * 60,
   })
 
   // V2: read from pair contract directly
@@ -136,7 +141,7 @@ export const useDevStats = ({ pair, enabled = true }: Props) => {
       return next
     },
     enabled: enabled && version === 3 && !hasCache,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   })
 
   const stableSave = useCallback(
