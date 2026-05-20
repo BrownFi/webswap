@@ -11,13 +11,16 @@
  */
 import { ChainId } from '@brownfi/sdk'
 import { kyberZapAggregator } from './kyber/zapAdapter'
+import { nativeZapAggregator } from './native/zapAdapter'
 import type { ZapAggregatorAdapter, ZapAggregatorId } from './zapTypes'
 import type { BrownFiVersion } from './types'
 
+// Listed native first so when two adapters tie on lpOut/amountOut the
+// comparator can use array order as a tie-breaker and prefer the BrownFi
+// router (fewer hops, no third-party fees).
 const zapAggregators: ZapAggregatorAdapter[] = [
+  nativeZapAggregator,
   kyberZapAggregator,
-  // Phase 3:
-  // nativeZapAggregator,
 ]
 
 export function getZapAggregatorsFor(chainId: ChainId, version: BrownFiVersion): ZapAggregatorAdapter[] {
