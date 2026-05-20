@@ -12,6 +12,15 @@ export const USDC = new Token(ChainId.MAINNET, '0xA0b86991c6218b36c1d19D4a2e9Eb0
 export const USDT = new Token(ChainId.MAINNET, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6, 'USDT', 'Tether USD')
 export const WBTC = new Token(ChainId.MAINNET, '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', 8, 'WBTC', 'Wrapped BTC')
 
+// Berachain base tokens for multi-hop route discovery. Without these in
+// BASES_TO_CHECK_TRADES_AGAINST, routes like DOLO→HONEY→BERA can't be
+// found — router only checks pairs against WBERA otherwise, missing the
+// healthy DOLO/HONEY + HONEY/WBERA path.
+const BERA_HONEY = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'HONEY', 'Honey')
+const BERA_USDCE = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6E4e9568C1D3241', 6,  'USDC.e', 'Bridged USDC (Stargate)')
+const BERA_WBTC  = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
+const BERA_WETH  = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
+
 // used to construct intermediary pairs for trading
 export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   ...WETH_ONLY,
@@ -19,6 +28,13 @@ export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   [ChainId.HYPER_EVM]: [
     ...WETH_ONLY[ChainId.HYPER_EVM],
     new Token(ChainId.HYPER_EVM, '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb', 8, 'USDT', 'USDT'),
+  ],
+  [ChainId.BERA_MAINNET]: [
+    ...WETH_ONLY[ChainId.BERA_MAINNET],
+    BERA_HONEY,
+    BERA_USDCE,
+    BERA_WBTC,
+    BERA_WETH,
   ],
 }
 
