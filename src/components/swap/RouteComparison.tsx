@@ -28,6 +28,7 @@ import { Currency, Token } from '@brownfi/sdk'
 import { useMemo, useState } from 'react'
 import type { UnifiedRoute } from 'hooks/useBestSwapRoute'
 import type { AggregatorChoice } from 'services/aggregators/types'
+import { RefreshIndicator } from './RefreshIndicator'
 
 interface Props {
   candidates: UnifiedRoute[]
@@ -46,6 +47,14 @@ interface Props {
    *  trigger so the "Best" winner isn't shown until every source has
    *  reported — matches the OUTPUT field's same gating. */
   isLoading?: boolean
+  /** Wall-clock ms of the most recent settled aggregator quote. Drives
+   *  the refresh-countdown ring; 0 = nothing fetched yet (ring hidden). */
+  lastFetchedAt?: number
+  /** Auto-refetch cadence in ms. Hook owns the canonical value; we just
+   *  render the ring against it. */
+  refreshIntervalMs?: number
+  /** Force-refetch handler. When omitted, the refresh icon is hidden. */
+  onRefresh?: () => void
 }
 
 function formatAmount(rawBig: { toString(): string }, currency: Currency | undefined): string {
@@ -114,6 +123,9 @@ export function RouteComparison({
   outputSymbol,
   outputUsdPrice,
   isLoading = false,
+  lastFetchedAt,
+  refreshIntervalMs,
+  onRefresh,
 }: Props) {
   const [open, setOpen] = useState(false)
 
@@ -294,6 +306,14 @@ export function RouteComparison({
                 </span>
               )}
             </span>
+          )}
+          {onRefresh && refreshIntervalMs && (
+            <RefreshIndicator
+              lastFetchedAt={lastFetchedAt ?? 0}
+              intervalMs={refreshIntervalMs}
+              onRefresh={onRefresh}
+              visible={!isLoading}
+            />
           )}
           {hasMultiple && <ChevronIcon open={open && !isLoading} dim={isLoading} />}
         </div>

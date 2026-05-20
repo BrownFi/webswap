@@ -289,6 +289,8 @@ export default function Swap() {
     isLoading: bestLoading,
     isStale: bestIsStale,
     refetchAll: refetchBest,
+    lastFetchedAt: bestLastFetchedAt,
+    refreshIntervalMs: bestRefreshIntervalMs,
   } = useBestSwapRoute({
     v2Trade: showWrap ? undefined : v2Trade,
     v3Trade: showWrap ? undefined : v3Trade,
@@ -696,6 +698,9 @@ export default function Swap() {
                 outputSymbol={getTokenSymbol(currencies[Field.OUTPUT], chainId) ?? ''}
                 outputUsdPrice={outputUsdPrice}
                 isLoading={isLoadingOrStale}
+                lastFetchedAt={bestLastFetchedAt}
+                refreshIntervalMs={bestRefreshIntervalMs}
+                onRefresh={refetchBest}
               />
             )}
 
