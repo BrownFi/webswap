@@ -34,6 +34,13 @@ import type {
 
 export type { RouteSource } from 'services/aggregators/types'
 
+/**
+ * Auto-refetch cadence for aggregator quotes. Sits just below Kyber's
+ * ~30s upstream TTL so we always have a fresh route on hand before the
+ * server-side one expires. Also drives the visual refresh countdown.
+ */
+const REFRESH_INTERVAL_MS = 20_000
+
 export interface UnifiedRoute {
   source: RouteSource
   /** Display name: "BrownFi V2" / "BrownFi V3" for native, aggregator's `name` otherwise. */
@@ -83,6 +90,13 @@ export interface UseBestSwapRouteResult {
   /** True when the chosen route's validUntil has passed and we haven't refetched yet. */
   isStale: boolean
   refetchAll: () => void
+  /** Wall-clock timestamp (ms) of the most recent aggregator quote that
+   *  settled — successful OR failed. Drives the refresh countdown UI; the
+   *  next auto-refetch fires at `lastFetchedAt + refreshIntervalMs`. */
+  lastFetchedAt: number
+  /** Configured auto-refetch cadence in ms, so the UI can render an accurate
+   *  progress ring without hardcoding the value in two places. */
+  refreshIntervalMs: number
 }
 
 function tokenAddress(c: Currency | undefined): string | undefined {
@@ -173,7 +187,7 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
       },
       enabled: baseKey !== null,
       // Keep quotes fresh. Kyber's TTL is ~30s; refetch a bit before that.
-      refetchInterval: 20_000,
+      refetchInterval: REFRESH_INTERVAL_MS,
       staleTime: 10_000,
     })),
   })
@@ -266,6 +280,25 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
 
     const refetchAll = () => queries.forEach((q) => q.refetch())
 
-    return { best, candidates: sorted, isLoading, isStale, refetchAll }
+    // React Query records `dataUpdatedAt` whenever a query settles (success
+    // or error). Take the max across adapters so the countdown reflects
+    // "time since the last aggregator response", regardless of which
+    // adapter answered last. Falls back to 0 when nothing has fetched yet
+    // — UI treats that as "indeterminate, no ring".
+    const lastFetchedAt = queries.reduce((acc, q) => {
+      const t = (q as { dataUpdatedAt?: number; errorUpdatedAt?: number }).dataUpdatedAt ?? 0
+      const e = (q as { dataUpdatedAt?: number; errorUpdatedAt?: number }).errorUpdatedAt ?? 0
+      return Math.max(acc, t, e)
+    }, 0)
+
+    return {
+      best,
+      candidates: sorted,
+      isLoading,
+      isStale,
+      refetchAll,
+      lastFetchedAt,
+      refreshIntervalMs: REFRESH_INTERVAL_MS,
+    }
   }, [aggregators, v2Trade, v3Trade, v2Unavailable, queries, selected, slippageBps])
 }
