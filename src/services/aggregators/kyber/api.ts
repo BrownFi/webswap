@@ -147,6 +147,15 @@ export async function buildRoute(params: KyberBuildParams): Promise<KyberBuildRe
   // Re-passing fee fields at this layer triggers "Exceeded desc.amount"
   // on-chain because the router's amount-consistency check would see the
   // fee applied twice.
+  // Kyber's docs cap slippageTolerance at 2000 bps (20%). The live API is
+  // actually more permissive — verified empirically that 2100 succeeds — but
+  // a very high value (~9999) requires `ignoreCappedSlippage: true` or the
+  // request is rejected with code 4000. Our FE clamps to 5000 bps via the
+  // user-reducer, so any value > 2000 lands in the gray zone where Kyber
+  // currently accepts it but the docs say it shouldn't. Set the override
+  // explicitly to match the docs' contract and future-proof against Kyber
+  // tightening enforcement.
+  const ignoreCappedSlippage = params.slippageBps > 2000
   const body: Record<string, unknown> = {
     routeSummary: params.routeSummary,
     sender: params.sender,
@@ -154,6 +163,7 @@ export async function buildRoute(params: KyberBuildParams): Promise<KyberBuildRe
     slippageTolerance: params.slippageBps,
     deadline: params.deadline,
     source: CLIENT_ID,
+    ...(ignoreCappedSlippage ? { ignoreCappedSlippage: true } : {}),
   }
   const res = await timedFetch(url, {
     method: 'POST',
