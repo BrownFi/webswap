@@ -73,7 +73,12 @@ const GET_PAIR_ACCOUNT = `
   }
 `
 
-const pairBGT: Record<string, string[]> = {
+// Whitelist of Bera pools that have a BGT vault — i.e. pools the
+// /igbt-vault-apr endpoint actually has data for. Exported so the pool list
+// can gate its fan-out useQueries on the same set instead of firing one
+// REST call per Bera pool (most of which return apr=0 today). Add a new
+// pair address here whenever a fresh BGT vault is deployed.
+export const pairBGT: Record<string, string[]> = {
   '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': ['0x7488174f1f518caf2faae4f30cbba65ea57cf4f9'], // BERA/HONEY
   '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': ['0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc'], // BERA/USDC.e
 }
