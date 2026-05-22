@@ -1,10 +1,11 @@
 /**
- * V3 Zap — direct contract calls to BrownFiV3Router02.
- * Replaces Kyber API for zap operations on V3 chains.
+ * V3 Zap primitives — quote estimate, Pyth updateData builder, and calldata
+ * builders for the BrownFi V3 router. The execution layer is the native zap
+ * adapter (services/aggregators/native/zapAdapter); these helpers stay here
+ * because they're also useful standalone (zap estimate previews, etc.).
  */
 import { ChainId, WETH } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
-import { TransactionResponse } from '@ethersproject/providers'
 import { Contract } from '@ethersproject/contracts'
 import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
@@ -125,128 +126,121 @@ export async function buildV3UpdateData(
   return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
 }
 
-// Helper: get ethers signer
-function getSigner(library: any, account: string) {
-  return typeof library?.getSigner === 'function' ? library.getSigner(account) : undefined
-}
-
-// Helper: gas margin (30%)
-function addGasMargin(gas: BigNumber): BigNumber {
-  return gas.mul(130).div(100)
+// Shape returned by the build* helpers below. Matches the swap aggregator's
+// BuildSwapResult so a future zap orchestration hook can send either kind of
+// tx with the same code path (`signer.sendTransaction({to, data, value, gasLimit})`).
+export type V3ZapTxRequest = {
+  to: string
+  data: string
+  value?: BigNumber
+  gasLimit?: BigNumber
 }
 
 /**
- * Execute V3 Zap In transaction.
+ * Build calldata for a V3 zap-in WITHOUT submitting. The aggregator-adapter
+ * path (services/aggregators/native/zapAdapter) uses this so the orchestration
+ * hook can call signer.sendTransaction itself, matching how the swap path
+ * routes through useAggregatorSwapCallback.
+ *
+ * Gas estimation is intentionally skipped: estimateGas requires the user's
+ * approval + balance to already be in place. The wallet's own estimate at
+ * sign time covers this. Callers that need a deterministic gas can simulate
+ * via callStatic separately and merge the result.
  */
-export async function executeV3ZapIn({
+export async function buildV3ZapInTx({
   chainId,
-  library,
-  account,
   tokenIn,
   tokenOther,
   amountIn,
   amountOtherMin,
+  minLiquidity,
+  account,
   deadline,
   updateData,
   isNativeETH,
-  slippageBps = 50,
 }: {
   chainId: ChainId
-  library: any
-  account: string
   tokenIn: string
   tokenOther: string
   amountIn: string
   amountOtherMin: string
+  minLiquidity: string
+  account: string
   deadline: BigNumber
   updateData: string
   isNativeETH: boolean
-  slippageBps?: number
-}): Promise<TransactionResponse> {
+}): Promise<V3ZapTxRequest> {
   const routerAddress = getRouterAddress(chainId, 3)
-  const signer = getSigner(library, account)
-  if (!signer) throw new Error('No signer available')
+  if (!routerAddress) throw new Error('V3 router not deployed on this chain')
 
-  const router = new Contract(routerAddress, V3_ZAP_ABI, signer)
-  const slippageSafe = Math.max(0, Math.min(10000, slippageBps))
-  const applySlip = (expected: BigNumber) => expected.mul(10000 - slippageSafe).div(10000)
-
+  // Use a no-signer Contract instance just to encode calldata via populateTransaction.
+  const router = new Contract(routerAddress, V3_ZAP_ABI)
   if (isNativeETH) {
-    // zapInETH(token, amountTokenMin, minLiquidity, to, deadline, updateData) payable
-    // Simulate with minLiquidity=0 to learn the actual LP out, then enforce slippage.
-    const simLp: BigNumber = await router.callStatic.zapInETH(
-      tokenOther, amountOtherMin, '0', account, deadline.toHexString(), updateData,
+    const populated = await router.populateTransaction.zapInETH(
+      tokenOther, amountOtherMin, minLiquidity, account, deadline.toHexString(), updateData,
       { value: amountIn },
     )
-    const minLp = applySlip(BigNumber.from(simLp)).toString()
-    const gas = await router.estimateGas.zapInETH(
-      tokenOther, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
-      { value: amountIn }
-    )
-    return router.zapInETH(
-      tokenOther, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
-      { value: amountIn, gasLimit: addGasMargin(gas) }
-    )
-  } else {
-    // zapIn(tokenIn, tokenOther, amountIn, amountOtherMin, minLiquidity, to, deadline, updateData)
-    const simLp: BigNumber = await router.callStatic.zapIn(
-      tokenIn, tokenOther, amountIn, amountOtherMin, '0', account, deadline.toHexString(), updateData,
-    )
-    const minLp = applySlip(BigNumber.from(simLp)).toString()
-    const gas = await router.estimateGas.zapIn(
-      tokenIn, tokenOther, amountIn, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
-    )
-    return router.zapIn(
-      tokenIn, tokenOther, amountIn, amountOtherMin, minLp, account, deadline.toHexString(), updateData,
-      { gasLimit: addGasMargin(gas) }
-    )
+    return {
+      to: populated.to ?? routerAddress,
+      data: populated.data ?? '0x',
+      value: populated.value ?? BigNumber.from(amountIn),
+    }
+  }
+
+  const populated = await router.populateTransaction.zapIn(
+    tokenIn, tokenOther, amountIn, amountOtherMin, minLiquidity, account, deadline.toHexString(), updateData,
+  )
+  return {
+    to: populated.to ?? routerAddress,
+    data: populated.data ?? '0x',
   }
 }
 
 /**
- * Execute V3 Zap Out transaction.
+ * Build calldata for a V3 zap-out WITHOUT submitting. Mirrors buildV3ZapInTx
+ * — same rationale for skipping estimateGas. updateData is built fresh here
+ * so callers don't need to repeat the Pyth fetch they already did at quote.
+ * Pass it in if you have it cached; otherwise this builds it.
  */
-export async function executeV3ZapOut({
+export async function buildV3ZapOutTx({
   chainId,
-  library,
-  account,
   tokenA,
   tokenB,
   tokenOut,
   liquidity,
   amountMin,
+  account,
   deadline,
+  updateData: maybeUpdateData,
   isNativeETH,
 }: {
   chainId: ChainId
-  library: any
-  account: string
   tokenA: string
   tokenB: string
   tokenOut: string
   liquidity: string
   amountMin: string
+  account: string
   deadline: BigNumber
+  updateData?: string
   isNativeETH: boolean
-}): Promise<TransactionResponse> {
+}): Promise<V3ZapTxRequest> {
   const routerAddress = getRouterAddress(chainId, 3)
-  const signer = getSigner(library, account)
-  if (!signer) throw new Error('No signer available')
+  if (!routerAddress) throw new Error('V3 router not deployed on this chain')
 
-  const router = new Contract(routerAddress, V3_ZAP_ABI, signer)
-
-  // zapOut/zapOutETH now require Pyth updateData — build a fresh blob for both tokens.
-  const updateData = await buildV3UpdateData([tokenA, tokenB], chainId)
+  const updateData = maybeUpdateData ?? (await buildV3UpdateData([tokenA, tokenB], chainId))
+  const router = new Contract(routerAddress, V3_ZAP_ABI)
 
   if (isNativeETH) {
-    // zapOutETH(token, liquidity, amountMin, to, deadline, updateData)
-    // token = the non-ETH token in the pair
     const token = tokenA === WETH[chainId]?.address ? tokenB : tokenA
-    const gas = await router.estimateGas.zapOutETH(token, liquidity, amountMin, account, deadline.toHexString(), updateData)
-    return router.zapOutETH(token, liquidity, amountMin, account, deadline.toHexString(), updateData, { gasLimit: addGasMargin(gas) })
-  } else {
-    // zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, to, deadline, updateData)
-    const gas = await router.estimateGas.zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData)
-    return router.zapOut(tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData, { gasLimit: addGasMargin(gas) })
+    const populated = await router.populateTransaction.zapOutETH(
+      token, liquidity, amountMin, account, deadline.toHexString(), updateData,
+    )
+    return { to: populated.to ?? routerAddress, data: populated.data ?? '0x' }
   }
+
+  const populated = await router.populateTransaction.zapOut(
+    tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData,
+  )
+  return { to: populated.to ?? routerAddress, data: populated.data ?? '0x' }
 }

@@ -1,5 +1,4 @@
 import { Currency, Pair } from '@brownfi/sdk'
-import { useQuery } from '@tanstack/react-query'
 import { ButtonError, ButtonPrimary, ButtonSecondary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { RowBetween } from 'components/Row'
@@ -9,6 +8,8 @@ import { TransactionConfirmationModal, TransactionErrorContent } from 'component
 import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { ApprovalState } from 'hooks/useApproveCallback'
+import { useBestZapInRoute } from 'hooks/useBestZapRoute'
+import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus } from 'react-feather'
 import { Field } from 'state/mint/actions'
@@ -18,13 +19,8 @@ import { useTransactionAdder } from 'state/transactions/hooks'
 import { ThemeContext } from 'styled-components'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
-import { wrappedCurrency } from 'utils/wrappedCurrency'
-import {
-  executeKyberZapTransaction,
-  getKyberZapRouteData,
-  isZapSupportedOnChain,
-  KyberZapRouteData,
-} from './zapHelpers'
+import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
+import { isZapSupportedOnChain, KyberZapRouteData } from './zapHelpers'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
 import ZapTokenInputRow, { ParsedZapInput, ZapInput } from './ZapInput'
 import { ZapRoutePreview } from './ZapRoutePreview'
@@ -116,39 +112,36 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
     supportsZap && pair && pairState === PairState.EXISTS && chainId && account && validInputs.length > 0,
   )
 
-  const routeQueryKey = useMemo(() => {
-    const amountKey = validInputs.map((input) => {
-      const address =
-        wrappedCurrency(input.currency ?? undefined, chainId ?? undefined)?.address ??
-        input.currency?.symbol ??
-        `native-${input.id}`
-      return `${address}:${input.parsedAmount?.raw.toString() ?? '0'}`
-    })
-    return ['kyberZapRoute', chainId, pair?.liquidityToken.address, account, allowedSlippage, amountKey]
-  }, [chainId, pair, account, allowedSlippage, validInputs])
+  const deadline = useTransactionDeadline()
+  const deadlineSeconds = useMemo(() => (deadline ? Number(deadline.toString()) : 0), [deadline])
 
+  // Hand the orchestration hook a stable inputs array — useMemo so identity
+  // changes only when underlying amounts/tokens do, not on every render.
+  // V2 has no native zap adapter, so `best.source` is always 'kyber' here;
+  // the form still routes through the registry for parity with V3 + future
+  // contracts work that might land a V2 native engine.
   const routeInputs = useMemo(
     () =>
       validInputs.map((input) => ({
         currency: input.currency!,
-        amount: input.parsedAmount!,
+        amountRaw: input.parsedAmount!.raw.toString(),
       })),
     [validInputs],
   )
 
-  const { data: zapRouteData, error: zapRouteError } = useQuery<KyberZapRouteData>({
-    queryKey: routeQueryKey,
-    queryFn: () =>
-      getKyberZapRouteData({
-        chainId: chainId!,
-        pair: pair!,
-        account: account!,
-        allowedSlippage,
-        inputs: routeInputs,
-      }),
-    enabled: isRouteAvailable,
-    refetchInterval: 15_000,
+  const { best, isLoading: isLoadingRoutes } = useBestZapInRoute({
+    pair,
+    inputs: routeInputs,
+    account: account ?? undefined,
+    slippageBps: allowedSlippage,
+    deadline: deadlineSeconds,
   })
+
+  // ZapRoutePreview was built for Kyber's raw response shape. Pull it back
+  // out of the unified quote for now; a later refactor can give the preview
+  // a generic shape that the native V2 engine could also fill.
+  const zapRouteData = (best?.quote?.routeSummary as KyberZapRouteData | undefined) ?? undefined
+  const zapRouteError = !isLoadingRoutes && isRouteAvailable && !best ? new Error('no-zap-route') : undefined
 
   const zapError = useMemo(() => {
     if (!supportsZap) return 'Zap not supported on this network'
@@ -322,7 +315,7 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
   }, [txHash])
 
   const handleSubmit = useCallback(async () => {
-    if (!chainId || !account || !library || !zapRouteData) {
+    if (!chainId || !account || !library || !best) {
       return
     }
 
@@ -332,11 +325,29 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
     setIsSubmitting(true)
 
     try {
-      const response = await executeKyberZapTransaction({
+      // Look up the adapter that produced this quote. For V2 today this is
+      // always the Kyber adapter, but going through the registry keeps the
+      // submission path identical to V3's and ready for any future native
+      // V2 engine that lands in the same registry.
+      const adapter = getZapAggregatorById(best.source)
+      if (!adapter) throw new Error(`Zap adapter ${best.source} not registered`)
+
+      const built = await adapter.buildZapIn({
         chainId,
         account,
-        routeData: zapRouteData,
-        library,
+        quote: best.quote,
+        slippageBps: allowedSlippage,
+        deadline: deadlineSeconds,
+      })
+
+      const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : undefined
+      if (!signer) throw new Error('No signer available')
+
+      const response = await signer.sendTransaction({
+        to: built.to,
+        data: built.data,
+        ...(built.value ? { value: built.value } : {}),
+        ...(built.gasLimit ? { gasLimit: built.gasLimit } : {}),
       })
 
       // Set hash first so the modal moves Pending → Submitted in one render
@@ -355,7 +366,7 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
       }
       setErrorMessage(parseZapError(error))
     }
-  }, [chainId, account, library, zapRouteData, addTransaction, submittedText])
+  }, [chainId, account, library, best, allowedSlippage, deadlineSeconds, addTransaction, submittedText])
 
   return (
     <AutoColumn gap="20px">

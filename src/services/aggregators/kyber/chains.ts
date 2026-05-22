@@ -26,3 +26,19 @@ export const KYBER_AGGREGATOR_CHAIN_SLUG: Partial<Record<ChainId, string>> = {
 export function isKyberSupported(chainId: ChainId, _version: BrownFiVersion): boolean {
   return !!KYBER_AGGREGATOR_CHAIN_SLUG[chainId]
 }
+
+/**
+ * Kyber's Zap API is a separate product from Aggregator. Its chain coverage
+ * differs (zap is currently live on fewer chains) and the URL path is
+ * `/<slug>/api/v1/in|out/route`. Keep these maps separate so a chain showing
+ * up in one product doesn't accidentally enable the other.
+ */
+export const KYBER_ZAP_CHAIN_SLUG: Partial<Record<ChainId, string>> = {
+  [ChainId.BERA_MAINNET]: 'berachain',
+  [ChainId.LINEA_MAINNET]: 'linea',
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function isKyberZapSupported(chainId: ChainId, _version: BrownFiVersion): boolean {
+  return !!KYBER_ZAP_CHAIN_SLUG[chainId]
+}

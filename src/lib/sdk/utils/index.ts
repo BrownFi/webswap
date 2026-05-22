@@ -304,6 +304,10 @@ export async function getPythPricesBatch(
           functionName: 'priceFeedIds',
           args: [addr as `0x${string}`],
         })),
+        // createPublicClient here has no `chain` field; viem can't
+        // auto-resolve Multicall3 from chain config. Universal canonical
+        // Multicall3 address is deployed on every supported chain.
+        multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
         allowFailure: true,
       })
       feedResults.forEach((r, i) => {
@@ -347,6 +351,7 @@ export async function getPythPricesBatch(
         functionName: 'getPriceUnsafe',
         args: [feedId as `0x${string}`],
       })),
+      multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
       allowFailure: true,
     })
     priceResults.forEach((r, i) => {
