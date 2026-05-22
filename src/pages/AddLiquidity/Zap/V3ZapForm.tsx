@@ -9,6 +9,7 @@ import { useActiveWeb3React } from 'hooks'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useBestZapInRoute, ZapChoice } from 'hooks/useBestZapRoute'
+import { ZapRouteComparison } from 'components/swap/ZapRouteComparison'
 import { useCallback, useMemo, useState } from 'react'
 import { Field } from 'state/mint/actions'
 import { tryParseAmount } from 'state/swap/hooks'
@@ -19,26 +20,12 @@ import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
-import { Text } from 'components/Rebass'
-import { BigNumber } from '@ethersproject/bignumber'
-import { formatNumber } from 'utils/prices'
 
 type V3ZapFormProps = {
   pair?: Pair
   pairState: PairState
   currencies: { [field in Field]?: Currency }
   allowedSlippage: number
-}
-
-// LP tokens are always 18 decimals on BrownFi V3, same as V2. Keep this
-// local so the comparison card stays self-contained.
-const LP_DECIMALS = 18
-
-function formatLpAmount(lp: BigNumber | undefined): string {
-  if (!lp || lp.isZero()) return '-'
-  const human = Number(lp.toString()) / 10 ** LP_DECIMALS
-  if (!Number.isFinite(human)) return '-'
-  return formatNumber(human, { maximumFractionDigits: 6 })
 }
 
 export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
@@ -220,76 +207,12 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
       />
 
       {showRoutesCard && (
-        <div className="px-4 py-3 rounded-md bg-white/5 text-sm text-white/70 flex flex-col gap-2">
-          {/* Engine selector pills. Auto picks the highest LP-out; explicit
-              picks pin one source. Pills for sources with no route are
-              dimmed and non-clickable so the user can see the option
-              exists but can't pin a dead route. */}
-          <div className="flex gap-1.5">
-            {([
-              { key: 'auto' as ZapChoice, label: 'Auto', enabled: true },
-              ...attempts.map((a) => ({
-                key: a.source as ZapChoice,
-                label: a.sourceName,
-                enabled: a.status !== 'no-route',
-              })),
-            ]).map((opt) => {
-              const isActive = zapSource === opt.key
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => opt.enabled && setZapSource(opt.key)}
-                  disabled={!opt.enabled}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 999,
-                    border: 'none',
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    fontWeight: 500,
-                    cursor: opt.enabled ? 'pointer' : 'not-allowed',
-                    background: isActive ? '#985C2A' : 'rgba(255,255,255,0.06)',
-                    color: isActive ? '#FFFFFF' : opt.enabled ? '#C4B89A' : '#6B6359',
-                    opacity: opt.enabled ? 1 : 0.5,
-                  }}
-                >
-                  {opt.label}
-                </button>
-              )
-            })}
-          </div>
-          {isLoadingRoutes && attempts.every((a) => a.status === 'loading') ? (
-            <Dots>Fetching routes</Dots>
-          ) : (
-            <>
-              {best ? (
-                <Text fontSize={13} color="white" opacity={0.85}>
-                  Using <b>{best.sourceName}</b> &middot; ≈ {formatLpAmount(best.lpOut)} LP
-                </Text>
-              ) : (
-                <Text fontSize={13} color="white" opacity={0.6}>
-                  No route available for this pair
-                </Text>
-              )}
-              {/* Always render the other engines so it's clear what was
-                  considered. Skip the winner (already shown above). */}
-              {attempts
-                .filter((a) => a.source !== best?.source)
-                .map((a) => {
-                  let detail: string
-                  if (a.status === 'loading') detail = 'fetching…'
-                  else if (a.status === 'success' && a.candidate) detail = `≈ ${formatLpAmount(a.candidate.lpOut)} LP`
-                  else detail = 'no route'
-                  return (
-                    <Text key={a.source} fontSize={12} color="white" opacity={0.5}>
-                      {a.sourceName}: {detail}
-                    </Text>
-                  )
-                })}
-            </>
-          )}
-        </div>
+        <ZapRouteComparison
+          attempts={attempts}
+          selected={zapSource}
+          onSelect={setZapSource}
+          isLoading={isLoadingRoutes && attempts.every((a) => a.status === 'loading')}
+        />
       )}
 
       {needsApproval && isValid && (
