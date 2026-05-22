@@ -11,6 +11,7 @@ import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useBestZapInRoute, ZapChoice } from 'hooks/useBestZapRoute'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { ZapRouteComparison } from 'components/swap/ZapRouteComparison'
+import { ZapRoutePreview } from './ZapRoutePreview'
 import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from 'state/mint/actions'
@@ -22,7 +23,6 @@ import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { formatNumber } from 'utils/prices'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
 
 type V3ZapFormProps = {
@@ -286,43 +286,17 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
         />
       )}
 
-      {/* Zap route preview — only renders when we have all the numbers
-          needed. Doesn't show as "loading…" because the user already
-          sees the route comparison card above; this panel is
-          supplemental and fine to appear once data settles. */}
+      {/* Shared ZapRoutePreview component — same look as V2 zap so users
+          see one consistent panel across both versions. Synthesizes USD
+          figures client-side for V3 (native quote has no USD fields);
+          will switch to Kyber's zapDetails when V3 indexing lands and
+          best.source becomes 'kyber'. */}
       {showRoutesCard && zapPreview && (
-        <div
-          style={{
-            background: '#1E1915',
-            border: '1px solid #2F2823',
-            borderRadius: '14px',
-            padding: '12px 16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            fontFamily: 'Inter',
-          }}
-        >
-          <span style={{ fontSize: '11px', fontWeight: 600, color: '#978A80', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            Zap route preview
-          </span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-            <span style={{ color: '#978A80' }}>Initial value (USD)</span>
-            <span style={{ color: '#FBFBFD' }}>${formatNumber(zapPreview.initialUsd, { maximumFractionDigits: 2 })}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-            <span style={{ color: '#978A80' }}>Estimated value after zap</span>
-            <span style={{ color: '#FBFBFD' }}>${formatNumber(zapPreview.estimatedUsd, { maximumFractionDigits: 2 })}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-            <span style={{ color: '#978A80' }}>Price impact</span>
-            <span style={{ color: zapPreview.impactPct < -1 ? '#FF7A95' : '#D8A072' }}>
-              {zapPreview.impactPct < 0.01 && zapPreview.impactPct > -0.01
-                ? '< 0.01%'
-                : `${zapPreview.impactPct > 0 ? '+' : ''}${formatNumber(zapPreview.impactPct, { maximumFractionDigits: 2 })}%`}
-            </span>
-          </div>
-        </div>
+        <ZapRoutePreview
+          initialUsd={zapPreview.initialUsd}
+          finalUsd={zapPreview.estimatedUsd}
+          priceImpactPct={zapPreview.impactPct}
+        />
       )}
 
       {needsApproval && isValid && (
