@@ -24,6 +24,18 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
 
   const disabled = !tokenA || !tokenB || !chainId
 
+  // Indexer ships token prices in the same bulk pair query the pool list /
+  // detail already loads. When BOTH sides are populated we can skip the
+  // per-pair /prices REST call entirely — saves one network call per
+  // PositionCard / YourPositionCard / AddLiquidity pool view, every 60s.
+  // When either side is missing (e.g. brand-new token not yet priced by
+  // the indexer) we keep firing the REST quote so the missing side fills
+  // in. Callers without `pairStats` (Swap page) see no change at all
+  // because both indexer values are 0/undefined → gate stays open.
+  const indexerPrice0 = pairStats?.token0?.price ?? 0
+  const indexerPrice1 = pairStats?.token1?.price ?? 0
+  const hasBothIndexerPrices = indexerPrice0 > 0 && indexerPrice1 > 0
+
   const { data: tokenPricesApi } = useQuery({
     queryKey: ['getPoolPrices', chainId, tokenA?.address, tokenB?.address],
     queryFn: () =>
@@ -42,7 +54,7 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
           setApiFailed(true)
           return [0, 0]
         }),
-    enabled: version >= 2 && enableFetchDetail && !disabled,
+    enabled: version >= 2 && enableFetchDetail && !disabled && !hasBothIndexerPrices,
     refetchInterval: 60_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
@@ -69,13 +81,19 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
     }
   }
 
-  const fallbackPrices = [pairStats?.token0?.price ?? 0, pairStats?.token1?.price ?? 0]
-
+  // Indexer-first per side. When the indexer has a positive price for a
+  // token, use it directly (no REST/Pyth roundtrip). Fall through the
+  // existing chain when indexer doesn't know the token — preserves swap
+  // / add-liquidity behavior for never-before-seen tokens.
   const pythPrices = {
     [Field.CURRENCY_A]:
-      (version >= 2 ? tokenPricesApi?.[0] || tokenPricesV2[0] : tokenPricesV1[0]) || fallbackPrices[0],
+      indexerPrice0 ||
+      (version >= 2 ? tokenPricesApi?.[0] || tokenPricesV2[0] : tokenPricesV1[0]) ||
+      0,
     [Field.CURRENCY_B]:
-      (version >= 2 ? tokenPricesApi?.[1] || tokenPricesV2[1] : tokenPricesV1[1]) || fallbackPrices[1],
+      indexerPrice1 ||
+      (version >= 2 ? tokenPricesApi?.[1] || tokenPricesV2[1] : tokenPricesV1[1]) ||
+      0,
   }
 
   return pythPrices
