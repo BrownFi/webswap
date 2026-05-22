@@ -136,6 +136,12 @@ export function getInitCodeHash(chainId: number, version: number): string {
 // ── Shared caches for Pyth data (used by getPythPrice and pair.ts) ────
 // priceFeedId: never changes per (factory, token) — cache forever
 const _feedIdCache = new Map<string, string>()
+// Concurrent-call dedup for the priceFeedIds(token) lookup. Without this,
+// when N callers (different candidate paths in trade discovery, parallel
+// adapter quotes, etc.) ask for the same token's feedId simultaneously
+// they all miss the cache before any writer settles and N RPC calls fire.
+// Tracking the inflight promise per key collapses those into one read.
+const _feedIdInflight = new Map<string, Promise<string>>()
 // getPriceUnsafe: short TTL (prices update ~1/s but UI doesn't need sub-second)
 const _priceCache = new Map<string, { value: number; ts: number }>()
 const _PRICE_TTL = 5_000
@@ -145,19 +151,31 @@ export async function getCachedPriceFeedId(client: any, factoryAddr: string, tok
   const key = `${factoryAddr}:${tokenAddr}`.toLowerCase()
   const cached = _feedIdCache.get(key)
   if (cached) return cached
-  const id = await client.readContract({
-    address: factoryAddr as `0x${string}`,
-    abi: [{
-      inputs: [{ name: '', type: 'address' }],
-      name: 'priceFeedIds',
-      outputs: [{ name: '', type: 'bytes32' }],
-      stateMutability: 'view', type: 'function',
-    }] as const,
-    functionName: 'priceFeedIds',
-    args: [tokenAddr as `0x${string}`],
-  })
-  _feedIdCache.set(key, id as string)
-  return id as string
+  const inflight = _feedIdInflight.get(key)
+  if (inflight) return inflight
+
+  const promise = (async () => {
+    const id = await client.readContract({
+      address: factoryAddr as `0x${string}`,
+      abi: [{
+        inputs: [{ name: '', type: 'address' }],
+        name: 'priceFeedIds',
+        outputs: [{ name: '', type: 'bytes32' }],
+        stateMutability: 'view', type: 'function',
+      }] as const,
+      functionName: 'priceFeedIds',
+      args: [tokenAddr as `0x${string}`],
+    })
+    _feedIdCache.set(key, id as string)
+    return id as string
+  })()
+
+  _feedIdInflight.set(key, promise)
+  try {
+    return await promise
+  } finally {
+    _feedIdInflight.delete(key)
+  }
 }
 
 export async function getPythPrice(address: string, chainId: number, version: number): Promise<number> {
