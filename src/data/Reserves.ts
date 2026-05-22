@@ -66,6 +66,12 @@ function useV3PairAddresses(
             functionName: 'getPair',
             args: [tokenA.address as `0x${string}`, tokenB.address as `0x${string}`],
           })),
+          // We construct the client without a `chain` field, so viem can't
+          // auto-resolve Multicall3 from the chain config and throws
+          // "client chain not configured". Universal canonical Multicall3
+          // address (0xcA11…CA11) is deployed on every chain we support
+          // (Bera, Linea, mainnet, etc.) — specify it explicitly.
+          multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
           allowFailure: true,
         })
         responses.forEach((r, i) => {
