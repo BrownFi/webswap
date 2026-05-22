@@ -37,22 +37,49 @@ function useV3PairAddresses(
       const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
       const factoryAddr = FACTORY_ADDRESS_V3[chainId]
 
-      const results = await Promise.all(
-        tokens.map(async ([tokenA, tokenB]) => {
-          if (!tokenA || !tokenB || tokenA.equals(tokenB)) return undefined
-          try {
-            const pair = await client.readContract({
-              address: factoryAddr as `0x${string}`,
-              abi: [{ inputs: [{ type: 'address' }, { type: 'address' }], name: 'getPair', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' }] as const,
-              functionName: 'getPair',
-              args: [tokenA.address as `0x${string}`, tokenB.address as `0x${string}`],
-            })
-            return pair === '0x0000000000000000000000000000000000000000' ? undefined : pair
-          } catch {
-            return undefined
+      // Pre-filter: track which slots correspond to valid token pairs that
+      // need an RPC lookup. Invalid slots (missing token, same-token pair)
+      // skip the multicall entirely; results array fills them as undefined
+      // at the merge step below.
+      const lookups: Array<{ index: number; tokenA: Token; tokenB: Token }> = []
+      tokens.forEach(([tokenA, tokenB], index) => {
+        if (tokenA && tokenB && !tokenA.equals(tokenB)) {
+          lookups.push({ index, tokenA, tokenB })
+        }
+      })
+
+      const results: (string | undefined)[] = tokens.map(() => undefined)
+      if (lookups.length === 0) {
+        setAddresses(results)
+        return
+      }
+
+      // ONE multicall instead of N parallel readContracts. With 3 candidate
+      // pair tuples that's 3 RPC calls → 1. The savings compound when the
+      // routing layer adds more bases.
+      try {
+        const factoryAbi = [{ inputs: [{ type: 'address' }, { type: 'address' }], name: 'getPair', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' }] as const
+        const responses = await client.multicall({
+          contracts: lookups.map(({ tokenA, tokenB }) => ({
+            address: factoryAddr as `0x${string}`,
+            abi: factoryAbi,
+            functionName: 'getPair',
+            args: [tokenA.address as `0x${string}`, tokenB.address as `0x${string}`],
+          })),
+          allowFailure: true,
+        })
+        responses.forEach((r, i) => {
+          if (r.status !== 'success') return
+          const pair = r.result as string
+          if (pair && pair !== '0x0000000000000000000000000000000000000000') {
+            results[lookups[i].index] = pair
           }
-        }),
-      )
+        })
+      } catch {
+        // Defensive: multicall down → fall through with undefined slots.
+        // PairState.NOT_EXISTS renders for those, which is the same outcome
+        // as the previous per-call try/catch returning undefined.
+      }
       setAddresses(results)
     }
 
