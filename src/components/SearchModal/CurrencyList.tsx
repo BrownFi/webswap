@@ -1,4 +1,4 @@
-import { Currency, CurrencyAmount, currencyEquals, ETHER, getPythPrice, Token, WETH } from '@brownfi/sdk'
+import { Currency, CurrencyAmount, currencyEquals, ETHER, getPythPricesBatch, Token, WETH } from '@brownfi/sdk'
 import Column from 'components/Column'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { Loader } from 'components/Loader'
@@ -15,7 +15,7 @@ import styled from 'styled-components'
 import { TYPE } from 'theme'
 import { getTokenName, getTokenSymbol, isTokenOnList } from 'utils'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { useQueries } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import ImportRow from './ImportRow'
 import { MenuItem } from './styleds'
 
@@ -237,9 +237,13 @@ export default function CurrencyList({
     return activeCurrencies.filter((c) => !(c instanceof Token) || !heldTokenAddrs.has(c.address))
   }, [activeCurrencies, heldList])
 
-  // Batched Pyth USD prices for held tokens. The SDK helper caches feed IDs
-  // and the price response for 5s, so re-opens are cheap. For the native
-  // token we look up the wrapped variant's feed (WBERA = BERA price).
+  // Batched Pyth USD prices for held tokens. Previously this was a
+  // useQueries fan-out (one getPythPrice call per token), which meant
+  // 2 RPC calls per token (priceFeedId + getPriceUnsafe) — 20+ RPC calls
+  // for a 10-token wallet on modal open. The new getPythPricesBatch
+  // collapses every token into ONE multicall pair: two RPC calls total
+  // regardless of N. For the native token we look up the wrapped variant's
+  // feed (WBERA = BERA price).
   const wrappedNative = chainId ? WETH[chainId as keyof typeof WETH] : undefined
   const heldTokens = useMemo(() => heldList.filter((c) => c instanceof Token) as Token[], [heldList])
   const priceTargets = useMemo(() => {
@@ -249,23 +253,17 @@ export default function CurrencyList({
     }
     return addrs
   }, [heldTokens, hasNative, wrappedNative])
-  const priceQueries = useQueries({
-    queries: priceTargets.map((addr) => ({
-      queryKey: ['pyth-price-search', chainId, addr],
-      queryFn: () => getPythPrice(addr, chainId!, version),
-      enabled: !!chainId,
-      staleTime: 30_000,
-    })),
+  // The query key includes a stable signature of the address set so React
+  // Query caches per held-token set rather than refetching on every render
+  // (priceTargets is a fresh array each pass, but the join is stable).
+  const targetsKey = useMemo(() => [...priceTargets].sort().join(','), [priceTargets])
+  const { data: usdByAddress = {} as Record<string, number> } = useQuery({
+    queryKey: ['pyth-prices-batch', chainId, targetsKey],
+    queryFn: () => getPythPricesBatch(priceTargets, chainId!, version),
+    enabled: !!chainId && priceTargets.length > 0,
+    staleTime: 30_000,
   })
-  const usdByAddress = useMemo(() => {
-    const map: Record<string, number> = {}
-    priceTargets.forEach((addr, i) => {
-      const p = priceQueries[i]?.data
-      if (typeof p === 'number' && p > 0) map[addr] = p
-    })
-    return map
-  }, [priceTargets, priceQueries])
-  const nativeUsd = wrappedNative?.address ? usdByAddress[wrappedNative.address] : undefined
+  const nativeUsd = wrappedNative?.address ? usdByAddress[wrappedNative.address.toLowerCase()] : undefined
 
   // Sort held tokens by USD value desc (priced first, unpriced last by balance).
   const heldSorted = useMemo(() => {
@@ -275,7 +273,10 @@ export default function CurrencyList({
       }
       if (c instanceof Token) {
         const bal = balances[c.address]
-        const price = usdByAddress[c.address]
+        // getPythPricesBatch keys are normalized lowercase; sources of
+        // `c.address` come from validateAndParseAddress (EIP-55 checksum
+        // case) so we lowercase at the lookup site.
+        const price = usdByAddress[c.address.toLowerCase()]
         return bal && price ? Number(bal.toExact()) * price : 0
       }
       return 0
@@ -331,7 +332,7 @@ export default function CurrencyList({
       let usdValue: number | undefined
       if (currency instanceof Token) {
         const bal = balances[currency.address]
-        const price = usdByAddress[currency.address]
+        const price = usdByAddress[currency.address.toLowerCase()]
         if (bal && price) usdValue = Number(bal.toExact()) * price
       } else if (currency === Currency.ETHER || currency === ETHER) {
         if (nativeBalance && nativeUsd) usdValue = Number(nativeBalance.toExact()) * nativeUsd

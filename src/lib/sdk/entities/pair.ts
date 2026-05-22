@@ -30,20 +30,41 @@ import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/
 let hermesCache: { key: string; data: string; ts: number } | null = null
 const HERMES_TTL = 5_000
 
+// Concurrent-call dedup. The 5s TTL above only helps SEQUENTIAL callers —
+// when trade discovery iterates several candidate paths in parallel (or
+// useBestSwapRoute fans out across adapters), N callers all check the
+// cache before the first writer settles, all miss, all fire the same
+// Hermes request. Tracking the inflight promise per sorted-key collapses
+// those N requests into one. Cleared after the promise settles so the
+// next post-TTL refresh isn't blocked by a stale slot.
+const hermesInflight = new Map<string, Promise<string>>()
+
 async function getCachedUpdateData(feedIds: string[]): Promise<string> {
   const sortedKey = [...feedIds].sort().join(',')
   if (hermesCache && hermesCache.key === sortedKey && Date.now() - hermesCache.ts < HERMES_TTL) {
     return hermesCache.data
   }
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
-  feedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
-  const resp = await fetch(pythUrl.toString())
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-  const json = await resp.json()
-  const dataBytes = (json.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
-  const encoded = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
-  hermesCache = { key: sortedKey, data: encoded, ts: Date.now() }
-  return encoded
+  const inflight = hermesInflight.get(sortedKey)
+  if (inflight) return inflight
+
+  const promise = (async () => {
+    const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
+    feedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+    const resp = await fetch(pythUrl.toString())
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+    const json = await resp.json()
+    const dataBytes = (json.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+    const encoded = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+    hermesCache = { key: sortedKey, data: encoded, ts: Date.now() }
+    return encoded
+  })()
+
+  hermesInflight.set(sortedKey, promise)
+  try {
+    return await promise
+  } finally {
+    hermesInflight.delete(sortedKey)
+  }
 }
 
 // Helper: fetch Pyth price feed data and update fee for WithPrice router calls

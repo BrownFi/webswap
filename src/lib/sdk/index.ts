@@ -31,6 +31,7 @@ export {
   getFactoryAddress,
   getInitCodeHash,
   getPythPrice,
+  getPythPricesBatch,
   getPythPricePair,
   isContractWithPrice,
   validateAndParseAddress,

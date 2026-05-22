@@ -12,7 +12,7 @@ import { Flex, Text } from 'components/Rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
-import { PairStats } from 'components/PositionCard/usePoolStats'
+import { PairStats, pairBGT } from 'components/PositionCard/usePoolStats'
 import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
@@ -149,8 +149,11 @@ export default function Pool() {
   }
 
   // BGT APR isn't on the pair entity — it comes from apiV2Service per pair.
-  // Fire one query per pair address; cheap because the list is short and the
-  // service caches. We only fetch on Bera (only chain with BGT vaults).
+  // Fan out ONLY for pools listed in `pairBGT` (the BE has data only for
+  // those). Previously this query ran for every Bera pool, so at N pools
+  // the user paid N REST round-trips on each list load even though all
+  // but the whitelisted few returned apr=0. With ~2 BGT vaults today this
+  // turns 100 calls into 2.
   const pairAddresses = useMemo(
     () => (data?.pairs ?? []).map((p) => p.id),
     [data?.pairs],
@@ -159,7 +162,7 @@ export default function Pool() {
     queries: pairAddresses.map((addr) => ({
       queryKey: ['getBgtApr', addr],
       queryFn: () => apiV2Service.getPoolBgt({ address: addr }),
-      enabled: chainId === ChainId.BERA_MAINNET && !!addr,
+      enabled: chainId === ChainId.BERA_MAINNET && !!addr && !!pairBGT[addr],
       staleTime: 5 * 60_000,
     })),
   })
