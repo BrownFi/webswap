@@ -24,17 +24,19 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
 
   const disabled = !tokenA || !tokenB || !chainId
 
-  // Indexer ships token prices in the same bulk pair query the pool list /
-  // detail already loads. When BOTH sides are populated we can skip the
-  // per-pair /prices REST call entirely — saves one network call per
-  // PositionCard / YourPositionCard / AddLiquidity pool view, every 60s.
-  // When either side is missing (e.g. brand-new token not yet priced by
-  // the indexer) we keep firing the REST quote so the missing side fills
-  // in. Callers without `pairStats` (Swap page) see no change at all
-  // because both indexer values are 0/undefined → gate stays open.
+  // Indexer prices come pre-baked in the bulk pair list / detail GraphQL.
+  // When both sides are populated, no extra network call is needed.
   const indexerPrice0 = pairStats?.token0?.price ?? 0
   const indexerPrice1 = pairStats?.token1?.price ?? 0
   const hasBothIndexerPrices = indexerPrice0 > 0 && indexerPrice1 > 0
+
+  // The /prices REST endpoint is only meaningful for pool-view surfaces:
+  // it depends on knowing the pool (via pairStats). The Swap page passes
+  // no pairStats — REST there was firing on every load, hitting a 500 on
+  // certain pairs (BE bug), and falling through to Pyth direct anyway.
+  // Gate REST on having pairStats so swap / add-liquidity (no-pair) flows
+  // skip it entirely and go straight to Pyth direct as primary.
+  const restEnabled = !!pairStats && !hasBothIndexerPrices && version >= 2 && enableFetchDetail && !disabled
 
   const { data: tokenPricesApi } = useQuery({
     queryKey: ['getPoolPrices', chainId, tokenA?.address, tokenB?.address],
@@ -54,18 +56,21 @@ export const usePythPrices = ({ chainId, pair, pairStats, currencyA, currencyB, 
           setApiFailed(true)
           return [0, 0]
         }),
-    enabled: version >= 2 && enableFetchDetail && !disabled && !hasBothIndexerPrices,
+    enabled: restEnabled,
     refetchInterval: 60_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   })
 
+  // Pyth direct fires whenever REST isn't going to (no pairStats), or
+  // whenever REST already failed. On the swap page this becomes the
+  // PRIMARY price source — no /prices round-trip at all.
   const tokenPricesV2 = usePythPricesV2({
     chainId,
     tokenA: tokenA!,
     tokenB: tokenB!,
-    enabled: version >= 2 && enableFetchDetail && apiFailed && !disabled,
+    enabled: version >= 2 && enableFetchDetail && !disabled && (!restEnabled || apiFailed),
   })
 
   const { data: tokenPricesV1 = [0, 0] } = useQuery({
