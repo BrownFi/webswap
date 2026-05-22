@@ -229,6 +229,143 @@ export async function getPythPrice(address: string, chainId: number, version: nu
   }
 }
 
+// ABI fragments used by both single + batch helpers below.
+const PRICE_FEED_IDS_ABI = [{
+  inputs: [{ name: '', type: 'address' }],
+  name: 'priceFeedIds',
+  outputs: [{ name: '', type: 'bytes32' }],
+  stateMutability: 'view', type: 'function',
+}] as const
+
+const GET_PRICE_UNSAFE_ABI = [{
+  inputs: [{ name: 'id', type: 'bytes32' }],
+  name: 'getPriceUnsafe',
+  outputs: [{
+    components: [
+      { name: 'price', type: 'int64' },
+      { name: 'conf', type: 'uint64' },
+      { name: 'expo', type: 'int32' },
+      { name: 'publishTime', type: 'uint256' },
+    ],
+    name: 'price', type: 'tuple',
+  }],
+  stateMutability: 'view', type: 'function',
+}] as const
+
+/**
+ * Batched version of getPythPrice. Combines N tokens' priceFeedId lookups
+ * into one multicall, then N getPriceUnsafe lookups into a second multicall.
+ *
+ * Per N tokens, this is 2 RPC calls TOTAL instead of 2N. Used by the
+ * token-select modal which renders prices for every token the user holds
+ * — previously that was a `useQueries` fan-out of getPythPrice, causing
+ * 20+ RPC calls per modal open with a typical wallet.
+ *
+ * Reads + writes the same shared _feedIdCache / _priceCache that
+ * getPythPrice uses, so a follow-up single-token lookup hits the cache.
+ * Returns a Record keyed by lowercase token address.
+ */
+export async function getPythPricesBatch(
+  addresses: string[],
+  chainId: number,
+  version: number,
+): Promise<Record<string, number>> {
+  const result: Record<string, number> = {}
+  if (!addresses.length || !chainId) return result
+
+  const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
+  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const factoryAddr = getFactoryAddress(chainId, version)
+  if (!factoryAddr) return result
+
+  // Dedup by lowercase address. Drop any token whose feedId we already have
+  // cached so we don't pay for the multicall slot on cache hits.
+  const lowered = addresses.map((a) => a.toLowerCase())
+  const needFeedLookup: string[] = []
+  const feedIdByAddress: Record<string, string> = {}
+  for (const addr of lowered) {
+    const cached = _feedIdCache.get(`${factoryAddr}:${addr}`.toLowerCase())
+    if (cached) {
+      feedIdByAddress[addr] = cached
+    } else {
+      needFeedLookup.push(addr)
+    }
+  }
+
+  // Step 1: multicall the missing priceFeedIds. Falls back to single
+  // readContract on multicall failure (e.g. Multicall3 not deployed) —
+  // unlikely on supported chains but defensive.
+  if (needFeedLookup.length > 0) {
+    try {
+      const feedResults = await client.multicall({
+        contracts: needFeedLookup.map((addr) => ({
+          address: factoryAddr as `0x${string}`,
+          abi: PRICE_FEED_IDS_ABI,
+          functionName: 'priceFeedIds',
+          args: [addr as `0x${string}`],
+        })),
+        allowFailure: true,
+      })
+      feedResults.forEach((r, i) => {
+        const addr = needFeedLookup[i]
+        if (r.status === 'success' && r.result) {
+          const id = r.result as string
+          feedIdByAddress[addr] = id
+          _feedIdCache.set(`${factoryAddr}:${addr}`.toLowerCase(), id)
+        }
+      })
+    } catch (e) {
+      console.warn('getPythPricesBatch: feedIds multicall failed', e)
+      return result
+    }
+  }
+
+  // Filter out tokens without a real feed (zero hash) — calling
+  // getPriceUnsafe(0x0…0) reverts and pollutes the multicall failure rate.
+  const priced: Array<{ addr: string; feedId: string }> = []
+  for (const addr of lowered) {
+    const feedId = feedIdByAddress[addr]
+    if (!feedId || /^0x0+$/.test(feedId)) continue
+    // Honor the 5s price TTL — if cached, skip the RPC slot entirely.
+    const priceKey = `${chainId}:${feedId}`
+    const cached = _priceCache.get(priceKey)
+    if (cached && Date.now() - cached.ts < _PRICE_TTL) {
+      result[addr] = cached.value
+      continue
+    }
+    priced.push({ addr, feedId })
+  }
+
+  if (priced.length === 0) return result
+
+  // Step 2: multicall the missing prices.
+  try {
+    const priceResults = await client.multicall({
+      contracts: priced.map(({ feedId }) => ({
+        address: PYTH_ADDRESS[chainId] as `0x${string}`,
+        abi: GET_PRICE_UNSAFE_ABI,
+        functionName: 'getPriceUnsafe',
+        args: [feedId as `0x${string}`],
+      })),
+      allowFailure: true,
+    })
+    priceResults.forEach((r, i) => {
+      const { addr, feedId } = priced[i]
+      if (r.status === 'success' && r.result) {
+        const price = getPriceFromUnsafe(r.result as any)
+        if (Number.isFinite(price) && price > 0) {
+          result[addr] = price
+          _priceCache.set(`${chainId}:${feedId}`, { value: price, ts: Date.now() })
+        }
+      }
+    })
+  } catch (e) {
+    console.warn('getPythPricesBatch: prices multicall failed', e)
+  }
+
+  return result
+}
+
 /**
  * Fetches Pyth oracle prices for both tokens in a pair.
  */
