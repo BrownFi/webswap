@@ -1,4 +1,4 @@
-import { Currency, ETHER, Pair } from '@brownfi/sdk'
+import { ChainId, Currency, ETHER, Field as PythField, Pair, RPC_URLS } from '@brownfi/sdk'
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
@@ -9,8 +9,10 @@ import { useActiveWeb3React } from 'hooks'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useBestZapInRoute, ZapChoice } from 'hooks/useBestZapRoute'
+import { usePythPrices } from 'hooks/usePythPrices'
 import { ZapRouteComparison } from 'components/swap/ZapRouteComparison'
 import { useCallback, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Field } from 'state/mint/actions'
 import { tryParseAmount } from 'state/swap/hooks'
 import { useCurrencyBalance } from 'state/wallet/hooks'
@@ -19,6 +21,8 @@ import { useUserSlippageTolerance } from 'state/user/hooks'
 import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
+import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { formatNumber } from 'utils/prices'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
 
 type V3ZapFormProps = {
@@ -176,6 +180,73 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
 
   const showRoutesCard = Boolean(parsedAmount?.greaterThan('0') && pair)
 
+  // -- Zap route preview (Initial USD / Estimated USD / Price impact) --
+  // Computed client-side from Pyth prices + pool reserves + a one-shot
+  // totalSupply read. Mirrors what V2 zap shows from Kyber's zapDetails
+  // when its Kyber-driven, except here we synthesize the figures from
+  // first principles since native V3 quotes don't ship USD-denominated
+  // fields. When Kyber V3 indexing lands later, the same panel can
+  // switch to best.quote.routeSummary.zapDetails for `best.source === 'kyber'`.
+  const pythPrices = usePythPrices({
+    chainId: (chainId ?? 0) as ChainId,
+    currencyA: pair?.token0,
+    currencyB: pair?.token1,
+  })
+  const pythPrice0 = pythPrices[PythField.CURRENCY_A]
+  const pythPrice1 = pythPrices[PythField.CURRENCY_B]
+
+  // Pair's LP totalSupply. Not on Pair instance — one-shot viem read,
+  // cached 60s. Skipped until pair is determined.
+  const { data: totalSupplyRaw } = useQuery({
+    queryKey: ['v3-zap-total-supply', chainId, pair?.liquidityToken.address],
+    queryFn: async () => {
+      const { createPublicClient, http } = await import('viem')
+      const client = createPublicClient({ transport: http(RPC_URLS[chainId!]) })
+      const supply = await client.readContract({
+        address: pair!.liquidityToken.address as `0x${string}`,
+        abi: [{ inputs: [], name: 'totalSupply', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,
+        functionName: 'totalSupply',
+      })
+      return supply as bigint
+    },
+    enabled: Boolean(chainId && pair?.liquidityToken.address),
+    staleTime: 60_000,
+  })
+
+  const zapPreview = useMemo(() => {
+    if (!best || !pair || !parsedAmount || !totalSupplyRaw) return null
+    if (!pythPrice0 || !pythPrice1) return null
+
+    const reserve0 = Number(pair.reserve0.raw.toString()) / 10 ** pair.token0.decimals
+    const reserve1 = Number(pair.reserve1.raw.toString()) / 10 ** pair.token1.decimals
+    const tvlUsd = reserve0 * pythPrice0 + reserve1 * pythPrice1
+    if (!isFinite(tvlUsd) || tvlUsd <= 0) return null
+
+    // LP tokens always 18 decimals on BrownFi V2/V3.
+    const supply = Number(totalSupplyRaw) / 10 ** 18
+    const lpOut = Number(best.lpOut.toString()) / 10 ** 18
+    if (supply <= 0 || lpOut <= 0) return null
+    const estimatedUsd = (lpOut / supply) * tvlUsd
+
+    // Input USD — resolve which pool side matches the selected input.
+    // ETHER maps to whichever pool token is the wrapped native.
+    const wrapped = wrappedCurrency(selectedCurrency, chainId)
+    let inputPythPrice = 0
+    if (wrapped) {
+      if (wrapped.address.toLowerCase() === pair.token0.address.toLowerCase()) inputPythPrice = pythPrice0
+      else if (wrapped.address.toLowerCase() === pair.token1.address.toLowerCase()) inputPythPrice = pythPrice1
+    }
+    const inputAmount = Number(parsedAmount.toExact())
+    const initialUsd = inputAmount * inputPythPrice
+    if (!isFinite(initialUsd) || initialUsd <= 0) return null
+
+    // Price impact = how much value is lost going from raw input to LP.
+    // Show absolute value with a sign — positive = gain (unusual but
+    // possible with rounding), negative = loss (typical).
+    const impactPct = ((estimatedUsd - initialUsd) / initialUsd) * 100
+    return { initialUsd, estimatedUsd, impactPct }
+  }, [best, pair, parsedAmount, totalSupplyRaw, pythPrice0, pythPrice1, selectedCurrency, chainId])
+
   return (
     <AutoColumn gap="20px">
       <TransactionConfirmationModal
@@ -213,6 +284,45 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
           onSelect={setZapSource}
           isLoading={isLoadingRoutes && attempts.every((a) => a.status === 'loading')}
         />
+      )}
+
+      {/* Zap route preview — only renders when we have all the numbers
+          needed. Doesn't show as "loading…" because the user already
+          sees the route comparison card above; this panel is
+          supplemental and fine to appear once data settles. */}
+      {showRoutesCard && zapPreview && (
+        <div
+          style={{
+            background: '#1E1915',
+            border: '1px solid #2F2823',
+            borderRadius: '14px',
+            padding: '12px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            fontFamily: 'Inter',
+          }}
+        >
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#978A80', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            Zap route preview
+          </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+            <span style={{ color: '#978A80' }}>Initial value (USD)</span>
+            <span style={{ color: '#FBFBFD' }}>${formatNumber(zapPreview.initialUsd, { maximumFractionDigits: 2 })}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+            <span style={{ color: '#978A80' }}>Estimated value after zap</span>
+            <span style={{ color: '#FBFBFD' }}>${formatNumber(zapPreview.estimatedUsd, { maximumFractionDigits: 2 })}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+            <span style={{ color: '#978A80' }}>Price impact</span>
+            <span style={{ color: zapPreview.impactPct < -1 ? '#FF7A95' : '#D8A072' }}>
+              {zapPreview.impactPct < 0.01 && zapPreview.impactPct > -0.01
+                ? '< 0.01%'
+                : `${zapPreview.impactPct > 0 ? '+' : ''}${formatNumber(zapPreview.impactPct, { maximumFractionDigits: 2 })}%`}
+            </span>
+          </div>
+        </div>
       )}
 
       {needsApproval && isValid && (
