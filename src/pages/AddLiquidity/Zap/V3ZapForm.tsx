@@ -8,7 +8,7 @@ import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
-import { useBestZapInRoute } from 'hooks/useBestZapRoute'
+import { useBestZapInRoute, ZapChoice } from 'hooks/useBestZapRoute'
 import { useCallback, useMemo, useState } from 'react'
 import { Field } from 'state/mint/actions'
 import { tryParseAmount } from 'state/swap/hooks'
@@ -71,6 +71,13 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
 
   const deadlineSeconds = useMemo(() => (deadline ? Number(deadline.toString()) : 0), [deadline])
 
+  // User's manual engine preference. 'auto' = best LP-out wins (default);
+  // 'native' = pin BrownFi V3 router; 'kyber' = pin Kyber zap. The hook
+  // honors the pin when that source has a route; falls back to native
+  // then best-available when the pinned source returns no route, so the
+  // user is never stuck.
+  const [zapSource, setZapSource] = useState<ZapChoice>('auto')
+
   // Fans out native + Kyber zap quotes in parallel; returns the winner +
   // every adapter's status (success / no-route / loading). The form
   // renders all attempts so the user can see why an engine didn't show
@@ -81,6 +88,7 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
     account: account ?? undefined,
     slippageBps: slippage,
     deadline: deadlineSeconds,
+    selected: zapSource,
   })
 
   // Approval target moves with the chosen engine. Native = V3 router;
@@ -212,7 +220,45 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
       />
 
       {showRoutesCard && (
-        <div className="px-4 py-3 rounded-md bg-white/5 text-sm text-white/70 flex flex-col gap-1">
+        <div className="px-4 py-3 rounded-md bg-white/5 text-sm text-white/70 flex flex-col gap-2">
+          {/* Engine selector pills. Auto picks the highest LP-out; explicit
+              picks pin one source. Pills for sources with no route are
+              dimmed and non-clickable so the user can see the option
+              exists but can't pin a dead route. */}
+          <div className="flex gap-1.5">
+            {([
+              { key: 'auto' as ZapChoice, label: 'Auto', enabled: true },
+              ...attempts.map((a) => ({
+                key: a.source as ZapChoice,
+                label: a.sourceName,
+                enabled: a.status !== 'no-route',
+              })),
+            ]).map((opt) => {
+              const isActive = zapSource === opt.key
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => opt.enabled && setZapSource(opt.key)}
+                  disabled={!opt.enabled}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 999,
+                    border: 'none',
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: opt.enabled ? 'pointer' : 'not-allowed',
+                    background: isActive ? '#985C2A' : 'rgba(255,255,255,0.06)',
+                    color: isActive ? '#FFFFFF' : opt.enabled ? '#C4B89A' : '#6B6359',
+                    opacity: opt.enabled ? 1 : 0.5,
+                  }}
+                >
+                  {opt.label}
+                </button>
+              )
+            })}
+          </div>
           {isLoadingRoutes && attempts.every((a) => a.status === 'loading') ? (
             <Dots>Fetching routes</Dots>
           ) : (
