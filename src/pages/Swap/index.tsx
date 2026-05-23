@@ -26,6 +26,7 @@ import useENSAddress from 'hooks/useENSAddress'
 import { useSwapCallback } from 'hooks/useSwapCallback'
 import { useAggregatorSwapCallback } from 'hooks/useAggregatorSwapCallback'
 import { useBestSwapRoute, type UnifiedRoute } from 'hooks/useBestSwapRoute'
+import { decodeContractError } from 'utils/decodeContractError'
 import { isBrownFiSource } from 'services/aggregators/types'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { BigNumber } from '@ethersproject/bignumber'
@@ -528,7 +529,9 @@ export default function Swap() {
           routeToConfirm,
           showConfirm,
           swapErrorMessage:
-            error.message?.indexOf('user rejected transaction') !== -1 ? 'User rejected transaction' : error.message,
+            error.message?.indexOf('user rejected transaction') !== -1
+              ? 'User rejected transaction'
+              : decodeContractError(error, error.message ?? 'Swap failed. Please try again.') ?? error.message,
           txHash: undefined,
         })
       })

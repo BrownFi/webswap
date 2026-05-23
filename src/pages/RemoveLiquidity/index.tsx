@@ -1,5 +1,6 @@
 import { Currency, currencyEquals, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
+import { decodeContractError } from 'utils/decodeContractError'
 import { isV3ZapSupported } from 'utils/v3Zap'
 import { useQuery } from '@tanstack/react-query'
 import { useBestZapOutRoute } from 'hooks/useBestZapRoute'
@@ -283,7 +284,13 @@ export default function RemoveLiquidity() {
       setAttemptingTxn(false)
       if (isUserRejection(e)) return
       console.error('Remove liquidity failed:', e)
-      createToast(useZap ? parseZapError(e) : (e?.reason || e?.message || 'Remove liquidity failed. Please try again.'), 'error')
+      createToast(
+        useZap
+          ? parseZapError(e)
+          : decodeContractError(e, 'Remove liquidity failed. Please try again.') ??
+            'Remove liquidity failed. Please try again.',
+        'error',
+      )
     }
   }
 

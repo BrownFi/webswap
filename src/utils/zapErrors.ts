@@ -36,9 +36,18 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 /**
  * Returns true if the error is a user rejection (MetaMask cancel).
+ *
+ * Walks the common shapes: the canonical EIP-1193 code 4001, ethers'
+ * ACTION_REJECTED string code, and the message-string variants some wallets
+ * still return (older WalletConnect, Rabby, embedded wallets) when the
+ * structured code is missing.
  */
-export function isUserRejection(error: ErrorLike): boolean {
-  return error?.code === 4001 || error?.code === 'ACTION_REJECTED'
+export function isUserRejection(error: ErrorLike | unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const e = error as ErrorLike
+  if (e.code === 4001 || e.code === 'ACTION_REJECTED') return true
+  const msg = typeof e.message === 'string' ? e.message.toLowerCase() : ''
+  return msg.includes('user rejected') || msg.includes('user denied')
 }
 
 /**

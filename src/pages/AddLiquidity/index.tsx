@@ -29,6 +29,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
+import { decodeContractError } from 'utils/decodeContractError'
+import { isUserRejection } from 'utils/zapErrors'
 import { AppBody } from 'pages/AppBody'
 import { Dots, Wrapper } from 'pages/Pool/styleds'
 import { useIsExpertMode, useUserSlippageTolerance } from 'state/user/hooks'
@@ -81,6 +83,7 @@ export default function AddLiquidity() {
     parsedAmounts,
     price,
     noLiquidity,
+    requiresPoolCreation,
     liquidityMinted,
     poolTokenPercentage,
     error,
@@ -161,7 +164,13 @@ export default function AddLiquidity() {
         parsedAmountB,
         exactFieldInput,
         deadline as any,
-        noLiquidity ?? false,
+        // Pass `requiresPoolCreation` (factory has no pair) rather than
+        // `noLiquidity` (pool exists but empty) so the SDK only zeroes out
+        // slippage when the V2 router will actually run the first-mint
+        // path. V3 empty pools still go through Pyth-driven amount
+        // recomputation, and zero slippage there reverts `InsufficientBAmount`
+        // on harmless integer-precision deltas between FE and router.
+        requiresPoolCreation ?? false,
         allowedSlippage,
         version,
       )
@@ -176,17 +185,19 @@ export default function AddLiquidity() {
       }
     } catch (error) {
       setAttemptingTxn(false)
-      if ((error as any)?.code !== 4001) {
-        console.error(error)
-      }
-      if (typeof (error as any)?.reason === 'string') {
-        createToast((error as any)?.reason, 'error')
-      }
+      if (isUserRejection(error)) return
+      console.error(error)
+      const msg = decodeContractError(error, 'Add liquidity failed. Please try again.')
+      if (msg) createToast(msg, 'error')
     }
   }
 
   const modalHeader = () => {
-    return noLiquidity ? (
+    // Show the "you are initializing this pair" card only when the user is
+    // actually deploying the pool contract (V2 first-mint). V3 empty pools
+    // are EXISTS-but-zero-supply and should go through the normal "you will
+    // receive N LP tokens" header instead.
+    return requiresPoolCreation ? (
       <AutoColumn gap="20px">
         <LightCard borderRadius="16px" style={{ marginTop: '20px' }}>
           <RowFlat className="px-2">
@@ -237,7 +248,12 @@ export default function AddLiquidity() {
         price={price}
         currencies={currencies}
         parsedAmounts={parsedAmounts}
+        // `noLiquidity` (zero-supply pool, including V3 pre-deployed) still
+        // drives the "Share of Pool: 100%" first-LP display. The button label,
+        // however, follows `requiresPoolCreation` so users on a V3 empty pool
+        // see "Confirm Supply" rather than "Create Pool & Supply".
         noLiquidity={noLiquidity}
+        requiresPoolCreation={requiresPoolCreation}
         onAdd={onAdd}
         poolTokenPercentage={poolTokenPercentage}
       />
@@ -357,7 +373,7 @@ export default function AddLiquidity() {
               hash={txHash}
               content={() => (
                 <ConfirmationModalContent
-                  title={noLiquidity ? 'You are creating a pool' : 'You will receive'}
+                  title={requiresPoolCreation ? 'You are creating a pool' : 'You will receive'}
                   onDismiss={handleDismissConfirmation}
                   topContent={modalHeader}
                   bottomContent={modalBottom}

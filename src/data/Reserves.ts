@@ -19,16 +19,38 @@ export enum PairState {
 }
 
 // V3: look up pair address from factory (no CREATE2)
+//
+// Returns { addresses, loading }. `loading` is true between mount and the
+// first multicall settling — without it the caller can't tell "factory says
+// no pool" from "factory hasn't been asked yet" since both produce undefined
+// slots. The Add-Liquidity page (`noLiquidity`) flips to "Create Pool & Supply"
+// on a NOT_EXISTS verdict, so getting LOADING vs NOT_EXISTS right matters for
+// the CTA label.
 function useV3PairAddresses(
   tokens: [Token | undefined, Token | undefined][],
   chainId: number,
   version: number,
-): (string | undefined)[] {
-  const [addresses, setAddresses] = useState<(string | undefined)[]>(() => tokens.map(() => undefined))
+): { addresses: (string | undefined)[]; loading: boolean } {
+  // Co-locate addresses + loading in a single state slot so each transition
+  // (init → fetched, dep-change → re-fetch) is one setState call. Two separate
+  // useState pairs tripped the `react-hooks` "synchronous setState in effect"
+  // rule because the early-return path did `setAddresses(...) ; setLoading(false)`.
+  const [state, setState] = useState<{ addresses: (string | undefined)[]; loading: boolean }>(() => ({
+    addresses: tokens.map(() => undefined),
+    // Default-loading on mount so the caller doesn't mistake an unfetched slot
+    // for "factory says no pool" before the multicall settles.
+    loading: true,
+  }))
 
   useEffect(() => {
     if (version !== 3 || !FACTORY_ADDRESS_V3[chainId]) {
-      setAddresses(tokens.map(() => undefined))
+      // Synchronous setState in an effect is the simplest way to express
+      // "this chain doesn't support V3 — reset and stop." Functional update
+      // doesn't help here (we want a fixed shape, not a derived one). The
+      // `react-hooks/set-state-in-effect` rule is overly strict for this
+      // dependency-reset pattern; `useReducer` would just rename the call.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState({ addresses: tokens.map(() => undefined), loading: false })
       return
     }
 
@@ -50,7 +72,7 @@ function useV3PairAddresses(
 
       const results: (string | undefined)[] = tokens.map(() => undefined)
       if (lookups.length === 0) {
-        setAddresses(results)
+        setState({ addresses: results, loading: false })
         return
       }
 
@@ -86,13 +108,17 @@ function useV3PairAddresses(
         // PairState.NOT_EXISTS renders for those, which is the same outcome
         // as the previous per-call try/catch returning undefined.
       }
-      setAddresses(results)
+      setState({ addresses: results, loading: false })
     }
 
+    // Mark loading on dep change. Functional updater so we don't depend on
+    // the state we're about to overwrite; preserves the previous addresses
+    // so the UI doesn't flash an empty list while the new fetch is in flight.
+    setState((prev) => ({ addresses: prev.addresses, loading: true }))
     fetchAddresses()
   }, [tokens.length, chainId, version])
 
-  return addresses
+  return state
 }
 
 export function usePairs(
@@ -129,8 +155,9 @@ export function usePairs(
     [tokens, version],
   )
 
-  // V3: look up from factory
-  const v3Addresses = useV3PairAddresses(tokens, chainId, version)
+  // V3: look up from factory. Destructure to keep call-site identical to the
+  // pre-refactor `(string | undefined)[]` shape plus the new loading flag.
+  const { addresses: v3Addresses, loading: v3AddressesLoading } = useV3PairAddresses(tokens, chainId, version)
 
   const pairAddresses = version === 3 ? v3Addresses : v1v2Addresses
 
@@ -144,6 +171,12 @@ export function usePairs(
       const tokenA = tokenPair[0]
       const tokenB = tokenPair[1]
 
+      // V3 factory lookup is async — until it settles, an undefined slot
+      // means "unknown, still loading", not "factory says no pool". Without
+      // this guard the Add-Liquidity page would briefly show "Create Pool
+      // & Supply" on every V3 nav before falling back to "Supply" once the
+      // reserves arrived.
+      if (version === 3 && v3AddressesLoading) return [PairState.LOADING, null]
       if (loading) return [PairState.LOADING, null]
       if (!tokenA || !tokenB || tokenA.equals(tokenB)) return [PairState.INVALID, null]
       if (!reserves) return [PairState.NOT_EXISTS, null]
@@ -156,7 +189,7 @@ export function usePairs(
       }
       return [PairState.EXISTS, pair]
     })
-  }, [results, tokens, version, pairAddresses, chainId])
+  }, [results, tokens, version, pairAddresses, chainId, v3AddressesLoading])
 }
 
 export function usePair(tokenA?: Currency, tokenB?: Currency): [PairState, Pair | null] {
