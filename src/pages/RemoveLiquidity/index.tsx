@@ -20,7 +20,7 @@ import { RowBetween, RowFixed } from 'components/Row'
 import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 import Slider from 'components/Slider'
 import { Dots } from 'components/swap/styleds'
-import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
+import { ConfirmationModalContent, TransactionConfirmationModal, TransactionErrorContent } from 'components/TransactionConfirmationModal'
 import { useActiveWeb3React } from 'hooks'
 import { useCurrency } from 'hooks/Tokens'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
@@ -46,7 +46,6 @@ import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
 import { formatNumber } from 'utils/prices'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { useToast } from 'containers/ToastProvider'
 import { useQueryClient } from '@tanstack/react-query'
 import { KyberZapOutRouteData } from './zapHelpers'
 
@@ -56,7 +55,6 @@ export default function RemoveLiquidity() {
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
 
-  const { createToast } = useToast()
   const queryClient = useQueryClient()
   const addTransaction = useTransactionAdder()
   const supportsZapV2 = useMemo(() => isZapSupportedOnChain(chainId), [chainId])
@@ -100,6 +98,10 @@ export default function RemoveLiquidity() {
   const [attemptingTxn, setAttemptingTxn] = useState(false) // clicked confirm
 
   const [txHash, setTxHash] = useState<string>('')
+  // Mirror Swap's in-modal failure surface so pre-submission reverts (wallet
+  // rejection, simulation revert, Kyber API failure) appear inside the open
+  // modal instead of as an out-of-band toast.
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
   const [allowedSlippage] = useUserSlippageTolerance()
 
   const deadline = useTransactionDeadline()
@@ -227,6 +229,7 @@ export default function RemoveLiquidity() {
       }
 
       setAttemptingTxn(true)
+      setErrorMessage(undefined)
       if (useZap && supportsZap) {
         // Single dispatch path for both V2 (Kyber) and V3 (native or Kyber):
         // the orchestration hook has already picked the winning adapter via
@@ -284,13 +287,16 @@ export default function RemoveLiquidity() {
       setAttemptingTxn(false)
       if (isUserRejection(e)) return
       console.error('Remove liquidity failed:', e)
-      createToast(
-        useZap
-          ? parseZapError(e)
-          : decodeContractError(e, 'Remove liquidity failed. Please try again.') ??
-            'Remove liquidity failed. Please try again.',
-        'error',
-      )
+      // Same routing as the success path: surface failure inside the
+      // confirm modal via TransactionErrorContent rather than a toast.
+      // Zap-side errors include HTTP/API failures from Kyber that don't
+      // look like contract reverts, so we keep parseZapError for the
+      // useZap branch — same friendlier copy, different decoder.
+      const msg = useZap
+        ? parseZapError(e)
+        : decodeContractError(e, 'Remove liquidity failed. Please try again.') ??
+          'Remove liquidity failed. Please try again.'
+      setErrorMessage(msg)
     }
   }
 
@@ -434,6 +440,7 @@ export default function RemoveLiquidity() {
       onUserInput(Field.LIQUIDITY_PERCENT, '0')
     }
     setTxHash('')
+    setErrorMessage(undefined)
   }, [onUserInput, txHash])
 
   return (
@@ -447,14 +454,23 @@ export default function RemoveLiquidity() {
             onDismiss={handleDismissConfirmation}
             attemptingTxn={attemptingTxn}
             hash={txHash ? txHash : ''}
-            content={() => (
-              <ConfirmationModalContent
-                title={'You will receive'}
-                onDismiss={handleDismissConfirmation}
-                topContent={modalHeader}
-                bottomContent={modalBottom}
-              />
-            )}
+            content={() =>
+              errorMessage ? (
+                <TransactionErrorContent
+                  message={errorMessage}
+                  onDismiss={handleDismissConfirmation}
+                  headerTitle="Remove Liquidity"
+                  failedTitle="Remove liquidity failed"
+                />
+              ) : (
+                <ConfirmationModalContent
+                  title={'You will receive'}
+                  onDismiss={handleDismissConfirmation}
+                  topContent={modalHeader}
+                  bottomContent={modalBottom}
+                />
+              )
+            }
             pendingText={pendingText}
             submittedText={submittedText}
           />

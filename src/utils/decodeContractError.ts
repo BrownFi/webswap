@@ -107,6 +107,111 @@ const STRING_REVERT_REGISTRY: Record<string, ErrorEntry> = {
     label: 'Token transfer failed',
     hint: 'A token transfer reverted. Check your balance and approvals.',
   },
+
+  // BrownFi V2 string reverts. Same pattern as V3 but a separate prefix
+  // ("BrownFi:" without the V3 suffix) and a different error vocabulary.
+  // The 80/90% reserve caps are V2-only and the most common slippage-style
+  // revert users hit on aggregator-bypass V2 trades.
+  'BrownFi: MAX_90_PERCENT_OF_RESERVE': {
+    label: 'Trade exceeds 90% of pool reserve',
+    hint: 'BrownFi V2 caps single trades at 90% of pool reserves. Reduce trade size.',
+  },
+  'BrownFi: MAX_80_PERCENT_OF_RESERVE': {
+    label: 'Trade exceeds 80% of pool reserve',
+    hint: 'BrownFi V2 caps single trades at 80% of pool reserves. Reduce trade size.',
+  },
+  'BrownFi: INSUFFICIENT_OUTPUT_AMOUNT': {
+    label: 'Insufficient output',
+    hint: 'Price moved past your slippage tolerance. Increase slippage and try again.',
+  },
+  'BrownFi: EXCESSIVE_INPUT_AMOUNT': {
+    label: 'Excessive input',
+    hint: 'Price moved past your slippage tolerance. Increase slippage and try again.',
+  },
+  'BrownFi: INVALID_INVENTORY': {
+    label: 'Trade too large for pool',
+    hint: 'BrownFi V2 rejects trades that would deplete the curve’s slack. Try a smaller amount.',
+  },
+  'BrownFi: INSUFFICIENT_LIQUIDITY': {
+    label: 'Insufficient pool liquidity',
+    hint: 'Pool does not have enough liquidity for this trade.',
+  },
+  'BrownFi: INSUFFICIENT_INPUT_AMOUNT': {
+    label: 'Insufficient input',
+    hint: 'Input amount is too small for the pool. Increase the amount.',
+  },
+  'BrownFi: EXPIRED': {
+    label: 'Transaction expired',
+    hint: 'Quote was older than the deadline. Refresh the quote and retry.',
+  },
+  'BrownFi: LOCKED': {
+    label: 'Pool busy',
+    hint: 'Pool is processing another transaction. Try again in a moment.',
+  },
+
+  // UniswapV2 string reverts — vanilla Uniswap V2 router/pair messages
+  // surface from forks the FE routes through (and through the BrownFi V2
+  // router itself, which inherits some of these). Useful for V2-deployed
+  // chains where BrownFi shares the V2 contract surface.
+  'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT': {
+    label: 'Insufficient output',
+    hint: 'Price moved past your slippage tolerance. Increase slippage and try again.',
+  },
+  'UniswapV2: EXCESSIVE_INPUT_AMOUNT': {
+    label: 'Excessive input',
+    hint: 'Price moved past your slippage tolerance. Increase slippage and try again.',
+  },
+  'UniswapV2: INSUFFICIENT_LIQUIDITY': {
+    label: 'Insufficient pool liquidity',
+    hint: 'Pool does not have enough liquidity for this trade.',
+  },
+  'UniswapV2: INSUFFICIENT_INPUT_AMOUNT': {
+    label: 'Insufficient input',
+    hint: 'Input amount is too small for the pool.',
+  },
+  'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED': {
+    label: 'Mint amount too small',
+    hint: 'Deposit is too small to mint LP. Increase amounts.',
+  },
+  'UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED': {
+    label: 'Burn amount too small',
+    hint: 'You are trying to burn too little LP. Increase amount.',
+  },
+  'UniswapV2: K': {
+    label: 'Invariant violated',
+    hint: 'Trade math failed the pool invariant. Try a smaller amount or refresh the quote.',
+  },
+  'UniswapV2: EXPIRED': {
+    label: 'Transaction expired',
+    hint: 'Quote was older than the deadline. Refresh the quote and retry.',
+  },
+  'UniswapV2: LOCKED': {
+    label: 'Pool busy',
+    hint: 'Pool is processing another transaction. Try again in a moment.',
+  },
+  'UniswapV2: TRANSFER_FAILED': {
+    label: 'Token transfer failed',
+    hint: 'A token transfer reverted. Check your balance and approvals.',
+  },
+  'UniswapV2: INVALID_TO': {
+    label: 'Invalid recipient',
+    hint: 'Router rejected the recipient address.',
+  },
+
+  // Generic ERC-20 failures (router-bubbled). Often the surface for fee-on-
+  // transfer tokens that V2/V3 routers don't support out of the box.
+  'TransferHelper::safeTransferFrom: transferFrom failed': {
+    label: 'Token transfer failed',
+    hint: 'Token rejected the transfer. Check balance, approval, or token compatibility (fee-on-transfer tokens are unsupported).',
+  },
+  'TransferHelper::safeTransfer: transfer failed': {
+    label: 'Token transfer failed',
+    hint: 'Token rejected the transfer. Check balance or token compatibility.',
+  },
+  'TransferHelper::safeApprove: approve failed': {
+    label: 'Approval failed',
+    hint: 'Token rejected the approve call. Some tokens require approve(0) before re-approving.',
+  },
 }
 
 /**
@@ -178,6 +283,40 @@ const ERROR_REGISTRY: Record<string, ErrorEntry> = {
   '0x827e7b7f': { label: 'Insufficient liquidity', hint: 'Pool does not have enough liquidity for this trade.' },
   '0x27dc822c': { label: 'Insufficient output', hint: 'Output below minimum. Increase slippage and try again.' },
   '0x44df3332': { label: 'Insufficient reserves', hint: 'Pool reserves are too low for this trade.' },
+
+  // Kyber MetaAggregationRouterV2 custom errors. Selectors derived from
+  // `keccak256(signature).slice(0,10)`; kept in sync with Kyber's docs so
+  // aggregator-route swaps surface meaningful messages instead of raw 4-byte
+  // codes. `Forbidden()` shares its selector with BrownFiV3 (same signature,
+  // same hash) — labelled in BrownFi terms above; the meaning is equivalent.
+  '0x064a4ec6': {
+    label: 'Aggregator slippage exceeded',
+    hint: 'Kyber received less output than your minimum. Refresh the route and try again, or raise slippage.',
+  },
+  '0x1841b4e1': {
+    label: 'Wrong native amount',
+    hint: 'msg.value mismatch on the aggregator call. Refresh the quote and retry.',
+  },
+  '0xd70f29d2': {
+    label: 'Wrong input token',
+    hint: 'Aggregator detected a token mismatch. Refresh the quote and retry.',
+  },
+  '0x00c227aa': {
+    label: 'ETH withdraw failed',
+    hint: 'Aggregator could not transfer native ETH back. Try again or pick a different route.',
+  },
+  '0xddd117cb': {
+    label: 'Token withdraw failed',
+    hint: 'Aggregator could not transfer output token. Check token compatibility or pick a different route.',
+  },
+  '0x1e4ec46b': {
+    label: 'Invalid receiver',
+    hint: 'Aggregator rejected the receiver address. Refresh the quote and retry.',
+  },
+  '0x710c9497': {
+    label: 'Invalid executor',
+    hint: 'Aggregator route uses an executor the router rejected. Refresh the quote.',
+  },
 }
 
 /**

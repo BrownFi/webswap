@@ -252,14 +252,27 @@ export function ConfirmationModalContent({
   )
 }
 
-export function TransactionErrorContent({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+export function TransactionErrorContent({
+  message,
+  onDismiss,
+  // Header strings default to the Swap copy for backward compatibility; the
+  // AddLiquidity / RemoveLiquidity callers pass their own wording so the
+  // in-modal failure screen still reads naturally for non-swap flows.
+  headerTitle = 'Review Swap',
+  failedTitle = 'Swap fail',
+}: {
+  message: string
+  onDismiss: () => void
+  headerTitle?: string
+  failedTitle?: string
+}) {
   const theme = useContext(ThemeContext)
   return (
     <Wrapper className="relative">
       <Section>
         <RowBetween>
           <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '24px', lineHeight: '32px', color: '#FBFBFD' }}>
-            Review Swap
+            {headerTitle}
           </span>
           <span className="absolute top-[16px] right-[16px]">
             <CloseIcon color="#B8ADA4" onClick={onDismiss} />
@@ -269,7 +282,7 @@ export function TransactionErrorContent({ message, onDismiss }: { message: strin
           <div className="flex justify-center mb-[20px]">
             <FailedIcon />
           </div>
-          <p className="text-[32px] font-semibold text-[#FF3B6A] text-center mb-[20px]">Swap fail</p>
+          <p className="text-[32px] font-semibold text-[#FF3B6A] text-center mb-[20px]">{failedTitle}</p>
 
           <Text fontWeight={500} fontSize={16} color={theme.white} style={{ textAlign: 'center' }}>
             {message}

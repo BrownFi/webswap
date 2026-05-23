@@ -7,7 +7,7 @@ import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row, { RowBetween, RowFlat } from 'components/Row'
-import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
+import { ConfirmationModalContent, TransactionConfirmationModal, TransactionErrorContent } from 'components/TransactionConfirmationModal'
 import { useCallback, useMemo, useState } from 'react'
 import { Plus } from 'react-feather'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
@@ -24,7 +24,6 @@ import { useTransactionAdder } from 'state/transactions/hooks'
 
 import ConnectWallet from 'components/ConnectWallet'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
-import { useToast } from 'containers/ToastProvider'
 import { useQueryClient } from '@tanstack/react-query'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import { usePythPrices } from 'hooks/usePythPrices'
@@ -52,7 +51,6 @@ export default function AddLiquidity() {
   const location = useLocation()
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
-  const { createToast } = useToast()
   const queryClient = useQueryClient()
   const addTransaction = useTransactionAdder()
 
@@ -105,6 +103,13 @@ export default function AddLiquidity() {
   // modal and loading
   const [showConfirm, setShowConfirm] = useState<boolean>(false)
   const [attemptingTxn, setAttemptingTxn] = useState<boolean>(false) // clicked confirm
+  // In-modal failure message. Pre-submission reverts (wallet rejection, gas
+  // estimation failure, contract revert during simulation) never produce a
+  // tx hash, so the TransactionConfirmationModal falls back to `content()`.
+  // Routing the error through this state — same pattern as Swap's
+  // `swapErrorMessage` — lets the modal show TransactionErrorContent
+  // instead of dumping the user back at the form review.
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
 
   // txn values
   const deadline = useTransactionDeadline() // custom from users settings
@@ -156,6 +161,7 @@ export default function AddLiquidity() {
     try {
       const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
       setAttemptingTxn(true)
+      setErrorMessage(undefined)
       const response = await addLiquidity(
         chainId,
         library as any,
@@ -187,8 +193,12 @@ export default function AddLiquidity() {
       setAttemptingTxn(false)
       if (isUserRejection(error)) return
       console.error(error)
+      // Surface decoded failure in the open modal, NOT a toast. The modal
+      // is already showing the user's "confirming…" state — popping a toast
+      // outside it while the modal silently drops back to the form view
+      // produces a confusing two-surface UX. Matches Swap's pattern.
       const msg = decodeContractError(error, 'Add liquidity failed. Please try again.')
-      if (msg) createToast(msg, 'error')
+      if (msg) setErrorMessage(msg)
     }
   }
 
@@ -303,6 +313,9 @@ export default function AddLiquidity() {
       onFieldAInput('')
     }
     setTxHash('')
+    // Clear any failure message so the next confirm opens fresh on the
+    // review screen instead of replaying the previous error.
+    setErrorMessage(undefined)
   }, [onFieldAInput, txHash])
 
   const isCreate = location.pathname.includes('/create')
@@ -371,14 +384,27 @@ export default function AddLiquidity() {
               onDismiss={handleDismissConfirmation}
               attemptingTxn={attemptingTxn}
               hash={txHash}
-              content={() => (
-                <ConfirmationModalContent
-                  title={requiresPoolCreation ? 'You are creating a pool' : 'You will receive'}
-                  onDismiss={handleDismissConfirmation}
-                  topContent={modalHeader}
-                  bottomContent={modalBottom}
-                />
-              )}
+              content={() =>
+                // Swap-style failure surface: when a pre-submission error
+                // settled into `errorMessage`, render the failed view in
+                // place of the review form so the user sees the failure
+                // where they expected the success.
+                errorMessage ? (
+                  <TransactionErrorContent
+                    message={errorMessage}
+                    onDismiss={handleDismissConfirmation}
+                    headerTitle="Add Liquidity"
+                    failedTitle="Add liquidity failed"
+                  />
+                ) : (
+                  <ConfirmationModalContent
+                    title={requiresPoolCreation ? 'You are creating a pool' : 'You will receive'}
+                    onDismiss={handleDismissConfirmation}
+                    topContent={modalHeader}
+                    bottomContent={modalBottom}
+                  />
+                )
+              }
               pendingText={pendingText}
               submittedText={submittedText}
               currencyToAdd={pair?.liquidityToken}
