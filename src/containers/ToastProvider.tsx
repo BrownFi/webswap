@@ -41,14 +41,25 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
 
   return (
     <div
-      className={`flex items-center gap-2 px-4 py-2 min-h-12 rounded-md shadow-lg text-sm transition-all duration-300 ${
+      // `items-start` so the icon stays pinned to the top-left when the
+      // message wraps to multiple lines (decoded contract errors are often
+      // ~2 sentences — "Initial liquidity too low. The first deposit…").
+      // `max-w-sm` caps the box at ~24rem so very long messages wrap into
+      // a card instead of stretching off-screen. `min-w-0` on the parent +
+      // `break-words` on the text lets unbreakable strings (selectors,
+      // addresses) still wrap mid-word rather than overflowing.
+      className={`flex items-start gap-2 px-4 py-3 min-h-12 max-w-sm sm:max-w-md rounded-md shadow-lg text-sm leading-snug transition-all duration-300 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-5'
       } ${
         toast.type === 'success' ? 'bg-green-600 text-white dark:bg-green-500' : 'bg-red-600 text-white dark:bg-red-500'
       }`}
     >
-      {toast.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-      <span className="[&::first-letter]:uppercase">{toast.message}</span>
+      {toast.type === 'success' ? (
+        <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
+      ) : (
+        <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+      )}
+      <span className="flex-1 min-w-0 break-words [&::first-letter]:uppercase">{toast.message}</span>
     </div>
   )
 }
@@ -71,7 +82,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={useMemo(() => ({ createToast }), [createToast])}>
       {children}
-      <div className="fixed top-24 right-4 sm:right-8 space-y-2 z-[200]">
+      {/* Above every FE-managed overlay: Modal (z-999), Settings (z-1001),
+          Popover (z-9999). Below wallet provider popups (RainbowKit/WC use
+          z-index in the billions). Without this, toasts fired from inside an
+          open modal — e.g. PairSettingsModal's per-row submit errors — were
+          rendered behind the modal backdrop and effectively invisible. */}
+      <div className="fixed top-24 right-4 sm:right-8 space-y-2 z-[10000]">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={handleRemove} />
         ))}

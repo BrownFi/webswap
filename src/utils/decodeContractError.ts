@@ -198,6 +198,63 @@ const STRING_REVERT_REGISTRY: Record<string, ErrorEntry> = {
     hint: 'Router rejected the recipient address.',
   },
 
+  // BrownFi V3 pair-config setters — admin/dev modal (PairSettingsModal).
+  // Contract enforces hard min/max bounds; each revert reason identifies
+  // the exact parameter so the admin knows which input is out of range.
+  'PairConfig: KB_TOO_HIGH': { label: 'kB out of range', hint: 'kB exceeds MAX_K. Lower the value.' },
+  'PairConfig: KB_TOO_LOW': { label: 'kB out of range', hint: 'kB is below MIN_K. Raise the value.' },
+  'PairConfig: KQ_TOO_HIGH': { label: 'kQ out of range', hint: 'kQ exceeds MAX_K. Lower the value.' },
+  'PairConfig: KQ_TOO_LOW': { label: 'kQ out of range', hint: 'kQ is below MIN_K. Raise the value.' },
+  'PairConfig: LAMBDA_TOO_HIGH': {
+    label: 'Lambda out of range',
+    hint: 'Lambda × 2 must be ≤ min(kB, kQ). Lower lambda or raise kappa first.',
+  },
+  'PairConfig: GAMMA_TOO_HIGH': { label: 'Gamma out of range', hint: 'Gamma exceeds MAX_GAMMA. Lower the value.' },
+  'PairConfig: GAMMA_TOO_LOW': { label: 'Gamma out of range', hint: 'Gamma is below MIN_GAMMA. Raise the value.' },
+  'PairConfig: FEE_TOO_HIGH': { label: 'Fee out of range', hint: 'Fee exceeds MAX_FEE. Lower the value.' },
+  'PairConfig: FEE_TOO_LOW': { label: 'Fee out of range', hint: 'Fee is below MIN_FEE. Raise the value.' },
+  'PairConfig: FEE_SPLIT_TOO_HIGH': {
+    label: 'Fee split out of range',
+    hint: 'Protocol fee split exceeds MAX_FEE_SPLIT. Lower the value.',
+  },
+  'PairConfig: FEE_TO_UNSET': {
+    label: 'Fee recipient not set',
+    hint: 'Set the protocol feeTo address on the factory before splitting protocol fee.',
+  },
+  'PairConfig: FIX_S_TOO_HIGH': { label: 'fixS out of range', hint: 'fixS exceeds MAX_FIX_S. Lower the value.' },
+  'PairConfig: COMPRESS_TOO_HIGH': {
+    label: 'Compress out of range',
+    hint: 'Compress exceeds MAX_COMPRESS. Lower the value.',
+  },
+  'PairConfig: S_SPREAD_TOO_HIGH': {
+    label: 'Spread out of range',
+    hint: 'Spread s exceeds MAX_S_SPREAD. Lower the value.',
+  },
+  'PairConfig: S_BOUND_TOO_HIGH': {
+    label: 'sBound out of range',
+    hint: 'sBound exceeds MAX_S_BOUND. Lower the value.',
+  },
+  'PairConfig: DIS_THRESHOLD_TOO_HIGH': {
+    label: 'disThreshold out of range',
+    hint: 'disThreshold exceeds MAX_DIS_THRESHOLD. Lower the value.',
+  },
+  'PairConfig: DIS_THRESHOLD_ZERO': {
+    label: 'disThreshold cannot be zero',
+    hint: 'Set disThreshold to a non-zero value.',
+  },
+  'PairConfig: INVALID_PYTH_WEIGHT': {
+    label: 'Pyth weight out of range',
+    hint: 'Pyth weight must be ≤ PRECISION (1e8). Lower the value.',
+  },
+  'PairConfig: CONSTRAINT2_VIOLATED': {
+    label: 'Parameter constraint violated',
+    hint: 'Combined parameters violate the contract’s second-order constraint. Adjust kappa, lambda, or gamma together.',
+  },
+  'PairConfig: ZERO_ADDRESS': {
+    label: 'Zero pair address',
+    hint: 'Pair address cannot be zero — open the modal on an existing pool.',
+  },
+
   // Generic ERC-20 failures (router-bubbled). Often the surface for fee-on-
   // transfer tokens that V2/V3 routers don't support out of the box.
   'TransferHelper::safeTransferFrom: transferFrom failed': {

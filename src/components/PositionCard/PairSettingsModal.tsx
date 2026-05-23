@@ -14,6 +14,8 @@ import { useVersion } from 'hooks/useVersion'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { CloseIcon } from 'theme/components'
 import { FACTORY_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
+import { decodeContractError } from 'utils/decodeContractError'
+import { isUserRejection } from 'utils/zapErrors'
 
 // V3-only setters live on the new V3 factory but aren't in IBrownFiV2Factory.json
 // (the JSON only carries the V2 surface + `setConfigOfPair`). Define the V3
@@ -181,23 +183,34 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
 
   const handleDismiss = () => onDismiss()
 
-  // Common error-→-toast mapper so each submitter doesn't re-do it. The
-  // contract reverts with a `PairConfig:` prefix for bound violations (e.g.
-  // `PairConfig: GAMMA_TOO_HIGH`) vs `restricted` modifier for missing role.
+  // Common error → toast mapper so each submitter doesn't re-do it. Routes
+  // through the shared decoder so per-parameter bound names (e.g.
+  // "Gamma out of range. Gamma exceeds MAX_GAMMA…") replace the previous
+  // generic "value out of range" toast. Authorization reverts (caller lacks
+  // the admin role) generally surface as UNPREDICTABLE_GAS_LIMIT during
+  // estimateGas without a useful revert reason, so we keep the dedicated
+  // authorization message for that case before falling back to the decoder.
   const handleSubmitError = (submitError: unknown) => {
     console.error(submitError)
+    if (isUserRejection(submitError)) {
+      createToast('Transaction rejected in wallet', 'error')
+      return
+    }
     const err = submitError as { code?: string | number; message?: string; reason?: string }
     const raw = `${err?.reason ?? ''} ${err?.message ?? ''}`.toLowerCase()
-    const isReverted =
-      err?.code === 'UNPREDICTABLE_GAS_LIMIT' ||
-      raw.includes('execution reverted') ||
-      raw.includes('unpredictable_gas_limit')
-    const isRejected = err?.code === 4001 || raw.includes('user rejected') || raw.includes('user denied')
-    const isBoundError = raw.includes('pairconfig:') || raw.includes('factory:')
-    if (isRejected) createToast('Transaction rejected in wallet', 'error')
-    else if (isBoundError) createToast('Reverted — value is out of the contract-allowed range. Check field bounds.', 'error')
-    else if (isReverted) createToast('Reverted — this wallet is not authorized (admin role required)', 'error')
-    else createToast('Failed to send transaction', 'error')
+    const reasonText = typeof err?.reason === 'string' ? err.reason : ''
+    const looksLikeContractBound = reasonText.startsWith('PairConfig:') || reasonText.startsWith('Factory:')
+    const isAuthFailure =
+      !looksLikeContractBound &&
+      (err?.code === 'UNPREDICTABLE_GAS_LIMIT' ||
+        raw.includes('unpredictable_gas_limit') ||
+        (raw.includes('execution reverted') && !reasonText))
+    if (isAuthFailure) {
+      createToast('Reverted — this wallet is not authorized (admin role required)', 'error')
+      return
+    }
+    const decoded = decodeContractError(submitError, 'Failed to send transaction')
+    createToast(decoded ?? 'Failed to send transaction', 'error')
   }
 
   // Runs `op` with submitting state + toast handling. Centralizes the
