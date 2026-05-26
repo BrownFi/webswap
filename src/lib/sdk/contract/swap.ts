@@ -163,21 +163,18 @@ export async function callSwapContract(
             error: new Error('Unexpected issue with estimating the gas. Please try again.'),
           }
         } catch (callError: any) {
-          const reason = callError.reason || callError.data?.message || ''
-          let errorMessage: string
-          if (reason.includes('INSUFFICIENT_OUTPUT_AMOUNT') || reason.includes('EXCESSIVE_INPUT_AMOUNT')) {
-            errorMessage = 'This transaction will not succeed either due to price movement or fee on transfer. Try increasing your slippage tolerance.'
-          } else if (reason.includes('INVALID_INVENTORY')) {
-            // BrownFi V3 rejects trades whose post-state would extract more
-            // pool value than the curve's κ-weighted slack allows. In
-            // practice this fires when the trade is large relative to pool
-            // reserves, or when the pool TVL is too thin to absorb any
-            // meaningful trade. Either way the user fix is the same.
-            errorMessage = 'This trade is too large for the pool. Try a smaller amount or wait for more liquidity.'
-          } else {
-            errorMessage = `The transaction cannot succeed due to error: ${reason || 'unknown'}. Try increasing slippage tolerance.`
-          }
-          return { call, error: new Error(errorMessage) }
+          // Defer to the shared decoder so revert messages stay consistent
+          // between the pre-simulation path (here) and the post-submission
+          // catch in pages/Swap/index.tsx. Previously this branch duplicated
+          // the registry inline and drifted out of sync — e.g. the
+          // INVALID_INVENTORY hint said "try smaller amount" when the actual
+          // cause is the trade direction worsening the pool's inventory skew
+          // (a smaller amount in the same direction often still reverts).
+          const { decodeContractError } = await import('../../../utils/decodeContractError')
+          const decoded =
+            decodeContractError(callError, 'The transaction cannot succeed. Try adjusting amount or slippage.') ??
+            'The transaction cannot succeed. Try adjusting amount or slippage.'
+          return { call, error: new Error(decoded) }
         }
       }
     })

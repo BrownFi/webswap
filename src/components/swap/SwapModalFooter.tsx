@@ -16,6 +16,7 @@ import { AutoRow, RowBetween, RowFixed } from 'components/Row'
 import { ErrorText, StyledBalanceMaxMini, SwapCallbackError } from './styleds'
 import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
+import { useTradingFee } from 'hooks/useTradingFee'
 
 const labelStyle = { fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' } as const
 const valueStyle = { fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' } as const
@@ -41,6 +42,13 @@ export default function SwapModalFooter({
   ])
   const { priceImpactWithoutFee } = useMemo(() => computeTradePriceBreakdown(trade), [trade])
   const severity = warningSeverity(priceImpactWithoutFee)
+  // LP fee for the selected native pool (V2 or V3). Driven by the same
+  // hook the in-page detail panel uses (AdvancedSwapDetails), so the
+  // confirm modal stays in sync with what the user saw before clicking
+  // Confirm. Aggregator routes bypass this footer entirely — Kyber
+  // bakes its fee into the quoted output, so there's no separate LP
+  // row to show for them.
+  const tradingFee = useTradingFee({ pair: trade.route.pairs[0] })
 
   const [showInverted, setShowInverted] = useState<boolean>(false)
 
@@ -86,6 +94,13 @@ export default function SwapModalFooter({
           <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
             {trade ? formatStringToNumber(trade?.priceImpactK, 4) : '-'}%
           </ErrorText>
+        </RowBetween>
+        <RowBetween>
+          <RowFixed>
+            <span style={labelStyle}>Liquidity Provider Fee</span>
+            <QuestionHelper text="A portion of each trade goes to liquidity providers as a protocol incentive." />
+          </RowFixed>
+          <span style={valueStyle}>{tradingFee}%</span>
         </RowBetween>
       </AutoColumn>
 

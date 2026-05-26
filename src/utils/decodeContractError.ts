@@ -60,8 +60,8 @@ const STRING_REVERT_REGISTRY: Record<string, ErrorEntry> = {
     hint: 'Deposit is too small to mint LP. Increase amounts.',
   },
   'BrownFiV3: INVALID_INVENTORY': {
-    label: 'Invalid pool inventory',
-    hint: 'The pool inventory cannot satisfy this trade. Try a smaller size.',
+    label: 'Pool inventory too skewed',
+    hint: 'This trade would push the pool further from its oracle-balanced state. The opposite direction (selling the other token) usually works. Otherwise wait for arbitrage to rebalance the pool, or try a smaller size.',
   },
   'BrownFiV3: INVALID_PRICE': {
     label: 'Oracle price unavailable',
