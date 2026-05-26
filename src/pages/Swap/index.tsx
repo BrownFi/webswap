@@ -1,5 +1,5 @@
 import { ChainId, Currency, CurrencyAmount, JSBI, Token, Trade } from '@brownfi/sdk'
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown, Repeat } from 'react-feather'
 import { Text } from 'components/Rebass'
 import { ThemeContext } from 'styled-components'
@@ -412,30 +412,96 @@ export default function Swap() {
 
   const [trackedFingerprint, setTrackedFingerprint] = useState(inputFingerprint)
   const [pendingQuote, setPendingQuote] = useState(false)
-  if (trackedFingerprint !== inputFingerprint) {
+  // Whether the BrownFi-native trade pipeline (useTradeExactIn/Out) has
+  // completed at least one full loading cycle since the last fingerprint
+  // change. The native pipeline can be SLOW to start on first input —
+  // useAllCommonPairs has to fetch reserves on first run, then
+  // useTradeExactIn's internal setTimeout(300) waits, then bestTradeExactIn
+  // fires. Total: ~1.4s before `loadingExactIn` flips true. Meanwhile Kyber
+  // returns in ~500ms. The previous 350ms time-based grace would fire at
+  // ~T+850ms — BEFORE V2 engages — briefly clearing pendingQuote and
+  // unmasking the "Kyber" row without skeleton. Switch to an EVENT-based
+  // grace: don't clear pendingQuote until native has actually completed
+  // (or a 2.5s absolute fallback for pairs that have no native pool).
+  const [nativeCycleDone, setNativeCycleDone] = useState(true)
+  const nativeCycleStartedRef = useRef(false)
+  // Derived staleness check. TRUE on the SAME render that detects the input
+  // change, BEFORE any setState below propagates. Without this, the previous
+  // render's DOM (showing the prior "Kyber Best" row) stays on screen for
+  // one frame after typing because `pendingQuote` is state and the current
+  // render still sees the old value. Including this in `isLoadingOrStale`
+  // forces the skeleton to render immediately on the input-change render,
+  // killing the brief "Kyber → loading → Kyber Best" flash the user saw.
+  const fingerprintIsStale = trackedFingerprint !== inputFingerprint
+  if (fingerprintIsStale) {
     setTrackedFingerprint(inputFingerprint)
     const willFetch =
       !!typedValue && Number(typedValue) > 0 && !!currencies[Field.INPUT] && !!currencies[Field.OUTPUT]
     setPendingQuote(willFetch)
+    // Reset the native-cycle gate so we wait for V2/V3 to engage again.
+    // Without this, a stale "done" from the previous fingerprint would let
+    // the grace timer fire immediately on the new fetch cycle.
+    if (willFetch) setNativeCycleDone(false)
   }
-  // Clear pendingQuote only when ALL source loading flags are quiet AND a
-  // short grace period elapses. This bridges the timing gap where Kyber's
-  // HTTP returns (~T+500ms) BEFORE V2/V3's trade pipeline even engages its
-  // loading flag (~T+600ms, because useTradeExactIn has its own internal
-  // setTimeout before firing multicall). Without the grace, the picker
-  // briefly flashes "settled" between Kyber settling and V2 engaging.
+  // On cold mount the page renders with the typedValue already set (URL
+  // prefill, persisted Redux state, etc.) but `trackedFingerprint` is
+  // initialized to the SAME value as `inputFingerprint`, so the mismatch
+  // check above never fires — `pendingQuote` stays false for the entire
+  // first fetch cycle. When Kyber's HTTP returns (~T+500ms) and V2/V3
+  // hasn't engaged its internal debounce yet (~T+800ms), there's a 300ms
+  // window where every loading flag is false and the picker briefly
+  // renders the lone Kyber row as "Kyber Best" before the skeleton
+  // re-appears. Promote pendingQuote to true whenever ANY source flag
+  // goes hot so the grace timer below has something to clear.
+  useEffect(() => {
+    if (bestLoading || loadingExactIn || loadingExactOut) {
+      // Bridging state-promotion pattern: when a downstream loading flag
+      // rises asynchronously after mount, sync pendingQuote up so the grace
+      // timer has something to clear. `react-hooks/set-state-in-effect` is
+      // overly strict for this case — there's no derived alternative because
+      // pendingQuote must persist beyond the loading flag's lifetime.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPendingQuote(true)
+    }
+  }, [bestLoading, loadingExactIn, loadingExactOut])
+
+  // Track the native trade pipeline's cycle. A "cycle" is a true→false
+  // edge on loadingExactIn or loadingExactOut. The ref captures the rising
+  // edge synchronously across renders; the state captures the falling edge
+  // for the grace effect to react to.
+  useEffect(() => {
+    if (loadingExactIn || loadingExactOut) {
+      nativeCycleStartedRef.current = true
+    } else if (nativeCycleStartedRef.current) {
+      nativeCycleStartedRef.current = false
+      setNativeCycleDone(true)
+    }
+  }, [loadingExactIn, loadingExactOut])
+
+  // Clear pendingQuote only when ALL source loading flags are quiet AND
+  // either the native cycle has finished OR an absolute max-wait has
+  // elapsed. The max-wait is a safety valve for pairs where the native
+  // pipeline determines it has no quote (no V2 pool) without ever raising
+  // its loading flag — without it, the picker would stay in skeleton
+  // forever on aggregator-only pairs.
   //
-  // Cleanup cancels the timer if any source re-engages within the window,
-  // so loading state stays sticky across the entire fetch cycle. A 350ms
-  // grace handles the worst observed Kyber→V2 gap with margin.
+  // - 350ms when native already completed → tight follow-on.
+  // - 2500ms when native hasn't engaged yet → covers the worst observed
+  //   reserves-load gap (~1.4s) plus the V2 trade itself (~600ms) with
+  //   margin, then falls through to show the Kyber-only result.
   useEffect(() => {
     if (!pendingQuote) return
     if (bestLoading || loadingExactIn || loadingExactOut) return
-    const t = setTimeout(() => setPendingQuote(false), 350)
+    const delay = nativeCycleDone ? 350 : 2500
+    const t = setTimeout(() => setPendingQuote(false), delay)
     return () => clearTimeout(t)
-  }, [pendingQuote, bestLoading, loadingExactIn, loadingExactOut])
+  }, [pendingQuote, bestLoading, loadingExactIn, loadingExactOut, nativeCycleDone])
 
-  const isLoadingOrStale = bestLoading || loadingExactIn || loadingExactOut || pendingQuote
+  // `fingerprintIsStale` covers the first-render window; `pendingQuote`
+  // covers the post-loading grace; the source flags cover everything in
+  // between. Either one being true → skeleton stays up.
+  const isLoadingOrStale =
+    fingerprintIsStale || bestLoading || loadingExactIn || loadingExactOut || pendingQuote
   const displayedOutput = rawDisplayedOutput
 
   // Both approval paths are called unconditionally per Hook rules. We pick
@@ -640,10 +706,15 @@ export default function Swap() {
               showCommonBases={true}
               balanceUsdPrice={inputUsdPrice}
               // Pulse only when this field is the DEPENDENT side (user is
-              // typing OUTPUT). `pendingQuote` is the synchronous bridge
-              // that engages before the real loading flag, so a field
-              // user types into never pulses underneath them.
-              loading={loadingExactOut || (independentField === Field.OUTPUT && pendingQuote)}
+              // typing OUTPUT). Combine both the derived `fingerprintIsStale`
+              // (true on the same render as the input change) and the
+              // state-based `pendingQuote` (grace period) so the dependent
+              // field starts pulsing immediately, without the one-frame
+              // stale-value flash.
+              loading={
+                loadingExactOut ||
+                (independentField === Field.OUTPUT && (fingerprintIsStale || pendingQuote))
+              }
             />
             <AutoColumn justify="space-between" className="relative">
               <AutoRow
@@ -677,7 +748,11 @@ export default function Swap() {
             <CurrencyInputPanel
               value={displayedOutput}
               onUserInput={handleTypeOutput}
-              loading={loadingExactIn || bestLoading || (independentField === Field.INPUT && pendingQuote)}
+              loading={
+                loadingExactIn ||
+                bestLoading ||
+                (independentField === Field.INPUT && (fingerprintIsStale || pendingQuote))
+              }
               label={'Your Receive'}
               showMaxButton={false}
               currency={currencies[Field.OUTPUT]}

@@ -222,11 +222,13 @@ export function RouteComparison({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 16px',
-          // Lock minimum row height so the trigger doesn't shrink/grow
-          // when content switches between skeleton (14px tall) and real
-          // text + badge (~18-20px once line-height + pill padding are
-          // factored in). 46px ≈ 12px top + 22px content + 12px bottom.
-          minHeight: 46,
+          // Lock minimum row height to accommodate the tallest child in the
+          // LOADED state — the RefreshIndicator is 28px tall and the
+          // RefreshIndicator returns `null` while loading (collapsing its
+          // slot to 0px). Without this, loading → loaded transition grew
+          // the row from 46 to 52 (28px indicator + 12px top + 12px bottom),
+          // causing a 6px layout shift on every settle. 52 = 28 + 24 pad.
+          minHeight: 52,
           background: 'transparent',
           border: 'none',
           cursor: hasMultiple && !isLoading ? 'pointer' : 'default',
