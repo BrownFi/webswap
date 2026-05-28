@@ -163,10 +163,24 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       )
     : rpcTotalSupply
 
+  // V2: indexer's `apr` is the gross fee APR (volume × fee / tvl × 365). Apply
+  // `1 − protocolFee` to surface the LP-side share.
+  //
+  // V3: every deployed pool today has feeSplit ≈ 1.0 (100% of trading fees
+  // routed to factory.feeTo), which would zero the LP-share computation out
+  // and the column would just show "--". Per product call, display the gross
+  // pool APR for V3 instead — it represents the pool's earning activity even
+  // though LPs aren't currently receiving a share. Revisit if/when feeSplit
+  // is lowered and LPs start earning fees directly.
+  const isV3 = pair.version === 3
+  const feeAPR =
+    shouldUseIndexer && pairStats
+      ? pairStats.apr * (isV3 ? 1 : 1 - pairStats.protocolFee)
+      : 0
   return {
     tradingFee,
     totalSupply,
-    feeAPR: (shouldUseIndexer ? pairStats.apr * (1 - pairStats.protocolFee) : 0) || 0,
+    feeAPR: feeAPR || 0,
     bgtAPR: (poolApr?.apr || 0) * 100,
     volume24h: (shouldUseIndexer ? pairStats.volumeDay : 0) || 0,
     volume7d: (shouldUseIndexer ? pairStats.volume7Day : 0) || 0,
