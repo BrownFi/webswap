@@ -376,7 +376,13 @@ export default function Portfolio() {
               <TYPE.body color="#978A80" textAlign="center">
                 Connect your wallet to view your liquidity positions.
               </TYPE.body>
-              <ConnectWallet />
+              {/* ConnectWallet's ButtonPrimary defaults to width:100% via the
+                  Base styled component — at page width that produces an
+                  awkward stretched button. Wrap in a fixed-width container
+                  so the CTA reads as a button, not a banner. */}
+              <div style={{ width: 'auto', maxWidth: 240 }}>
+                <ConnectWallet />
+              </div>
             </EmptyProposals>
           ) : (
             <>
