@@ -51,9 +51,17 @@ const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   overflow: hidden;
   padding: 12px;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, gap 0.2s ease;
   background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#1E1915')};
   gap: ${({ $expanded }) => ($expanded ? '24px' : '4px')};
+
+  /* Hover only affects collapsed rows. When expanded, the card is already
+     in its "active" #2F2823 tint and a hover bump would feel jittery as
+     the user moves between sub-sections. Matches the Portfolio row's
+     hover treatment so the two surfaces feel consistent. */
+  &:hover {
+    background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#252019')};
+  }
 
   @media (min-width: 720px) {
     padding: 16px;
@@ -175,7 +183,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         <div
           className="flex items-center cursor-pointer max-md:flex-wrap max-md:gap-2"
           style={{ gap: '8px', minHeight: '60px' }}
-          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}`)}
+          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${pair.version}`)}
         >
           {/* Pool name */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>

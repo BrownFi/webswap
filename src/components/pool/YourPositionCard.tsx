@@ -1,7 +1,8 @@
 import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useActiveWeb3React } from 'hooks'
+import { useChainGuard } from 'hooks/useChainGuard'
 import { useTotalSupply } from 'data/TotalSupply'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { CurrencyLogo } from 'components/CurrencyLogo'
@@ -88,6 +89,12 @@ export function YourPositionCard({ pair, pairStats }: Props) {
 
   const poolChainId = pair.liquidityToken.chainId
   const chainMismatch = !!account && chainId !== poolChainId
+  // Cross-chain action handling — when the user's wallet is on a chain
+  // other than the pool's chain, the Add/Remove buttons morph into
+  // "Switch to {pool's chain}" buttons that trigger a wallet switch
+  // before performing the action.
+  const guard = useChainGuard(poolChainId)
+  const navigate = useNavigate()
 
   const hasWalletLp =
     !!userPoolBalance && JSBI.greaterThan(userPoolBalance.raw, JSBI.BigInt(0))
@@ -271,25 +278,44 @@ export function YourPositionCard({ pair, pairStats }: Props) {
       {account && hasLiquidity && expanded && (
         <div className="pt-3 flex flex-col gap-2">
           <div className="flex gap-2">
-            <Link
-              to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-              className="no-underline inline-flex items-center justify-center flex-1"
+            <button
+              type="button"
+              onClick={async () => {
+                if (!guard.matches) {
+                  await guard.switchToTarget()
+                  return
+                }
+                navigate(`/add/${currencyId(currency0)}/${currencyId(currency1)}`)
+              }}
+              disabled={guard.isSwitching}
+              className="inline-flex items-center justify-center flex-1"
               style={{
                 background: '#985C2A',
+                border: 'none',
                 borderRadius: '8px',
                 padding: '10px',
                 fontFamily: 'Inter',
                 fontSize: '14px',
                 fontWeight: 500,
                 color: '#FFFFFF',
+                cursor: guard.isSwitching ? 'wait' : 'pointer',
+                opacity: guard.isSwitching ? 0.7 : 1,
               }}
             >
-              Add
-            </Link>
+              {guard.matches ? 'Add' : `Switch to ${guard.targetChainName}`}
+            </button>
             {hasWalletLp ? (
-              <Link
-                to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
-                className="no-underline inline-flex items-center justify-center flex-1"
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!guard.matches) {
+                    await guard.switchToTarget()
+                    return
+                  }
+                  navigate(`/remove/${currencyId(currency0)}/${currencyId(currency1)}`)
+                }}
+                disabled={guard.isSwitching}
+                className="inline-flex items-center justify-center flex-1"
                 style={{
                   background: 'transparent',
                   border: '1px solid #493E35',
@@ -299,10 +325,12 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                   fontSize: '14px',
                   fontWeight: 500,
                   color: '#FBFBFD',
+                  cursor: guard.isSwitching ? 'wait' : 'pointer',
+                  opacity: guard.isSwitching ? 0.7 : 1,
                 }}
               >
-                Remove
-              </Link>
+                {guard.matches ? 'Remove' : `Switch to ${guard.targetChainName}`}
+              </button>
             ) : (
               <span
                 title="Your LP is staked. Unstake on the platform below first, then return here to remove liquidity."

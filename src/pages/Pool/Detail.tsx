@@ -1,12 +1,13 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Settings } from 'react-feather'
 import { Address, checksumAddress } from 'viem'
 
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { useChainGuard } from 'hooks/useChainGuard'
 import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
@@ -135,7 +136,18 @@ type PairRaw = {
 export default function PoolDetail() {
   const { pairAddress, chainId: chainIdParam } = useParams<{ pairAddress: string; chainId: string }>()
   const chainId = Number(chainIdParam)
-  const { version } = useVersion({ chainId })
+  const [searchParams] = useSearchParams()
+  const { version: reduxVersion } = useVersion({ chainId })
+  // Version precedence: explicit `?v=` from URL > Redux toggle. Pool list
+  // and Portfolio links include the version so a V2 pool always queries
+  // /indexer and a V3 pool always queries /indexer/v3, regardless of the
+  // user's current V2/V3 toggle in the header. Old URLs without `?v=`
+  // (bookmarks, shared links) fall back to Redux for backward compat.
+  const urlVersion = (() => {
+    const raw = Number(searchParams.get('v'))
+    return raw === 2 || raw === 3 ? raw : undefined
+  })()
+  const version = urlVersion ?? reduxVersion
 
   // Version-aware query. V3 hits /indexer/v3 with the V3 schema; the V2 path is
   // unchanged. Aliasing (feeSplit→protocolFee, kB→k) happens after the fetch so
@@ -223,6 +235,11 @@ function PoolDetailInner({
   const { version, isBeta } = useVersion({ chainId, pair })
   const navigate = useNavigate()
 
+  // Chain match check for the action buttons (Add Liquidity, Swap). When
+  // wallet ≠ pool chain, the buttons morph to "Switch to {chain}" and call
+  // the wallet switch on click, then proceed to the action after success.
+  const { matches: walletMatchesPool, targetChainName, switchToTarget, isSwitching } = useChainGuard(chainId)
+
   // Detect wallet chain CHANGE (not initial mismatch). If user actively
   // switches to a chain that doesn't match this pool, send them to /pool
   // so they can browse pools on the new chain.
@@ -281,8 +298,6 @@ function PoolDetailInner({
 
   const symbol0 = (getTokenSymbol(currency0, chainId) ?? '?')
   const symbol1 = (getTokenSymbol(currency1, chainId) ?? '?')
-
-  const chainMismatch = walletChainId && walletChainId !== chainId
 
   // USD value breakdown for the pool balance bar
   const reserve0Num = Number(pair.reserve0.toSignificant(8)) || 0
@@ -389,21 +404,9 @@ function PoolDetailInner({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
           {/* Left column */}
           <div className="flex flex-col gap-5 order-2 lg:order-1">
-            {chainMismatch && (
-              <div
-                className="px-4 py-3"
-                style={{
-                  background: '#2F2823',
-                  border: '1px solid #493E35',
-                  borderRadius: '8px',
-                  fontFamily: 'Inter',
-                  fontSize: '13px',
-                  color: '#D8A072',
-                }}
-              >
-                This pool is on a different chain than your connected wallet. Switch wallet chain to use Swap / Add / Remove.
-              </div>
-            )}
+            {/* Cross-chain action affordance now lives ON the action buttons
+                themselves — they morph to "Switch to {chain}" when wallet ≠
+                pool chain. A standalone banner here was redundant. */}
             {/* Header — shown on desktop only; mobile header is above the grid */}
             <div className="hidden lg:flex items-center gap-3 flex-wrap">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} />
@@ -622,12 +625,25 @@ function PoolDetailInner({
                 inline buttons side-by-side so they stay above the fold without
                 eating vertical space. */}
             <div className="hidden lg:grid grid-cols-2 gap-2">
-              <Link
-                to={`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`}
-                className="no-underline inline-flex items-center justify-center"
+              {/* Swap + Add Liquidity action buttons. Both are click-handlers
+                  (not raw Links) so we can branch on wallet chain match:
+                  if matches → navigate; if not → trigger wallet switch and
+                  navigate on success. Mirrors Uniswap's multi-chain pattern. */}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!walletMatchesPool) {
+                    await switchToTarget()
+                    // Don't navigate after the switch — the user may have
+                    // rejected. They can re-click; matches will be true now
+                    // if accepted, falling through to the navigate branch.
+                    return
+                  }
+                  navigate(`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`)
+                }}
+                disabled={isSwitching}
+                className="inline-flex items-center justify-center"
                 style={{
-                  // Match the Remove button (secondary outline) in
-                  // YourPositionCard so the two action sets read consistently.
                   background: 'transparent',
                   border: '1px solid #493E35',
                   borderRadius: '8px',
@@ -636,25 +652,38 @@ function PoolDetailInner({
                   fontSize: '14px',
                   fontWeight: 500,
                   color: '#FBFBFD',
+                  cursor: isSwitching ? 'wait' : 'pointer',
+                  opacity: isSwitching ? 0.7 : 1,
                 }}
               >
-                Swap
-              </Link>
-              <Link
-                to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-                className="no-underline inline-flex items-center justify-center"
+                {walletMatchesPool ? 'Swap' : `Switch to ${targetChainName}`}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!walletMatchesPool) {
+                    await switchToTarget()
+                    return
+                  }
+                  navigate(`/add/${currencyId(currency0)}/${currencyId(currency1)}`)
+                }}
+                disabled={isSwitching}
+                className="inline-flex items-center justify-center"
                 style={{
                   background: '#985C2A',
+                  border: 'none',
                   borderRadius: '8px',
                   padding: '10px',
                   fontFamily: 'Inter',
                   fontSize: '14px',
                   fontWeight: 500,
                   color: '#FFFFFF',
+                  cursor: isSwitching ? 'wait' : 'pointer',
+                  opacity: isSwitching ? 0.7 : 1,
                 }}
               >
-                + Add liquidity
-              </Link>
+                {walletMatchesPool ? '+ Add liquidity' : `Switch to ${targetChainName}`}
+              </button>
             </div>
 
             {/* Your position — collapsible; sits above Stats so a return

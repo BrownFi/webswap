@@ -51,6 +51,15 @@ function fmtPct(n: number) {
   return `${n >= 0 ? '+' : ''}${(n * 100).toFixed(2)}%`
 }
 
+// Pool fee APR straight from the indexer's `apr` field. Two-decimal percent.
+// Falls back to a dash when unavailable so empty cells don't read as "0%".
+function fmtApr(n: number | string | undefined): string {
+  if (n === undefined || n === null) return '—'
+  const v = typeof n === 'number' ? n : Number(n)
+  if (!Number.isFinite(v) || v === 0) return '—'
+  return `${v.toFixed(2)}%`
+}
+
 function pnlColor(n: number) {
   if (n > 0) return '#83CF84'
   if (n < 0) return '#FF7A95'
@@ -79,7 +88,7 @@ function PortfolioStatsBar({
   isLoading?: boolean
 }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {stats.map((stat, index) => (
         <div
           key={`${stat.label}-${index}`}
@@ -180,9 +189,27 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
     [token1, positionChainId],
   )
 
-  const handleClick = () => navigate(`/pool/${positionChainId}/${position.pair.id}`)
+  // Pass version as query param so PoolDetail hits the right indexer.
+  // Without this, the detail page falls back to the user's global V2/V3
+  // toggle from Redux — clicking a V2 position while Redux is on V3 (or
+  // vice versa) would query the wrong indexer and "Pool not found".
+  const handleClick = () => navigate(`/pool/${positionChainId}/${position.pair.id}?v=${position.version}`)
 
   const pnlPct = position.basePortfolio > 0 ? position.unrealizedPnL / position.basePortfolio : 0
+
+  // Sub-line under the pair name. We deliberately DON'T show the token-
+  // amount breakdown here — the USD Value column already tells the user
+  // what the position is worth, and the breakdown adds visual noise for
+  // most users. Pool share % gives context that USD value can't ("am I a
+  // big or small LP in this pool?") and staying it. Staked-LP indicator
+  // is appended only when relevant.
+  const totalUserLp = position.lp + position.stakeLP
+  const totalSupplyNum = Number(position.pair.totalSupply) || 0
+  const sharePct = totalSupplyNum > 0 ? (totalUserLp / totalSupplyNum) * 100 : 0
+  const subLineParts: string[] = []
+  if (sharePct > 0) subLineParts.push(`${sharePct < 0.01 ? '<0.01' : sharePct.toFixed(2)}% of pool`)
+  if (position.stakeLP > 0) subLineParts.push(`${formatNumber(position.stakeLP, { maximumFractionDigits: 4 })} staked`)
+  const subLine = subLineParts.join(' · ')
 
   return (
     <div
@@ -237,9 +264,12 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
               </span>
             )}
           </div>
-          {position.stakeLP > 0 && (
+          {/* Sub-line: pool share %. Token amount breakdown intentionally
+              omitted — the USD Value column already conveys position size
+              and the breakdown adds noise for typical users. */}
+          {subLine && (
             <span style={{ ...labelStyle, marginTop: '2px' }}>
-              {formatNumber(position.stakeLP, { maximumFractionDigits: 4 })} staked
+              {subLine}
             </span>
           )}
         </div>
@@ -260,15 +290,8 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
         </span>
       </div>
       <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right' }}>
-        <span
-          style={{
-            fontFamily: 'Inter',
-            fontSize: '14px',
-            fontWeight: 500,
-            color: pnlColor(position.lpPortfolio - position.bnhPortfolio),
-          }}
-        >
-          {fmtUsd(position.lpPortfolio - position.bnhPortfolio, { showSign: true })}
+        <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#83CF84' }}>
+          {fmtApr(position.pair.apr)}
         </span>
       </div>
     </div>
@@ -292,7 +315,7 @@ function TableHeader() {
       <span style={{ flex: 1, textAlign: 'right' }}>Value</span>
       <span style={{ flex: 1, textAlign: 'right' }}>PnL</span>
       <span style={{ flex: 1, textAlign: 'right' }}>ROI</span>
-      <span style={{ flex: 1, textAlign: 'right' }}>vs HODL</span>
+      <span style={{ flex: 1, textAlign: 'right' }}>APR</span>
     </div>
   )
 }
@@ -301,6 +324,29 @@ export default function Portfolio() {
   const { account } = useActiveWeb3React()
   const { active, closed, stats, isLoading, isError } = usePortfolio()
   const [showClosed, setShowClosed] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Filter both active + closed buckets by token symbol/name. Same pattern
+  // as the Pool list page — case-insensitive substring match. Empty query
+  // returns the original lists unchanged. We filter both buckets so a
+  // search hit in `closed` still surfaces (user can expand the section to
+  // see it).
+  const filterByQuery = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return null
+    return (p: PortfolioPosition) => {
+      const t0 = p.pair.token0
+      const t1 = p.pair.token1
+      return (
+        (t0?.symbol?.toLowerCase() ?? '').includes(q) ||
+        (t1?.symbol?.toLowerCase() ?? '').includes(q) ||
+        (t0?.name?.toLowerCase() ?? '').includes(q) ||
+        (t1?.name?.toLowerCase() ?? '').includes(q)
+      )
+    }
+  }, [searchQuery])
+  const activeFiltered = filterByQuery ? active.filter(filterByQuery) : active
+  const closedFiltered = filterByQuery ? closed.filter(filterByQuery) : closed
 
   // Hero stats row computed inside the hook; this just renders.
   const heroPnLPct = stats.totalBasePortfolio > 0 ? stats.totalPnL / stats.totalBasePortfolio : 0
@@ -355,18 +401,40 @@ export default function Portfolio() {
                     subColor: pnlColor(stats.totalPnL),
                   },
                   {
-                    label: 'vs HODL',
-                    value: fmtUsd(stats.vsHodl, { showSign: true }),
-                    sub: stats.vsHodl > 0 ? 'LPing winning' : stats.vsHodl < 0 ? 'HODL winning' : 'Tied',
-                    subColor: pnlColor(stats.vsHodl),
-                  },
-                  {
                     label: 'Cost Basis',
                     value: fmtUsd(stats.totalBasePortfolio),
                     sub: 'Total invested',
                   },
                 ]}
               />
+
+              {/* Search bar — mirrors Pool list page. Filters both active
+                  and closed positions by token symbol/name (case-insensitive
+                  substring). Only renders once there's at least one position
+                  to filter; pointless on the empty state. */}
+              {(active.length > 0 || closed.length > 0) && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search token"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      height: '48px',
+                      background: '#120F0D',
+                      border: '1px solid #2F2823',
+                      borderRadius: '8px',
+                      padding: '12px 16px',
+                      fontFamily: 'Inter',
+                      fontWeight: 500,
+                      fontSize: '16px',
+                      color: '#FBFBFD',
+                      outline: 'none',
+                    }}
+                    className="placeholder-[#978A80] w-full sm:w-[300px]"
+                  />
+                </div>
+              )}
 
               {isLoading ? (
                 <EmptyProposals>
@@ -388,10 +456,19 @@ export default function Portfolio() {
                     Open the Pool page to start LPing.
                   </TYPE.body>
                 </EmptyProposals>
+              ) : activeFiltered.length === 0 ? (
+                // Active list is non-empty but the search query filters
+                // everything out. Distinct empty state so the user knows
+                // it's a search-no-result, not "no positions at all".
+                <EmptyProposals>
+                  <TYPE.body color="#978A80" textAlign="center">
+                    No active positions match &ldquo;{searchQuery}&rdquo;.
+                  </TYPE.body>
+                </EmptyProposals>
               ) : (
                 <>
                   <TableHeader />
-                  {active.map((p) => (
+                  {activeFiltered.map((p) => (
                     <PositionRow key={p.id} position={p} />
                   ))}
                 </>
@@ -399,7 +476,7 @@ export default function Portfolio() {
 
               {/* Closed positions — collapsed by default. Useful for users who
                   want to see PnL history from positions they've fully exited. */}
-              {closed.length > 0 && (
+              {closedFiltered.length > 0 && (
                 <div className="mt-4">
                   <button
                     type="button"
@@ -418,7 +495,7 @@ export default function Portfolio() {
                       color: '#978A80',
                     }}
                   >
-                    Closed positions ({closed.length})
+                    Closed positions ({closedFiltered.length}{closedFiltered.length !== closed.length ? ` of ${closed.length}` : ''})
                     <svg
                       width="14"
                       height="14"
@@ -432,7 +509,7 @@ export default function Portfolio() {
                   {showClosed && (
                     <>
                       <TableHeader />
-                      {closed.map((p) => (
+                      {closedFiltered.map((p) => (
                         <PositionRow key={p.id} position={p} />
                       ))}
                     </>
