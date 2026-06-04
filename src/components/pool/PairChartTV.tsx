@@ -234,7 +234,12 @@ const PairChartTVInner = ({ pair }: Props) => {
         uniV2Price: uni,
         lpMinusUniV2: lp - uni,
         tvl: tvlRaw,
-        netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
+        // Use uniRaw (not the scaled `uni`) so the formula stays
+        // self-consistent with the unscaled lpRaw/tvlRaw it's mixed with.
+        // For non-HYPE pools uni === uniRaw so this is identical; only the
+        // kHYPE/USDT pool (`iskHYPEUSDT`) is affected, where the scaled
+        // `uni` would have produced a value 1e9× too small.
+        netPnL: tvlRaw - (uniRaw * tvlRaw) / (lpRaw || 1),
         volume: volRaw,
       }
     }
