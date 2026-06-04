@@ -138,7 +138,12 @@ const SERIES_ALL: SeriesMeta[] = [
   // blue, UniV2 red, TVL purple, NetPnL green).
   { key: 'lpMinusUniV2',  label: 'LP − UniV2',     color: '#F5C84B99', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
-  { key: 'netPnL',        label: 'Net PnL',        color: '#83CF84',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
+  // Display label is "LP − BH" (LP minus Buy & Hold) to read as a sibling
+  // of "LP − UniV2" — same comparator pattern, just against the HODL
+  // reference instead of UniV2. Internal key stays `netPnL` to avoid a
+  // sweep across the indexer field name and downstream consumers; this
+  // is a pure copy change.
+  { key: 'netPnL',        label: 'LP − BH',        color: '#83CF84',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
   { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
