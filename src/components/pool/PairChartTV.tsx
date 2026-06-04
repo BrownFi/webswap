@@ -99,7 +99,7 @@ type DayData = {
 
 type HourData = Omit<DayData, 'dayStartUnix'> & { hourStartUnix: number }
 
-type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'tvl' | 'netPnL' | 'volume'
+type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpMinusUniV2' | 'tvl' | 'netPnL' | 'volume'
 
 type SeriesMeta = {
   key: SeriesKey
@@ -126,12 +126,20 @@ type SeriesMeta = {
 // (deep saturated green, histogram). The hue distance + render-type
 // difference keeps them visually separable on the same chart.
 const SERIES_ALL: SeriesMeta[] = [
-  { key: 'lpPrice',    label: 'LP Price',    color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice',   label: 'HODL Price',  color: '#6FB3E699', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  { key: 'uniV2Price', label: 'UniV2 Price', color: '#E0484899', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  { key: 'tvl',        label: 'TVL',         color: '#B47AAE', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
-  { key: 'netPnL',     label: 'Net PnL',     color: '#83CF84', type: 'line',      priceScaleId: 'left',   yAxis: 'left'  },
-  { key: 'volume',     label: 'Volume',      color: '#16A34A', type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
+  { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
+  { key: 'bnhPrice',      label: 'HODL Price',     color: '#6FB3E699', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'uniV2Price',    label: 'UniV2 Price',    color: '#E0484899', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // LP − UniV2 divergence. Plotted on the LEFT (derived-metrics) axis with
+  // NetPnL so the small price-delta numbers don't collapse against the
+  // primary price scale on the right. Visual style mirrors UniV2 Price —
+  // 1px dotted at ~60% opacity (alpha `99` ≈ 0.6) so it reads as a paired
+  // reference next to its parent series rather than competing with the
+  // primary LP/Net PnL lines. Yellow keeps it distinct from the existing
+  // palette (LP orange, HODL blue, UniV2 red, TVL purple, NetPnL green).
+  { key: 'lpMinusUniV2',  label: 'LP − UniV2',     color: '#F5C84B99', type: 'line',      priceScaleId: 'left',   yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
+  { key: 'netPnL',        label: 'Net PnL',        color: '#83CF84',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
+  { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
 type Props = {
@@ -143,13 +151,23 @@ const PairChartTVInner = ({ pair }: Props) => {
   const supportsUniV2 = hasUniV2Price(pair.chainId)
   const availableSeries = useMemo(() => {
     if (!showExtendedMetrics) return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
-    return supportsUniV2 ? SERIES_ALL : SERIES_ALL.filter((s) => s.key !== 'uniV2Price')
+    // Hide both the UniV2 reference AND the LP−UniV2 divergence line on
+    // chains without uniV2Price indexer data — the diff would be
+    // misleading (lpPrice − 0 = lpPrice) otherwise.
+    return supportsUniV2
+      ? SERIES_ALL
+      : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
   }, [showExtendedMetrics, supportsUniV2])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
     lpPrice: true,
     bnhPrice: showExtendedMetrics,
     uniV2Price: showExtendedMetrics,
+    // LP−UniV2 divergence default-on with the other extended metrics, but
+    // gated on the chain actually exposing uniV2Price downstream via the
+    // availableSeries filter below — otherwise the line would just show
+    // raw lpPrice values.
+    lpMinusUniV2: showExtendedMetrics,
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
     volume: true,
@@ -196,15 +214,25 @@ const PairChartTVInner = ({ pair }: Props) => {
   const data = isHourly ? hourResp : dayResp
 
   const fullChartData = useMemo(() => {
-    const toPoint = (lpRaw: number, bnhRaw: number, uniRaw: number, tvlRaw: number, volRaw: number, time: number) => ({
-      time,
-      lpPrice: iskHYPEUSDT ? lpRaw / 1e9 : lpRaw,
-      bnhPrice: iskHYPEUSDT ? bnhRaw / 1e9 : bnhRaw,
-      uniV2Price: iskHYPEUSDT ? uniRaw / 1e9 : uniRaw,
-      tvl: tvlRaw,
-      netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
-      volume: volRaw,
-    })
+    const toPoint = (lpRaw: number, bnhRaw: number, uniRaw: number, tvlRaw: number, volRaw: number, time: number) => {
+      // Apply the iskHYPEUSDT scale BEFORE computing the diff so we don't
+      // mix raw and scaled values. The divergence is in the same price
+      // units as lpPrice/uniV2Price; rendering on the LEFT axis lets it
+      // auto-scale independently of the primary price range.
+      const lp = iskHYPEUSDT ? lpRaw / 1e9 : lpRaw
+      const bnh = iskHYPEUSDT ? bnhRaw / 1e9 : bnhRaw
+      const uni = iskHYPEUSDT ? uniRaw / 1e9 : uniRaw
+      return {
+        time,
+        lpPrice: lp,
+        bnhPrice: bnh,
+        uniV2Price: uni,
+        lpMinusUniV2: lp - uni,
+        tvl: tvlRaw,
+        netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
+        volume: volRaw,
+      }
+    }
     if (isHourly) {
       const rows = (data as { pairHourDatas?: HourData[] } | undefined)?.pairHourDatas
       if (!rows) return []
