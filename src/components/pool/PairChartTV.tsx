@@ -232,14 +232,14 @@ const PairChartTVInner = ({ pair }: Props) => {
         lpPrice: lp,
         bnhPrice: bnh,
         uniV2Price: uni,
-        lpMinusUniV2: lp - uni,
-        tvl: tvlRaw,
         // Use uniRaw (not the scaled `uni`) so the formula stays
         // self-consistent with the unscaled lpRaw/tvlRaw it's mixed with.
         // For non-HYPE pools uni === uniRaw so this is identical; only the
         // kHYPE/USDT pool (`iskHYPEUSDT`) is affected, where the scaled
         // `uni` would have produced a value 1e9× too small.
-        netPnL: tvlRaw - (uniRaw * tvlRaw) / (lpRaw || 1),
+        lpMinusUniV2:  tvlRaw - (uniRaw * tvlRaw) / (lpRaw || 1),
+        tvl: tvlRaw,
+        netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
         volume: volRaw,
       }
     }
@@ -550,7 +550,10 @@ const PairChartTVInner = ({ pair }: Props) => {
                 .map((meta) => {
                   const v = hovered[meta.key] as number
                   const formatted =
-                    meta.key === 'tvl' || meta.key === 'netPnL' || meta.key === 'volume'
+                    meta.key === 'tvl' ||
+                    meta.key === 'netPnL' ||
+                    meta.key === 'lpMinusUniV2' ||
+                    meta.key === 'volume'
                       ? formatPrice(v, { maximumFractionDigits: 0 })
                       : formatPrice(v, { maximumFractionDigits: 3 })
                   return (

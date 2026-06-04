@@ -52,13 +52,37 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 // (useVersion's enableGraphQL derives V3 support from this map). Do NOT add a
 // chain until the V3 indexer is live at bf-v2-api-beta.brownfi.io/indexer/v3
 // for it — otherwise the FE will throw HTTP 500 on every V3 pool query.
+//
+// 2026-06-04 (beta branch): swapped to the v3-final deployment. Architectural
+// change vs the prior V3 deployment — zap entrypoints have been split out of
+// the router into a separate BrownFiV3Zap contract (see ZAP_ADDRESS_V3 below).
+// The router now only handles swap + add/remove liquidity. Library quotes are
+// inventory-safe; the INVALID_INVENTORY reverts we saw on lopsided pools
+// should be much rarer. develop/bera intentionally remain on the previous
+// V3 deployment until contract team promotes v3-final to prod.
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
-  [ChainId.BERA_MAINNET]: '0xFB473aEAe9b0d03c6974BCf5f2B67dA4AF7F6043',
+  [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
 }
 
 export const FACTORY_ADDRESS_V3: Record<number, string> = {
-  [ChainId.BERA_MAINNET]: '0x83A329E93f7A36b9baAb5bF1EAFF319947387552',
+  [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
 }
+
+// Zap-specific address. Separate from the router on v3-final deployments.
+// For chains/deployments where zap entrypoints still live on the router,
+// callers should fall back to ROUTER_ADDRESS_V3 (see utils/v3Zap.ts).
+export const ZAP_ADDRESS_V3: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
+}
+
+// Single toggle controlling whether V3 pool data comes from the GraphQL
+// indexer or from on-chain reads (factory.allPairs + per-pool multicall).
+// Set to `false` during the window between a new V3 factory deploy and the
+// indexer being repointed — flip to `true` once /indexer/v3 is tracking
+// the current FACTORY_ADDRESS_V3 above. Both the V3 GraphQL query strings
+// (LIST_ALL_PAIRS_V3, GET_PAIR_V3) and the on-chain hook live behind this
+// flag, so the flip is a single-line config change with no code to paste.
+export const V3_USE_INDEXER = false
 
 export const FACTORY_ADDRESS: Record<number, string> = {
   [ChainId.MAINNET]: '0xD705B4e18055D8Fa1d099d0533163a9e8fA09E4A',
