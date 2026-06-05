@@ -15,8 +15,16 @@ export const graphqlFetcher = async ({
   if (chainId !== ChainId.BERA_MAINNET) {
     query = query.replace(/stakeLP/g, '')
   }
-  const path = version === 3 ? '/indexer/v3' : '/indexer'
-  const url = `${import.meta.env.VITE_API_URL}${path}?chainId=${chainId}`
+  // V3 routing: prefer VITE_INDEXER_V3_URL (a complete, host-included URL)
+  // when set — that's the escape hatch for new factory deploys whose
+  // indexer hasn't been folded into the main API yet (e.g. a temporary
+  // Goldsky subgraph). When unset, fall back to the legacy
+  // VITE_API_URL/indexer/v3 path. V2 is always VITE_API_URL/indexer.
+  const v3Override = import.meta.env.VITE_INDEXER_V3_URL
+  const url =
+    version === 3 && v3Override
+      ? v3Override
+      : `${import.meta.env.VITE_API_URL}${version === 3 ? '/indexer/v3' : '/indexer'}?chainId=${chainId}`
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10_000)
   try {

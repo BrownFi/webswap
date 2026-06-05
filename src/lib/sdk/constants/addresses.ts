@@ -82,7 +82,7 @@ export const ZAP_ADDRESS_V3: Record<number, string> = {
 // the current FACTORY_ADDRESS_V3 above. Both the V3 GraphQL query strings
 // (LIST_ALL_PAIRS_V3, GET_PAIR_V3) and the on-chain hook live behind this
 // flag, so the flip is a single-line config change with no code to paste.
-export const V3_USE_INDEXER = false
+export const V3_USE_INDEXER = true
 
 export const FACTORY_ADDRESS: Record<number, string> = {
   [ChainId.MAINNET]: '0xD705B4e18055D8Fa1d099d0533163a9e8fA09E4A',
