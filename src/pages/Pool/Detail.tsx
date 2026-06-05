@@ -11,9 +11,7 @@ import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
-import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
-import { V3_USE_INDEXER } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
@@ -57,10 +55,10 @@ const GET_PAIR = `
   }
 `
 
-// V3 indexer schema: feeSplit instead of protocolFee, kB+kQ instead of k,
-// plus spread/skew/blend config and a uniV2 reference price. Aliased to V2
-// field names client-side so the rest of this page stays version-agnostic.
-// Used only when V3_USE_INDEXER is true; on-chain hook covers the other case.
+// V3 indexer schema: feeSplit instead of protocolFee, kB/kQ instead of k, plus
+// the spread/skew/blend config and uniV2 reference price. We alias feeSplit→
+// protocolFee and kB→k client-side so the rest of this page stays version-
+// agnostic.
 const GET_PAIR_V3 = `
   query PairDetailV3($id: ID!) {
     pair(id: $id) {
@@ -139,8 +137,9 @@ export default function PoolDetail() {
   const chainId = Number(chainIdParam)
   const { version } = useVersion({ chainId })
 
-  // V2 → indexer. V3 → indexer or on-chain depending on V3_USE_INDEXER
-  // (constants/addresses.ts). Same single-flag pattern as the pool list.
+  // Version-aware query. V3 hits /indexer/v3 with the V3 schema; the V2 path is
+  // unchanged. Aliasing (feeSplit→protocolFee, kB→k) happens after the fetch so
+  // every consumer downstream sees a uniform shape.
   const { data: pairRes, isLoading } = useQuery<{ pair: PairRaw | null }>({
     queryKey: ['pairDetail', chainId, pairAddress, version],
     queryFn: () =>
@@ -149,28 +148,21 @@ export default function PoolDetail() {
         query: version === 3 ? GET_PAIR_V3 : GET_PAIR,
         variables: { chainId, version, id: pairAddress?.toLowerCase() },
       }),
-    enabled: !!pairAddress && !!chainId && (version !== 3 || V3_USE_INDEXER),
+    enabled: !!pairAddress && !!chainId,
     staleTime: 60_000,
   })
 
-  const { data: onChainPool, isLoading: isOnChainLoading } = useV3PoolOnChain(
-    chainId,
-    pairAddress,
-    version === 3 && !V3_USE_INDEXER,
-  )
-
   const pairRaw = useMemo(() => {
-    if (version === 3 && !V3_USE_INDEXER) {
-      // V3 on-chain path. Project PairStats onto PairRaw — chart/history
-      // fields stay undefined, which downstream components handle.
-      if (!onChainPool) return null
-      return { ...onChainPool, protocolFee: 0, k: undefined } as unknown as PairRaw
-    }
     const p = pairRes?.pair
     if (!p) return null
     if (version !== 3) return p
-    return { ...p, protocolFee: p.protocolFee ?? p.feeSplit ?? 0, k: p.k ?? p.kB }
-  }, [pairRes, onChainPool, version])
+    // V3 → unify field names with V2 expectations
+    return {
+      ...p,
+      protocolFee: p.protocolFee ?? p.feeSplit ?? 0,
+      k: p.k ?? p.kB,
+    }
+  }, [pairRes, version])
   const pair = useMemo(() => {
     if (!pairRaw || !chainId) return null
     const t0 = pairRaw.token0
@@ -201,9 +193,9 @@ export default function PoolDetail() {
         ← Back to pools
       </Link>
 
-      {(isLoading || (version === 3 && !V3_USE_INDEXER && isOnChainLoading)) && <PoolDetailSkeleton />}
+      {isLoading && <PoolDetailSkeleton />}
 
-      {!isLoading && !(version === 3 && !V3_USE_INDEXER && isOnChainLoading) && !pair && (
+      {!isLoading && !pair && (
         <div style={{ padding: '80px 0', textAlign: 'center', color: '#978A80', fontFamily: 'Inter' }}>
           Pool not found.
         </div>

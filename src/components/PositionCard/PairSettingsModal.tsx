@@ -17,52 +17,22 @@ import { FACTORY_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
 import { decodeContractError } from 'utils/decodeContractError'
 import { isUserRejection } from 'utils/zapErrors'
 
-// V3 admin setters as exposed by the v3-final factory. The previous deploy
-// shipped one setter per parameter (setKappaOfPair, setLambdaOfPair, etc.);
-// v3-final consolidates them behind a single `setConfigOfPair(tokenA, tokenB,
-// Config tuple)` plus two preserved partial setters (fee, disThreshold).
-// Updating one field means reading the current Config, mutating it, and
-// writing the whole tuple back — see `submitViaSetConfig` below.
+// V3-only setters live on the new V3 factory but aren't in IBrownFiV2Factory.json
+// (the JSON only carries the V2 surface + `setConfigOfPair`). Define the V3
+// setter signatures inline so we can build an ethers Contract directly for V3
+// admin writes — no need to extend the shared ABI artifact.
 const V3_FACTORY_SETTERS_ABI = [
-  'function setConfigOfPair(address tokenA, address tokenB, (uint256 kB, uint256 kQ, uint64 lambda, uint32 fee, uint32 feeSplit, uint32 compress, uint32 sSell, uint32 sBuy, uint32 fixS, uint32 disThreshold, uint32 sBound, uint32 pythWeight, uint32 gamma) config)',
+  'function setKappaOfPair(address tokenA, address tokenB, uint256 kB, uint256 kQ)',
+  'function setLambdaOfPair(address tokenA, address tokenB, uint64 lambda)',
   'function setFeeOfPair(address tokenA, address tokenB, uint32 fee)',
+  'function setFeeSplitOfPair(address tokenA, address tokenB, uint32 feeSplit)',
+  'function setSpreadOfPair(address tokenA, address tokenB, uint32 compress, uint32 sSell, uint32 sBuy)',
+  'function setFixSpreadOfPair(address tokenA, address tokenB, uint32 fixS)',
   'function setDisThresholdOfPair(address tokenA, address tokenB, uint32 disThreshold)',
+  'function setSboundOfPair(address tokenA, address tokenB, uint32 sBound)',
+  'function setPythWeightOfPair(address tokenA, address tokenB, uint32 pythWeight)',
+  'function setGammaOfPair(address tokenA, address tokenB, uint32 gamma)',
 ] as const
-
-// Config field order matches IBrownFiV3PairConfig.Config — must align with
-// the tuple in setConfigOfPair above and the layout of getConfig in useDev-
-// Stats. Q64 scaling for the first three (kB/kQ/lambda); PRECISION (1e8) for
-// the rest. Display numbers in `currentValues` are already in fraction form.
-type ConfigOverride = Partial<Record<
-  'kB' | 'kQ' | 'lambda' | 'fee' | 'feeSplit' | 'compress' | 'sSell' | 'sBuy' |
-  'fixS' | 'disThreshold' | 'sBound' | 'pythWeight' | 'gamma',
-  string
->>
-
-const buildConfigTuple = (current: DevStatsLike | undefined, overrides: ConfigOverride) => {
-  // `current` values are decoded fractions; convert back to chain units. Use
-  // overrides where provided (already strings from the input field, also in
-  // fraction form). Missing fields fall back to 0 — caller should guard so
-  // that a single-field update doesn't silently zero out unset siblings on a
-  // pool with no current values loaded yet.
-  const q64 = (v: string | number | undefined) => v == null || v === '' ? '0' : Math.floor(Number(v) * 2 ** 64).toString()
-  const prec = (v: string | number | undefined) => v == null || v === '' ? '0' : Math.floor(Number(v) * 1e8).toString()
-  return [
-    q64(overrides.kB ?? current?.kB),
-    q64(overrides.kQ ?? current?.kQ),
-    q64(overrides.lambda ?? current?.lambda),
-    prec(overrides.fee ?? current?.fee),
-    prec(overrides.feeSplit ?? current?.feeSplit),
-    prec(overrides.compress ?? current?.compress),
-    prec(overrides.sSell ?? current?.sSell),
-    prec(overrides.sBuy ?? current?.sBuy),
-    prec(overrides.fixS ?? current?.fixS),
-    prec(overrides.disThreshold ?? current?.disThreshold),
-    prec(overrides.sBound ?? current?.sBound),
-    prec(overrides.pythWeight ?? current?.pythWeight),
-    prec(overrides.gamma ?? current?.gamma),
-  ] as const
-}
 
 // V2: 4 rows. V3: 11 rows. The V3-only rows live below the shared ones and
 // each maps to one factory setter — see `submit*` handlers below.
@@ -272,75 +242,79 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   const tokenA = pair.token0.address
   const tokenB = pair.token1.address
 
-  // Refuse to send a single-field update if `currentValues` hasn't loaded —
-  // otherwise the unset siblings in the Config tuple would default to 0 and
-  // silently overwrite the on-chain config. Caller is admin so a hard error
-  // is preferable to a corrupted pool.
-  const requireCurrent = (): boolean => {
-    if (!currentValues || (currentValues.kB === undefined && currentValues.fee === undefined)) {
-      createToast('Open this modal on an existing pool — current config has not loaded yet', 'error')
-      return false
-    }
-    return true
-  }
-
-  const submitViaSetConfig = (field: FieldKey, summary: string, override: ConfigOverride) => {
-    if (!requireCurrent()) return
-    const tuple = buildConfigTuple(currentValues, override)
-    return runSubmit(field, summary, () => factoryV3!.setConfigOfPair(tokenA, tokenB, tuple), 'v3')
-  }
-
   // ─── Submitters (one per row) ─────────────────────────────────────────────
-  // V2 keeps its legacy per-field setters (factoryContract). V3 routes all
-  // edits except `fee` and `disThreshold` through setConfigOfPair — those two
-  // are still partial setters on the v3-final factory.
+  // V2 path uses `factoryContract` (legacy V2 ABI). V3 path uses `factoryV3`
+  // (inline ABI, dedicated setters). V3 lambda/fee both have dedicated
+  // setters too — share names with V2 but the contract is different.
   const submitK = () =>
     runSubmit('k', 'Set K', () => factoryContract!.setKOfPair(tokenA, tokenB, toQ64(kInput)), 'v2')
 
   const submitKappa = () => {
+    // Each input falls back to its current on-chain value (so user can set
+    // just kQ without re-typing kB). Refuse to send if either side is empty
+    // and we have no current value — silently sending 0 would brick the pool.
     const kB = kBInput || (currentValues?.kB !== undefined ? round(currentValues.kB) : '')
     const kQ = kQInput || (currentValues?.kQ !== undefined ? round(currentValues.kQ) : '')
     if (!kB || !kQ) return createToast('Enter both kB and kQ (or open this modal on an existing pool to inherit)', 'error')
-    return submitViaSetConfig('kappa', 'Set Kappa', { kB, kQ })
+    return runSubmit(
+      'kappa', 'Set Kappa',
+      () => factoryV3!.setKappaOfPair(tokenA, tokenB, toQ64(kB), toQ64(kQ)),
+      'v3',
+    )
   }
 
   const submitLambda = () =>
     isV3
-      ? submitViaSetConfig('lambda', 'Set Lambda', { lambda: lambdaInput })
+      ? runSubmit('lambda', 'Set Lambda', () => factoryV3!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v3')
       : runSubmit('lambda', 'Set Lambda', () => factoryContract!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v2')
 
-  // fee + disThreshold are the two preserved partial setters on v3-final, so
-  // they keep their direct call path (one tx, no read-modify-write).
   const submitFee = () =>
     isV3
       ? runSubmit('fee', 'Set Fee', () => factoryV3!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v3')
       : runSubmit('fee', 'Set Fee', () => factoryContract!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v2')
 
-  const submitProtocolFee = () =>
-    isV3
-      ? submitViaSetConfig('protocolFee', 'Set FeeSplit', { feeSplit: protocolFeeInput })
-      : runSubmit(
-          'protocolFee', 'Set Protocol Fee',
-          () => factoryContract!.setProtocolFeeOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
-          'v2',
-        )
+  const submitProtocolFee = () => {
+    if (isV3) {
+      return runSubmit(
+        'protocolFee', 'Set FeeSplit',
+        () => factoryV3!.setFeeSplitOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
+        'v3',
+      )
+    }
+    return runSubmit(
+      'protocolFee', 'Set Protocol Fee',
+      () => factoryContract!.setProtocolFeeOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
+      'v2',
+    )
+  }
 
   const submitSpread = () => {
+    // Each sub-input falls back to its current on-chain value. Refuse to
+    // send if any field has neither input nor current value — sending 0 for
+    // missing fields would silently flatten the spread curve.
     const compress = compressInput || (currentValues?.compress !== undefined ? round(currentValues.compress) : '')
     const sSell = sSellInput || (currentValues?.sSell !== undefined ? round(currentValues.sSell) : '')
     const sBuy = sBuyInput || (currentValues?.sBuy !== undefined ? round(currentValues.sBuy) : '')
     if (compress === '' || sSell === '' || sBuy === '') {
       return createToast('Spread requires compress, sSell and sBuy — fill all three (or inherit from current)', 'error')
     }
-    return submitViaSetConfig('spread', 'Set Spread', { compress, sSell, sBuy })
+    return runSubmit(
+      'spread', 'Set Spread',
+      () => factoryV3!.setSpreadOfPair(tokenA, tokenB, toPREC(compress), toPREC(sSell), toPREC(sBuy)),
+      'v3',
+    )
   }
 
-  const submitFixS = () => submitViaSetConfig('fixS', 'Set fixS', { fixS: fixSInput })
+  const submitFixS = () =>
+    runSubmit('fixS', 'Set fixS', () => factoryV3!.setFixSpreadOfPair(tokenA, tokenB, toPREC(fixSInput)), 'v3')
   const submitDisThreshold = () =>
     runSubmit('disThreshold', 'Set disThreshold', () => factoryV3!.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)), 'v3')
-  const submitSBound = () => submitViaSetConfig('sBound', 'Set sBound', { sBound: sBoundInput })
-  const submitPythWeight = () => submitViaSetConfig('pythWeight', 'Set pythWeight', { pythWeight: pythWeightInput })
-  const submitGamma = () => submitViaSetConfig('gamma', 'Set gamma', { gamma: gammaInput })
+  const submitSBound = () =>
+    runSubmit('sBound', 'Set sBound', () => factoryV3!.setSboundOfPair(tokenA, tokenB, toPREC(sBoundInput)), 'v3')
+  const submitPythWeight = () =>
+    runSubmit('pythWeight', 'Set pythWeight', () => factoryV3!.setPythWeightOfPair(tokenA, tokenB, toPREC(pythWeightInput)), 'v3')
+  const submitGamma = () =>
+    runSubmit('gamma', 'Set gamma', () => factoryV3!.setGammaOfPair(tokenA, tokenB, toPREC(gammaInput)), 'v3')
 
   return (
     <Modal isOpen={isOpen} onDismiss={handleDismiss}>

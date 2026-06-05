@@ -9,25 +9,12 @@ import { BigNumber } from '@ethersproject/bignumber'
 import { Contract } from '@ethersproject/contracts'
 import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
-import { ROUTER_ADDRESS_V3, ZAP_ADDRESS_V3, RPC_URLS } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V3, RPC_URLS } from 'lib/sdk/constants/addresses'
 
-// On v3-final deployments zap entrypoints live on a separate BrownFiV3Zap
-// contract. On older deployments the router still hosts them, so we fall
-// back to the router address when no dedicated zap is registered. Exported
-// because the zap aggregator adapter needs this same address to surface as
-// the approval spender (callers approve the zap contract, not the router).
-export function getV3ZapAddress(chainId: ChainId): string | undefined {
-  return ZAP_ADDRESS_V3[chainId] || ROUTER_ADDRESS_V3[chainId]
-}
-
-// V3 Router/Zap ABI. Quote function is on the router; zap entrypoints are on
-// the dedicated Zap contract (v3-final split — see getV3ZapAddress). The
-// quote was previously `quoteAmountsOutWithUpdate(uint, address[], bytes)`
-// nonpayable; v3-final replaced it with view-only `getAmountsOut(uint, address[])`
-// — the library reads cached Pyth state internally for quotes, write paths
-// still take updateData.
+// V3 Router ABI — zap + quote functions only (updated for the new V3 router:
+// zapIn/zapInETH added `minLiquidity`, zapOut/zapOutETH added `updateData`).
 const V3_ZAP_ABI = [
-  { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }], name: 'getAmountsOut', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }], name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [{ name: 'tokenIn', type: 'address' }, { name: 'tokenOther', type: 'address' }, { name: 'amountIn', type: 'uint256' }, { name: 'amountOtherMin', type: 'uint256' }, { name: 'minLiquidity', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapIn', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [{ name: 'token', type: 'address' }, { name: 'amountTokenMin', type: 'uint256' }, { name: 'minLiquidity', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapInETH', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'payable', type: 'function' },
   { inputs: [{ name: 'tokenA', type: 'address' }, { name: 'tokenB', type: 'address' }, { name: 'tokenOut', type: 'address' }, { name: 'liquidity', type: 'uint256' }, { name: 'amountMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapOut', outputs: [{ name: 'amount', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
@@ -44,9 +31,9 @@ export function isV3ZapSupported(chainId?: ChainId | null, version?: number): bo
 
 /**
  * Get estimated output amount for half the zap input (for slippage calculation).
- * v3-final routes through the router's view-only getAmountsOut — Pyth state
- * is cached on-chain, no inline update needed. Write-side zapIn still takes
- * updateData so execution gets a fresh price.
+ * Uses quoteAmountsOutWithUpdate (simulate) so the router can apply a fresh Pyth
+ * update — the legacy view getAmountOut reverts with StalePrice on the new V3
+ * deployment.
  */
 export async function getV3ZapEstimate(
   chainId: ChainId,
@@ -61,11 +48,13 @@ export async function getV3ZapEstimate(
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const halfAmount = BigInt(amountIn) / 2n
 
-  const result = await client.readContract({
+  const updateData = await buildV3UpdateData([tokenIn, tokenOther], chainId)
+
+  const { result } = await client.simulateContract({
     address: routerAddress as `0x${string}`,
     abi: V3_ZAP_ABI,
-    functionName: 'getAmountsOut',
-    args: [halfAmount, [tokenIn as `0x${string}`, tokenOther as `0x${string}`]],
+    functionName: 'quoteAmountsOutWithUpdate',
+    args: [halfAmount, [tokenIn as `0x${string}`, tokenOther as `0x${string}`], updateData as `0x${string}`],
   })
 
   const amountOut = result[result.length - 1]
@@ -181,28 +170,28 @@ export async function buildV3ZapInTx({
   updateData: string
   isNativeETH: boolean
 }): Promise<V3ZapTxRequest> {
-  const zapAddress = getV3ZapAddress(chainId)
-  if (!zapAddress) throw new Error('V3 zap not deployed on this chain')
+  const routerAddress = getRouterAddress(chainId, 3)
+  if (!routerAddress) throw new Error('V3 router not deployed on this chain')
 
   // Use a no-signer Contract instance just to encode calldata via populateTransaction.
-  const zap = new Contract(zapAddress, V3_ZAP_ABI)
+  const router = new Contract(routerAddress, V3_ZAP_ABI)
   if (isNativeETH) {
-    const populated = await zap.populateTransaction.zapInETH(
+    const populated = await router.populateTransaction.zapInETH(
       tokenOther, amountOtherMin, minLiquidity, account, deadline.toHexString(), updateData,
       { value: amountIn },
     )
     return {
-      to: populated.to ?? zapAddress,
+      to: populated.to ?? routerAddress,
       data: populated.data ?? '0x',
       value: populated.value ?? BigNumber.from(amountIn),
     }
   }
 
-  const populated = await zap.populateTransaction.zapIn(
+  const populated = await router.populateTransaction.zapIn(
     tokenIn, tokenOther, amountIn, amountOtherMin, minLiquidity, account, deadline.toHexString(), updateData,
   )
   return {
-    to: populated.to ?? zapAddress,
+    to: populated.to ?? routerAddress,
     data: populated.data ?? '0x',
   }
 }
@@ -236,22 +225,22 @@ export async function buildV3ZapOutTx({
   updateData?: string
   isNativeETH: boolean
 }): Promise<V3ZapTxRequest> {
-  const zapAddress = getV3ZapAddress(chainId)
-  if (!zapAddress) throw new Error('V3 zap not deployed on this chain')
+  const routerAddress = getRouterAddress(chainId, 3)
+  if (!routerAddress) throw new Error('V3 router not deployed on this chain')
 
   const updateData = maybeUpdateData ?? (await buildV3UpdateData([tokenA, tokenB], chainId))
-  const zap = new Contract(zapAddress, V3_ZAP_ABI)
+  const router = new Contract(routerAddress, V3_ZAP_ABI)
 
   if (isNativeETH) {
     const token = tokenA === WETH[chainId]?.address ? tokenB : tokenA
-    const populated = await zap.populateTransaction.zapOutETH(
+    const populated = await router.populateTransaction.zapOutETH(
       token, liquidity, amountMin, account, deadline.toHexString(), updateData,
     )
-    return { to: populated.to ?? zapAddress, data: populated.data ?? '0x' }
+    return { to: populated.to ?? routerAddress, data: populated.data ?? '0x' }
   }
 
-  const populated = await zap.populateTransaction.zapOut(
+  const populated = await router.populateTransaction.zapOut(
     tokenA, tokenB, tokenOut, liquidity, amountMin, account, deadline.toHexString(), updateData,
   )
-  return { to: populated.to ?? zapAddress, data: populated.data ?? '0x' }
+  return { to: populated.to ?? routerAddress, data: populated.data ?? '0x' }
 }

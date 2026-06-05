@@ -23,11 +23,11 @@ import {
   buildV3UpdateData,
   buildV3ZapInTx,
   buildV3ZapOutTx,
-  getV3ZapAddress,
   getV3ZapEstimate,
   isV3ZapSupported,
 } from 'utils/v3Zap'
 import { RPC_URLS } from 'lib/sdk/constants/addresses'
+import { getRouterAddress } from 'lib/sdk/utils'
 import type {
   BuildZapInParams,
   BuildZapOutParams,
@@ -217,10 +217,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       amountOther: BigNumber.from(amountOut.toString()),
     }).catch(() => BigNumber.from(0))
 
-    // Returned as `routerAddress` for backward shape compat, but on v3-final
-    // this is the dedicated BrownFiV3Zap contract — that's what the approval
-    // spender in V3ZapForm uses, and that's where build* helpers send calldata.
-    const routerAddress = getV3ZapAddress(params.chainId)
+    const routerAddress = getRouterAddress(params.chainId, 3)
     if (!routerAddress) return null
 
     return {
@@ -314,10 +311,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     const amountOut = directOut.add(swapAmountOut)
     if (amountOut.lte(0)) return null
 
-    // Returned as `routerAddress` for backward shape compat, but on v3-final
-    // this is the dedicated BrownFiV3Zap contract — that's what the approval
-    // spender in V3ZapForm uses, and that's where build* helpers send calldata.
-    const routerAddress = getV3ZapAddress(params.chainId)
+    const routerAddress = getRouterAddress(params.chainId, 3)
     if (!routerAddress) return null
 
     return {
