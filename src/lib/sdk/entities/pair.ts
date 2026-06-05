@@ -167,14 +167,19 @@ const ABI_ROUTER_WITH_PRICE_IN = [{
   inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'priceUpdate', type: 'bytes[]' }],
   name: 'getAmountsInWithPrice', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
 }] as const
-// V3 quote functions — use router's quoteAmountsOut/InWithUpdate (includes Pyth update + accurate AMM math)
+// V3 quote functions on the v3-final router. The previous deployment exposed
+// a `quoteAmountsOut/InWithUpdate(uint, address[], bytes)` simulate-style call
+// that also applied a Pyth update inline. v3-final replaced both with simple
+// view-only `getAmountsOut/In(uint, address[])` — the library reads cached
+// Pyth state internally. Write paths (swap*, addLiquidity*) still take the
+// `bytes updateData` param, so users still pay for a Pyth refresh at execution.
 const ABI_V3_QUOTE_OUT = [{
-  inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
-  name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
+  inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }],
+  name: 'getAmountsOut', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
 }] as const
 const ABI_V3_QUOTE_IN = [{
-  inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
-  name: 'quoteAmountsInWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
+  inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }],
+  name: 'getAmountsIn', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
 }] as const
 
 class InsufficientReservesError extends Error {
@@ -397,21 +402,19 @@ export class Pair {
         account: account as `0x${string}`,
       })
     } else if (version === 3) {
-      // V3: use quoteAmountsOutWithUpdate (includes Pyth update + accurate AMM math)
-      // If quote reverts (ExceedsMaxOut, StalePrice, etc.), throw InsufficientReservesError
-      // so UI shows "Insufficient liquidity" instead of a misleading sync fallback estimate
+      // V3 (v3-final): view-only getAmountsOut. Pyth update is applied at the
+      // execution leg, not at quote time, so no updateData arg here. If the
+      // contract reverts (ExceedsMaxOut, InvalidPrice, SearchIterationLimit-
+      // Reached, etc.) throw InsufficientReservesError so the UI shows
+      // "Insufficient liquidity" rather than a misleading sync fallback.
       try {
-        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-        const { result } = await client.simulateContract({
+        amountOuts = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_OUT,
-          functionName: 'quoteAmountsOutWithUpdate',
-          args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          functionName: 'getAmountsOut',
+          args: [BigInt(inputAmount.raw.toString()), pathAddresses],
         })
-        amountOuts = result
       } catch (err: any) {
-        // Quote failed — likely ExceedsMaxOut (0xd0915224) or other contract revert
-        // Don't fall back to sync (would show wrong amount + 0% impact)
         throw new InsufficientReservesError()
       }
     } else {
@@ -503,19 +506,16 @@ export class Pair {
         account: account as `0x${string}`,
       })
     } else if (version === 3) {
-      // V3: use quoteAmountsInWithUpdate (includes Pyth update + accurate AMM math)
+      // V3 (v3-final): view-only getAmountsIn. Same change as the out-side
+      // quote — no updateData at quote time, write paths handle the refresh.
       try {
-        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-        const { result } = await client.simulateContract({
+        amountIns = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_IN,
-          functionName: 'quoteAmountsInWithUpdate',
-          args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          functionName: 'getAmountsIn',
+          args: [BigInt(outputAmount.raw.toString()), pathAddresses],
         })
-        amountIns = result
       } catch (err: any) {
-        // Quote failed — likely ExceedsMaxOut or other contract revert
-        // Throw InsufficientReservesError so UI shows proper error
         throw new InsufficientReservesError()
       }
     } else {
