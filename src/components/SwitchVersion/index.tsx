@@ -55,7 +55,7 @@ const SwitchVersion = ({ isMobile }: Props) => {
             background: version === v ? '#985C2A' : 'transparent',
           }}
         >
-          {v === 3 ? 'V3 Pilot' : `V${v}`}
+          V{v}
         </button>
       ))}
     </div>
