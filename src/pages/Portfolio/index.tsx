@@ -17,7 +17,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AutoColumn } from 'components/Column'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { Token } from '@brownfi/sdk'
 import { Address, checksumAddress } from 'viem'
 import { useActiveWeb3React } from 'hooks'
@@ -235,7 +235,7 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#FBFBFD' }}>
-              {c0.symbol}/{c1.symbol}
+              <DoubleCurrencySymbol currency0={c0} currency1={c1} />
             </span>
             <VersionBadge version={position.version} />
             {chainMeta && (
