@@ -213,14 +213,22 @@ export function useDefaultTokens(chainId: number): TokenInfo[] {
   return DEFAULT_TOKEN_LIST.tokens.filter((token) => token.chainId === chainId)
 }
 
-export const findLogoURI = (token: Token): string | undefined => {
+// Defensive: callers (CurrencyLogo) cast `currency as Token` and pass it in
+// before `useToken` has resolved an unknown ERC20 — during that window the
+// argument is actually undefined/null. Accept that and return undefined
+// instead of throwing "Cannot read properties of undefined (reading 'chainId')".
+// Concrete repro: /remove/eth/<unknown-token-addr> on HyperEVM crashed here
+// during the multicall for token metadata.
+export const findLogoURI = (token: Token | null | undefined): string | undefined => {
+  if (!token) return undefined
   const foundToken = DEFAULT_TOKEN_LIST.tokens.find(
     (item) => item.chainId === token.chainId && token.address.toLowerCase() === item.address.toLowerCase(),
   )
   return foundToken?.logoURI
 }
 
-export const findLogoBySymbol = (token: Token): string | undefined => {
+export const findLogoBySymbol = (token: Token | null | undefined): string | undefined => {
+  if (!token) return undefined
   const catchToken = DEFAULT_TOKEN_LIST.tokens.find((item) => item.symbol === token.symbol)
   return catchToken?.logoURI
 }
