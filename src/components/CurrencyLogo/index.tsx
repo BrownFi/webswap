@@ -55,28 +55,29 @@ export function CurrencyLogo({
     return []
   }, [currency, uriLocations])
 
+  // Narrow with `instanceof Token` instead of casting. ETHER (native) and
+  // undefined skip these lookups — ETHER hits the explicit per-chain branch
+  // below (HYPE / BERA / etc.), so feeding the symbol "ETH" into the generic
+  // token-list lookup would have returned a misleading Ethereum logo on
+  // non-Ethereum chains.
   const srcs: string[] = useMemo(() => {
-    if (defaultSrcs.length === 0) {
-      const logoURI = findLogoURI(currency as Token)
-      if (logoURI) {
-        return [logoURI]
-      }
+    if (defaultSrcs.length === 0 && currency instanceof Token) {
+      const logoURI = findLogoURI(currency)
+      if (logoURI) return [logoURI]
     }
     return defaultSrcs
   }, [currency, defaultSrcs])
 
   const srcsSymbol: string[] = useMemo(() => {
-    if (defaultSrcs.length === 0) {
-      const logoURI = findLogoBySymbol(currency as Token)
-      if (logoURI) {
-        return [logoURI]
-      }
+    if (defaultSrcs.length === 0 && currency instanceof Token) {
+      const logoURI = findLogoBySymbol(currency)
+      if (logoURI) return [logoURI]
     }
     return defaultSrcs
   }, [currency, defaultSrcs])
 
-  if ((currency as any)?.logoURI) {
-    return <StyledEthereumLogo src={(currency as any)?.logoURI} size={size} style={style} />
+  if (currency instanceof WrappedTokenInfo && currency.logoURI) {
+    return <StyledEthereumLogo src={currency.logoURI} size={size} style={style} />
   }
 
   if (srcs.length > 0) {
