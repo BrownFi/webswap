@@ -212,9 +212,10 @@ export default function AddLiquidity() {
         <LightCard borderRadius="16px" style={{ marginTop: '20px' }}>
           <RowFlat className="px-2">
             <Text fontSize="36px" fontWeight={600} lineHeight="42px" marginRight={10} color="white">
-              {getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
-                '/' +
-                getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}
+              <DoubleCurrencySymbol
+                currency0={currencies[Field.CURRENCY_A]}
+                currency1={currencies[Field.CURRENCY_B]}
+              />
             </Text>
             <DoubleCurrencyLogo
               currency0={currencies[Field.CURRENCY_A]}
@@ -238,10 +239,11 @@ export default function AddLiquidity() {
         </RowFlat>
         <Row>
           <span style={{ fontFamily: 'Inter', fontSize: '24px', fontWeight: 600, color: '#FBFBFD' }}>
-            {getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
-              '/' +
-              getTokenSymbol(currencies[Field.CURRENCY_B], chainId) +
-              ' Pool Tokens'}
+            <DoubleCurrencySymbol
+              currency0={currencies[Field.CURRENCY_A]}
+              currency1={currencies[Field.CURRENCY_B]}
+            />
+            {' Pool Tokens'}
           </span>
         </Row>
         <span style={{ fontFamily: 'Inter', fontSize: '12px', fontStyle: 'italic', color: '#978A80', textAlign: 'left', padding: '8px 0 0 0' }}>

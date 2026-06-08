@@ -1,4 +1,6 @@
-import { Pair } from '@brownfi/sdk'
+import { Currency, Pair } from '@brownfi/sdk'
+import { getTokenSymbol } from 'utils'
+import { currencyId } from 'utils/currencyId'
 
 export const shouldReverse = (pairSymbols: string) => {
   return [
@@ -34,4 +36,19 @@ export const shouldReverse = (pairSymbols: string) => {
 export const shouldReversePair = (pair: Pair) => {
   const pairSymbols = [pair.token0.symbol, pair.token1.symbol].join('/')
   return shouldReverse(pairSymbols)
+}
+
+// Returns [baseId, quoteId] in display order so /add and /remove URLs match
+// the page title (which is base/quote). Callers pass currencies already
+// unwrapped (ETHER vs Token) since that's what getTokenSymbol needs to match
+// the whitelist's entries (e.g. 'USDC.e/BERA' uses BERA from ETHER unwrap).
+export const orderedCurrencyIds = (
+  currency0: Currency,
+  currency1: Currency,
+  chainId: number | undefined,
+): [string, string] => {
+  const pairSymbols = [getTokenSymbol(currency0, chainId), getTokenSymbol(currency1, chainId)].join('/')
+  return shouldReverse(pairSymbols)
+    ? [currencyId(currency1), currencyId(currency0)]
+    : [currencyId(currency0), currencyId(currency1)]
 }

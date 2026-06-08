@@ -6,7 +6,8 @@ import { Settings } from 'react-feather'
 import { Address, checksumAddress } from 'viem'
 
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
+import { shouldReverse } from 'utils/pair'
 import { useChainGuard } from 'hooks/useChainGuard'
 import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import { isMainnet } from 'connectors'
@@ -318,6 +319,18 @@ function PoolDetailInner({
   const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
   const pct1 = 100 - pct0
 
+  // Pool balances panel renders in base/quote order so the bar + labels
+  // stay consistent with the page title (which uses DoubleCurrencySymbol).
+  // All four bound values flip together to keep each row internally
+  // correct (reserve amount stays attached to its own symbol + color).
+  const isReversed = shouldReverse(`${symbol0}/${symbol1}`)
+  const balanceL = isReversed
+    ? { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
+    : { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
+  const balanceR = isReversed
+    ? { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
+    : { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
+
   return (
         <>
         {/* Mobile-only section: pair title + dev stats + rate, always on top */}
@@ -325,7 +338,7 @@ function PoolDetailInner({
           <div className="flex items-center gap-2 flex-wrap">
             <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={26} margin />
             <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>
-              {symbol0} / {symbol1}
+              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
             </span>
             <span
               style={{
@@ -419,7 +432,7 @@ function PoolDetailInner({
             <div className="hidden lg:flex items-center gap-3 flex-wrap">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} />
               <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', color: '#FBFBFD' }}>
-                {symbol0} / {symbol1}
+                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
               </span>
               <span
                 style={{
@@ -814,12 +827,12 @@ function PoolDetailInner({
               <StatRow label="Pool balances">
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '13px', color: '#FBFBFD', marginTop: '4px' }}>
                   <span className="inline-flex items-center gap-1.5">
-                    <CurrencyLogo currency={currency0} size="16px" />
-                    {formatNumber(Number(pair.reserve0.toSignificant(6)), { maximumFractionDigits: 2 })} {symbol0}
+                    <CurrencyLogo currency={balanceL.cur} size="16px" />
+                    {formatNumber(Number(balanceL.reserve.toSignificant(6)), { maximumFractionDigits: 2 })} {balanceL.sym}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    {formatNumber(Number(pair.reserve1.toSignificant(6)), { maximumFractionDigits: 2 })} {symbol1}
-                    <CurrencyLogo currency={currency1} size="16px" />
+                    {formatNumber(Number(balanceR.reserve.toSignificant(6)), { maximumFractionDigits: 2 })} {balanceR.sym}
+                    <CurrencyLogo currency={balanceR.cur} size="16px" />
                   </span>
                 </div>
                 {totalValue > 0 && (
@@ -833,12 +846,12 @@ function PoolDetailInner({
                         background: '#2F2823',
                       }}
                     >
-                      <div style={{ width: `${pct0}%`, background: '#D8A072' }} />
-                      <div style={{ width: `${pct1}%`, background: '#6FB3E6' }} />
+                      <div style={{ width: `${balanceL.pct}%`, background: balanceL.color }} />
+                      <div style={{ width: `${balanceR.pct}%`, background: balanceR.color }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '11px', color: '#978A80', marginTop: '4px' }}>
-                      <span>{pct0.toFixed(2)}%</span>
-                      <span>{pct1.toFixed(2)}%</span>
+                      <span>{balanceL.pct.toFixed(2)}%</span>
+                      <span>{balanceR.pct.toFixed(2)}%</span>
                     </div>
                   </div>
                 )}

@@ -9,7 +9,7 @@ import { CurrencyLogo } from 'components/CurrencyLogo'
 import { Loader } from 'components/Loader'
 import { isMainnet } from 'connectors'
 import { getTokenSymbol } from 'utils'
-import { currencyId } from 'utils/currencyId'
+import { orderedCurrencyIds } from 'utils/pair'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { usePythPrices } from 'hooks/usePythPrices'
@@ -165,7 +165,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
             You don&apos;t have liquidity in this pool yet.
           </div>
           <Link
-            to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+            to={`/add/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`}
             className="no-underline inline-flex items-center justify-center w-full"
             style={{
               background: '#985C2A',
@@ -285,7 +285,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                   await guard.switchToTarget()
                   return
                 }
-                navigate(`/add/${currencyId(currency0)}/${currencyId(currency1)}`)
+                navigate(`/add/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`)
               }}
               disabled={guard.isSwitching}
               className="inline-flex items-center justify-center flex-1"
@@ -312,7 +312,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                     await guard.switchToTarget()
                     return
                   }
-                  navigate(`/remove/${currencyId(currency0)}/${currencyId(currency1)}`)
+                  navigate(`/remove/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`)
                 }}
                 disabled={guard.isSwitching}
                 className="inline-flex items-center justify-center flex-1"
