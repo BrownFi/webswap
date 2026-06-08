@@ -18,7 +18,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AutoColumn } from 'components/Column'
 import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
-import { Token } from '@brownfi/sdk'
+import { Currency, ETHER, Token, WETH } from '@brownfi/sdk'
 import { Address, checksumAddress } from 'viem'
 import { useActiveWeb3React } from 'hooks'
 import { availableChains } from 'connectors'
@@ -179,15 +179,22 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
   // The pair token entities from the indexer are raw shapes — wrap them in
   // SDK Token objects so DoubleCurrencyLogo gets a normalized currency
   // input (it uses currency.symbol + addresses for icon resolution).
+  // Unwrap WETH/WBERA/WHYPE/etc. → ETHER so the symbol matches the
+  // shouldReverse whitelist (which stores entries like "USDC.e/BERA",
+  // not "USDC.e/WBERA"). Without this Portfolio renders wrapped names
+  // and the whitelist match fails, so pools that should display as
+  // BERA/USDC.e were stuck on USDC.e/BERA.
   const { token0, token1 } = position.pair
-  const c0 = useMemo(
-    () => new Token(positionChainId, checksumAddress(token0.id as Address), token0.decimals, token0.symbol, token0.name),
-    [token0, positionChainId],
-  )
-  const c1 = useMemo(
-    () => new Token(positionChainId, checksumAddress(token1.id as Address), token1.decimals, token1.symbol, token1.name),
-    [token1, positionChainId],
-  )
+  const c0: Currency = useMemo(() => {
+    const t = new Token(positionChainId, checksumAddress(token0.id as Address), token0.decimals, token0.symbol, token0.name)
+    const weth = WETH[positionChainId]
+    return weth && t.equals(weth) ? ETHER : t
+  }, [token0, positionChainId])
+  const c1: Currency = useMemo(() => {
+    const t = new Token(positionChainId, checksumAddress(token1.id as Address), token1.decimals, token1.symbol, token1.name)
+    const weth = WETH[positionChainId]
+    return weth && t.equals(weth) ? ETHER : t
+  }, [token1, positionChainId])
 
   // Pass version as query param so PoolDetail hits the right indexer.
   // Without this, the detail page falls back to the user's global V2/V3
