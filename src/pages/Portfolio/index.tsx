@@ -238,11 +238,11 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
       }}
     >
       <div className="flex items-center gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
-        <DoubleCurrencyLogo currency0={c0} currency1={c1} size={32} />
+        <DoubleCurrencyLogo currency0={c0} currency1={c1} size={32} chainId={positionChainId} />
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#FBFBFD' }}>
-              <DoubleCurrencySymbol currency0={c0} currency1={c1} />
+              <DoubleCurrencySymbol currency0={c0} currency1={c1} chainId={positionChainId} />
             </span>
             <VersionBadge version={position.version} />
             {chainMeta && (
