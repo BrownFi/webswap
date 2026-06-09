@@ -23,7 +23,8 @@ type DevStatsLike = {
 export function V3ExtraParams({ devStats }: { devStats: DevStatsLike }) {
   const items: { label: string; value: number | undefined }[] = [
     { label: 'kQ', value: devStats.kQ },
-    { label: 'Fee', value: devStats.fee },
+    // Fee is already shown as a badge next to the pair title on both Pool
+    // List and Pool Detail — listing it again here was redundant noise.
     { label: 'Compress', value: devStats.compress },
     { label: 'sSell', value: devStats.sSell },
     { label: 'sBuy', value: devStats.sBuy },
