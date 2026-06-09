@@ -16,20 +16,30 @@ export const graphqlFetcher = async ({
   if (chainId !== ChainId.BERA_MAINNET) {
     query = query.replace(/stakeLP/g, '')
   }
-  // V3 routing: prefer VITE_INDEXER_V3_URL (a complete, host-included URL)
-  // when set AND the chain is in V3_USE_INDEXER (i.e. its subgraph is the
-  // one VITE_INDEXER_V3_URL points at). Otherwise — including V3 chains
-  // still waiting on a subgraph (e.g. HyperEVM as of 2026-06-09) — fall
-  // back to VITE_API_URL/indexer/v3?chainId=N so the request doesn't get
-  // sent to another chain's subgraph and return the wrong pools.
-  // V2 always uses VITE_API_URL/indexer.
-  const v3OverrideEnv = import.meta.env.VITE_INDEXER_V3_URL
-  const v3OverrideForThisChain =
-    version === 3 && v3OverrideEnv && (V3_USE_INDEXER[chainId] ?? false)
-      ? v3OverrideEnv
-      : undefined
-  const url = v3OverrideForThisChain
-    ? v3OverrideForThisChain
+  // V3 routing per chain.
+  //
+  // - Bera: temporary Goldsky subgraph at VITE_INDEXER_V3_URL (the BE
+  //   hasn't folded the Bera v3-final factory into the main /indexer/v3
+  //   path yet). The map below applies the override ONLY to Bera so the
+  //   URL doesn't accidentally serve other chains.
+  // - HyperEVM (and any future chain): standard
+  //   VITE_API_URL/indexer/v3?chainId={chainId} — the BE-hosted multi-
+  //   chain V3 indexer. When the chain's subgraph isn't live yet, the
+  //   response is a clean 404 caught by React Query (Pool list/detail
+  //   fall back to the on-chain hook via V3_USE_INDEXER[chainId]=false).
+  // - V2 always uses VITE_API_URL/indexer.
+  //
+  // When BE migrates Bera to /indexer/v3 too, unset VITE_INDEXER_V3_URL
+  // (or drop the Bera entry below) and Bera will fall through to the
+  // standard path like every other chain.
+  const V3_OVERRIDE_URL: Record<number, string | undefined> = {
+    [ChainId.BERA_MAINNET]: import.meta.env.VITE_INDEXER_V3_URL,
+  }
+  const override = V3_OVERRIDE_URL[chainId]
+  const useOverride =
+    version === 3 && !!override && (V3_USE_INDEXER[chainId] ?? false)
+  const url = useOverride
+    ? override
     : `${import.meta.env.VITE_API_URL}${version === 3 ? '/indexer/v3' : '/indexer'}?chainId=${chainId}`
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10_000)
