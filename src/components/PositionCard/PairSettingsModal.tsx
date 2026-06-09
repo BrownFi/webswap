@@ -222,6 +222,17 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     summary: string,
     op: () => Promise<TransactionResponse>,
     needs: 'v2' | 'v3' = 'v2',
+    // Optional eth_call dry-run. Ethers' default `.method(...)` runs
+    // estimateGas first; when a Factory→PairConfig revert bubbles through
+    // estimateGas, the inner `require(..., 'PairConfig: ...')` reason often
+    // gets dropped on the way back — the FE then sees UNPREDICTABLE_GAS_LIMIT
+    // with no reasonText and the auth heuristic mis-classifies it as
+    // "not authorized". Passing the same call via `callStatic` (which uses
+    // plain eth_call) preserves the inner string, so constraint violations
+    // surface with the right "Lambda out of range" / "kB out of range"
+    // toast instead. The dry-run runs first; on revert we short-circuit
+    // and skip the real submit.
+    simulate?: () => Promise<unknown>,
   ) => {
     const ctr = needs === 'v3' ? factoryV3 : factoryContract
     if (!ctr || !account) {
@@ -230,6 +241,14 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     }
     setSubmitting((prev) => ({ ...prev, [field]: true }))
     try {
+      if (simulate) {
+        try {
+          await simulate()
+        } catch (simErr) {
+          handleSubmitError(simErr)
+          return
+        }
+      }
       const response = await op()
       addTransaction(response, { summary: `${summary} for ${pair.token0.symbol}/${pair.token1.symbol}` })
     } catch (err) {
@@ -260,17 +279,28 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
       'kappa', 'Set Kappa',
       () => factoryV3!.setKappaOfPair(tokenA, tokenB, toQ64(kB), toQ64(kQ)),
       'v3',
+      () => factoryV3!.callStatic.setKappaOfPair(tokenA, tokenB, toQ64(kB), toQ64(kQ)),
     )
   }
 
   const submitLambda = () =>
     isV3
-      ? runSubmit('lambda', 'Set Lambda', () => factoryV3!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v3')
+      ? runSubmit(
+          'lambda', 'Set Lambda',
+          () => factoryV3!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)),
+          'v3',
+          () => factoryV3!.callStatic.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)),
+        )
       : runSubmit('lambda', 'Set Lambda', () => factoryContract!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v2')
 
   const submitFee = () =>
     isV3
-      ? runSubmit('fee', 'Set Fee', () => factoryV3!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v3')
+      ? runSubmit(
+          'fee', 'Set Fee',
+          () => factoryV3!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)),
+          'v3',
+          () => factoryV3!.callStatic.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)),
+        )
       : runSubmit('fee', 'Set Fee', () => factoryContract!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v2')
 
   const submitProtocolFee = () => {
@@ -279,6 +309,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
         'protocolFee', 'Set FeeSplit',
         () => factoryV3!.setFeeSplitOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
         'v3',
+        () => factoryV3!.callStatic.setFeeSplitOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
       )
     }
     return runSubmit(
@@ -302,19 +333,40 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
       'spread', 'Set Spread',
       () => factoryV3!.setSpreadOfPair(tokenA, tokenB, toPREC(compress), toPREC(sSell), toPREC(sBuy)),
       'v3',
+      () => factoryV3!.callStatic.setSpreadOfPair(tokenA, tokenB, toPREC(compress), toPREC(sSell), toPREC(sBuy)),
     )
   }
 
   const submitFixS = () =>
-    runSubmit('fixS', 'Set fixS', () => factoryV3!.setFixSpreadOfPair(tokenA, tokenB, toPREC(fixSInput)), 'v3')
+    runSubmit('fixS', 'Set fixS',
+      () => factoryV3!.setFixSpreadOfPair(tokenA, tokenB, toPREC(fixSInput)),
+      'v3',
+      () => factoryV3!.callStatic.setFixSpreadOfPair(tokenA, tokenB, toPREC(fixSInput)),
+    )
   const submitDisThreshold = () =>
-    runSubmit('disThreshold', 'Set disThreshold', () => factoryV3!.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)), 'v3')
+    runSubmit('disThreshold', 'Set disThreshold',
+      () => factoryV3!.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)),
+      'v3',
+      () => factoryV3!.callStatic.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)),
+    )
   const submitSBound = () =>
-    runSubmit('sBound', 'Set sBound', () => factoryV3!.setSboundOfPair(tokenA, tokenB, toPREC(sBoundInput)), 'v3')
+    runSubmit('sBound', 'Set sBound',
+      () => factoryV3!.setSboundOfPair(tokenA, tokenB, toPREC(sBoundInput)),
+      'v3',
+      () => factoryV3!.callStatic.setSboundOfPair(tokenA, tokenB, toPREC(sBoundInput)),
+    )
   const submitPythWeight = () =>
-    runSubmit('pythWeight', 'Set pythWeight', () => factoryV3!.setPythWeightOfPair(tokenA, tokenB, toPREC(pythWeightInput)), 'v3')
+    runSubmit('pythWeight', 'Set pythWeight',
+      () => factoryV3!.setPythWeightOfPair(tokenA, tokenB, toPREC(pythWeightInput)),
+      'v3',
+      () => factoryV3!.callStatic.setPythWeightOfPair(tokenA, tokenB, toPREC(pythWeightInput)),
+    )
   const submitGamma = () =>
-    runSubmit('gamma', 'Set gamma', () => factoryV3!.setGammaOfPair(tokenA, tokenB, toPREC(gammaInput)), 'v3')
+    runSubmit('gamma', 'Set gamma',
+      () => factoryV3!.setGammaOfPair(tokenA, tokenB, toPREC(gammaInput)),
+      'v3',
+      () => factoryV3!.callStatic.setGammaOfPair(tokenA, tokenB, toPREC(gammaInput)),
+    )
 
   return (
     <Modal isOpen={isOpen} onDismiss={handleDismiss}>
