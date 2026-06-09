@@ -15,7 +15,7 @@ import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
 import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
-import { V3_USE_INDEXER } from 'lib/sdk/constants/addresses'
+import { useV3Indexer } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
@@ -62,7 +62,7 @@ const GET_PAIR = `
 // V3 indexer schema: feeSplit instead of protocolFee, kB+kQ instead of k,
 // plus spread/skew/blend config and a uniV2 reference price. Aliased to V2
 // field names client-side so the rest of this page stays version-agnostic.
-// Used only when V3_USE_INDEXER is true; on-chain hook covers the other case.
+// Used only when v3UseIndexer is true; on-chain hook covers the other case.
 const GET_PAIR_V3 = `
   query PairDetailV3($id: ID!) {
     pair(id: $id) {
@@ -141,6 +141,9 @@ export default function PoolDetail() {
   const chainId = Number(chainIdParam)
   const [searchParams] = useSearchParams()
   const { version: reduxVersion } = useVersion({ chainId })
+  // Per-chain V3 indexer toggle. See constants/addresses.ts. HyperEVM
+  // currently `false` (factory live but subgraph not yet) → on-chain hook.
+  const v3UseIndexer = useV3Indexer(chainId)
   // Version precedence: explicit `?v=` from URL > Redux toggle. Pool list
   // and Portfolio links include the version so a V2 pool always queries
   // /indexer and a V3 pool always queries /indexer/v3, regardless of the
@@ -152,7 +155,7 @@ export default function PoolDetail() {
   })()
   const version = urlVersion ?? reduxVersion
 
-  // V2 → indexer. V3 → indexer or on-chain depending on V3_USE_INDEXER
+  // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer
   // (constants/addresses.ts). Same single-flag pattern as the pool list.
   const { data: pairRes, isLoading } = useQuery<{ pair: PairRaw | null }>({
     queryKey: ['pairDetail', chainId, pairAddress, version],
@@ -162,18 +165,18 @@ export default function PoolDetail() {
         query: version === 3 ? GET_PAIR_V3 : GET_PAIR,
         variables: { chainId, version, id: pairAddress?.toLowerCase() },
       }),
-    enabled: !!pairAddress && !!chainId && (version !== 3 || V3_USE_INDEXER),
+    enabled: !!pairAddress && !!chainId && (version !== 3 || v3UseIndexer),
     staleTime: 60_000,
   })
 
   const { data: onChainPool, isLoading: isOnChainLoading } = useV3PoolOnChain(
     chainId,
     pairAddress,
-    version === 3 && !V3_USE_INDEXER,
+    version === 3 && !v3UseIndexer,
   )
 
   const pairRaw = useMemo(() => {
-    if (version === 3 && !V3_USE_INDEXER) {
+    if (version === 3 && !v3UseIndexer) {
       // V3 on-chain path. Project PairStats onto PairRaw — chart/history
       // fields stay undefined, which downstream components handle.
       if (!onChainPool) return null
@@ -214,9 +217,9 @@ export default function PoolDetail() {
         ← Back to pools
       </Link>
 
-      {(isLoading || (version === 3 && !V3_USE_INDEXER && isOnChainLoading)) && <PoolDetailSkeleton />}
+      {(isLoading || (version === 3 && !v3UseIndexer && isOnChainLoading)) && <PoolDetailSkeleton />}
 
-      {!isLoading && !(version === 3 && !V3_USE_INDEXER && isOnChainLoading) && !pair && (
+      {!isLoading && !(version === 3 && !v3UseIndexer && isOnChainLoading) && !pair && (
         <div style={{ padding: '80px 0', textAlign: 'center', color: '#978A80', fontFamily: 'Inter' }}>
           Pool not found.
         </div>

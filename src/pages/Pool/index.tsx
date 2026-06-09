@@ -23,7 +23,7 @@ import { apiV2Service } from 'services'
 import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
 import { usePairs } from 'data/Reserves'
 import { useV3PoolsOnChain } from 'hooks/useV3PoolsOnChain'
-import { V3_USE_INDEXER } from 'lib/sdk/constants/addresses'
+import { useV3Indexer } from 'lib/sdk/constants/addresses'
 import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
@@ -71,7 +71,7 @@ const LIST_ALL_PAIRS = `
 // V3 indexer schema: feeSplit instead of protocolFee, kB+kQ instead of k,
 // plus all V3-only config (spread/skew/blend) and a uni-v2 reference price.
 // Aliased to V2 field names client-side so consumers don't fork code paths.
-// Used only when V3_USE_INDEXER is true (constants/addresses.ts); when false
+// Used only when v3UseIndexer is true (constants/addresses.ts); when false
 // the on-chain hook in useV3PoolsOnChain takes over.
 const LIST_ALL_PAIRS_V3 = `
   query PairListV3($chainId: Int) {
@@ -110,6 +110,10 @@ export default function Pool() {
   const { chainId } = useActiveWeb3React()
   const { version, enableGraphQL } = useVersion({ chainId })
   const allTokens = useDefaultTokens(chainId)
+  // Per-chain V3 indexer toggle: true for chains where the subgraph is live
+  // (Bera), false for chains awaiting the indexer (HyperEVM) — those use the
+  // useV3PoolsOnChain factory-enumeration hook instead.
+  const v3UseIndexer = useV3Indexer(chainId)
 
   const { data: protocolStats, isLoading: isLoadingStats } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
@@ -118,11 +122,11 @@ export default function Pool() {
     gcTime: 30 * 60_000,
   })
 
-  // V2 always hits the indexer. V3 routing is gated on V3_USE_INDEXER:
+  // V2 always hits the indexer. V3 routing is gated on v3UseIndexer:
   // - true (default once /indexer/v3 tracks the current factory): indexer
   // - false (current beta state, fresh v3-final factory not yet indexed):
   //   on-chain reads via useV3PoolsOnChain
-  // Flip V3_USE_INDEXER in lib/sdk/constants/addresses.ts when the indexer
+  // Flip v3UseIndexer in lib/sdk/constants/addresses.ts when the indexer
   // is caught up — no other code changes required.
   const { data, error, isLoading: isLoadingPairs } = useQuery<{ pairs: PairStats[] }>({
     queryKey: ['pairList', chainId, version],
@@ -132,14 +136,14 @@ export default function Pool() {
         query: version === 3 ? LIST_ALL_PAIRS_V3 : LIST_ALL_PAIRS,
         variables: { chainId, version },
       }),
-    enabled: enableGraphQL && (version !== 3 || V3_USE_INDEXER),
+    enabled: enableGraphQL && (version !== 3 || v3UseIndexer),
     refetchInterval: 60_000,
     staleTime: 60_000,
   })
 
   const { data: onChainV3Pools, isLoading: isLoadingOnChainV3 } = useV3PoolsOnChain(
     chainId,
-    version === 3 && !V3_USE_INDEXER,
+    version === 3 && !v3UseIndexer,
   )
 
   // V3 indexer ships `feeSplit` / `kB` (not `protocolFee` / `k`). Alias them
@@ -188,9 +192,9 @@ export default function Pool() {
   }, [pairAddresses, bgtAprQueries])
 
   const sortedPairs = useMemo(() => {
-    // V2 → indexer. V3 → indexer or on-chain depending on V3_USE_INDEXER.
+    // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer.
     const raw: PairStats[] =
-      version === 3 && !V3_USE_INDEXER ? (onChainV3Pools ?? []) : (data?.pairs ?? [])
+      version === 3 && !v3UseIndexer ? (onChainV3Pools ?? []) : (data?.pairs ?? [])
     const normalized: PairStats[] = version === 3
       ? raw.map((p: any) => ({
           ...p,
@@ -388,7 +392,7 @@ export default function Pool() {
                 </div>
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
-            ) : enableGraphQL && (version === 3 && !V3_USE_INDEXER ? isLoadingOnChainV3 : isLoadingPairs) ? (
+            ) : enableGraphQL && (version === 3 && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
               <PairListSkeleton />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />

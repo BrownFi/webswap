@@ -62,10 +62,12 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 // V3 deployment until contract team promotes v3-final to prod.
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
+  [ChainId.HYPER_EVM]: '0xc0E55d0085266E9A33456610E08172f9c173F908',
 }
 
 export const FACTORY_ADDRESS_V3: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
+  [ChainId.HYPER_EVM]: '0x6A4Bd89709b67eC846F02cF9E95A0dd2Fb515720',
 }
 
 // Zap-specific address. Separate from the router on v3-final deployments.
@@ -73,16 +75,29 @@ export const FACTORY_ADDRESS_V3: Record<number, string> = {
 // callers should fall back to ROUTER_ADDRESS_V3 (see utils/v3Zap.ts).
 export const ZAP_ADDRESS_V3: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
+  [ChainId.HYPER_EVM]: '0xE5dEbF39457fa6e7FFcdDb5af40435AD2D52438b',
 }
 
-// Single toggle controlling whether V3 pool data comes from the GraphQL
+// Per-chain toggle controlling whether V3 pool data comes from the GraphQL
 // indexer or from on-chain reads (factory.allPairs + per-pool multicall).
-// Set to `false` during the window between a new V3 factory deploy and the
-// indexer being repointed — flip to `true` once /indexer/v3 is tracking
-// the current FACTORY_ADDRESS_V3 above. Both the V3 GraphQL query strings
+// Set `true` once /indexer/v3 (or the per-chain override) is tracking the
+// current FACTORY_ADDRESS_V3 for that chain; leave `false` (or omit) during
+// the window after a fresh factory deploy. Unmapped chains default to
+// `false` via `useV3Indexer()` below. Both the V3 GraphQL query strings
 // (LIST_ALL_PAIRS_V3, GET_PAIR_V3) and the on-chain hook live behind this
-// flag, so the flip is a single-line config change with no code to paste.
-export const V3_USE_INDEXER = true
+// flag — flipping per chain is the only thing needed to switch sources.
+export const V3_USE_INDEXER: Record<number, boolean> = {
+  [ChainId.BERA_MAINNET]: true,
+  // HyperEVM V3 contracts are live (factory 0x6A4Bd…720, deployed
+  // 2026-06-09) but the Goldsky subgraph isn't standing yet — flip to
+  // true once BE confirms /indexer/v3 (or a HL-specific override URL)
+  // is serving the new factory.
+  [ChainId.HYPER_EVM]: false,
+}
+
+/** Reader with safe default for chains not in the map. */
+export const useV3Indexer = (chainId: number | undefined): boolean =>
+  chainId != null && (V3_USE_INDEXER[chainId] ?? false)
 
 export const FACTORY_ADDRESS: Record<number, string> = {
   [ChainId.MAINNET]: '0xD705B4e18055D8Fa1d099d0533163a9e8fA09E4A',
