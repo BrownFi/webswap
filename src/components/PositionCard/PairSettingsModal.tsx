@@ -252,6 +252,17 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     summary: string,
     op: () => Promise<TransactionResponse>,
     needs: 'v2' | 'v3' = 'v2',
+    // Optional eth_call dry-run. Ethers' default `.method(...)` runs
+    // estimateGas first; when a Factory→PairConfig revert bubbles through
+    // estimateGas, the inner `require(..., 'PairConfig: ...')` reason often
+    // gets dropped on the way back — the FE then sees UNPREDICTABLE_GAS_LIMIT
+    // with no reasonText and the auth heuristic mis-classifies it as
+    // "not authorized". Passing the same call via `callStatic` (which uses
+    // plain eth_call) preserves the inner string, so constraint violations
+    // surface with the right "Lambda out of range" / "kB out of range"
+    // toast instead. The dry-run runs first; on revert we short-circuit
+    // and skip the real submit.
+    simulate?: () => Promise<unknown>,
   ) => {
     const ctr = needs === 'v3' ? factoryV3 : factoryContract
     if (!ctr || !account) {
@@ -260,6 +271,14 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     }
     setSubmitting((prev) => ({ ...prev, [field]: true }))
     try {
+      if (simulate) {
+        try {
+          await simulate()
+        } catch (simErr) {
+          handleSubmitError(simErr)
+          return
+        }
+      }
       const response = await op()
       addTransaction(response, { summary: `${summary} for ${pair.token0.symbol}/${pair.token1.symbol}` })
     } catch (err) {
@@ -287,7 +306,12 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   const submitViaSetConfig = (field: FieldKey, summary: string, override: ConfigOverride) => {
     if (!requireCurrent()) return
     const tuple = buildConfigTuple(currentValues, override)
-    return runSubmit(field, summary, () => factoryV3!.setConfigOfPair(tokenA, tokenB, tuple), 'v3')
+    return runSubmit(
+      field, summary,
+      () => factoryV3!.setConfigOfPair(tokenA, tokenB, tuple),
+      'v3',
+      () => factoryV3!.callStatic.setConfigOfPair(tokenA, tokenB, tuple),
+    )
   }
 
   // ─── Submitters (one per row) ─────────────────────────────────────────────
@@ -313,7 +337,12 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   // they keep their direct call path (one tx, no read-modify-write).
   const submitFee = () =>
     isV3
-      ? runSubmit('fee', 'Set Fee', () => factoryV3!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v3')
+      ? runSubmit(
+          'fee', 'Set Fee',
+          () => factoryV3!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)),
+          'v3',
+          () => factoryV3!.callStatic.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)),
+        )
       : runSubmit('fee', 'Set Fee', () => factoryContract!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v2')
 
   const submitProtocolFee = () =>
@@ -337,7 +366,12 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
 
   const submitFixS = () => submitViaSetConfig('fixS', 'Set fixS', { fixS: fixSInput })
   const submitDisThreshold = () =>
-    runSubmit('disThreshold', 'Set disThreshold', () => factoryV3!.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)), 'v3')
+    runSubmit(
+      'disThreshold', 'Set disThreshold',
+      () => factoryV3!.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)),
+      'v3',
+      () => factoryV3!.callStatic.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)),
+    )
   const submitSBound = () => submitViaSetConfig('sBound', 'Set sBound', { sBound: sBoundInput })
   const submitPythWeight = () => submitViaSetConfig('pythWeight', 'Set pythWeight', { pythWeight: pythWeightInput })
   const submitGamma = () => submitViaSetConfig('gamma', 'Set gamma', { gamma: gammaInput })
