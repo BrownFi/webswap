@@ -45,7 +45,12 @@ const buildConfigTuple = (current: DevStatsLike | undefined, overrides: ConfigOv
   // fraction form). Missing fields fall back to 0 — caller should guard so
   // that a single-field update doesn't silently zero out unset siblings on a
   // pool with no current values loaded yet.
-  const q64 = (v: string | number | undefined) => v == null || v === '' ? '0' : Math.floor(Number(v) * 2 ** 64).toString()
+  //
+  // q64 routes through the standalone toQ64 (BigInt-based) so we don't
+  // re-introduce the float-precision bug that made the setLambda input
+  // 0.0005 silently revert. toPREC stays inline because 1e8 fits in JS
+  // Number precision (max input × 1e8 ≪ 2^53).
+  const q64 = (v: string | number | undefined) => v == null || v === '' ? '0' : toQ64(String(v))
   const prec = (v: string | number | undefined) => v == null || v === '' ? '0' : Math.floor(Number(v) * 1e8).toString()
   return [
     q64(overrides.kB ?? current?.kB),
@@ -107,7 +112,30 @@ type Props = {
 
 const sanitize = (value: string) => value.trim()
 const round = (v: number) => parseFloat((Math.round(v * 1e6) / 1e6).toFixed(6)).toString()
-const toQ64 = (v: string) => Math.floor(Number(v) * 2 ** 64).toString()
+// BigInt-based Q64 conversion. The naive `Math.floor(Number(v) * 2**64)`
+// overshoots by 1–2 ulp for small inputs because IEEE 754 doubles can't
+// represent integers exactly past 2^53. Concrete repro that prompted the
+// fix: toQ64('0.0005') = 9223372036854776 (off by 1), so 2×lambda came out
+// to 18446744073709552 — exceeding the on-chain minK (18446744073709550)
+// by 2 wei and reverting with 'PairConfig: LAMBDA_TOO_HIGH' even at the
+// nominal max allowed input. The BigInt path multiplies the integer +
+// fractional digits separately so no float multiplication happens at the
+// Q64 scale.
+const toQ64 = (v: string): string => {
+  const trimmed = (v ?? '').trim()
+  if (!trimmed || isNaN(Number(trimmed))) return '0'
+  const negative = trimmed.startsWith('-')
+  const cleaned = negative ? trimmed.slice(1) : trimmed
+  const [intPart = '0', fracRaw = ''] = cleaned.split('.')
+  // Pad/truncate fractional part to 18 digits — enough precision for any
+  // realistic kappa/lambda input without overflowing intermediate BigInts.
+  const fracPart = fracRaw.padEnd(18, '0').slice(0, 18)
+  const SCALE = 10n ** 18n
+  const Q64 = 2n ** 64n
+  const scaled = BigInt(intPart) * SCALE + BigInt(fracPart)
+  const result = (scaled * Q64) / SCALE
+  return (negative ? -result : result).toString()
+}
 const toPREC = (v: string) => Math.floor(Number(v) * 10 ** 8).toString()
 
 // Row component MUST live outside the parent — declaring it inside causes
