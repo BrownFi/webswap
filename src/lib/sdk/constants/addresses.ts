@@ -88,11 +88,11 @@ export const ZAP_ADDRESS_V3: Record<number, string> = {
 // flag — flipping per chain is the only thing needed to switch sources.
 export const V3_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
-  // HyperEVM V3 contracts are live (factory 0x6A4Bd…720, deployed
-  // 2026-06-09) but the Goldsky subgraph isn't standing yet — flip to
-  // true once BE confirms /indexer/v3 (or a HL-specific override URL)
-  // is serving the new factory.
-  [ChainId.HYPER_EVM]: false,
+  // HyperEVM V3 subgraph live on the BE-hosted multi-chain
+  // /indexer/v3?chainId=999 path (confirmed 2026-06-09). Pool list/
+  // detail now use the single GraphQL request like Bera instead of
+  // per-pool on-chain multicalls — ~3-5× faster page load.
+  [ChainId.HYPER_EVM]: true,
 }
 
 /** Reader with safe default for chains not in the map. */
