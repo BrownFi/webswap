@@ -369,7 +369,7 @@ function PoolDetailInner({
                 color: '#83CF84',
               }}
             >
-              Fee {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+              Fee {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
             </span>
             {isBeta && (
               <span style={{ background: '#f97316', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', color: '#fff' }}>
@@ -463,7 +463,7 @@ function PoolDetailInner({
                   color: '#83CF84',
                 }}
               >
-                Fee {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+                Fee {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
               </span>
               {isBeta && (
                 <span
