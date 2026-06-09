@@ -27,6 +27,13 @@ export const shouldReverse = (pairSymbols: string) => {
     // HyperEVM — symbol updated from USDT to USD₮0 (the old USDT/kHYPE
     // entry above stays for any legacy positions on the old token).
     'USD₮0/kHYPE',
+    // HyperEVM — kHYPE is a liquid-staking HYPE derivative (Kinetiq), so
+    // the conventional display is "kHYPE per HYPE" (LST priced in
+    // underlying). V3 subgraph confirms quoteTokenIndex=0 → kHYPE is
+    // base, HYPE is quote. Token0 of the pair is WHYPE which
+    // getTokenSymbol unwraps to "HYPE" on HL, so the raw label here is
+    // "HYPE/kHYPE".
+    'HYPE/kHYPE',
     // Sei — WSEI doesn't unwrap to a friendly display symbol in
     // getTokenSymbol, so match the raw wrapped form here.
     'USDC/WSEI',
