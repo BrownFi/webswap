@@ -50,14 +50,17 @@ function applySlippage(amount: BigNumber, slippageBps: number): BigNumber {
   return amount.mul(10_000 - slippageBps).div(10_000)
 }
 
-// Kyber wraps everything in a 30%-buffered gas hint. Mirror what the legacy
-// executeKyberZap* helpers were doing so the adapter's `buildZap*` returns
-// the same gasLimit users have been seeing in their wallet popups.
+// Kyber's reported gas under-estimates multi-hop routes badly (observed ~1.7×
+// short on a Linea swap), and its executor `.call{gas}`s each inner DEX so a
+// too-low limit reverts with the opaque "Call failed". This is the FALLBACK
+// hint only — the zap send sites prefer a live on-chain estimateGas at send
+// time (utils/estimateGasWithMargin). Use a 100% buffer so even the fallback
+// path clears realistic routes.
 function bufferedGas(raw: string | undefined): BigNumber | undefined {
   if (!raw) return undefined
   try {
     const bn = BigNumber.from(raw)
-    return bn.mul(130).div(100)
+    return bn.mul(200).div(100)
   } catch {
     return undefined
   }

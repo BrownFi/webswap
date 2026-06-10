@@ -24,6 +24,7 @@ import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
+import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
 
 type V3ZapFormProps = {
   pair?: Pair
@@ -157,11 +158,20 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
       const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : undefined
       if (!signer) throw new Error('No signer available')
 
+      // Kyber under-estimates gas on multi-hop routes; resolve a live estimate
+      // (×1.25) at send time, falling back to the adapter hint. See
+      // utils/estimateGasWithMargin.
+      const gasLimit = await estimateGasWithMargin(
+        signer,
+        { to: built.to, data: built.data, value: built.value },
+        built.gasLimit,
+      )
+
       const tx = await signer.sendTransaction({
         to: built.to,
         data: built.data,
         ...(built.value ? { value: built.value } : {}),
-        ...(built.gasLimit ? { gasLimit: built.gasLimit } : {}),
+        ...(gasLimit ? { gasLimit } : {}),
       })
 
       setTxHash(tx.hash)

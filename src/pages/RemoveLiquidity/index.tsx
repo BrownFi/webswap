@@ -46,6 +46,7 @@ import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
 import { formatNumber } from 'utils/prices'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
+import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
 import { useQueryClient } from '@tanstack/react-query'
 import { KyberZapOutRouteData } from './zapHelpers'
 
@@ -251,11 +252,20 @@ export default function RemoveLiquidity() {
         const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : undefined
         if (!signer) throw new Error('No signer available')
 
+        // Kyber under-estimates gas on multi-hop routes; resolve a live estimate
+        // (×1.25) at send time, falling back to the adapter hint. See
+        // utils/estimateGasWithMargin.
+        const gasLimit = await estimateGasWithMargin(
+          signer,
+          { to: built.to, data: built.data, value: built.value },
+          built.gasLimit,
+        )
+
         const response = await signer.sendTransaction({
           to: built.to,
           data: built.data,
           ...(built.value ? { value: built.value } : {}),
-          ...(built.gasLimit ? { gasLimit: built.gasLimit } : {}),
+          ...(gasLimit ? { gasLimit } : {}),
         })
 
         setAttemptingTxn(false)

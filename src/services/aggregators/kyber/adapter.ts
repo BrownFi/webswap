@@ -147,9 +147,13 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
       to: res.data.routerAddress,
       data: res.data.data,
       value,
-      // Add a 30% buffer to Kyber's gas estimate to reduce out-of-gas risk
-      // on complex routes (matches the Kyber zap path).
-      gasLimit: res.data.gas ? BigNumber.from(res.data.gas).mul(130).div(100) : undefined,
+      // Kyber's reported gas under-estimates multi-hop routes badly (observed
+      // ~1.7× short on a Linea LINEA→ETH swap), and its executor `.call{gas}`s
+      // each inner DEX so a too-low limit reverts with the opaque "Call failed".
+      // This is the FALLBACK hint only — useAggregatorSwapCallback prefers a
+      // live on-chain estimateGas at send time. Use a 100% buffer here so even
+      // the fallback path clears realistic routes.
+      gasLimit: res.data.gas ? BigNumber.from(res.data.gas).mul(200).div(100) : undefined,
     }
   },
 }
