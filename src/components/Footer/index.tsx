@@ -121,7 +121,7 @@ const Footer = () => {
       {/* Footer bottom */}
       <div style={{ width: '100%', maxWidth: '1760px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div style={{ width: '100%', height: '1px', background: '#2F2823' }} />
-        <span style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textAlign: 'center' }}>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textAlign: 'center' }}>
           &copy;{new Date().getUTCFullYear()} BrownFi. All rights reserved.
         </span>
       </div>

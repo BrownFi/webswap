@@ -10,12 +10,14 @@
     <meta name="theme-color" content="#ff007a" />
     <meta name="fortmatic-site-verification" content="j93LgcVZk79qcgyo" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Self-hosted Geist + Inter (@font-face in src/theme/fonts.css) served
+         from our own origin — removes the eager third-party webfont CSS+woff2
+         critical-path chain on initial render. Preload the two most-used UI
+         faces (Inter latin 400/500) so they start with the document; the rest
+         load via @font-face with display=swap. crossorigin is required even
+         same-origin because font fetches are CORS-anonymous. -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-400-latin.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-500-latin.woff2" crossorigin />
 
     <title>Brownfi Interface</title>
   </head>

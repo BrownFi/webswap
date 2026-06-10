@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import 'rc-slider/assets/index.css'
+import 'theme/fonts.css'
 import 'theme/index.css'
 import styled from 'styled-components'
 import GoogleAnalyticsReporter from 'components/analytics/GoogleAnalyticsReporter'
