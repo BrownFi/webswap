@@ -422,7 +422,9 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
       >
         <style>{`.pair-settings-scroll::-webkit-scrollbar { display: none; }`}</style>
         <RowBetween>
-          <Text fontSize={18} fontWeight={600}>Pair settings</Text>
+          <Text fontSize={18} fontWeight={600}>
+            Pair settings — {pair.token0.symbol}/{pair.token1.symbol}
+          </Text>
           <CloseIcon onClick={handleDismiss} />
         </RowBetween>
 
