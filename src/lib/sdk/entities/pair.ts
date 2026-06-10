@@ -167,19 +167,23 @@ const ABI_ROUTER_WITH_PRICE_IN = [{
   inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'priceUpdate', type: 'bytes[]' }],
   name: 'getAmountsInWithPrice', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
 }] as const
-// V3 quote functions on the v3-final router. The previous deployment exposed
-// a `quoteAmountsOut/InWithUpdate(uint, address[], bytes)` simulate-style call
-// that also applied a Pyth update inline. v3-final replaced both with simple
-// view-only `getAmountsOut/In(uint, address[])` — the library reads cached
-// Pyth state internally. Write paths (swap*, addLiquidity*) still take the
-// `bytes updateData` param, so users still pay for a Pyth refresh at execution.
+// V3 quote functions on the v3-final router. These MUST be the WithUpdate
+// variants: the pool's priceOf() reverts StalePrice() if the on-chain Pyth
+// price is older than the factory's minPriceAge (~60s). Plain view-only
+// getAmountsOut/In can't satisfy that at quote time on a slow-moving feed
+// (e.g. USDC drifts >60s), so the quote reverts and the V3 route silently
+// disappears from the UI. quoteAmountsOut/InWithUpdate applies a fresh Pyth
+// update in-call (read-only via eth_call) so the quote sees a fresh price.
+// (Regression note: commit 2362674 wrongly swapped these to plain getAmounts*
+// on a false "v3-final reads cached Pyth" assumption — this restores the
+// correct calls originally added in ac59a1a.)
 const ABI_V3_QUOTE_OUT = [{
-  inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }],
-  name: 'getAmountsOut', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
+  inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
+  name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
 }] as const
 const ABI_V3_QUOTE_IN = [{
-  inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }],
-  name: 'getAmountsIn', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function',
+  inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
+  name: 'quoteAmountsInWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
 }] as const
 
 class InsufficientReservesError extends Error {
@@ -402,17 +406,21 @@ export class Pair {
         account: account as `0x${string}`,
       })
     } else if (version === 3) {
-      // V3 (v3-final): view-only getAmountsOut. Pyth update is applied at the
-      // execution leg, not at quote time, so no updateData arg here. If the
-      // contract reverts (ExceedsMaxOut, InvalidPrice, SearchIterationLimit-
-      // Reached, etc.) throw InsufficientReservesError so the UI shows
-      // "Insufficient liquidity" rather than a misleading sync fallback.
+      // V3 (v3-final): quoteAmountsOutWithUpdate applies a fresh Pyth update
+      // in-call so priceOf() doesn't revert StalePrice() at quote time (the
+      // on-chain price can be >minPriceAge old for slow feeds like USDC).
+      // updateData is the cached Hermes blob (solidityPackHelper). Called
+      // read-only (eth_call). Keep the revert→InsufficientReservesError mapping
+      // so genuine no-route reverts (ExceedsMaxOut, InvalidPrice, SearchItera-
+      // tionLimitReached, …) surface as "Insufficient liquidity".
       try {
+        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
         amountOuts = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_OUT,
-          functionName: 'getAmountsOut',
-          args: [BigInt(inputAmount.raw.toString()), pathAddresses],
+          functionName: 'quoteAmountsOutWithUpdate',
+          args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          account: account as `0x${string}`,
         })
       } catch (err: any) {
         throw new InsufficientReservesError()
@@ -506,14 +514,17 @@ export class Pair {
         account: account as `0x${string}`,
       })
     } else if (version === 3) {
-      // V3 (v3-final): view-only getAmountsIn. Same change as the out-side
-      // quote — no updateData at quote time, write paths handle the refresh.
+      // V3 (v3-final): quoteAmountsInWithUpdate — applies a fresh Pyth update
+      // in-call so priceOf() doesn't revert StalePrice() at quote time. Mirrors
+      // the out-side. updateData = cached Hermes blob; revert→Insufficient.
       try {
+        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
         amountIns = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_IN,
-          functionName: 'getAmountsIn',
-          args: [BigInt(outputAmount.raw.toString()), pathAddresses],
+          functionName: 'quoteAmountsInWithUpdate',
+          args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          account: account as `0x${string}`,
         })
       } catch (err: any) {
         throw new InsufficientReservesError()

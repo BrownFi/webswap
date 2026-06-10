@@ -21,13 +21,15 @@ export function getV3ZapAddress(chainId: ChainId): string | undefined {
 }
 
 // V3 Router/Zap ABI. Quote function is on the router; zap entrypoints are on
-// the dedicated Zap contract (v3-final split — see getV3ZapAddress). The
-// quote was previously `quoteAmountsOutWithUpdate(uint, address[], bytes)`
-// nonpayable; v3-final replaced it with view-only `getAmountsOut(uint, address[])`
-// — the library reads cached Pyth state internally for quotes, write paths
-// still take updateData.
+// the dedicated Zap contract (v3-final split — see getV3ZapAddress). The quote
+// MUST be `quoteAmountsOutWithUpdate(uint, address[], bytes)`: the pool's
+// priceOf() reverts StalePrice() if the on-chain Pyth price is older than the
+// factory's minPriceAge (~60s), so a plain view-only getAmountsOut reverts at
+// quote time on slow feeds (e.g. USDC). The WithUpdate variant applies a fresh
+// Pyth update in-call (read-only via eth_call). (Regression note: commit
+// 2362674 wrongly swapped this to plain getAmountsOut — restored here.)
 const V3_ZAP_ABI = [
-  { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }], name: 'getAmountsOut', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }], name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [{ name: 'tokenIn', type: 'address' }, { name: 'tokenOther', type: 'address' }, { name: 'amountIn', type: 'uint256' }, { name: 'amountOtherMin', type: 'uint256' }, { name: 'minLiquidity', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapIn', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [{ name: 'token', type: 'address' }, { name: 'amountTokenMin', type: 'uint256' }, { name: 'minLiquidity', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapInETH', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'payable', type: 'function' },
   { inputs: [{ name: 'tokenA', type: 'address' }, { name: 'tokenB', type: 'address' }, { name: 'tokenOut', type: 'address' }, { name: 'liquidity', type: 'uint256' }, { name: 'amountMin', type: 'uint256' }, { name: 'to', type: 'address' }, { name: 'deadline', type: 'uint256' }, { name: 'updateData', type: 'bytes' }], name: 'zapOut', outputs: [{ name: 'amount', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
@@ -44,9 +46,10 @@ export function isV3ZapSupported(chainId?: ChainId | null, version?: number): bo
 
 /**
  * Get estimated output amount for half the zap input (for slippage calculation).
- * v3-final routes through the router's view-only getAmountsOut — Pyth state
- * is cached on-chain, no inline update needed. Write-side zapIn still takes
- * updateData so execution gets a fresh price.
+ * Uses quoteAmountsOutWithUpdate so the router applies a fresh Pyth price in the
+ * quote (priceOf reverts StalePrice past minPriceAge ~60s — a plain getAmountsOut
+ * can't quote a slow feed like USDC). updateData = fresh Hermes blob; called
+ * read-only via eth_call. Write-side zapIn still takes its own updateData.
  */
 export async function getV3ZapEstimate(
   chainId: ChainId,
@@ -61,12 +64,16 @@ export async function getV3ZapEstimate(
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const halfAmount = BigInt(amountIn) / 2n
 
-  const result = await client.readContract({
+  const updateData = await buildV3UpdateData([tokenIn, tokenOther], chainId)
+  // quoteAmountsOutWithUpdate is nonpayable on-chain (it applies the Pyth
+  // update), but we call it read-only via eth_call. viem types readContract's
+  // return as `never` for non-view fns, so cast the decoded amounts array.
+  const result = (await client.readContract({
     address: routerAddress as `0x${string}`,
     abi: V3_ZAP_ABI,
-    functionName: 'getAmountsOut',
-    args: [halfAmount, [tokenIn as `0x${string}`, tokenOther as `0x${string}`]],
-  })
+    functionName: 'quoteAmountsOutWithUpdate',
+    args: [halfAmount, [tokenIn as `0x${string}`, tokenOther as `0x${string}`], updateData as `0x${string}`],
+  })) as readonly bigint[]
 
   const amountOut = result[result.length - 1]
 
