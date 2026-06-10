@@ -109,7 +109,7 @@ const StyledConnectButton = () => {
   )
 }
 import SwitchVersion from 'components/SwitchVersion'
-import { appEnv, isMainnet } from 'connectors'
+import { appEnvLabel, isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useAccount } from 'wagmi'
 import CustomAccountDisplay from './CustomAccountDisplay'
@@ -191,7 +191,7 @@ export default function Header() {
             textTransform: 'uppercase',
             flexShrink: 0,
           }}>
-            {appEnv}
+            {appEnvLabel}
           </span>
         )}
 
