@@ -22,6 +22,7 @@ import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { isZapSupportedOnChain, KyberZapRouteData } from './zapHelpers'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
+import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
 import ZapTokenInputRow, { ParsedZapInput, ZapInput } from './ZapInput'
 import { ZapRoutePreview } from './ZapRoutePreview'
 
@@ -343,11 +344,20 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
       const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : undefined
       if (!signer) throw new Error('No signer available')
 
+      // Kyber under-estimates gas on multi-hop routes; resolve a live estimate
+      // (×1.25) at send time, falling back to the adapter hint. See
+      // utils/estimateGasWithMargin.
+      const gasLimit = await estimateGasWithMargin(
+        signer,
+        { to: built.to, data: built.data, value: built.value },
+        built.gasLimit,
+      )
+
       const response = await signer.sendTransaction({
         to: built.to,
         data: built.data,
         ...(built.value ? { value: built.value } : {}),
-        ...(built.gasLimit ? { gasLimit: built.gasLimit } : {}),
+        ...(gasLimit ? { gasLimit } : {}),
       })
 
       // Set hash first so the modal moves Pending → Submitted in one render

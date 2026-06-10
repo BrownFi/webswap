@@ -14,6 +14,7 @@ import { getAggregatorById } from 'services/aggregators'
 import { isBrownFiSource } from 'services/aggregators/types'
 import type { UnifiedRoute } from './useBestSwapRoute'
 import { useActiveWeb3React } from './index'
+import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
 
 export interface AggregatorSwapCallback {
   state: SwapCallbackState
@@ -76,11 +77,20 @@ export function useAggregatorSwapCallback(
           : undefined
       if (!signer) throw new Error('No signer available')
 
+      // Kyber under-estimates gas on multi-hop routes; a too-low limit makes
+      // the executor's inner `.call{gas}` revert with "Call failed". Resolve a
+      // live estimate (×1.25) at send time, falling back to the adapter hint.
+      const gasLimit = await estimateGasWithMargin(
+        signer,
+        { to: built.to, data: built.data, value: built.value },
+        built.gasLimit,
+      )
+
       const response = await signer.sendTransaction({
         to: built.to,
         data: built.data,
         value: built.value,
-        gasLimit: built.gasLimit,
+        gasLimit,
       })
 
       addTransaction(response, {
