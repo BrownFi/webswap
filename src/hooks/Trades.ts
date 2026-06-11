@@ -9,7 +9,11 @@ import { useActiveWeb3React } from './index'
 import { useUnsupportedTokens } from './Tokens'
 import { useUserSingleHopOnly } from 'state/user/hooks'
 
-function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency, versionOverride?: number): Pair[] {
+function useAllCommonPairs(
+  currencyA?: Currency,
+  currencyB?: Currency,
+  versionOverride?: number,
+): { pairs: Pair[]; loading: boolean } {
   const { chainId } = useActiveWeb3React()
 
   const [tokenA, tokenB] = chainId
@@ -67,7 +71,7 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency, versionOv
   const allPairs = usePairs(allPairCombinations, versionOverride)
 
   // only pass along valid pairs, non-duplicated pairs
-  return useMemo(
+  const pairs = useMemo(
     () =>
       Object.values(
         allPairs
@@ -81,12 +85,24 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency, versionOv
       ),
     [allPairs],
   )
+
+  // True while ANY candidate pair is still resolving (V3 factory.getPair +
+  // reserve reads are async and can take ~1.5s). Consumers fold this into
+  // their loading flag so the UI keeps a skeleton up during the reserves-load
+  // window — otherwise an empty-pairs pass looks like a finished quote and the
+  // loading indicator clears early (dead zone, esp. on no-aggregator V3 pairs).
+  const loading = useMemo(() => allPairs.some(([state]) => state === PairState.LOADING), [allPairs])
+
+  return { pairs, loading }
 }
 
 type TradeExactIn = {
   trade: Trade | null
   loadingExactIn: boolean
   isInsufficient?: boolean
+  /** True when the pool rejected the trade for exceeding its per-swap cap
+   *  (curve limit), not because it's empty — UI should say "reduce amount". */
+  maxExceeded?: boolean
 }
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
@@ -99,8 +115,13 @@ export function useTradeExactIn(
   const [trade, setTrade] = useState<Trade | null>(null)
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
+  const [maxExceeded, setMaxExceeded] = useState(false)
 
-  const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut, versionOverride)
+  const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
+    currencyAmountIn?.currency,
+    currencyOut,
+    versionOverride,
+  )
   const { account } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()
@@ -108,9 +129,15 @@ export function useTradeExactIn(
   useEffect(() => {
     let stale = false
 
+    // Engage loading synchronously on input/pair change — before the 300ms
+    // debounce — so the UI never sees a false-negative gap while the debounce
+    // and the async quote run.
+    if (currencyAmountIn && currencyOut) setLoading(true)
+
     const getTrade = async () => {
       setLoading(true)
       setInsufficient(false)
+      setMaxExceeded(false)
       if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeIn = await Trade.bestTradeExactIn(account ?? '', allowedPairs, currencyAmountIn, currencyOut, {
@@ -130,6 +157,7 @@ export function useTradeExactIn(
             // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
+            if (Array.isArray(bestTradeIn) && (bestTradeIn as any).maxExceeded) setMaxExceeded(true)
             setTrade(foundTrade)
             setLoading(false)
           }
@@ -152,6 +180,7 @@ export function useTradeExactIn(
         if (!stale) {
           const foundTrade = bestTradeIn?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
+          if (Array.isArray(bestTradeIn) && (bestTradeIn as any).maxExceeded) setMaxExceeded(true)
           setTrade(foundTrade)
           setLoading(false)
         }
@@ -176,8 +205,11 @@ export function useTradeExactIn(
 
   return {
     trade: trade,
-    loadingExactIn: loading,
+    // Stay loading while reserves/pair addresses are still resolving so the
+    // skeleton doesn't clear during the on-chain pair-lookup window.
+    loadingExactIn: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
+    maxExceeded: maxExceeded && !trade,
   }
 }
 
@@ -185,6 +217,7 @@ type TradeExactOut = {
   trade: Trade | null
   loadingExactOut: boolean
   isInsufficient?: boolean
+  maxExceeded?: boolean
 }
 /**
  * Returns the best trade for the token in to the exact amount of token out
@@ -197,8 +230,13 @@ export function useTradeExactOut(
   const [trade, setTrade] = useState<Trade | null>(null)
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
+  const [maxExceeded, setMaxExceeded] = useState(false)
 
-  const allowedPairs = useAllCommonPairs(currencyIn, currencyAmountOut?.currency, versionOverride)
+  const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
+    currencyIn,
+    currencyAmountOut?.currency,
+    versionOverride,
+  )
   const { account } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()
@@ -206,10 +244,15 @@ export function useTradeExactOut(
   useEffect(() => {
     let stale = false
 
+    // Engage loading synchronously on input/pair change — before the 300ms
+    // debounce — so the UI never sees a false-negative gap.
+    if (currencyIn && currencyAmountOut) setLoading(true)
+
     const getTrade = async () => {
       setTrade(null)
       setLoading(true)
       setInsufficient(false)
+      setMaxExceeded(false)
       if (currencyIn && currencyAmountOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeOut = await Trade.bestTradeExactOut(
@@ -235,6 +278,7 @@ export function useTradeExactOut(
             // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
+            if (Array.isArray(bestTradeOut) && (bestTradeOut as any).maxExceeded) setMaxExceeded(true)
             setTrade(foundTrade)
             setLoading(false)
           }
@@ -258,6 +302,7 @@ export function useTradeExactOut(
         if (!stale) {
           const foundTrade = bestTradeOut?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
+          if (Array.isArray(bestTradeOut) && (bestTradeOut as any).maxExceeded) setMaxExceeded(true)
           setTrade(foundTrade)
           setLoading(false)
         }
@@ -280,8 +325,9 @@ export function useTradeExactOut(
 
   return {
     trade: trade,
-    loadingExactOut: loading,
+    loadingExactOut: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
+    maxExceeded: maxExceeded && !trade,
   }
 }
 

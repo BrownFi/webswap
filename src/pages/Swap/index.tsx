@@ -169,12 +169,14 @@ export default function Swap() {
   const {
     v2Trade,
     v3Trade,
+    v4Trade,
     currencyBalances,
     parsedAmount,
     currencies,
     inputError: rawSwapInputError,
     v2AmountOutExceedsReserve,
     nativePoolLiquidityInsufficient,
+    nativePoolMaxExceeded,
     loadingExactIn,
     loadingExactOut,
   } = useDerivedSwapInfo()
@@ -295,6 +297,7 @@ export default function Swap() {
   } = useBestSwapRoute({
     v2Trade: showWrap ? undefined : v2Trade,
     v3Trade: showWrap ? undefined : v3Trade,
+    v4Trade: showWrap ? undefined : v4Trade,
     v2Unavailable: v2AmountOutExceedsReserve,
     tokenIn: currencies[Field.INPUT],
     tokenOut: currencies[Field.OUTPUT],
@@ -357,13 +360,18 @@ export default function Swap() {
     if (v2AmountOutExceedsReserve && best?.source === 'brownfi-v2') {
       return 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
     }
-    // Both BrownFi versions lack a route — but if an aggregator has one,
-    // the user can still swap. Only block when no source has a route.
+    // No native route — but if an aggregator has one, the user can still
+    // swap. Only block when no source has a route. A per-swap cap (pool has
+    // liquidity, but this trade is too big for the oracle-AMM curve) gets a
+    // distinct message from a genuinely empty pool.
+    if (nativePoolMaxExceeded && !best) {
+      return 'Amount exceeds this pool’s per-trade limit. Reduce the amount.'
+    }
     if (nativePoolLiquidityInsufficient && !best) {
       return 'Insufficient pool liquidity for this trade. Try a smaller amount.'
     }
     return undefined
-  }, [rawSwapInputError, v2AmountOutExceedsReserve, best, nativePoolLiquidityInsufficient])
+  }, [rawSwapInputError, v2AmountOutExceedsReserve, best, nativePoolLiquidityInsufficient, nativePoolMaxExceeded])
   const isValid = !swapInputError
   // User manually picked a specific aggregator, but orchestration fell back
   // to native (the chosen aggregator returned no route for this pair on
@@ -903,9 +911,23 @@ export default function Swap() {
                 {wrapInputError ??
                   (wrapType === WrapType.WRAP ? 'Wrap' : wrapType === WrapType.UNWRAP ? 'Unwrap' : null)}
               </ButtonPrimary>
-            ) : isLoadingWrap || ((loadingExactIn || loadingExactOut) && userHasSpecifiedInputOutput && !swapInputError) ? (
+            ) : isLoadingWrap || (isLoadingOrStale && userHasSpecifiedInputOutput) ? (
+              // Use isLoadingOrStale (the same signal that gates the route
+              // details/skeleton) rather than just loadingExactIn/Out — the
+              // latter has gaps (debounce + async reserve-load window) where no
+              // flag is hot yet, leaving the button with no loading feedback on
+              // no-aggregator pairs. This keeps the button in sync with the
+              // skeleton: loading from keystroke until the quote resolves.
+              //
+              // NOTE: intentionally NOT gated on `!swapInputError`. Errors like
+              // "Insufficient balance" are known synchronously, but the user
+              // still needs immediate confirmation that their input registered
+              // and a quote is being fetched (the output field's opacity pulse
+              // is too subtle, esp. on an empty field). Once the quote resolves
+              // and isLoadingOrStale clears, this falls through to the balance/
+              // error button below.
               <ButtonError disabled>
-                <Dots>Loading</Dots>
+                <Dots>Finding best price</Dots>
               </ButtonError>
             ) : noRoute && userHasSpecifiedInputOutput && !swapInputError ? (
               <ButtonError disabled>

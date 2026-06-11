@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { addLiquidity, Currency, currencyEquals, getRouterAddress, TokenAmount, WETH } from '@brownfi/sdk'
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { LightCard } from 'components/Card'
@@ -212,9 +213,10 @@ export default function AddLiquidity() {
         <LightCard borderRadius="16px" style={{ marginTop: '20px' }}>
           <RowFlat className="px-2">
             <Text fontSize="36px" fontWeight={600} lineHeight="42px" marginRight={10} color="white">
-              {getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
-                '/' +
-                getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}
+              <DoubleCurrencySymbol
+                currency0={currencies[Field.CURRENCY_A]}
+                currency1={currencies[Field.CURRENCY_B]}
+              />
             </Text>
             <DoubleCurrencyLogo
               currency0={currencies[Field.CURRENCY_A]}
@@ -238,10 +240,11 @@ export default function AddLiquidity() {
         </RowFlat>
         <Row>
           <span style={{ fontFamily: 'Inter', fontSize: '24px', fontWeight: 600, color: '#FBFBFD' }}>
-            {getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
-              '/' +
-              getTokenSymbol(currencies[Field.CURRENCY_B], chainId) +
-              ' Pool Tokens'}
+            <DoubleCurrencySymbol
+              currency0={currencies[Field.CURRENCY_A]}
+              currency1={currencies[Field.CURRENCY_B]}
+            />
+            {' Pool Tokens'}
           </span>
         </Row>
         <span style={{ fontFamily: 'Inter', fontSize: '12px', fontStyle: 'italic', color: '#978A80', textAlign: 'left', padding: '8px 0 0 0' }}>
@@ -369,7 +372,7 @@ export default function AddLiquidity() {
           </div>
         </div>
 
-        {useZap && version === 3 && pair ? (
+        {useZap && isV3Like(version) && pair ? (
           <Wrapper>
             <V3ZapForm pair={pair} pairState={pairState} currencies={currencies} allowedSlippage={allowedSlippage} />
           </Wrapper>

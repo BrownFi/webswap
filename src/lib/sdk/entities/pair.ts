@@ -1,3 +1,4 @@
+import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { getCreate2Address } from '@ethersproject/address'
@@ -167,7 +168,16 @@ const ABI_ROUTER_WITH_PRICE_IN = [{
   inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'priceUpdate', type: 'bytes[]' }],
   name: 'getAmountsInWithPrice', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
 }] as const
-// V3 quote functions — use router's quoteAmountsOut/InWithUpdate (includes Pyth update + accurate AMM math)
+// V3 quote functions on the v3-final router. These MUST be the WithUpdate
+// variants: the pool's priceOf() reverts StalePrice() if the on-chain Pyth
+// price is older than the factory's minPriceAge (~60s). Plain view-only
+// getAmountsOut/In can't satisfy that at quote time on a slow-moving feed
+// (e.g. USDC drifts >60s), so the quote reverts and the V3 route silently
+// disappears from the UI. quoteAmountsOut/InWithUpdate applies a fresh Pyth
+// update in-call (read-only via eth_call) so the quote sees a fresh price.
+// (Regression note: commit 2362674 wrongly swapped these to plain getAmounts*
+// on a false "v3-final reads cached Pyth" assumption — this restores the
+// correct calls originally added in ac59a1a.)
 const ABI_V3_QUOTE_OUT = [{
   inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
   name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
@@ -197,6 +207,55 @@ class InsufficientInputAmountError extends Error {
       Object.setPrototypeOf(this, InsufficientInputAmountError.prototype)
     }
   }
+}
+
+/**
+ * The V3 router caps how much can be swapped through a pool in a single
+ * trade (an oracle-AMM curve limit, not an empty pool). On small pools this
+ * reverts even though liquidity exists — so we surface it distinctly from
+ * InsufficientReservesError, letting the UI say "reduce the amount" instead
+ * of the misleading "insufficient liquidity".
+ */
+class MaxAmountOutExceededError extends Error {
+  public readonly isMaxAmountOutExceededError = true
+  // Treated as an expected, business-as-usual rejection by isExpectedTradeError.
+  public readonly isInsufficientReservesError = true
+  constructor() {
+    super('EXCEEDS_MAX_OUTPUT')
+    this.name = 'MaxAmountOutExceededError'
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(this, MaxAmountOutExceededError.prototype)
+    }
+  }
+}
+
+// V3 router custom-error selectors that mean "this trade exceeds the pool's
+// per-swap cap" (vs a genuinely empty pool). Keep lowercased.
+//   0xc64511c2 — exact-in: input exceeds max accepted (params: amountIn, maxIn)
+//   0xf1ac6cc5 — exact-out: requested output exceeds max achievable ("cutoff")
+//   0xd0915224 — ExceedsMaxOut (max quotable output)
+const MAX_CAP_SELECTORS = new Set<string>(['0xc64511c2', '0xf1ac6cc5', '0xd0915224'])
+
+/**
+ * Best-effort extraction of the 4-byte revert selector from an ethers/viem
+ * error. Walks the cause chain (viem nests the raw revert under .cause.data /
+ * .raw) and falls back to scanning the message.
+ */
+function extractRevertSelector(err: any): string | undefined {
+  let e = err
+  for (let i = 0; i < 8 && e; i++) {
+    const hex = (typeof e?.data === 'string' && e.data) || (typeof e?.raw === 'string' && e.raw) || ''
+    if (/^0x[0-9a-fA-F]{8}/.test(hex)) return hex.slice(0, 10).toLowerCase()
+    e = e?.cause
+  }
+  const m = (err?.message ?? '').match(/0x[0-9a-fA-F]{8}/)
+  return m ? m[0].toLowerCase() : undefined
+}
+
+/** Map a caught V3 quote revert to the right error type. */
+function v3QuoteError(err: any): Error {
+  const sel = extractRevertSelector(err)
+  return sel && MAX_CAP_SELECTORS.has(sel) ? new MaxAmountOutExceededError() : new InsufficientReservesError()
 }
 
 let PAIR_ADDRESS_CACHE: Record<string, Record<string, string>> = {}
@@ -230,8 +289,8 @@ export class Pair {
     const tokenAmounts: [TokenAmount, TokenAmount] = tokenAmountA.token.sortsBefore(tokenAmountB.token)
       ? [tokenAmountA, tokenAmountB]
       : [tokenAmountB, tokenAmountA]
-    const symbol = version >= 2 ? (version === 3 ? 'BF-V3' : 'BF-V2') : 'BRF-V1'
-    const name = version >= 2 ? (version === 3 ? 'BrownFi V3' : 'BrownFi V2') : 'BrownFi V1'
+    const symbol = version >= 2 ? (isV3Like(version) ? 'BF-V3' : 'BF-V2') : 'BRF-V1'
+    const name = version >= 2 ? (isV3Like(version) ? 'BrownFi V3' : 'BrownFi V2') : 'BrownFi V1'
     this.liquidityToken = new Token(
       tokenAmounts[0].token.chainId,
       Pair.getAddress(tokenAmounts[0].token, tokenAmounts[1].token, version),
@@ -396,23 +455,25 @@ export class Pair {
         args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         account: account as `0x${string}`,
       })
-    } else if (version === 3) {
-      // V3: use quoteAmountsOutWithUpdate (includes Pyth update + accurate AMM math)
-      // If quote reverts (ExceedsMaxOut, StalePrice, etc.), throw InsufficientReservesError
-      // so UI shows "Insufficient liquidity" instead of a misleading sync fallback estimate
+    } else if (isV3Like(version)) {
+      // V3 (v3-final): quoteAmountsOutWithUpdate applies a fresh Pyth update
+      // in-call so priceOf() doesn't revert StalePrice() at quote time (the
+      // on-chain price can be >minPriceAge old for slow feeds like USDC).
+      // updateData is the cached Hermes blob (solidityPackHelper). Called
+      // read-only (eth_call). Keep the revert→InsufficientReservesError mapping
+      // so genuine no-route reverts (ExceedsMaxOut, InvalidPrice, SearchItera-
+      // tionLimitReached, …) surface as "Insufficient liquidity".
       try {
         const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-        const { result } = await client.simulateContract({
+        amountOuts = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_OUT,
           functionName: 'quoteAmountsOutWithUpdate',
           args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          account: account as `0x${string}`,
         })
-        amountOuts = result
       } catch (err: any) {
-        // Quote failed — likely ExceedsMaxOut (0xd0915224) or other contract revert
-        // Don't fall back to sync (would show wrong amount + 0% impact)
-        throw new InsufficientReservesError()
+        throw v3QuoteError(err)
       }
     } else {
       amountOuts = await client.readContract({
@@ -429,15 +490,15 @@ export class Pair {
     }
 
     let priceImpactK: number
-    if (version === 3) {
+    if (isV3Like(version)) {
       // V3: price impact = (midPrice - executionPrice) / midPrice
       // midPrice from Pyth oracle, executionPrice = amountOut/amountIn
       const { getPythPrice: getPythPriceFn } = await import('../utils')
       const inToken = inputAmount.token
       const outToken = outputReserve.token
       const [priceIn, priceOut] = await Promise.all([
-        getPythPriceFn(inToken.address, chainId, 3),
-        getPythPriceFn(outToken.address, chainId, 3),
+        getPythPriceFn(inToken.address, chainId, version),
+        getPythPriceFn(outToken.address, chainId, version),
       ])
       if (priceIn > 0 && priceOut > 0) {
         const inAmt = Number(inputAmount.toExact())
@@ -502,21 +563,21 @@ export class Pair {
         args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         account: account as `0x${string}`,
       })
-    } else if (version === 3) {
-      // V3: use quoteAmountsInWithUpdate (includes Pyth update + accurate AMM math)
+    } else if (isV3Like(version)) {
+      // V3 (v3-final): quoteAmountsInWithUpdate — applies a fresh Pyth update
+      // in-call so priceOf() doesn't revert StalePrice() at quote time. Mirrors
+      // the out-side. updateData = cached Hermes blob; revert→Insufficient.
       try {
         const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-        const { result } = await client.simulateContract({
+        amountIns = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_IN,
           functionName: 'quoteAmountsInWithUpdate',
           args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          account: account as `0x${string}`,
         })
-        amountIns = result
       } catch (err: any) {
-        // Quote failed — likely ExceedsMaxOut or other contract revert
-        // Throw InsufficientReservesError so UI shows proper error
-        throw new InsufficientReservesError()
+        throw v3QuoteError(err)
       }
     } else {
       amountIns = await client.readContract({
@@ -530,14 +591,14 @@ export class Pair {
     const inputAmountResult = new TokenAmount(inputReserve.token, amountIns[0].toString())
 
     let priceImpactK: number
-    if (version === 3) {
+    if (isV3Like(version)) {
       // V3: price impact = (midPrice - executionPrice) / midPrice
       const { getPythPrice: getPythPriceFn } = await import('../utils')
       const inToken = inputReserve.token
       const outToken = outputAmount.token
       const [priceIn, priceOut] = await Promise.all([
-        getPythPriceFn(inToken.address, chainId, 3),
-        getPythPriceFn(outToken.address, chainId, 3),
+        getPythPriceFn(inToken.address, chainId, version),
+        getPythPriceFn(outToken.address, chainId, version),
       ])
       if (priceIn > 0 && priceOut > 0) {
         const inAmt = Number(inputAmountResult.toExact())

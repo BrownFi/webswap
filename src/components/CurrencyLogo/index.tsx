@@ -35,12 +35,21 @@ export function CurrencyLogo({
   currency,
   size = '24px',
   style,
+  // Optional chainId override. When set, takes precedence over the wallet's
+  // current chain. Use when rendering a currency that belongs to a
+  // different chain than the connected wallet (e.g. Portfolio aggregates
+  // positions across chains — passing positionChainId here makes the
+  // ETHER fallback render the correct native logo for the POSITION's
+  // chain rather than the wallet's chain).
+  chainId: chainIdProp,
 }: {
   currency?: Currency
   size?: string
   style?: React.CSSProperties
+  chainId?: number
 }) {
-  const { chainId } = useActiveWeb3React()
+  const { chainId: walletChainId } = useActiveWeb3React()
+  const chainId = chainIdProp ?? walletChainId
   const uriLocations = useHttpLocations(currency instanceof WrappedTokenInfo ? currency.logoURI : undefined)
 
   const defaultSrcs: string[] = useMemo(() => {

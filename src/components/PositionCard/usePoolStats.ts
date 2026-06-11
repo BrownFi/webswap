@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { ChainId, JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { useTotalSupply } from 'data/TotalSupply'
@@ -172,7 +173,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
   // pool APR for V3 instead — it represents the pool's earning activity even
   // though LPs aren't currently receiving a share. Revisit if/when feeSplit
   // is lowered and LPs start earning fees directly.
-  const isV3 = pair.version === 3
+  const isV3 = isV3Like(pair.version)
   const feeAPR =
     shouldUseIndexer && pairStats
       ? pairStats.apr * (isV3 ? 1 : 1 - pairStats.protocolFee)

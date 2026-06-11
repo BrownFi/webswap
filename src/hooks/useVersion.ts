@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
 import { isMainnet, isV3Enabled } from 'connectors'
-import { ROUTER_ADDRESS_V1, ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen } from 'lib/sdk/constants/addresses'
 
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
   const location = useLocation()
@@ -50,7 +50,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
     if (!isV3Enabled) return [2, true]
     const selectedVersion = stableVersion
     if (selectedVersion === 1 && !ROUTER_ADDRESS_V1[chainId as number]) return [2, false]
-    if (selectedVersion === 3 && !ROUTER_ADDRESS_V3[chainId as number]) return [2, false]
+    if (isV3Like(selectedVersion) && !routerV3Gen(selectedVersion)[chainId as number]) return [2, false]
     return [selectedVersion, false]
   }, [chainId, stableVersion])
 
@@ -96,7 +96,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
     const pairAddr = pair?.liquidityToken.address?.toLowerCase()
     const isPromoted = pairAddr ? promoted.has(pairAddr) : false
 
-    return (version === 2 || version === 3) && !isPromoted
+    return (version === 2 || isV3Like(version)) && !isPromoted
   }, [pair?.liquidityToken.address, version])
 
   const enableGraphQL = useMemo(() => {
@@ -116,7 +116,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       ChainId.MONAD,
     ]
     if (version === 2) return v2Chains.includes(chainId as number)
-    if (version === 3) return !!ROUTER_ADDRESS_V3[chainId as number]
+    if (isV3Like(version)) return !!routerV3Gen(version)[chainId as number]
     return false
   }, [chainId, version])
 

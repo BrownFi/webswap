@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { Pair } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
 import { useActiveWeb3React } from 'hooks'
@@ -41,7 +42,7 @@ export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
   // normalized to decimal fractions; fee is a fraction (e.g. 0.0005 = 0.05%).
   const fromIndexer = useMemo(() => {
     if (!pairStats) return undefined
-    if (version === 3) {
+    if (isV3Like(version)) {
       if (pairStats.lambda === undefined && pairStats.kB === undefined) return undefined
       return {
         lambda: pairStats.lambda,
@@ -121,12 +122,14 @@ export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
 
   // V3: read from PairConfig contract via viem
   useQuery({
-    queryKey: ['v3DevStats', chainId, pair.liquidityToken.address],
+    queryKey: ['v3DevStats', chainId, pair.liquidityToken.address, `v${version}`],
     queryFn: async () => {
       const { createPublicClient, http } = await import('viem')
-      const { RPC_URLS, FACTORY_ADDRESS_V3 } = await import('lib/sdk/constants/addresses')
+      const { RPC_URLS, factoryV3Gen } = await import('lib/sdk/constants/addresses')
       const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-      const factoryAddr = FACTORY_ADDRESS_V3[chainId]
+      // Resolve the factory for the pool's version (4 = Official, 3 = Pilot);
+      // the pilot map is Bera-only and gave wrong/empty config for v4 pools.
+      const factoryAddr = factoryV3Gen(version)[chainId]
       if (!factoryAddr) return null
 
       const configAddr = await client.readContract({
@@ -195,7 +198,7 @@ export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
     // Fallback only — fires when the indexer hasn't shipped this pair yet
     // (just deployed, or backend down). When pairStats is healthy this stays
     // disabled and the entire pool list runs on a single GraphQL request.
-    enabled: enabled && version === 3 && !hasIndexerData,
+    enabled: enabled && isV3Like(version) && !hasIndexerData,
     staleTime: 5 * 60 * 1000,
   })
 

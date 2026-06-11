@@ -1,3 +1,4 @@
+import { isV3Like } from '../constants'
 import { Contract } from '@ethersproject/contracts'
 import { getAddress } from '@ethersproject/address'
 import { AddressZero } from '@ethersproject/constants'
@@ -43,7 +44,7 @@ export function getContract(address: string, ABI: any, library: any, account?: s
 }
 
 export function getRouterContract(chainId: number, library: any, account: string, version: number): Contract {
-  const IRouter = version === 3 ? IRouterV3 : version === 2 ? IRouterV2 : IRouterV1
+  const IRouter = isV3Like(version) ? IRouterV3 : version === 2 ? IRouterV2 : IRouterV1
   return getContract(getRouterAddress(chainId, version), IRouter, library, account)
 }
 

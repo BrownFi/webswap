@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import 'rc-slider/assets/index.css'
+import 'theme/fonts.css'
 import 'theme/index.css'
 import styled from 'styled-components'
 import GoogleAnalyticsReporter from 'components/analytics/GoogleAnalyticsReporter'
@@ -23,6 +24,7 @@ const PoolFinder = lazy(() => import('./PoolFinder'))
 const AddLiquidity = lazy(() => import('./AddLiquidity'))
 const RemoveLiquidity = lazy(() => import('./RemoveLiquidity'))
 const PoolDetail = lazy(() => import('./Pool/Detail'))
+const Portfolio = lazy(() => import('./Portfolio'))
 
 const BodyWrapper = styled.div`
   display: flex;
@@ -87,6 +89,14 @@ export default function App() {
               element={
                 <RouteErrorBoundary>
                   <Pool />
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path="/portfolio"
+              element={
+                <RouteErrorBoundary>
+                  <Portfolio />
                 </RouteErrorBoundary>
               }
             />

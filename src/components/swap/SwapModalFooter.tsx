@@ -92,7 +92,9 @@ export default function SwapModalFooter({
             <QuestionHelper text="Price impact is the difference between your trading price and oracle price." />
           </RowFixed>
           <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
-            {trade ? formatStringToNumber(trade?.priceImpactK, 4) : '-'}%
+            {/* Clamp: V2 reserve-drain math can produce absurd values on
+                near-empty pools; >100% is meaningless to show. */}
+            {trade ? ((trade?.priceImpactK ?? 0) > 100 ? '>100' : formatStringToNumber(trade?.priceImpactK, 4)) : '-'}%
           </ErrorText>
         </RowBetween>
         <RowBetween>

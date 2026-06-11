@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 /**
  * Native (BrownFi router) zap adapter — implements ZapAggregatorAdapter.
  *
@@ -23,11 +24,12 @@ import {
   buildV3UpdateData,
   buildV3ZapInTx,
   buildV3ZapOutTx,
+  getV3ZapAddress,
   getV3ZapEstimate,
   isV3ZapSupported,
 } from 'utils/v3Zap'
 import { RPC_URLS } from 'lib/sdk/constants/addresses'
-import { getRouterAddress } from 'lib/sdk/utils'
+import type { BrownFiVersion } from '../types'
 import type {
   BuildZapInParams,
   BuildZapOutParams,
@@ -94,22 +96,36 @@ function pickOtherTokenAddress(pool: ZapInQuoteParams['pair'], inputAddress: str
 
 /**
  * Lightweight LP-out estimate. We can't run the contract's `zapIn` static
- * call without the user's tokens + approval already in place, so this uses
- * the V2-style minted-LP formula on current reserves + totalSupply:
+ * call without the user's tokens + approval already in place, so we estimate
+ * the minted LP from value share.
  *
- *   liquidity = min(amountA * totalSupply / reserveA,
- *                   amountB * totalSupply / reserveB)
+ * IMPORTANT: BrownFi V3 is an oracle-priced AMM — reserves are inventory and
+ * are NOT pinned to the price ratio. The Uniswap-V2 formula
+ *   min(amountA·S/reserveA, amountB·S/reserveB)
+ * is therefore wrong here: when the pool's inventory is value-imbalanced, the
+ * `min()` collapses onto the under-stocked side and wildly understates LP
+ * (which showed up as a fake double-digit negative "price impact" in the zap
+ * preview, and biased native-vs-Kyber ranking + lpOutMin).
  *
- * `amountA` is the input remaining after the internal half-swap; `amountB`
- * is what the swap quote says we'll receive. Reserves are slightly stale
- * here (pre-swap), so the figure underestimates LP by a tiny margin — fine
- * for a comparison metric vs Kyber's reported `addedLiquidity`.
+ * Instead we mint proportional to value, valuing both the deposit and the
+ * pool TVL at the SAME oracle price implied by the half-swap quote
+ * (`amountOther` received per `amountSwappedIn` swapped). Reserve imbalance
+ * then cancels out:
+ *
+ *   price (other per in) = amountOther / amountSwappedIn
+ *   valueAdded (in `other` units) = amountOther + amountAfterSwap · price
+ *   poolTVL    (in `other` units) = reserveOther + reserveIn · price
+ *   liquidity  = totalSupply · valueAdded / poolTVL
+ *
+ * Multiplying numerator & denominator by `amountSwappedIn` clears the inner
+ * division and keeps the whole thing in integer (BigNumber) math.
  */
 async function estimateLpOut({
   chainId,
   pairAddress,
   reserveTokenIn,
   reserveTokenOther,
+  amountSwappedIn,
   amountAfterSwap,
   amountOther,
 }: {
@@ -117,6 +133,8 @@ async function estimateLpOut({
   pairAddress: string
   reserveTokenIn: BigNumber
   reserveTokenOther: BigNumber
+  /** The portion of the input that was swapped into `other` (the half). */
+  amountSwappedIn: BigNumber
   amountAfterSwap: BigNumber
   amountOther: BigNumber
 }): Promise<BigNumber> {
@@ -127,13 +145,24 @@ async function estimateLpOut({
     functionName: 'totalSupply',
   })
   const totalSupply = BigNumber.from(totalSupplyRaw.toString())
-  if (totalSupply.isZero() || reserveTokenIn.isZero() || reserveTokenOther.isZero()) {
+  if (
+    totalSupply.isZero() ||
+    reserveTokenIn.isZero() ||
+    reserveTokenOther.isZero() ||
+    amountSwappedIn.isZero() ||
+    amountOther.isZero()
+  ) {
     return BigNumber.from(0)
   }
 
-  const lpFromIn = amountAfterSwap.mul(totalSupply).div(reserveTokenIn)
-  const lpFromOther = amountOther.mul(totalSupply).div(reserveTokenOther)
-  return lpFromIn.lt(lpFromOther) ? lpFromIn : lpFromOther
+  // valueAdded·amountSwappedIn = amountOther·(amountSwappedIn + amountAfterSwap)
+  //   = amountOther · (full input amount)
+  const valueAddedScaled = amountOther.mul(amountSwappedIn.add(amountAfterSwap))
+  // poolTVL·amountSwappedIn = reserveOther·amountSwappedIn + reserveIn·amountOther
+  const poolTvlScaled = reserveTokenOther.mul(amountSwappedIn).add(reserveTokenIn.mul(amountOther))
+  if (poolTvlScaled.isZero()) return BigNumber.from(0)
+
+  return totalSupply.mul(valueAddedScaled).div(poolTvlScaled)
 }
 
 function applySlippage(amount: BigNumber, slippageBps: number): BigNumber {
@@ -145,7 +174,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
   name: 'BrownFi',
 
   isSupported(chainId, version) {
-    return version === 3 && isV3ZapSupported(chainId, version)
+    return isV3Like(version) && isV3ZapSupported(chainId, version)
   },
 
   async quoteZapIn(params: ZapInQuoteParams): Promise<ZapInQuote<NativeZapInRoute> | null> {
@@ -175,6 +204,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
         tokenOtherAddress,
         amountRaw,
         params.slippageBps,
+        params.version,
       )
       amountOut = est.amountOut
       amountOtherMin = est.amountOtherMin
@@ -188,12 +218,16 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     // we treat that as "no native quote" and let Kyber win.
     let updateData: string
     try {
-      updateData = await buildV3UpdateData([tokenInAddress, tokenOtherAddress], params.chainId)
+      updateData = await buildV3UpdateData([tokenInAddress, tokenOtherAddress], params.chainId, params.version)
     } catch {
       return null
     }
 
-    const amountAfterSwap = BigNumber.from(amountRaw).sub(BigNumber.from(amountRaw).div(TWO))
+    // getV3ZapEstimate swaps exactly half (floor) and returns `amountOut` for
+    // that half; the remainder is added as-is. Keep both so estimateLpOut can
+    // recover the swap-implied oracle price.
+    const amountSwappedIn = BigNumber.from(amountRaw).div(TWO)
+    const amountAfterSwap = BigNumber.from(amountRaw).sub(amountSwappedIn)
 
     // Reserves are read off the Pair (already populated by useAllCommonPairs
     // / Reserves.ts upstream). Pick the side matching tokenIn vs tokenOther.
@@ -213,11 +247,18 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       pairAddress: params.pair.liquidityToken.address,
       reserveTokenIn: BigNumber.from(reserveIn.raw.toString()),
       reserveTokenOther: BigNumber.from(reserveOther.raw.toString()),
+      amountSwappedIn,
       amountAfterSwap,
       amountOther: BigNumber.from(amountOut.toString()),
     }).catch(() => BigNumber.from(0))
 
-    const routerAddress = getRouterAddress(params.chainId, 3)
+    // `routerAddress` is the unified route's APPROVAL SPENDER + tx target —
+    // i.e. the contract the zap tx is sent to and that pulls tokens via
+    // transferFrom. For the native zap that's the zap contract, NOT the swap
+    // router. They're the same address on pilot (zap falls back to router) but
+    // differ on V3 Official, where approving the router left the zap contract
+    // without an allowance → zapIn reverted on estimateGas.
+    const routerAddress = getV3ZapAddress(params.chainId, params.version)
     if (!routerAddress) return null
 
     return {
@@ -233,8 +274,12 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       routerAddress,
       routeSummary: {
         tokenInAddress,
+        version: params.version,
         tokenOtherAddress,
         amountIn: amountRaw,
+        // Raw (pre-slippage) swap output of the half-swap, in `other` token
+        // units. Used by the zap preview to value the result from value-flow.
+        amountOther: amountOut.toString(),
         amountOtherMin: amountOtherMin.toString(),
         updateData,
         isNativeETH: resolved.isNative,
@@ -275,7 +320,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
         functionName: 'totalSupply',
       })
       totalSupply = BigNumber.from(totalSupplyRaw.toString())
-      updateData = await buildV3UpdateData([tokenAAddress, tokenBAddress], params.chainId)
+      updateData = await buildV3UpdateData([tokenAAddress, tokenBAddress], params.chainId, params.version)
     } catch {
       return null
     }
@@ -301,6 +346,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
         tokenOutAddress,
         otherSide.mul(2).toString(), // getV3ZapEstimate halves internally; pass 2x to model a full swap
         0,
+        params.version,
       )
       swapAmountOut = BigNumber.from(est.amountOut.toString())
     } catch {
@@ -311,7 +357,13 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     const amountOut = directOut.add(swapAmountOut)
     if (amountOut.lte(0)) return null
 
-    const routerAddress = getRouterAddress(params.chainId, 3)
+    // `routerAddress` is the unified route's APPROVAL SPENDER + tx target —
+    // i.e. the contract the zap tx is sent to and that pulls tokens via
+    // transferFrom. For the native zap that's the zap contract, NOT the swap
+    // router. They're the same address on pilot (zap falls back to router) but
+    // differ on V3 Official, where approving the router left the zap contract
+    // without an allowance → zapIn reverted on estimateGas.
+    const routerAddress = getV3ZapAddress(params.chainId, params.version)
     if (!routerAddress) return null
 
     return {
@@ -323,6 +375,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       routerAddress,
       routeSummary: {
         tokenAAddress,
+        version: params.version,
         tokenBAddress,
         tokenOutAddress,
         liquidityRaw: params.liquidityRaw,
@@ -338,6 +391,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     const deadlineBn = BigNumber.from(params.deadline)
     return buildV3ZapInTx({
       chainId: params.chainId,
+      version: r.version,
       tokenIn: r.tokenInAddress,
       tokenOther: r.tokenOtherAddress,
       amountIn: r.amountIn,
@@ -357,6 +411,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     const deadlineBn = BigNumber.from(params.deadline)
     return buildV3ZapOutTx({
       chainId: params.chainId,
+      version: r.version,
       tokenA: r.tokenAAddress,
       tokenB: r.tokenBAddress,
       tokenOut: r.tokenOutAddress,
@@ -373,9 +428,12 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
 /** Raw shape the adapter stores in routeSummary for zap-in. Internal — the
  *  comparison hook and execution layer pass it through opaquely. */
 export type NativeZapInRoute = {
+  version: BrownFiVersion
   tokenInAddress: string
   tokenOtherAddress: string
   amountIn: string
+  /** Raw (pre-slippage) half-swap output in `other` token units. */
+  amountOther: string
   amountOtherMin: string
   updateData: string
   isNativeETH: boolean
@@ -383,6 +441,7 @@ export type NativeZapInRoute = {
 
 /** Raw shape for zap-out. */
 export type NativeZapOutRoute = {
+  version: BrownFiVersion
   tokenAAddress: string
   tokenBAddress: string
   tokenOutAddress: string

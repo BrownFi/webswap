@@ -13,13 +13,14 @@ import {
   THREE,
   ROUTER_ADDRESS,
   ROUTER_ADDRESS_V1,
-  ROUTER_ADDRESS_V3,
   ROUTER_ADDRESS_WITH_PRICE,
   FACTORY_ADDRESS,
   FACTORY_ADDRESS_V1,
-  FACTORY_ADDRESS_V3,
   INIT_CODE_HASH,
   INIT_CODE_HASH_V1,
+  isV3Like,
+  routerV3Gen,
+  factoryV3Gen,
 } from '../constants'
 import type { BigintIsh } from '../constants'
 
@@ -116,16 +117,31 @@ export function isContractWithPrice(chainId: number, version: number): boolean {
 }
 
 export function getRouterAddress(chainId: number, version: number): string {
-  if (version === 3) return ROUTER_ADDRESS_V3[chainId] ?? ''
+  if (isV3Like(version)) return routerV3Gen(version)[chainId] ?? ''
   return version === 2 ? ROUTER_ADDRESS[chainId] : ROUTER_ADDRESS_V1[chainId]
 }
 
 export function getFactoryAddress(chainId: number, version: number): string {
-  if (version === 3) return FACTORY_ADDRESS_V3[chainId] ?? ''
+  if (isV3Like(version)) return factoryV3Gen(version)[chainId] ?? ''
   return version === 2 ? FACTORY_ADDRESS[chainId] : FACTORY_ADDRESS_V1[chainId]
 }
 
 export function getInitCodeHash(chainId: number, version: number): string {
+  // V3 pairs are deployed via factory.createPair (registry), not CREATE2.
+  // Pair.getAddress's CREATE2 computation runs anyway during `new Pair(...)`
+  // but the result is discarded — MemoizedPairList overrides liquidityToken
+  // with the real registry address right after construction. So we just need
+  // a non-undefined 32-byte hash to keep getCreate2Address from crashing on
+  // chains that don't have a V1 entry (e.g. HyperEVM). Fall back to V2's
+  // hash; if that's also missing, use zero hash — either way the value is
+  // never read by anything that depends on its correctness.
+  if (isV3Like(version)) {
+    // V3-gen (pilot=3, official=4) pairs use a factory registry, not CREATE2 —
+    // the CREATE2 hash is only needed so `new Pair(...)` doesn't crash; the
+    // computed address is discarded and overridden with the registry address.
+    // Any non-undefined 32-byte hash works.
+    return INIT_CODE_HASH_V1[chainId] ?? INIT_CODE_HASH[chainId] ?? '0x0000000000000000000000000000000000000000000000000000000000000000'
+  }
   return version === 2 ? INIT_CODE_HASH[chainId] : INIT_CODE_HASH_V1[chainId]
 }
 

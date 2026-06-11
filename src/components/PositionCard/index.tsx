@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { Pair, TokenAmount } from '@brownfi/sdk'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
@@ -11,7 +12,6 @@ import { ButtonSecondary } from 'components/Button'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
 import { useTokenBalance } from 'state/wallet/hooks'
-import { currencyId } from 'utils/currencyId'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 
 import { Card } from 'components/Card'
@@ -29,7 +29,7 @@ import { isMainnet } from 'connectors'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
-import { shouldReversePair } from 'utils/pair'
+import { orderedCurrencyIds, shouldReversePair } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
@@ -51,9 +51,17 @@ const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   overflow: hidden;
   padding: 12px;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, gap 0.2s ease;
   background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#1E1915')};
   gap: ${({ $expanded }) => ($expanded ? '24px' : '4px')};
+
+  /* Hover only affects collapsed rows. When expanded, the card is already
+     in its "active" #2F2823 tint and a hover bump would feel jittery as
+     the user moves between sub-sections. Matches the Portfolio row's
+     hover treatment so the two surfaces feel consistent. */
+  &:hover {
+    background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#252019')};
+  }
 
   @media (min-width: 720px) {
     padding: 16px;
@@ -175,7 +183,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         <div
           className="flex items-center cursor-pointer max-md:flex-wrap max-md:gap-2"
           style={{ gap: '8px', minHeight: '60px' }}
-          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}`)}
+          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${pair.version}`)}
         >
           {/* Pool name */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
@@ -277,7 +285,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           {/* Actions */}
           <div className="hidden md:flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
             <Link
-              to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+              to={`/add/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`}
               className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
               style={{
                 background: '#985C2A',
@@ -308,13 +316,13 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
             )}
             {/* Fee is already shown in green under the pair name — drop it here */}
-            {(version === 3 ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+            {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
               <Text>
-                {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-                {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                {isV3Like(version) ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                {formatNumberLambda(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
               </Text>
             )}
-            {version === 3 && <V3ExtraParams devStats={devStats} />}
+            {isV3Like(version) && <V3ExtraParams devStats={devStats} />}
             {canEditSettings && (
               <Settings size="14" className="cursor-pointer text-[#c4943a] hover:text-[#d4a94f]" onClick={() => setShowSettings(true)} />
             )}
@@ -443,7 +451,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   {/* Action buttons */}
                   <div className="pt-2 flex gap-3">
                     <Link
-                      to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+                      to={`/add/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`}
                       className="no-underline flex items-center justify-center flex-1"
                       style={{
                         background: '#985C2A',
@@ -460,7 +468,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       Add
                     </Link>
                     <Link
-                      to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
+                      to={`/remove/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`}
                       className="no-underline flex items-center justify-center flex-1"
                       style={{
                         background: '#985C2A',
