@@ -360,14 +360,15 @@ export default function Swap() {
     if (v2AmountOutExceedsReserve && best?.source === 'brownfi-v2') {
       return 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
     }
-    // Both BrownFi versions lack a route — but if an aggregator has one,
-    // the user can still swap. Only block when no source has a route.
+    // No native route — but if an aggregator has one, the user can still
+    // swap. Only block when no source has a route. A per-swap cap (pool has
+    // liquidity, but this trade is too big for the oracle-AMM curve) gets a
+    // distinct message from a genuinely empty pool.
+    if (nativePoolMaxExceeded && !best) {
+      return 'Amount exceeds this pool’s per-trade limit. Reduce the amount.'
+    }
     if (nativePoolLiquidityInsufficient && !best) {
-      // Distinguish a per-swap cap (pool has liquidity, but this trade is too
-      // big for the oracle-AMM curve) from a genuinely empty pool.
-      return nativePoolMaxExceeded
-        ? 'Amount exceeds this pool’s per-trade limit. Reduce the amount.'
-        : 'Insufficient pool liquidity for this trade. Try a smaller amount.'
+      return 'Insufficient pool liquidity for this trade. Try a smaller amount.'
     }
     return undefined
   }, [rawSwapInputError, v2AmountOutExceedsReserve, best, nativePoolLiquidityInsufficient, nativePoolMaxExceeded])

@@ -333,11 +333,16 @@ export function useDerivedSwapInfo(): {
   // a route and the SDK signaled insufficient reserves. Surfaced as a
   // separate flag so the Swap page can combine it with aggregator-route
   // availability before deciding to block the swap.
+  const noNativeTrade = !v2Trade && !v3Trade && !v4Trade
   const nativePoolLiquidityInsufficient =
-    !!isInsufficient && !v2Trade && !v3Trade && !v4Trade && !isInputEmpty && !loadingExactIn && !loadingExactOut
+    !!isInsufficient && noNativeTrade && !isInputEmpty && !loadingExactIn && !loadingExactOut
 
-  // Same gate, but the cause is a per-swap cap rather than an empty pool.
-  const nativePoolMaxExceeded = nativePoolLiquidityInsufficient && someMaxExceeded
+  // A native pool rejected the trade for exceeding its per-swap cap. Driven
+  // directly off `someMaxExceeded` (NOT the all-pipelines-insufficient union,
+  // which is false whenever a pair has no V2 pool — e.g. V3-only pairs like
+  // HYPE/USDC on HyperEVM), so it still fires there.
+  const nativePoolMaxExceeded =
+    someMaxExceeded && noNativeTrade && !isInputEmpty && !loadingExactIn && !loadingExactOut
 
   return {
     currencies,
