@@ -448,8 +448,8 @@ export class Pair {
       const inToken = inputAmount.token
       const outToken = outputReserve.token
       const [priceIn, priceOut] = await Promise.all([
-        getPythPriceFn(inToken.address, chainId, 3),
-        getPythPriceFn(outToken.address, chainId, 3),
+        getPythPriceFn(inToken.address, chainId, version),
+        getPythPriceFn(outToken.address, chainId, version),
       ])
       if (priceIn > 0 && priceOut > 0) {
         const inAmt = Number(inputAmount.toExact())
@@ -548,8 +548,8 @@ export class Pair {
       const inToken = inputReserve.token
       const outToken = outputAmount.token
       const [priceIn, priceOut] = await Promise.all([
-        getPythPriceFn(inToken.address, chainId, 3),
-        getPythPriceFn(outToken.address, chainId, 3),
+        getPythPriceFn(inToken.address, chainId, version),
+        getPythPriceFn(outToken.address, chainId, version),
       ])
       if (priceIn > 0 && priceOut > 0) {
         const inAmt = Number(inputAmountResult.toExact())
