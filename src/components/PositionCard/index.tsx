@@ -145,12 +145,18 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
     const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(6)) || 1)
+    // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
+    // values (e.g. 6,606,088% / 2,378,191,932%). Below a $1 TVL floor the
+    // numbers are meaningless — zero them so the columns render their default
+    // "--" instead. Threshold, not `tvl > 0`, because a $0.50 pool still blows up.
+    const MIN_TVL_FOR_RATIOS = 1
+    const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS
     // 24h Fees / TVL — simple daily ratio, no annualization
     const feeDay = Number(pairStats?.feeDay) || 0
-    const feeOverTvl = tvl > 0 ? (feeDay / tvl) * 100 : 0
+    const feeOverTvl = ratiosMeaningful ? (feeDay / tvl) * 100 : 0
     // Annualized fee APR (LP share)
     const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
-    const feeAPR = shouldUseIndexer ? feeAPRIndexer : feeAPRFallback
+    const feeAPR = ratiosMeaningful ? (shouldUseIndexer ? feeAPRIndexer : feeAPRFallback) : 0
     return { tvl, lpPrice, feeOverTvl, feeAPR }
   }, [token0Price, token1Price, pair, totalPoolTokens, pairStats?.feeDay, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
 
