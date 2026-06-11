@@ -24,7 +24,8 @@ const PoolFinder = lazy(() => import('./PoolFinder'))
 const AddLiquidity = lazy(() => import('./AddLiquidity'))
 const RemoveLiquidity = lazy(() => import('./RemoveLiquidity'))
 const PoolDetail = lazy(() => import('./Pool/Detail'))
-const Portfolio = lazy(() => import('./Portfolio'))
+// Portfolio temporarily hidden on beta — re-enable with the /portfolio route below + the Header nav link.
+// const Portfolio = lazy(() => import('./Portfolio'))
 
 const BodyWrapper = styled.div`
   display: flex;
@@ -92,6 +93,10 @@ export default function App() {
                 </RouteErrorBoundary>
               }
             />
+            {/* Portfolio temporarily hidden on beta — /portfolio falls through
+                to the catch-all `*` route and redirects to /swap. Re-enable
+                by uncommenting this route, the lazy import above, and the
+                Header nav link.
             <Route
               path="/portfolio"
               element={
@@ -100,6 +105,7 @@ export default function App() {
                 </RouteErrorBoundary>
               }
             />
+            */}
             <Route
               path="/pool/:chainId/:pairAddress"
               element={
