@@ -15,7 +15,7 @@ import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
 import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
-import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
+import { useV3Indexer, isV3Like, versionLabel } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
@@ -355,7 +355,7 @@ function PoolDetailInner({
                 color: '#FBFBFD',
               }}
             >
-              v{version}
+              {versionLabel(version)}
             </span>
             <span
               style={{
@@ -449,7 +449,7 @@ function PoolDetailInner({
                   color: '#FBFBFD',
                 }}
               >
-                v{version}
+                {versionLabel(version)}
               </span>
               <span
                 style={{

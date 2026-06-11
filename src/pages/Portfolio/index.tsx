@@ -1,3 +1,4 @@
+import { versionLabel } from 'lib/sdk/constants/addresses'
 import { isV3Like } from '@brownfi/sdk'
 /**
  * My Portfolio page — single-chain view of the connected user's LP
@@ -158,7 +159,7 @@ function VersionBadge({ version }: { version: 2 | 3 }) {
         letterSpacing: '0.04em',
       }}
     >
-      V{version}
+      {versionLabel(version)}
     </span>
   )
 }

@@ -79,6 +79,11 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 export const isV3Like = (version: number | undefined | null): boolean =>
   version === 3 || version === 4
 
+/** User-facing label for a protocol version. Internal version 4 is the
+ *  OFFICIAL V3 deployment — never show "V4" to users. */
+export const versionLabel = (version: number | undefined | null): string =>
+  version === 4 ? 'V3 Official' : version === 3 ? 'V3 Pilot' : `V${version ?? 2}`
+
 // version 3 — PILOT (pre-v3-final, Bera only; zap on router)
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0xFB473aEAe9b0d03c6974BCf5f2B67dA4AF7F6043',
