@@ -12,7 +12,12 @@ type Option = { label: string; version: number }
 
 const SwitchVersion = ({ isMobile }: Props) => {
   const { chainId } = useActiveWeb3React()
-  const { appVersion: version, isDisabled, switchVersion } = useVersion({ chainId })
+  // Highlight the EFFECTIVE version (useVersion already falls back to a
+  // chain-supported one), not the raw stored appVersion. Otherwise, switching
+  // from a chain with V3 Pilot (v3) to one without it (e.g. HyperEVM = V2 +
+  // V3 Official only) left the toggle with nothing selected while the pool
+  // list correctly showed the fallback (V2).
+  const { version, isDisabled, switchVersion } = useVersion({ chainId })
 
   // Build from the deployment tables: Bera has both V3s → V2 / V3 Official /
   // V3 Pilot; HyperEVM has official only → V2 / V3 Official.
