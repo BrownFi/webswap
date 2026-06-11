@@ -24,11 +24,11 @@ import {
   buildV3UpdateData,
   buildV3ZapInTx,
   buildV3ZapOutTx,
+  getV3ZapAddress,
   getV3ZapEstimate,
   isV3ZapSupported,
 } from 'utils/v3Zap'
 import { RPC_URLS } from 'lib/sdk/constants/addresses'
-import { getRouterAddress } from 'lib/sdk/utils'
 import type { BrownFiVersion } from '../types'
 import type {
   BuildZapInParams,
@@ -252,7 +252,13 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       amountOther: BigNumber.from(amountOut.toString()),
     }).catch(() => BigNumber.from(0))
 
-    const routerAddress = getRouterAddress(params.chainId, params.version)
+    // `routerAddress` is the unified route's APPROVAL SPENDER + tx target —
+    // i.e. the contract the zap tx is sent to and that pulls tokens via
+    // transferFrom. For the native zap that's the zap contract, NOT the swap
+    // router. They're the same address on pilot (zap falls back to router) but
+    // differ on V3 Official, where approving the router left the zap contract
+    // without an allowance → zapIn reverted on estimateGas.
+    const routerAddress = getV3ZapAddress(params.chainId, params.version)
     if (!routerAddress) return null
 
     return {
@@ -351,7 +357,13 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     const amountOut = directOut.add(swapAmountOut)
     if (amountOut.lte(0)) return null
 
-    const routerAddress = getRouterAddress(params.chainId, params.version)
+    // `routerAddress` is the unified route's APPROVAL SPENDER + tx target —
+    // i.e. the contract the zap tx is sent to and that pulls tokens via
+    // transferFrom. For the native zap that's the zap contract, NOT the swap
+    // router. They're the same address on pilot (zap falls back to router) but
+    // differ on V3 Official, where approving the router left the zap contract
+    // without an allowance → zapIn reverted on estimateGas.
+    const routerAddress = getV3ZapAddress(params.chainId, params.version)
     if (!routerAddress) return null
 
     return {
