@@ -169,6 +169,7 @@ export default function Swap() {
   const {
     v2Trade,
     v3Trade,
+    v4Trade,
     currencyBalances,
     parsedAmount,
     currencies,
@@ -295,6 +296,7 @@ export default function Swap() {
   } = useBestSwapRoute({
     v2Trade: showWrap ? undefined : v2Trade,
     v3Trade: showWrap ? undefined : v3Trade,
+    v4Trade: showWrap ? undefined : v4Trade,
     v2Unavailable: v2AmountOutExceedsReserve,
     tokenIn: currencies[Field.INPUT],
     tokenOut: currencies[Field.OUTPUT],

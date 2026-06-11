@@ -14,16 +14,18 @@ export type AggregatorId = 'kyber' | '1inch' | 'paraswap' | 'okx'
 /** Every route source the smart router can emit: BrownFi-native versions
  *  (each pool generation is a distinct source so the user can compare V2
  *  vs V3 quotes side-by-side) plus every registered external aggregator. */
-export type RouteSource = 'brownfi-v2' | 'brownfi-v3' | AggregatorId
+// brownfi-v3 = V3 Pilot (version 3); brownfi-v4 = V3 Official (version 4).
+export type RouteSource = 'brownfi-v2' | 'brownfi-v3' | 'brownfi-v4' | AggregatorId
 
 /** The user's route preference. `auto` lets orchestration pick the best
  *  amountOut across all sources. Legacy `'native'` is still accepted from
  *  persisted state — the user reducer migrates it to `'auto'`. */
 export type AggregatorChoice = 'auto' | RouteSource | 'native'
 
-/** True when the source is a BrownFi-native pool quote (V2 or V3). */
+/** True when the source is a BrownFi-native pool quote (V2, V3 pilot, or V3
+ *  official). */
 export function isBrownFiSource(source: RouteSource | undefined): boolean {
-  return source === 'brownfi-v2' || source === 'brownfi-v3'
+  return source === 'brownfi-v2' || source === 'brownfi-v3' || source === 'brownfi-v4'
 }
 
 /** BrownFi pool version that the aggregator's BrownFi liquidity feed knows about. */
