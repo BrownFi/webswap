@@ -2,7 +2,7 @@ import { isV3Like } from '@brownfi/sdk'
 import { Pair } from '@brownfi/sdk'
 import { TransactionResponse } from '@ethersproject/providers'
 import { Contract } from '@ethersproject/contracts'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Text } from 'components/Rebass'
 
 import { ButtonPrimary } from 'components/Button'
@@ -120,6 +120,18 @@ const toPREC = (v: string): string => {
   return (negative ? -result : result).toString()
 }
 
+// Q64 value to send for a kappa/lambda field. When the input still equals the
+// pre-filled display (i.e. the admin didn't touch this field), send the EXACT
+// on-chain raw Q64 instead of re-encoding the decimal. The round-trip
+// raw → "0.005" → toQ64 is NOT identity for values written by the old
+// float-based toQ64 (off by 1–2 wei), so on a pool sitting at the
+// 2*lambda == min(kB,kQ) boundary, re-sending an "unchanged" kB silently
+// dropped it a couple wei and reverted 'PairConfig: LAMBDA_TOO_HIGH'.
+const q64Field = (input: string, displayVal: number | undefined, raw: string | undefined): string => {
+  if (raw !== undefined && displayVal !== undefined && input.trim() === round(displayVal)) return raw
+  return toQ64(input)
+}
+
 // Row component MUST live outside the parent — declaring it inside causes
 // React to remount the <input> on every render (new function identity ⇒ new
 // component type), which makes the input lose focus after each keystroke.
@@ -184,6 +196,56 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : library
     return new Contract(addr, V3_FACTORY_SETTERS_ABI, signer)
   }, [isV3, version, library, account, chainId])
+
+  // Exact on-chain raw Q64 config (kB/kQ/lambda), read once when the modal
+  // opens. Used to preserve fields the admin didn't change — see q64Field.
+  const [rawConfig, setRawConfig] = useState<{ kB?: string; kQ?: string; lambda?: string }>({})
+  useEffect(() => {
+    if (!isOpen || !isV3 || !chainId) return
+    let stale = false
+    ;(async () => {
+      try {
+        const { createPublicClient, http } = await import('viem')
+        const { RPC_URLS } = await import('lib/sdk/constants/addresses')
+        const factoryAddr = factoryV3Gen(version)[chainId]
+        if (!factoryAddr) return
+        const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+        const cfgAddr = await client.readContract({
+          address: factoryAddr as `0x${string}`,
+          abi: [{ inputs: [], name: 'pairConfig', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' }] as const,
+          functionName: 'pairConfig',
+        })
+        const c = (await client.readContract({
+          address: cfgAddr as `0x${string}`,
+          abi: [{
+            inputs: [{ type: 'address' }],
+            name: 'getConfig',
+            outputs: [{
+              components: [
+                { name: 'kB', type: 'uint256' }, { name: 'kQ', type: 'uint256' }, { name: 'lambda', type: 'uint64' },
+                { name: 'fee', type: 'uint32' }, { name: 'feeSplit', type: 'uint32' }, { name: 'compress', type: 'uint32' },
+                { name: 'sSell', type: 'uint32' }, { name: 'sBuy', type: 'uint32' }, { name: 'fixS', type: 'uint32' },
+                { name: 'disThreshold', type: 'uint32' }, { name: 'sBound', type: 'uint32' }, { name: 'pythWeight', type: 'uint32' },
+                { name: 'gamma', type: 'uint32' },
+              ],
+              type: 'tuple',
+            }],
+            stateMutability: 'view', type: 'function',
+          }] as const,
+          functionName: 'getConfig',
+          args: [pair.liquidityToken.address as `0x${string}`],
+        })) as { kB: bigint; kQ: bigint; lambda: bigint }
+        if (!stale) setRawConfig({ kB: c.kB.toString(), kQ: c.kQ.toString(), lambda: c.lambda.toString() })
+      } catch {
+        // No raw config (pool not yet created, RPC error) — q64Field falls
+        // back to re-encoding the input, same as before.
+        if (!stale) setRawConfig({})
+      }
+    })()
+    return () => {
+      stale = true
+    }
+  }, [isOpen, isV3, chainId, version, pair.liquidityToken.address])
 
   // Inputs — one per row (kappa + spread are paired sub-inputs)
   const [kInput, setKInput] = useState('')
@@ -324,11 +386,16 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     const kB = kBInput || (currentValues?.kB !== undefined ? round(currentValues.kB) : '')
     const kQ = kQInput || (currentValues?.kQ !== undefined ? round(currentValues.kQ) : '')
     if (!kB || !kQ) return createToast('Enter both kB and kQ (or open this modal on an existing pool to inherit)', 'error')
+    // setKappaOfPair sets BOTH kB and kQ, so changing one re-sends the other.
+    // Preserve the exact stored raw Q64 for the unchanged side so it doesn't
+    // drift below 2*lambda at the boundary (see q64Field).
+    const kBq = q64Field(kB, currentValues?.kB, rawConfig.kB)
+    const kQq = q64Field(kQ, currentValues?.kQ, rawConfig.kQ)
     return runSubmit(
       'kappa', 'Set Kappa',
-      () => factoryV3!.setKappaOfPair(tokenA, tokenB, toQ64(kB), toQ64(kQ)),
+      () => factoryV3!.setKappaOfPair(tokenA, tokenB, kBq, kQq),
       'v3',
-      () => factoryV3!.callStatic.setKappaOfPair(tokenA, tokenB, toQ64(kB), toQ64(kQ)),
+      () => factoryV3!.callStatic.setKappaOfPair(tokenA, tokenB, kBq, kQq),
     )
   }
 
@@ -336,9 +403,9 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     isV3
       ? runSubmit(
           'lambda', 'Set Lambda',
-          () => factoryV3!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)),
+          () => factoryV3!.setLambdaOfPair(tokenA, tokenB, q64Field(lambdaInput, currentValues?.lambda, rawConfig.lambda)),
           'v3',
-          () => factoryV3!.callStatic.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)),
+          () => factoryV3!.callStatic.setLambdaOfPair(tokenA, tokenB, q64Field(lambdaInput, currentValues?.lambda, rawConfig.lambda)),
         )
       : runSubmit('lambda', 'Set Lambda', () => factoryContract!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v2')
 
