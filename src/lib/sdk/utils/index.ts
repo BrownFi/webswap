@@ -126,6 +126,23 @@ export function getFactoryAddress(chainId: number, version: number): string {
 }
 
 export function getInitCodeHash(chainId: number, version: number): string {
+  // V3 pairs are deployed via factory.createPair (registry), not CREATE2.
+  // Pair.getAddress's CREATE2 computation runs anyway during `new Pair(...)`
+  // but the result is discarded — MemoizedPairList overrides liquidityToken
+  // with the real registry address right after construction. So we just need
+  // a non-undefined 32-byte hash to keep getCreate2Address from crashing on
+  // chains that don't have a V1 entry (e.g. HyperEVM). Fall back to V2's
+  // hash; if that's also missing, use zero hash — either way the value is
+  // never read by anything that depends on its correctness.
+  if (version === 3) {
+    // Try V1's hash first so Bera (which already had this implicit behavior
+    // pre-fix via `version === 2 ? ... : INIT_CODE_HASH_V1[chainId]`) keeps
+    // computing the exact same dummy address it always did — no behavior
+    // change there. New chains without a V1 entry (HyperEVM) fall through
+    // to V2's hash, then to the zero hash. The CREATE2 result is discarded
+    // for V3, so the specific value doesn't matter — only "non-undefined".
+    return INIT_CODE_HASH_V1[chainId] ?? INIT_CODE_HASH[chainId] ?? '0x0000000000000000000000000000000000000000000000000000000000000000'
+  }
   return version === 2 ? INIT_CODE_HASH[chainId] : INIT_CODE_HASH_V1[chainId]
 }
 

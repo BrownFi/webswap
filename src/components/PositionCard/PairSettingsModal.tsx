@@ -17,10 +17,13 @@ import { FACTORY_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
 import { decodeContractError } from 'utils/decodeContractError'
 import { isUserRejection } from 'utils/zapErrors'
 
-// V3-only setters live on the new V3 factory but aren't in IBrownFiV2Factory.json
-// (the JSON only carries the V2 surface + `setConfigOfPair`). Define the V3
-// setter signatures inline so we can build an ethers Contract directly for V3
-// admin writes — no need to extend the shared ABI artifact.
+// V3 admin setters as exposed by the v3-final factory. The PairConfig
+// restructure REPLACED the old struct-based `setConfigOfPair(tokenA, tokenB,
+// Config tuple)` with one granular setter per parameter — each forwards to the
+// matching BrownFiV3PairConfig per-field setter. Calling the removed bulk
+// setter (selector 0x692ef4d2) hits a non-existent function on the deployed
+// factory and reverts with no reason string (data="0x"), which is what broke
+// every admin write. Each `submit*` handler below calls its own setter.
 const V3_FACTORY_SETTERS_ABI = [
   'function setKappaOfPair(address tokenA, address tokenB, uint256 kB, uint256 kQ)',
   'function setLambdaOfPair(address tokenA, address tokenB, uint64 lambda)',
@@ -101,7 +104,21 @@ const toQ64 = (v: string): string => {
   const result = (scaled * Q64) / SCALE
   return (negative ? -result : result).toString()
 }
-const toPREC = (v: string) => Math.floor(Number(v) * 10 ** 8).toString()
+// BigInt-based PRECISION (1e8) conversion. Same motivation as toQ64: the naive
+// `Math.floor(Number(v) * 1e8)` loses a ulp on values like 0.29 (→ 28999999)
+// because the float product lands just under the integer. String-splitting the
+// integer and fractional digits keeps it exact, so a nominally-valid input
+// can't revert on an off-by-one bound (e.g. gamma 0.4 → exactly 40000000).
+const toPREC = (v: string): string => {
+  const trimmed = (v ?? '').trim()
+  if (!trimmed || isNaN(Number(trimmed))) return '0'
+  const negative = trimmed.startsWith('-')
+  const cleaned = negative ? trimmed.slice(1) : trimmed
+  const [intPart = '0', fracRaw = ''] = cleaned.split('.')
+  const fracPart = fracRaw.padEnd(8, '0').slice(0, 8) // PRECISION = 1e8 → 8 decimals
+  const result = BigInt(intPart) * 10n ** 8n + BigInt(fracPart)
+  return (negative ? -result : result).toString()
+}
 
 // Row component MUST live outside the parent — declaring it inside causes
 // React to remount the <input> on every render (new function identity ⇒ new
@@ -285,16 +302,17 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   const tokenB = pair.token1.address
 
   // ─── Submitters (one per row) ─────────────────────────────────────────────
-  // V2 path uses `factoryContract` (legacy V2 ABI). V3 path uses `factoryV3`
-  // (inline ABI, dedicated setters). V3 lambda/fee both have dedicated
-  // setters too — share names with V2 but the contract is different.
+  // V2 keeps its legacy per-field setters (factoryContract). V3 calls the
+  // granular per-field factory setters directly — one tx touches exactly one
+  // field, so there's no read-modify-write of the whole Config and no risk of
+  // an unrelated stale/zeroed field clobbering on-chain state. Each V3 call
+  // passes a `callStatic` dry-run so Factory→PairConfig revert reasons (e.g.
+  // 'PairConfig: GAMMA_TOO_LOW') survive to the toast instead of being dropped
+  // by estimateGas as a bare UNPREDICTABLE_GAS_LIMIT.
   const submitK = () =>
     runSubmit('k', 'Set K', () => factoryContract!.setKOfPair(tokenA, tokenB, toQ64(kInput)), 'v2')
 
   const submitKappa = () => {
-    // Each input falls back to its current on-chain value (so user can set
-    // just kQ without re-typing kB). Refuse to send if either side is empty
-    // and we have no current value — silently sending 0 would brick the pool.
     const kB = kBInput || (currentValues?.kB !== undefined ? round(currentValues.kB) : '')
     const kQ = kQInput || (currentValues?.kQ !== undefined ? round(currentValues.kQ) : '')
     if (!kB || !kQ) return createToast('Enter both kB and kQ (or open this modal on an existing pool to inherit)', 'error')
@@ -326,26 +344,21 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
         )
       : runSubmit('fee', 'Set Fee', () => factoryContract!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v2')
 
-  const submitProtocolFee = () => {
-    if (isV3) {
-      return runSubmit(
-        'protocolFee', 'Set FeeSplit',
-        () => factoryV3!.setFeeSplitOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
-        'v3',
-        () => factoryV3!.callStatic.setFeeSplitOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
-      )
-    }
-    return runSubmit(
-      'protocolFee', 'Set Protocol Fee',
-      () => factoryContract!.setProtocolFeeOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
-      'v2',
-    )
-  }
+  const submitProtocolFee = () =>
+    isV3
+      ? runSubmit(
+          'protocolFee', 'Set FeeSplit',
+          () => factoryV3!.setFeeSplitOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
+          'v3',
+          () => factoryV3!.callStatic.setFeeSplitOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
+        )
+      : runSubmit(
+          'protocolFee', 'Set Protocol Fee',
+          () => factoryContract!.setProtocolFeeOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
+          'v2',
+        )
 
   const submitSpread = () => {
-    // Each sub-input falls back to its current on-chain value. Refuse to
-    // send if any field has neither input nor current value — sending 0 for
-    // missing fields would silently flatten the spread curve.
     const compress = compressInput || (currentValues?.compress !== undefined ? round(currentValues.compress) : '')
     const sSell = sSellInput || (currentValues?.sSell !== undefined ? round(currentValues.sSell) : '')
     const sBuy = sBuyInput || (currentValues?.sBuy !== undefined ? round(currentValues.sBuy) : '')
@@ -361,31 +374,36 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   }
 
   const submitFixS = () =>
-    runSubmit('fixS', 'Set fixS',
+    runSubmit(
+      'fixS', 'Set fixS',
       () => factoryV3!.setFixSpreadOfPair(tokenA, tokenB, toPREC(fixSInput)),
       'v3',
       () => factoryV3!.callStatic.setFixSpreadOfPair(tokenA, tokenB, toPREC(fixSInput)),
     )
   const submitDisThreshold = () =>
-    runSubmit('disThreshold', 'Set disThreshold',
+    runSubmit(
+      'disThreshold', 'Set disThreshold',
       () => factoryV3!.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)),
       'v3',
       () => factoryV3!.callStatic.setDisThresholdOfPair(tokenA, tokenB, toPREC(disThresholdInput)),
     )
   const submitSBound = () =>
-    runSubmit('sBound', 'Set sBound',
+    runSubmit(
+      'sBound', 'Set sBound',
       () => factoryV3!.setSboundOfPair(tokenA, tokenB, toPREC(sBoundInput)),
       'v3',
       () => factoryV3!.callStatic.setSboundOfPair(tokenA, tokenB, toPREC(sBoundInput)),
     )
   const submitPythWeight = () =>
-    runSubmit('pythWeight', 'Set pythWeight',
+    runSubmit(
+      'pythWeight', 'Set pythWeight',
       () => factoryV3!.setPythWeightOfPair(tokenA, tokenB, toPREC(pythWeightInput)),
       'v3',
       () => factoryV3!.callStatic.setPythWeightOfPair(tokenA, tokenB, toPREC(pythWeightInput)),
     )
   const submitGamma = () =>
-    runSubmit('gamma', 'Set gamma',
+    runSubmit(
+      'gamma', 'Set gamma',
       () => factoryV3!.setGammaOfPair(tokenA, tokenB, toPREC(gammaInput)),
       'v3',
       () => factoryV3!.callStatic.setGammaOfPair(tokenA, tokenB, toPREC(gammaInput)),
@@ -404,7 +422,9 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
       >
         <style>{`.pair-settings-scroll::-webkit-scrollbar { display: none; }`}</style>
         <RowBetween>
-          <Text fontSize={18} fontWeight={600}>Pair settings</Text>
+          <Text fontSize={18} fontWeight={600}>
+            Pair settings — {pair.token0.symbol}/{pair.token1.symbol}
+          </Text>
           <CloseIcon onClick={handleDismiss} />
         </RowBetween>
 

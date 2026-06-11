@@ -1,4 +1,5 @@
 import { ChainId } from '@brownfi/sdk'
+import { V3_USE_INDEXER } from 'lib/sdk/constants/addresses'
 
 export const graphqlFetcher = async ({
   operationName,
@@ -15,8 +16,31 @@ export const graphqlFetcher = async ({
   if (chainId !== ChainId.BERA_MAINNET) {
     query = query.replace(/stakeLP/g, '')
   }
-  const path = version === 3 ? '/indexer/v3' : '/indexer'
-  const url = `${import.meta.env.VITE_API_URL}${path}?chainId=${chainId}`
+  // V3 routing per chain.
+  //
+  // - Bera: temporary Goldsky subgraph at VITE_INDEXER_V3_URL (the BE
+  //   hasn't folded the Bera v3-final factory into the main /indexer/v3
+  //   path yet). The map below applies the override ONLY to Bera so the
+  //   URL doesn't accidentally serve other chains.
+  // - HyperEVM (and any future chain): standard
+  //   VITE_API_URL/indexer/v3?chainId={chainId} — the BE-hosted multi-
+  //   chain V3 indexer. When the chain's subgraph isn't live yet, the
+  //   response is a clean 404 caught by React Query (Pool list/detail
+  //   fall back to the on-chain hook via V3_USE_INDEXER[chainId]=false).
+  // - V2 always uses VITE_API_URL/indexer.
+  //
+  // When BE migrates Bera to /indexer/v3 too, unset VITE_INDEXER_V3_URL
+  // (or drop the Bera entry below) and Bera will fall through to the
+  // standard path like every other chain.
+  const V3_OVERRIDE_URL: Record<number, string | undefined> = {
+    [ChainId.BERA_MAINNET]: import.meta.env.VITE_INDEXER_V3_URL,
+  }
+  const override = V3_OVERRIDE_URL[chainId]
+  const useOverride =
+    version === 3 && !!override && (V3_USE_INDEXER[chainId] ?? false)
+  const url = useOverride
+    ? override
+    : `${import.meta.env.VITE_API_URL}${version === 3 ? '/indexer/v3' : '/indexer'}?chainId=${chainId}`
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10_000)
   try {

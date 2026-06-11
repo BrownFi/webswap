@@ -11,7 +11,7 @@ import { AutoColumn, ColumnCenter } from 'components/Column'
 import ConnectWallet from 'components/ConnectWallet'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { Loader } from 'components/Loader'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import NumericInput from 'components/NumericInput'
@@ -377,7 +377,7 @@ export default function RemoveLiquidity() {
       <>
         <RowBetween>
           <Text color={theme.white} fontWeight={500} fontSize={16} opacity={0.5}>
-            {getTokenSymbol(currencyA, chainId) + '/' + getTokenSymbol(currencyB, chainId)} Burned
+            <DoubleCurrencySymbol currency0={currencyA} currency1={currencyB} /> Burned
           </Text>
           <RowFixed>
             <DoubleCurrencyLogo currency0={currencyA} currency1={currencyB} margin={true} />

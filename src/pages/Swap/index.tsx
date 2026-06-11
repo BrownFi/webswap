@@ -903,9 +903,23 @@ export default function Swap() {
                 {wrapInputError ??
                   (wrapType === WrapType.WRAP ? 'Wrap' : wrapType === WrapType.UNWRAP ? 'Unwrap' : null)}
               </ButtonPrimary>
-            ) : isLoadingWrap || ((loadingExactIn || loadingExactOut) && userHasSpecifiedInputOutput && !swapInputError) ? (
+            ) : isLoadingWrap || (isLoadingOrStale && userHasSpecifiedInputOutput) ? (
+              // Use isLoadingOrStale (the same signal that gates the route
+              // details/skeleton) rather than just loadingExactIn/Out — the
+              // latter has gaps (debounce + async reserve-load window) where no
+              // flag is hot yet, leaving the button with no loading feedback on
+              // no-aggregator pairs. This keeps the button in sync with the
+              // skeleton: loading from keystroke until the quote resolves.
+              //
+              // NOTE: intentionally NOT gated on `!swapInputError`. Errors like
+              // "Insufficient balance" are known synchronously, but the user
+              // still needs immediate confirmation that their input registered
+              // and a quote is being fetched (the output field's opacity pulse
+              // is too subtle, esp. on an empty field). Once the quote resolves
+              // and isLoadingOrStale clears, this falls through to the balance/
+              // error button below.
               <ButtonError disabled>
-                <Dots>Loading</Dots>
+                <Dots>Finding best price</Dots>
               </ButtonError>
             ) : noRoute && userHasSpecifiedInputOutput && !swapInputError ? (
               <ButtonError disabled>

@@ -9,7 +9,11 @@ import { useActiveWeb3React } from './index'
 import { useUnsupportedTokens } from './Tokens'
 import { useUserSingleHopOnly } from 'state/user/hooks'
 
-function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency, versionOverride?: number): Pair[] {
+function useAllCommonPairs(
+  currencyA?: Currency,
+  currencyB?: Currency,
+  versionOverride?: number,
+): { pairs: Pair[]; loading: boolean } {
   const { chainId } = useActiveWeb3React()
 
   const [tokenA, tokenB] = chainId
@@ -67,7 +71,7 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency, versionOv
   const allPairs = usePairs(allPairCombinations, versionOverride)
 
   // only pass along valid pairs, non-duplicated pairs
-  return useMemo(
+  const pairs = useMemo(
     () =>
       Object.values(
         allPairs
@@ -81,6 +85,15 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency, versionOv
       ),
     [allPairs],
   )
+
+  // True while ANY candidate pair is still resolving (V3 factory.getPair +
+  // reserve reads are async and can take ~1.5s). Consumers fold this into
+  // their loading flag so the UI keeps a skeleton up during the reserves-load
+  // window — otherwise an empty-pairs pass looks like a finished quote and the
+  // loading indicator clears early (dead zone, esp. on no-aggregator V3 pairs).
+  const loading = useMemo(() => allPairs.some(([state]) => state === PairState.LOADING), [allPairs])
+
+  return { pairs, loading }
 }
 
 type TradeExactIn = {
@@ -100,13 +113,22 @@ export function useTradeExactIn(
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
 
-  const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut, versionOverride)
+  const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
+    currencyAmountIn?.currency,
+    currencyOut,
+    versionOverride,
+  )
   const { account } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
   useEffect(() => {
     let stale = false
+
+    // Engage loading synchronously on input/pair change — before the 300ms
+    // debounce — so the UI never sees a false-negative gap while the debounce
+    // and the async quote run.
+    if (currencyAmountIn && currencyOut) setLoading(true)
 
     const getTrade = async () => {
       setLoading(true)
@@ -176,7 +198,9 @@ export function useTradeExactIn(
 
   return {
     trade: trade,
-    loadingExactIn: loading,
+    // Stay loading while reserves/pair addresses are still resolving so the
+    // skeleton doesn't clear during the on-chain pair-lookup window.
+    loadingExactIn: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
   }
 }
@@ -198,13 +222,21 @@ export function useTradeExactOut(
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
 
-  const allowedPairs = useAllCommonPairs(currencyIn, currencyAmountOut?.currency, versionOverride)
+  const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
+    currencyIn,
+    currencyAmountOut?.currency,
+    versionOverride,
+  )
   const { account } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
   useEffect(() => {
     let stale = false
+
+    // Engage loading synchronously on input/pair change — before the 300ms
+    // debounce — so the UI never sees a false-negative gap.
+    if (currencyIn && currencyAmountOut) setLoading(true)
 
     const getTrade = async () => {
       setTrade(null)
@@ -280,7 +312,7 @@ export function useTradeExactOut(
 
   return {
     trade: trade,
-    loadingExactOut: loading,
+    loadingExactOut: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
   }
 }

@@ -131,6 +131,11 @@ const monad = overrideChain({
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
+// Display-only navbar badge label. Decoupled from `appEnv` (which selects
+// chains/API) so a deployment can run beta-tier infra while still labeling
+// itself per branch: develop → 'dev', beta → 'beta' (falls back to appEnv).
+export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
+
 // Feature capability derived from the API URL, NOT the env name. The two are
 // orthogonal:
 //   - VITE_ENVIRONMENT controls deployment identity (mainnet/beta/testnet).

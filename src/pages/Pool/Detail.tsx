@@ -1,17 +1,21 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Settings } from 'react-feather'
 import { Address, checksumAddress } from 'viem'
 
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
+import { shouldReverse } from 'utils/pair'
+import { useChainGuard } from 'hooks/useChainGuard'
 import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
+import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
+import { useV3Indexer } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
@@ -55,10 +59,10 @@ const GET_PAIR = `
   }
 `
 
-// V3 indexer schema: feeSplit instead of protocolFee, kB/kQ instead of k, plus
-// the spread/skew/blend config and uniV2 reference price. We alias feeSplit→
-// protocolFee and kB→k client-side so the rest of this page stays version-
-// agnostic.
+// V3 indexer schema: feeSplit instead of protocolFee, kB+kQ instead of k,
+// plus spread/skew/blend config and a uniV2 reference price. Aliased to V2
+// field names client-side so the rest of this page stays version-agnostic.
+// Used only when v3UseIndexer is true; on-chain hook covers the other case.
 const GET_PAIR_V3 = `
   query PairDetailV3($id: ID!) {
     pair(id: $id) {
@@ -135,11 +139,24 @@ type PairRaw = {
 export default function PoolDetail() {
   const { pairAddress, chainId: chainIdParam } = useParams<{ pairAddress: string; chainId: string }>()
   const chainId = Number(chainIdParam)
-  const { version } = useVersion({ chainId })
+  const [searchParams] = useSearchParams()
+  const { version: reduxVersion } = useVersion({ chainId })
+  // Per-chain V3 indexer toggle. See constants/addresses.ts. HyperEVM
+  // currently `false` (factory live but subgraph not yet) → on-chain hook.
+  const v3UseIndexer = useV3Indexer(chainId)
+  // Version precedence: explicit `?v=` from URL > Redux toggle. Pool list
+  // and Portfolio links include the version so a V2 pool always queries
+  // /indexer and a V3 pool always queries /indexer/v3, regardless of the
+  // user's current V2/V3 toggle in the header. Old URLs without `?v=`
+  // (bookmarks, shared links) fall back to Redux for backward compat.
+  const urlVersion = (() => {
+    const raw = Number(searchParams.get('v'))
+    return raw === 2 || raw === 3 ? raw : undefined
+  })()
+  const version = urlVersion ?? reduxVersion
 
-  // Version-aware query. V3 hits /indexer/v3 with the V3 schema; the V2 path is
-  // unchanged. Aliasing (feeSplit→protocolFee, kB→k) happens after the fetch so
-  // every consumer downstream sees a uniform shape.
+  // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer
+  // (constants/addresses.ts). Same single-flag pattern as the pool list.
   const { data: pairRes, isLoading } = useQuery<{ pair: PairRaw | null }>({
     queryKey: ['pairDetail', chainId, pairAddress, version],
     queryFn: () =>
@@ -148,21 +165,28 @@ export default function PoolDetail() {
         query: version === 3 ? GET_PAIR_V3 : GET_PAIR,
         variables: { chainId, version, id: pairAddress?.toLowerCase() },
       }),
-    enabled: !!pairAddress && !!chainId,
+    enabled: !!pairAddress && !!chainId && (version !== 3 || v3UseIndexer),
     staleTime: 60_000,
   })
 
+  const { data: onChainPool, isLoading: isOnChainLoading } = useV3PoolOnChain(
+    chainId,
+    pairAddress,
+    version === 3 && !v3UseIndexer,
+  )
+
   const pairRaw = useMemo(() => {
+    if (version === 3 && !v3UseIndexer) {
+      // V3 on-chain path. Project PairStats onto PairRaw — chart/history
+      // fields stay undefined, which downstream components handle.
+      if (!onChainPool) return null
+      return { ...onChainPool, protocolFee: 0, k: undefined } as unknown as PairRaw
+    }
     const p = pairRes?.pair
     if (!p) return null
     if (version !== 3) return p
-    // V3 → unify field names with V2 expectations
-    return {
-      ...p,
-      protocolFee: p.protocolFee ?? p.feeSplit ?? 0,
-      k: p.k ?? p.kB,
-    }
-  }, [pairRes, version])
+    return { ...p, protocolFee: p.protocolFee ?? p.feeSplit ?? 0, k: p.k ?? p.kB }
+  }, [pairRes, onChainPool, version])
   const pair = useMemo(() => {
     if (!pairRaw || !chainId) return null
     const t0 = pairRaw.token0
@@ -193,9 +217,9 @@ export default function PoolDetail() {
         ← Back to pools
       </Link>
 
-      {isLoading && <PoolDetailSkeleton />}
+      {(isLoading || (version === 3 && !v3UseIndexer && isOnChainLoading)) && <PoolDetailSkeleton />}
 
-      {!isLoading && !pair && (
+      {!isLoading && !(version === 3 && !v3UseIndexer && isOnChainLoading) && !pair && (
         <div style={{ padding: '80px 0', textAlign: 'center', color: '#978A80', fontFamily: 'Inter' }}>
           Pool not found.
         </div>
@@ -222,6 +246,11 @@ function PoolDetailInner({
   const { chainId: walletChainId, account } = useActiveWeb3React()
   const { version, isBeta } = useVersion({ chainId, pair })
   const navigate = useNavigate()
+
+  // Chain match check for the action buttons (Add Liquidity, Swap). When
+  // wallet ≠ pool chain, the buttons morph to "Switch to {chain}" and call
+  // the wallet switch on click, then proceed to the action after success.
+  const { matches: walletMatchesPool, targetChainName, switchToTarget, isSwitching } = useChainGuard(chainId)
 
   // Detect wallet chain CHANGE (not initial mismatch). If user actively
   // switches to a chain that doesn't match this pool, send them to /pool
@@ -282,8 +311,6 @@ function PoolDetailInner({
   const symbol0 = (getTokenSymbol(currency0, chainId) ?? '?')
   const symbol1 = (getTokenSymbol(currency1, chainId) ?? '?')
 
-  const chainMismatch = walletChainId && walletChainId !== chainId
-
   // USD value breakdown for the pool balance bar
   const reserve0Num = Number(pair.reserve0.toSignificant(8)) || 0
   const reserve1Num = Number(pair.reserve1.toSignificant(8)) || 0
@@ -295,6 +322,18 @@ function PoolDetailInner({
   const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
   const pct1 = 100 - pct0
 
+  // Pool balances panel renders in base/quote order so the bar + labels
+  // stay consistent with the page title (which uses DoubleCurrencySymbol).
+  // All four bound values flip together to keep each row internally
+  // correct (reserve amount stays attached to its own symbol + color).
+  const isReversed = shouldReverse(`${symbol0}/${symbol1}`)
+  const balanceL = isReversed
+    ? { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
+    : { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
+  const balanceR = isReversed
+    ? { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
+    : { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
+
   return (
         <>
         {/* Mobile-only section: pair title + dev stats + rate, always on top */}
@@ -302,7 +341,7 @@ function PoolDetailInner({
           <div className="flex items-center gap-2 flex-wrap">
             <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={26} margin />
             <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>
-              {symbol0} / {symbol1}
+              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
             </span>
             <span
               style={{
@@ -389,26 +428,14 @@ function PoolDetailInner({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
           {/* Left column */}
           <div className="flex flex-col gap-5 order-2 lg:order-1">
-            {chainMismatch && (
-              <div
-                className="px-4 py-3"
-                style={{
-                  background: '#2F2823',
-                  border: '1px solid #493E35',
-                  borderRadius: '8px',
-                  fontFamily: 'Inter',
-                  fontSize: '13px',
-                  color: '#D8A072',
-                }}
-              >
-                This pool is on a different chain than your connected wallet. Switch wallet chain to use Swap / Add / Remove.
-              </div>
-            )}
+            {/* Cross-chain action affordance now lives ON the action buttons
+                themselves — they morph to "Switch to {chain}" when wallet ≠
+                pool chain. A standalone banner here was redundant. */}
             {/* Header — shown on desktop only; mobile header is above the grid */}
             <div className="hidden lg:flex items-center gap-3 flex-wrap">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} />
               <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', color: '#FBFBFD' }}>
-                {symbol0} / {symbol1}
+                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
               </span>
               <span
                 style={{
@@ -622,12 +649,25 @@ function PoolDetailInner({
                 inline buttons side-by-side so they stay above the fold without
                 eating vertical space. */}
             <div className="hidden lg:grid grid-cols-2 gap-2">
-              <Link
-                to={`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`}
-                className="no-underline inline-flex items-center justify-center"
+              {/* Swap + Add Liquidity action buttons. Both are click-handlers
+                  (not raw Links) so we can branch on wallet chain match:
+                  if matches → navigate; if not → trigger wallet switch and
+                  navigate on success. Mirrors Uniswap's multi-chain pattern. */}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!walletMatchesPool) {
+                    await switchToTarget()
+                    // Don't navigate after the switch — the user may have
+                    // rejected. They can re-click; matches will be true now
+                    // if accepted, falling through to the navigate branch.
+                    return
+                  }
+                  navigate(`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`)
+                }}
+                disabled={isSwitching}
+                className="inline-flex items-center justify-center"
                 style={{
-                  // Match the Remove button (secondary outline) in
-                  // YourPositionCard so the two action sets read consistently.
                   background: 'transparent',
                   border: '1px solid #493E35',
                   borderRadius: '8px',
@@ -636,25 +676,38 @@ function PoolDetailInner({
                   fontSize: '14px',
                   fontWeight: 500,
                   color: '#FBFBFD',
+                  cursor: isSwitching ? 'wait' : 'pointer',
+                  opacity: isSwitching ? 0.7 : 1,
                 }}
               >
-                Swap
-              </Link>
-              <Link
-                to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
-                className="no-underline inline-flex items-center justify-center"
+                {walletMatchesPool ? 'Swap' : `Switch to ${targetChainName}`}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!walletMatchesPool) {
+                    await switchToTarget()
+                    return
+                  }
+                  navigate(`/add/${currencyId(currency0)}/${currencyId(currency1)}`)
+                }}
+                disabled={isSwitching}
+                className="inline-flex items-center justify-center"
                 style={{
                   background: '#985C2A',
+                  border: 'none',
                   borderRadius: '8px',
                   padding: '10px',
                   fontFamily: 'Inter',
                   fontSize: '14px',
                   fontWeight: 500,
                   color: '#FFFFFF',
+                  cursor: isSwitching ? 'wait' : 'pointer',
+                  opacity: isSwitching ? 0.7 : 1,
                 }}
               >
-                + Add liquidity
-              </Link>
+                {walletMatchesPool ? '+ Add liquidity' : `Switch to ${targetChainName}`}
+              </button>
             </div>
 
             {/* Your position — collapsible; sits above Stats so a return
@@ -777,12 +830,12 @@ function PoolDetailInner({
               <StatRow label="Pool balances">
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '13px', color: '#FBFBFD', marginTop: '4px' }}>
                   <span className="inline-flex items-center gap-1.5">
-                    <CurrencyLogo currency={currency0} size="16px" />
-                    {formatNumber(Number(pair.reserve0.toSignificant(6)), { maximumFractionDigits: 2 })} {symbol0}
+                    <CurrencyLogo currency={balanceL.cur} size="16px" />
+                    {formatNumber(Number(balanceL.reserve.toSignificant(6)), { maximumFractionDigits: 2 })} {balanceL.sym}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    {formatNumber(Number(pair.reserve1.toSignificant(6)), { maximumFractionDigits: 2 })} {symbol1}
-                    <CurrencyLogo currency={currency1} size="16px" />
+                    {formatNumber(Number(balanceR.reserve.toSignificant(6)), { maximumFractionDigits: 2 })} {balanceR.sym}
+                    <CurrencyLogo currency={balanceR.cur} size="16px" />
                   </span>
                 </div>
                 {totalValue > 0 && (
@@ -796,12 +849,12 @@ function PoolDetailInner({
                         background: '#2F2823',
                       }}
                     >
-                      <div style={{ width: `${pct0}%`, background: '#D8A072' }} />
-                      <div style={{ width: `${pct1}%`, background: '#6FB3E6' }} />
+                      <div style={{ width: `${balanceL.pct}%`, background: balanceL.color }} />
+                      <div style={{ width: `${balanceR.pct}%`, background: balanceR.color }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '11px', color: '#978A80', marginTop: '4px' }}>
-                      <span>{pct0.toFixed(2)}%</span>
-                      <span>{pct1.toFixed(2)}%</span>
+                      <span>{balanceL.pct.toFixed(2)}%</span>
+                      <span>{balanceR.pct.toFixed(2)}%</span>
                     </div>
                   </div>
                 )}

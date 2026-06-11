@@ -6,6 +6,10 @@ interface ImportMetaEnv {
   readonly VITE_KYBERSWAP_ZAP_API_URL: string
   readonly VITE_WALLETCONNECT_PROJECT_ID: string
   readonly VITE_ENVIRONMENT: 'mainnet' | 'beta' | 'testnet'
+  // Display-only badge label in the navbar (e.g. 'dev', 'beta'). Decoupled from
+  // VITE_ENVIRONMENT, which functionally selects chains/API. Falls back to
+  // VITE_ENVIRONMENT when unset — see `appEnvLabel` in connectors/index.ts.
+  readonly VITE_ENV_LABEL?: string
   // Kyber affiliate fee (optional — all three required together to engage).
   readonly VITE_KYBER_FEE_RECEIVER?: string
   readonly VITE_KYBER_FEE_BPS?: string

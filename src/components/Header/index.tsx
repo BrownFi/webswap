@@ -109,7 +109,7 @@ const StyledConnectButton = () => {
   )
 }
 import SwitchVersion from 'components/SwitchVersion'
-import { appEnv, isMainnet } from 'connectors'
+import { appEnvLabel, isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useAccount } from 'wagmi'
 import CustomAccountDisplay from './CustomAccountDisplay'
@@ -191,7 +191,7 @@ export default function Header() {
             textTransform: 'uppercase',
             flexShrink: 0,
           }}>
-            {appEnv}
+            {appEnvLabel}
           </span>
         )}
 
@@ -211,6 +211,9 @@ export default function Header() {
             </StyledNavLink>
             <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
               Pool
+            </StyledNavLink>
+            <StyledNavLink id="portfolio-nav-link" to="/portfolio">
+              Portfolio
             </StyledNavLink>
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them

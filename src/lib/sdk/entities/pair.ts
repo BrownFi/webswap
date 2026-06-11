@@ -167,7 +167,16 @@ const ABI_ROUTER_WITH_PRICE_IN = [{
   inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'priceUpdate', type: 'bytes[]' }],
   name: 'getAmountsInWithPrice', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
 }] as const
-// V3 quote functions — use router's quoteAmountsOut/InWithUpdate (includes Pyth update + accurate AMM math)
+// V3 quote functions on the v3-final router. These MUST be the WithUpdate
+// variants: the pool's priceOf() reverts StalePrice() if the on-chain Pyth
+// price is older than the factory's minPriceAge (~60s). Plain view-only
+// getAmountsOut/In can't satisfy that at quote time on a slow-moving feed
+// (e.g. USDC drifts >60s), so the quote reverts and the V3 route silently
+// disappears from the UI. quoteAmountsOut/InWithUpdate applies a fresh Pyth
+// update in-call (read-only via eth_call) so the quote sees a fresh price.
+// (Regression note: commit 2362674 wrongly swapped these to plain getAmounts*
+// on a false "v3-final reads cached Pyth" assumption — this restores the
+// correct calls originally added in ac59a1a.)
 const ABI_V3_QUOTE_OUT = [{
   inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
   name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
@@ -397,21 +406,23 @@ export class Pair {
         account: account as `0x${string}`,
       })
     } else if (version === 3) {
-      // V3: use quoteAmountsOutWithUpdate (includes Pyth update + accurate AMM math)
-      // If quote reverts (ExceedsMaxOut, StalePrice, etc.), throw InsufficientReservesError
-      // so UI shows "Insufficient liquidity" instead of a misleading sync fallback estimate
+      // V3 (v3-final): quoteAmountsOutWithUpdate applies a fresh Pyth update
+      // in-call so priceOf() doesn't revert StalePrice() at quote time (the
+      // on-chain price can be >minPriceAge old for slow feeds like USDC).
+      // updateData is the cached Hermes blob (solidityPackHelper). Called
+      // read-only (eth_call). Keep the revert→InsufficientReservesError mapping
+      // so genuine no-route reverts (ExceedsMaxOut, InvalidPrice, SearchItera-
+      // tionLimitReached, …) surface as "Insufficient liquidity".
       try {
         const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-        const { result } = await client.simulateContract({
+        amountOuts = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_OUT,
           functionName: 'quoteAmountsOutWithUpdate',
           args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          account: account as `0x${string}`,
         })
-        amountOuts = result
       } catch (err: any) {
-        // Quote failed — likely ExceedsMaxOut (0xd0915224) or other contract revert
-        // Don't fall back to sync (would show wrong amount + 0% impact)
         throw new InsufficientReservesError()
       }
     } else {
@@ -503,19 +514,19 @@ export class Pair {
         account: account as `0x${string}`,
       })
     } else if (version === 3) {
-      // V3: use quoteAmountsInWithUpdate (includes Pyth update + accurate AMM math)
+      // V3 (v3-final): quoteAmountsInWithUpdate — applies a fresh Pyth update
+      // in-call so priceOf() doesn't revert StalePrice() at quote time. Mirrors
+      // the out-side. updateData = cached Hermes blob; revert→Insufficient.
       try {
         const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-        const { result } = await client.simulateContract({
+        amountIns = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_IN,
           functionName: 'quoteAmountsInWithUpdate',
           args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          account: account as `0x${string}`,
         })
-        amountIns = result
       } catch (err: any) {
-        // Quote failed — likely ExceedsMaxOut or other contract revert
-        // Throw InsufficientReservesError so UI shows proper error
         throw new InsufficientReservesError()
       }
     } else {
