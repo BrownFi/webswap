@@ -231,9 +231,10 @@ class MaxAmountOutExceededError extends Error {
 
 // V3 router custom-error selectors that mean "this trade exceeds the pool's
 // per-swap cap" (vs a genuinely empty pool). Keep lowercased.
-//   0xc64511c2 — input exceeds max accepted (params: amountIn, maxIn)
+//   0xc64511c2 — exact-in: input exceeds max accepted (params: amountIn, maxIn)
+//   0xf1ac6cc5 — exact-out: requested output exceeds max achievable ("cutoff")
 //   0xd0915224 — ExceedsMaxOut (max quotable output)
-const MAX_CAP_SELECTORS = new Set<string>(['0xc64511c2', '0xd0915224'])
+const MAX_CAP_SELECTORS = new Set<string>(['0xc64511c2', '0xf1ac6cc5', '0xd0915224'])
 
 /**
  * Best-effort extraction of the 4-byte revert selector from an ethers/viem
