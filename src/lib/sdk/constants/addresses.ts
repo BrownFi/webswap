@@ -60,44 +60,75 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 // inventory-safe; the INVALID_INVENTORY reverts we saw on lopsided pools
 // should be much rarer. develop/bera intentionally remain on the previous
 // V3 deployment until contract team promotes v3-final to prod.
+// ─── Two BrownFi "V3-generation" deployments, modeled as distinct versions ──
+// There are two live V3-style deployments the user can swap between, treated
+// as separate protocol versions so the swap router can quote BOTH and compare:
+//   - version 3 = "V3 Pilot"   (pre-v3-final): Bera 0x83A329E9 only. Zap lives
+//     on the router (no separate zap). Indexed by beta-api/indexer/v3.
+//   - version 4 = "V3 Official" (v3-final): Bera 0x6Ccf36d3 + HyperEVM
+//     0x6A4Bd897. Separate BrownFiV3Zap contract. Indexed by Goldsky (Bera) /
+//     beta-api (HL).
+// Both share the SAME FE call shape (quoteAmountsOutWithUpdate, factory.getPair
+// registry, getV3ZapAddress router-fallback) — so behavior checks use
+// `isV3Like(version)` while address/indexer resolution keys on the exact
+// version. Pilot = 3 (unchanged) so existing beta users' persisted selection
+// stays on pilot; Official is the new opt-in version 4.
+
+/** True for any V3-generation version (pilot=3 or official=4). Use this in
+ *  place of `version === 3` for BEHAVIOR checks (both behave identically). */
+export const isV3Like = (version: number | undefined | null): boolean =>
+  version === 3 || version === 4
+
+// version 3 — PILOT (pre-v3-final, Bera only; zap on router)
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0xFB473aEAe9b0d03c6974BCf5f2B67dA4AF7F6043',
+}
+export const FACTORY_ADDRESS_V3: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0x83A329E93f7A36b9baAb5bF1EAFF319947387552',
+}
+export const ZAP_ADDRESS_V3: Record<number, string> = {} // pilot: zap on router
+export const V3_USE_INDEXER: Record<number, boolean> = {
+  [ChainId.BERA_MAINNET]: true,
+}
+
+// version 4 — OFFICIAL (v3-final; Bera + HyperEVM; separate zap)
+export const ROUTER_ADDRESS_V4: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
   [ChainId.HYPER_EVM]: '0xc0E55d0085266E9A33456610E08172f9c173F908',
 }
-
-export const FACTORY_ADDRESS_V3: Record<number, string> = {
+export const FACTORY_ADDRESS_V4: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
   [ChainId.HYPER_EVM]: '0x6A4Bd89709b67eC846F02cF9E95A0dd2Fb515720',
 }
-
-// Zap-specific address. Separate from the router on v3-final deployments.
-// For chains/deployments where zap entrypoints still live on the router,
-// callers should fall back to ROUTER_ADDRESS_V3 (see utils/v3Zap.ts).
-export const ZAP_ADDRESS_V3: Record<number, string> = {
+export const ZAP_ADDRESS_V4: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
   [ChainId.HYPER_EVM]: '0xE5dEbF39457fa6e7FFcdDb5af40435AD2D52438b',
 }
-
-// Per-chain toggle controlling whether V3 pool data comes from the GraphQL
-// indexer or from on-chain reads (factory.allPairs + per-pool multicall).
-// Set `true` once /indexer/v3 (or the per-chain override) is tracking the
-// current FACTORY_ADDRESS_V3 for that chain; leave `false` (or omit) during
-// the window after a fresh factory deploy. Unmapped chains default to
-// `false` via `useV3Indexer()` below. Both the V3 GraphQL query strings
-// (LIST_ALL_PAIRS_V3, GET_PAIR_V3) and the on-chain hook live behind this
-// flag — flipping per chain is the only thing needed to switch sources.
-export const V3_USE_INDEXER: Record<number, boolean> = {
+export const V4_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
-  // HyperEVM V3 subgraph live on the BE-hosted multi-chain
-  // /indexer/v3?chainId=999 path (confirmed 2026-06-09). Pool list/
-  // detail now use the single GraphQL request like Bera instead of
-  // per-pool on-chain multicalls — ~3-5× faster page load.
   [ChainId.HYPER_EVM]: true,
 }
 
-/** Reader with safe default for chains not in the map. */
-export const useV3Indexer = (chainId: number | undefined): boolean =>
-  chainId != null && (V3_USE_INDEXER[chainId] ?? false)
+/** Per-version address-map resolvers (used by the SDK getters + readers). */
+export const routerV3Gen = (version: number): Record<number, string> =>
+  version === 4 ? ROUTER_ADDRESS_V4 : ROUTER_ADDRESS_V3
+export const factoryV3Gen = (version: number): Record<number, string> =>
+  version === 4 ? FACTORY_ADDRESS_V4 : FACTORY_ADDRESS_V3
+export const zapV3Gen = (version: number): Record<number, string> =>
+  version === 4 ? ZAP_ADDRESS_V4 : ZAP_ADDRESS_V3
+
+/** Indexer-source reader. Defaults false. Keyed on the exact V3-gen version. */
+export const useV3Indexer = (chainId: number | undefined, version?: number): boolean => {
+  if (chainId == null) return false
+  const map = version === 4 ? V4_USE_INDEXER : V3_USE_INDEXER
+  return map[chainId] ?? false
+}
+
+// Availability checks for the version toggle (variant-agnostic).
+export const hasV3Pilot = (chainId: number | undefined): boolean =>
+  chainId != null && !!ROUTER_ADDRESS_V3[chainId]
+export const hasV3Official = (chainId: number | undefined): boolean =>
+  chainId != null && !!ROUTER_ADDRESS_V4[chainId]
 
 export const FACTORY_ADDRESS: Record<number, string> = {
   [ChainId.MAINNET]: '0xD705B4e18055D8Fa1d099d0533163a9e8fA09E4A',
