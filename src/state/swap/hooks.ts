@@ -297,14 +297,16 @@ export function useDerivedSwapInfo(): {
   //    present, which silently left the Swap button enabled for aggregator-
   //    only pairs even with zero balance.
   //  - Exact-out (user typed OUTPUT): the required input is the trade's
-  //    maximumAmountIn (with slippage). Falls back to V2 since aggregators
-  //    don't quote exact-out today.
+  //    maximumAmountIn (with slippage). Use whichever native pipeline quoted
+  //    (V3 Official / Pilot / V2) — gating on v2Trade alone left the button
+  //    wrongly enabled with zero balance when the exact-out route was V3.
   const balanceIn = currencyBalances[Field.INPUT]
-  const requiredIn = isExactIn
-    ? parsedAmount
-    : slippageAdjustedAmounts
-      ? slippageAdjustedAmounts[Field.INPUT]
+  const exactOutTrade = v4Trade ?? v3Trade ?? v2Trade
+  const exactOutRequiredIn =
+    !isExactIn && exactOutTrade && allowedSlippage
+      ? computeSlippageAdjustedAmounts(exactOutTrade, allowedSlippage)[Field.INPUT]
       : null
+  const requiredIn = isExactIn ? parsedAmount : exactOutRequiredIn
   const amountOut = slippageAdjustedAmounts ? slippageAdjustedAmounts[Field.OUTPUT] : null
 
   if (balanceIn && requiredIn && balanceIn.lessThan(requiredIn)) {

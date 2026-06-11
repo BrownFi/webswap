@@ -41,7 +41,10 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
           <QuestionHelper text="Price impact is the difference between your trading price and oracle price." />
         </RowFixed>
         <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
-          {trade ? formatStringToNumber(trade?.priceImpactK, 4) : '-'}%
+          {/* Clamp display: V2's reserve-drain math can produce absurd values
+              (e.g. 10,331%) on near-empty pools. Beyond 100% is meaningless to
+              show; the red severity still flags it. */}
+          {trade ? ((trade?.priceImpactK ?? 0) > 100 ? '>100' : formatStringToNumber(trade?.priceImpactK, 4)) : '-'}%
         </ErrorText>
       </RowBetween>
       <RowBetween>
