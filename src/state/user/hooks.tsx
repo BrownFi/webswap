@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { BASES_TO_TRACK_LIQUIDITY_FOR, ChainId, Pair, PINNED_PAIRS, Token } from '@brownfi/sdk'
 import { useCallback, useMemo } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
@@ -214,8 +215,8 @@ export function useURLWarningToggle(): () => void {
  * @param tokenB the other token
  */
 export function toV2LiquidityToken([tokenA, tokenB]: [Token, Token], version: number): Token {
-  const symbol = version >= 2 ? (version === 3 ? `BF-V3` : `BF-V2`) : `BRF-V1`
-  const name = version >= 2 ? (version === 3 ? `BrownFi V3` : `BrownFi V2`) : `BrownFi V1`
+  const symbol = version >= 2 ? (isV3Like(version) ? `BF-V3` : `BF-V2`) : `BRF-V1`
+  const name = version >= 2 ? (isV3Like(version) ? `BrownFi V3` : `BrownFi V2`) : `BrownFi V1`
   return new Token(tokenA.chainId, Pair.getAddress(tokenA, tokenB, version), 18, symbol, name)
 }
 

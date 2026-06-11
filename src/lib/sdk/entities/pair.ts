@@ -1,3 +1,4 @@
+import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { getCreate2Address } from '@ethersproject/address'
@@ -239,8 +240,8 @@ export class Pair {
     const tokenAmounts: [TokenAmount, TokenAmount] = tokenAmountA.token.sortsBefore(tokenAmountB.token)
       ? [tokenAmountA, tokenAmountB]
       : [tokenAmountB, tokenAmountA]
-    const symbol = version >= 2 ? (version === 3 ? 'BF-V3' : 'BF-V2') : 'BRF-V1'
-    const name = version >= 2 ? (version === 3 ? 'BrownFi V3' : 'BrownFi V2') : 'BrownFi V1'
+    const symbol = version >= 2 ? (isV3Like(version) ? 'BF-V3' : 'BF-V2') : 'BRF-V1'
+    const name = version >= 2 ? (isV3Like(version) ? 'BrownFi V3' : 'BrownFi V2') : 'BrownFi V1'
     this.liquidityToken = new Token(
       tokenAmounts[0].token.chainId,
       Pair.getAddress(tokenAmounts[0].token, tokenAmounts[1].token, version),
@@ -405,7 +406,7 @@ export class Pair {
         args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         account: account as `0x${string}`,
       })
-    } else if (version === 3) {
+    } else if (isV3Like(version)) {
       // V3 (v3-final): quoteAmountsOutWithUpdate applies a fresh Pyth update
       // in-call so priceOf() doesn't revert StalePrice() at quote time (the
       // on-chain price can be >minPriceAge old for slow feeds like USDC).
@@ -440,7 +441,7 @@ export class Pair {
     }
 
     let priceImpactK: number
-    if (version === 3) {
+    if (isV3Like(version)) {
       // V3: price impact = (midPrice - executionPrice) / midPrice
       // midPrice from Pyth oracle, executionPrice = amountOut/amountIn
       const { getPythPrice: getPythPriceFn } = await import('../utils')
@@ -513,7 +514,7 @@ export class Pair {
         args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         account: account as `0x${string}`,
       })
-    } else if (version === 3) {
+    } else if (isV3Like(version)) {
       // V3 (v3-final): quoteAmountsInWithUpdate — applies a fresh Pyth update
       // in-call so priceOf() doesn't revert StalePrice() at quote time. Mirrors
       // the out-side. updateData = cached Hermes blob; revert→Insufficient.
@@ -541,7 +542,7 @@ export class Pair {
     const inputAmountResult = new TokenAmount(inputReserve.token, amountIns[0].toString())
 
     let priceImpactK: number
-    if (version === 3) {
+    if (isV3Like(version)) {
       // V3: price impact = (midPrice - executionPrice) / midPrice
       const { getPythPrice: getPythPriceFn } = await import('../utils')
       const inToken = inputReserve.token

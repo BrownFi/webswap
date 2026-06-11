@@ -7,7 +7,7 @@ import { useActiveWeb3React } from 'hooks'
 import { useMultipleContractSingleData } from 'state/multicall/hooks'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { useVersion } from 'hooks/useVersion'
-import { FACTORY_ADDRESS_V3, RPC_URLS } from 'lib/sdk/constants/addresses'
+import { RPC_URLS, isV3Like, factoryV3Gen } from 'lib/sdk/constants/addresses'
 
 const PAIR_INTERFACE = new Interface(IUniswapV2PairABI.abi)
 
@@ -43,7 +43,7 @@ function useV3PairAddresses(
   }))
 
   useEffect(() => {
-    if (version !== 3 || !FACTORY_ADDRESS_V3[chainId]) {
+    if (!isV3Like(version) || !factoryV3Gen(version)[chainId]) {
       // Synchronous setState in an effect is the simplest way to express
       // "this chain doesn't support V3 — reset and stop." Functional update
       // doesn't help here (we want a fixed shape, not a derived one). The
@@ -57,7 +57,7 @@ function useV3PairAddresses(
     const fetchAddresses = async () => {
       const { createPublicClient, http } = await import('viem')
       const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-      const factoryAddr = FACTORY_ADDRESS_V3[chainId]
+      const factoryAddr = factoryV3Gen(version)[chainId]
 
       // Pre-filter: track which slots correspond to valid token pairs that
       // need an RPC lookup. Invalid slots (missing token, same-token pair)
@@ -147,7 +147,7 @@ export function usePairs(
   // V1/V2: compute via CREATE2
   const v1v2Addresses = useMemo(
     () =>
-      version !== 3
+      !isV3Like(version)
         ? tokens.map(([tokenA, tokenB]) =>
             tokenA && tokenB && !tokenA.equals(tokenB) ? Pair.getAddress(tokenA, tokenB, version) : undefined
           )
@@ -159,7 +159,7 @@ export function usePairs(
   // pre-refactor `(string | undefined)[]` shape plus the new loading flag.
   const { addresses: v3Addresses, loading: v3AddressesLoading } = useV3PairAddresses(tokens, chainId, version)
 
-  const pairAddresses = version === 3 ? v3Addresses : v1v2Addresses
+  const pairAddresses = isV3Like(version) ? v3Addresses : v1v2Addresses
 
   const results = useMultipleContractSingleData(pairAddresses, PAIR_INTERFACE, 'getReserves')
 
@@ -176,7 +176,7 @@ export function usePairs(
       // this guard the Add-Liquidity page would briefly show "Create Pool
       // & Supply" on every V3 nav before falling back to "Supply" once the
       // reserves arrived.
-      if (version === 3 && v3AddressesLoading) return [PairState.LOADING, null]
+      if (isV3Like(version) && v3AddressesLoading) return [PairState.LOADING, null]
       if (loading) return [PairState.LOADING, null]
       if (!tokenA || !tokenB || tokenA.equals(tokenB)) return [PairState.INVALID, null]
       if (!reserves) return [PairState.NOT_EXISTS, null]
@@ -184,7 +184,7 @@ export function usePairs(
       const [token0, token1] = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA]
       const pair = new Pair(new TokenAmount(token0, reserve0.toString()), new TokenAmount(token1, reserve1.toString()), version)
       // V3: override liquidityToken with real pair address from factory
-      if (version === 3 && pairAddresses[i]) {
+      if (isV3Like(version) && pairAddresses[i]) {
         ;(pair as any).liquidityToken = new Token(chainId, pairAddresses[i]!, 18, 'BF-V3', 'BrownFi V3')
       }
       return [PairState.EXISTS, pair]

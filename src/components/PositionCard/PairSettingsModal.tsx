@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { Pair } from '@brownfi/sdk'
 import { TransactionResponse } from '@ethersproject/providers'
 import { Contract } from '@ethersproject/contracts'
@@ -160,7 +161,7 @@ function SettingsRow({
 export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Props) {
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
-  const isV3 = version === 3
+  const isV3 = isV3Like(version)
   const { createToast } = useToast()
   const factoryContract = useFactoryContract(true, { readonly: false })
   const addTransaction = useTransactionAdder()

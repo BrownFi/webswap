@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { Pair } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
 import { useActiveWeb3React } from 'hooks'
@@ -41,7 +42,7 @@ export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
   // normalized to decimal fractions; fee is a fraction (e.g. 0.0005 = 0.05%).
   const fromIndexer = useMemo(() => {
     if (!pairStats) return undefined
-    if (version === 3) {
+    if (isV3Like(version)) {
       if (pairStats.lambda === undefined && pairStats.kB === undefined) return undefined
       return {
         lambda: pairStats.lambda,
@@ -195,7 +196,7 @@ export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
     // Fallback only — fires when the indexer hasn't shipped this pair yet
     // (just deployed, or backend down). When pairStats is healthy this stays
     // disabled and the entire pool list runs on a single GraphQL request.
-    enabled: enabled && version === 3 && !hasIndexerData,
+    enabled: enabled && isV3Like(version) && !hasIndexerData,
     staleTime: 5 * 60 * 1000,
   })
 

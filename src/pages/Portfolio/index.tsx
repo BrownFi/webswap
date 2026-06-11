@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 /**
  * My Portfolio page — single-chain view of the connected user's LP
  * positions, with aggregate stats up top and a sortable per-position
@@ -142,7 +143,7 @@ function PortfolioStatsBar({
 // V2/V3 toggle elsewhere — this is a read-only badge so the user knows
 // which contract surface holds the position.
 function VersionBadge({ version }: { version: 2 | 3 }) {
-  const v3 = version === 3
+  const v3 = isV3Like(version)
   return (
     <span
       style={{

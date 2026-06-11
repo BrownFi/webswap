@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 /**
  * V3 Zap primitives — quote estimate, Pyth updateData builder, and calldata
  * builders for the BrownFi V3 router. The execution layer is the native zap
@@ -40,7 +41,7 @@ const V3_ZAP_ABI = [
  * Check if V3 Zap is supported on a chain.
  */
 export function isV3ZapSupported(chainId?: ChainId | null, version?: number): boolean {
-  if (!chainId || version !== 3) return false
+  if (!chainId || !isV3Like(version)) return false
   return !!ROUTER_ADDRESS_V3[chainId]
 }
 

@@ -1,3 +1,4 @@
+import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId } from '../constants/chainId'
@@ -124,7 +125,7 @@ export async function callSwapContract(
       // the router/pair see matching oracle prices and the bound is tight
       // against the actual swap math (prevents INVALID_INVENTORY from a
       // cross-block Pyth drift).
-      if (version === 3) {
+      if (isV3Like(version)) {
         try {
           const isExactIn = methodName.startsWith('swapExact')
           const isETHIn = methodName.includes('ETHForTokens')

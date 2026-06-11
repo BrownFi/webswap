@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { Pair } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
 import { useEffect } from 'react'
@@ -29,7 +30,7 @@ export const useTradingFee = ({ pair }: Props) => {
 
   const pairContract = usePairV2Contract(pair.liquidityToken.address)
   const isV2 = version === 2
-  const isV3 = version === 3
+  const isV3 = isV3Like(version)
   const feeContract = version >= 1 && version <= 2 ? pairContract : null
   const precisionContract = isV2 ? pairContract : null
   const feeResult = useSingleCallResult(feeContract, 'fee', undefined, { disabled: isAvailable() || isV3 })

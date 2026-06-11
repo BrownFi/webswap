@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { Pair, TokenAmount } from '@brownfi/sdk'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
@@ -315,13 +316,13 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
             )}
             {/* Fee is already shown in green under the pair name — drop it here */}
-            {(version === 3 ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+            {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
               <Text>
-                {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-                {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                {isV3Like(version) ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                {formatNumberLambda(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
               </Text>
             )}
-            {version === 3 && <V3ExtraParams devStats={devStats} />}
+            {isV3Like(version) && <V3ExtraParams devStats={devStats} />}
             {canEditSettings && (
               <Settings size="14" className="cursor-pointer text-[#c4943a] hover:text-[#d4a94f]" onClick={() => setShowSettings(true)} />
             )}

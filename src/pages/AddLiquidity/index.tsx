@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { addLiquidity, Currency, currencyEquals, getRouterAddress, TokenAmount, WETH } from '@brownfi/sdk'
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { LightCard } from 'components/Card'
@@ -371,7 +372,7 @@ export default function AddLiquidity() {
           </div>
         </div>
 
-        {useZap && version === 3 && pair ? (
+        {useZap && isV3Like(version) && pair ? (
           <Wrapper>
             <V3ZapForm pair={pair} pairState={pairState} currencies={currencies} allowedSlippage={allowedSlippage} />
           </Wrapper>
