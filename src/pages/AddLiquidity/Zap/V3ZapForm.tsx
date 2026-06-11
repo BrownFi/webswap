@@ -224,35 +224,60 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   })
 
   const zapPreview = useMemo(() => {
-    if (!best || !pair || !parsedAmount || !totalSupplyRaw) return null
+    if (!best || !pair || !parsedAmount) return null
     if (!pythPrice0 || !pythPrice1) return null
-
-    const reserve0 = Number(pair.reserve0.raw.toString()) / 10 ** pair.token0.decimals
-    const reserve1 = Number(pair.reserve1.raw.toString()) / 10 ** pair.token1.decimals
-    const tvlUsd = reserve0 * pythPrice0 + reserve1 * pythPrice1
-    if (!isFinite(tvlUsd) || tvlUsd <= 0) return null
-
-    // LP tokens always 18 decimals on BrownFi V2/V3.
-    const supply = Number(totalSupplyRaw) / 10 ** 18
-    const lpOut = Number(best.lpOut.toString()) / 10 ** 18
-    if (supply <= 0 || lpOut <= 0) return null
-    const estimatedUsd = (lpOut / supply) * tvlUsd
 
     // Input USD — resolve which pool side matches the selected input.
     // ETHER maps to whichever pool token is the wrapped native.
     const wrapped = wrappedCurrency(selectedCurrency, chainId)
     let inputPythPrice = 0
+    let inputIsToken0 = false
     if (wrapped) {
-      if (wrapped.address.toLowerCase() === pair.token0.address.toLowerCase()) inputPythPrice = pythPrice0
-      else if (wrapped.address.toLowerCase() === pair.token1.address.toLowerCase()) inputPythPrice = pythPrice1
+      if (wrapped.address.toLowerCase() === pair.token0.address.toLowerCase()) {
+        inputPythPrice = pythPrice0
+        inputIsToken0 = true
+      } else if (wrapped.address.toLowerCase() === pair.token1.address.toLowerCase()) {
+        inputPythPrice = pythPrice1
+      }
     }
     const inputAmount = Number(parsedAmount.toExact())
     const initialUsd = inputAmount * inputPythPrice
     if (!isFinite(initialUsd) || initialUsd <= 0) return null
 
-    // Price impact = how much value is lost going from raw input to LP.
-    // Show absolute value with a sign — positive = gain (unusual but
-    // possible with rounding), negative = loss (typical).
+    // Estimated value after zap — computed from VALUE FLOW, not from the LP
+    // reserve formula. BrownFi V3 is oracle-priced (reserves aren't pinned to
+    // price), so a reserve-share estimate misreports impact on imbalanced
+    // pools. A single-sided zap keeps ~half the input as-is and swaps the
+    // other half into `other`; the only real value change is the swap
+    // spread/fee on the swapped half:
+    //   estimatedUsd = (kept half value) + (swap output value)
+    // `amountOther` is the raw (pre-slippage) half-swap output from the
+    // native quote, in `other` token units.
+    const route = best.quote?.routeSummary as { amountOther?: string } | undefined
+    let estimatedUsd: number | undefined
+    if (route?.amountOther != null) {
+      const otherToken = inputIsToken0 ? pair.token1 : pair.token0
+      const otherPythPrice = inputIsToken0 ? pythPrice1 : pythPrice0
+      const amountOtherTokens = Number(route.amountOther) / 10 ** otherToken.decimals
+      const swapOutputUsd = amountOtherTokens * otherPythPrice
+      const keptHalfUsd = (inputAmount / 2) * inputPythPrice
+      estimatedUsd = keptHalfUsd + swapOutputUsd
+    } else if (totalSupplyRaw) {
+      // Fallback (e.g. future Kyber V3): value the minted LP by reserve share.
+      // estimateLpOut is now oracle-aware, so this stays consistent.
+      const reserve0 = Number(pair.reserve0.raw.toString()) / 10 ** pair.token0.decimals
+      const reserve1 = Number(pair.reserve1.raw.toString()) / 10 ** pair.token1.decimals
+      const tvlUsd = reserve0 * pythPrice0 + reserve1 * pythPrice1
+      const supply = Number(totalSupplyRaw) / 10 ** 18 // LP always 18 decimals
+      const lpOut = Number(best.lpOut.toString()) / 10 ** 18
+      if (isFinite(tvlUsd) && tvlUsd > 0 && supply > 0 && lpOut > 0) {
+        estimatedUsd = (lpOut / supply) * tvlUsd
+      }
+    }
+    if (estimatedUsd === undefined || !isFinite(estimatedUsd)) return null
+
+    // Price impact = value lost going from raw input to LP. Negative = loss
+    // (typical: the swap spread/fee); positive = rounding gain.
     const impactPct = ((estimatedUsd - initialUsd) / initialUsd) * 100
     return { initialUsd, estimatedUsd, impactPct }
   }, [best, pair, parsedAmount, totalSupplyRaw, pythPrice0, pythPrice1, selectedCurrency, chainId])

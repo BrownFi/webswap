@@ -96,22 +96,36 @@ function pickOtherTokenAddress(pool: ZapInQuoteParams['pair'], inputAddress: str
 
 /**
  * Lightweight LP-out estimate. We can't run the contract's `zapIn` static
- * call without the user's tokens + approval already in place, so this uses
- * the V2-style minted-LP formula on current reserves + totalSupply:
+ * call without the user's tokens + approval already in place, so we estimate
+ * the minted LP from value share.
  *
- *   liquidity = min(amountA * totalSupply / reserveA,
- *                   amountB * totalSupply / reserveB)
+ * IMPORTANT: BrownFi V3 is an oracle-priced AMM — reserves are inventory and
+ * are NOT pinned to the price ratio. The Uniswap-V2 formula
+ *   min(amountA·S/reserveA, amountB·S/reserveB)
+ * is therefore wrong here: when the pool's inventory is value-imbalanced, the
+ * `min()` collapses onto the under-stocked side and wildly understates LP
+ * (which showed up as a fake double-digit negative "price impact" in the zap
+ * preview, and biased native-vs-Kyber ranking + lpOutMin).
  *
- * `amountA` is the input remaining after the internal half-swap; `amountB`
- * is what the swap quote says we'll receive. Reserves are slightly stale
- * here (pre-swap), so the figure underestimates LP by a tiny margin — fine
- * for a comparison metric vs Kyber's reported `addedLiquidity`.
+ * Instead we mint proportional to value, valuing both the deposit and the
+ * pool TVL at the SAME oracle price implied by the half-swap quote
+ * (`amountOther` received per `amountSwappedIn` swapped). Reserve imbalance
+ * then cancels out:
+ *
+ *   price (other per in) = amountOther / amountSwappedIn
+ *   valueAdded (in `other` units) = amountOther + amountAfterSwap · price
+ *   poolTVL    (in `other` units) = reserveOther + reserveIn · price
+ *   liquidity  = totalSupply · valueAdded / poolTVL
+ *
+ * Multiplying numerator & denominator by `amountSwappedIn` clears the inner
+ * division and keeps the whole thing in integer (BigNumber) math.
  */
 async function estimateLpOut({
   chainId,
   pairAddress,
   reserveTokenIn,
   reserveTokenOther,
+  amountSwappedIn,
   amountAfterSwap,
   amountOther,
 }: {
@@ -119,6 +133,8 @@ async function estimateLpOut({
   pairAddress: string
   reserveTokenIn: BigNumber
   reserveTokenOther: BigNumber
+  /** The portion of the input that was swapped into `other` (the half). */
+  amountSwappedIn: BigNumber
   amountAfterSwap: BigNumber
   amountOther: BigNumber
 }): Promise<BigNumber> {
@@ -129,13 +145,24 @@ async function estimateLpOut({
     functionName: 'totalSupply',
   })
   const totalSupply = BigNumber.from(totalSupplyRaw.toString())
-  if (totalSupply.isZero() || reserveTokenIn.isZero() || reserveTokenOther.isZero()) {
+  if (
+    totalSupply.isZero() ||
+    reserveTokenIn.isZero() ||
+    reserveTokenOther.isZero() ||
+    amountSwappedIn.isZero() ||
+    amountOther.isZero()
+  ) {
     return BigNumber.from(0)
   }
 
-  const lpFromIn = amountAfterSwap.mul(totalSupply).div(reserveTokenIn)
-  const lpFromOther = amountOther.mul(totalSupply).div(reserveTokenOther)
-  return lpFromIn.lt(lpFromOther) ? lpFromIn : lpFromOther
+  // valueAdded·amountSwappedIn = amountOther·(amountSwappedIn + amountAfterSwap)
+  //   = amountOther · (full input amount)
+  const valueAddedScaled = amountOther.mul(amountSwappedIn.add(amountAfterSwap))
+  // poolTVL·amountSwappedIn = reserveOther·amountSwappedIn + reserveIn·amountOther
+  const poolTvlScaled = reserveTokenOther.mul(amountSwappedIn).add(reserveTokenIn.mul(amountOther))
+  if (poolTvlScaled.isZero()) return BigNumber.from(0)
+
+  return totalSupply.mul(valueAddedScaled).div(poolTvlScaled)
 }
 
 function applySlippage(amount: BigNumber, slippageBps: number): BigNumber {
@@ -196,7 +223,11 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       return null
     }
 
-    const amountAfterSwap = BigNumber.from(amountRaw).sub(BigNumber.from(amountRaw).div(TWO))
+    // getV3ZapEstimate swaps exactly half (floor) and returns `amountOut` for
+    // that half; the remainder is added as-is. Keep both so estimateLpOut can
+    // recover the swap-implied oracle price.
+    const amountSwappedIn = BigNumber.from(amountRaw).div(TWO)
+    const amountAfterSwap = BigNumber.from(amountRaw).sub(amountSwappedIn)
 
     // Reserves are read off the Pair (already populated by useAllCommonPairs
     // / Reserves.ts upstream). Pick the side matching tokenIn vs tokenOther.
@@ -216,6 +247,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       pairAddress: params.pair.liquidityToken.address,
       reserveTokenIn: BigNumber.from(reserveIn.raw.toString()),
       reserveTokenOther: BigNumber.from(reserveOther.raw.toString()),
+      amountSwappedIn,
       amountAfterSwap,
       amountOther: BigNumber.from(amountOut.toString()),
     }).catch(() => BigNumber.from(0))
@@ -239,6 +271,9 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
         version: params.version,
         tokenOtherAddress,
         amountIn: amountRaw,
+        // Raw (pre-slippage) swap output of the half-swap, in `other` token
+        // units. Used by the zap preview to value the result from value-flow.
+        amountOther: amountOut.toString(),
         amountOtherMin: amountOtherMin.toString(),
         updateData,
         isNativeETH: resolved.isNative,
@@ -385,6 +420,8 @@ export type NativeZapInRoute = {
   tokenInAddress: string
   tokenOtherAddress: string
   amountIn: string
+  /** Raw (pre-slippage) half-swap output in `other` token units. */
+  amountOther: string
   amountOtherMin: string
   updateData: string
   isNativeETH: boolean
