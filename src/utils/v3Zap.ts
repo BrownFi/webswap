@@ -10,15 +10,17 @@ import { BigNumber } from '@ethersproject/bignumber'
 import { Contract } from '@ethersproject/contracts'
 import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
-import { ROUTER_ADDRESS_V3, ZAP_ADDRESS_V3, RPC_URLS } from 'lib/sdk/constants/addresses'
+import { routerV3Gen, zapV3Gen, RPC_URLS } from 'lib/sdk/constants/addresses'
 
 // On v3-final deployments zap entrypoints live on a separate BrownFiV3Zap
 // contract. On older deployments the router still hosts them, so we fall
 // back to the router address when no dedicated zap is registered. Exported
 // because the zap aggregator adapter needs this same address to surface as
 // the approval spender (callers approve the zap contract, not the router).
-export function getV3ZapAddress(chainId: ChainId): string | undefined {
-  return ZAP_ADDRESS_V3[chainId] || ROUTER_ADDRESS_V3[chainId]
+export function getV3ZapAddress(chainId: ChainId, version: number): string | undefined {
+  // Pilot (v3) has no separate zap → falls back to its router. Official (v4)
+  // has a dedicated zap contract.
+  return zapV3Gen(version)[chainId] || routerV3Gen(version)[chainId]
 }
 
 // V3 Router/Zap ABI. Quote function is on the router; zap entrypoints are on
@@ -42,7 +44,7 @@ const V3_ZAP_ABI = [
  */
 export function isV3ZapSupported(chainId?: ChainId | null, version?: number): boolean {
   if (!chainId || !isV3Like(version)) return false
-  return !!ROUTER_ADDRESS_V3[chainId]
+  return !!routerV3Gen(version as number)[chainId]
 }
 
 /**
@@ -58,14 +60,15 @@ export async function getV3ZapEstimate(
   tokenOther: string,
   amountIn: string,
   slippageBips: number,
+  version: number,
 ): Promise<{ amountOut: bigint; amountOtherMin: bigint }> {
-  const routerAddress = getRouterAddress(chainId, 3)
+  const routerAddress = getRouterAddress(chainId, version)
   if (!routerAddress) throw new Error('V3 router not deployed on this chain')
 
   const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
   const halfAmount = BigInt(amountIn) / 2n
 
-  const updateData = await buildV3UpdateData([tokenIn, tokenOther], chainId)
+  const updateData = await buildV3UpdateData([tokenIn, tokenOther], chainId, version)
   // quoteAmountsOutWithUpdate is nonpayable on-chain (it applies the Pyth
   // update), but we call it read-only via eth_call. viem types readContract's
   // return as `never` for non-view fns, so cast the decoded amounts array.
@@ -91,8 +94,9 @@ export async function getV3ZapEstimate(
 export async function buildV3UpdateData(
   tokenAddresses: string[],
   chainId: ChainId,
+  version: number,
 ): Promise<string> {
-  const factoryAddress = getFactoryAddress(chainId, 3)
+  const factoryAddress = getFactoryAddress(chainId, version)
   if (!factoryAddress) {
     // If no V3 factory, return empty encoded bytes
     return encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
@@ -168,6 +172,7 @@ export type V3ZapTxRequest = {
  */
 export async function buildV3ZapInTx({
   chainId,
+  version,
   tokenIn,
   tokenOther,
   amountIn,
@@ -179,6 +184,7 @@ export async function buildV3ZapInTx({
   isNativeETH,
 }: {
   chainId: ChainId
+  version: number
   tokenIn: string
   tokenOther: string
   amountIn: string
@@ -189,7 +195,7 @@ export async function buildV3ZapInTx({
   updateData: string
   isNativeETH: boolean
 }): Promise<V3ZapTxRequest> {
-  const zapAddress = getV3ZapAddress(chainId)
+  const zapAddress = getV3ZapAddress(chainId, version)
   if (!zapAddress) throw new Error('V3 zap not deployed on this chain')
 
   // Use a no-signer Contract instance just to encode calldata via populateTransaction.
@@ -223,6 +229,7 @@ export async function buildV3ZapInTx({
  */
 export async function buildV3ZapOutTx({
   chainId,
+  version,
   tokenA,
   tokenB,
   tokenOut,
@@ -234,6 +241,7 @@ export async function buildV3ZapOutTx({
   isNativeETH,
 }: {
   chainId: ChainId
+  version: number
   tokenA: string
   tokenB: string
   tokenOut: string
@@ -244,10 +252,10 @@ export async function buildV3ZapOutTx({
   updateData?: string
   isNativeETH: boolean
 }): Promise<V3ZapTxRequest> {
-  const zapAddress = getV3ZapAddress(chainId)
+  const zapAddress = getV3ZapAddress(chainId, version)
   if (!zapAddress) throw new Error('V3 zap not deployed on this chain')
 
-  const updateData = maybeUpdateData ?? (await buildV3UpdateData([tokenA, tokenB], chainId))
+  const updateData = maybeUpdateData ?? (await buildV3UpdateData([tokenA, tokenB], chainId, version))
   const zap = new Contract(zapAddress, V3_ZAP_ABI)
 
   if (isNativeETH) {

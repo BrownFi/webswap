@@ -29,6 +29,7 @@ import {
 } from 'utils/v3Zap'
 import { RPC_URLS } from 'lib/sdk/constants/addresses'
 import { getRouterAddress } from 'lib/sdk/utils'
+import type { BrownFiVersion } from '../types'
 import type {
   BuildZapInParams,
   BuildZapOutParams,
@@ -176,6 +177,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
         tokenOtherAddress,
         amountRaw,
         params.slippageBps,
+        params.version,
       )
       amountOut = est.amountOut
       amountOtherMin = est.amountOtherMin
@@ -189,7 +191,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     // we treat that as "no native quote" and let Kyber win.
     let updateData: string
     try {
-      updateData = await buildV3UpdateData([tokenInAddress, tokenOtherAddress], params.chainId)
+      updateData = await buildV3UpdateData([tokenInAddress, tokenOtherAddress], params.chainId, params.version)
     } catch {
       return null
     }
@@ -218,7 +220,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       amountOther: BigNumber.from(amountOut.toString()),
     }).catch(() => BigNumber.from(0))
 
-    const routerAddress = getRouterAddress(params.chainId, 3)
+    const routerAddress = getRouterAddress(params.chainId, params.version)
     if (!routerAddress) return null
 
     return {
@@ -234,6 +236,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       routerAddress,
       routeSummary: {
         tokenInAddress,
+        version: params.version,
         tokenOtherAddress,
         amountIn: amountRaw,
         amountOtherMin: amountOtherMin.toString(),
@@ -276,7 +279,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
         functionName: 'totalSupply',
       })
       totalSupply = BigNumber.from(totalSupplyRaw.toString())
-      updateData = await buildV3UpdateData([tokenAAddress, tokenBAddress], params.chainId)
+      updateData = await buildV3UpdateData([tokenAAddress, tokenBAddress], params.chainId, params.version)
     } catch {
       return null
     }
@@ -302,6 +305,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
         tokenOutAddress,
         otherSide.mul(2).toString(), // getV3ZapEstimate halves internally; pass 2x to model a full swap
         0,
+        params.version,
       )
       swapAmountOut = BigNumber.from(est.amountOut.toString())
     } catch {
@@ -312,7 +316,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     const amountOut = directOut.add(swapAmountOut)
     if (amountOut.lte(0)) return null
 
-    const routerAddress = getRouterAddress(params.chainId, 3)
+    const routerAddress = getRouterAddress(params.chainId, params.version)
     if (!routerAddress) return null
 
     return {
@@ -324,6 +328,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
       routerAddress,
       routeSummary: {
         tokenAAddress,
+        version: params.version,
         tokenBAddress,
         tokenOutAddress,
         liquidityRaw: params.liquidityRaw,
@@ -339,6 +344,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     const deadlineBn = BigNumber.from(params.deadline)
     return buildV3ZapInTx({
       chainId: params.chainId,
+      version: r.version,
       tokenIn: r.tokenInAddress,
       tokenOther: r.tokenOtherAddress,
       amountIn: r.amountIn,
@@ -358,6 +364,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     const deadlineBn = BigNumber.from(params.deadline)
     return buildV3ZapOutTx({
       chainId: params.chainId,
+      version: r.version,
       tokenA: r.tokenAAddress,
       tokenB: r.tokenBAddress,
       tokenOut: r.tokenOutAddress,
@@ -374,6 +381,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
 /** Raw shape the adapter stores in routeSummary for zap-in. Internal — the
  *  comparison hook and execution layer pass it through opaquely. */
 export type NativeZapInRoute = {
+  version: BrownFiVersion
   tokenInAddress: string
   tokenOtherAddress: string
   amountIn: string
@@ -384,6 +392,7 @@ export type NativeZapInRoute = {
 
 /** Raw shape for zap-out. */
 export type NativeZapOutRoute = {
+  version: BrownFiVersion
   tokenAAddress: string
   tokenBAddress: string
   tokenOutAddress: string

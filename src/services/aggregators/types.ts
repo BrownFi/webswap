@@ -28,8 +28,11 @@ export function isBrownFiSource(source: RouteSource | undefined): boolean {
   return source === 'brownfi-v2' || source === 'brownfi-v3' || source === 'brownfi-v4'
 }
 
-/** BrownFi pool version that the aggregator's BrownFi liquidity feed knows about. */
-export type BrownFiVersion = 2 | 3
+/**
+ * BrownFi pool version that the aggregator's BrownFi liquidity feed knows about.
+ * 2 = V2, 3 = V3 Pilot, 4 = V3 Official (a distinct deployment, surfaced to users as "V3 Official").
+ */
+export type BrownFiVersion = 2 | 3 | 4
 
 export interface QuoteParams {
   chainId: ChainId
