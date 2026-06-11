@@ -23,7 +23,7 @@ import { apiV2Service } from 'services'
 import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
 import { usePairs } from 'data/Reserves'
 import { useV3PoolsOnChain } from 'hooks/useV3PoolsOnChain'
-import { useV3Indexer } from 'lib/sdk/constants/addresses'
+import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
 import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
@@ -113,7 +113,7 @@ export default function Pool() {
   // Per-chain V3 indexer toggle: true for chains where the subgraph is live
   // (Bera), false for chains awaiting the indexer (HyperEVM) — those use the
   // useV3PoolsOnChain factory-enumeration hook instead.
-  const v3UseIndexer = useV3Indexer(chainId)
+  const v3UseIndexer = useV3Indexer(chainId, version)
 
   const { data: protocolStats, isLoading: isLoadingStats } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
@@ -132,18 +132,18 @@ export default function Pool() {
     queryKey: ['pairList', chainId, version],
     queryFn: () =>
       graphqlFetcher({
-        operationName: version === 3 ? 'PairListV3' : 'PairList',
-        query: version === 3 ? LIST_ALL_PAIRS_V3 : LIST_ALL_PAIRS,
+        operationName: isV3Like(version) ? 'PairListV3' : 'PairList',
+        query: isV3Like(version) ? LIST_ALL_PAIRS_V3 : LIST_ALL_PAIRS,
         variables: { chainId, version },
       }),
-    enabled: enableGraphQL && (version !== 3 || v3UseIndexer),
+    enabled: enableGraphQL && (!isV3Like(version) || v3UseIndexer),
     refetchInterval: 60_000,
     staleTime: 60_000,
   })
 
   const { data: onChainV3Pools, isLoading: isLoadingOnChainV3 } = useV3PoolsOnChain(
     chainId,
-    version === 3 && !v3UseIndexer,
+    isV3Like(version) && !v3UseIndexer,
   )
 
   // V3 indexer ships `feeSplit` / `kB` (not `protocolFee` / `k`). Alias them
@@ -194,8 +194,8 @@ export default function Pool() {
   const sortedPairs = useMemo(() => {
     // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer.
     const raw: PairStats[] =
-      version === 3 && !v3UseIndexer ? (onChainV3Pools ?? []) : (data?.pairs ?? [])
-    const normalized: PairStats[] = version === 3
+      isV3Like(version) && !v3UseIndexer ? (onChainV3Pools ?? []) : (data?.pairs ?? [])
+    const normalized: PairStats[] = isV3Like(version)
       ? raw.map((p: any) => ({
           ...p,
           protocolFee: p.protocolFee ?? p.feeSplit ?? 0,
@@ -392,7 +392,7 @@ export default function Pool() {
                 </div>
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
-            ) : enableGraphQL && (version === 3 && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
+            ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
               <PairListSkeleton />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
@@ -628,7 +628,7 @@ function MemoizedPairList({
         // V3 pools live in a factory registry rather than at a CREATE2 address,
         // so SDK's computed `liquidityToken` is wrong. Use the indexer's pair
         // id (== the real pair address) instead.
-        if (version === 3) {
+        if (isV3Like(version)) {
           ;(pair as any).liquidityToken = new Token(
             chainId,
             checksumAddress(item.id as Address),

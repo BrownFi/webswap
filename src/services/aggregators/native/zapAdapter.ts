@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 /**
  * Native (BrownFi router) zap adapter — implements ZapAggregatorAdapter.
  *
@@ -145,7 +146,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
   name: 'BrownFi',
 
   isSupported(chainId, version) {
-    return version === 3 && isV3ZapSupported(chainId, version)
+    return isV3Like(version) && isV3ZapSupported(chainId, version)
   },
 
   async quoteZapIn(params: ZapInQuoteParams): Promise<ZapInQuote<NativeZapInRoute> | null> {

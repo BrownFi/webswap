@@ -15,7 +15,7 @@ import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
 import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
-import { useV3Indexer } from 'lib/sdk/constants/addresses'
+import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
@@ -141,9 +141,6 @@ export default function PoolDetail() {
   const chainId = Number(chainIdParam)
   const [searchParams] = useSearchParams()
   const { version: reduxVersion } = useVersion({ chainId })
-  // Per-chain V3 indexer toggle. See constants/addresses.ts. HyperEVM
-  // currently `false` (factory live but subgraph not yet) → on-chain hook.
-  const v3UseIndexer = useV3Indexer(chainId)
   // Version precedence: explicit `?v=` from URL > Redux toggle. Pool list
   // and Portfolio links include the version so a V2 pool always queries
   // /indexer and a V3 pool always queries /indexer/v3, regardless of the
@@ -151,9 +148,12 @@ export default function PoolDetail() {
   // (bookmarks, shared links) fall back to Redux for backward compat.
   const urlVersion = (() => {
     const raw = Number(searchParams.get('v'))
-    return raw === 2 || raw === 3 ? raw : undefined
+    return raw === 2 || isV3Like(raw) ? raw : undefined
   })()
   const version = urlVersion ?? reduxVersion
+  // Per-chain V3 indexer toggle. See constants/addresses.ts. Keyed on the
+  // resolved version (pilot=3 vs official=4) so each picks its own indexer.
+  const v3UseIndexer = useV3Indexer(chainId, version)
 
   // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer
   // (constants/addresses.ts). Same single-flag pattern as the pool list.
@@ -161,22 +161,22 @@ export default function PoolDetail() {
     queryKey: ['pairDetail', chainId, pairAddress, version],
     queryFn: () =>
       graphqlFetcher({
-        operationName: version === 3 ? 'PairDetailV3' : 'PairDetail',
-        query: version === 3 ? GET_PAIR_V3 : GET_PAIR,
+        operationName: isV3Like(version) ? 'PairDetailV3' : 'PairDetail',
+        query: isV3Like(version) ? GET_PAIR_V3 : GET_PAIR,
         variables: { chainId, version, id: pairAddress?.toLowerCase() },
       }),
-    enabled: !!pairAddress && !!chainId && (version !== 3 || v3UseIndexer),
+    enabled: !!pairAddress && !!chainId && (!isV3Like(version) || v3UseIndexer),
     staleTime: 60_000,
   })
 
   const { data: onChainPool, isLoading: isOnChainLoading } = useV3PoolOnChain(
     chainId,
     pairAddress,
-    version === 3 && !v3UseIndexer,
+    isV3Like(version) && !v3UseIndexer,
   )
 
   const pairRaw = useMemo(() => {
-    if (version === 3 && !v3UseIndexer) {
+    if (isV3Like(version) && !v3UseIndexer) {
       // V3 on-chain path. Project PairStats onto PairRaw — chart/history
       // fields stay undefined, which downstream components handle.
       if (!onChainPool) return null
@@ -184,7 +184,7 @@ export default function PoolDetail() {
     }
     const p = pairRes?.pair
     if (!p) return null
-    if (version !== 3) return p
+    if (!isV3Like(version)) return p
     return { ...p, protocolFee: p.protocolFee ?? p.feeSplit ?? 0, k: p.k ?? p.kB }
   }, [pairRes, onChainPool, version])
   const pair = useMemo(() => {
@@ -205,7 +205,7 @@ export default function PoolDetail() {
     // V3 uses a factory registry rather than CREATE2, so SDK-computed
     // liquidityToken address is wrong. Override with the real pair address
     // so balanceOf reads hit the right contract.
-    if (version === 3 && pairAddress) {
+    if (isV3Like(version) && pairAddress) {
       ;(built as any).liquidityToken = new Token(chainId, checksumAddress(pairAddress as Address), 18, 'BF-V3', 'BrownFi V3')
     }
     return built
@@ -217,9 +217,9 @@ export default function PoolDetail() {
         ← Back to pools
       </Link>
 
-      {(isLoading || (version === 3 && !v3UseIndexer && isOnChainLoading)) && <PoolDetailSkeleton />}
+      {(isLoading || (isV3Like(version) && !v3UseIndexer && isOnChainLoading)) && <PoolDetailSkeleton />}
 
-      {!isLoading && !(version === 3 && !v3UseIndexer && isOnChainLoading) && !pair && (
+      {!isLoading && !(isV3Like(version) && !v3UseIndexer && isOnChainLoading) && !pair && (
         <div style={{ padding: '80px 0', textAlign: 'center', color: '#978A80', fontFamily: 'Inter' }}>
           Pool not found.
         </div>
@@ -405,13 +405,13 @@ function PoolDetailInner({
               {devStats.kappa !== undefined && (
                 <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
               )}
-              {(version === 3 ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+              {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
                 <span>
-                  {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-                  {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                  {isV3Like(version) ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                  {formatNumberLambda(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
                 </span>
               )}
-              {version === 3 && <V3ExtraParams devStats={devStats} />}
+              {isV3Like(version) && <V3ExtraParams devStats={devStats} />}
               {account && (
                 <Settings
                   size="14"
@@ -511,13 +511,13 @@ function PoolDetailInner({
                 {devStats.kappa !== undefined && (
                   <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
                 )}
-                {(version === 3 ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+                {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
                   <span>
-                    {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-                    {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                    {isV3Like(version) ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                    {formatNumberLambda(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
                   </span>
                 )}
-                {version === 3 && <V3ExtraParams devStats={devStats} />}
+                {isV3Like(version) && <V3ExtraParams devStats={devStats} />}
                 {account && (
                   <Settings
                     size="14"

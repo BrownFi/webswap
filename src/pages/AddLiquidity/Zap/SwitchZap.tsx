@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { isMainnet } from 'connectors'
 
 type SwitchZapProps = {
@@ -9,7 +10,7 @@ type SwitchZapProps = {
 export const SwitchZap = ({ enabled, onToggle, version }: SwitchZapProps) => {
   // V3: always show zap toggle (not gated by mainnet)
   // V2 and below: keep existing behavior
-  if (version !== 3 && isMainnet) return null
+  if (!isV3Like(version) && isMainnet) return null
   return (
     <div
       onClick={onToggle}
