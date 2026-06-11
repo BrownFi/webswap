@@ -292,11 +292,18 @@ function PoolDetailInner({
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
   const [showSettings, setShowSettings] = useState(false)
 
+  // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
+  // values (6,606,088% / 2,378,191,932%). Below a $1 TVL floor they're
+  // meaningless — zero them so the cards render their "--" default. (Matches
+  // the pool-list behavior in PositionCard.)
+  const ratiosMeaningful = Number(pairRaw?.tvl) >= 1
   // 24h fee / TVL (simple ratio, no annualization)
   const feeOverTvl =
-    Number(pairRaw.feeDay) > 0 && Number(pairRaw.tvl) > 0
+    ratiosMeaningful && Number(pairRaw.feeDay) > 0
       ? (Number(pairRaw.feeDay) / Number(pairRaw.tvl)) * 100
       : 0
+  // Fee APR comes from the indexer (usePoolStats) and explodes the same way.
+  const feeAprDisplay = ratiosMeaningful ? feeAPR ?? 0 : 0
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   const incentiveIcon = bgtAPR
     ? 'https://furthermore.app/icons/bgt.svg'
@@ -728,8 +735,8 @@ function PoolDetailInner({
 
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
-                {!isMainnet && <StatInline label="Fee APR" value={`${formatNumberLambda(feeAPR ?? 0, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />}
-                <StatInline label="24h Fees / TVL" value={`${formatNumberLambda(feeOverTvl ?? 0, { maximumFractionDigits: 2 })}%`} />
+                {!isMainnet && <StatInline label="Fee APR" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />}
+                <StatInline label="24h Fees / TVL" value={(feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--')} />
                 {incentiveApr > 0 && (
                   <div>
                     <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
@@ -769,7 +776,7 @@ function PoolDetailInner({
                       Fee APR
                     </div>
                     <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
-                      {`${formatNumberLambda(feeAPR ?? 0, { maximumFractionDigits: 2 })}%`}
+                      {(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                     </div>
                   </div>
                 )}
@@ -779,7 +786,7 @@ function PoolDetailInner({
                     <QuestionHelper text="Last 24h fees as a percentage of current TVL — the pool's daily fee yield." />
                   </div>
                   <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
-                    {`${formatNumberLambda(feeOverTvl ?? 0, { maximumFractionDigits: 2 })}%`}
+                    {(feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--')}
                   </div>
                 </div>
                 {incentiveApr > 0 && (
