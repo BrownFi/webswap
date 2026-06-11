@@ -41,12 +41,14 @@ export const useTradingFee = ({ pair }: Props) => {
 
   // V3: read from pairConfig via viem (matches useDevStats logic)
   const { data: v3TradingFee } = useQuery({
-    queryKey: ['tradingFeeV3', chainId, pair.liquidityToken.address],
+    queryKey: ['tradingFeeV3', chainId, pair.liquidityToken.address, `v${version}`],
     queryFn: async () => {
       const { createPublicClient, http } = await import('viem')
-      const { RPC_URLS, FACTORY_ADDRESS_V3 } = await import('lib/sdk/constants/addresses')
+      const { RPC_URLS, factoryV3Gen } = await import('lib/sdk/constants/addresses')
       const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-      const factoryAddr = FACTORY_ADDRESS_V3[chainId]
+      // Use the pool's version (pair.version) so v4 pools read their own
+      // factory's config, not the pilot map (Bera-only).
+      const factoryAddr = factoryV3Gen(version)[chainId]
       if (!factoryAddr) return 0
       const configAddr = await client.readContract({
         address: factoryAddr as `0x${string}`,

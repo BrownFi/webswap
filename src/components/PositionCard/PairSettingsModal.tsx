@@ -14,7 +14,7 @@ import { useFactoryContract } from 'hooks/useContract'
 import { useVersion } from 'hooks/useVersion'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { CloseIcon } from 'theme/components'
-import { FACTORY_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
+import { factoryV3Gen } from 'lib/sdk/constants/addresses'
 import { decodeContractError } from 'utils/decodeContractError'
 import { isUserRejection } from 'utils/zapErrors'
 
@@ -172,11 +172,14 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   // legacy V2 setter surface).
   const factoryV3 = useMemo(() => {
     if (!isV3 || !library || !account || !chainId) return null
-    const addr = FACTORY_ADDRESS_V3[chainId]
+    // Resolve the factory for the pool's actual version (4 = V3 Official,
+    // 3 = V3 Pilot). Hardcoding the pilot map sent v4 admin writes
+    // (setGammaOfPair etc.) to the wrong factory.
+    const addr = factoryV3Gen(version)[chainId]
     if (!addr) return null
     const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : library
     return new Contract(addr, V3_FACTORY_SETTERS_ABI, signer)
-  }, [isV3, library, account, chainId])
+  }, [isV3, version, library, account, chainId])
 
   // Inputs — one per row (kappa + spread are paired sub-inputs)
   const [kInput, setKInput] = useState('')
