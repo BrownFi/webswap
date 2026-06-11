@@ -337,6 +337,9 @@ export class Trade {
         if (!isExpectedTradeError(error)) {
           console.warn('======= getOutputAmountAsync error', error)
         }
+        // Tag the result when the pool rejected because the trade exceeds its
+        // per-swap cap (not an empty pool) so the UI can say "reduce amount".
+        if ((error as any)?.isMaxAmountOutExceededError) (bestTrades as any).maxExceeded = true
         return
       }
 
@@ -433,6 +436,7 @@ export class Trade {
         if (!isExpectedTradeError(error)) {
           console.error('======= getInputAmountAsync error', error)
         }
+        if ((error as any)?.isMaxAmountOutExceededError) (bestTrades as any).maxExceeded = true
         continue
       }
 

@@ -100,6 +100,9 @@ type TradeExactIn = {
   trade: Trade | null
   loadingExactIn: boolean
   isInsufficient?: boolean
+  /** True when the pool rejected the trade for exceeding its per-swap cap
+   *  (curve limit), not because it's empty — UI should say "reduce amount". */
+  maxExceeded?: boolean
 }
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
@@ -112,6 +115,7 @@ export function useTradeExactIn(
   const [trade, setTrade] = useState<Trade | null>(null)
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
+  const [maxExceeded, setMaxExceeded] = useState(false)
 
   const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
     currencyAmountIn?.currency,
@@ -133,6 +137,7 @@ export function useTradeExactIn(
     const getTrade = async () => {
       setLoading(true)
       setInsufficient(false)
+      setMaxExceeded(false)
       if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeIn = await Trade.bestTradeExactIn(account ?? '', allowedPairs, currencyAmountIn, currencyOut, {
@@ -152,6 +157,7 @@ export function useTradeExactIn(
             // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
+            if (Array.isArray(bestTradeIn) && (bestTradeIn as any).maxExceeded) setMaxExceeded(true)
             setTrade(foundTrade)
             setLoading(false)
           }
@@ -174,6 +180,7 @@ export function useTradeExactIn(
         if (!stale) {
           const foundTrade = bestTradeIn?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
+          if (Array.isArray(bestTradeIn) && (bestTradeIn as any).maxExceeded) setMaxExceeded(true)
           setTrade(foundTrade)
           setLoading(false)
         }
@@ -202,6 +209,7 @@ export function useTradeExactIn(
     // skeleton doesn't clear during the on-chain pair-lookup window.
     loadingExactIn: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
+    maxExceeded: maxExceeded && !trade,
   }
 }
 
@@ -209,6 +217,7 @@ type TradeExactOut = {
   trade: Trade | null
   loadingExactOut: boolean
   isInsufficient?: boolean
+  maxExceeded?: boolean
 }
 /**
  * Returns the best trade for the token in to the exact amount of token out
@@ -221,6 +230,7 @@ export function useTradeExactOut(
   const [trade, setTrade] = useState<Trade | null>(null)
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
+  const [maxExceeded, setMaxExceeded] = useState(false)
 
   const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
     currencyIn,
@@ -242,6 +252,7 @@ export function useTradeExactOut(
       setTrade(null)
       setLoading(true)
       setInsufficient(false)
+      setMaxExceeded(false)
       if (currencyIn && currencyAmountOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeOut = await Trade.bestTradeExactOut(
@@ -267,6 +278,7 @@ export function useTradeExactOut(
             // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
+            if (Array.isArray(bestTradeOut) && (bestTradeOut as any).maxExceeded) setMaxExceeded(true)
             setTrade(foundTrade)
             setLoading(false)
           }
@@ -290,6 +302,7 @@ export function useTradeExactOut(
         if (!stale) {
           const foundTrade = bestTradeOut?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
+          if (Array.isArray(bestTradeOut) && (bestTradeOut as any).maxExceeded) setMaxExceeded(true)
           setTrade(foundTrade)
           setLoading(false)
         }
@@ -314,6 +327,7 @@ export function useTradeExactOut(
     trade: trade,
     loadingExactOut: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
+    maxExceeded: maxExceeded && !trade,
   }
 }
 

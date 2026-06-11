@@ -125,6 +125,9 @@ export function useDerivedSwapInfo(): {
    *  trade. Surfaced separately so the Swap page can still allow the
    *  swap if an aggregator route exists. */
   nativePoolLiquidityInsufficient: boolean
+  /** A native pool rejected the trade for exceeding its per-swap cap (curve
+   *  limit), not for being empty. UI shows a "reduce amount" message. */
+  nativePoolMaxExceeded: boolean
   loadingExactIn: boolean
   loadingExactOut: boolean
 } {
@@ -221,6 +224,19 @@ export function useDerivedSwapInfo(): {
     !chainSupportsV4 || tradeOutV4.isInsufficient,
   ].every(Boolean)
   const isInsufficient = insufficientIn || insufficientOut
+
+  // Distinct from "insufficient": at least one native pipeline rejected the
+  // trade because it exceeds the pool's per-swap cap (oracle-AMM curve limit),
+  // not because the pool is empty. Surfaced so the button can say "reduce
+  // amount" instead of the misleading "insufficient liquidity".
+  const someMaxExceeded = [
+    tradeInV2.maxExceeded,
+    chainSupportsV3 && tradeInV3.maxExceeded,
+    chainSupportsV4 && tradeInV4.maxExceeded,
+    tradeOutV2.maxExceeded,
+    chainSupportsV3 && tradeOutV3.maxExceeded,
+    chainSupportsV4 && tradeOutV4.maxExceeded,
+  ].some(Boolean)
 
   // Keep tradeIn/tradeOut for the rest of the function — these are
   // V2-backed values used by the existing inputError + balance-check logic
@@ -320,6 +336,9 @@ export function useDerivedSwapInfo(): {
   const nativePoolLiquidityInsufficient =
     !!isInsufficient && !v2Trade && !v3Trade && !v4Trade && !isInputEmpty && !loadingExactIn && !loadingExactOut
 
+  // Same gate, but the cause is a per-swap cap rather than an empty pool.
+  const nativePoolMaxExceeded = nativePoolLiquidityInsufficient && someMaxExceeded
+
   return {
     currencies,
     currencyBalances,
@@ -330,6 +349,7 @@ export function useDerivedSwapInfo(): {
     inputError,
     v2AmountOutExceedsReserve,
     nativePoolLiquidityInsufficient,
+    nativePoolMaxExceeded,
     loadingExactIn,
     loadingExactOut,
   }

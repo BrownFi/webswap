@@ -333,6 +333,13 @@ const ERROR_REGISTRY: Record<string, ErrorEntry> = {
     label: 'Exceeds maximum out',
     hint: 'Trade exceeds the pool’s maximum quotable output. Reduce amount.',
   },
+  // V3 router: input exceeds the max the pool will accept for one swap
+  // (params: amountIn, maxIn). Common on small pools — the curve caps a
+  // single trade well below total TVL.
+  '0xc64511c2': {
+    label: 'Amount exceeds pool limit',
+    hint: 'This pool caps how much can be swapped in a single trade. Reduce the input amount.',
+  },
   '0x19abf40e': { label: 'Stale Pyth price', hint: 'Oracle price is stale. Try again in a few seconds.' },
 
   // Legacy V2 string-style errors (kept for completeness; mostly already

@@ -209,6 +209,54 @@ class InsufficientInputAmountError extends Error {
   }
 }
 
+/**
+ * The V3 router caps how much can be swapped through a pool in a single
+ * trade (an oracle-AMM curve limit, not an empty pool). On small pools this
+ * reverts even though liquidity exists — so we surface it distinctly from
+ * InsufficientReservesError, letting the UI say "reduce the amount" instead
+ * of the misleading "insufficient liquidity".
+ */
+class MaxAmountOutExceededError extends Error {
+  public readonly isMaxAmountOutExceededError = true
+  // Treated as an expected, business-as-usual rejection by isExpectedTradeError.
+  public readonly isInsufficientReservesError = true
+  constructor() {
+    super('EXCEEDS_MAX_OUTPUT')
+    this.name = 'MaxAmountOutExceededError'
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(this, MaxAmountOutExceededError.prototype)
+    }
+  }
+}
+
+// V3 router custom-error selectors that mean "this trade exceeds the pool's
+// per-swap cap" (vs a genuinely empty pool). Keep lowercased.
+//   0xc64511c2 — input exceeds max accepted (params: amountIn, maxIn)
+//   0xd0915224 — ExceedsMaxOut (max quotable output)
+const MAX_CAP_SELECTORS = new Set<string>(['0xc64511c2', '0xd0915224'])
+
+/**
+ * Best-effort extraction of the 4-byte revert selector from an ethers/viem
+ * error. Walks the cause chain (viem nests the raw revert under .cause.data /
+ * .raw) and falls back to scanning the message.
+ */
+function extractRevertSelector(err: any): string | undefined {
+  let e = err
+  for (let i = 0; i < 8 && e; i++) {
+    const hex = (typeof e?.data === 'string' && e.data) || (typeof e?.raw === 'string' && e.raw) || ''
+    if (/^0x[0-9a-fA-F]{8}/.test(hex)) return hex.slice(0, 10).toLowerCase()
+    e = e?.cause
+  }
+  const m = (err?.message ?? '').match(/0x[0-9a-fA-F]{8}/)
+  return m ? m[0].toLowerCase() : undefined
+}
+
+/** Map a caught V3 quote revert to the right error type. */
+function v3QuoteError(err: any): Error {
+  const sel = extractRevertSelector(err)
+  return sel && MAX_CAP_SELECTORS.has(sel) ? new MaxAmountOutExceededError() : new InsufficientReservesError()
+}
+
 let PAIR_ADDRESS_CACHE: Record<string, Record<string, string>> = {}
 
 export class Pair {
@@ -424,7 +472,7 @@ export class Pair {
           account: account as `0x${string}`,
         })
       } catch (err: any) {
-        throw new InsufficientReservesError()
+        throw v3QuoteError(err)
       }
     } else {
       amountOuts = await client.readContract({
@@ -528,7 +576,7 @@ export class Pair {
           account: account as `0x${string}`,
         })
       } catch (err: any) {
-        throw new InsufficientReservesError()
+        throw v3QuoteError(err)
       }
     } else {
       amountIns = await client.readContract({

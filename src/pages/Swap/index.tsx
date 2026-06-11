@@ -176,6 +176,7 @@ export default function Swap() {
     inputError: rawSwapInputError,
     v2AmountOutExceedsReserve,
     nativePoolLiquidityInsufficient,
+    nativePoolMaxExceeded,
     loadingExactIn,
     loadingExactOut,
   } = useDerivedSwapInfo()
@@ -362,10 +363,14 @@ export default function Swap() {
     // Both BrownFi versions lack a route — but if an aggregator has one,
     // the user can still swap. Only block when no source has a route.
     if (nativePoolLiquidityInsufficient && !best) {
-      return 'Insufficient pool liquidity for this trade. Try a smaller amount.'
+      // Distinguish a per-swap cap (pool has liquidity, but this trade is too
+      // big for the oracle-AMM curve) from a genuinely empty pool.
+      return nativePoolMaxExceeded
+        ? 'Amount exceeds this pool’s per-trade limit. Reduce the amount.'
+        : 'Insufficient pool liquidity for this trade. Try a smaller amount.'
     }
     return undefined
-  }, [rawSwapInputError, v2AmountOutExceedsReserve, best, nativePoolLiquidityInsufficient])
+  }, [rawSwapInputError, v2AmountOutExceedsReserve, best, nativePoolLiquidityInsufficient, nativePoolMaxExceeded])
   const isValid = !swapInputError
   // User manually picked a specific aggregator, but orchestration fell back
   // to native (the chosen aggregator returned no route for this pair on
