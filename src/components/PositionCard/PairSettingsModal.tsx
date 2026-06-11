@@ -11,7 +11,6 @@ import { RowBetween } from 'components/Row'
 import { useToast } from 'containers/ToastProvider'
 import { useActiveWeb3React } from 'hooks'
 import { useFactoryContract } from 'hooks/useContract'
-import { useVersion } from 'hooks/useVersion'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { CloseIcon } from 'theme/components'
 import { factoryV3Gen } from 'lib/sdk/constants/addresses'
@@ -160,7 +159,12 @@ function SettingsRow({
 
 export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Props) {
   const { account, chainId, library } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
+  // Key off the POOL's version, NOT the global useVersion toggle. The toggle
+  // is the user's default-version preference and can differ from the pool
+  // being edited (e.g. once the list shows both V3 Official + Pilot pools).
+  // Resolving the factory from the toggle could send admin writes to the
+  // wrong deployment. Same fix already applied in useTradingFee.
+  const version = pair.version ?? 2
   const isV3 = isV3Like(version)
   const { createToast } = useToast()
   const factoryContract = useFactoryContract(true, { readonly: false })
@@ -172,9 +176,9 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   // legacy V2 setter surface).
   const factoryV3 = useMemo(() => {
     if (!isV3 || !library || !account || !chainId) return null
-    // Resolve the factory for the pool's actual version (4 = V3 Official,
-    // 3 = V3 Pilot). Hardcoding the pilot map sent v4 admin writes
-    // (setGammaOfPair etc.) to the wrong factory.
+    // Resolve the factory for the pool's version (4 = V3 Official, 3 = V3
+    // Pilot). Hardcoding the pilot map sent v4 admin writes (setGammaOfPair
+    // etc.) to the wrong factory.
     const addr = factoryV3Gen(version)[chainId]
     if (!addr) return null
     const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : library
