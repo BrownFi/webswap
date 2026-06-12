@@ -31,7 +31,40 @@ async function getJson<T>(url: string): Promise<T | null> {
   }
 }
 
+// Protocol-wide stats are version-independent, but switching the version
+// toggle does a full page reload (version is page-load-constant), which wipes
+// React Query's in-memory cache and would re-fire these 3 DefiLlama calls on
+// every switch. Persist the result in localStorage with a short TTL so a
+// reload within the window reuses it instead of refetching.
+const CACHE_KEY = 'brownfi:protocolStats'
+const CACHE_TTL = 10 * 60_000 // 10 min — matches the useQuery staleTime
+
+function readProtocolStatsCache(): ProtocolStats | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const { ts, data } = JSON.parse(raw) as { ts: number; data: ProtocolStats }
+    if (Date.now() - ts > CACHE_TTL) return null
+    return data
+  } catch {
+    return null
+  }
+}
+
+function writeProtocolStatsCache(data: ProtocolStats): void {
+  // Don't persist an all-zero result (a failed/empty fetch) — let it retry.
+  if (!(data.currentTvl || data.volumeAllTime || data.feesAllTime)) return
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }))
+  } catch {
+    /* quota / private mode — fine, just skip caching */
+  }
+}
+
 export async function fetchProtocolStats(): Promise<ProtocolStats> {
+  const cached = readProtocolStatsCache()
+  if (cached) return cached
+
   const [protocolData, volumeData, feesData] = await Promise.all([
     getJson<{
       chainTvls?: Record<string, { tvl?: TvlPoint[] }>
@@ -69,7 +102,7 @@ export async function fetchProtocolStats(): Promise<ProtocolStats> {
 
   chains.sort((a, b) => b.tvl - a.tvl)
 
-  return {
+  const result: ProtocolStats = {
     currentTvl,
     athTvl,
     volume24h: Number(volumeData?.total24h) || 0,
@@ -79,4 +112,6 @@ export async function fetchProtocolStats(): Promise<ProtocolStats> {
     tvlHistory,
     chains,
   }
+  writeProtocolStatsCache(result)
+  return result
 }
