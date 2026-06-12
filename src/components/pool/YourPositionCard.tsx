@@ -165,7 +165,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
             You don&apos;t have liquidity in this pool yet.
           </div>
           <Link
-            to={`/add/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`}
+            to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
             className="no-underline inline-flex items-center justify-center w-full"
             style={{
               background: '#985C2A',
@@ -285,7 +285,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                   await guard.switchToTarget()
                   return
                 }
-                navigate(`/add/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`)
+                navigate(`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`)
               }}
               disabled={guard.isSwitching}
               className="inline-flex items-center justify-center flex-1"
@@ -312,7 +312,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                     await guard.switchToTarget()
                     return
                   }
-                  navigate(`/remove/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`)
+                  navigate(`/remove/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`)
                 }}
                 disabled={guard.isSwitching}
                 className="inline-flex items-center justify-center flex-1"

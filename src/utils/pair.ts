@@ -74,9 +74,11 @@ export const orderedCurrencyIds = (
   currency0: Currency,
   currency1: Currency,
   chainId: number | undefined,
+  quoteTokenIndex?: number | null,
 ): [string, string] => {
-  const pairSymbols = [getTokenSymbol(currency0, chainId), getTokenSymbol(currency1, chainId)].join('/')
-  return shouldReverse(pairSymbols)
+  // Same base/quote rule as the display (quoteTokenIndex for V3, whitelist
+  // fallback) so /add and /remove URLs match the pool name + balance bar.
+  return shouldReverseDisplay(currency0, currency1, chainId, quoteTokenIndex)
     ? [currencyId(currency1), currencyId(currency0)]
     : [currencyId(currency0), currencyId(currency1)]
 }

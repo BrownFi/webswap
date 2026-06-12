@@ -295,7 +295,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           {/* Actions */}
           <div className="hidden md:flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
             <Link
-              to={`/add/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`}
+              to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
               className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
               style={{
                 background: '#985C2A',
@@ -461,7 +461,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   {/* Action buttons */}
                   <div className="pt-2 flex gap-3">
                     <Link
-                      to={`/add/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`}
+                      to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
                       className="no-underline flex items-center justify-center flex-1"
                       style={{
                         background: '#985C2A',
@@ -478,7 +478,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       Add
                     </Link>
                     <Link
-                      to={`/remove/${orderedCurrencyIds(currency0, currency1, chainId).join("/")}`}
+                      to={`/remove/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
                       className="no-underline flex items-center justify-center flex-1"
                       style={{
                         background: '#985C2A',
