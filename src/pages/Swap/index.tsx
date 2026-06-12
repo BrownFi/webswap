@@ -356,20 +356,31 @@ export default function Swap() {
   // BrownFi V2 — if the user is going to swap through Kyber or V3 instead,
   // the V2 reserve constraint doesn't apply.
   const swapInputError = useMemo(() => {
-    if (rawSwapInputError) return rawSwapInputError
+    // Prerequisite states (connect wallet / enter amount / select token /
+    // recipient) always win — you can't even evaluate a route without them.
+    // The balance error is held back: when there's NO executable route, the
+    // reason WHY (per-trade cap / thin pool) is more useful than "insufficient
+    // balance" — the trade can't go through at this size even with the funds.
+    const isBalanceError = !!rawSwapInputError && rawSwapInputError.endsWith('balance')
+    if (rawSwapInputError && !isBalanceError) return rawSwapInputError
+
     if (v2AmountOutExceedsReserve && best?.source === 'brownfi-v2') {
       return 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
     }
     // No native route — but if an aggregator has one, the user can still
     // swap. Only block when no source has a route. A per-swap cap (pool has
     // liquidity, but this trade is too big for the oracle-AMM curve) gets a
-    // distinct message from a genuinely empty pool.
+    // distinct message from a genuinely empty pool. These take priority over
+    // the balance error so the customer sees the actual pool constraint.
     if (nativePoolMaxExceeded && !best) {
       return 'Amount exceeds this pool’s per-trade limit. Reduce the amount.'
     }
     if (nativePoolLiquidityInsufficient && !best) {
       return 'Insufficient pool liquidity for this trade. Try a smaller amount.'
     }
+    // Fall back to the held-back balance error (a route exists, you just can't
+    // afford it — or the no-route reason wasn't a pool cap/liquidity case).
+    if (rawSwapInputError) return rawSwapInputError
     return undefined
   }, [rawSwapInputError, v2AmountOutExceedsReserve, best, nativePoolLiquidityInsufficient, nativePoolMaxExceeded])
   const isValid = !swapInputError
