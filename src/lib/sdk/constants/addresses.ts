@@ -74,15 +74,20 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 // version. Pilot = 3 (unchanged) so existing beta users' persisted selection
 // stays on pilot; Official is the new opt-in version 4.
 
+/** Named protocol versions. V3_OFFICIAL (4) is the v3-final deployment shown
+ *  to users as "V3 Official"; V3_PILOT (3) is the original pre-v3-final V3.
+ *  Use these instead of bare magic numbers when resolving addresses/labels. */
+export const VERSION = { V2: 2, V3_PILOT: 3, V3_OFFICIAL: 4 } as const
+
 /** True for any V3-generation version (pilot=3 or official=4). Use this in
  *  place of `version === 3` for BEHAVIOR checks (both behave identically). */
 export const isV3Like = (version: number | undefined | null): boolean =>
-  version === 3 || version === 4
+  version === VERSION.V3_PILOT || version === VERSION.V3_OFFICIAL
 
 /** User-facing label for a protocol version. Internal version 4 is the
  *  OFFICIAL V3 deployment — never show "V4" to users. */
 export const versionLabel = (version: number | undefined | null): string =>
-  version === 4 ? 'V3 Official' : version === 3 ? 'V3 Pilot' : `V${version ?? 2}`
+  version === VERSION.V3_OFFICIAL ? 'V3 Official' : version === VERSION.V3_PILOT ? 'V3 Pilot' : `V${version ?? 2}`
 
 // version 3 — PILOT (pre-v3-final, Bera only; zap on router)
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
@@ -116,16 +121,16 @@ export const V4_USE_INDEXER: Record<number, boolean> = {
 
 /** Per-version address-map resolvers (used by the SDK getters + readers). */
 export const routerV3Gen = (version: number): Record<number, string> =>
-  version === 4 ? ROUTER_ADDRESS_V4 : ROUTER_ADDRESS_V3
+  version === VERSION.V3_OFFICIAL ? ROUTER_ADDRESS_V4 : ROUTER_ADDRESS_V3
 export const factoryV3Gen = (version: number): Record<number, string> =>
-  version === 4 ? FACTORY_ADDRESS_V4 : FACTORY_ADDRESS_V3
+  version === VERSION.V3_OFFICIAL ? FACTORY_ADDRESS_V4 : FACTORY_ADDRESS_V3
 export const zapV3Gen = (version: number): Record<number, string> =>
-  version === 4 ? ZAP_ADDRESS_V4 : ZAP_ADDRESS_V3
+  version === VERSION.V3_OFFICIAL ? ZAP_ADDRESS_V4 : ZAP_ADDRESS_V3
 
 /** Indexer-source reader. Defaults false. Keyed on the exact V3-gen version. */
 export const useV3Indexer = (chainId: number | undefined, version?: number): boolean => {
   if (chainId == null) return false
-  const map = version === 4 ? V4_USE_INDEXER : V3_USE_INDEXER
+  const map = version === VERSION.V3_OFFICIAL ? V4_USE_INDEXER : V3_USE_INDEXER
   return map[chainId] ?? false
 }
 
