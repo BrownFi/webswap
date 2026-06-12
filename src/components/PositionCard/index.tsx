@@ -29,7 +29,7 @@ import { isMainnet } from 'connectors'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
-import { orderedCurrencyIds, shouldReversePair } from 'utils/pair'
+import { orderedCurrencyIds, shouldReverse as shouldReverseSymbols } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
@@ -127,7 +127,14 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
-  const shouldReverse = shouldReversePair(pair)
+  // Match on UNWRAPPED symbols (BERA, not WBERA) so the balance bar reverses
+  // the same way as the pair name (DoubleCurrencySymbol) and the Pool Detail
+  // page. shouldReversePair used raw token0/token1 symbols ("USDC.e/WBERA"),
+  // which missed the whitelist's "USDC.e/BERA" entry — so the list bar showed
+  // USDC.e/BERA while the name + detail showed BERA/USDC.e.
+  const shouldReverse = shouldReverseSymbols(
+    `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`,
+  )
 
   const pythPrices = usePythPrices({
     chainId,
