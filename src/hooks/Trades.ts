@@ -79,7 +79,10 @@ function useAllCommonPairs(
     [tokenA, tokenB, bases, basePairs, chainId],
   )
 
-  const allPairs = usePairs(allPairCombinations, versionOverride)
+  // Swap routing reads reserves via the dedicated batched viem multicall so V2
+  // resolves on time even under the V3-Official cold-start RPC contention
+  // (see useReservesMulticall in data/Reserves).
+  const allPairs = usePairs(allPairCombinations, versionOverride, { batchedReserves: true })
 
   // only pass along valid pairs, non-duplicated pairs
   const pairs = useMemo(

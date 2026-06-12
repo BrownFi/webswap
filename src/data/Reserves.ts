@@ -11,11 +11,103 @@ import { RPC_URLS, isV3Like, factoryV3Gen } from 'lib/sdk/constants/addresses'
 
 const PAIR_INTERFACE = new Interface(IUniswapV2PairABI.abi)
 
+const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11'
+
+const RESERVES_ABI = [
+  {
+    inputs: [],
+    name: 'getReserves',
+    outputs: [
+      { name: '_reserve0', type: 'uint112' },
+      { name: '_reserve1', type: 'uint112' },
+      { name: '_blockTimestampLast', type: 'uint32' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const
+
 export enum PairState {
   LOADING,
   NOT_EXISTS,
   EXISTS,
   INVALID,
+}
+
+// Mirrors the shape the pair-construction memo reads off the legacy multicall's
+// CallState: `{ result: { reserve0, reserve1 } | undefined, loading }`.
+type ReserveSlot = { result?: { reserve0: bigint; reserve1: bigint }; loading: boolean }
+
+// Resilient, self-contained reserve fetch via ONE viem Multicall3 aggregate3
+// (allowFailure) — used ONLY by the swap routing path (useAllCommonPairs).
+//
+// Why not the shared legacy Redux multicall here: that multicall batches calls
+// across the WHOLE app (great for the pool list's many rows), but its single
+// per-block `aggregate` fetch gets starved on the V3-Official swap cold-start
+// when the parallel viem quote/getPair calls saturate the RPC — so V2's
+// reserves arrived seconds late and the V2 route looked missing. The swap page
+// only has a handful of candidate pairs (V2 + V3 pilot + V3 official), so a
+// dedicated batched read here costs ~1 extra multicall but resolves on time and
+// independent of that contention. Pool/mint/burn keep the shared multicall.
+function useReservesMulticall(pairAddresses: (string | undefined)[], chainId: number): ReserveSlot[] {
+  const addrKey = pairAddresses.join(',')
+  const [state, setState] = useState<{ key: string; slots: ReserveSlot[] }>(() => ({
+    key: '',
+    slots: pairAddresses.map(() => ({ result: undefined, loading: true })),
+  }))
+
+  useEffect(() => {
+    let stale = false
+    const lookups: { index: number; address: string }[] = []
+    pairAddresses.forEach((a, i) => {
+      if (a) lookups.push({ index: i, address: a })
+    })
+
+    if (lookups.length === 0) {
+      setState({ key: addrKey, slots: pairAddresses.map(() => ({ result: undefined, loading: false })) })
+      return
+    }
+
+    // Mark loading on a genuine address change (not a re-run with the same set),
+    // preserving prior slots so the UI doesn't flash empty mid-refetch.
+    setState((prev) => ({
+      key: addrKey,
+      slots: prev.key === addrKey ? prev.slots : pairAddresses.map(() => ({ result: undefined, loading: true })),
+    }))
+
+    const run = async () => {
+      const { createPublicClient, http } = await import('viem')
+      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+      const next: ReserveSlot[] = pairAddresses.map(() => ({ result: undefined, loading: false }))
+      try {
+        const responses = await client.multicall({
+          contracts: lookups.map(({ address }) => ({
+            address: address as `0x${string}`,
+            abi: RESERVES_ABI,
+            functionName: 'getReserves',
+          })),
+          multicallAddress: MULTICALL3,
+          allowFailure: true,
+        })
+        responses.forEach((r, i) => {
+          if (r.status !== 'success' || !r.result) return
+          const [reserve0, reserve1] = r.result as readonly [bigint, bigint, number]
+          next[lookups[i].index] = { result: { reserve0, reserve1 }, loading: false }
+        })
+      } catch {
+        // RPC/multicall down → leave slots undefined (renders NOT_EXISTS), same
+        // outcome as the legacy path's per-call failure.
+      }
+      if (!stale) setState({ key: addrKey, slots: next })
+    }
+    run()
+    return () => {
+      stale = true
+    }
+  }, [addrKey, chainId])
+
+  // Length-safe view (state can lag a render behind a fast address change).
+  return pairAddresses.map((_, i) => state.slots[i] ?? { result: undefined, loading: true })
 }
 
 // V3: look up pair address from factory (no CREATE2)
@@ -130,6 +222,15 @@ export function usePairs(
    * surface's V2/V3 toggle).
    */
   versionOverride?: number,
+  /**
+   * When true, reserves are read via a dedicated viem Multicall3 batch
+   * instead of the shared legacy Redux multicall. Used by the swap routing
+   * path so V2's reserves resolve on time even when the V3-Official cold-start
+   * saturates the RPC (see useReservesMulticall). Other surfaces (pool list,
+   * mint, burn) leave this off to keep the legacy multicall's cross-component
+   * batching, which is more RPC-efficient for many simultaneous pairs.
+   */
+  options?: { batchedReserves?: boolean },
 ): [PairState, Pair | null][] {
   const { chainId } = useActiveWeb3React()
   const { version: appVersion } = useVersion({ chainId })
@@ -161,7 +262,17 @@ export function usePairs(
 
   const pairAddresses = isV3Like(version) ? v3Addresses : v1v2Addresses
 
-  const results = useMultipleContractSingleData(pairAddresses, PAIR_INTERFACE, 'getReserves')
+  // Two reserve sources; exactly one does work (the other is fed an empty list
+  // and no-ops) so Hook order stays stable. Swap routing opts into the batched
+  // viem path; everything else uses the shared legacy multicall.
+  const batched = !!options?.batchedReserves
+  const legacyResults = useMultipleContractSingleData(
+    batched ? [] : pairAddresses,
+    PAIR_INTERFACE,
+    'getReserves',
+  )
+  const batchedResults = useReservesMulticall(batched ? pairAddresses : [], chainId)
+  const results = batched ? batchedResults : legacyResults
 
   return useMemo(() => {
     return results.map((result, i) => {
