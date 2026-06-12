@@ -151,9 +151,10 @@ export const kyberAggregator: AggregatorAdapter<KyberRouteSummary> = {
       // ~1.7× short on a Linea LINEA→ETH swap), and its executor `.call{gas}`s
       // each inner DEX so a too-low limit reverts with the opaque "Call failed".
       // This is the FALLBACK hint only — useAggregatorSwapCallback prefers a
-      // live on-chain estimateGas at send time. Use a 100% buffer here so even
-      // the fallback path clears realistic routes.
-      gasLimit: res.data.gas ? BigNumber.from(res.data.gas).mul(200).div(100) : undefined,
+      // live on-chain estimateGas at send time. Use a 200% buffer (3× Kyber's
+      // estimate) so even the fallback path clears realistic/long routes
+      // (HyperEVM multi-hop through several CLOB/DEX venues underran 2×).
+      gasLimit: res.data.gas ? BigNumber.from(res.data.gas).mul(300).div(100) : undefined,
     }
   },
 }

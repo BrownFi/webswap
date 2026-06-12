@@ -11,8 +11,10 @@ import { BigNumber } from '@ethersproject/bignumber'
  * flag it.
  *
  * Strategy: estimate on-chain at SEND time (approval/permit is mined by then,
- * unlike at quote time) and use the larger of (estimate × 1.25) and the
- * adapter's buffered hint. If estimateGas itself reverts (transient RPC,
+ * unlike at quote time) and use the larger of (estimate × 1.7) and the
+ * adapter's buffered hint. The 70% margin is generous on purpose — gas limit is
+ * only a ceiling (you pay for gas USED, not the limit), and Kyber's executor
+ * starves inner `.call{gas}`s on a tight limit. If estimateGas itself reverts (transient RPC,
  * allowance not yet visible), fall back to the hint and let the wallet do its
  * own check.
  *
@@ -26,7 +28,7 @@ export async function estimateGasWithMargin(
 ): Promise<BigNumber | undefined> {
   try {
     const est = await signer.estimateGas(tx)
-    const withMargin = est.mul(125).div(100)
+    const withMargin = est.mul(170).div(100)
     return fallbackHint && fallbackHint.gt(withMargin) ? fallbackHint : withMargin
   } catch {
     return fallbackHint
