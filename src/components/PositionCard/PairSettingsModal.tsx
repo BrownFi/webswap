@@ -179,7 +179,10 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   const version = pair.version ?? 2
   const isV3 = isV3Like(version)
   const { createToast } = useToast()
-  const factoryContract = useFactoryContract(true, { readonly: false })
+  // Pass the POOL's version (not the global toggle) so V2 setters resolve the
+  // V2 factory even when the header toggle is on V3 (e.g. a V2 pool opened from
+  // Portfolio). Mirrors the factoryV3 (pool-version) resolution below.
+  const factoryContract = useFactoryContract(true, { readonly: false }, version)
   const addTransaction = useTransactionAdder()
 
   // V3 setters aren't in IBrownFiV2Factory.json — build a tiny Contract from
