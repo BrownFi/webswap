@@ -20,6 +20,9 @@ export const KYBER_AGGREGATOR_CHAIN_SLUG: Partial<Record<ChainId, string>> = {
   [ChainId.ARBITRUM_MAINNET]: 'arbitrum',
   [ChainId.LINEA_MAINNET]: 'linea',
   [ChainId.BERA_MAINNET]: 'berachain',
+  // Kyber added HyperEVM at our request — verified live 2026-06-12: /routes +
+  // /route/build both 200, router 0x6131B5fae19EA4f9D964eAc0408E4408b66337b5.
+  [ChainId.HYPER_EVM]: 'hyperevm',
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
