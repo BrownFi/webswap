@@ -123,6 +123,15 @@ export interface BestTradeOptions {
   maxHops?: number
 }
 
+/**
+ * Result of bestTradeExactIn/Out: the sorted trade list, plus a flag set when
+ * a candidate pool was skipped because the trade exceeds its per-swap cap
+ * (vs a genuinely empty pool). Lets the UI show "reduce amount" instead of
+ * "insufficient liquidity". The flag rides on the array (it's accumulated
+ * through recursion) — typed here so callers read it without `as any`.
+ */
+export type TradeList = Trade[] & { maxExceeded?: boolean }
+
 export class Trade {
   public readonly route: Route
   public readonly tradeType: TradeType
@@ -285,8 +294,8 @@ export class Trade {
     { maxNumResults = 3, maxHops = 3 }: BestTradeOptions = {},
     currentPairs: Pair[] = [],
     originalAmountIn: CurrencyAmount = currencyAmountIn,
-    bestTrades: Trade[] = []
-  ): Promise<Trade[]> {
+    bestTrades: TradeList = []
+  ): Promise<TradeList> {
     invariant(pairs.length > 0, 'PAIRS')
     invariant(maxHops > 0, 'MAX_HOPS')
     invariant(originalAmountIn === currencyAmountIn || currentPairs.length > 0, 'INVALID_RECURSION')
@@ -339,7 +348,7 @@ export class Trade {
         }
         // Tag the result when the pool rejected because the trade exceeds its
         // per-swap cap (not an empty pool) so the UI can say "reduce amount".
-        if ((error as any)?.isMaxAmountOutExceededError) (bestTrades as any).maxExceeded = true
+        if ((error as any)?.isMaxAmountOutExceededError) bestTrades.maxExceeded = true
         return
       }
 
@@ -387,8 +396,8 @@ export class Trade {
     { maxNumResults = 3, maxHops = 3 }: BestTradeOptions = {},
     currentPairs: Pair[] = [],
     originalAmountOut: CurrencyAmount = currencyAmountOut,
-    bestTrades: Trade[] = []
-  ): Promise<Trade[]> {
+    bestTrades: TradeList = []
+  ): Promise<TradeList> {
     invariant(pairs.length > 0, 'PAIRS')
     invariant(maxHops > 0, 'MAX_HOPS')
     invariant(originalAmountOut === currencyAmountOut || currentPairs.length > 0, 'INVALID_RECURSION')
@@ -436,7 +445,7 @@ export class Trade {
         if (!isExpectedTradeError(error)) {
           console.error('======= getInputAmountAsync error', error)
         }
-        if ((error as any)?.isMaxAmountOutExceededError) (bestTrades as any).maxExceeded = true
+        if ((error as any)?.isMaxAmountOutExceededError) bestTrades.maxExceeded = true
         continue
       }
 

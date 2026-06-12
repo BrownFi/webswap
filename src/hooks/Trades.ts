@@ -157,7 +157,7 @@ export function useTradeExactIn(
             // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
-            if (Array.isArray(bestTradeIn) && (bestTradeIn as any).maxExceeded) setMaxExceeded(true)
+            if (bestTradeIn?.maxExceeded) setMaxExceeded(true)
             setTrade(foundTrade)
             setLoading(false)
           }
@@ -180,7 +180,7 @@ export function useTradeExactIn(
         if (!stale) {
           const foundTrade = bestTradeIn?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
-          if (Array.isArray(bestTradeIn) && (bestTradeIn as any).maxExceeded) setMaxExceeded(true)
+          if (bestTradeIn?.maxExceeded) setMaxExceeded(true)
           setTrade(foundTrade)
           setLoading(false)
         }
@@ -278,7 +278,7 @@ export function useTradeExactOut(
             // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
-            if (Array.isArray(bestTradeOut) && (bestTradeOut as any).maxExceeded) setMaxExceeded(true)
+            if (bestTradeOut?.maxExceeded) setMaxExceeded(true)
             setTrade(foundTrade)
             setLoading(false)
           }
@@ -302,7 +302,7 @@ export function useTradeExactOut(
         if (!stale) {
           const foundTrade = bestTradeOut?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
-          if (Array.isArray(bestTradeOut) && (bestTradeOut as any).maxExceeded) setMaxExceeded(true)
+          if (bestTradeOut?.maxExceeded) setMaxExceeded(true)
           setTrade(foundTrade)
           setLoading(false)
         }

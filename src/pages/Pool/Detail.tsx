@@ -104,38 +104,9 @@ function secondsToAgo(seconds: number) {
   return `${Math.floor(seconds / 86400)}d`
 }
 
-type PairRaw = {
-  id: string
-  fee: number
-  protocolFee: number
-  feeDay: number
-  totalSupply: number
-  reserve0: number
-  reserve1: number
-  tvl: number
-  apr: number
-  volumeDay: number
-  volume7Day: number
-  updatedAt: number
-  lambda?: number
-  k?: number
-  // V3 extras (undefined on V2). Aliased from feeSplit/kB by the loader below.
-  kB?: number
-  kQ?: number
-  feeSplit?: number
-  compress?: number
-  sSell?: number
-  sBuy?: number
-  fixS?: number
-  disThreshold?: number
-  sBound?: number
-  pythWeight?: number
-  gamma?: number
-  uniV2Price?: number
-  quoteTokenIndex?: number
-  token0: PairStats['token0']
-  token1: PairStats['token1']
-}
+// The detail-page pair row is exactly the shared PairStats shape (V2 + V3
+// fields, token0/token1). Alias rather than re-declaring it.
+type PairRaw = PairStats
 
 
 export default function PoolDetail() {

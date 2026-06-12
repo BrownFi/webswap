@@ -10,7 +10,7 @@ export {
   inputOutputComparator,
   tradeComparator,
 } from './trade'
-export type { BestTradeOptions } from './trade'
+export type { BestTradeOptions, TradeList } from './trade'
 export {
   Fraction,
   CurrencyAmount,
