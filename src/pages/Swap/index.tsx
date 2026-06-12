@@ -502,7 +502,7 @@ export default function Swap() {
   //   long in case a starved pipeline (V2) is about to re-engage.
   // - GRACE_NO_NATIVE: native never raised its flag (e.g. aggregator-only
   //   pair) → longer absolute safety valve before falling through.
-  const GRACE_AFTER_NATIVE = 1000
+  const GRACE_AFTER_NATIVE = 300
   const GRACE_NO_NATIVE = 8000
   useEffect(() => {
     if (!pendingQuote) return
