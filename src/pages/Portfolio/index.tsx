@@ -1,4 +1,4 @@
-import { versionLabel } from 'lib/sdk/constants/addresses'
+import { versionLabel, versionToSlug } from 'lib/sdk/constants/addresses'
 import { isV3Like } from '@brownfi/sdk'
 /**
  * My Portfolio page — single-chain view of the connected user's LP
@@ -202,7 +202,7 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
   // Without this, the detail page falls back to the user's global V2/V3
   // toggle from Redux — clicking a V2 position while Redux is on V3 (or
   // vice versa) would query the wrong indexer and "Pool not found".
-  const handleClick = () => navigate(`/pool/${positionChainId}/${position.pair.id}?v=${position.version}`)
+  const handleClick = () => navigate(`/pool/${positionChainId}/${position.pair.id}?v=${versionToSlug(position.version)}`)
 
   const pnlPct = position.basePortfolio > 0 ? position.unrealizedPnL / position.basePortfolio : 0
 

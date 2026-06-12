@@ -1,5 +1,6 @@
 import { isV3Like } from '@brownfi/sdk'
 import { Pair, TokenAmount } from '@brownfi/sdk'
+import { versionToSlug } from 'lib/sdk/constants/addresses'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
 import { lazy, Suspense, useMemo, useState } from 'react'
@@ -193,7 +194,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         <div
           className="flex items-center cursor-pointer max-md:flex-wrap max-md:gap-2"
           style={{ gap: '8px', minHeight: '60px' }}
-          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${pair.version}`)}
+          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${versionToSlug(pair.version)}`)}
         >
           {/* Pool name */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>

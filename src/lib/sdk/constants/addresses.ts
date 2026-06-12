@@ -89,6 +89,23 @@ export const isV3Like = (version: number | undefined | null): boolean =>
 export const versionLabel = (version: number | undefined | null): string =>
   version === VERSION.V3_OFFICIAL ? 'V3 Official' : version === VERSION.V3_PILOT ? 'V3 Pilot' : `V${version ?? 2}`
 
+/** URL slug for a version — keeps the raw internal number out of the address
+ *  bar (users see `v3-official`, never `v=4`). */
+export const versionToSlug = (version: number | undefined | null): string =>
+  version === VERSION.V3_OFFICIAL ? 'v3-official' : version === VERSION.V3_PILOT ? 'v3-pilot' : 'v2'
+
+/** Parse the `?v=` param back to a numeric version. Accepts the slug form;
+ *  also tolerates a raw number (e.g. an already-open `v=4` tab) so nothing
+ *  breaks mid-session. Returns undefined for anything else → caller falls
+ *  back to the toggle. */
+export const slugToVersion = (slug: string | null | undefined): number | undefined => {
+  if (slug === 'v3-official') return VERSION.V3_OFFICIAL
+  if (slug === 'v3-pilot') return VERSION.V3_PILOT
+  if (slug === 'v2') return VERSION.V2
+  const n = Number(slug)
+  return n === VERSION.V2 || n === VERSION.V3_PILOT || n === VERSION.V3_OFFICIAL ? n : undefined
+}
+
 // version 3 — PILOT (pre-v3-final, Bera only; zap on router)
 export const ROUTER_ADDRESS_V3: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0xFB473aEAe9b0d03c6974BCf5f2B67dA4AF7F6043',

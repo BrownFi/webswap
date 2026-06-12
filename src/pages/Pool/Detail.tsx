@@ -15,7 +15,7 @@ import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
 import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
-import { useV3Indexer, isV3Like, versionLabel } from 'lib/sdk/constants/addresses'
+import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
@@ -114,15 +114,11 @@ export default function PoolDetail() {
   const chainId = Number(chainIdParam)
   const [searchParams] = useSearchParams()
   const { version: reduxVersion } = useVersion({ chainId })
-  // Version precedence: explicit `?v=` from URL > Redux toggle. Pool list
-  // and Portfolio links include the version so a V2 pool always queries
-  // /indexer and a V3 pool always queries /indexer/v3, regardless of the
-  // user's current V2/V3 toggle in the header. Old URLs without `?v=`
-  // (bookmarks, shared links) fall back to Redux for backward compat.
-  const urlVersion = (() => {
-    const raw = Number(searchParams.get('v'))
-    return raw === 2 || isV3Like(raw) ? raw : undefined
-  })()
+  // Version precedence: explicit `?v=` slug from URL > Redux toggle. Pool list
+  // and Portfolio links include the version (e.g. ?v=v3-official) so a V2 pool
+  // always queries /indexer and a V3 pool always queries /indexer/v3,
+  // regardless of the header toggle. No `?v=` falls back to the toggle.
+  const urlVersion = slugToVersion(searchParams.get('v'))
   const version = urlVersion ?? reduxVersion
   // Per-chain V3 indexer toggle. See constants/addresses.ts. Keyed on the
   // resolved version (pilot=3 vs official=4) so each picks its own indexer.
