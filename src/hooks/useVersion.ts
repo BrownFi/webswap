@@ -103,7 +103,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
     // V2 indexer chains are listed explicitly because not every V2 deployment
     // also has an indexer. V3 follows a simpler rule: any chain with a V3
     // router has a V3 indexer (router + indexer ship together), so we derive
-    // from the address map directly. Adding a chain to ROUTER_ADDRESS_V3
+    // from the address map directly. Adding a chain to ROUTER_ADDRESS_V3_PILOT
     // unlocks both contract calls and indexer queries.
     const v2Chains = [
       ChainId.BERA_MAINNET,

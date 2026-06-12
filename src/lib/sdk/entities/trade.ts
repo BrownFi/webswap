@@ -124,13 +124,22 @@ export interface BestTradeOptions {
 }
 
 /**
- * Result of bestTradeExactIn/Out: the sorted trade list, plus a flag set when
- * a candidate pool was skipped because the trade exceeds its per-swap cap
- * (vs a genuinely empty pool). Lets the UI show "reduce amount" instead of
- * "insufficient liquidity". The flag rides on the array (it's accumulated
- * through recursion) — typed here so callers read it without `as any`.
+ * Result of bestTradeExactIn/Out: the sorted trade list, plus flags set during
+ * the search. The flags ride on the array (accumulated through recursion) —
+ * typed here so callers read them without `as any`.
+ *
+ * - maxExceeded: a candidate pool was skipped because the trade exceeds its
+ *   per-swap cap (vs a genuinely empty pool). Lets the UI show "reduce amount"
+ *   instead of "insufficient liquidity".
+ * - transientError: a candidate quote threw a NON-business error (RPC timeout,
+ *   Hermes fetch failure, JSON-RPC rate-limit) and was skipped. This is
+ *   indistinguishable from "thin pool" at the result level (both yield no
+ *   trade), so we flag it explicitly — the hook layer retries on this but NOT
+ *   on a clean insufficient-liquidity result, so a momentary network blip
+ *   doesn't leave the route permanently missing while a genuinely empty pool
+ *   still reports "insufficient" immediately.
  */
-export type TradeList = Trade[] & { maxExceeded?: boolean }
+export type TradeList = Trade[] & { maxExceeded?: boolean; transientError?: boolean }
 
 export class Trade {
   public readonly route: Route
@@ -344,7 +353,10 @@ export class Trade {
         amountOut = result[0]
       } catch (error) {
         if (!isExpectedTradeError(error)) {
-          console.warn('======= getOutputAmountAsync error', error)
+          // A non-business error (RPC/Hermes/network) — the quote didn't get a
+          // real answer. Flag it so the hook layer can retry rather than treat
+          // this as a settled "no route".
+          bestTrades.transientError = true
         }
         // Tag the result when the pool rejected because the trade exceeds its
         // per-swap cap (not an empty pool) so the UI can say "reduce amount".
@@ -377,6 +389,9 @@ export class Trade {
           )
         }
       } catch (error) {
+        // Recursion / Route / computeAmount threw unexpectedly — treat as
+        // transient so the hook retries rather than locking in a missing route.
+        bestTrades.transientError = true
         console.warn('======= bestTradeExactIn iteration error', error)
         return
       }
@@ -443,7 +458,8 @@ export class Trade {
         amountIn = result[0]
       } catch (error) {
         if (!isExpectedTradeError(error)) {
-          console.error('======= getInputAmountAsync error', error)
+          // Non-business error — flag for retry (see bestTradeExactIn).
+          bestTrades.transientError = true
         }
         if ((error as any)?.isMaxAmountOutExceededError) bestTrades.maxExceeded = true
         continue
@@ -472,6 +488,7 @@ export class Trade {
           )
         }
       } catch (error) {
+        bestTrades.transientError = true
         console.warn('======= bestTradeExactOut iteration error', error)
         continue
       }

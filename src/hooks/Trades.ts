@@ -1,5 +1,16 @@
 import { Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+
+// A quote can fail transiently — an RPC timeout, a Hermes (Pyth) fetch blip, a
+// JSON-RPC rate-limit under the heavy concurrent load of an initial page load
+// (V2 + V3 + V4 pipelines + aggregators + indexer all firing at once). When
+// that happens the SDK skips the pair and resolves with no trade, which looks
+// identical to a genuinely empty pool — so the route silently vanishes and,
+// because the effect only re-runs on input change, NEVER recovers. We retry a
+// bounded number of times (only when the SDK flags a transient error, never on
+// a clean insufficient-liquidity result) so a momentary blip self-heals.
+const MAX_QUOTE_RETRIES = 2
+const QUOTE_RETRY_DELAY_MS = 1500
 
 import { BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES, ADDITIONAL_BASES } from 'constants/common'
 import { PairState, usePairs } from 'data/Reserves'
@@ -126,8 +137,39 @@ export function useTradeExactIn(
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
+  // Bumping this re-runs the quote effect WITHOUT an input change — used to
+  // retry after a transient failure. `retryCountRef` bounds the attempts; it's
+  // reset inside the effect when the actual inputs change (not on a retry
+  // re-run) so each new quote gets a fresh budget.
+  const [retryTick, setRetryTick] = useState(0)
+  const retryCountRef = useRef(0)
+  const lastSigRef = useRef('')
+
   useEffect(() => {
     let stale = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+
+    // Reset the retry budget when the inputs themselves changed (vs. a retry
+    // re-run, where the signature is identical and retryTick advanced).
+    const inputSig = `${allowedPairs?.length}|${currencyAmountIn?.raw?.toString()}|${currencyOut?.name}|${singleHopOnly}`
+    if (lastSigRef.current !== inputSig) {
+      lastSigRef.current = inputSig
+      retryCountRef.current = 0
+    }
+
+    // Schedules a bounded retry when a quote came back empty due to a TRANSIENT
+    // error (RPC/Hermes blip) rather than a real "no route". Returns true when
+    // a retry is pending so the caller keeps the loading state up. We keep
+    // loading rather than flashing "no route" → retry → route.
+    const scheduleRetryIfTransient = (foundTrade: Trade | null, list?: { transientError?: boolean }): boolean => {
+      if (foundTrade || !list?.transientError || retryCountRef.current >= MAX_QUOTE_RETRIES) return false
+      retryTimer = setTimeout(() => {
+        if (stale) return
+        retryCountRef.current += 1
+        setRetryTick((t) => t + 1)
+      }, QUOTE_RETRY_DELAY_MS)
+      return true
+    }
 
     // Engage loading synchronously on input/pair change — before the 300ms
     // debounce — so the UI never sees a false-negative gap while the debounce
@@ -158,8 +200,9 @@ export function useTradeExactIn(
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
             if (bestTradeIn?.maxExceeded) setMaxExceeded(true)
+            const retrying = scheduleRetryIfTransient(foundTrade, bestTradeIn ?? undefined)
             setTrade(foundTrade)
-            setLoading(false)
+            setLoading(retrying)
           }
           return
         }
@@ -181,8 +224,9 @@ export function useTradeExactIn(
           const foundTrade = bestTradeIn?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
           if (bestTradeIn?.maxExceeded) setMaxExceeded(true)
+          const retrying = scheduleRetryIfTransient(foundTrade, bestTradeIn ?? undefined)
           setTrade(foundTrade)
-          setLoading(false)
+          setLoading(retrying)
         }
         return
       }
@@ -200,8 +244,9 @@ export function useTradeExactIn(
     return () => {
       stale = true
       clearTimeout(timeout)
+      if (retryTimer) clearTimeout(retryTimer)
     }
-  }, [allowedPairs?.length, currencyAmountIn?.raw.toString(), currencyOut?.name, singleHopOnly])
+  }, [allowedPairs?.length, currencyAmountIn?.raw.toString(), currencyOut?.name, singleHopOnly, retryTick])
 
   return {
     trade: trade,
@@ -241,8 +286,32 @@ export function useTradeExactOut(
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
+  // Transient-failure retry — see useTradeExactIn for the rationale.
+  const [retryTick, setRetryTick] = useState(0)
+  const retryCountRef = useRef(0)
+  const lastSigRef = useRef('')
+
   useEffect(() => {
     let stale = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+
+    // Reset the retry budget when the inputs themselves changed (vs. a retry
+    // re-run, where the signature is identical and retryTick advanced).
+    const inputSig = `${allowedPairs?.length}|${currencyAmountOut?.raw?.toString()}|${currencyIn?.name}|${singleHopOnly}`
+    if (lastSigRef.current !== inputSig) {
+      lastSigRef.current = inputSig
+      retryCountRef.current = 0
+    }
+
+    const scheduleRetryIfTransient = (foundTrade: Trade | null, list?: { transientError?: boolean }): boolean => {
+      if (foundTrade || !list?.transientError || retryCountRef.current >= MAX_QUOTE_RETRIES) return false
+      retryTimer = setTimeout(() => {
+        if (stale) return
+        retryCountRef.current += 1
+        setRetryTick((t) => t + 1)
+      }, QUOTE_RETRY_DELAY_MS)
+      return true
+    }
 
     // Engage loading synchronously on input/pair change — before the 300ms
     // debounce — so the UI never sees a false-negative gap.
@@ -279,8 +348,9 @@ export function useTradeExactOut(
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
             if (bestTradeOut?.maxExceeded) setMaxExceeded(true)
+            const retrying = scheduleRetryIfTransient(foundTrade, bestTradeOut ?? undefined)
             setTrade(foundTrade)
-            setLoading(false)
+            setLoading(retrying)
           }
           return
         }
@@ -303,8 +373,9 @@ export function useTradeExactOut(
           const foundTrade = bestTradeOut?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
           if (bestTradeOut?.maxExceeded) setMaxExceeded(true)
+          const retrying = scheduleRetryIfTransient(foundTrade, bestTradeOut ?? undefined)
           setTrade(foundTrade)
-          setLoading(false)
+          setLoading(retrying)
         }
         return
       }
@@ -320,8 +391,9 @@ export function useTradeExactOut(
     return () => {
       stale = true
       clearTimeout(timeout)
+      if (retryTimer) clearTimeout(retryTimer)
     }
-  }, [currencyIn?.name, currencyAmountOut?.raw?.toString(), allowedPairs?.length, singleHopOnly])
+  }, [currencyIn?.name, currencyAmountOut?.raw?.toString(), allowedPairs?.length, singleHopOnly, retryTick])
 
   return {
     trade: trade,

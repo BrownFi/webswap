@@ -324,7 +324,12 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
             )}
             {devStats.kappa !== undefined && (
-              <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
+              <Text>
+                {isV3Like(version) ? 'kB' : 'Kappa'}: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}
+              </Text>
+            )}
+            {isV3Like(version) && devStats.kQ !== undefined && (
+              <Text>kQ: {formatNumberLambda(devStats.kQ, { maximumFractionDigits: 4 })}</Text>
             )}
             {/* Fee is already shown in green under the pair name — drop it here */}
             {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (

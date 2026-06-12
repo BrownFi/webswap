@@ -15,7 +15,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createPublicClient, http } from 'viem'
 import type { PairStats } from 'components/PositionCard/usePoolStats'
-import { FACTORY_ADDRESS_V3, RPC_URLS } from 'lib/sdk/constants/addresses'
+import { FACTORY_ADDRESS_V3_PILOT, RPC_URLS } from 'lib/sdk/constants/addresses'
 import { GET_CONFIG_ABI, fromQ64, fromPrec } from 'utils/v3Config'
 
 const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11' as const
@@ -84,7 +84,7 @@ type FetchedToken = {
 }
 
 async function fetchV3PoolsOnChain(chainId: number): Promise<PairStats[]> {
-  const factory = FACTORY_ADDRESS_V3[chainId]
+  const factory = FACTORY_ADDRESS_V3_PILOT[chainId]
   const rpc = RPC_URLS[chainId]
   if (!factory || !rpc) return []
 
@@ -246,7 +246,7 @@ export function useV3PoolsOnChain(chainId: number | undefined, enabled: boolean)
   return useQuery<PairStats[]>({
     queryKey: ['v3PoolsOnChain', chainId],
     queryFn: () => fetchV3PoolsOnChain(chainId as number),
-    enabled: enabled && !!chainId && !!FACTORY_ADDRESS_V3[chainId as number],
+    enabled: enabled && !!chainId && !!FACTORY_ADDRESS_V3_PILOT[chainId as number],
     // Reserves/supply move every block on an active pool — 30s keeps the
     // numbers reasonably fresh without hammering RPC.
     staleTime: 30_000,
@@ -255,7 +255,7 @@ export function useV3PoolsOnChain(chainId: number | undefined, enabled: boolean)
 }
 
 async function fetchV3PoolOnChain(chainId: number, pairAddress: string): Promise<PairStats | null> {
-  const factory = FACTORY_ADDRESS_V3[chainId]
+  const factory = FACTORY_ADDRESS_V3_PILOT[chainId]
   const rpc = RPC_URLS[chainId]
   if (!factory || !rpc) return null
 
@@ -339,7 +339,7 @@ export function useV3PoolOnChain(chainId: number | undefined, pairAddress: strin
   return useQuery<PairStats | null>({
     queryKey: ['v3PoolOnChain', chainId, pairAddress?.toLowerCase()],
     queryFn: () => fetchV3PoolOnChain(chainId as number, pairAddress as string),
-    enabled: enabled && !!chainId && !!pairAddress && !!FACTORY_ADDRESS_V3[chainId as number],
+    enabled: enabled && !!chainId && !!pairAddress && !!FACTORY_ADDRESS_V3_PILOT[chainId as number],
     staleTime: 30_000,
     refetchInterval: 30_000,
   })

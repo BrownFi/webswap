@@ -483,6 +483,16 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
         </RowBetween>
 
         <div className="space-y-3">
+          {/* Order mirrors the dev-stats strip: Lambda, kB, kQ, … */}
+          <SettingsRow
+            label="setLambdaOfPair (uint64)"
+            value={lambdaInput}
+            setValue={setLambdaInput}
+            placeholder={currentValues?.lambda !== undefined ? `Current: ${round(currentValues.lambda)}` : 'Lambda'}
+            onSubmit={submitLambda}
+            busy={submitting.lambda}
+          />
+
           {/* Kappa — single Q64 on V2, paired (kB + kQ) on V3 */}
           {isV3 ? (
             <div>
@@ -517,15 +527,6 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
               busy={submitting.k}
             />
           )}
-
-          <SettingsRow
-            label="setLambdaOfPair (uint64)"
-            value={lambdaInput}
-            setValue={setLambdaInput}
-            placeholder={currentValues?.lambda !== undefined ? `Current: ${round(currentValues.lambda)}` : 'Lambda'}
-            onSubmit={submitLambda}
-            busy={submitting.lambda}
-          />
 
           <SettingsRow
             label="setFeeOfPair (uint32)"

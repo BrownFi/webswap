@@ -380,7 +380,12 @@ function PoolDetailInner({
                 <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
               )}
               {devStats.kappa !== undefined && (
-                <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
+                <span>
+                  {isV3Like(version) ? 'kB' : 'Kappa'}: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}
+                </span>
+              )}
+              {isV3Like(version) && devStats.kQ !== undefined && (
+                <span>kQ: {formatNumberLambda(devStats.kQ, { maximumFractionDigits: 4 })}</span>
               )}
               {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
                 <span>
@@ -486,7 +491,12 @@ function PoolDetailInner({
                   <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
                 )}
                 {devStats.kappa !== undefined && (
-                  <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
+                  <span>
+                    {isV3Like(version) ? 'kB' : 'Kappa'}: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}
+                  </span>
+                )}
+                {isV3Like(version) && devStats.kQ !== undefined && (
+                  <span>kQ: {formatNumberLambda(devStats.kQ, { maximumFractionDigits: 4 })}</span>
                 )}
                 {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
                   <span>

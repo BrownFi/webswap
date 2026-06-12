@@ -55,7 +55,7 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 //
 // 2026-06-04 (beta branch): swapped to the v3-final deployment. Architectural
 // change vs the prior V3 deployment — zap entrypoints have been split out of
-// the router into a separate BrownFiV3Zap contract (see ZAP_ADDRESS_V3 below).
+// the router into a separate BrownFiV3Zap contract (see ZAP_ADDRESS_V3_PILOT below).
 // The router now only handles swap + add/remove liquidity. Library quotes are
 // inventory-safe; the INVALID_INVENTORY reverts we saw on lopsided pools
 // should be much rarer. develop/bera intentionally remain on the previous
@@ -107,55 +107,55 @@ export const slugToVersion = (slug: string | null | undefined): number | undefin
 }
 
 // version 3 — PILOT (pre-v3-final, Bera only; zap on router)
-export const ROUTER_ADDRESS_V3: Record<number, string> = {
+export const ROUTER_ADDRESS_V3_PILOT: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0xFB473aEAe9b0d03c6974BCf5f2B67dA4AF7F6043',
 }
-export const FACTORY_ADDRESS_V3: Record<number, string> = {
+export const FACTORY_ADDRESS_V3_PILOT: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x83A329E93f7A36b9baAb5bF1EAFF319947387552',
 }
-export const ZAP_ADDRESS_V3: Record<number, string> = {} // pilot: zap on router
-export const V3_USE_INDEXER: Record<number, boolean> = {
+export const ZAP_ADDRESS_V3_PILOT: Record<number, string> = {} // pilot: zap on router
+export const V3_PILOT_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
 }
 
 // version 4 — OFFICIAL (v3-final; Bera + HyperEVM; separate zap)
-export const ROUTER_ADDRESS_V4: Record<number, string> = {
+export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
   [ChainId.HYPER_EVM]: '0xc0E55d0085266E9A33456610E08172f9c173F908',
 }
-export const FACTORY_ADDRESS_V4: Record<number, string> = {
+export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
   [ChainId.HYPER_EVM]: '0x6A4Bd89709b67eC846F02cF9E95A0dd2Fb515720',
 }
-export const ZAP_ADDRESS_V4: Record<number, string> = {
+export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
   [ChainId.HYPER_EVM]: '0xE5dEbF39457fa6e7FFcdDb5af40435AD2D52438b',
 }
-export const V4_USE_INDEXER: Record<number, boolean> = {
+export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
   [ChainId.HYPER_EVM]: true,
 }
 
 /** Per-version address-map resolvers (used by the SDK getters + readers). */
 export const routerV3Gen = (version: number): Record<number, string> =>
-  version === VERSION.V3_OFFICIAL ? ROUTER_ADDRESS_V4 : ROUTER_ADDRESS_V3
+  version === VERSION.V3_OFFICIAL ? ROUTER_ADDRESS_V3_OFFICIAL : ROUTER_ADDRESS_V3_PILOT
 export const factoryV3Gen = (version: number): Record<number, string> =>
-  version === VERSION.V3_OFFICIAL ? FACTORY_ADDRESS_V4 : FACTORY_ADDRESS_V3
+  version === VERSION.V3_OFFICIAL ? FACTORY_ADDRESS_V3_OFFICIAL : FACTORY_ADDRESS_V3_PILOT
 export const zapV3Gen = (version: number): Record<number, string> =>
-  version === VERSION.V3_OFFICIAL ? ZAP_ADDRESS_V4 : ZAP_ADDRESS_V3
+  version === VERSION.V3_OFFICIAL ? ZAP_ADDRESS_V3_OFFICIAL : ZAP_ADDRESS_V3_PILOT
 
 /** Indexer-source reader. Defaults false. Keyed on the exact V3-gen version. */
 export const useV3Indexer = (chainId: number | undefined, version?: number): boolean => {
   if (chainId == null) return false
-  const map = version === VERSION.V3_OFFICIAL ? V4_USE_INDEXER : V3_USE_INDEXER
+  const map = version === VERSION.V3_OFFICIAL ? V3_OFFICIAL_USE_INDEXER : V3_PILOT_USE_INDEXER
   return map[chainId] ?? false
 }
 
 // Availability checks for the version toggle (variant-agnostic).
 export const hasV3Pilot = (chainId: number | undefined): boolean =>
-  chainId != null && !!ROUTER_ADDRESS_V3[chainId]
+  chainId != null && !!ROUTER_ADDRESS_V3_PILOT[chainId]
 export const hasV3Official = (chainId: number | undefined): boolean =>
-  chainId != null && !!ROUTER_ADDRESS_V4[chainId]
+  chainId != null && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId]
 
 export const FACTORY_ADDRESS: Record<number, string> = {
   [ChainId.MAINNET]: '0xD705B4e18055D8Fa1d099d0533163a9e8fA09E4A',

@@ -11,7 +11,7 @@
  * merge by descending USD value. Each row carries its chainId so the
  * UI badge can show the chain icon.
  *
- * V3 is currently Bera-only (only chain in ROUTER_ADDRESS_V3) — that
+ * V3 is currently Bera-only (only chain in ROUTER_ADDRESS_V3_PILOT) — that
  * map is the source of truth. V2 indexer chains are listed explicitly
  * since not every V2 deployment has an indexer.
  *
@@ -27,7 +27,7 @@ import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useActiveWeb3React } from 'hooks'
 import { ChainId } from '@brownfi/sdk'
-import { ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V3_PILOT } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 
 const PAIR_ACCOUNTS_QUERY = `
@@ -80,12 +80,12 @@ const V2_INDEXER_CHAINS: ChainId[] = [
   ChainId.MONAD,
 ]
 
-// V3 indexer chains are derived directly from ROUTER_ADDRESS_V3 — V3
+// V3 indexer chains are derived directly from ROUTER_ADDRESS_V3_PILOT — V3
 // router and V3 indexer ship together, so the address map is the source
 // of truth. Currently Bera-only.
-const V3_INDEXER_CHAINS: ChainId[] = (Object.keys(ROUTER_ADDRESS_V3) as unknown as ChainId[])
+const V3_INDEXER_CHAINS: ChainId[] = (Object.keys(ROUTER_ADDRESS_V3_PILOT) as unknown as ChainId[])
   .map((k) => Number(k) as ChainId)
-  .filter((id) => !!ROUTER_ADDRESS_V3[id])
+  .filter((id) => !!ROUTER_ADDRESS_V3_PILOT[id])
 
 export interface PortfolioPair {
   id: string

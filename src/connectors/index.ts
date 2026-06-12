@@ -152,7 +152,7 @@ export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
 // production) lacks them, so it's the only one that doesn't match.
 //
 // V3 contracts are still per-chain (currently Berachain-only via
-// ROUTER_ADDRESS_V3) so even with this flag true, useVersion + SwitchVersion
+// ROUTER_ADDRESS_V3_PILOT) so even with this flag true, useVersion + SwitchVersion
 // only expose V3 on chains where the router is deployed. The flag here is
 // only about API capability, not per-chain readiness.
 export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.test(

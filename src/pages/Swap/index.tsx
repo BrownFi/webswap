@@ -168,8 +168,8 @@ export default function Swap() {
   const { independentField, typedValue, recipient } = useSwapState()
   const {
     v2Trade,
-    v3Trade,
-    v4Trade,
+    v3PilotTrade,
+    v3OfficialTrade,
     currencyBalances,
     parsedAmount,
     currencies,
@@ -296,8 +296,8 @@ export default function Swap() {
     refreshIntervalMs: bestRefreshIntervalMs,
   } = useBestSwapRoute({
     v2Trade: showWrap ? undefined : v2Trade,
-    v3Trade: showWrap ? undefined : v3Trade,
-    v4Trade: showWrap ? undefined : v4Trade,
+    v3PilotTrade: showWrap ? undefined : v3PilotTrade,
+    v3OfficialTrade: showWrap ? undefined : v3OfficialTrade,
     v2Unavailable: v2AmountOutExceedsReserve,
     tokenIn: currencies[Field.INPUT],
     tokenOut: currencies[Field.OUTPUT],
@@ -486,21 +486,28 @@ export default function Swap() {
     }
   }, [loadingExactIn, loadingExactOut])
 
-  // Clear pendingQuote only when ALL source loading flags are quiet AND
-  // either the native cycle has finished OR an absolute max-wait has
-  // elapsed. The max-wait is a safety valve for pairs where the native
-  // pipeline determines it has no quote (no V2 pool) without ever raising
-  // its loading flag — without it, the picker would stay in skeleton
-  // forever on aggregator-only pairs.
+  // Clear pendingQuote (reveal the route picker) only when ALL source loading
+  // flags are quiet, AFTER a grace wait. The grace exists so a SLOW native
+  // route still arrives before we reveal the comparison — otherwise the fast
+  // routes (V3 Official + Kyber) show first and the V2 row pops in late,
+  // reading as "V2 is missing".
   //
-  // - 350ms when native already completed → tight follow-on.
-  // - 2500ms when native hasn't engaged yet → covers the worst observed
-  //   reserves-load gap (~1.4s) plus the V2 trade itself (~600ms) with
-  //   margin, then falls through to show the Kyber-only result.
+  // The waits are intentionally generous: V2's reserve read is starved on the
+  // V3-Official cold-start and can land a couple seconds after the others, so
+  // a short grace would reveal the picker before V2 is in. If a slower route
+  // re-raises a loading flag during the wait, the effect re-runs and the timer
+  // is cancelled (line above), so we keep waiting until it truly settles.
+  //
+  // - GRACE_AFTER_NATIVE: native already completed a cycle → still wait this
+  //   long in case a starved pipeline (V2) is about to re-engage.
+  // - GRACE_NO_NATIVE: native never raised its flag (e.g. aggregator-only
+  //   pair) → longer absolute safety valve before falling through.
+  const GRACE_AFTER_NATIVE = 1000
+  const GRACE_NO_NATIVE = 8000
   useEffect(() => {
     if (!pendingQuote) return
     if (bestLoading || loadingExactIn || loadingExactOut) return
-    const delay = nativeCycleDone ? 350 : 2500
+    const delay = nativeCycleDone ? GRACE_AFTER_NATIVE : GRACE_NO_NATIVE
     const t = setTimeout(() => setPendingQuote(false), delay)
     return () => clearTimeout(t)
   }, [pendingQuote, bestLoading, loadingExactIn, loadingExactOut, nativeCycleDone])

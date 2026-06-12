@@ -16,7 +16,7 @@ import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies
 import { SwapState } from './reducer'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { computeSlippageAdjustedAmounts } from 'utils/prices'
-import { ROUTER_ADDRESS_V3, ROUTER_ADDRESS_V4 } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V3_PILOT, ROUTER_ADDRESS_V3_OFFICIAL } from 'lib/sdk/constants/addresses'
 
 export function useSwapState(): AppState['swap'] {
   return useSelector<AppState, AppState['swap']>((state) => state.swap)
@@ -112,10 +112,10 @@ export function useDerivedSwapInfo(): {
   v2Trade: Trade | undefined
   /** V3 BrownFi trade, when the V3 pool indexer has liquidity for this pair.
    *  Quoted in parallel with V2 so the smart router can compare them. */
-  v3Trade: Trade | undefined
+  v3PilotTrade: Trade | undefined
   /** V3 Official (v3-final, version 4) trade — quoted in parallel with the
    *  pilot V3 (version 3) so the router can compare both deployments. */
-  v4Trade: Trade | undefined
+  v3OfficialTrade: Trade | undefined
   inputError?: string
   /** BrownFi-V2-specific constraint: amount-out > 90% of pool reserve.
    *  Surfaced separately so the Swap page can decide whether to block —
@@ -172,56 +172,56 @@ export function useDerivedSwapInfo(): {
   // Each pipeline is gated by whether that deployment's router exists on the
   // chain; hook call order stays stable (we always call the hooks, feeding
   // `undefined` amount to skip the multicall when inert).
-  const chainSupportsV3 = !!chainId && !!ROUTER_ADDRESS_V3[chainId] // pilot
-  const chainSupportsV4 = !!chainId && !!ROUTER_ADDRESS_V4[chainId] // official
+  const chainSupportsV3Pilot = !!chainId && !!ROUTER_ADDRESS_V3_PILOT[chainId] // pilot
+  const chainSupportsV3Official = !!chainId && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId] // official
   const tradeInV2 = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 2)
   const tradeOutV2 = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined, 2)
-  const tradeInV3 = useTradeExactIn(
-    isExactIn && chainSupportsV3 ? parsedAmount : undefined,
+  const tradeInV3Pilot = useTradeExactIn(
+    isExactIn && chainSupportsV3Pilot ? parsedAmount : undefined,
     outputCurrency ?? undefined,
     3,
   )
-  const tradeOutV3 = useTradeExactOut(
+  const tradeOutV3Pilot = useTradeExactOut(
     inputCurrency ?? undefined,
-    !isExactIn && chainSupportsV3 ? parsedAmount : undefined,
+    !isExactIn && chainSupportsV3Pilot ? parsedAmount : undefined,
     3,
   )
-  const tradeInV4 = useTradeExactIn(
-    isExactIn && chainSupportsV4 ? parsedAmount : undefined,
+  const tradeInV3Official = useTradeExactIn(
+    isExactIn && chainSupportsV3Official ? parsedAmount : undefined,
     outputCurrency ?? undefined,
     4,
   )
-  const tradeOutV4 = useTradeExactOut(
+  const tradeOutV3Official = useTradeExactOut(
     inputCurrency ?? undefined,
-    !isExactIn && chainSupportsV4 ? parsedAmount : undefined,
+    !isExactIn && chainSupportsV3Official ? parsedAmount : undefined,
     4,
   )
 
   const v2Trade = isExactIn ? tradeInV2.trade : tradeOutV2.trade
-  const v3Trade = isExactIn ? tradeInV3.trade : tradeOutV3.trade
-  const v4Trade = isExactIn ? tradeInV4.trade : tradeOutV4.trade
+  const v3PilotTrade = isExactIn ? tradeInV3Pilot.trade : tradeOutV3Pilot.trade
+  const v3OfficialTrade = isExactIn ? tradeInV3Official.trade : tradeOutV3Official.trade
 
   // Loading + insufficient unioned across V2 + V3-pilot + V3-official. Inert
   // pipelines (no router on chain) are excluded so an idle one doesn't mask a
   // real "insufficient" verdict from the others.
   const loadingExactIn =
     tradeInV2.loadingExactIn ||
-    (chainSupportsV3 && tradeInV3.loadingExactIn) ||
-    (chainSupportsV4 && tradeInV4.loadingExactIn)
+    (chainSupportsV3Pilot && tradeInV3Pilot.loadingExactIn) ||
+    (chainSupportsV3Official && tradeInV3Official.loadingExactIn)
   const loadingExactOut =
     tradeOutV2.loadingExactOut ||
-    (chainSupportsV3 && tradeOutV3.loadingExactOut) ||
-    (chainSupportsV4 && tradeOutV4.loadingExactOut)
+    (chainSupportsV3Pilot && tradeOutV3Pilot.loadingExactOut) ||
+    (chainSupportsV3Official && tradeOutV3Official.loadingExactOut)
   // "Insufficient" only when EVERY deployed pipeline says insufficient.
   const insufficientIn = [
     tradeInV2.isInsufficient,
-    !chainSupportsV3 || tradeInV3.isInsufficient,
-    !chainSupportsV4 || tradeInV4.isInsufficient,
+    !chainSupportsV3Pilot || tradeInV3Pilot.isInsufficient,
+    !chainSupportsV3Official || tradeInV3Official.isInsufficient,
   ].every(Boolean)
   const insufficientOut = [
     tradeOutV2.isInsufficient,
-    !chainSupportsV3 || tradeOutV3.isInsufficient,
-    !chainSupportsV4 || tradeOutV4.isInsufficient,
+    !chainSupportsV3Pilot || tradeOutV3Pilot.isInsufficient,
+    !chainSupportsV3Official || tradeOutV3Official.isInsufficient,
   ].every(Boolean)
   const isInsufficient = insufficientIn || insufficientOut
 
@@ -231,11 +231,11 @@ export function useDerivedSwapInfo(): {
   // amount" instead of the misleading "insufficient liquidity".
   const someMaxExceeded = [
     tradeInV2.maxExceeded,
-    chainSupportsV3 && tradeInV3.maxExceeded,
-    chainSupportsV4 && tradeInV4.maxExceeded,
+    chainSupportsV3Pilot && tradeInV3Pilot.maxExceeded,
+    chainSupportsV3Official && tradeInV3Official.maxExceeded,
     tradeOutV2.maxExceeded,
-    chainSupportsV3 && tradeOutV3.maxExceeded,
-    chainSupportsV4 && tradeOutV4.maxExceeded,
+    chainSupportsV3Pilot && tradeOutV3Pilot.maxExceeded,
+    chainSupportsV3Official && tradeOutV3Official.maxExceeded,
   ].some(Boolean)
 
   // Keep tradeIn/tradeOut for the rest of the function — these are
@@ -301,7 +301,7 @@ export function useDerivedSwapInfo(): {
   //    (V3 Official / Pilot / V2) — gating on v2Trade alone left the button
   //    wrongly enabled with zero balance when the exact-out route was V3.
   const balanceIn = currencyBalances[Field.INPUT]
-  const exactOutTrade = v4Trade ?? v3Trade ?? v2Trade
+  const exactOutTrade = v3OfficialTrade ?? v3PilotTrade ?? v2Trade
   const exactOutRequiredIn =
     !isExactIn && exactOutTrade && allowedSlippage
       ? computeSlippageAdjustedAmounts(exactOutTrade, allowedSlippage)[Field.INPUT]
@@ -335,7 +335,7 @@ export function useDerivedSwapInfo(): {
   // a route and the SDK signaled insufficient reserves. Surfaced as a
   // separate flag so the Swap page can combine it with aggregator-route
   // availability before deciding to block the swap.
-  const noNativeTrade = !v2Trade && !v3Trade && !v4Trade
+  const noNativeTrade = !v2Trade && !v3PilotTrade && !v3OfficialTrade
   const nativePoolLiquidityInsufficient =
     !!isInsufficient && noNativeTrade && !isInputEmpty && !loadingExactIn && !loadingExactOut
 
@@ -351,8 +351,8 @@ export function useDerivedSwapInfo(): {
     currencyBalances,
     parsedAmount,
     v2Trade: v2Trade ?? undefined,
-    v3Trade: v3Trade ?? undefined,
-    v4Trade: v4Trade ?? undefined,
+    v3PilotTrade: v3PilotTrade ?? undefined,
+    v3OfficialTrade: v3OfficialTrade ?? undefined,
     inputError,
     v2AmountOutExceedsReserve,
     nativePoolLiquidityInsufficient,

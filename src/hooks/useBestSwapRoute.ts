@@ -64,10 +64,10 @@ export interface UseBestSwapRouteParams {
   /** BrownFi V2 trade from useDerivedSwapInfo. */
   v2Trade: Trade | undefined
   /** BrownFi V3 PILOT trade (version 3). Optional. */
-  v3Trade: Trade | undefined
+  v3PilotTrade: Trade | undefined
   /** BrownFi V3 OFFICIAL trade (version 4). Optional. Surfaced as its own
    *  candidate so the picker compares pilot vs official side-by-side. */
-  v4Trade: Trade | undefined
+  v3OfficialTrade: Trade | undefined
   /** V2 trade exists but amount-out exceeds 90% pool reserve. Surfaced
    *  as a candidate (dimmed) but excluded from `best` selection so
    *  swaps don't route through a pool that can't fulfill them. */
@@ -114,7 +114,7 @@ function deriveAmountOutMin(amountOut: BigNumber, slippageBps: number): BigNumbe
 
 function brownfiRouteFromTrade(
   trade: Trade,
-  source: 'brownfi-v2' | 'brownfi-v3' | 'brownfi-v4',
+  source: 'brownfi-v2' | 'brownfi-v3-pilot' | 'brownfi-v3-official',
   sourceName: string,
   slippageBps: number,
 ): UnifiedRoute | null {
@@ -136,8 +136,8 @@ function brownfiRouteFromTrade(
 export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRouteResult {
   const {
     v2Trade,
-    v3Trade,
-    v4Trade,
+    v3PilotTrade,
+    v3OfficialTrade,
     v2Unavailable,
     tokenIn,
     tokenOut,
@@ -216,12 +216,12 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
     // rows so the picker compares both deployments side-by-side and auto-picks
     // best amountOut. Each carries its trade (version 3/4), so the swap callback
     // executes against the right deployment's router.
-    if (v4Trade) {
-      const r = brownfiRouteFromTrade(v4Trade, 'brownfi-v4', 'BrownFi V3 Official', slippageBps)
+    if (v3OfficialTrade) {
+      const r = brownfiRouteFromTrade(v3OfficialTrade, 'brownfi-v3-official', 'BrownFi V3 Official', slippageBps)
       if (r) candidates.push(r)
     }
-    if (v3Trade) {
-      const r = brownfiRouteFromTrade(v3Trade, 'brownfi-v3', 'BrownFi V3 Pilot', slippageBps)
+    if (v3PilotTrade) {
+      const r = brownfiRouteFromTrade(v3PilotTrade, 'brownfi-v3-pilot', 'BrownFi V3 Pilot', slippageBps)
       if (r) candidates.push(r)
     }
 
@@ -243,7 +243,7 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
 
     // Sort by amountOut desc so the UI gets a "best on top" comparison.
     // Tie-break: BrownFi-native first (no external router hop, lower gas).
-    const isBrownFi = (s: string) => s === 'brownfi-v2' || s === 'brownfi-v3'
+    const isBrownFi = (s: string) => s === 'brownfi-v2' || s === 'brownfi-v3-pilot' || s === 'brownfi-v3-official'
     const sorted = [...candidates].sort((a, b) => {
       if (a.amountOut.eq(b.amountOut)) {
         if (isBrownFi(a.source) && !isBrownFi(b.source)) return -1
@@ -311,5 +311,5 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
       lastFetchedAt,
       refreshIntervalMs: REFRESH_INTERVAL_MS,
     }
-  }, [aggregators, v2Trade, v3Trade, v4Trade, v2Unavailable, queries, selected, slippageBps])
+  }, [aggregators, v2Trade, v3PilotTrade, v3OfficialTrade, v2Unavailable, queries, selected, slippageBps])
 }
