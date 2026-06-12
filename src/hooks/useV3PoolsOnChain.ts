@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createPublicClient, http } from 'viem'
 import type { PairStats } from 'components/PositionCard/usePoolStats'
 import { FACTORY_ADDRESS_V3, RPC_URLS } from 'lib/sdk/constants/addresses'
+import { GET_CONFIG_ABI, fromQ64, fromPrec } from 'utils/v3Config'
 
 const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11' as const
 
@@ -25,34 +26,6 @@ const FACTORY_ABI = [
   { inputs: [], name: 'pairConfig', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' },
 ] as const
 
-// PairConfig.getConfig returns the full per-pair config struct. Field order
-// must match IBrownFiV3PairConfig.Config in the contract source; we decode
-// Q64 scaling for kB/kQ/lambda and 1e8 PRECISION scaling for the rest.
-const PAIR_CONFIG_ABI = [{
-  inputs: [{ type: 'address' }],
-  name: 'getConfig',
-  outputs: [{
-    components: [
-      { name: 'kB', type: 'uint256' },
-      { name: 'kQ', type: 'uint256' },
-      { name: 'lambda', type: 'uint64' },
-      { name: 'fee', type: 'uint32' },
-      { name: 'feeSplit', type: 'uint32' },
-      { name: 'compress', type: 'uint32' },
-      { name: 'sSell', type: 'uint32' },
-      { name: 'sBuy', type: 'uint32' },
-      { name: 'fixS', type: 'uint32' },
-      { name: 'disThreshold', type: 'uint32' },
-      { name: 'sBound', type: 'uint32' },
-      { name: 'pythWeight', type: 'uint32' },
-      { name: 'gamma', type: 'uint32' },
-    ],
-    type: 'tuple',
-  }],
-  stateMutability: 'view',
-  type: 'function',
-}] as const
-
 const PAIR_ABI = [
   { inputs: [], name: 'token0', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' },
   { inputs: [], name: 'token1', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' },
@@ -60,10 +33,6 @@ const PAIR_ABI = [
   { inputs: [], name: 'totalSupply', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
 ] as const
 
-const Q64 = 2n ** 64n
-const PREC = 100000000n
-const fromQ64 = (v: bigint) => Number((v * 1000000n) / Q64) / 1000000
-const fromPrec = (v: number | bigint) => Number(v) / Number(PREC)
 
 type ConfigStruct = {
   kB: bigint
@@ -155,7 +124,7 @@ async function fetchV3PoolsOnChain(chainId: number): Promise<PairStats[]> {
     { address: addr as `0x${string}`, abi: PAIR_ABI, functionName: 'token1' as const },
     { address: addr as `0x${string}`, abi: PAIR_ABI, functionName: 'getReserves' as const },
     { address: addr as `0x${string}`, abi: PAIR_ABI, functionName: 'totalSupply' as const },
-    { address: pairConfigAddr as `0x${string}`, abi: PAIR_CONFIG_ABI, functionName: 'getConfig' as const, args: [addr as `0x${string}`] },
+    { address: pairConfigAddr as `0x${string}`, abi: GET_CONFIG_ABI, functionName: 'getConfig' as const, args: [addr as `0x${string}`] },
   ])
   const poolResp = await client.multicall({
     contracts: poolCalls,
@@ -304,7 +273,7 @@ async function fetchV3PoolOnChain(chainId: number, pairAddress: string): Promise
     { address: pairAddress as `0x${string}`, abi: PAIR_ABI, functionName: 'token1' as const },
     { address: pairAddress as `0x${string}`, abi: PAIR_ABI, functionName: 'getReserves' as const },
     { address: pairAddress as `0x${string}`, abi: PAIR_ABI, functionName: 'totalSupply' as const },
-    { address: pairConfigAddr as `0x${string}`, abi: PAIR_CONFIG_ABI, functionName: 'getConfig' as const, args: [pairAddress as `0x${string}`] },
+    { address: pairConfigAddr as `0x${string}`, abi: GET_CONFIG_ABI, functionName: 'getConfig' as const, args: [pairAddress as `0x${string}`] },
   ]
   const r = await client.multicall({ contracts: calls, multicallAddress: MULTICALL3, allowFailure: true })
   if (r[0].status !== 'success' || r[1].status !== 'success' || r[2].status !== 'success') return null

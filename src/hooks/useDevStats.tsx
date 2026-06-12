@@ -124,54 +124,10 @@ export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
   useQuery({
     queryKey: ['v3DevStats', chainId, pair.liquidityToken.address, `v${version}`],
     queryFn: async () => {
-      const { createPublicClient, http } = await import('viem')
-      const { RPC_URLS, factoryV3Gen } = await import('lib/sdk/constants/addresses')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-      // Resolve the factory for the pool's version (4 = Official, 3 = Pilot);
-      // the pilot map is Bera-only and gave wrong/empty config for v4 pools.
-      const factoryAddr = factoryV3Gen(version)[chainId]
-      if (!factoryAddr) return null
-
-      const configAddr = await client.readContract({
-        address: factoryAddr as `0x${string}`,
-        abi: [{ inputs: [], name: 'pairConfig', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' }] as const,
-        functionName: 'pairConfig',
-      })
-
-      const config = await client.readContract({
-        address: configAddr as `0x${string}`,
-        abi: [{
-          inputs: [{ type: 'address' }],
-          name: 'getConfig',
-          outputs: [{
-            components: [
-              { name: 'kB', type: 'uint256' },
-              { name: 'kQ', type: 'uint256' },
-              { name: 'lambda', type: 'uint64' },
-              { name: 'fee', type: 'uint32' },
-              { name: 'feeSplit', type: 'uint32' },
-              { name: 'compress', type: 'uint32' },
-              { name: 'sSell', type: 'uint32' },
-              { name: 'sBuy', type: 'uint32' },
-              { name: 'fixS', type: 'uint32' },
-              { name: 'disThreshold', type: 'uint32' },
-              { name: 'sBound', type: 'uint32' },
-              { name: 'pythWeight', type: 'uint32' },
-              { name: 'gamma', type: 'uint32' },
-            ],
-            type: 'tuple',
-          }],
-          stateMutability: 'view',
-          type: 'function',
-        }] as const,
-        functionName: 'getConfig',
-        args: [pair.liquidityToken.address as `0x${string}`],
-      })
-
-      const Q64 = 2n ** 64n
-      const PREC = 100000000n
-      const fromQ64 = (v: bigint) => Number((v * 1000000n) / Q64) / 1000000
-      const fromPrec = (v: number | bigint) => Number(v) / Number(PREC)
+      const { readV3PairConfig, fromQ64, fromPrec } = await import('utils/v3Config')
+      // Resolves the factory for the pool's version (4 = Official, 3 = Pilot).
+      const config = await readV3PairConfig(chainId, version, pair.liquidityToken.address)
+      if (!config) return null
 
       const kB = fromQ64(config.kB)
       const kQ = fromQ64(config.kQ)

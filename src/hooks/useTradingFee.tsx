@@ -43,48 +43,11 @@ export const useTradingFee = ({ pair }: Props) => {
   const { data: v3TradingFee } = useQuery({
     queryKey: ['tradingFeeV3', chainId, pair.liquidityToken.address, `v${version}`],
     queryFn: async () => {
-      const { createPublicClient, http } = await import('viem')
-      const { RPC_URLS, factoryV3Gen } = await import('lib/sdk/constants/addresses')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-      // Use the pool's version (pair.version) so v4 pools read their own
-      // factory's config, not the pilot map (Bera-only).
-      const factoryAddr = factoryV3Gen(version)[chainId]
-      if (!factoryAddr) return 0
-      const configAddr = await client.readContract({
-        address: factoryAddr as `0x${string}`,
-        abi: [{ inputs: [], name: 'pairConfig', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' }] as const,
-        functionName: 'pairConfig',
-      })
-      const config = await client.readContract({
-        address: configAddr as `0x${string}`,
-        abi: [{
-          inputs: [{ type: 'address' }],
-          name: 'getConfig',
-          outputs: [{
-            components: [
-              { name: 'kB', type: 'uint256' },
-              { name: 'kQ', type: 'uint256' },
-              { name: 'lambda', type: 'uint64' },
-              { name: 'fee', type: 'uint32' },
-              { name: 'feeSplit', type: 'uint32' },
-              { name: 'compress', type: 'uint32' },
-              { name: 'sSell', type: 'uint32' },
-              { name: 'sBuy', type: 'uint32' },
-              { name: 'fixS', type: 'uint32' },
-              { name: 'disThreshold', type: 'uint32' },
-              { name: 'sBound', type: 'uint32' },
-              { name: 'pythWeight', type: 'uint32' },
-              { name: 'gamma', type: 'uint32' },
-            ],
-            type: 'tuple',
-          }],
-          stateMutability: 'view',
-          type: 'function',
-        }] as const,
-        functionName: 'getConfig',
-        args: [pair.liquidityToken.address as `0x${string}`],
-      })
-      return (Number(config.fee) / 1e8) * 100
+      // Pool's version (pair.version) → v4 pools read their own factory, not pilot.
+      const { readV3PairConfig, fromPrec } = await import('utils/v3Config')
+      const config = await readV3PairConfig(chainId, version, pair.liquidityToken.address)
+      if (!config) return 0
+      return fromPrec(config.fee) * 100
     },
     enabled: isV3 && !isAvailable(),
     staleTime: 2 * 60 * 1000,

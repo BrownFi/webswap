@@ -1,4 +1,4 @@
-import { Currency, Pair } from '@brownfi/sdk'
+import { Currency } from '@brownfi/sdk'
 import { getTokenSymbol } from 'utils'
 import { currencyId } from 'utils/currencyId'
 
@@ -38,11 +38,6 @@ export const shouldReverse = (pairSymbols: string) => {
     // getTokenSymbol, so match the raw wrapped form here.
     'USDC/WSEI',
   ].includes(pairSymbols)
-}
-
-export const shouldReversePair = (pair: Pair) => {
-  const pairSymbols = [pair.token0.symbol, pair.token1.symbol].join('/')
-  return shouldReverse(pairSymbols)
 }
 
 /**

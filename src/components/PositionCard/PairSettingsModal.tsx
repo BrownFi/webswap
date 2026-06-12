@@ -205,36 +205,12 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     let stale = false
     ;(async () => {
       try {
-        const { createPublicClient, http } = await import('viem')
-        const { RPC_URLS } = await import('lib/sdk/constants/addresses')
-        const factoryAddr = factoryV3Gen(version)[chainId]
-        if (!factoryAddr) return
-        const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-        const cfgAddr = await client.readContract({
-          address: factoryAddr as `0x${string}`,
-          abi: [{ inputs: [], name: 'pairConfig', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' }] as const,
-          functionName: 'pairConfig',
-        })
-        const c = (await client.readContract({
-          address: cfgAddr as `0x${string}`,
-          abi: [{
-            inputs: [{ type: 'address' }],
-            name: 'getConfig',
-            outputs: [{
-              components: [
-                { name: 'kB', type: 'uint256' }, { name: 'kQ', type: 'uint256' }, { name: 'lambda', type: 'uint64' },
-                { name: 'fee', type: 'uint32' }, { name: 'feeSplit', type: 'uint32' }, { name: 'compress', type: 'uint32' },
-                { name: 'sSell', type: 'uint32' }, { name: 'sBuy', type: 'uint32' }, { name: 'fixS', type: 'uint32' },
-                { name: 'disThreshold', type: 'uint32' }, { name: 'sBound', type: 'uint32' }, { name: 'pythWeight', type: 'uint32' },
-                { name: 'gamma', type: 'uint32' },
-              ],
-              type: 'tuple',
-            }],
-            stateMutability: 'view', type: 'function',
-          }] as const,
-          functionName: 'getConfig',
-          args: [pair.liquidityToken.address as `0x${string}`],
-        })) as { kB: bigint; kQ: bigint; lambda: bigint }
+        const { readV3PairConfig } = await import('utils/v3Config')
+        const c = await readV3PairConfig(chainId, version, pair.liquidityToken.address)
+        if (!c) {
+          if (!stale) setRawConfig({})
+          return
+        }
         if (!stale) setRawConfig({ kB: c.kB.toString(), kQ: c.kQ.toString(), lambda: c.lambda.toString() })
       } catch {
         // No raw config (pool not yet created, RPC error) — q64Field falls
