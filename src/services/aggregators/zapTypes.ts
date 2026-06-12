@@ -70,6 +70,9 @@ export interface ZapInQuote<R = unknown> {
   /** Where the user approves the input token(s). */
   routerAddress: string
   routeSummary: R
+  /** BrownFi pool version this quote was built for. Carried so the matching
+   *  build call uses the same API surface (V3 = Kyber Earn dex 84 / pre-prod). */
+  version?: number
   /** Unix seconds. Quote is stale after this — orchestration must refetch
    *  before signing rather than build calldata from an expired route. */
   validUntil: number
@@ -85,6 +88,8 @@ export interface ZapOutQuote<R = unknown> {
   /** Where the user approves the LP token. */
   routerAddress: string
   routeSummary: R
+  /** BrownFi pool version this quote was built for (see ZapInQuote.version). */
+  version?: number
   validUntil: number
 }
 

@@ -103,6 +103,8 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
         amountsIn,
         // Kyber expects slippage in basis points as a string.
         slippage: String(params.slippageBps),
+        // V3-gen pools (3/4) route to Kyber Earn (dex 84); V2 stays legacy.
+        version: params.pair.version,
       })
     } catch {
       return null
@@ -127,6 +129,7 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
       gasEstimate: route.gas ? BigNumber.from(route.gas) : undefined,
       routerAddress: route.routerAddress,
       routeSummary: route,
+      version: params.pair.version,
       validUntil: Math.floor(Date.now() / 1000) + KYBER_ZAP_QUOTE_TTL_SECONDS,
     }
   },
@@ -145,6 +148,7 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
         tokenOut: tokenOutAddr,
         liquidityOut: params.liquidityRaw,
         slippage: String(params.slippageBps),
+        version: params.pair.version,
       })
     } catch {
       return null
@@ -180,6 +184,7 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
       gasEstimate: route.gas ? BigNumber.from(route.gas) : undefined,
       routerAddress: route.routerAddress,
       routeSummary: route,
+      version: params.pair.version,
       validUntil: Math.floor(Date.now() / 1000) + KYBER_ZAP_QUOTE_TTL_SECONDS,
     }
   },
@@ -193,6 +198,7 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
       // Pass through the user's deadline so it's embedded in the calldata
       // rather than letting Kyber substitute its own implicit default.
       deadline: params.deadline,
+      version: params.quote.version,
     })
 
     if (!built?.callData || !built?.routerAddress) {
@@ -214,6 +220,7 @@ export const kyberZapAggregator: ZapAggregatorAdapter<KyberRouteData, KyberRoute
       recipient: params.account,
       route: params.quote.routeSummary.route,
       deadline: params.deadline,
+      version: params.quote.version,
     })
 
     if (!built?.callData || !built?.routerAddress) {
