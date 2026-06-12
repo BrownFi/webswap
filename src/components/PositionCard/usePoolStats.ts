@@ -53,6 +53,10 @@ export type PairStats = {
   pythWeight?: number
   gamma?: number
   uniV2Price?: number
+  // V3-only: which token is the quote (0 = token0, 1 = token1). The
+  // authoritative base/quote designation — drives display order via
+  // shouldReverseDisplay. Undefined on V2.
+  quoteTokenIndex?: number
   token0?: Token | null
   token1?: Token | null
 }

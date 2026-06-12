@@ -45,6 +45,27 @@ export const shouldReversePair = (pair: Pair) => {
   return shouldReverse(pairSymbols)
 }
 
+/**
+ * Display order (base/quote) for a pair. V3 pools carry the AUTHORITATIVE
+ * `quoteTokenIndex` from the indexer — 0 means token0 is the quote, so we
+ * reverse to show base (token1) first; 1 means token0 is the base (no
+ * reverse). When it's absent (V2 constant-product pools have no oracle
+ * base/quote, or the data didn't load) we fall back to the symbol whitelist.
+ * This is the robust source of truth — the whitelist can't keep up with new
+ * pools (e.g. WBTC/WETH official = WETH/WBTC, USDC.e/HONEY = HONEY/USDC.e).
+ */
+export const shouldReverseDisplay = (
+  currency0: Currency | undefined,
+  currency1: Currency | undefined,
+  chainId: number | undefined,
+  quoteTokenIndex?: number | null,
+): boolean => {
+  if (quoteTokenIndex === 0) return true
+  if (quoteTokenIndex === 1) return false
+  const pairSymbols = [getTokenSymbol(currency0, chainId), getTokenSymbol(currency1, chainId)].join('/')
+  return shouldReverse(pairSymbols)
+}
+
 // Returns [baseId, quoteId] in display order so /add and /remove URLs match
 // the page title (which is base/quote). Callers pass currencies already
 // unwrapped (ETHER vs Token) since that's what getTokenSymbol needs to match

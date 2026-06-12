@@ -7,7 +7,7 @@ import { Address, checksumAddress } from 'viem'
 
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
-import { shouldReverse } from 'utils/pair'
+import { shouldReverseDisplay } from 'utils/pair'
 import { useChainGuard } from 'hooks/useChainGuard'
 import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import { isMainnet } from 'connectors'
@@ -90,6 +90,7 @@ const GET_PAIR_V3 = `
       pythWeight
       gamma
       uniV2Price
+      quoteTokenIndex
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
     }
@@ -131,6 +132,7 @@ type PairRaw = {
   pythWeight?: number
   gamma?: number
   uniV2Price?: number
+  quoteTokenIndex?: number
   token0: PairStats['token0']
   token1: PairStats['token1']
 }
@@ -330,10 +332,11 @@ function PoolDetailInner({
   const pct1 = 100 - pct0
 
   // Pool balances panel renders in base/quote order so the bar + labels
-  // stay consistent with the page title (which uses DoubleCurrencySymbol).
-  // All four bound values flip together to keep each row internally
-  // correct (reserve amount stays attached to its own symbol + color).
-  const isReversed = shouldReverse(`${symbol0}/${symbol1}`)
+  // stay consistent with the page title. V3 uses the indexer's authoritative
+  // quoteTokenIndex; V2 / unknown fall back to the symbol whitelist. All four
+  // bound values flip together to keep each row internally correct (reserve
+  // amount stays attached to its own symbol + color).
+  const isReversed = shouldReverseDisplay(currency0, currency1, chainId, pairRaw.quoteTokenIndex)
   const balanceL = isReversed
     ? { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
     : { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
@@ -346,9 +349,9 @@ function PoolDetailInner({
         {/* Mobile-only section: pair title + dev stats + rate, always on top */}
         <div className="lg:hidden flex flex-col gap-3 mt-4 mb-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={26} margin />
+            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={26} margin quoteTokenIndex={pairRaw.quoteTokenIndex} />
             <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>
-              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
+              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairRaw.quoteTokenIndex} />
             </span>
             <span
               style={{
@@ -440,9 +443,9 @@ function PoolDetailInner({
                 pool chain. A standalone banner here was redundant. */}
             {/* Header — shown on desktop only; mobile header is above the grid */}
             <div className="hidden lg:flex items-center gap-3 flex-wrap">
-              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} />
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} quoteTokenIndex={pairRaw.quoteTokenIndex} />
               <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', color: '#FBFBFD' }}>
-                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
+                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairRaw.quoteTokenIndex} />
               </span>
               <span
                 style={{

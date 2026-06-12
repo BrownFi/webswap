@@ -100,6 +100,7 @@ const LIST_ALL_PAIRS_V3 = `
       pythWeight
       gamma
       uniV2Price
+      quoteTokenIndex
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
     }

@@ -29,7 +29,7 @@ import { isMainnet } from 'connectors'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
-import { orderedCurrencyIds, shouldReverse as shouldReverseSymbols } from 'utils/pair'
+import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
@@ -127,14 +127,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
-  // Match on UNWRAPPED symbols (BERA, not WBERA) so the balance bar reverses
-  // the same way as the pair name (DoubleCurrencySymbol) and the Pool Detail
-  // page. shouldReversePair used raw token0/token1 symbols ("USDC.e/WBERA"),
-  // which missed the whitelist's "USDC.e/BERA" entry — so the list bar showed
-  // USDC.e/BERA while the name + detail showed BERA/USDC.e.
-  const shouldReverse = shouldReverseSymbols(
-    `${getTokenSymbol(currency0, chainId)}/${getTokenSymbol(currency1, chainId)}`,
-  )
+  // Base/quote order: V3 pools use the indexer's authoritative quoteTokenIndex;
+  // V2 / unknown fall back to the unwrapped-symbol whitelist. Same source as
+  // the pair name (DoubleCurrencySymbol) and the Pool Detail page, so the
+  // balance bar, name, and detail all agree.
+  const shouldReverse = shouldReverseDisplay(currency0, currency1, chainId, pairStats?.quoteTokenIndex)
 
   const pythPrices = usePythPrices({
     chainId,
@@ -201,7 +198,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           {/* Pool name */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
             <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0 hidden sm:block">
-              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={40} />
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={40} quoteTokenIndex={pairStats?.quoteTokenIndex} />
             </div>
             <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0 sm:hidden flex items-center">
               <CurrencyLogo currency={currency0} size="28px" />
@@ -210,7 +207,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             <div className="min-w-0 flex-1">
               <div className="inline-flex items-center gap-2.5 max-w-full">
                 <span className="text-[16px] sm:text-[20px]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '30px', color: '#FBFBFD', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
+                  <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairStats?.quoteTokenIndex} />
                 </span>
                 <a
                   href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
@@ -373,7 +370,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   <PairChartModal
                     enableAdvancedZoom
                     pair={pair}
-                    name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
+                    name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairStats?.quoteTokenIndex} />}
                   />
                 </Suspense>
                 {isTest && <PairFavorite pair={pair} />}

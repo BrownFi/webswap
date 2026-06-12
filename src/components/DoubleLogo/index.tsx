@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { CurrencyLogo } from 'components/CurrencyLogo'
 import { getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
-import { shouldReverse } from 'utils/pair'
+import { shouldReverseDisplay } from 'utils/pair'
 
 interface DoubleCurrencyLogoProps {
   margin?: boolean
@@ -15,16 +15,17 @@ interface DoubleCurrencyLogoProps {
   // wins and Bera native ETHER would resolve to "HYPE" when wallet sits on
   // HyperEVM). See CurrencyLogo for the same prop.
   chainId?: number
+  // V3 pools' authoritative base/quote from the indexer. Overrides the symbol
+  // whitelist when provided (see shouldReverseDisplay).
+  quoteTokenIndex?: number | null
 }
 
 export const HigherLogo = styled(CurrencyLogo)``
 
-export function DoubleCurrencyLogo({ currency0, currency1, size = 16, margin = false, chainId: chainIdProp }: DoubleCurrencyLogoProps) {
+export function DoubleCurrencyLogo({ currency0, currency1, size = 16, margin = false, chainId: chainIdProp, quoteTokenIndex }: DoubleCurrencyLogoProps) {
   const { chainId: walletChainId } = useActiveWeb3React()
   const chainId = chainIdProp ?? walletChainId
-  const symbols = [getTokenSymbol(currency0, chainId), getTokenSymbol(currency1, chainId)]
-  const pair = symbols.join('/')
-  const isReversed = shouldReverse(pair)
+  const isReversed = shouldReverseDisplay(currency0, currency1, chainId, quoteTokenIndex)
   const first = isReversed ? currency1 : currency0
   const second = isReversed ? currency0 : currency1
 
@@ -61,12 +62,13 @@ type DoubleCurrencySymbolProps = {
   currency1?: Currency
   // Optional chainId override for cross-chain rendering (see DoubleCurrencyLogo).
   chainId?: number
+  // V3 pools' authoritative base/quote from the indexer (see shouldReverseDisplay).
+  quoteTokenIndex?: number | null
 }
 
-export const DoubleCurrencySymbol = ({ currency0, currency1, chainId: chainIdProp }: DoubleCurrencySymbolProps) => {
+export const DoubleCurrencySymbol = ({ currency0, currency1, chainId: chainIdProp, quoteTokenIndex }: DoubleCurrencySymbolProps) => {
   const { chainId: walletChainId } = useActiveWeb3React()
   const chainId = chainIdProp ?? walletChainId
   const symbols = [getTokenSymbol(currency0, chainId), getTokenSymbol(currency1, chainId)]
-  const pair = symbols.join('/')
-  return <>{shouldReverse(pair) ? symbols.reverse().join('/') : pair}</>
+  return <>{shouldReverseDisplay(currency0, currency1, chainId, quoteTokenIndex) ? [symbols[1], symbols[0]].join('/') : symbols.join('/')}</>
 }
