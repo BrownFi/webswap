@@ -7,7 +7,7 @@ import {
   Trade,
   getRouterAddress,
 } from '@brownfi/sdk'
-import { MaxUint256 } from '@ethersproject/constants'
+import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionResponse } from '@ethersproject/providers'
 import { useTokenAllowance } from 'data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from 'data/V1'
@@ -63,13 +63,13 @@ export function useApproveCallback(
       return
     }
 
-    // [TEST — unlimited approve] Temporarily approving MaxUint256 to verify
-    // whether the MetaMask "likely to fail" warning on token-input swaps
-    // (e.g. USDT→HYPE, directional) is an allowance issue. If unlimited
-    // approve removes the warning, the cause is the approval (not StalePrice).
-    // REVERT to exact-amount approve after the test:
-    //   const amountRaw = amountToApprove.raw.toString()
-    const amountRaw = MaxUint256.toString()
+    // Approve the swap amount + a 10% buffer (not exact, not unlimited). Exact
+    // can land just short of the allowance when the swap pulls slightly more
+    // (input-side slippage/fee/rounding) → transferFrom revert; the buffer
+    // absorbs that while keeping blast radius limited vs MaxUint256. (Unlimited
+    // approve was tested and did NOT remove the MetaMask warning — that warning
+    // is not an allowance issue, so we keep a bounded approval here.)
+    const amountRaw = BigNumber.from(amountToApprove.raw.toString()).mul(110).div(100).toString()
     const estimatedGas = await tokenContract.estimateGas.approve(spender, amountRaw)
 
     return tokenContract
