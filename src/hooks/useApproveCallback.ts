@@ -7,6 +7,7 @@ import {
   Trade,
   getRouterAddress,
 } from '@brownfi/sdk'
+import { MaxUint256 } from '@ethersproject/constants'
 import { TransactionResponse } from '@ethersproject/providers'
 import { useTokenAllowance } from 'data/Allowances'
 import { getTradeVersion, useV1TradeExchangeAddress } from 'data/V1'
@@ -62,12 +63,13 @@ export function useApproveCallback(
       return
     }
 
-    // Approve EXACTLY the swap / liquidity amount, not MaxUint256. Matches
-    // the safer default used by Uniswap V3 UI / Matcha / 1inch — limits
-    // blast radius if the spender contract is ever compromised or upgraded
-    // unexpectedly. Trade-off: user re-approves on each swap with a
-    // different amount; one extra tx per session is acceptable.
-    const amountRaw = amountToApprove.raw.toString()
+    // [TEST — unlimited approve] Temporarily approving MaxUint256 to verify
+    // whether the MetaMask "likely to fail" warning on token-input swaps
+    // (e.g. USDT→HYPE, directional) is an allowance issue. If unlimited
+    // approve removes the warning, the cause is the approval (not StalePrice).
+    // REVERT to exact-amount approve after the test:
+    //   const amountRaw = amountToApprove.raw.toString()
+    const amountRaw = MaxUint256.toString()
     const estimatedGas = await tokenContract.estimateGas.approve(spender, amountRaw)
 
     return tokenContract
