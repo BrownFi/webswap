@@ -166,6 +166,7 @@ export function RouteComparison({
         deltaBps: deltaBpsFor(c),
         isBest: c.source === firstSelectable?.source,
         unavailable: c.unavailable,
+        reason: c.unavailable?.reason,
       }
     })
   }, [candidates, outputCurrency, outputUsdPrice])
@@ -296,16 +297,22 @@ export function RouteComparison({
             <span
               style={{
                 fontFamily: 'Inter',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#FBFBFD',
+                fontSize: activeRow.unavailable ? '12px' : '14px',
+                fontWeight: activeRow.unavailable ? 500 : 600,
+                color: activeRow.unavailable ? '#FF7A95' : '#FBFBFD',
               }}
             >
+              {activeRow.unavailable ? (
+                activeRow.reason ?? 'No route'
+              ) : (
+                <>
               {activeRow.amountOut} {outputSymbol}
               {activeRow.usd && (
                 <span style={{ color: '#978A80', fontWeight: 500, marginLeft: '6px' }}>
                   ≈ {activeRow.usd}
                 </span>
+              )}
+                </>
               )}
             </span>
           )}
@@ -444,22 +451,39 @@ export function RouteComparison({
                     )}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                    <span
-                      style={{
-                        fontFamily: 'Inter',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: active ? '#FBFBFD' : '#CFC7C1',
-                      }}
-                    >
-                      {row.amountOut} {outputSymbol}
-                      {row.usd && (
-                        <span style={{ color: '#978A80', fontWeight: 500, marginLeft: '6px' }}>
-                          ≈ {row.usd}
-                        </span>
-                      )}
-                    </span>
-                    {row.deltaBps !== undefined && (
+                    {row.unavailable ? (
+                      // No usable route — show WHY instead of a 0 amount, so the
+                      // user can compare (e.g. "No liquidity / pool", "cap").
+                      <span
+                        style={{
+                          fontFamily: 'Inter',
+                          fontSize: '12px',
+                          fontWeight: 500,
+                          color: '#FF7A95',
+                          textAlign: 'right',
+                          maxWidth: 180,
+                        }}
+                      >
+                        {row.reason ?? 'Unavailable'}
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontFamily: 'Inter',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: active ? '#FBFBFD' : '#CFC7C1',
+                        }}
+                      >
+                        {row.amountOut} {outputSymbol}
+                        {row.usd && (
+                          <span style={{ color: '#978A80', fontWeight: 500, marginLeft: '6px' }}>
+                            ≈ {row.usd}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                    {!row.unavailable && row.deltaBps !== undefined && (
                       <span
                         style={{
                           fontFamily: 'Inter',

@@ -60,6 +60,18 @@ export interface UnifiedRoute {
   unavailable?: { reason: string }
 }
 
+/** Per-source applicability + failure reason, so the picker can list every
+ *  BrownFi version deployed on the chain even when it produced no quote. */
+export interface NativeRouteStatus {
+  source: 'brownfi-v2' | 'brownfi-v3-pilot' | 'brownfi-v3-official'
+  sourceName: string
+  /** True when this version's router is deployed on the current chain. */
+  supported: boolean
+  /** Why there's no route (no liquidity, cap exceeded). Undefined when a
+   *  trade exists OR while the quote is still loading. */
+  reason?: string
+}
+
 export interface UseBestSwapRouteParams {
   /** BrownFi V2 trade from useDerivedSwapInfo. */
   v2Trade: Trade | undefined
@@ -72,6 +84,13 @@ export interface UseBestSwapRouteParams {
    *  as a candidate (dimmed) but excluded from `best` selection so
    *  swaps don't route through a pool that can't fulfill them. */
   v2Unavailable?: boolean
+  /** Status for each applicable BrownFi version. When provided, the picker
+   *  lists every supported version (even with no route) and shows its reason.
+   *  When omitted, falls back to listing only versions that produced a trade. */
+  nativeStatuses?: NativeRouteStatus[]
+  /** Max output the V2 pool can give when its 90%-reserve cap is hit — appended
+   *  to the V2 "unavailable" reason as an actionable hint. */
+  v2MaxOutputHint?: string
   tokenIn: Currency | undefined
   tokenOut: Currency | undefined
   amountIn: BigNumber | undefined
@@ -139,6 +158,8 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
     v3PilotTrade,
     v3OfficialTrade,
     v2Unavailable,
+    nativeStatuses,
+    v2MaxOutputHint,
     tokenIn,
     tokenOut,
     amountIn,
@@ -198,47 +219,84 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
   return useMemo(() => {
     const candidates: UnifiedRoute[] = []
 
-    // BrownFi V2 + V3 — surfaced as separate candidates so the user can
-    // compare them side-by-side in RouteComparison. The user's `selected`
-    // choice is honored at pick time, not by hiding candidates. V2 with
-    // a reserve issue is included but marked `unavailable` so the picker
-    // can dim it; selection logic skips unavailable routes.
-    if (v2Trade) {
-      const r = brownfiRouteFromTrade(v2Trade, 'brownfi-v2', 'BrownFi V2', slippageBps)
-      if (r) {
-        if (v2Unavailable) {
-          r.unavailable = { reason: 'Amount exceeds 90% of pool reserve' }
+    // BrownFi V2 + V3 — surfaced as separate candidates so the user can compare
+    // them side-by-side in RouteComparison. Every version deployed on the chain
+    // appears, even with no route: a missing quote becomes a dimmed,
+    // `unavailable` row with a reason (no liquidity, cap exceeded) so the user
+    // can SEE why a pool can't fill, not just have it vanish. Selection logic
+    // skips unavailable routes; the user's `selected` choice is honored at pick
+    // time, not by hiding candidates.
+    const tradeBySource: Record<NativeRouteStatus['source'], Trade | undefined> = {
+      'brownfi-v2': v2Trade,
+      'brownfi-v3-official': v3OfficialTrade,
+      'brownfi-v3-pilot': v3PilotTrade,
+    }
+    // Fallback (no nativeStatuses passed): old behavior — only versions with a
+    // trade, marked supported so they still render.
+    const statuses: NativeRouteStatus[] = nativeStatuses ?? [
+      { source: 'brownfi-v2', sourceName: 'BrownFi V2', supported: !!v2Trade },
+      { source: 'brownfi-v3-official', sourceName: 'BrownFi V3 Official', supported: !!v3OfficialTrade },
+      { source: 'brownfi-v3-pilot', sourceName: 'BrownFi V3 Pilot', supported: !!v3PilotTrade },
+    ]
+    statuses.forEach((s) => {
+      if (!s.supported) return // version not deployed on this chain → no row
+      const trade = tradeBySource[s.source]
+      if (trade) {
+        const r = brownfiRouteFromTrade(trade, s.source, s.sourceName, slippageBps)
+        if (r) {
+          // V2's 90%-reserve cap: a quote exists but can't be used. Append the
+          // max output hint when we have it ("Exceeds reserve — max ~X").
+          if (s.source === 'brownfi-v2' && v2Unavailable) {
+            r.unavailable = {
+              reason: v2MaxOutputHint ? `Exceeds reserve — ${v2MaxOutputHint}` : 'Amount exceeds 90% of pool reserve',
+            }
+          }
+          candidates.push(r)
         }
-        candidates.push(r)
+        return
       }
-    }
-    // V3 Official (version 4) and V3 Pilot (version 3) are surfaced as separate
-    // rows so the picker compares both deployments side-by-side and auto-picks
-    // best amountOut. Each carries its trade (version 3/4), so the swap callback
-    // executes against the right deployment's router.
-    if (v3OfficialTrade) {
-      const r = brownfiRouteFromTrade(v3OfficialTrade, 'brownfi-v3-official', 'BrownFi V3 Official', slippageBps)
-      if (r) candidates.push(r)
-    }
-    if (v3PilotTrade) {
-      const r = brownfiRouteFromTrade(v3PilotTrade, 'brownfi-v3-pilot', 'BrownFi V3 Pilot', slippageBps)
-      if (r) candidates.push(r)
-    }
+      // No trade. Only show the row once we know WHY (reason set = settled);
+      // skip while still loading so we don't flash a premature "No route".
+      if (s.reason) {
+        candidates.push({
+          source: s.source,
+          sourceName: s.sourceName,
+          amountOut: BigNumber.from(0),
+          amountOutMin: BigNumber.from(0),
+          unavailable: { reason: s.reason },
+        })
+      }
+    })
 
-    // Each aggregator that returned a quote.
+    // Every supported aggregator gets a row — with a quote, or dimmed with a
+    // reason when it returned no route / errored — so Kyber is always visible
+    // in the comparison alongside the native pools.
     queries.forEach((q, i) => {
-      const data = q.data
-      if (!data) return
       const adapter = aggregators[i]
-      candidates.push({
-        source: adapter.id,
-        sourceName: adapter.name,
-        amountOut: data.amountOut,
-        amountOutMin: data.amountOutMin,
-        gasEstimate: data.gasEstimate,
-        priceImpact: data.priceImpact,
-        aggregatorQuote: data,
-      })
+      const data = q.data
+      if (data) {
+        candidates.push({
+          source: adapter.id,
+          sourceName: adapter.name,
+          amountOut: data.amountOut,
+          amountOutMin: data.amountOutMin,
+          gasEstimate: data.gasEstimate,
+          priceImpact: data.priceImpact,
+          aggregatorQuote: data,
+        })
+        return
+      }
+      // No quote. Show the row only once the query has settled (not loading) and
+      // we actually fired it (baseKey present), so it doesn't flash during load.
+      if (baseKey && !q.isLoading) {
+        candidates.push({
+          source: adapter.id,
+          sourceName: adapter.name,
+          amountOut: BigNumber.from(0),
+          amountOutMin: BigNumber.from(0),
+          unavailable: { reason: q.isError ? 'Quote failed' : 'No route' },
+        })
+      }
     })
 
     // Sort by amountOut desc so the UI gets a "best on top" comparison.
@@ -311,5 +369,5 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
       lastFetchedAt,
       refreshIntervalMs: REFRESH_INTERVAL_MS,
     }
-  }, [aggregators, v2Trade, v3PilotTrade, v3OfficialTrade, v2Unavailable, queries, selected, slippageBps])
+  }, [aggregators, v2Trade, v3PilotTrade, v3OfficialTrade, v2Unavailable, nativeStatuses, v2MaxOutputHint, baseKey, queries, selected, slippageBps])
 }

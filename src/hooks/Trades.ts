@@ -117,6 +117,9 @@ type TradeExactIn = {
   /** True when the pool rejected the trade for exceeding its per-swap cap
    *  (curve limit), not because it's empty — UI should say "reduce amount". */
   maxExceeded?: boolean
+  /** True when at least one pool exists for this pair at this version. Lets the
+   *  UI tell "no pool deployed" apart from "pool exists but too thin". */
+  hasPools?: boolean
 }
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
@@ -258,6 +261,7 @@ export function useTradeExactIn(
     loadingExactIn: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
     maxExceeded: maxExceeded && !trade,
+    hasPools: allowedPairs.length > 0,
   }
 }
 
@@ -266,6 +270,8 @@ type TradeExactOut = {
   loadingExactOut: boolean
   isInsufficient?: boolean
   maxExceeded?: boolean
+  /** True when at least one pool exists for this pair at this version. */
+  hasPools?: boolean
 }
 /**
  * Returns the best trade for the token in to the exact amount of token out
@@ -403,6 +409,7 @@ export function useTradeExactOut(
     loadingExactOut: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
     maxExceeded: maxExceeded && !trade,
+    hasPools: allowedPairs.length > 0,
   }
 }
 

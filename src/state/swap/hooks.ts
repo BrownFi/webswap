@@ -116,6 +116,18 @@ export function useDerivedSwapInfo(): {
   /** V3 Official (v3-final, version 4) trade — quoted in parallel with the
    *  pilot V3 (version 3) so the router can compare both deployments. */
   v3OfficialTrade: Trade | undefined
+  /** Per-source applicability + failure reason for the route comparison, so
+   *  the picker can list every BrownFi version deployed on the chain (even
+   *  ones with no route) and explain why. */
+  nativeStatuses: Array<{
+    source: 'brownfi-v2' | 'brownfi-v3-pilot' | 'brownfi-v3-official'
+    sourceName: string
+    supported: boolean
+    reason?: string
+  }>
+  /** When V2's output exceeds its 90%-reserve cap, the max output the pool can
+   *  give (e.g. "Max ~123.45 HONEY"), so the picker can show how far to reduce. */
+  v2MaxOutputHint?: string
   inputError?: string
   /** BrownFi-V2-specific constraint: amount-out > 90% of pool reserve.
    *  Surfaced separately so the Swap page can decide whether to block —
@@ -346,6 +358,62 @@ export function useDerivedSwapInfo(): {
   const nativePoolMaxExceeded =
     someMaxExceeded && noNativeTrade && !isInputEmpty && !loadingExactIn && !loadingExactOut
 
+  // Per-source status for the route comparison. Surfaces EVERY BrownFi version
+  // deployed on this chain (not only the ones that produced a quote) so the
+  // picker can list V2 / V3 Official / V3 Pilot side-by-side and explain a
+  // missing route (no liquidity, per-swap cap). `reason` is left undefined
+  // while still loading so the UI doesn't flash a premature "No route".
+  const settled = !isInputEmpty && !loadingExactIn && !loadingExactOut
+  // Flags for the ACTIVE direction (exact-in vs exact-out) per version — the
+  // inactive direction's hook runs with no amount, so its `hasPools` is always
+  // false and would mislabel a live pool as "No pool".
+  const v2Flags = isExactIn ? tradeInV2 : tradeOutV2
+  const pilotFlags = isExactIn ? tradeInV3Pilot : tradeOutV3Pilot
+  const officialFlags = isExactIn ? tradeInV3Official : tradeOutV3Official
+  const nativeReason = (
+    t: Trade | undefined | null,
+    f: { isInsufficient?: boolean; maxExceeded?: boolean; hasPools?: boolean },
+  ): string | undefined => {
+    if (t) return undefined
+    if (!settled) return undefined
+    if (f.maxExceeded) return 'Amount exceeds pool per-swap cap'
+    if (!f.hasPools) return 'No pool' // no pool deployed for this pair at this version
+    if (f.isInsufficient) return 'Pool too thin' // pool exists but can't fill the trade
+    return 'No route'
+  }
+  const nativeStatuses = [
+    {
+      source: 'brownfi-v2' as const,
+      sourceName: 'BrownFi V2',
+      supported: true,
+      reason: nativeReason(v2Trade, v2Flags),
+    },
+    {
+      source: 'brownfi-v3-official' as const,
+      sourceName: 'BrownFi V3 Official',
+      supported: chainSupportsV3Official,
+      reason: nativeReason(v3OfficialTrade, officialFlags),
+    },
+    {
+      source: 'brownfi-v3-pilot' as const,
+      sourceName: 'BrownFi V3 Pilot',
+      supported: chainSupportsV3Pilot,
+      reason: nativeReason(v3PilotTrade, pilotFlags),
+    },
+  ]
+
+  // V2 90%-reserve cap: a quote exists but its output exceeds 90% of the pool's
+  // output reserve. Surface the max output the pool can give so the user knows
+  // how far to reduce. `compareOut` is the output-side reserve (CurrencyAmount).
+  const v2MaxOutputHint = (() => {
+    if (!v2AmountOutExceedsReserve || !compareOut) return undefined
+    const maxOut = +compareOut.toExact() * 0.9
+    if (!isFinite(maxOut) || maxOut <= 0) return undefined
+    let sym = outputCurrency?.symbol
+    if (chainId && (outputCurrency === ETHER || isNativeCurrency(sym))) sym = getNativeToken(chainId)
+    return `Max ~${Number(maxOut.toPrecision(6))}${sym ? ' ' + sym : ''}`
+  })()
+
   return {
     currencies,
     currencyBalances,
@@ -353,6 +421,8 @@ export function useDerivedSwapInfo(): {
     v2Trade: v2Trade ?? undefined,
     v3PilotTrade: v3PilotTrade ?? undefined,
     v3OfficialTrade: v3OfficialTrade ?? undefined,
+    nativeStatuses,
+    v2MaxOutputHint,
     inputError,
     v2AmountOutExceedsReserve,
     nativePoolLiquidityInsufficient,
