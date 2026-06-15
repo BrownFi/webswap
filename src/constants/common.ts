@@ -18,7 +18,10 @@ export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET]],
   [ChainId.HYPER_EVM]: [
     ...WETH_ONLY[ChainId.HYPER_EVM],
-    new Token(ChainId.HYPER_EVM, '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb', 8, 'USDT', 'USDT'),
+    // USD₮0 — 6 decimals on-chain (was wrongly 8 here; the token list + pinned
+    // config already use 6). Wrong base decimals corrupt reserve math for any
+    // multi-hop route that passes through USD₮0 (off by 100×).
+    new Token(ChainId.HYPER_EVM, '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb', 6, 'USDT', 'USDT'),
   ],
 }
 
