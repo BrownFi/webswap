@@ -139,7 +139,7 @@ export interface BestTradeOptions {
  *   doesn't leave the route permanently missing while a genuinely empty pool
  *   still reports "insufficient" immediately.
  */
-export type TradeList = Trade[] & { maxExceeded?: boolean; transientError?: boolean }
+export type TradeList = Trade[] & { maxExceeded?: boolean; transientError?: boolean; maxInputRaw?: string }
 
 export class Trade {
   public readonly route: Route
@@ -360,7 +360,10 @@ export class Trade {
         }
         // Tag the result when the pool rejected because the trade exceeds its
         // per-swap cap (not an empty pool) so the UI can say "reduce amount".
-        if ((error as any)?.isMaxAmountOutExceededError) bestTrades.maxExceeded = true
+        if ((error as any)?.isMaxAmountOutExceededError) {
+          bestTrades.maxExceeded = true
+          if ((error as any).maxIn) bestTrades.maxInputRaw = (error as any).maxIn
+        }
         return
       }
 
@@ -461,7 +464,10 @@ export class Trade {
           // Non-business error — flag for retry (see bestTradeExactIn).
           bestTrades.transientError = true
         }
-        if ((error as any)?.isMaxAmountOutExceededError) bestTrades.maxExceeded = true
+        if ((error as any)?.isMaxAmountOutExceededError) {
+          bestTrades.maxExceeded = true
+          if ((error as any).maxIn) bestTrades.maxInputRaw = (error as any).maxIn
+        }
         continue
       }
 

@@ -220,9 +220,15 @@ class MaxAmountOutExceededError extends Error {
   public readonly isMaxAmountOutExceededError = true
   // Treated as an expected, business-as-usual rejection by isExpectedTradeError.
   public readonly isInsufficientReservesError = true
-  constructor() {
+  /** Max input the pool accepts (raw, input-token units), decoded from the
+   *  exact-in cap revert (0xc64511c2 params: amountIn, maxIn). Lets the UI show
+   *  "Max X" so the user knows how far to reduce. Undefined for the exact-out
+   *  cutoff revert or when decoding fails. */
+  public readonly maxIn?: string
+  constructor(maxIn?: string) {
     super('EXCEEDS_MAX_OUTPUT')
     this.name = 'MaxAmountOutExceededError'
+    this.maxIn = maxIn
     if (Object.setPrototypeOf) {
       Object.setPrototypeOf(this, MaxAmountOutExceededError.prototype)
     }
@@ -252,10 +258,42 @@ function extractRevertSelector(err: any): string | undefined {
   return m ? m[0].toLowerCase() : undefined
 }
 
+/**
+ * Full revert data hex (selector + abi-encoded args) from an ethers/viem error,
+ * walking the cause chain. Used to decode the exact-in cap revert's `maxIn`.
+ */
+function extractRevertData(err: any): string | undefined {
+  let e = err
+  for (let i = 0; i < 8 && e; i++) {
+    const hex = (typeof e?.data === 'string' && e.data) || (typeof e?.raw === 'string' && e.raw) || ''
+    if (/^0x[0-9a-fA-F]{10,}$/.test(hex)) return hex.toLowerCase()
+    e = e?.cause
+  }
+  return undefined
+}
+
 /** Map a caught V3 quote revert to the right error type. */
 function v3QuoteError(err: any): Error {
   const sel = extractRevertSelector(err)
-  return sel && MAX_CAP_SELECTORS.has(sel) ? new MaxAmountOutExceededError() : new InsufficientReservesError()
+  if (sel && MAX_CAP_SELECTORS.has(sel)) {
+    // The exact-in cap revert (0xc64511c2) encodes (amountIn, maxIn) — decode
+    // the 2nd 32-byte word (maxIn) so the UI can show the max swappable input.
+    // Defensive: any decode hiccup just yields no number (generic message).
+    let maxIn: string | undefined
+    if (sel === '0xc64511c2') {
+      const data = extractRevertData(err)
+      if (data && data.length >= 10 + 128) {
+        try {
+          const v = BigInt('0x' + data.slice(10 + 64, 10 + 128))
+          if (v > 0n) maxIn = v.toString()
+        } catch {
+          // leave maxIn undefined
+        }
+      }
+    }
+    return new MaxAmountOutExceededError(maxIn)
+  }
+  return new InsufficientReservesError()
 }
 
 let PAIR_ADDRESS_CACHE: Record<string, Record<string, string>> = {}

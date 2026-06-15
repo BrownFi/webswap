@@ -117,6 +117,9 @@ type TradeExactIn = {
   /** True when the pool rejected the trade for exceeding its per-swap cap
    *  (curve limit), not because it's empty — UI should say "reduce amount". */
   maxExceeded?: boolean
+  /** Max input the pool accepts (raw units) when maxExceeded — decoded from the
+   *  cap revert. Lets the UI show "Max X" so the user can reduce to a valid size. */
+  maxInputRaw?: string
   /** True when at least one pool exists for this pair at this version. Lets the
    *  UI tell "no pool deployed" apart from "pool exists but too thin". */
   hasPools?: boolean
@@ -133,6 +136,7 @@ export function useTradeExactIn(
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
   const [maxExceeded, setMaxExceeded] = useState(false)
+  const [maxInputRaw, setMaxInputRaw] = useState<string | undefined>(undefined)
 
   const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
     currencyAmountIn?.currency,
@@ -205,7 +209,10 @@ export function useTradeExactIn(
             // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
-            if (bestTradeIn?.maxExceeded) setMaxExceeded(true)
+            if (bestTradeIn?.maxExceeded) {
+            setMaxExceeded(true)
+            setMaxInputRaw(bestTradeIn?.maxInputRaw)
+          }
             const retrying = scheduleRetryIfTransient(foundTrade, bestTradeIn ?? undefined)
             setTrade(foundTrade)
             setLoading(retrying)
@@ -229,7 +236,10 @@ export function useTradeExactIn(
         if (!stale) {
           const foundTrade = bestTradeIn?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeIn) && bestTradeIn.length === 0) setInsufficient(true)
-          if (bestTradeIn?.maxExceeded) setMaxExceeded(true)
+          if (bestTradeIn?.maxExceeded) {
+            setMaxExceeded(true)
+            setMaxInputRaw(bestTradeIn?.maxInputRaw)
+          }
           const retrying = scheduleRetryIfTransient(foundTrade, bestTradeIn ?? undefined)
           setTrade(foundTrade)
           setLoading(retrying)
@@ -261,6 +271,7 @@ export function useTradeExactIn(
     loadingExactIn: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
     maxExceeded: maxExceeded && !trade,
+    maxInputRaw,
     hasPools: allowedPairs.length > 0,
   }
 }
@@ -270,6 +281,8 @@ type TradeExactOut = {
   loadingExactOut: boolean
   isInsufficient?: boolean
   maxExceeded?: boolean
+  /** Max input the pool accepts (raw units) when maxExceeded. */
+  maxInputRaw?: string
   /** True when at least one pool exists for this pair at this version. */
   hasPools?: boolean
 }
@@ -285,6 +298,7 @@ export function useTradeExactOut(
   const [loading, setLoading] = useState(false)
   const [isInsufficient, setInsufficient] = useState(false)
   const [maxExceeded, setMaxExceeded] = useState(false)
+  const [maxInputRaw, setMaxInputRaw] = useState<string | undefined>(undefined)
 
   const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
     currencyIn,
@@ -356,7 +370,10 @@ export function useTradeExactOut(
             // SDK swallows INSUFFICIENT_RESERVES per-pair and returns []. If we
             // have pairs but no trade found, the pool is too thin → flag it.
             if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
-            if (bestTradeOut?.maxExceeded) setMaxExceeded(true)
+            if (bestTradeOut?.maxExceeded) {
+            setMaxExceeded(true)
+            setMaxInputRaw(bestTradeOut?.maxInputRaw)
+          }
             const retrying = scheduleRetryIfTransient(foundTrade, bestTradeOut ?? undefined)
             setTrade(foundTrade)
             setLoading(retrying)
@@ -381,7 +398,10 @@ export function useTradeExactOut(
         if (!stale) {
           const foundTrade = bestTradeOut?.[0] ?? null
           if (!foundTrade && Array.isArray(bestTradeOut) && bestTradeOut.length === 0) setInsufficient(true)
-          if (bestTradeOut?.maxExceeded) setMaxExceeded(true)
+          if (bestTradeOut?.maxExceeded) {
+            setMaxExceeded(true)
+            setMaxInputRaw(bestTradeOut?.maxInputRaw)
+          }
           const retrying = scheduleRetryIfTransient(foundTrade, bestTradeOut ?? undefined)
           setTrade(foundTrade)
           setLoading(retrying)
@@ -409,6 +429,7 @@ export function useTradeExactOut(
     loadingExactOut: loading || pairsLoading,
     isInsufficient: isInsufficient && !trade,
     maxExceeded: maxExceeded && !trade,
+    maxInputRaw,
     hasPools: allowedPairs.length > 0,
   }
 }

@@ -370,13 +370,25 @@ export function useDerivedSwapInfo(): {
   const v2Flags = isExactIn ? tradeInV2 : tradeOutV2
   const pilotFlags = isExactIn ? tradeInV3Pilot : tradeOutV3Pilot
   const officialFlags = isExactIn ? tradeInV3Official : tradeOutV3Official
+  // Format the per-swap-cap "max input" (raw, input-token units) into a short,
+  // actionable hint like "Max ~123.45 USDT" so the user knows how far to reduce.
+  const fmtMaxIn = (raw?: string): string | undefined => {
+    if (!raw || !inputCurrency) return undefined
+    const num = Number(raw) / 10 ** inputCurrency.decimals
+    if (!isFinite(num) || num <= 0) return undefined
+    let sym = inputCurrency.symbol
+    if (chainId && (inputCurrency === ETHER || isNativeCurrency(sym))) sym = getNativeToken(chainId)
+    return `Max ~${Number(num.toPrecision(6))}${sym ? ' ' + sym : ''}`
+  }
   const nativeReason = (
     t: Trade | undefined | null,
-    f: { isInsufficient?: boolean; maxExceeded?: boolean; hasPools?: boolean },
+    f: { isInsufficient?: boolean; maxExceeded?: boolean; hasPools?: boolean; maxInputRaw?: string },
   ): string | undefined => {
     if (t) return undefined
     if (!settled) return undefined
-    if (f.maxExceeded) return 'Amount exceeds pool per-swap cap'
+    // Per-swap cap hit: show the max swappable input when we decoded it, else a
+    // short generic message. (Boss request: short + the value the user can input.)
+    if (f.maxExceeded) return fmtMaxIn(f.maxInputRaw) ?? 'Exceeds pool max swap size'
     if (!f.hasPools) return 'No pool' // no pool deployed for this pair at this version
     if (f.isInsufficient) return 'Pool too thin' // pool exists but can't fill the trade
     return 'No route'
