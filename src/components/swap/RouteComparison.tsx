@@ -174,6 +174,13 @@ export function RouteComparison({
   if (candidates.length < 1) return null
   const activeRow = rows.find((r) => r.key === activeKey) ?? rows[0]
   const hasMultiple = candidates.length > 1
+  // Progressive rendering: show routes the moment they arrive. Only show the
+  // skeleton when NOTHING has resolved yet; once any route is in, render it and
+  // mark "comparing…" until all sources settle (Best is provisional until then,
+  // so we suppress the Best badge while comparing to avoid a misleading winner).
+  const hasAnyRoute = candidates.length >= 1
+  const showSkeleton = isLoading && !hasAnyRoute
+  const comparing = isLoading && hasAnyRoute
 
   const handleSelect = (key: AggregatorChoice) => {
     // Clicking the currently-Best row means "stay on best" — drop the
@@ -214,9 +221,9 @@ export function RouteComparison({
           source happens to settle first. */}
       <button
         type="button"
-        onClick={() => hasMultiple && !isLoading && setOpen((v) => !v)}
-        disabled={!hasMultiple || isLoading}
-        aria-expanded={open && !isLoading}
+        onClick={() => hasMultiple && !showSkeleton && setOpen((v) => !v)}
+        disabled={!hasMultiple || showSkeleton}
+        aria-expanded={open && !showSkeleton}
         style={{
           width: '100%',
           display: 'flex',
@@ -232,7 +239,7 @@ export function RouteComparison({
           minHeight: 52,
           background: 'transparent',
           border: 'none',
-          cursor: hasMultiple && !isLoading ? 'pointer' : 'default',
+          cursor: hasMultiple && !showSkeleton ? 'pointer' : 'default',
           textAlign: 'left',
         }}
       >
@@ -249,10 +256,9 @@ export function RouteComparison({
           >
             Route
           </span>
-          {isLoading ? (
-            // Skeleton replaces the source label + badge so the trigger
-            // keeps its full height + horizontal rhythm during loading.
-            // No layout shift when the real labels pop in.
+          {showSkeleton ? (
+            // Skeleton only when NOTHING has resolved yet — keeps the trigger's
+            // height + rhythm. Once any route arrives we render it (progressive).
             <>
               <Skel w={86} h={14} />
               <Skel w={36} h={14} />
@@ -269,29 +275,50 @@ export function RouteComparison({
               >
                 {activeRow.label}
               </span>
-              {activeRow.isBest && (
+              {comparing ? (
+                // Still waiting on other sources — Best is provisional, so show
+                // "comparing…" instead of a (possibly-wrong) Best badge.
                 <span
                   style={{
                     padding: '2px 6px',
                     borderRadius: '6px',
-                    background: 'rgba(131, 207, 132, 0.12)',
-                    border: '1px solid rgba(131, 207, 132, 0.35)',
+                    background: 'rgba(216, 160, 114, 0.12)',
+                    border: '1px solid rgba(216, 160, 114, 0.35)',
                     fontFamily: 'Inter',
                     fontSize: '10px',
                     fontWeight: 600,
-                    color: '#83CF84',
+                    color: '#D8A072',
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                   }}
                 >
-                  Best
+                  Comparing…
                 </span>
+              ) : (
+                activeRow.isBest && (
+                  <span
+                    style={{
+                      padding: '2px 6px',
+                      borderRadius: '6px',
+                      background: 'rgba(131, 207, 132, 0.12)',
+                      border: '1px solid rgba(131, 207, 132, 0.35)',
+                      fontFamily: 'Inter',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      color: '#83CF84',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Best
+                  </span>
+                )
               )}
             </>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {isLoading ? (
+          {showSkeleton ? (
             <Skel w={84} h={14} />
           ) : (
             <span
@@ -321,10 +348,10 @@ export function RouteComparison({
               lastFetchedAt={lastFetchedAt ?? 0}
               intervalMs={refreshIntervalMs}
               onRefresh={onRefresh}
-              visible={!isLoading}
+              visible={!showSkeleton}
             />
           )}
-          {hasMultiple && <ChevronIcon open={open && !isLoading} dim={isLoading} />}
+          {hasMultiple && <ChevronIcon open={open && !showSkeleton} dim={showSkeleton} />}
         </div>
       </button>
 
@@ -335,7 +362,7 @@ export function RouteComparison({
       <div
         style={{
           display: 'grid',
-          gridTemplateRows: open && hasMultiple && !isLoading ? '1fr' : '0fr',
+          gridTemplateRows: open && hasMultiple && !showSkeleton ? '1fr' : '0fr',
           transition: 'grid-template-rows 220ms ease',
         }}
       >
@@ -431,7 +458,7 @@ export function RouteComparison({
                         Unavailable
                       </span>
                     )}
-                    {row.isBest && (
+                    {!comparing && row.isBest && (
                       <span
                         style={{
                           padding: '2px 6px',
