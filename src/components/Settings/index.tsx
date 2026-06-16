@@ -72,7 +72,7 @@ const MenuFlyout = styled.span`
   min-width: 496px;
   background: #1E1915;
   border: 1px solid #2F2823;
-  border-radius: 32px;
+  border-radius: 24px;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -106,7 +106,7 @@ const ModalContentWrapper = styled.div`
   justify-content: center;
   padding: 2rem 0;
   background-color: ${({ theme }) => theme.bg2};
-  border-radius: 20px;
+  border-radius: 16px;
 `
 
 export function SettingsTab() {
@@ -168,7 +168,7 @@ export function SettingsTab() {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #3d3425',
                   backgroundColor: '#0d0b08',
                   color: 'white',
@@ -229,9 +229,9 @@ export function SettingsTab() {
             <RowBetween>
               <RowFixed>
                 <TYPE.black style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#CFC7C1' }}>
-                  Multihops
+                  Smart routing
                 </TYPE.black>
-                <QuestionHelper text="Enable swaps through multiple token pairs." />
+                <QuestionHelper text="Auto-route swaps through multiple pools to get the best price." />
               </RowFixed>
               <Toggle
                 id="toggle-disable-multihop-button"
@@ -241,6 +241,7 @@ export function SettingsTab() {
                 }}
               />
             </RowBetween>
+
         </MenuFlyout>
         </>,
         document.body

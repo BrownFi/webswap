@@ -1,30 +1,28 @@
 import { Currency, Pair } from '@brownfi/sdk'
-import { useQuery } from '@tanstack/react-query'
 import { ButtonError, ButtonPrimary, ButtonSecondary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { RowBetween } from 'components/Row'
 import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 import { Dots } from 'components/swap/styleds'
-import { useToast } from 'containers/ToastProvider'
+import { TransactionConfirmationModal, TransactionErrorContent } from 'components/TransactionConfirmationModal'
 import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { ApprovalState } from 'hooks/useApproveCallback'
+import { useBestZapInRoute } from 'hooks/useBestZapRoute'
+import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus } from 'react-feather'
 import { Field } from 'state/mint/actions'
 import { tryParseAmount } from 'state/swap/hooks'
 import { useCurrencyBalances } from 'state/wallet/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 import { ThemeContext } from 'styled-components'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
-import { wrappedCurrency } from 'utils/wrappedCurrency'
-import {
-  executeKyberZapTransaction,
-  getKyberZapRouteData,
-  isZapSupportedOnChain,
-  KyberZapRouteData,
-} from './zapHelpers'
+import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
+import { isZapSupportedOnChain, KyberZapRouteData } from './zapHelpers'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
+import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
 import ZapTokenInputRow, { ParsedZapInput, ZapInput } from './ZapInput'
 import { ZapRoutePreview } from './ZapRoutePreview'
 
@@ -45,9 +43,12 @@ type ZapFormProps = {
 export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFormProps) {
   const theme = useContext(ThemeContext)
   const { account, chainId, library } = useActiveWeb3React()
-  const { createToast } = useToast()
+  const addTransaction = useTransactionAdder()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [txHash, setTxHash] = useState<string>('')
+  const [errorMessage, setErrorMessage] = useState<string | undefined>()
   const idRef = useRef(0)
   const previousPairAddress = useRef<string | undefined>()
 
@@ -112,39 +113,36 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
     supportsZap && pair && pairState === PairState.EXISTS && chainId && account && validInputs.length > 0,
   )
 
-  const routeQueryKey = useMemo(() => {
-    const amountKey = validInputs.map((input) => {
-      const address =
-        wrappedCurrency(input.currency ?? undefined, chainId ?? undefined)?.address ??
-        input.currency?.symbol ??
-        `native-${input.id}`
-      return `${address}:${input.parsedAmount?.raw.toString() ?? '0'}`
-    })
-    return ['kyberZapRoute', chainId, pair?.liquidityToken.address, account, allowedSlippage, amountKey]
-  }, [chainId, pair, account, allowedSlippage, validInputs])
+  const deadline = useTransactionDeadline()
+  const deadlineSeconds = useMemo(() => (deadline ? Number(deadline.toString()) : 0), [deadline])
 
+  // Hand the orchestration hook a stable inputs array — useMemo so identity
+  // changes only when underlying amounts/tokens do, not on every render.
+  // V2 has no native zap adapter, so `best.source` is always 'kyber' here;
+  // the form still routes through the registry for parity with V3 + future
+  // contracts work that might land a V2 native engine.
   const routeInputs = useMemo(
     () =>
       validInputs.map((input) => ({
         currency: input.currency!,
-        amount: input.parsedAmount!,
+        amountRaw: input.parsedAmount!.raw.toString(),
       })),
     [validInputs],
   )
 
-  const { data: zapRouteData, error: zapRouteError } = useQuery<KyberZapRouteData>({
-    queryKey: routeQueryKey,
-    queryFn: () =>
-      getKyberZapRouteData({
-        chainId: chainId!,
-        pair: pair!,
-        account: account!,
-        allowedSlippage,
-        inputs: routeInputs,
-      }),
-    enabled: isRouteAvailable,
-    refetchInterval: 15_000,
+  const { best, isLoading: isLoadingRoutes } = useBestZapInRoute({
+    pair,
+    inputs: routeInputs,
+    account: account ?? undefined,
+    slippageBps: allowedSlippage,
+    deadline: deadlineSeconds,
   })
+
+  // ZapRoutePreview was built for Kyber's raw response shape. Pull it back
+  // out of the unified quote for now; a later refactor can give the preview
+  // a generic shape that the native V2 engine could also fill.
+  const zapRouteData = (best?.quote?.routeSummary as KyberZapRouteData | undefined) ?? undefined
+  const zapRouteError = !isLoadingRoutes && isRouteAvailable && !best ? new Error('no-zap-route') : undefined
 
   const zapError = useMemo(() => {
     if (!supportsZap) return 'Zap not supported on this network'
@@ -292,35 +290,111 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
     [createInput],
   )
 
+  // Modal text — describe the tokens going in. Aggregated so the modal stays
+  // readable even when the user is zapping 3+ inputs.
+  const inputsSummary = useMemo(() => {
+    const parts = validInputs.map(
+      (i) =>
+        `${i.parsedAmount?.toSignificant(6) ?? ''} ${getTokenSymbol(i.currency ?? undefined, chainId ?? undefined) ?? ''}`.trim(),
+    )
+    return parts.join(' + ')
+  }, [validInputs, chainId])
+  const pairLabel = useMemo(() => {
+    if (!pair || !chainId) return 'pool'
+    return `${getTokenSymbol(pair.token0, chainId)}/${getTokenSymbol(pair.token1, chainId)}`
+  }, [pair, chainId])
+  const pendingText = `Zapping ${inputsSummary} into ${pairLabel}`
+  const submittedText = `Zapped ${inputsSummary} into ${pairLabel}`
+
+  const handleDismissConfirm = useCallback(() => {
+    setShowConfirm(false)
+    if (txHash) {
+      setInputs((prev) => prev.map((input) => ({ ...input, amount: '' })))
+    }
+    setTxHash('')
+    setErrorMessage(undefined)
+  }, [txHash])
+
   const handleSubmit = useCallback(async () => {
-    if (!chainId || !account || !library || !zapRouteData) {
+    if (!chainId || !account || !library || !best) {
       return
     }
 
-    try {
-      setIsSubmitting(true)
+    setErrorMessage(undefined)
+    setTxHash('')
+    setShowConfirm(true)
+    setIsSubmitting(true)
 
-      await executeKyberZapTransaction({
+    try {
+      // Look up the adapter that produced this quote. For V2 today this is
+      // always the Kyber adapter, but going through the registry keeps the
+      // submission path identical to V3's and ready for any future native
+      // V2 engine that lands in the same registry.
+      const adapter = getZapAggregatorById(best.source)
+      if (!adapter) throw new Error(`Zap adapter ${best.source} not registered`)
+
+      const built = await adapter.buildZapIn({
         chainId,
         account,
-        routeData: zapRouteData,
-        library,
+        quote: best.quote,
+        slippageBps: allowedSlippage,
+        deadline: deadlineSeconds,
       })
 
-      setInputs((prev) => prev.map((input) => ({ ...input, amount: '' })))
-      setIsSubmitting(false)
+      const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : undefined
+      if (!signer) throw new Error('No signer available')
 
-      createToast('Zap Successful', 'success')
+      // Kyber under-estimates gas on multi-hop routes; resolve a live estimate
+      // (×1.25) at send time, falling back to the adapter hint. See
+      // utils/estimateGasWithMargin.
+      const gasLimit = await estimateGasWithMargin(
+        signer,
+        { to: built.to, data: built.data, value: built.value },
+        built.gasLimit,
+      )
+
+      const response = await signer.sendTransaction({
+        to: built.to,
+        data: built.data,
+        ...(built.value ? { value: built.value } : {}),
+        ...(gasLimit ? { gasLimit } : {}),
+      })
+
+      // Set hash first so the modal moves Pending → Submitted in one render
+      // and never falls through to the `content()` fallback (blank div).
+      if (response) {
+        setTxHash(response.hash)
+        addTransaction(response, { summary: submittedText })
+      }
+      setIsSubmitting(false)
     } catch (error) {
       setIsSubmitting(false)
-      if (isUserRejection(error as any)) return
       console.error('Zap transaction failed:', error)
-      createToast(parseZapError(error), 'error')
+      if (isUserRejection(error as any)) {
+        setShowConfirm(false)
+        return
+      }
+      setErrorMessage(parseZapError(error))
     }
-  }, [chainId, account, library, zapRouteData])
+  }, [chainId, account, library, best, allowedSlippage, deadlineSeconds, addTransaction, submittedText])
 
   return (
     <AutoColumn gap="20px">
+      <TransactionConfirmationModal
+        isOpen={showConfirm}
+        onDismiss={handleDismissConfirm}
+        attemptingTxn={isSubmitting}
+        hash={txHash}
+        pendingText={pendingText}
+        submittedText={submittedText}
+        content={() =>
+          errorMessage ? (
+            <TransactionErrorContent onDismiss={handleDismissConfirm} message={errorMessage} />
+          ) : (
+            <div />
+          )
+        }
+      />
       <AutoColumn gap="24px">
         {parsedInputs.map((input, index) => {
           return (

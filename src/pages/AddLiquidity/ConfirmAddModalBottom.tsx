@@ -8,6 +8,7 @@ import { getTokenSymbol } from 'utils'
 
 export function ConfirmAddModalBottom({
   noLiquidity,
+  requiresPoolCreation,
   price,
   currencies,
   parsedAmounts,
@@ -15,6 +16,10 @@ export function ConfirmAddModalBottom({
   onAdd,
 }: {
   noLiquidity?: boolean
+  /** True only when this submission will actually deploy the pair contract
+   *  (V2 first-mint). V3 pools are pre-deployed by the permissioned factory,
+   *  so even on a V3 empty pool the user is just supplying — not creating. */
+  requiresPoolCreation?: boolean
   price?: Fraction
   currencies: { [field in Field]?: Currency }
   parsedAmounts: { [field in Field]?: CurrencyAmount }
@@ -58,7 +63,7 @@ export function ConfirmAddModalBottom({
       </RowBetween>
       <ButtonPrimary style={{ margin: '20px 0 0 0' }} onClick={onAdd}>
         <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '16px', color: '#FFFFFF' }}>
-          {noLiquidity ? 'Create Pool & Supply' : 'Confirm Supply'}
+          {requiresPoolCreation ? 'Create Pool & Supply' : 'Confirm Supply'}
         </span>
       </ButtonPrimary>
     </>

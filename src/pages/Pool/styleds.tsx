@@ -22,7 +22,7 @@ export const MaxButton = styled.button<{ width: string }>`
   padding: 8px 12px;
   background-color: #493E35;
   border: 1px solid #493E35;
-  border-radius: 8px;
+  border-radius: 6px;
   font-family: Inter, sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -66,10 +66,10 @@ export const PageWrapper = styled(AutoColumn)`
   width: 100%;
   background: #1E1915;
   border: 1px solid #2F2823;
-  border-radius: 32px;
+  border-radius: 24px;
 
   ${({ theme }) => theme.mediaWidth.upToSmall`
-    border-radius: 20px;
+    border-radius: 16px;
   `};
 `
 

@@ -70,12 +70,12 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom, inline }: Props) 
       bnhPrice: number
     }[]
   }>({
-    queryKey: ['pairStats', pair.chainId, pair.liquidityToken.address],
+    queryKey: ['pairStats', pair.chainId, pair.liquidityToken.address, pair.version],
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
         query: GET_PAIR_STATS,
-        variables: { chainId: pair.chainId, pair: pair.liquidityToken.address.toLowerCase() },
+        variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     enabled: inline || isOpen,
     refetchInterval: 60_000,

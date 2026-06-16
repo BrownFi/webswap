@@ -12,20 +12,22 @@ import { Flex, Text } from 'components/Rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
-import { PairStats } from 'components/PositionCard/usePoolStats'
+import { PairStats, pairBGT } from 'components/PositionCard/usePoolStats'
 import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { graphqlFetcher } from 'utils/graphql'
+import { apiV2Service } from 'services'
 import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
 import { usePairs } from 'data/Reserves'
+import { useV3PoolsOnChain } from 'hooks/useV3PoolsOnChain'
+import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
 import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
-import { V3_POOLS } from 'constants/v3Pools'
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
@@ -42,6 +44,8 @@ const LIST_ALL_PAIRS = `
       volumeDay
       volume7Day
       updatedAt
+      lambda
+      k
       token0 {
         id
         decimals
@@ -64,10 +68,53 @@ const LIST_ALL_PAIRS = `
   }
 `
 
+// V3 indexer schema: feeSplit instead of protocolFee, kB+kQ instead of k,
+// plus all V3-only config (spread/skew/blend) and a uni-v2 reference price.
+// Aliased to V2 field names client-side so consumers don't fork code paths.
+// Used only when v3UseIndexer is true (constants/addresses.ts); when false
+// the on-chain hook in useV3PoolsOnChain takes over.
+const LIST_ALL_PAIRS_V3 = `
+  query PairListV3($chainId: Int) {
+    pairs {
+      id
+      fee
+      feeSplit
+      feeDay
+      totalSupply
+      reserve0
+      reserve1
+      tvl
+      apr
+      volumeDay
+      volume7Day
+      updatedAt
+      lambda
+      kB
+      kQ
+      compress
+      sSell
+      sBuy
+      fixS
+      disThreshold
+      sBound
+      pythWeight
+      gamma
+      uniV2Price
+      quoteTokenIndex
+      token0 { id decimals name price priceFeedId symbol totalSupply }
+      token1 { id decimals name price priceFeedId symbol totalSupply }
+    }
+  }
+`
+
 export default function Pool() {
   const { chainId } = useActiveWeb3React()
   const { version, enableGraphQL } = useVersion({ chainId })
   const allTokens = useDefaultTokens(chainId)
+  // Per-chain V3 indexer toggle: true for chains where the subgraph is live
+  // (Bera), false for chains awaiting the indexer (HyperEVM) — those use the
+  // useV3PoolsOnChain factory-enumeration hook instead.
+  const v3UseIndexer = useV3Indexer(chainId, version)
 
   const { data: protocolStats, isLoading: isLoadingStats } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
@@ -76,56 +123,100 @@ export default function Pool() {
     gcTime: 30 * 60_000,
   })
 
-  const { data, error, isLoading: isLoadingPairs } = useQuery<{
-    pairs: {
-      id: string
-      fee: number
-      protocolFee: number
-      feeDay: number
-      totalSupply: number
-      reserve0: number
-      reserve1: number
-      tvl: number
-      apr: number
-      volumeDay: number
-      volume7Day: number
-      updatedAt: number
-      token0: {
-        id: string
-        decimals: number
-        name: string
-        price: number
-        priceFeedId: string
-        symbol: string
-        totalSupply: number
-      }
-      token1: {
-        id: string
-        decimals: number
-        name: string
-        price: number
-        priceFeedId: string
-        symbol: string
-        totalSupply: number
-      }
-    }[]
-  }>({
-    queryKey: ['pairList', chainId],
+  // V2 always hits the indexer. V3 routing is gated on v3UseIndexer:
+  // - true (default once /indexer/v3 tracks the current factory): indexer
+  // - false (current beta state, fresh v3-final factory not yet indexed):
+  //   on-chain reads via useV3PoolsOnChain
+  // Flip v3UseIndexer in lib/sdk/constants/addresses.ts when the indexer
+  // is caught up — no other code changes required.
+  const { data, error, isLoading: isLoadingPairs } = useQuery<{ pairs: PairStats[] }>({
+    queryKey: ['pairList', chainId, version],
     queryFn: () =>
       graphqlFetcher({
-        operationName: 'PairList',
-        query: LIST_ALL_PAIRS,
-        variables: { chainId },
+        operationName: isV3Like(version) ? 'PairListV3' : 'PairList',
+        query: isV3Like(version) ? LIST_ALL_PAIRS_V3 : LIST_ALL_PAIRS,
+        variables: { chainId, version },
       }),
-    enabled: enableGraphQL,
+    enabled: enableGraphQL && (!isV3Like(version) || v3UseIndexer),
     refetchInterval: 60_000,
     staleTime: 60_000,
   })
 
-  const sortedPairs = useMemo(
-    () => (data?.pairs ?? []).slice().sort((pairA: PairStats, pairB: PairStats) => pairB.tvl - pairA.tvl),
+  const { data: onChainV3Pools, isLoading: isLoadingOnChainV3 } = useV3PoolsOnChain(
+    chainId,
+    isV3Like(version) && !v3UseIndexer,
+  )
+
+  // V3 indexer ships `feeSplit` / `kB` (not `protocolFee` / `k`). Alias them
+  // client-side so downstream code (PositionCard, devStats, etc.) stays
+  // version-agnostic. Extra V3 fields pass through unchanged.
+  // Sortable columns. Default: TVL desc. Fee APR uses indexer's `apr`. The
+  // 24h-Fees/TVL and BGT APR columns are computed client-side below.
+  type SortKey = 'tvl' | 'volumeDay' | 'feeOverTvl' | 'apr' | 'bgtAPR'
+  type SortDir = 'asc' | 'desc'
+  const [sortKey, setSortKey] = useState<SortKey>('tvl')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
+    } else {
+      setSortKey(key)
+      setSortDir('desc')
+    }
+  }
+
+  // BGT APR isn't on the pair entity — it comes from apiV2Service per pair.
+  // Fan out ONLY for pools listed in `pairBGT` (the BE has data only for
+  // those). Previously this query ran for every Bera pool, so at N pools
+  // the user paid N REST round-trips on each list load even though all
+  // but the whitelisted few returned apr=0. With ~2 BGT vaults today this
+  // turns 100 calls into 2.
+  const pairAddresses = useMemo(
+    () => (data?.pairs ?? []).map((p) => p.id),
     [data?.pairs],
   )
+  const bgtAprQueries = useQueries({
+    queries: pairAddresses.map((addr) => ({
+      queryKey: ['getBgtApr', addr],
+      queryFn: () => apiV2Service.getPoolBgt({ address: addr }),
+      enabled: chainId === ChainId.BERA_MAINNET && !!addr && !!pairBGT[addr],
+      staleTime: 5 * 60_000,
+    })),
+  })
+  const bgtAprByAddr = useMemo(() => {
+    const m: Record<string, number> = {}
+    pairAddresses.forEach((addr, i) => {
+      const apr = (bgtAprQueries[i]?.data as any)?.apr
+      if (typeof apr === 'number' && apr > 0) m[addr.toLowerCase()] = apr * 100
+    })
+    return m
+  }, [pairAddresses, bgtAprQueries])
+
+  const sortedPairs = useMemo(() => {
+    // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer.
+    const raw: PairStats[] =
+      isV3Like(version) && !v3UseIndexer ? (onChainV3Pools ?? []) : (data?.pairs ?? [])
+    const normalized: PairStats[] = isV3Like(version)
+      ? raw.map((p: any) => ({
+          ...p,
+          protocolFee: p.protocolFee ?? p.feeSplit ?? 0,
+          k: p.k ?? p.kB,
+        }))
+      : raw
+    const dir = sortDir === 'desc' ? 1 : -1
+    const valueOf = (p: PairStats): number => {
+      if (sortKey === 'feeOverTvl') {
+        const t = Number(p.tvl) || 0
+        const f = Number(p.feeDay) || 0
+        return t > 0 ? (f / t) * 100 : 0
+      }
+      if (sortKey === 'bgtAPR') {
+        return bgtAprByAddr[p.id.toLowerCase()] ?? 0
+      }
+      return Number((p as any)[sortKey]) || 0
+    }
+    return normalized.slice().sort((a, b) => (valueOf(b) - valueOf(a)) * dir)
+  }, [data?.pairs, onChainV3Pools, version, sortKey, sortDir, bgtAprByAddr])
 
   const blocklist = useMemo(
     () =>
@@ -156,8 +247,8 @@ export default function Pool() {
           return false
         }
         if (isMainnet) {
-          const token0Address = pair.token0?.id.toLowerCase()
-          const token1Address = pair.token1?.id.toLowerCase()
+          const token0Address = pair.token0?.id.toLowerCase() ?? ''
+          const token1Address = pair.token1?.id.toLowerCase() ?? ''
           return allowedTokenAddresses.has(token0Address) || allowedTokenAddresses.has(token1Address)
         }
         return true
@@ -262,7 +353,7 @@ export default function Pool() {
                   height: '48px',
                   background: '#120F0D',
                   border: '1px solid #2F2823',
-                  borderRadius: '12px',
+                  borderRadius: '8px',
                   padding: '12px 16px',
                   fontFamily: 'Inter',
                   fontWeight: 500,
@@ -274,10 +365,10 @@ export default function Pool() {
               />
             </div>
 
-            {/* Table header + rows */}
-            {version === 3 ? (
-              <V3PoolList />
-            ) : shouldUseGraphQL && searchFilteredPairs.length > 0 ? (
+            {/* Table header + rows. V3 used to go through V3PoolList (on-chain
+                reads, hardcoded pool list) — now both V2 and V3 share the same
+                indexer-backed path via MemoizedPairList. */}
+            {shouldUseGraphQL && searchFilteredPairs.length > 0 ? (
               <>
                 <div
                   className="hidden md:flex items-center"
@@ -291,16 +382,18 @@ export default function Pool() {
                   }}
                 >
                   <span style={{ flex: 2 }}>Pool</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
-                  {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>APR</span>}
-                  <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
+                  <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
+                  <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
+                  <SortHeader label="24h Fees / TVL" active={sortKey === 'feeOverTvl'} dir={sortDir} onClick={() => handleSort('feeOverTvl')} />
+                  {!isMainnet && (
+                    <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  )}
+                  <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                  <span style={{ flex: 1, textAlign: 'right' }} />
                 </div>
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
-            ) : enableGraphQL && isLoadingPairs ? (
+            ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
               <PairListSkeleton />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
@@ -353,7 +446,7 @@ function PoolStatsBar({
           }`}
           style={{
             background: '#2F2823',
-            borderRadius: '16px',
+            borderRadius: '12px',
           }}
         >
           {isLoading && !hasData ? (
@@ -391,6 +484,67 @@ function PoolStatsBar({
   )
 }
 
+// Clickable header column with sort indicator. Used in the pool list header
+// for TVL / 24h Volume / Fee APR. Highlights the active column and shows ▼/▲
+// per the current direction.
+function SortHeader({
+  label,
+  active,
+  dir,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  dir: 'asc' | 'desc'
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center justify-end gap-1 cursor-pointer hover:text-[#FBFBFD] transition-colors"
+      style={{
+        flex: 1,
+        background: 'transparent',
+        border: 'none',
+        padding: 0,
+        fontFamily: 'inherit',
+        fontWeight: 'inherit',
+        fontSize: 'inherit',
+        color: active ? '#FBFBFD' : 'inherit',
+        textAlign: 'right',
+      }}
+    >
+      <span>{label}</span>
+      {/* DefiLlama-style sort indicator: ↕ on every clickable column so users
+          know they're sortable; flips to ↓/↑ on the active one. SVG instead
+          of unicode so all three states render at identical dimensions. */}
+      <SortIcon state={active ? (dir === 'desc' ? 'down' : 'up') : 'both'} />
+    </button>
+  )
+}
+
+function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
+  const active = state !== 'both'
+  return (
+    <svg
+      width="10"
+      height="12"
+      viewBox="0 0 10 12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ opacity: active ? 1 : 0.45, flexShrink: 0 }}
+      aria-hidden="true"
+    >
+      {state !== 'down' && <polyline points="3,4 5,1.5 7,4" />}
+      {state !== 'up' && <polyline points="3,8 5,10.5 7,8" />}
+    </svg>
+  )
+}
+
 function PairListSkeleton() {
   return (
     <>
@@ -408,11 +562,11 @@ function PairListSkeleton() {
       >
         <span style={{ flex: 2 }}>Pool</span>
         <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Vol 24h</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>24h Volume</span>
         <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
-        {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>APR</span>}
-        <span style={{ flex: 1, textAlign: 'right' }}>Incentive APR</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Actions</span>
+        {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>Fee APR</span>}
+        <span style={{ flex: 1, textAlign: 'right' }}>BGT APR</span>
+        <span style={{ flex: 1, textAlign: 'right' }} />
       </div>
       {[0, 1, 2, 3, 4].map((i) => (
         <div
@@ -423,7 +577,7 @@ function PairListSkeleton() {
             gap: '8px',
             minHeight: '60px',
             background: '#1E1915',
-            borderRadius: '12px',
+            borderRadius: '8px',
             marginBottom: '8px',
           }}
         >
@@ -472,6 +626,18 @@ function MemoizedPairList({
           ),
           version,
         )
+        // V3 pools live in a factory registry rather than at a CREATE2 address,
+        // so SDK's computed `liquidityToken` is wrong. Use the indexer's pair
+        // id (== the real pair address) instead.
+        if (isV3Like(version)) {
+          ;(pair as any).liquidityToken = new Token(
+            chainId,
+            checksumAddress(item.id as Address),
+            18,
+            'BF-V3',
+            'BrownFi V3',
+          )
+        }
         return { pair, stats: item }
       }),
     [pairs, chainId, version],
@@ -481,75 +647,6 @@ function MemoizedPairList({
     <>
       {pairsWithObjects.map(({ pair, stats }) => (
         <FullPositionCard key={pair.liquidityToken.address} pair={pair} pairStats={stats} />
-      ))}
-    </>
-  )
-}
-
-function V3PoolList() {
-  const { chainId } = useActiveWeb3React()
-  const pools = V3_POOLS[chainId] ?? []
-
-  const { data: v3Pairs, isLoading } = useQuery({
-    queryKey: ['v3Pools', chainId],
-    queryFn: async () => {
-      const { createPublicClient, http } = await import('viem')
-      const { RPC_URLS } = await import('lib/sdk/constants/addresses')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-
-      const results = await Promise.all(
-        pools.map(async (pool) => {
-          try {
-            const reserves = await client.readContract({
-              address: pool.pair as `0x${string}`,
-              abi: [{ inputs: [], name: 'getReserves', outputs: [{ type: 'uint112' }, { type: 'uint112' }, { type: 'uint32' }], stateMutability: 'view', type: 'function' }] as const,
-              functionName: 'getReserves',
-            })
-            const token0 = new Token(chainId, pool.token0.address, pool.token0.decimals, pool.token0.symbol, pool.token0.name)
-            const token1 = new Token(chainId, pool.token1.address, pool.token1.decimals, pool.token1.symbol, pool.token1.name)
-            const pair = new Pair(
-              new TokenAmount(token0, reserves[0].toString()),
-              new TokenAmount(token1, reserves[1].toString()),
-              3,
-            )
-            // V3 uses factory.getPair() not CREATE2 — override LP token with real pair address
-            ;(pair as any).liquidityToken = new Token(chainId, pool.pair, 18, 'BF-V3', 'BrownFi V3')
-            return pair
-          } catch {
-            return null
-          }
-        }),
-      )
-      return results.filter((p): p is Pair => p !== null)
-    },
-    enabled: pools.length > 0,
-    refetchInterval: 30_000,
-  })
-
-  if (isLoading) {
-    return (
-      <EmptyProposals>
-        <TYPE.body color={'#999'} textAlign="center">
-          <Dots>Loading V3 pools</Dots>
-        </TYPE.body>
-      </EmptyProposals>
-    )
-  }
-
-  if (!v3Pairs || v3Pairs.length === 0) {
-    return (
-      <EmptyProposals>
-        <TYPE.body color={'#999'} textAlign="center">
-          No V3 pools found.
-        </TYPE.body>
-      </EmptyProposals>
-    )
-  }
-
-  return (
-    <>
-      {v3Pairs.map((pair) => (
-        <FullPositionCard key={pair.liquidityToken.address} pair={pair} />
       ))}
     </>
   )

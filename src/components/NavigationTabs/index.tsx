@@ -29,7 +29,7 @@ function StyledNavLink({
       className={({ isActive }) =>
         `flex flex-row flex-nowrap items-center justify-center h-12 rounded-[3rem] outline-none cursor-pointer no-underline text-text3 text-xl
         hover:text-text1 focus:text-text1
-        ${isActive || className?.includes('active') ? 'rounded-xl font-medium !text-text1' : ''}
+        ${isActive || className?.includes('active') ? 'rounded-lg font-medium !text-text1' : ''}
         ${className ?? ''}`
       }
     >

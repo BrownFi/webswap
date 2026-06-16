@@ -19,6 +19,11 @@ import { darkTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { ToastProvider } from 'containers/ToastProvider'
 import { ErrorBoundary } from 'containers/ErrorBoundary'
+import { installChunkReloadHandler } from 'utils/chunkReload'
+
+// Auto-reload tabs running an old bundle when a deploy invalidates their
+// hashed chunks (Vite renames assets on each build).
+installChunkReloadHandler()
 
 // Validate required environment variables at startup
 const REQUIRED_ENV_VARS = ['VITE_API_URL'] as const

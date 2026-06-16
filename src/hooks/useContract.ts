@@ -127,9 +127,15 @@ export function useStakingContract(stakingAddress?: string, withSignerIfPossible
 export function useFactoryContract(
   withSignerIfPossible = false,
   options: { readonly?: boolean } = { readonly: true },
+  // Resolve the factory for a SPECIFIC version (e.g. the pool being edited)
+  // instead of the global header toggle. The admin settings modal passes the
+  // pool's own version so V2 setters can't target a V3 factory when the
+  // toggle happens to be on V3 (reachable via a V2 pool opened from Portfolio).
+  versionOverride?: number,
 ): Contract | null {
   const { chainId } = useActiveWeb3React()
-  const { version } = useVersion({ chainId })
+  const { version: globalVersion } = useVersion({ chainId })
+  const version = versionOverride ?? globalVersion
   const factoryAddress = getFactoryAddress(chainId, version)
   return useContract(factoryAddress, IFactoryV2, withSignerIfPossible, options)
 }

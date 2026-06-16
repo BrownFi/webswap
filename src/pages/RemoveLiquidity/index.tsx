@@ -1,15 +1,17 @@
-import { Currency, currencyEquals, ETHER, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH, RPC_URLS } from '@brownfi/sdk'
+import { Currency, currencyEquals, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
-import { executeV3ZapOut, isV3ZapSupported, buildV3UpdateData } from 'utils/v3Zap'
-import { createPublicClient, http } from 'viem'
+import { decodeContractError } from 'utils/decodeContractError'
+import { isV3ZapSupported } from 'utils/v3Zap'
 import { useQuery } from '@tanstack/react-query'
+import { useBestZapOutRoute } from 'hooks/useBestZapRoute'
+import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { ButtonConfirmed, ButtonError, ButtonPrimary } from 'components/Button'
 import { RemoveLiqudityCard } from 'components/Card'
 import { AutoColumn, ColumnCenter } from 'components/Column'
 import ConnectWallet from 'components/ConnectWallet'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { Loader } from 'components/Loader'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import NumericInput from 'components/NumericInput'
@@ -18,7 +20,7 @@ import { RowBetween, RowFixed } from 'components/Row'
 import { CurrencySearchModal } from 'components/SearchModal/CurrencySearchModal'
 import Slider from 'components/Slider'
 import { Dots } from 'components/swap/styleds'
-import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
+import { ConfirmationModalContent, TransactionConfirmationModal, TransactionErrorContent } from 'components/TransactionConfirmationModal'
 import { useActiveWeb3React } from 'hooks'
 import { useCurrency } from 'hooks/Tokens'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
@@ -37,15 +39,16 @@ import { useParams } from 'react-router-dom'
 import { Text } from 'components/Rebass'
 import { Field } from 'state/burn/actions'
 import { useBurnActionHandlers, useBurnState, useDerivedBurnInfo } from 'state/burn/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { ThemeContext } from 'styled-components'
 import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
 import { formatNumber } from 'utils/prices'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { useToast } from 'containers/ToastProvider'
+import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
 import { useQueryClient } from '@tanstack/react-query'
-import { executeKyberZapOutTransaction, getKyberZapOutRouteData, KyberZapOutRouteData } from './zapHelpers'
+import { KyberZapOutRouteData } from './zapHelpers'
 
 export default function RemoveLiquidity() {
   const { currencyIdA, currencyIdB } = useParams<{ currencyIdA: string; currencyIdB: string }>()
@@ -53,8 +56,8 @@ export default function RemoveLiquidity() {
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
 
-  const { createToast } = useToast()
   const queryClient = useQueryClient()
+  const addTransaction = useTransactionAdder()
   const supportsZapV2 = useMemo(() => isZapSupportedOnChain(chainId), [chainId])
   const supportsZapV3 = useMemo(() => isV3ZapSupported(chainId, version), [chainId, version])
   const supportsZap = supportsZapV2 || supportsZapV3
@@ -96,6 +99,10 @@ export default function RemoveLiquidity() {
   const [attemptingTxn, setAttemptingTxn] = useState(false) // clicked confirm
 
   const [txHash, setTxHash] = useState<string>('')
+  // Mirror Swap's in-modal failure surface so pre-submission reverts (wallet
+  // rejection, simulation revert, Kyber API failure) appear inside the open
+  // modal instead of as an out-of-band toast.
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
   const [allowedSlippage] = useUserSlippageTolerance()
 
   const deadline = useTransactionDeadline()
@@ -122,69 +129,61 @@ export default function RemoveLiquidity() {
 
   const amountOut = useDebounce(parsedAmounts[Field.LIQUIDITY]?.raw.toString() ?? '0', 200)
 
-  const zapOutQueryKey = useMemo(() => {
-    if (!useZap || !supportsZap) {
-      return ['zap-out-disabled']
-    }
+  const deadlineSeconds = useMemo(() => (deadline ? Number(deadline.toString()) : 0), [deadline])
 
-    const tokenOutAddress = zapOutCurrency
-      ? wrappedCurrency(zapOutCurrency, chainId)?.address ?? zapOutCurrency.symbol ?? 'token-out'
-      : 'token-out'
-
-    return ['kyberZapOutRoute', chainId ?? 'unknown', pair?.liquidityToken.address, account, tokenOutAddress, amountOut]
-  }, [useZap, supportsZap, zapOutCurrency, chainId, pair, account, amountOut])
-
-  const isZapRouteAvailable = Boolean(
-    useZap && supportsZapV2 && !supportsZapV3 && pair && chainId && account && zapOutCurrency && Number(amountOut) > 0,
-  )
-
-  const { data: zapOutRouteData, error: zapOutRouteError, isFetching: isFetchingZapOutRoute } = useQuery<
-    KyberZapOutRouteData
-  >({
-    queryKey: zapOutQueryKey,
-    queryFn: () =>
-      getKyberZapOutRouteData({
-        chainId: chainId!,
-        pair: pair!,
-        account: account!,
-        tokenOut: zapOutCurrency!,
-        amountOut: amountOut,
-        allowedSlippage,
-      }),
-    enabled: isZapRouteAvailable,
-    refetchInterval: 30_000,
+  // One orchestration call replaces three separate code paths that used to
+  // live here (V2 Kyber route, V3 native quote via quoteAmountsOutWithUpdate,
+  // plus the proportional/swap math for the estimated token-out figure).
+  // The hook fans out every registered adapter that supports this chain ×
+  // version, sorts by amountOut desc with native tie-break, and returns the
+  // winner. V2 today = Kyber-only; V3 = both native and Kyber compete.
+  const { best, attempts: zapAttempts, isLoading: isLoadingZapRoute } = useBestZapOutRoute({
+    pair: pair ?? undefined,
+    liquidityRaw: useZap && Number(amountOut) > 0 ? amountOut : undefined,
+    tokenOut: useZap ? zapOutCurrency ?? undefined : undefined,
+    account: account ?? undefined,
+    slippageBps: allowedSlippage,
+    deadline: deadlineSeconds,
   })
 
+  // ZapRoutePreview still expects the Kyber raw shape. Only renders when
+  // Kyber actually won; for the native winner we show our own price-impact
+  // block below instead.
+  const kyberRouteSummary = useMemo<KyberZapOutRouteData | undefined>(
+    () => (best?.source === 'kyber' ? (best.quote.routeSummary as KyberZapOutRouteData) : undefined),
+    [best],
+  )
+
   const approvalSpender = useMemo(() => {
-    if (useZap && supportsZap && zapOutRouteData?.routerAddress) {
-      return zapOutRouteData.routerAddress
-    }
+    if (useZap && best?.routerAddress) return best.routerAddress
     return chainId ? getRouterAddress(chainId, version) : undefined
-  }, [useZap, supportsZap, zapOutRouteData, chainId, version])
+  }, [useZap, best, chainId, version])
 
   const [approval, approveCallback] = useApproveCallback(parsedAmounts[Field.LIQUIDITY], approvalSpender)
 
   const zapOutValidationError = useMemo(() => {
     if (!useZap || !supportsZap) return undefined
     if (!zapOutCurrency) return 'Select token'
-    if (supportsZapV3) return undefined // V3 uses router contract directly, no Kyber route needed
-    if (zapOutRouteError) return 'Failed to get zap route'
-    if (isZapRouteAvailable && !zapOutRouteData) return 'Fetching zap route'
+    // While the orchestration is in-flight, don't surface an error — the
+    // submit button stays disabled via isLoadingZapRoute. Only after the
+    // queries settle do we declare "no route available".
+    if (!isLoadingZapRoute && !best) return 'Failed to get zap route'
     return undefined
-  }, [useZap, supportsZap, supportsZapV3, zapOutCurrency, zapOutRouteError, isZapRouteAvailable, zapOutRouteData])
+  }, [useZap, supportsZap, zapOutCurrency, isLoadingZapRoute, best])
 
   const combinedError = zapOutValidationError ?? derivedError
   const isValid = !combinedError
 
   const zapOutToken = useMemo(() => wrappedCurrency(zapOutCurrency ?? undefined, chainId), [zapOutCurrency, chainId])
 
-  const { data: zapOutTokenPrice = 0, isFetching: isFetchingZapOutPrice } = useQuery({
+  // Token prices stay as Pyth lookups — used only by the USD comparison
+  // block, not by the zap quote itself (the adapter already returned a
+  // token-denominated amountOut).
+  const { data: zapOutTokenPrice = 0 } = useQuery({
     queryKey: ['getPythPrice', zapOutToken?.address],
     queryFn: () => getPythPrice(zapOutToken!.address, chainId!, version),
     enabled: Boolean(useZap && supportsZap && zapOutToken && chainId && version),
   })
-
-  // V3 zap: fetch both token prices for USD estimates
   const { data: token0Price = 0 } = useQuery({
     queryKey: ['getPythPrice', pair?.token0.address],
     queryFn: () => getPythPrice(pair!.token0.address, chainId!, version),
@@ -196,65 +195,20 @@ export default function RemoveLiquidity() {
     enabled: Boolean(supportsZapV3 && useZap && pair && chainId && version),
   })
 
-  const isFetchingZapOutAmount = supportsZapV3 ? false : (isFetchingZapOutRoute || isFetchingZapOutPrice)
+  const isFetchingZapOutAmount = isLoadingZapRoute
 
-  // V3: get accurate swap estimate from router's quoteAmountsOutWithUpdate
-  const { data: v3ZapOutEstimate } = useQuery({
-    queryKey: ['v3ZapOutQuote', pair?.liquidityToken.address, zapOutToken?.address,
-      parsedAmounts[Field.CURRENCY_A]?.toExact(), parsedAmounts[Field.CURRENCY_B]?.toExact()],
-    queryFn: async () => {
-      if (!pair || !zapOutToken || !chainId) return undefined
-      const amount0 = Number(parsedAmounts[Field.CURRENCY_A]?.toExact() || 0)
-      const amount1 = Number(parsedAmounts[Field.CURRENCY_B]?.toExact() || 0)
-      if (amount0 <= 0 && amount1 <= 0) return undefined
-
-      const isToken0Out = zapOutToken.address.toLowerCase() === pair.token0.address.toLowerCase()
-      const directAmount = isToken0Out ? amount0 : amount1
-      const swapAmount = isToken0Out ? amount1 : amount0
-      const swapTokenIn = isToken0Out ? pair.token1.address : pair.token0.address
-      const swapTokenOut = zapOutToken.address
-
-      if (swapAmount <= 0) return directAmount
-
-      // Use router's quoteAmountsOutWithUpdate for accurate swap estimate
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-      const routerAddr = getRouterAddress(chainId, version)
-      const updateData = await buildV3UpdateData([swapTokenIn, swapTokenOut], chainId)
-
-      const { result } = await client.simulateContract({
-        address: routerAddr as `0x${string}`,
-        abi: [{
-          inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
-          name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
-        }] as const,
-        functionName: 'quoteAmountsOutWithUpdate',
-        args: [
-          BigInt(Math.floor(swapAmount * 1e18).toString()),
-          [swapTokenIn as `0x${string}`, swapTokenOut as `0x${string}`],
-          updateData as `0x${string}`,
-        ],
-      })
-
-      const swapOut = Number(result[result.length - 1]) / 1e18
-      return directAmount + swapOut
-    },
-    enabled: Boolean(supportsZapV3 && useZap && pair && zapOutToken && chainId &&
-      (Number(parsedAmounts[Field.CURRENCY_A]?.toExact() || 0) > 0 || Number(parsedAmounts[Field.CURRENCY_B]?.toExact() || 0) > 0)),
-    staleTime: 10_000,
-  })
-
+  // Convert the adapter's amountOut (BigNumber in smallest units) into a
+  // float for the existing UI. The native adapter's quoteZapOut and Kyber's
+  // route both honor decimals correctly, so a single conversion path works
+  // for either source.
   const zapOutEstimatedTokenAmount = useMemo(() => {
-    // V3: use router quote
-    if (supportsZapV3) return v3ZapOutEstimate ?? undefined
-
-    // V2: estimate from Kyber route data
-    if (!zapOutRouteData?.zapDetails?.finalAmountUsd) return undefined
-    const finalUsd = Number(zapOutRouteData.zapDetails.finalAmountUsd)
-    if (!Number.isFinite(finalUsd) || finalUsd <= 0) return undefined
-    if (!zapOutTokenPrice || zapOutTokenPrice <= 0) return undefined
-    const amount = finalUsd / zapOutTokenPrice
-    return Number.isFinite(amount) && amount > 0 ? amount : undefined
-  }, [zapOutRouteData, zapOutTokenPrice, supportsZapV3, v3ZapOutEstimate])
+    if (!best || !zapOutToken) return undefined
+    const decimals = zapOutToken.decimals
+    const raw = Number(best.amountOut.toString())
+    if (!Number.isFinite(raw)) return undefined
+    const amount = raw / 10 ** decimals
+    return amount > 0 ? amount : undefined
+  }, [best, zapOutToken])
 
   const handleOpenZapCurrencyModal = useCallback(() => {
     setIsZapCurrencyModalOpen(true)
@@ -276,42 +230,48 @@ export default function RemoveLiquidity() {
       }
 
       setAttemptingTxn(true)
-      if (useZap && version === 3 && supportsZapV3 && zapOutCurrency) {
-        const tokenOut = wrappedCurrency(zapOutCurrency, chainId)
-        if (!tokenOut) throw new Error('Invalid output token')
-        const isNativeETH = zapOutCurrency === ETHER
-        const response = await executeV3ZapOut({
+      setErrorMessage(undefined)
+      if (useZap && supportsZap) {
+        // Single dispatch path for both V2 (Kyber) and V3 (native or Kyber):
+        // the orchestration hook has already picked the winning adapter via
+        // `best.source`; we look it up in the registry and ask it to build
+        // calldata. The adapter handles all version-specific contract
+        // shape — native zapOut/zapOutETH for V3, Kyber router for V2.
+        if (!best) throw new Error('Zap route unavailable')
+        const adapter = getZapAggregatorById(best.source)
+        if (!adapter) throw new Error(`Zap adapter ${best.source} not registered`)
+
+        const built = await adapter.buildZapOut({
           chainId,
-          library,
           account,
-          tokenA: pair!.token0.address,
-          tokenB: pair!.token1.address,
-          tokenOut: tokenOut.address,
-          liquidity: parsedAmounts[Field.LIQUIDITY]!.raw.toString(),
-          amountMin: '0', // TODO: calculate from reserves + slippage
-          deadline: deadline as any,
-          isNativeETH,
+          quote: best.quote,
+          slippageBps: allowedSlippage,
+          deadline: deadlineSeconds,
+        })
+
+        const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : undefined
+        if (!signer) throw new Error('No signer available')
+
+        // Kyber under-estimates gas on multi-hop routes; resolve a live estimate
+        // (×1.25) at send time, falling back to the adapter hint. See
+        // utils/estimateGasWithMargin.
+        const gasLimit = await estimateGasWithMargin(
+          signer,
+          { to: built.to, data: built.data, value: built.value },
+          built.gasLimit,
+        )
+
+        const response = await signer.sendTransaction({
+          to: built.to,
+          data: built.data,
+          ...(built.value ? { value: built.value } : {}),
+          ...(gasLimit ? { gasLimit } : {}),
         })
 
         setAttemptingTxn(false)
         if (response) {
           setTxHash(response.hash)
-        }
-      } else if (useZap && supportsZap) {
-        if (!zapOutRouteData) {
-          throw new Error('Zap route unavailable')
-        }
-
-        const response = await executeKyberZapOutTransaction({
-          chainId,
-          account,
-          routeData: zapOutRouteData,
-          library,
-        })
-
-        setAttemptingTxn(false)
-        if (response) {
-          setTxHash(response.hash)
+          addTransaction(response, { summary: submittedText })
         }
       } else {
         const response = await removeLiquidity(
@@ -329,6 +289,7 @@ export default function RemoveLiquidity() {
         setAttemptingTxn(false)
         if (response) {
           setTxHash(response.hash)
+          addTransaction(response, { summary: submittedText })
           setTimeout(() => queryClient.invalidateQueries(), 5000)
         }
       }
@@ -336,7 +297,16 @@ export default function RemoveLiquidity() {
       setAttemptingTxn(false)
       if (isUserRejection(e)) return
       console.error('Remove liquidity failed:', e)
-      createToast(useZap ? parseZapError(e) : (e?.reason || e?.message || 'Remove liquidity failed. Please try again.'), 'error')
+      // Same routing as the success path: surface failure inside the
+      // confirm modal via TransactionErrorContent rather than a toast.
+      // Zap-side errors include HTTP/API failures from Kyber that don't
+      // look like contract reverts, so we keep parseZapError for the
+      // useZap branch — same friendlier copy, different decoder.
+      const msg = useZap
+        ? parseZapError(e)
+        : decodeContractError(e, 'Remove liquidity failed. Please try again.') ??
+          'Remove liquidity failed. Please try again.'
+      setErrorMessage(msg)
     }
   }
 
@@ -407,7 +377,7 @@ export default function RemoveLiquidity() {
       <>
         <RowBetween>
           <Text color={theme.white} fontWeight={500} fontSize={16} opacity={0.5}>
-            {getTokenSymbol(currencyA, chainId) + '/' + getTokenSymbol(currencyB, chainId)} Burned
+            <DoubleCurrencySymbol currency0={currencyA} currency1={currencyB} /> Burned
           </Text>
           <RowFixed>
             <DoubleCurrencyLogo currency0={currencyA} currency1={currencyB} margin={true} />
@@ -453,6 +423,12 @@ export default function RemoveLiquidity() {
       : `Removing ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}` +
         ` ${getTokenSymbol(currencyA, chainId)} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}` +
         ` ${getTokenSymbol(currencyB, chainId)}`
+  const submittedText =
+    useZap && zapOutSymbol
+      ? `Removed liquidity into ${zapOutSymbol}`
+      : `Removed ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)}` +
+        ` ${getTokenSymbol(currencyA, chainId)} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)}` +
+        ` ${getTokenSymbol(currencyB, chainId)}`
 
   const liquidityPercentChangeCallback = useCallback(
     (value: number) => {
@@ -474,6 +450,7 @@ export default function RemoveLiquidity() {
       onUserInput(Field.LIQUIDITY_PERCENT, '0')
     }
     setTxHash('')
+    setErrorMessage(undefined)
   }, [onUserInput, txHash])
 
   return (
@@ -487,15 +464,25 @@ export default function RemoveLiquidity() {
             onDismiss={handleDismissConfirmation}
             attemptingTxn={attemptingTxn}
             hash={txHash ? txHash : ''}
-            content={() => (
-              <ConfirmationModalContent
-                title={'You will receive'}
-                onDismiss={handleDismissConfirmation}
-                topContent={modalHeader}
-                bottomContent={modalBottom}
-              />
-            )}
+            content={() =>
+              errorMessage ? (
+                <TransactionErrorContent
+                  message={errorMessage}
+                  onDismiss={handleDismissConfirmation}
+                  headerTitle="Remove Liquidity"
+                  failedTitle="Remove liquidity failed"
+                />
+              ) : (
+                <ConfirmationModalContent
+                  title={'You will receive'}
+                  onDismiss={handleDismissConfirmation}
+                  topContent={modalHeader}
+                  bottomContent={modalBottom}
+                />
+              )
+            }
             pendingText={pendingText}
+            submittedText={submittedText}
           />
           <AutoColumn gap="20px">
             <RemoveLiqudityCard>
@@ -563,7 +550,6 @@ export default function RemoveLiquidity() {
 
                   <SwitchZap
                     enabled={useZap}
-                    version={version}
                     onToggle={() => {
                       setUseZap((prev) => !prev)
                     }}
@@ -574,7 +560,7 @@ export default function RemoveLiquidity() {
                   <AutoColumn gap="16px">
                     <button
                       type="button"
-                      className="flex items-center justify-between w-full px-4 py-2 min-h-12 bg-[#120F0D] border border-[#2F2823] hover:bg-[#2F2823] rounded-xl"
+                      className="flex items-center justify-between w-full px-4 py-2 min-h-12 bg-[#120F0D] border border-[#2F2823] hover:bg-[#2F2823] rounded-lg"
                       onClick={handleOpenZapCurrencyModal}
                     >
                       {zapOutCurrency ? (
@@ -621,9 +607,37 @@ export default function RemoveLiquidity() {
                           </div>
                         </div>
                       )
-                    })() : !supportsZapV3 ? (
-                      <ZapRoutePreview routeData={zapOutRouteData} />
+                    })() : kyberRouteSummary ? (
+                      <ZapRoutePreview routeData={kyberRouteSummary} />
                     ) : null}
+                    {/* Per-adapter status strip — only renders when more than
+                        one adapter is even possible on this chain/version, so
+                        V2 (Kyber-only) stays uncluttered. Mirrors the strip
+                        in V3ZapForm so users can see exactly what was tried. */}
+                    {zapAttempts.length > 1 && (
+                      <div className="flex flex-col gap-1 text-xs text-white/50 px-1 pt-1">
+                        {zapAttempts.map((a) => {
+                          let detail: string
+                          if (a.status === 'loading') detail = 'fetching…'
+                          else if (a.status === 'success' && a.candidate && zapOutToken)
+                            detail = `≈ ${formatNumber(
+                              Number(a.candidate.amountOut.toString()) / 10 ** zapOutToken.decimals,
+                              { maximumFractionDigits: 4 },
+                            )} ${zapOutToken.symbol ?? ''}`
+                          else detail = 'no route'
+                          const winner = best?.source === a.source
+                          return (
+                            <div key={a.source} className="flex justify-between">
+                              <span className={winner ? 'text-white' : ''}>
+                                {a.sourceName}
+                                {winner ? ' (using)' : ''}
+                              </span>
+                              <span className={winner ? 'text-white' : ''}>{detail}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </AutoColumn>
                 ) : (
                   <AutoColumn gap="10px">

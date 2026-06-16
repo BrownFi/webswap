@@ -1,4 +1,4 @@
-import { ChainId, getRouterAddress, getFactoryAddress, ROUTER_ADDRESS, ROUTER_ADDRESS_V3 } from '@brownfi/sdk'
+import { ChainId, getRouterAddress, getFactoryAddress, ROUTER_ADDRESS, ROUTER_ADDRESS_V3_PILOT } from '@brownfi/sdk'
 import { isV3ZapSupported } from './v3Zap'
 
 describe('V3 Zap: isV3ZapSupported', () => {
@@ -13,7 +13,7 @@ describe('V3 Zap: isV3ZapSupported', () => {
   })
 
   it('returns true when V3 router is deployed (mock address)', () => {
-    // ROUTER_ADDRESS_V3 has mock Berachain address for testing
+    // ROUTER_ADDRESS_V3_PILOT has mock Berachain address for testing
     expect(isV3ZapSupported(ChainId.BERA_MAINNET, 3)).toBe(true)
   })
 
@@ -61,8 +61,8 @@ describe('V3 Zap: getFactoryAddress version branching', () => {
   })
 })
 
-describe('V3 Zap: ROUTER_ADDRESS_V3 has mock entries', () => {
+describe('V3 Zap: ROUTER_ADDRESS_V3_PILOT has mock entries', () => {
   it('V3 map has Berachain mock address', () => {
-    expect(ROUTER_ADDRESS_V3[ChainId.BERA_MAINNET]).toBeTruthy()
+    expect(ROUTER_ADDRESS_V3_PILOT[ChainId.BERA_MAINNET]).toBeTruthy()
   })
 })

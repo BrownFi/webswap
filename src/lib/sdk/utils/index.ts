@@ -13,13 +13,14 @@ import {
   THREE,
   ROUTER_ADDRESS,
   ROUTER_ADDRESS_V1,
-  ROUTER_ADDRESS_V3,
   ROUTER_ADDRESS_WITH_PRICE,
   FACTORY_ADDRESS,
   FACTORY_ADDRESS_V1,
-  FACTORY_ADDRESS_V3,
   INIT_CODE_HASH,
   INIT_CODE_HASH_V1,
+  isV3Like,
+  routerV3Gen,
+  factoryV3Gen,
 } from '../constants'
 import type { BigintIsh } from '../constants'
 
@@ -116,16 +117,31 @@ export function isContractWithPrice(chainId: number, version: number): boolean {
 }
 
 export function getRouterAddress(chainId: number, version: number): string {
-  if (version === 3) return ROUTER_ADDRESS_V3[chainId] ?? ''
+  if (isV3Like(version)) return routerV3Gen(version)[chainId] ?? ''
   return version === 2 ? ROUTER_ADDRESS[chainId] : ROUTER_ADDRESS_V1[chainId]
 }
 
 export function getFactoryAddress(chainId: number, version: number): string {
-  if (version === 3) return FACTORY_ADDRESS_V3[chainId] ?? ''
+  if (isV3Like(version)) return factoryV3Gen(version)[chainId] ?? ''
   return version === 2 ? FACTORY_ADDRESS[chainId] : FACTORY_ADDRESS_V1[chainId]
 }
 
 export function getInitCodeHash(chainId: number, version: number): string {
+  // V3 pairs are deployed via factory.createPair (registry), not CREATE2.
+  // Pair.getAddress's CREATE2 computation runs anyway during `new Pair(...)`
+  // but the result is discarded — MemoizedPairList overrides liquidityToken
+  // with the real registry address right after construction. So we just need
+  // a non-undefined 32-byte hash to keep getCreate2Address from crashing on
+  // chains that don't have a V1 entry (e.g. HyperEVM). Fall back to V2's
+  // hash; if that's also missing, use zero hash — either way the value is
+  // never read by anything that depends on its correctness.
+  if (isV3Like(version)) {
+    // V3-gen (pilot=3, official=4) pairs use a factory registry, not CREATE2 —
+    // the CREATE2 hash is only needed so `new Pair(...)` doesn't crash; the
+    // computed address is discarded and overridden with the registry address.
+    // Any non-undefined 32-byte hash works.
+    return INIT_CODE_HASH_V1[chainId] ?? INIT_CODE_HASH[chainId] ?? '0x0000000000000000000000000000000000000000000000000000000000000000'
+  }
   return version === 2 ? INIT_CODE_HASH[chainId] : INIT_CODE_HASH_V1[chainId]
 }
 
@@ -136,6 +152,12 @@ export function getInitCodeHash(chainId: number, version: number): string {
 // ── Shared caches for Pyth data (used by getPythPrice and pair.ts) ────
 // priceFeedId: never changes per (factory, token) — cache forever
 const _feedIdCache = new Map<string, string>()
+// Concurrent-call dedup for the priceFeedIds(token) lookup. Without this,
+// when N callers (different candidate paths in trade discovery, parallel
+// adapter quotes, etc.) ask for the same token's feedId simultaneously
+// they all miss the cache before any writer settles and N RPC calls fire.
+// Tracking the inflight promise per key collapses those into one read.
+const _feedIdInflight = new Map<string, Promise<string>>()
 // getPriceUnsafe: short TTL (prices update ~1/s but UI doesn't need sub-second)
 const _priceCache = new Map<string, { value: number; ts: number }>()
 const _PRICE_TTL = 5_000
@@ -145,19 +167,31 @@ export async function getCachedPriceFeedId(client: any, factoryAddr: string, tok
   const key = `${factoryAddr}:${tokenAddr}`.toLowerCase()
   const cached = _feedIdCache.get(key)
   if (cached) return cached
-  const id = await client.readContract({
-    address: factoryAddr as `0x${string}`,
-    abi: [{
-      inputs: [{ name: '', type: 'address' }],
-      name: 'priceFeedIds',
-      outputs: [{ name: '', type: 'bytes32' }],
-      stateMutability: 'view', type: 'function',
-    }] as const,
-    functionName: 'priceFeedIds',
-    args: [tokenAddr as `0x${string}`],
-  })
-  _feedIdCache.set(key, id as string)
-  return id as string
+  const inflight = _feedIdInflight.get(key)
+  if (inflight) return inflight
+
+  const promise = (async () => {
+    const id = await client.readContract({
+      address: factoryAddr as `0x${string}`,
+      abi: [{
+        inputs: [{ name: '', type: 'address' }],
+        name: 'priceFeedIds',
+        outputs: [{ name: '', type: 'bytes32' }],
+        stateMutability: 'view', type: 'function',
+      }] as const,
+      functionName: 'priceFeedIds',
+      args: [tokenAddr as `0x${string}`],
+    })
+    _feedIdCache.set(key, id as string)
+    return id as string
+  })()
+
+  _feedIdInflight.set(key, promise)
+  try {
+    return await promise
+  } finally {
+    _feedIdInflight.delete(key)
+  }
 }
 
 export async function getPythPrice(address: string, chainId: number, version: number): Promise<number> {
@@ -209,6 +243,148 @@ export async function getPythPrice(address: string, chainId: number, version: nu
     console.warn('Cannot get Pyth price', error)
     return 0
   }
+}
+
+// ABI fragments used by both single + batch helpers below.
+const PRICE_FEED_IDS_ABI = [{
+  inputs: [{ name: '', type: 'address' }],
+  name: 'priceFeedIds',
+  outputs: [{ name: '', type: 'bytes32' }],
+  stateMutability: 'view', type: 'function',
+}] as const
+
+const GET_PRICE_UNSAFE_ABI = [{
+  inputs: [{ name: 'id', type: 'bytes32' }],
+  name: 'getPriceUnsafe',
+  outputs: [{
+    components: [
+      { name: 'price', type: 'int64' },
+      { name: 'conf', type: 'uint64' },
+      { name: 'expo', type: 'int32' },
+      { name: 'publishTime', type: 'uint256' },
+    ],
+    name: 'price', type: 'tuple',
+  }],
+  stateMutability: 'view', type: 'function',
+}] as const
+
+/**
+ * Batched version of getPythPrice. Combines N tokens' priceFeedId lookups
+ * into one multicall, then N getPriceUnsafe lookups into a second multicall.
+ *
+ * Per N tokens, this is 2 RPC calls TOTAL instead of 2N. Used by the
+ * token-select modal which renders prices for every token the user holds
+ * — previously that was a `useQueries` fan-out of getPythPrice, causing
+ * 20+ RPC calls per modal open with a typical wallet.
+ *
+ * Reads + writes the same shared _feedIdCache / _priceCache that
+ * getPythPrice uses, so a follow-up single-token lookup hits the cache.
+ * Returns a Record keyed by lowercase token address.
+ */
+export async function getPythPricesBatch(
+  addresses: string[],
+  chainId: number,
+  version: number,
+): Promise<Record<string, number>> {
+  const result: Record<string, number> = {}
+  if (!addresses.length || !chainId) return result
+
+  const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
+  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const factoryAddr = getFactoryAddress(chainId, version)
+  if (!factoryAddr) return result
+
+  // Dedup by lowercase address. Drop any token whose feedId we already have
+  // cached so we don't pay for the multicall slot on cache hits.
+  const lowered = addresses.map((a) => a.toLowerCase())
+  const needFeedLookup: string[] = []
+  const feedIdByAddress: Record<string, string> = {}
+  for (const addr of lowered) {
+    const cached = _feedIdCache.get(`${factoryAddr}:${addr}`.toLowerCase())
+    if (cached) {
+      feedIdByAddress[addr] = cached
+    } else {
+      needFeedLookup.push(addr)
+    }
+  }
+
+  // Step 1: multicall the missing priceFeedIds. Falls back to single
+  // readContract on multicall failure (e.g. Multicall3 not deployed) —
+  // unlikely on supported chains but defensive.
+  if (needFeedLookup.length > 0) {
+    try {
+      const feedResults = await client.multicall({
+        contracts: needFeedLookup.map((addr) => ({
+          address: factoryAddr as `0x${string}`,
+          abi: PRICE_FEED_IDS_ABI,
+          functionName: 'priceFeedIds',
+          args: [addr as `0x${string}`],
+        })),
+        // createPublicClient here has no `chain` field; viem can't
+        // auto-resolve Multicall3 from chain config. Universal canonical
+        // Multicall3 address is deployed on every supported chain.
+        multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
+        allowFailure: true,
+      })
+      feedResults.forEach((r, i) => {
+        const addr = needFeedLookup[i]
+        if (r.status === 'success' && r.result) {
+          const id = r.result as string
+          feedIdByAddress[addr] = id
+          _feedIdCache.set(`${factoryAddr}:${addr}`.toLowerCase(), id)
+        }
+      })
+    } catch (e) {
+      console.warn('getPythPricesBatch: feedIds multicall failed', e)
+      return result
+    }
+  }
+
+  // Filter out tokens without a real feed (zero hash) — calling
+  // getPriceUnsafe(0x0…0) reverts and pollutes the multicall failure rate.
+  const priced: Array<{ addr: string; feedId: string }> = []
+  for (const addr of lowered) {
+    const feedId = feedIdByAddress[addr]
+    if (!feedId || /^0x0+$/.test(feedId)) continue
+    // Honor the 5s price TTL — if cached, skip the RPC slot entirely.
+    const priceKey = `${chainId}:${feedId}`
+    const cached = _priceCache.get(priceKey)
+    if (cached && Date.now() - cached.ts < _PRICE_TTL) {
+      result[addr] = cached.value
+      continue
+    }
+    priced.push({ addr, feedId })
+  }
+
+  if (priced.length === 0) return result
+
+  // Step 2: multicall the missing prices.
+  try {
+    const priceResults = await client.multicall({
+      contracts: priced.map(({ feedId }) => ({
+        address: PYTH_ADDRESS[chainId] as `0x${string}`,
+        abi: GET_PRICE_UNSAFE_ABI,
+        functionName: 'getPriceUnsafe',
+        args: [feedId as `0x${string}`],
+      })),
+      multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
+      allowFailure: true,
+    })
+    priceResults.forEach((r, i) => {
+      const { addr, feedId } = priced[i]
+      if (r.status === 'success' && r.result) {
+        const price = getPriceFromUnsafe(r.result as any)
+        if (Number.isFinite(price) && price > 0) {
+          result[addr] = price
+          _priceCache.set(`${chainId}:${feedId}`, { value: price, ts: Date.now() })
+        }
+      }
+    })
+  } catch (e) {
+    console.warn('getPythPricesBatch: prices multicall failed', e)
+  }
+
+  return result
 }
 
 /**

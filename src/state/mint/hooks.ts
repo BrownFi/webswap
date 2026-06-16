@@ -58,6 +58,14 @@ export function useDerivedMintInfo(
   parsedAmounts: { [field in Field]?: CurrencyAmount }
   price?: Price
   noLiquidity?: boolean
+  /** True only when the pool contract itself does not exist (factory.getPair
+   *  returns 0x0). Distinct from `noLiquidity`, which also covers the
+   *  "contract exists but totalSupply === 0" case. The V3 factory is
+   *  permissioned — a user can never "create" a V3 pool from the FE, only
+   *  add liquidity to one the admin has already deployed. The button label
+   *  should follow `requiresPoolCreation` (i.e., only call it "Create Pool"
+   *  when a V2 first-mint will actually deploy the pair). */
+  requiresPoolCreation?: boolean
   liquidityMinted?: TokenAmount
   poolTokenPercentage?: Percent
   error?: string
@@ -83,6 +91,12 @@ export function useDerivedMintInfo(
 
   const noLiquidity: boolean =
     pairState === PairState.NOT_EXISTS || Boolean(totalSupply && JSBI.equal(totalSupply.raw, ZERO))
+
+  // Pool-contract existence flag. Distinct from `noLiquidity` so the UI can
+  // tell apart "the factory has no pair for these tokens" (the only case
+  // where a V2 first-mint deploys the pair) from "the pair contract exists
+  // but has zero LP supply" (V3 pre-deployed pools awaiting first liquidity).
+  const requiresPoolCreation: boolean = pairState === PairState.NOT_EXISTS
 
   // balances
   const balances = useCurrencyBalances(account ?? undefined, [
@@ -270,6 +284,7 @@ export function useDerivedMintInfo(
     parsedAmounts,
     price,
     noLiquidity,
+    requiresPoolCreation,
     liquidityMinted,
     poolTokenPercentage,
     error,

@@ -1,3 +1,4 @@
+import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId } from '../constants/chainId'
@@ -124,7 +125,7 @@ export async function callSwapContract(
       // the router/pair see matching oracle prices and the bound is tight
       // against the actual swap math (prevents INVALID_INVENTORY from a
       // cross-block Pyth drift).
-      if (version === 3) {
+      if (isV3Like(version)) {
         try {
           const isExactIn = methodName.startsWith('swapExact')
           const isETHIn = methodName.includes('ETHForTokens')
@@ -145,10 +146,16 @@ export async function callSwapContract(
             const expectedIn = BigNumber.from(amounts[0])
             args[limitIdx] = expectedIn.mul(10000 + slippageBps).div(10000).toString()
           }
-        } catch (simErr) {
-          // Let the existing gas-estimation path catch this and surface the
-          // real revert reason to the user. Don't silently proceed with the
-          // stale bound.
+        } catch {
+          // Pre-sim failed (transient RPC/Pyth blip, or a genuine revert).
+          // `simArgs` was a throwaway COPY — `args[limitIdx]` still holds the
+          // original slippage-protected bound from trade construction
+          // (minimumAmountOut / maximumAmountIn), so it is safe to proceed; we
+          // simply skip the tighter re-derived bound for this attempt. We
+          // intentionally do NOT re-throw: a transient simulation failure must
+          // not block a swap whose constructed bound is already valid. The
+          // gas-estimation + callStatic below still surface any genuine revert
+          // reason to the user.
         }
       }
 
@@ -163,16 +170,18 @@ export async function callSwapContract(
             error: new Error('Unexpected issue with estimating the gas. Please try again.'),
           }
         } catch (callError: any) {
-          const reason = callError.reason || callError.data?.message || ''
-          let errorMessage: string
-          if (reason.includes('INSUFFICIENT_OUTPUT_AMOUNT') || reason.includes('EXCESSIVE_INPUT_AMOUNT')) {
-            errorMessage = 'This transaction will not succeed either due to price movement or fee on transfer. Try increasing your slippage tolerance.'
-          } else if (reason.includes('INVALID_INVENTORY')) {
-            errorMessage = 'Swap amount is too small for this pool. Try a larger amount.'
-          } else {
-            errorMessage = `The transaction cannot succeed due to error: ${reason || 'unknown'}. Try increasing slippage tolerance.`
-          }
-          return { call, error: new Error(errorMessage) }
+          // Defer to the shared decoder so revert messages stay consistent
+          // between the pre-simulation path (here) and the post-submission
+          // catch in pages/Swap/index.tsx. Previously this branch duplicated
+          // the registry inline and drifted out of sync — e.g. the
+          // INVALID_INVENTORY hint said "try smaller amount" when the actual
+          // cause is the trade direction worsening the pool's inventory skew
+          // (a smaller amount in the same direction often still reverts).
+          const { decodeContractError } = await import('../../../utils/decodeContractError')
+          const decoded =
+            decodeContractError(callError, 'The transaction cannot succeed. Try adjusting amount or slippage.') ??
+            'The transaction cannot succeed. Try adjusting amount or slippage.'
+          return { call, error: new Error(decoded) }
         }
       }
     })

@@ -5,7 +5,6 @@ import { computeSlippageAdjustedAmounts, warningSeveritySlippage } from 'utils/p
 import { AutoColumn } from 'components/Column'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween, RowFixed } from 'components/Row'
-import SwapRoute from './SwapRoute'
 import { formatStringToNumber, getTokenSymbol } from 'utils'
 import { useActiveWeb3React } from 'hooks'
 import { ErrorText } from './styleds'
@@ -42,7 +41,10 @@ function TradeSummary({ trade, allowedSlippage }: { trade: Trade; allowedSlippag
           <QuestionHelper text="Price impact is the difference between your trading price and oracle price." />
         </RowFixed>
         <ErrorText fontWeight={500} fontSize={14} severity={warningSeveritySlippage(trade?.priceImpactK || 0)}>
-          {trade ? formatStringToNumber(trade?.priceImpactK, 4) : '-'}%
+          {/* Clamp display: V2's reserve-drain math can produce absurd values
+              (e.g. 10,331%) on near-empty pools. Beyond 100% is meaningless to
+              show; the red severity still flags it. */}
+          {trade ? ((trade?.priceImpactK ?? 0) > 100 ? '>100' : formatStringToNumber(trade?.priceImpactK, 4)) : '-'}%
         </ErrorText>
       </RowBetween>
       <RowBetween>
@@ -67,24 +69,17 @@ export interface AdvancedSwapDetailsProps {
 export function AdvancedSwapDetails({ trade }: AdvancedSwapDetailsProps) {
   const [allowedSlippage] = useUserSlippageTolerance()
 
-  const showRoute = Boolean(trade && trade.route.path.length > 2)
-
+  // Multi-hop route visualization (A → B → C) intentionally omitted. The
+  // route picker above already conveys the source (BrownFi V2 / Kyber /
+  // etc.), which is the load-bearing info for the user. Hop visualization
+  // doesn't extend cleanly to aggregator routes (Kyber's split paths are
+  // graph-shaped, not linear), so hiding here keeps native + aggregator
+  // detail panels symmetric.
   return (
     <AutoColumn gap="0px" style={{ width: '100%' }}>
       {trade && (
         <>
           <TradeSummary trade={trade} allowedSlippage={allowedSlippage} />
-          {showRoute && (
-            <RowBetween style={{ padding: '0 0px' }}>
-              <RowFixed>
-                <span style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, color: '#C4B89A' }}>
-                  Route
-                </span>
-                <QuestionHelper text="Routing through these tokens resulted in the best price for your trade." />
-              </RowFixed>
-              <SwapRoute trade={trade} />
-            </RowBetween>
-          )}
         </>
       )}
     </AutoColumn>

@@ -29,7 +29,7 @@ const CurrencySelect = styled.button<{ selected: boolean }>`
   font-weight: 500;
   background: #2F2823;
   color: white;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #807266;
   box-shadow: none;
   outline: none;
@@ -67,7 +67,7 @@ const Aligner = styled.span`
 const InputPanel = styled.div<{ hideInput?: boolean }>`
   ${({ theme }) => theme.flexColumnNoWrap}
   position: relative;
-  border-radius: 24px;
+  border-radius: 18px;
   padding: 24px;
   z-index: 1;
   background: #2F2823;
@@ -81,12 +81,12 @@ const InputPanel = styled.div<{ hideInput?: boolean }>`
 
   ${({ theme }) => theme.mediaWidth.upToSmall`
     padding: 16px;
-    border-radius: 16px;
+    border-radius: 12px;
   `};
 `
 
 const Container = styled.div<{ hideInput: boolean }>`
-  border-radius: 24px;
+  border-radius: 18px;
   border: 0;
   background-color: transparent;
 `
@@ -144,6 +144,10 @@ interface CurrencyInputPanelProps {
   showCommonBases?: boolean
   customBalanceText?: string
   loading?: boolean
+  /** USD price (1 token = $X) for the currently-selected currency. When
+   *  present, an `≈ $Y` value is shown next to the balance. Pure render;
+   *  parent fetches the price once (cached) and threads it down. */
+  balanceUsdPrice?: number
 }
 
 export function CurrencyInputPanel({
@@ -163,6 +167,7 @@ export function CurrencyInputPanel({
   showCommonBases,
   customBalanceText,
   loading,
+  balanceUsdPrice,
 }: CurrencyInputPanelProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const { account, chainId } = useActiveWeb3React()
@@ -192,8 +197,27 @@ export function CurrencyInputPanel({
                     style={{ display: 'inline', cursor: 'pointer' }}
                   >
                     {!hideBalance && !!currency && selectedCurrencyBalance
-                      ? (customBalanceText ?? 'Balance: ') + +selectedCurrencyBalance.toSignificant(6)
+                      // Use 4 sig figs for compact mobile display. Full
+                      // precision is preserved in the `title` attribute
+                      // (hover/long-press) for users who need it.
+                      ? (customBalanceText ?? 'Balance: ') + +selectedCurrencyBalance.toSignificant(4)
                       : ' -'}
+                    {!hideBalance && !!currency && selectedCurrencyBalance && balanceUsdPrice ? (() => {
+                      // Use full 6-sig precision for the USD math (independent
+                      // of the truncated display value above) so the dollar
+                      // figure is faithful even when the token amount is
+                      // visually rounded.
+                      const balanceNum = Number(selectedCurrencyBalance.toSignificant(6))
+                      const usd = balanceNum * balanceUsdPrice
+                      if (!isFinite(usd) || usd <= 0) return null
+                      const fmt =
+                        usd < 0.01 ? '< $0.01'
+                        : usd < 1 ? `$${usd.toFixed(3)}`
+                        : usd < 1000 ? `$${usd.toFixed(2)}`
+                        : usd < 1_000_000 ? `$${(usd / 1000).toFixed(2)}K`
+                        : `$${(usd / 1_000_000).toFixed(2)}M`
+                      return <span style={{ color: '#978A80', marginLeft: 6, fontSize: 14 }}>({fmt})</span>
+                    })() : null}
                   </TYPE.body>
                 )}
                 {account && currency && showMaxButton && label !== 'To' && (
@@ -205,7 +229,7 @@ export function CurrencyInputPanel({
             </RowBetween>
           </LabelRow>
         )}
-        <InputRow style={hideInput ? { padding: '0', borderRadius: '8px' } : {}} selected={disableCurrencySelect}>
+        <InputRow style={hideInput ? { padding: '0', borderRadius: '6px' } : {}} selected={disableCurrencySelect}>
           {!hideInput && (
             <>
               <NumericalInput

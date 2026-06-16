@@ -131,6 +131,38 @@ const monad = overrideChain({
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
+// Display-only navbar badge label. Decoupled from `appEnv` (which selects
+// chains/API) so a deployment can run beta-tier infra while still labeling
+// itself per branch: develop → 'dev', beta → 'beta' (falls back to appEnv).
+export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
+
+// Feature capability derived from the API URL, NOT the env name. The two are
+// orthogonal:
+//   - VITE_ENVIRONMENT controls deployment identity (mainnet/beta/testnet).
+//     Used for dev-only UI gates (admin stats, edit-pool, etc.).
+//   - VITE_API_URL controls which indexer the FE talks to. The V3 indexer
+//     (/indexer/v3) and the uniV2Price field landed on the non-prod APIs
+//     first; production api.brownfi.io doesn't have them yet.
+//
+// Match all non-prod API aliases:
+//   - bf-v2-api-beta.brownfi.io  (legacy)
+//   - dev-api.brownfi.io          (current dev alias)
+//   - beta-api.brownfi.io         (current beta alias — V3 + uniV2Price wired 2026-05-20)
+// All three serve the V3 schema + uniV2Price. Only api.brownfi.io (true
+// production) lacks them, so it's the only one that doesn't match.
+//
+// V3 contracts are still per-chain (currently Berachain-only via
+// ROUTER_ADDRESS_V3_PILOT) so even with this flag true, useVersion + SwitchVersion
+// only expose V3 on chains where the router is deployed. The flag here is
+// only about API capability, not per-chain readiness.
+export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.test(
+  import.meta.env.VITE_API_URL ?? '',
+)
+// V3 is enabled when the API serves /indexer/v3 + uniV2Price — true for the
+// beta-api alias (which production now uses) and dev. The legacy api.brownfi.io
+// alias doesn't have V3 yet, so a deployment pointed at it stays V2-only.
+export const isV3Enabled = isBetaApi
+
 const mainChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,

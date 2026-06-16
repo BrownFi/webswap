@@ -48,13 +48,121 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0xa244C6d127Ec19689f0DEf715417736c7f6cf0C4',
 }
 
-export const ROUTER_ADDRESS_V3: Record<number, string> = {
-  [ChainId.BERA_MAINNET]: '0x3C347a9584EFe4dDe25e262ED7b65976aB7B8474',
+// ⚠️ Rollout contract: adding a chain here also enables V3 GraphQL queries
+// (useVersion's enableGraphQL derives V3 support from this map). Do NOT add a
+// chain until the V3 indexer is live at bf-v2-api-beta.brownfi.io/indexer/v3
+// for it — otherwise the FE will throw HTTP 500 on every V3 pool query.
+//
+// 2026-06-04 (beta branch): swapped to the v3-final deployment. Architectural
+// change vs the prior V3 deployment — zap entrypoints have been split out of
+// the router into a separate BrownFiV3Zap contract (see ZAP_ADDRESS_V3_PILOT below).
+// The router now only handles swap + add/remove liquidity. Library quotes are
+// inventory-safe; the INVALID_INVENTORY reverts we saw on lopsided pools
+// should be much rarer. develop/bera intentionally remain on the previous
+// V3 deployment until contract team promotes v3-final to prod.
+// ─── Two BrownFi "V3-generation" deployments, modeled as distinct versions ──
+// There are two live V3-style deployments the user can swap between, treated
+// as separate protocol versions so the swap router can quote BOTH and compare:
+//   - version 3 = "V3 Pilot"   (pre-v3-final): Bera 0x83A329E9 only. Zap lives
+//     on the router (no separate zap). Indexed by beta-api/indexer/v3.
+//   - version 4 = "V3 Official" (v3-final): Bera 0x6Ccf36d3 + HyperEVM
+//     0x6A4Bd897. Separate BrownFiV3Zap contract. Indexed by Goldsky (Bera) /
+//     beta-api (HL).
+// Both share the SAME FE call shape (quoteAmountsOutWithUpdate, factory.getPair
+// registry, getV3ZapAddress router-fallback) — so behavior checks use
+// `isV3Like(version)` while address/indexer resolution keys on the exact
+// version. Pilot = 3 (unchanged) so existing beta users' persisted selection
+// stays on pilot; Official is the new opt-in version 4.
+
+/** Named protocol versions. V3_OFFICIAL (4) is the v3-final deployment shown
+ *  to users as "V3 Official"; V3_PILOT (3) is the original pre-v3-final V3.
+ *  Use these instead of bare magic numbers when resolving addresses/labels. */
+export const VERSION = { V2: 2, V3_PILOT: 3, V3_OFFICIAL: 4 } as const
+
+/** True for any V3-generation version (pilot=3 or official=4). Use this in
+ *  place of `version === 3` for BEHAVIOR checks (both behave identically). */
+export const isV3Like = (version: number | undefined | null): boolean =>
+  version === VERSION.V3_PILOT || version === VERSION.V3_OFFICIAL
+
+/** User-facing label for a protocol version. Internal version 4 is the
+ *  OFFICIAL V3 deployment — never show "V4" to users. */
+export const versionLabel = (version: number | undefined | null): string =>
+  version === VERSION.V3_OFFICIAL ? 'V3 Official' : version === VERSION.V3_PILOT ? 'V3 Pilot' : `V${version ?? 2}`
+
+/** URL slug for a version — keeps the raw internal number out of the address
+ *  bar (users see `v3-official`, never `v=4`). */
+export const versionToSlug = (version: number | undefined | null): string =>
+  version === VERSION.V3_OFFICIAL ? 'v3-official' : version === VERSION.V3_PILOT ? 'v3-pilot' : 'v2'
+
+/** Parse the `?v=` param back to a numeric version. Accepts the slug form;
+ *  also tolerates a raw number (e.g. an already-open `v=4` tab) so nothing
+ *  breaks mid-session. Returns undefined for anything else → caller falls
+ *  back to the toggle. */
+export const slugToVersion = (slug: string | null | undefined): number | undefined => {
+  if (slug === 'v3-official') return VERSION.V3_OFFICIAL
+  if (slug === 'v3-pilot') return VERSION.V3_PILOT
+  if (slug === 'v2') return VERSION.V2
+  const n = Number(slug)
+  return n === VERSION.V2 || n === VERSION.V3_PILOT || n === VERSION.V3_OFFICIAL ? n : undefined
 }
 
-export const FACTORY_ADDRESS_V3: Record<number, string> = {
-  [ChainId.BERA_MAINNET]: '0x83c415DE737F87dD5072AbE666a0F8429215db5A',
+// version 3 — PILOT (pre-v3-final, Bera only; zap on router)
+// V3 Pilot addresses stay defined (contracts still exist) — Pilot is HIDDEN on
+// mainnet via the !isMainnet env gate in `hasV3Pilot` below, so beta/dev keep
+// it testable with one codebase (no per-branch address divergence).
+export const ROUTER_ADDRESS_V3_PILOT: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0xFB473aEAe9b0d03c6974BCf5f2B67dA4AF7F6043',
 }
+export const FACTORY_ADDRESS_V3_PILOT: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0x83A329E93f7A36b9baAb5bF1EAFF319947387552',
+}
+export const ZAP_ADDRESS_V3_PILOT: Record<number, string> = {} // pilot: zap on router
+export const V3_PILOT_USE_INDEXER: Record<number, boolean> = {
+  [ChainId.BERA_MAINNET]: true,
+}
+
+// version 4 — OFFICIAL (v3-final; Bera + HyperEVM; separate zap)
+export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
+  [ChainId.HYPER_EVM]: '0xc0E55d0085266E9A33456610E08172f9c173F908',
+}
+export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
+  [ChainId.HYPER_EVM]: '0x6A4Bd89709b67eC846F02cF9E95A0dd2Fb515720',
+}
+export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
+  [ChainId.HYPER_EVM]: '0xE5dEbF39457fa6e7FFcdDb5af40435AD2D52438b',
+}
+export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
+  [ChainId.BERA_MAINNET]: true,
+  [ChainId.HYPER_EVM]: true,
+}
+
+/** Per-version address-map resolvers (used by the SDK getters + readers). */
+export const routerV3Gen = (version: number): Record<number, string> =>
+  version === VERSION.V3_OFFICIAL ? ROUTER_ADDRESS_V3_OFFICIAL : ROUTER_ADDRESS_V3_PILOT
+export const factoryV3Gen = (version: number): Record<number, string> =>
+  version === VERSION.V3_OFFICIAL ? FACTORY_ADDRESS_V3_OFFICIAL : FACTORY_ADDRESS_V3_PILOT
+export const zapV3Gen = (version: number): Record<number, string> =>
+  version === VERSION.V3_OFFICIAL ? ZAP_ADDRESS_V3_OFFICIAL : ZAP_ADDRESS_V3_PILOT
+
+/** Indexer-source reader. Defaults false. Keyed on the exact V3-gen version. */
+export const useV3Indexer = (chainId: number | undefined, version?: number): boolean => {
+  if (chainId == null) return false
+  const map = version === VERSION.V3_OFFICIAL ? V3_OFFICIAL_USE_INDEXER : V3_PILOT_USE_INDEXER
+  return map[chainId] ?? false
+}
+
+// Availability checks for the version toggle (variant-agnostic).
+// V3 Pilot is HIDDEN on the production (mainnet) build — env-gated here so the
+// single codebase serves both: beta/dev (non-mainnet) keep Pilot for testing,
+// the mainnet release shows only V3 Official. Contracts/addresses stay defined.
+const IS_MAINNET_BUILD = import.meta.env.VITE_ENVIRONMENT === 'mainnet'
+export const hasV3Pilot = (chainId: number | undefined): boolean =>
+  chainId != null && !!ROUTER_ADDRESS_V3_PILOT[chainId] && !IS_MAINNET_BUILD
+export const hasV3Official = (chainId: number | undefined): boolean =>
+  chainId != null && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId]
 
 export const FACTORY_ADDRESS: Record<number, string> = {
   [ChainId.MAINNET]: '0xD705B4e18055D8Fa1d099d0533163a9e8fA09E4A',

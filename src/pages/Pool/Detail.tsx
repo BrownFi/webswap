@@ -1,23 +1,30 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Settings } from 'react-feather'
 import { Address, checksumAddress } from 'viem'
 
 import { CurrencyLogo } from 'components/CurrencyLogo'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
+import { shouldReverseDisplay } from 'utils/pair'
+import { useChainGuard } from 'hooks/useChainGuard'
+import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
+import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
+import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
+import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
+import QuestionHelper from 'components/QuestionHelper'
+import { getRestakers } from 'constants/restakers'
 import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
-import { getV3PoolConfig } from 'constants/v3Pools'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -44,6 +51,46 @@ const GET_PAIR = `
       volumeDay
       volume7Day
       updatedAt
+      lambda
+      k
+      token0 { id decimals name price priceFeedId symbol totalSupply }
+      token1 { id decimals name price priceFeedId symbol totalSupply }
+    }
+  }
+`
+
+// V3 indexer schema: feeSplit instead of protocolFee, kB+kQ instead of k,
+// plus spread/skew/blend config and a uniV2 reference price. Aliased to V2
+// field names client-side so the rest of this page stays version-agnostic.
+// Used only when v3UseIndexer is true; on-chain hook covers the other case.
+const GET_PAIR_V3 = `
+  query PairDetailV3($id: ID!) {
+    pair(id: $id) {
+      id
+      fee
+      feeSplit
+      feeDay
+      totalSupply
+      reserve0
+      reserve1
+      tvl
+      apr
+      volumeDay
+      volume7Day
+      updatedAt
+      lambda
+      kB
+      kQ
+      compress
+      sSell
+      sBuy
+      fixS
+      disThreshold
+      sBound
+      pythWeight
+      gamma
+      uniV2Price
+      quoteTokenIndex
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
     }
@@ -57,111 +104,58 @@ function secondsToAgo(seconds: number) {
   return `${Math.floor(seconds / 86400)}d`
 }
 
-type PairRaw = {
-  id: string
-  fee: number
-  protocolFee: number
-  feeDay: number
-  totalSupply: number
-  reserve0: number
-  reserve1: number
-  tvl: number
-  apr: number
-  volumeDay: number
-  volume7Day: number
-  updatedAt: number
-  token0: PairStats['token0']
-  token1: PairStats['token1']
-}
+// The detail-page pair row is exactly the shared PairStats shape (V2 + V3
+// fields, token0/token1). Alias rather than re-declaring it.
+type PairRaw = PairStats
 
 
 export default function PoolDetail() {
   const { pairAddress, chainId: chainIdParam } = useParams<{ pairAddress: string; chainId: string }>()
   const chainId = Number(chainIdParam)
-  const { version } = useVersion({ chainId })
+  const [searchParams] = useSearchParams()
+  const { version: reduxVersion } = useVersion({ chainId })
+  // Version precedence: explicit `?v=` slug from URL > Redux toggle. Pool list
+  // and Portfolio links include the version (e.g. ?v=v3-official) so a V2 pool
+  // always queries /indexer and a V3 pool always queries /indexer/v3,
+  // regardless of the header toggle. No `?v=` falls back to the toggle.
+  const urlVersion = slugToVersion(searchParams.get('v'))
+  const version = urlVersion ?? reduxVersion
+  // Per-chain V3 indexer toggle. See constants/addresses.ts. Keyed on the
+  // resolved version (pilot=3 vs official=4) so each picks its own indexer.
+  const v3UseIndexer = useV3Indexer(chainId, version)
 
-  const v3Config = useMemo(() => getV3PoolConfig(chainId, pairAddress), [chainId, pairAddress])
-
-  const { data: pairRes, isLoading: isLoadingGraphQL } = useQuery<{ pair: PairRaw | null }>({
-    queryKey: ['pairDetail', chainId, pairAddress],
+  // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer
+  // (constants/addresses.ts). Same single-flag pattern as the pool list.
+  const { data: pairRes, isLoading } = useQuery<{ pair: PairRaw | null }>({
+    queryKey: ['pairDetail', chainId, pairAddress, version],
     queryFn: () =>
       graphqlFetcher({
-        operationName: 'PairDetail',
-        query: GET_PAIR,
-        variables: { chainId, id: pairAddress?.toLowerCase() },
+        operationName: isV3Like(version) ? 'PairDetailV3' : 'PairDetail',
+        query: isV3Like(version) ? GET_PAIR_V3 : GET_PAIR,
+        variables: { chainId, version, id: pairAddress?.toLowerCase() },
       }),
-    // Skip GraphQL entirely when we already know this is a hardcoded V3 pool —
-    // the indexer doesn't track V3 yet, so the call would just return null.
-    enabled: !!pairAddress && !!chainId && !v3Config,
+    enabled: !!pairAddress && !!chainId && (!isV3Like(version) || v3UseIndexer),
     staleTime: 60_000,
   })
 
-  // V3 fallback: read reserves on-chain and build a synthetic pairRaw.
-  // Indexer-only fields (tvl, volume, fees, apr) default to 0 until the V3
-  // indexer comes online.
-  const { data: v3PairRaw, isLoading: isLoadingV3 } = useQuery<PairRaw | null>({
-    queryKey: ['pairDetailV3', chainId, pairAddress],
-    queryFn: async () => {
-      if (!v3Config || !chainId) return null
-      const { createPublicClient, http } = await import('viem')
-      const { RPC_URLS } = await import('lib/sdk/constants/addresses')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
-      const [reserves, totalSupplyRaw] = await Promise.all([
-        client.readContract({
-          address: v3Config.pair as Address,
-          abi: [{ inputs: [], name: 'getReserves', outputs: [{ type: 'uint112' }, { type: 'uint112' }, { type: 'uint32' }], stateMutability: 'view', type: 'function' }] as const,
-          functionName: 'getReserves',
-        }),
-        client
-          .readContract({
-            address: v3Config.pair as Address,
-            abi: [{ inputs: [], name: 'totalSupply', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,
-            functionName: 'totalSupply',
-          })
-          .catch(() => 0n),
-      ])
-      const reserve0 = Number(reserves[0]) / 10 ** v3Config.token0.decimals
-      const reserve1 = Number(reserves[1]) / 10 ** v3Config.token1.decimals
-      return {
-        id: v3Config.pair,
-        fee: 0,
-        protocolFee: 0,
-        feeDay: 0,
-        totalSupply: Number(totalSupplyRaw) / 1e18,
-        reserve0,
-        reserve1,
-        tvl: 0,
-        apr: 0,
-        volumeDay: 0,
-        volume7Day: 0,
-        updatedAt: Math.floor(Date.now() / 1000),
-        token0: {
-          id: v3Config.token0.address,
-          decimals: v3Config.token0.decimals,
-          symbol: v3Config.token0.symbol,
-          name: v3Config.token0.name,
-          price: 0,
-          priceFeedId: '',
-          totalSupply: 0,
-        },
-        token1: {
-          id: v3Config.token1.address,
-          decimals: v3Config.token1.decimals,
-          symbol: v3Config.token1.symbol,
-          name: v3Config.token1.name,
-          price: 0,
-          priceFeedId: '',
-          totalSupply: 0,
-        },
-      } as PairRaw
-    },
-    enabled: !!v3Config && !!chainId,
-    staleTime: 30_000,
-    refetchInterval: 30_000,
-  })
+  const { data: onChainPool, isLoading: isOnChainLoading } = useV3PoolOnChain(
+    chainId,
+    pairAddress,
+    isV3Like(version) && !v3UseIndexer,
+  )
 
-  const pairRaw = v3Config ? v3PairRaw : pairRes?.pair
-  const isLoading = v3Config ? isLoadingV3 : isLoadingGraphQL
+  const pairRaw = useMemo(() => {
+    if (isV3Like(version) && !v3UseIndexer) {
+      // V3 on-chain path. Project PairStats onto PairRaw — chart/history
+      // fields stay undefined, which downstream components handle.
+      if (!onChainPool) return null
+      return { ...onChainPool, protocolFee: 0, k: undefined } as unknown as PairRaw
+    }
+    const p = pairRes?.pair
+    if (!p) return null
+    if (!isV3Like(version)) return p
+    return { ...p, protocolFee: p.protocolFee ?? p.feeSplit ?? 0, k: p.k ?? p.kB }
+  }, [pairRes, onChainPool, version])
   const pair = useMemo(() => {
     if (!pairRaw || !chainId) return null
     const t0 = pairRaw.token0
@@ -180,7 +174,7 @@ export default function PoolDetail() {
     // V3 uses a factory registry rather than CREATE2, so SDK-computed
     // liquidityToken address is wrong. Override with the real pair address
     // so balanceOf reads hit the right contract.
-    if (version === 3 && pairAddress) {
+    if (isV3Like(version) && pairAddress) {
       ;(built as any).liquidityToken = new Token(chainId, checksumAddress(pairAddress as Address), 18, 'BF-V3', 'BrownFi V3')
     }
     return built
@@ -192,9 +186,9 @@ export default function PoolDetail() {
         ← Back to pools
       </Link>
 
-      {isLoading && <PoolDetailSkeleton />}
+      {(isLoading || (isV3Like(version) && !v3UseIndexer && isOnChainLoading)) && <PoolDetailSkeleton />}
 
-      {!isLoading && !pair && (
+      {!isLoading && !(isV3Like(version) && !v3UseIndexer && isOnChainLoading) && !pair && (
         <div style={{ padding: '80px 0', textAlign: 'center', color: '#978A80', fontFamily: 'Inter' }}>
           Pool not found.
         </div>
@@ -221,6 +215,11 @@ function PoolDetailInner({
   const { chainId: walletChainId, account } = useActiveWeb3React()
   const { version, isBeta } = useVersion({ chainId, pair })
   const navigate = useNavigate()
+
+  // Chain match check for the action buttons (Add Liquidity, Swap). When
+  // wallet ≠ pool chain, the buttons morph to "Switch to {chain}" and call
+  // the wallet switch on click, then proceed to the action after success.
+  const { matches: walletMatchesPool, targetChainName, switchToTarget, isSwitching } = useChainGuard(chainId)
 
   // Detect wallet chain CHANGE (not initial mismatch). If user actively
   // switches to a chain that doesn't match this pool, send them to /pool
@@ -259,26 +258,34 @@ function PoolDetailInner({
     enableFetchDetail: true,
   })
 
-  const devStats = useDevStats({ pair, enabled: !isMainnet })
+  const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
   const [showSettings, setShowSettings] = useState(false)
 
+  // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
+  // values (6,606,088% / 2,378,191,932%). Below a $1 TVL floor they're
+  // meaningless — zero them so the cards render their "--" default. (Matches
+  // the pool-list behavior in PositionCard.)
+  const ratiosMeaningful = Number(pairRaw?.tvl) >= 1
   // 24h fee / TVL (simple ratio, no annualization)
   const feeOverTvl =
-    Number(pairRaw.feeDay) > 0 && Number(pairRaw.tvl) > 0
+    ratiosMeaningful && Number(pairRaw.feeDay) > 0
       ? (Number(pairRaw.feeDay) / Number(pairRaw.tvl)) * 100
       : 0
+  // Fee APR comes from the indexer (usePoolStats) and explodes the same way.
+  const feeAprDisplay = ratiosMeaningful ? feeAPR ?? 0 : 0
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   const incentiveIcon = bgtAPR
     ? 'https://furthermore.app/icons/bgt.svg'
     : null
+  const restakers = getRestakers(chainId, pair.liquidityToken.address)
+  const isBgt = bgtAPR > 0
+  const incentiveLabel = isBgt ? 'BGT APR' : 'Incentive APR'
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
 
   const symbol0 = (getTokenSymbol(currency0, chainId) ?? '?')
   const symbol1 = (getTokenSymbol(currency1, chainId) ?? '?')
-
-  const chainMismatch = walletChainId && walletChainId !== chainId
 
   // USD value breakdown for the pool balance bar
   const reserve0Num = Number(pair.reserve0.toSignificant(8)) || 0
@@ -291,14 +298,27 @@ function PoolDetailInner({
   const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
   const pct1 = 100 - pct0
 
+  // Pool balances panel renders in base/quote order so the bar + labels
+  // stay consistent with the page title. V3 uses the indexer's authoritative
+  // quoteTokenIndex; V2 / unknown fall back to the symbol whitelist. All four
+  // bound values flip together to keep each row internally correct (reserve
+  // amount stays attached to its own symbol + color).
+  const isReversed = shouldReverseDisplay(currency0, currency1, chainId, pairRaw.quoteTokenIndex)
+  const balanceL = isReversed
+    ? { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
+    : { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
+  const balanceR = isReversed
+    ? { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
+    : { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
+
   return (
         <>
         {/* Mobile-only section: pair title + dev stats + rate, always on top */}
         <div className="lg:hidden flex flex-col gap-3 mt-4 mb-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={26} margin />
+            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={26} margin quoteTokenIndex={pairRaw.quoteTokenIndex} />
             <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>
-              {symbol0} / {symbol1}
+              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairRaw.quoteTokenIndex} />
             </span>
             <span
               style={{
@@ -312,7 +332,7 @@ function PoolDetailInner({
                 color: '#FBFBFD',
               }}
             >
-              v{version}
+              {versionLabel(version)}
             </span>
             <span
               style={{
@@ -326,7 +346,7 @@ function PoolDetailInner({
                 color: '#83CF84',
               }}
             >
-              {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+              Fee {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
             </span>
             {isBeta && (
               <span style={{ background: '#f97316', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', color: '#fff' }}>
@@ -339,10 +359,10 @@ function PoolDetailInner({
               rel="noreferrer"
               className="hover:underline inline-flex items-center gap-1 ml-auto"
               style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80' }}
-              title={`View ${shortenAddress(pair.liquidityToken.address)} on explorer`}
+              title={`View pair contract ${pair.liquidityToken.address} on explorer`}
             >
               {/* Address text hidden on mobile — icon-only carries the link */}
-              <span className="hidden sm:inline">{shortenAddress(pair.liquidityToken.address)}</span>
+              <span className="hidden sm:inline">Pair {shortenAddress(pair.liquidityToken.address)}</span>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                 <polyline points="15 3 21 3 21 9" />
@@ -353,15 +373,27 @@ function PoolDetailInner({
 
           {!isMainnet && (
             <div
-              className="flex flex-wrap items-center gap-3"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1"
               style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
             >
-              <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
-              <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
-              <span>
-                {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-                {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
-              </span>
+              {devStats.lambda !== undefined && (
+                <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
+              )}
+              {devStats.kappa !== undefined && (
+                <span>
+                  {isV3Like(version) ? 'kB' : 'Kappa'}: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}
+                </span>
+              )}
+              {isV3Like(version) && devStats.kQ !== undefined && (
+                <span>kQ: {formatNumberLambda(devStats.kQ, { maximumFractionDigits: 4 })}</span>
+              )}
+              {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+                <span>
+                  {isV3Like(version) ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                  {formatNumberLambda(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                </span>
+              )}
+              {isV3Like(version) && <V3ExtraParams devStats={devStats} />}
               {account && (
                 <Settings
                   size="14"
@@ -378,26 +410,14 @@ function PoolDetailInner({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
           {/* Left column */}
           <div className="flex flex-col gap-5 order-2 lg:order-1">
-            {chainMismatch && (
-              <div
-                className="px-4 py-3"
-                style={{
-                  background: '#2F2823',
-                  border: '1px solid #493E35',
-                  borderRadius: '12px',
-                  fontFamily: 'Inter',
-                  fontSize: '13px',
-                  color: '#D8A072',
-                }}
-              >
-                This pool is on a different chain than your connected wallet. Switch wallet chain to use Swap / Add / Remove.
-              </div>
-            )}
+            {/* Cross-chain action affordance now lives ON the action buttons
+                themselves — they morph to "Switch to {chain}" when wallet ≠
+                pool chain. A standalone banner here was redundant. */}
             {/* Header — shown on desktop only; mobile header is above the grid */}
             <div className="hidden lg:flex items-center gap-3 flex-wrap">
-              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} />
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} quoteTokenIndex={pairRaw.quoteTokenIndex} />
               <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', color: '#FBFBFD' }}>
-                {symbol0} / {symbol1}
+                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairRaw.quoteTokenIndex} />
               </span>
               <span
                 style={{
@@ -411,7 +431,7 @@ function PoolDetailInner({
                   color: '#FBFBFD',
                 }}
               >
-                v{version}
+                {versionLabel(version)}
               </span>
               <span
                 style={{
@@ -425,7 +445,7 @@ function PoolDetailInner({
                   color: '#83CF84',
                 }}
               >
-                {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+                Fee {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
               </span>
               {isBeta && (
                 <span
@@ -450,9 +470,9 @@ function PoolDetailInner({
                 rel="noreferrer"
                 className="hover:underline inline-flex items-center gap-1"
                 style={{ fontFamily: 'Inter', fontSize: '13px', color: '#978A80', marginLeft: 'auto' }}
-                title="View on explorer"
+                title={`View pair contract ${pair.liquidityToken.address} on explorer`}
               >
-                {shortenAddress(pair.liquidityToken.address)}
+                Pair {shortenAddress(pair.liquidityToken.address)}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                   <polyline points="15 3 21 3 21 9" />
@@ -464,15 +484,27 @@ function PoolDetailInner({
             {/* Dev stats — non-mainnet only (above the rate) — desktop only */}
             {!isMainnet && (
               <div
-                className="hidden lg:flex flex-wrap items-center gap-3"
+                className="hidden lg:flex flex-wrap items-center gap-x-3 gap-y-1"
                 style={{ fontFamily: 'Inter', fontSize: '12px', color: '#8A7D66' }}
               >
-                <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
-                <span>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</span>
+                {devStats.lambda !== undefined && (
+                  <span>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</span>
+                )}
+                {devStats.kappa !== undefined && (
                   <span>
-                  {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-                  {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
-                </span>
+                    {isV3Like(version) ? 'kB' : 'Kappa'}: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}
+                  </span>
+                )}
+                {isV3Like(version) && devStats.kQ !== undefined && (
+                  <span>kQ: {formatNumberLambda(devStats.kQ, { maximumFractionDigits: 4 })}</span>
+                )}
+                {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+                  <span>
+                    {isV3Like(version) ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                    {formatNumberLambda(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+                  </span>
+                )}
+                {isV3Like(version) && <V3ExtraParams devStats={devStats} />}
                 {account && (
                   <Settings
                     size="14"
@@ -496,20 +528,20 @@ function PoolDetailInner({
             )}
 
             {/* Chart */}
-            <Suspense fallback={<div style={{ height: 460, background: '#1E1915', borderRadius: '16px' }} />}>
+            <Suspense fallback={<div style={{ height: 380, background: '#1E1915', borderRadius: '12px' }} />}>
               <PairChartTV pair={pair} />
             </Suspense>
 
             {/* Your position — mobile only, above activity */}
             <div className="lg:hidden">
-              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
+              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }} />}>
                 <YourPositionCard pair={pair} pairStats={pairStats} />
               </Suspense>
             </div>
 
             {/* Your recent activity — only shown when wallet is connected on this pool's chain */}
             {account && chainId === walletChainId && (
-              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
                 <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD', marginBottom: '12px' }}>
                   Your recent activity
                 </div>
@@ -600,75 +632,184 @@ function PoolDetailInner({
 
           {/* Right sidebar */}
           <div className="flex flex-col gap-4 order-1 lg:order-2">
-            {(() => {
-              const cardBase = 'p-4 lg:p-[23px] text-center lg:text-left'
-              const cardStyle = { background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' } as const
-              const labelCls = 'text-[13px] lg:text-[14px]'
-              const valueCls = 'text-[22px] lg:text-[32px]'
+            {/* Primary actions — thin button strip, no surrounding card. Two
+                inline buttons side-by-side so they stay above the fold without
+                eating vertical space. */}
+            <div className="hidden lg:grid grid-cols-2 gap-2">
+              {/* Swap + Add Liquidity action buttons. Both are click-handlers
+                  (not raw Links) so we can branch on wallet chain match:
+                  if matches → navigate; if not → trigger wallet switch and
+                  navigate on success. Mirrors Uniswap's multi-chain pattern. */}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!walletMatchesPool) {
+                    await switchToTarget()
+                    // Don't navigate after the switch — the user may have
+                    // rejected. They can re-click; matches will be true now
+                    // if accepted, falling through to the navigate branch.
+                    return
+                  }
+                  navigate(`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`)
+                }}
+                disabled={isSwitching}
+                className="inline-flex items-center justify-center"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #493E35',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  fontFamily: 'Inter',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#FBFBFD',
+                  cursor: isSwitching ? 'wait' : 'pointer',
+                  opacity: isSwitching ? 0.7 : 1,
+                }}
+              >
+                {walletMatchesPool ? 'Swap' : `Switch to ${targetChainName}`}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!walletMatchesPool) {
+                    await switchToTarget()
+                    return
+                  }
+                  navigate(`/add/${currencyId(currency0)}/${currencyId(currency1)}`)
+                }}
+                disabled={isSwitching}
+                className="inline-flex items-center justify-center"
+                style={{
+                  background: '#985C2A',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  fontFamily: 'Inter',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#FFFFFF',
+                  cursor: isSwitching ? 'wait' : 'pointer',
+                  opacity: isSwitching ? 0.7 : 1,
+                }}
+              >
+                {walletMatchesPool ? '+ Add liquidity' : `Switch to ${targetChainName}`}
+              </button>
+            </div>
 
-              const aprCard = !isMainnet ? (
-                <div key="apr" className={cardBase} style={cardStyle}>
-                  <div className={labelCls} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>APR</div>
-                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '4px' }}>
-                    {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '—'}
-                  </div>
-                </div>
-              ) : null
+            {/* Your position — collapsible; sits above Stats so a return
+                visitor sees their state above the fold. */}
+            <div className="hidden lg:block">
+              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }} />}>
+                <YourPositionCard pair={pair} pairStats={pairStats} />
+              </Suspense>
+            </div>
 
-              const feesTvlCard = (
-                <div key="fees" className={cardBase} style={cardStyle}>
-                  <div className={labelCls} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>24h Fees / TVL</div>
-                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '4px' }}>
-                    {feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '—'}
-                  </div>
-                </div>
-              )
+            {/* APR — the three yield metrics combined into a single card
+                (Fee APR, 24h Fees / TVL, BGT/Incentive APR). Visual treatment
+                mirrors Stats so the rail reads as a consistent stack. */}
+            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
+              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
+                APR
+              </div>
 
-              const incentiveCard = incentiveApr > 0 ? (
-                <div key="incentive" className={cardBase} style={cardStyle}>
-                  <div className={`flex items-center justify-center lg:justify-start gap-2 ${labelCls}`} style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                    Incentive APR
-                    {incentiveIcon && (
-                      <img src={incentiveIcon} alt="BGT" style={{ width: '18px', height: '18px', borderRadius: '50%' }} />
+              {/* Mobile: inline rows. */}
+              <div className="flex flex-col gap-2 lg:hidden">
+                {!isMainnet && <StatInline label="Fee APR" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />}
+                <StatInline label="24h Fees / TVL" value={(feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--')} />
+                {incentiveApr > 0 && (
+                  <div>
+                    <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
+                    {restakers.length > 0 && (
+                      <div className="inline-flex items-center gap-x-3 gap-y-1 flex-wrap" style={{ marginTop: '4px' }}>
+                        <span style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80' }}>Stake on</span>
+                        {restakers.map((r) => (
+                          <a
+                            key={r.vaultAddress}
+                            href={r.stakePageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 hover:opacity-80"
+                            style={{
+                              fontFamily: 'Inter',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: '#D8A072',
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            {r.iconUrl && <img src={r.iconUrl} alt="" style={{ width: 14, height: 14, borderRadius: 4 }} />}
+                            {r.platform}
+                          </a>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <div className={valueCls} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '4px' }}>
-                    +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%
+                )}
+              </div>
+
+              {/* Desktop: stacked label/value rows matching Stats. */}
+              <div className="hidden lg:block">
+                {!isMainnet && (
+                  <div className="mb-3 lg:mb-4">
+                    <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                      Fee APR
+                    </div>
+                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
+                      {(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                    </div>
+                  </div>
+                )}
+                <div className="mb-3 lg:mb-4">
+                  <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                    24h Fees / TVL
+                    <QuestionHelper text="Last 24h fees as a percentage of current TVL — the pool's daily fee yield." />
+                  </div>
+                  <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
+                    {(feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--')}
                   </div>
                 </div>
-              ) : null
-
-              const count = 1 + (aprCard ? 1 : 0) + (incentiveCard ? 1 : 0)
-
-              // Layout rule (mobile; desktop keeps vertical stack via lg:contents):
-              //   1 card  → full width
-              //   2 cards → side by side in a 2-col grid
-              //   3 cards → 24h Fees/TVL on its own row, APR + Incentive side by side
-              if (count === 3) {
-                return (
-                  <>
-                    {feesTvlCard}
-                    <div className="grid grid-cols-2 gap-4 lg:contents">
-                      {aprCard}
-                      {incentiveCard}
+                {incentiveApr > 0 && (
+                  <div className="mb-3 lg:mb-4">
+                    <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                      {incentiveLabel}
+                      {incentiveIcon && <img src={incentiveIcon} alt="BGT" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
+                      {isBgt && <QuestionHelper text="Stake your LP token on a restaker vault to earn BGT." />}
                     </div>
-                  </>
-                )
-              }
-              if (count === 2) {
-                return (
-                  <div className="grid grid-cols-2 gap-4 lg:contents">
-                    {aprCard}
-                    {feesTvlCard}
-                    {incentiveCard}
+                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
+                      +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%
+                    </div>
+                    {restakers.length > 0 && (
+                      <div className="inline-flex items-center gap-x-3 gap-y-1 flex-wrap" style={{ marginTop: '6px' }}>
+                        <span style={{ fontFamily: 'Inter', fontSize: '12px', color: '#978A80' }}>Stake on</span>
+                        {restakers.map((r) => (
+                          <a
+                            key={r.vaultAddress}
+                            href={r.stakePageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 hover:opacity-80"
+                            style={{
+                              fontFamily: 'Inter',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: '#D8A072',
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            {r.iconUrl && <img src={r.iconUrl} alt="" style={{ width: 14, height: 14, borderRadius: 4 }} />}
+                            {r.platform}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )
-              }
-              return feesTvlCard
-            })()}
+                )}
+              </div>
+            </div>
 
             {/* Stats */}
-            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
+            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
                 Stats
               </div>
@@ -676,12 +817,12 @@ function PoolDetailInner({
               <StatRow label="Pool balances">
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '13px', color: '#FBFBFD', marginTop: '4px' }}>
                   <span className="inline-flex items-center gap-1.5">
-                    <CurrencyLogo currency={currency0} size="16px" />
-                    {formatNumber(Number(pair.reserve0.toSignificant(6)), { maximumFractionDigits: 2 })} {symbol0}
+                    <CurrencyLogo currency={balanceL.cur} size="16px" />
+                    {formatNumber(Number(balanceL.reserve.toSignificant(6)), { maximumFractionDigits: 2 })} {balanceL.sym}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    {formatNumber(Number(pair.reserve1.toSignificant(6)), { maximumFractionDigits: 2 })} {symbol1}
-                    <CurrencyLogo currency={currency1} size="16px" />
+                    {formatNumber(Number(balanceR.reserve.toSignificant(6)), { maximumFractionDigits: 2 })} {balanceR.sym}
+                    <CurrencyLogo currency={balanceR.cur} size="16px" />
                   </span>
                 </div>
                 {totalValue > 0 && (
@@ -695,12 +836,12 @@ function PoolDetailInner({
                         background: '#2F2823',
                       }}
                     >
-                      <div style={{ width: `${pct0}%`, background: '#D8A072' }} />
-                      <div style={{ width: `${pct1}%`, background: '#6FB3E6' }} />
+                      <div style={{ width: `${balanceL.pct}%`, background: balanceL.color }} />
+                      <div style={{ width: `${balanceR.pct}%`, background: balanceR.color }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '11px', color: '#978A80', marginTop: '4px' }}>
-                      <span>{pct0.toFixed(2)}%</span>
-                      <span>{pct1.toFixed(2)}%</span>
+                      <span>{balanceL.pct.toFixed(2)}%</span>
+                      <span>{balanceR.pct.toFixed(2)}%</span>
                     </div>
                   </div>
                 )}
@@ -719,12 +860,9 @@ function PoolDetailInner({
               </div>
             </div>
 
-            {/* Your position (bottom) — desktop only; mobile renders it below the chart */}
-            <div className="hidden lg:block">
-              <Suspense fallback={<div style={{ height: 120, background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }} />}>
-                <YourPositionCard pair={pair} pairStats={pairStats} />
-              </Suspense>
-            </div>
+            {/* Your position used to render here at the bottom of the rail —
+                now pinned to the top (above Stats / APR cards) so it's visible
+                above the fold on 14" laptops. */}
           </div>
     </div>
     </>
@@ -753,13 +891,13 @@ function StatRow({
   )
 }
 
-function StatInline({ label, value }: { label: string; value: string }) {
+function StatInline({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <div className="flex items-center justify-between">
       <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>
         {label}
       </span>
-      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', color: '#FBFBFD' }}>
+      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', color: valueColor ?? '#FBFBFD' }}>
         {value}
       </span>
     </div>
@@ -781,7 +919,7 @@ function SkeletonBar({ w, h, rounded = 'rounded' }: { w: number | string; h: num
 
 function PoolDetailSkeleton() {
   const Card = ({ children }: { children?: React.ReactNode }) => (
-    <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px', padding: '20px' }}>
+    <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
       {children}
     </div>
   )
@@ -802,7 +940,7 @@ function PoolDetailSkeleton() {
           <SkeletonBar w={80} h={14} />
           <SkeletonBar w={110} h={14} />
         </div>
-        <SkeletonBar w={220} h={36} rounded="rounded-[10px]" />
+        <SkeletonBar w={220} h={36} rounded="rounded-[8px]" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
@@ -823,12 +961,12 @@ function PoolDetailSkeleton() {
             <SkeletonBar w={90} h={14} />
             <SkeletonBar w={120} h={14} />
           </div>
-          <div className="hidden lg:block"><SkeletonBar w={240} h={36} rounded="rounded-[10px]" /></div>
+          <div className="hidden lg:block"><SkeletonBar w={240} h={36} rounded="rounded-[8px]" /></div>
 
           {/* Chart card — matches real structure (range selector + chart + legend) */}
-          <div className="p-[12px] sm:p-[16px]" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '16px' }}>
+          <div className="p-[12px] sm:p-[16px]" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
             <div className="flex items-center justify-end mb-3">
-              <SkeletonBar w={180} h={30} rounded="rounded-[10px]" />
+              <SkeletonBar w={180} h={30} rounded="rounded-[8px]" />
             </div>
             <div className="h-[260px] sm:h-[320px] lg:h-[400px] animate-pulse rounded" style={{ background: '#2F2823' }} />
             <div className="flex flex-wrap items-center justify-center gap-4 mt-3">
@@ -868,7 +1006,7 @@ function PoolDetailSkeleton() {
                 <SkeletonBar w="100%" h={16} />
                 <SkeletonBar w="100%" h={16} />
                 <SkeletonBar w="100%" h={16} />
-                <SkeletonBar w="100%" h={36} rounded="rounded-[10px]" />
+                <SkeletonBar w="100%" h={36} rounded="rounded-[8px]" />
               </div>
             </Card>
           </div>
@@ -882,7 +1020,7 @@ function PoolDetailSkeleton() {
               <SkeletonBar w="100%" h={16} />
               <SkeletonBar w="100%" h={16} />
               <SkeletonBar w="100%" h={16} />
-              <SkeletonBar w="100%" h={36} rounded="rounded-[10px]" />
+              <SkeletonBar w="100%" h={36} rounded="rounded-[8px]" />
             </div>
           </Card>
         </div>

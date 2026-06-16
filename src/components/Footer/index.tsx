@@ -59,8 +59,34 @@ const Footer = () => {
           </p> */}
         </div>
 
-        {/* Right: Social icons */}
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        {/* Right (desktop) / centered (mobile): secondary links + social icons
+            grouped together. Text size bumped to 18px so it visually balances
+            the 24px social icons. On mobile, the parent's `space-between` would
+            leave this row left-aligned after wrapping — `mx-auto md:mx-0`
+            centers it on narrow screens and resets on md+. */}
+        <div
+          className="mx-auto md:mx-0 justify-center md:justify-start"
+          style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}
+        >
+          <a
+            href="https://paragraph.com/@brownfi-amm"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontFamily: 'Inter', fontSize: '18px', fontWeight: 500, color: '#A1A1A1', textDecoration: 'none' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#FBFBFD')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#A1A1A1')}
+          >
+            Blog
+          </a>
+          <span
+            aria-disabled="true"
+            style={{ fontFamily: 'Inter', fontSize: '18px', fontWeight: 500, color: '#A1A1A1', opacity: 0.5, cursor: 'not-allowed' }}
+            title="Docs coming soon"
+          >
+            Docs
+          </span>
+          {/* Social icons */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {[
             { icon: <XIcon />, href: 'https://x.com/BrownFiAMM' },
             { icon: <TelegramIcon />, href: 'https://t.me/brownfiammcommunity' },
@@ -88,13 +114,14 @@ const Footer = () => {
               {item.icon}
             </a>
           ))}
+          </div>
         </div>
       </div>
 
       {/* Footer bottom */}
       <div style={{ width: '100%', maxWidth: '1760px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div style={{ width: '100%', height: '1px', background: '#2F2823' }} />
-        <span style={{ fontFamily: 'Geist, Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textAlign: 'center' }}>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '21px', color: '#A1A1A1', textAlign: 'center' }}>
           &copy;{new Date().getUTCFullYear()} BrownFi. All rights reserved.
         </span>
       </div>

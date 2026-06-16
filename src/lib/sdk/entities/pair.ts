@@ -1,3 +1,4 @@
+import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { getCreate2Address } from '@ethersproject/address'
@@ -30,20 +31,41 @@ import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/
 let hermesCache: { key: string; data: string; ts: number } | null = null
 const HERMES_TTL = 5_000
 
+// Concurrent-call dedup. The 5s TTL above only helps SEQUENTIAL callers —
+// when trade discovery iterates several candidate paths in parallel (or
+// useBestSwapRoute fans out across adapters), N callers all check the
+// cache before the first writer settles, all miss, all fire the same
+// Hermes request. Tracking the inflight promise per sorted-key collapses
+// those N requests into one. Cleared after the promise settles so the
+// next post-TTL refresh isn't blocked by a stale slot.
+const hermesInflight = new Map<string, Promise<string>>()
+
 async function getCachedUpdateData(feedIds: string[]): Promise<string> {
   const sortedKey = [...feedIds].sort().join(',')
   if (hermesCache && hermesCache.key === sortedKey && Date.now() - hermesCache.ts < HERMES_TTL) {
     return hermesCache.data
   }
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
-  feedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
-  const resp = await fetch(pythUrl.toString())
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-  const json = await resp.json()
-  const dataBytes = (json.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
-  const encoded = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
-  hermesCache = { key: sortedKey, data: encoded, ts: Date.now() }
-  return encoded
+  const inflight = hermesInflight.get(sortedKey)
+  if (inflight) return inflight
+
+  const promise = (async () => {
+    const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
+    feedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+    const resp = await fetch(pythUrl.toString())
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+    const json = await resp.json()
+    const dataBytes = (json.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+    const encoded = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
+    hermesCache = { key: sortedKey, data: encoded, ts: Date.now() }
+    return encoded
+  })()
+
+  hermesInflight.set(sortedKey, promise)
+  try {
+    return await promise
+  } finally {
+    hermesInflight.delete(sortedKey)
+  }
 }
 
 // Helper: fetch Pyth price feed data and update fee for WithPrice router calls
@@ -146,7 +168,16 @@ const ABI_ROUTER_WITH_PRICE_IN = [{
   inputs: [{ name: 'amountOut', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'priceUpdate', type: 'bytes[]' }],
   name: 'getAmountsInWithPrice', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'payable', type: 'function',
 }] as const
-// V3 quote functions — use router's quoteAmountsOut/InWithUpdate (includes Pyth update + accurate AMM math)
+// V3 quote functions on the v3-final router. These MUST be the WithUpdate
+// variants: the pool's priceOf() reverts StalePrice() if the on-chain Pyth
+// price is older than the factory's minPriceAge (~60s). Plain view-only
+// getAmountsOut/In can't satisfy that at quote time on a slow-moving feed
+// (e.g. USDC drifts >60s), so the quote reverts and the V3 route silently
+// disappears from the UI. quoteAmountsOut/InWithUpdate applies a fresh Pyth
+// update in-call (read-only via eth_call) so the quote sees a fresh price.
+// (Regression note: commit 2362674 wrongly swapped these to plain getAmounts*
+// on a false "v3-final reads cached Pyth" assumption — this restores the
+// correct calls originally added in ac59a1a.)
 const ABI_V3_QUOTE_OUT = [{
   inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'path', type: 'address[]' }, { name: 'updateData', type: 'bytes' }],
   name: 'quoteAmountsOutWithUpdate', outputs: [{ name: 'amounts', type: 'uint256[]' }], stateMutability: 'nonpayable', type: 'function',
@@ -176,6 +207,104 @@ class InsufficientInputAmountError extends Error {
       Object.setPrototypeOf(this, InsufficientInputAmountError.prototype)
     }
   }
+}
+
+/**
+ * The V3 router caps how much can be swapped through a pool in a single
+ * trade (an oracle-AMM curve limit, not an empty pool). On small pools this
+ * reverts even though liquidity exists — so we surface it distinctly from
+ * InsufficientReservesError, letting the UI say "reduce the amount" instead
+ * of the misleading "insufficient liquidity".
+ */
+class MaxAmountOutExceededError extends Error {
+  public readonly isMaxAmountOutExceededError = true
+  // Treated as an expected, business-as-usual rejection by isExpectedTradeError.
+  public readonly isInsufficientReservesError = true
+  /** Max input the pool accepts (raw, input-token units), decoded from the
+   *  exact-in cap revert (0xc64511c2 params: amountIn, maxIn). Lets the UI show
+   *  "Max X" so the user knows how far to reduce. Undefined for the exact-out
+   *  cutoff revert or when decoding fails. */
+  public readonly maxIn?: string
+  constructor(maxIn?: string) {
+    super('EXCEEDS_MAX_OUTPUT')
+    this.name = 'MaxAmountOutExceededError'
+    this.maxIn = maxIn
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(this, MaxAmountOutExceededError.prototype)
+    }
+  }
+}
+
+// V3 router custom-error selectors that mean "this trade exceeds the pool's
+// per-swap cap" (vs a genuinely empty pool). Keep lowercased.
+//   0xc64511c2 — exact-in: input exceeds max accepted (params: amountIn, maxIn)
+//   0xf1ac6cc5 — exact-out: requested output exceeds max achievable ("cutoff")
+//   0xd0915224 — ExceedsMaxOut (max quotable output)
+const MAX_CAP_SELECTORS = new Set<string>(['0xc64511c2', '0xf1ac6cc5', '0xd0915224'])
+
+/**
+ * Best-effort extraction of the 4-byte revert selector from an ethers/viem
+ * error. Walks the cause chain (viem nests the raw revert under .cause.data /
+ * .raw) and falls back to scanning the message.
+ */
+function extractRevertSelector(err: any): string | undefined {
+  let e = err
+  for (let i = 0; i < 8 && e; i++) {
+    const hex = (typeof e?.data === 'string' && e.data) || (typeof e?.raw === 'string' && e.raw) || ''
+    if (/^0x[0-9a-fA-F]{8}/.test(hex)) return hex.slice(0, 10).toLowerCase()
+    e = e?.cause
+  }
+  const m = (err?.message ?? '').match(/0x[0-9a-fA-F]{8}/)
+  return m ? m[0].toLowerCase() : undefined
+}
+
+/**
+ * Full revert data hex (selector + abi-encoded args) from an ethers/viem error,
+ * walking the cause chain. Used to decode the exact-in cap revert's `maxIn`.
+ */
+function extractRevertData(err: any): string | undefined {
+  let e = err
+  for (let i = 0; i < 8 && e; i++) {
+    const hex = (typeof e?.data === 'string' && e.data) || (typeof e?.raw === 'string' && e.raw) || ''
+    if (/^0x[0-9a-fA-F]{10,}$/.test(hex)) return hex.toLowerCase()
+    e = e?.cause
+  }
+  return undefined
+}
+
+/** Map a caught V3 quote revert to the right error type. */
+function v3QuoteError(err: any): Error {
+  const sel = extractRevertSelector(err)
+  if (sel && MAX_CAP_SELECTORS.has(sel)) {
+    // The exact-in cap revert (0xc64511c2) encodes (amountIn, maxIn) — decode
+    // the 2nd 32-byte word (maxIn) so the UI can show the max swappable input.
+    // Defensive: any decode hiccup just yields no number (generic message).
+    let maxIn: string | undefined
+    if (sel === '0xc64511c2') {
+      const data = extractRevertData(err)
+      if (data && data.length >= 10 + 128) {
+        try {
+          const v = BigInt('0x' + data.slice(10 + 64, 10 + 128))
+          if (v > 0n) maxIn = v.toString()
+        } catch {
+          // leave maxIn undefined
+        }
+      }
+    }
+    return new MaxAmountOutExceededError(maxIn)
+  }
+  // Non-cap revert (insufficient reserves, oracle guard, stale price, …). The
+  // SDK stays decoupled from the app's error registry, so we only ATTACH the
+  // raw revert bytes/message here; the hook layer (decodeContractErrorLabel)
+  // turns them into a user-facing reason for the route comparison.
+  const e = new InsufficientReservesError()
+  ;(e as any).revertSelector = sel
+  ;(e as any).revertData = extractRevertData(err)
+  ;(e as any).revertMessage =
+    (typeof err?.shortMessage === 'string' && err.shortMessage) ||
+    (typeof err?.message === 'string' && err.message) ||
+    undefined
+  return e
 }
 
 let PAIR_ADDRESS_CACHE: Record<string, Record<string, string>> = {}
@@ -209,8 +338,8 @@ export class Pair {
     const tokenAmounts: [TokenAmount, TokenAmount] = tokenAmountA.token.sortsBefore(tokenAmountB.token)
       ? [tokenAmountA, tokenAmountB]
       : [tokenAmountB, tokenAmountA]
-    const symbol = version >= 2 ? (version === 3 ? 'BF-V3' : 'BF-V2') : 'BRF-V1'
-    const name = version >= 2 ? (version === 3 ? 'BrownFi V3' : 'BrownFi V2') : 'BrownFi V1'
+    const symbol = version >= 2 ? (isV3Like(version) ? 'BF-V3' : 'BF-V2') : 'BRF-V1'
+    const name = version >= 2 ? (isV3Like(version) ? 'BrownFi V3' : 'BrownFi V2') : 'BrownFi V1'
     this.liquidityToken = new Token(
       tokenAmounts[0].token.chainId,
       Pair.getAddress(tokenAmounts[0].token, tokenAmounts[1].token, version),
@@ -352,6 +481,9 @@ export class Pair {
     let priceUpdate: string[] = []
     let updateFee = 0
     let amountOuts: readonly bigint[]
+    // Hoisted so the marginal-reference price-impact probe below can reuse the
+    // same Pyth update blob without re-fetching.
+    let updateData: string | undefined
 
     if (isContractWithPrice(chainId, version)) {
       const feedResult = await getFeedPriceAndFee(pairs, chainId)
@@ -367,7 +499,7 @@ export class Pair {
       })
       amountOuts = result
     } else if (version === 2) {
-      const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
+      updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
       amountOuts = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,
         abi: ABI_ROUTER_V2,
@@ -375,23 +507,25 @@ export class Pair {
         args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         account: account as `0x${string}`,
       })
-    } else if (version === 3) {
-      // V3: use quoteAmountsOutWithUpdate (includes Pyth update + accurate AMM math)
-      // If quote reverts (ExceedsMaxOut, StalePrice, etc.), throw InsufficientReservesError
-      // so UI shows "Insufficient liquidity" instead of a misleading sync fallback estimate
+    } else if (isV3Like(version)) {
+      // V3 (v3-final): quoteAmountsOutWithUpdate applies a fresh Pyth update
+      // in-call so priceOf() doesn't revert StalePrice() at quote time (the
+      // on-chain price can be >minPriceAge old for slow feeds like USDC).
+      // updateData is the cached Hermes blob (solidityPackHelper). Called
+      // read-only (eth_call). Keep the revert→InsufficientReservesError mapping
+      // so genuine no-route reverts (ExceedsMaxOut, InvalidPrice, SearchItera-
+      // tionLimitReached, …) surface as "Insufficient liquidity".
       try {
-        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-        const { result } = await client.simulateContract({
+        updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
+        amountOuts = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_OUT,
           functionName: 'quoteAmountsOutWithUpdate',
           args: [BigInt(inputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          account: account as `0x${string}`,
         })
-        amountOuts = result
       } catch (err: any) {
-        // Quote failed — likely ExceedsMaxOut (0xd0915224) or other contract revert
-        // Don't fall back to sync (would show wrong amount + 0% impact)
-        throw new InsufficientReservesError()
+        throw v3QuoteError(err)
       }
     } else {
       amountOuts = await client.readContract({
@@ -407,29 +541,65 @@ export class Pair {
       throw new InsufficientInputAmountError()
     }
 
-    let priceImpactK: number
-    if (version === 3) {
-      // V3: price impact = (midPrice - executionPrice) / midPrice
-      // midPrice from Pyth oracle, executionPrice = amountOut/amountIn
-      const { getPythPrice: getPythPriceFn } = await import('../utils')
-      const inToken = inputAmount.token
-      const outToken = outputReserve.token
-      const [priceIn, priceOut] = await Promise.all([
-        getPythPriceFn(inToken.address, chainId, 3),
-        getPythPriceFn(outToken.address, chainId, 3),
-      ])
-      if (priceIn > 0 && priceOut > 0) {
-        const inAmt = Number(inputAmount.toExact())
-        const outAmt = Number(outputAmount.toExact())
-        const executionPrice = outAmt / inAmt
-        const midPrice = priceIn / priceOut
-        priceImpactK = midPrice > 0 ? Math.max(0, ((midPrice - executionPrice) / midPrice) * 100) : 0
-      } else {
-        priceImpactK = 0
+    // Price impact = the slippage caused by THIS trade's size, measured
+    // against a near-marginal quote (same path/method/updateData, 1/1000 the
+    // size). This isolates true size-impact: the LP fee and the AMM's baseline
+    // spread cancel (both quotes pay them equally) and no external oracle is
+    // read (no stale-price noise). ~0 for small trades, growing with size —
+    // correct for V2 (constant product) and V3 (oracle AMM) alike. The old
+    // formulas conflated fee + spread + (V3) a stale-oracle delta, which made
+    // a $0.13 swap read ~0.65%.
+    let priceImpactK = 0
+    try {
+      const inputRaw = BigInt(inputAmount.raw.toString())
+      const marginalRaw = inputRaw / 1000n
+      if (marginalRaw > 0n) {
+        let marginalOuts: readonly bigint[]
+        if (isContractWithPrice(chainId, version)) {
+          const { result } = await client.simulateContract({
+            address: ROUTER_ADDRESS_WITH_PRICE[chainId] as `0x${string}`,
+            abi: ABI_ROUTER_WITH_PRICE,
+            functionName: 'getAmountsOutWithPrice',
+            args: [marginalRaw, pathAddresses, priceUpdate as `0x${string}`[]],
+            value: BigInt(updateFee),
+            account: account as `0x${string}`,
+          })
+          marginalOuts = result
+        } else if (version === 2) {
+          marginalOuts = await client.readContract({
+            address: getRouterAddress(chainId, version) as `0x${string}`,
+            abi: ABI_ROUTER_V2,
+            functionName: 'getAmountsOut',
+            args: [marginalRaw, pathAddresses, (updateData ?? '0x') as `0x${string}`],
+            account: account as `0x${string}`,
+          })
+        } else if (isV3Like(version)) {
+          marginalOuts = await client.readContract({
+            address: getRouterAddress(chainId, version) as `0x${string}`,
+            abi: ABI_V3_QUOTE_OUT,
+            functionName: 'quoteAmountsOutWithUpdate',
+            args: [marginalRaw, pathAddresses, (updateData ?? '0x') as `0x${string}`],
+            account: account as `0x${string}`,
+          })
+        } else {
+          marginalOuts = await client.readContract({
+            address: getRouterAddress(chainId, version) as `0x${string}`,
+            abi: ABI_ROUTER_V1,
+            functionName: 'getAmountsOut',
+            args: [marginalRaw, pathAddresses],
+          })
+        }
+        const marginalOut = marginalOuts[marginalOuts.length - 1]
+        // exec = out/in; the out/in decimal factor is identical for both
+        // quotes, so it cancels in the ratio below.
+        const sizedExec = Number(amountOuts[amountOuts.length - 1]) / Number(inputRaw)
+        const marginalExec = Number(marginalOut) / Number(marginalRaw)
+        if (marginalExec > 0) priceImpactK = Math.max(0, ((marginalExec - sizedExec) / marginalExec) * 100)
       }
-    } else {
-      const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
-      priceImpactK = 0.001 * Number(ratio) * 100
+    } catch {
+      // Marginal probe failed — price impact is a display metric, never block
+      // the trade on it. Leave at 0.
+      priceImpactK = 0
     }
 
     return [outputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount), version), priceUpdate, updateFee, priceImpactK]
@@ -458,6 +628,8 @@ export class Pair {
     let priceUpdate: string[] = []
     let updateFee = 0
     let amountIns: readonly bigint[]
+    // Hoisted so the marginal-reference price-impact probe below can reuse it.
+    let updateData: string | undefined
 
     if (isContractWithPrice(chainId, version)) {
       const feedResult = await getFeedPriceAndFee(pairs, chainId)
@@ -473,7 +645,7 @@ export class Pair {
       })
       amountIns = result
     } else if (version === 2) {
-      const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
+      updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
       amountIns = await client.readContract({
         address: getRouterAddress(chainId, version) as `0x${string}`,
         abi: ABI_ROUTER_V2_IN,
@@ -481,21 +653,21 @@ export class Pair {
         args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
         account: account as `0x${string}`,
       })
-    } else if (version === 3) {
-      // V3: use quoteAmountsInWithUpdate (includes Pyth update + accurate AMM math)
+    } else if (isV3Like(version)) {
+      // V3 (v3-final): quoteAmountsInWithUpdate — applies a fresh Pyth update
+      // in-call so priceOf() doesn't revert StalePrice() at quote time. Mirrors
+      // the out-side. updateData = cached Hermes blob; revert→Insufficient.
       try {
-        const updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
-        const { result } = await client.simulateContract({
+        updateData = await solidityPackHelper(pathAddresses as string[], chainId, version)
+        amountIns = await client.readContract({
           address: getRouterAddress(chainId, version) as `0x${string}`,
           abi: ABI_V3_QUOTE_IN,
           functionName: 'quoteAmountsInWithUpdate',
           args: [BigInt(outputAmount.raw.toString()), pathAddresses, updateData as `0x${string}`],
+          account: account as `0x${string}`,
         })
-        amountIns = result
       } catch (err: any) {
-        // Quote failed — likely ExceedsMaxOut or other contract revert
-        // Throw InsufficientReservesError so UI shows proper error
-        throw new InsufficientReservesError()
+        throw v3QuoteError(err)
       }
     } else {
       amountIns = await client.readContract({
@@ -508,28 +680,57 @@ export class Pair {
 
     const inputAmountResult = new TokenAmount(inputReserve.token, amountIns[0].toString())
 
-    let priceImpactK: number
-    if (version === 3) {
-      // V3: price impact = (midPrice - executionPrice) / midPrice
-      const { getPythPrice: getPythPriceFn } = await import('../utils')
-      const inToken = inputReserve.token
-      const outToken = outputAmount.token
-      const [priceIn, priceOut] = await Promise.all([
-        getPythPriceFn(inToken.address, chainId, 3),
-        getPythPriceFn(outToken.address, chainId, 3),
-      ])
-      if (priceIn > 0 && priceOut > 0) {
-        const inAmt = Number(inputAmountResult.toExact())
-        const outAmt = Number(outputAmount.toExact())
-        const executionPrice = outAmt / inAmt
-        const midPrice = priceIn / priceOut
-        priceImpactK = midPrice > 0 ? Math.max(0, ((midPrice - executionPrice) / midPrice) * 100) : 0
-      } else {
-        priceImpactK = 0
+    // Price impact via marginal reference (exact-out): quote a tiny output
+    // (1/1000) and compare the execution price. Same rationale as the exact-in
+    // path — fee + baseline spread cancel, no oracle read, ~0 for small trades.
+    let priceImpactK = 0
+    try {
+      const outputRaw = BigInt(outputAmount.raw.toString())
+      const marginalOutRaw = outputRaw / 1000n
+      if (marginalOutRaw > 0n) {
+        let marginalIns: readonly bigint[]
+        if (isContractWithPrice(chainId, version)) {
+          const { result } = await client.simulateContract({
+            address: ROUTER_ADDRESS_WITH_PRICE[chainId] as `0x${string}`,
+            abi: ABI_ROUTER_WITH_PRICE_IN,
+            functionName: 'getAmountsInWithPrice',
+            args: [marginalOutRaw, pathAddresses, priceUpdate as `0x${string}`[]],
+            value: BigInt(updateFee),
+            account: account as `0x${string}`,
+          })
+          marginalIns = result
+        } else if (version === 2) {
+          marginalIns = await client.readContract({
+            address: getRouterAddress(chainId, version) as `0x${string}`,
+            abi: ABI_ROUTER_V2_IN,
+            functionName: 'getAmountsIn',
+            args: [marginalOutRaw, pathAddresses, (updateData ?? '0x') as `0x${string}`],
+            account: account as `0x${string}`,
+          })
+        } else if (isV3Like(version)) {
+          marginalIns = await client.readContract({
+            address: getRouterAddress(chainId, version) as `0x${string}`,
+            abi: ABI_V3_QUOTE_IN,
+            functionName: 'quoteAmountsInWithUpdate',
+            args: [marginalOutRaw, pathAddresses, (updateData ?? '0x') as `0x${string}`],
+            account: account as `0x${string}`,
+          })
+        } else {
+          marginalIns = await client.readContract({
+            address: getRouterAddress(chainId, version) as `0x${string}`,
+            abi: ABI_ROUTER_V1_IN,
+            functionName: 'getAmountsIn',
+            args: [marginalOutRaw, pathAddresses],
+          })
+        }
+        const marginalIn = marginalIns[0]
+        // exec = out/in; decimal factor cancels in the ratio.
+        const sizedExec = Number(outputRaw) / Number(amountIns[0])
+        const marginalExec = Number(marginalOutRaw) / Number(marginalIn)
+        if (marginalExec > 0) priceImpactK = Math.max(0, ((marginalExec - sizedExec) / marginalExec) * 100)
       }
-    } else {
-      const ratio = outputAmount.divide(outputReserve.subtract(outputAmount)).toSignificant(6)
-      priceImpactK = 0.001 * Number(ratio) * 100
+    } catch {
+      priceImpactK = 0
     }
 
     return [inputAmountResult, new Pair(inputReserve.add(inputAmountResult), outputReserve.subtract(outputAmount), version), priceUpdate, updateFee, priceImpactK]

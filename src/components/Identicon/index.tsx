@@ -8,7 +8,7 @@ import Jazzicon from 'jazzicon'
 const StyledIdenticonContainer = styled.div`
   height: 40px;
   width: 40px;
-  border-radius: 20px;
+  border-radius: 16px;
   background-color: ${({ theme }) => theme.bg4};
   margin-right: 12px;
 `

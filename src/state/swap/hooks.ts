@@ -1,11 +1,9 @@
 import useENS from 'hooks/useENS'
-import { Version } from 'hooks/useToggledVersion'
 import { parseUnits } from '@ethersproject/units'
 import { Currency, CurrencyAmount, ETHER, JSBI, Token, TokenAmount, Trade } from '@brownfi/sdk'
 import { ParsedQs } from 'qs'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useV1Trade } from 'data/V1'
 import { useActiveWeb3React } from 'hooks'
 import { useCurrency } from 'hooks/Tokens'
 import { useTradeExactIn, useTradeExactOut } from 'hooks/Trades'
@@ -16,9 +14,9 @@ import { AppDispatch, AppState } from 'state'
 import { useCurrencyBalances } from 'state/wallet/hooks'
 import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies, typeInput } from './actions'
 import { SwapState } from './reducer'
-import useToggledVersion from 'hooks/useToggledVersion'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { computeSlippageAdjustedAmounts } from 'utils/prices'
+import { hasV3Pilot, ROUTER_ADDRESS_V3_OFFICIAL } from 'lib/sdk/constants/addresses'
 
 export function useSwapState(): AppState['swap'] {
   return useSelector<AppState, AppState['swap']>((state) => state.swap)
@@ -112,14 +110,40 @@ export function useDerivedSwapInfo(): {
   currencyBalances: { [field in Field]?: CurrencyAmount }
   parsedAmount: CurrencyAmount | undefined
   v2Trade: Trade | undefined
+  /** V3 BrownFi trade, when the V3 pool indexer has liquidity for this pair.
+   *  Quoted in parallel with V2 so the smart router can compare them. */
+  v3PilotTrade: Trade | undefined
+  /** V3 Official (v3-final, version 4) trade — quoted in parallel with the
+   *  pilot V3 (version 3) so the router can compare both deployments. */
+  v3OfficialTrade: Trade | undefined
+  /** Per-source applicability + failure reason for the route comparison, so
+   *  the picker can list every BrownFi version deployed on the chain (even
+   *  ones with no route) and explain why. */
+  nativeStatuses: Array<{
+    source: 'brownfi-v2' | 'brownfi-v3-pilot' | 'brownfi-v3-official'
+    sourceName: string
+    supported: boolean
+    reason?: string
+  }>
+  /** When V2's output exceeds its 90%-reserve cap, the max output the pool can
+   *  give (e.g. "Max ~123.45 HONEY"), so the picker can show how far to reduce. */
+  v2MaxOutputHint?: string
   inputError?: string
-  v1Trade: Trade | undefined
+  /** BrownFi-V2-specific constraint: amount-out > 90% of pool reserve.
+   *  Surfaced separately so the Swap page can decide whether to block —
+   *  only relevant when the chosen route is V2. */
+  v2AmountOutExceedsReserve: boolean
+  /** Both BrownFi V2 and V3 have insufficient pool liquidity for this
+   *  trade. Surfaced separately so the Swap page can still allow the
+   *  swap if an aggregator route exists. */
+  nativePoolLiquidityInsufficient: boolean
+  /** A native pool rejected the trade for exceeding its per-swap cap (curve
+   *  limit), not for being empty. UI shows a "reduce amount" message. */
+  nativePoolMaxExceeded: boolean
   loadingExactIn: boolean
   loadingExactOut: boolean
 } {
   const { account, chainId } = useActiveWeb3React()
-
-  const toggledVersion = useToggledVersion()
 
   const {
     independentField,
@@ -144,12 +168,95 @@ export function useDerivedSwapInfo(): {
   const parsedAmount = tryParseAmount(debouncedTypedValue, (isExactIn ? inputCurrency : outputCurrency) ?? undefined)
   const isInputEmpty = !(+debouncedTypedValue > 0)
 
-  const tradeIn = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined)
-  const tradeOut = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined)
+  // Dual-quote both BrownFi versions in parallel. useBestSwapRoute will
+  // compare them against each other AND against every supported external
+  // aggregator (Kyber, …) and pick the winner. The trade pipeline is no
+  // longer pinned to one version — each call passes its target version
+  // explicitly so the global versionSelector (used by Add/Remove Liquidity)
+  // doesn't leak into the Swap surface.
+  //
+  // V3 is gated by whether a V3 router is deployed on this chain. Hook
+  // call order stays stable (we still call useTradeExactIn/Out for V3) —
+  // we just feed `undefined` for the amount so the underlying pipeline
+  // short-circuits and skips the multicall.
+  // Quote V2 + BOTH V3-gen deployments (pilot=3, official=4) in parallel so
+  // useBestSwapRoute can compare all of them (+ aggregators) and pick best.
+  // Each pipeline is gated by whether that deployment's router exists on the
+  // chain; hook call order stays stable (we always call the hooks, feeding
+  // `undefined` amount to skip the multicall when inert).
+  const chainSupportsV3Pilot = hasV3Pilot(chainId) // pilot — env-gated (hidden on mainnet)
+  const chainSupportsV3Official = !!chainId && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId] // official
+  const tradeInV2 = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 2)
+  const tradeOutV2 = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined, 2)
+  const tradeInV3Pilot = useTradeExactIn(
+    isExactIn && chainSupportsV3Pilot ? parsedAmount : undefined,
+    outputCurrency ?? undefined,
+    3,
+  )
+  const tradeOutV3Pilot = useTradeExactOut(
+    inputCurrency ?? undefined,
+    !isExactIn && chainSupportsV3Pilot ? parsedAmount : undefined,
+    3,
+  )
+  const tradeInV3Official = useTradeExactIn(
+    isExactIn && chainSupportsV3Official ? parsedAmount : undefined,
+    outputCurrency ?? undefined,
+    4,
+  )
+  const tradeOutV3Official = useTradeExactOut(
+    inputCurrency ?? undefined,
+    !isExactIn && chainSupportsV3Official ? parsedAmount : undefined,
+    4,
+  )
+
+  const v2Trade = isExactIn ? tradeInV2.trade : tradeOutV2.trade
+  const v3PilotTrade = isExactIn ? tradeInV3Pilot.trade : tradeOutV3Pilot.trade
+  const v3OfficialTrade = isExactIn ? tradeInV3Official.trade : tradeOutV3Official.trade
+
+  // Loading + insufficient unioned across V2 + V3-pilot + V3-official. Inert
+  // pipelines (no router on chain) are excluded so an idle one doesn't mask a
+  // real "insufficient" verdict from the others.
+  const loadingExactIn =
+    tradeInV2.loadingExactIn ||
+    (chainSupportsV3Pilot && tradeInV3Pilot.loadingExactIn) ||
+    (chainSupportsV3Official && tradeInV3Official.loadingExactIn)
+  const loadingExactOut =
+    tradeOutV2.loadingExactOut ||
+    (chainSupportsV3Pilot && tradeOutV3Pilot.loadingExactOut) ||
+    (chainSupportsV3Official && tradeOutV3Official.loadingExactOut)
+  // "Insufficient" only when EVERY deployed pipeline says insufficient.
+  const insufficientIn = [
+    tradeInV2.isInsufficient,
+    !chainSupportsV3Pilot || tradeInV3Pilot.isInsufficient,
+    !chainSupportsV3Official || tradeInV3Official.isInsufficient,
+  ].every(Boolean)
+  const insufficientOut = [
+    tradeOutV2.isInsufficient,
+    !chainSupportsV3Pilot || tradeOutV3Pilot.isInsufficient,
+    !chainSupportsV3Official || tradeOutV3Official.isInsufficient,
+  ].every(Boolean)
+  const isInsufficient = insufficientIn || insufficientOut
+
+  // Distinct from "insufficient": at least one native pipeline rejected the
+  // trade because it exceeds the pool's per-swap cap (oracle-AMM curve limit),
+  // not because the pool is empty. Surfaced so the button can say "reduce
+  // amount" instead of the misleading "insufficient liquidity".
+  const someMaxExceeded = [
+    tradeInV2.maxExceeded,
+    chainSupportsV3Pilot && tradeInV3Pilot.maxExceeded,
+    chainSupportsV3Official && tradeInV3Official.maxExceeded,
+    tradeOutV2.maxExceeded,
+    chainSupportsV3Pilot && tradeOutV3Pilot.maxExceeded,
+    chainSupportsV3Official && tradeOutV3Official.maxExceeded,
+  ].some(Boolean)
+
+  // Keep tradeIn/tradeOut for the rest of the function — these are
+  // V2-backed values used by the existing inputError + balance-check logic
+  // below. Real winner selection happens in useBestSwapRoute.
+  const tradeIn = tradeInV2
+  const tradeOut = tradeOutV2
   const bestTradeExactIn = tradeIn.trade
   const bestTradeExactOut = tradeOut.trade
-
-  const v2Trade = isExactIn ? bestTradeExactIn : bestTradeExactOut
 
   const currencyBalances = {
     [Field.INPUT]: relevantTokenBalances[0],
@@ -160,9 +267,6 @@ export function useDerivedSwapInfo(): {
     [Field.INPUT]: inputCurrency ?? undefined,
     [Field.OUTPUT]: outputCurrency ?? undefined,
   }
-
-  // get link to trade on v1, if a better rate exists
-  const v1Trade = useV1Trade(isExactIn, currencies[Field.INPUT], currencies[Field.OUTPUT], parsedAmount)
 
   let inputError: string | undefined
 
@@ -198,61 +302,150 @@ export function useDerivedSwapInfo(): {
 
   const slippageAdjustedAmounts = v2Trade && allowedSlippage && computeSlippageAdjustedAmounts(v2Trade, allowedSlippage)
 
-  const slippageAdjustedAmountsV1 =
-    v1Trade && allowedSlippage && computeSlippageAdjustedAmounts(v1Trade, allowedSlippage)
+  // Compare input balance to required input. Two cases:
+  //  - Exact-in (user typed INPUT): input amount = parsedAmount. This works
+  //    REGARDLESS of which route source wins (V2 / V3 / Kyber), so we don't
+  //    gate on v2Trade existing. Earlier we only checked when v2Trade was
+  //    present, which silently left the Swap button enabled for aggregator-
+  //    only pairs even with zero balance.
+  //  - Exact-out (user typed OUTPUT): the required input is the trade's
+  //    maximumAmountIn (with slippage). Use whichever native pipeline quoted
+  //    (V3 Official / Pilot / V2) — gating on v2Trade alone left the button
+  //    wrongly enabled with zero balance when the exact-out route was V3.
+  const balanceIn = currencyBalances[Field.INPUT]
+  const exactOutTrade = v3OfficialTrade ?? v3PilotTrade ?? v2Trade
+  const exactOutRequiredIn =
+    !isExactIn && exactOutTrade && allowedSlippage
+      ? computeSlippageAdjustedAmounts(exactOutTrade, allowedSlippage)[Field.INPUT]
+      : null
+  const requiredIn = isExactIn ? parsedAmount : exactOutRequiredIn
+  const amountOut = slippageAdjustedAmounts ? slippageAdjustedAmounts[Field.OUTPUT] : null
 
-  // compare input balance to max input based on version
-  const [balanceIn, amountIn, amountOut] = [
-    currencyBalances[Field.INPUT],
-    toggledVersion === Version.v1
-      ? slippageAdjustedAmountsV1
-        ? slippageAdjustedAmountsV1[Field.INPUT]
-        : null
-      : slippageAdjustedAmounts
-      ? slippageAdjustedAmounts[Field.INPUT]
-      : null,
-    toggledVersion === Version.v1
-      ? slippageAdjustedAmountsV1
-        ? slippageAdjustedAmountsV1[Field.OUTPUT]
-        : null
-      : slippageAdjustedAmounts
-      ? slippageAdjustedAmounts[Field.OUTPUT]
-      : null,
-  ]
-
-  if (balanceIn && amountIn && balanceIn.lessThan(amountIn)) {
-    let symbol = amountIn.currency.symbol
+  if (balanceIn && requiredIn && balanceIn.lessThan(requiredIn)) {
+    let symbol = requiredIn.currency.symbol
     if (chainId && symbol === ETHER.symbol) {
       symbol = getNativeToken(chainId)
     }
     inputError = 'Insufficient ' + symbol + ' balance'
   }
 
+  // 90%-of-reserve constraint is a BrownFi-V2-pool-specific check. We
+  // expose it as a separate field rather than baking it into inputError
+  // so the Swap page can decide whether to block: if the smart router's
+  // best route isn't V2 (e.g., it's Kyber or V3), this constraint is
+  // irrelevant — the swap can proceed through the other source.
   const compareOut =
     outputCurrency?.symbol === reserve1?.token.symbol ||
     (outputCurrency === ETHER && isNativeCurrency(reserve1?.token.symbol))
       ? reserve1
       : reserve0
+  const v2AmountOutExceedsReserve = !!(
+    amountOut && compareOut && +amountOut?.toExact() > +compareOut.toExact() * 0.9
+  )
 
-  if (amountOut && compareOut && +amountOut?.toExact() > +compareOut.toExact() * 0.9) {
-    inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
-  }
+  // BrownFi-native pool liquidity flag: true when neither V2 nor V3 has
+  // a route and the SDK signaled insufficient reserves. Surfaced as a
+  // separate flag so the Swap page can combine it with aggregator-route
+  // availability before deciding to block the swap.
+  const noNativeTrade = !v2Trade && !v3PilotTrade && !v3OfficialTrade
+  const nativePoolLiquidityInsufficient =
+    !!isInsufficient && noNativeTrade && !isInputEmpty && !loadingExactIn && !loadingExactOut
 
-  if (tradeOut.isInsufficient || tradeIn.isInsufficient) {
-    if (!isInputEmpty && !tradeIn.loadingExactIn && !tradeOut.loadingExactOut) {
-      inputError = 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
-    }
+  // A native pool rejected the trade for exceeding its per-swap cap. Driven
+  // directly off `someMaxExceeded` (NOT the all-pipelines-insufficient union,
+  // which is false whenever a pair has no V2 pool — e.g. V3-only pairs like
+  // HYPE/USDC on HyperEVM), so it still fires there.
+  const nativePoolMaxExceeded =
+    someMaxExceeded && noNativeTrade && !isInputEmpty && !loadingExactIn && !loadingExactOut
+
+  // Per-source status for the route comparison. Surfaces EVERY BrownFi version
+  // deployed on this chain (not only the ones that produced a quote) so the
+  // picker can list V2 / V3 Official / V3 Pilot side-by-side and explain a
+  // missing route (no liquidity, per-swap cap). `reason` is left undefined
+  // while still loading so the UI doesn't flash a premature "No route".
+  const settled = !isInputEmpty && !loadingExactIn && !loadingExactOut
+  // Flags for the ACTIVE direction (exact-in vs exact-out) per version — the
+  // inactive direction's hook runs with no amount, so its `hasPools` is always
+  // false and would mislabel a live pool as "No pool".
+  const v2Flags = isExactIn ? tradeInV2 : tradeOutV2
+  const pilotFlags = isExactIn ? tradeInV3Pilot : tradeOutV3Pilot
+  const officialFlags = isExactIn ? tradeInV3Official : tradeOutV3Official
+  // Format the per-swap-cap "max input" (raw, input-token units) into a short,
+  // actionable hint like "Max ~123.45 USDT" so the user knows how far to reduce.
+  const fmtMaxIn = (raw?: string): string | undefined => {
+    if (!raw || !inputCurrency) return undefined
+    const num = Number(raw) / 10 ** inputCurrency.decimals
+    if (!isFinite(num) || num <= 0) return undefined
+    let sym = inputCurrency.symbol
+    if (chainId && (inputCurrency === ETHER || isNativeCurrency(sym))) sym = getNativeToken(chainId)
+    return `Max ~${Number(num.toPrecision(6))}${sym ? ' ' + sym : ''}`
   }
+  const nativeReason = (
+    t: Trade | undefined | null,
+    f: { isInsufficient?: boolean; maxExceeded?: boolean; hasPools?: boolean; maxInputRaw?: string; reason?: string },
+  ): string | undefined => {
+    if (t) return undefined
+    if (!settled) return undefined
+    // Per-swap cap hit: show the max swappable input when we decoded it, else a
+    // short generic message. (Boss request: short + the value the user can input.)
+    if (f.maxExceeded) return fmtMaxIn(f.maxInputRaw) ?? 'Exceeds pool max swap size'
+    if (!f.hasPools) return 'No pool' // no pool deployed for this pair at this version
+    // Decoded contract revert (e.g. "Price feed unstable" for the oracle
+    // discrepancy guard). Preferred over the generic "Pool too thin" because the
+    // real revert often has nothing to do with depth — and tells the user
+    // whether reducing the amount would even help.
+    if (f.reason) return f.reason
+    if (f.isInsufficient) return 'Pool too thin' // pool exists but can't fill the trade
+    return 'No route'
+  }
+  const nativeStatuses = [
+    {
+      source: 'brownfi-v2' as const,
+      sourceName: 'BrownFi V2',
+      supported: true,
+      reason: nativeReason(v2Trade, v2Flags),
+    },
+    {
+      source: 'brownfi-v3-official' as const,
+      sourceName: 'BrownFi V3 Official',
+      supported: chainSupportsV3Official,
+      reason: nativeReason(v3OfficialTrade, officialFlags),
+    },
+    {
+      source: 'brownfi-v3-pilot' as const,
+      sourceName: 'BrownFi V3 Pilot',
+      supported: chainSupportsV3Pilot,
+      reason: nativeReason(v3PilotTrade, pilotFlags),
+    },
+  ]
+
+  // V2 90%-reserve cap: a quote exists but its output exceeds 90% of the pool's
+  // output reserve. Surface the max output the pool can give so the user knows
+  // how far to reduce. `compareOut` is the output-side reserve (CurrencyAmount).
+  const v2MaxOutputHint = (() => {
+    if (!v2AmountOutExceedsReserve || !compareOut) return undefined
+    const maxOut = +compareOut.toExact() * 0.9
+    if (!isFinite(maxOut) || maxOut <= 0) return undefined
+    let sym = outputCurrency?.symbol
+    if (chainId && (outputCurrency === ETHER || isNativeCurrency(sym))) sym = getNativeToken(chainId)
+    return `Max ~${Number(maxOut.toPrecision(6))}${sym ? ' ' + sym : ''}`
+  })()
 
   return {
     currencies,
     currencyBalances,
     parsedAmount,
     v2Trade: v2Trade ?? undefined,
+    v3PilotTrade: v3PilotTrade ?? undefined,
+    v3OfficialTrade: v3OfficialTrade ?? undefined,
+    nativeStatuses,
+    v2MaxOutputHint,
     inputError,
-    v1Trade,
-    loadingExactIn: tradeIn.loadingExactIn,
-    loadingExactOut: tradeOut.loadingExactOut,
+    v2AmountOutExceedsReserve,
+    nativePoolLiquidityInsufficient,
+    nativePoolMaxExceeded,
+    loadingExactIn,
+    loadingExactOut,
   }
 }
 

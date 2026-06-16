@@ -1,4 +1,6 @@
+import { isV3Like } from '@brownfi/sdk'
 import { Pair, TokenAmount } from '@brownfi/sdk'
+import { versionToSlug } from 'lib/sdk/constants/addresses'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
 import { lazy, Suspense, useMemo, useState } from 'react'
@@ -11,7 +13,6 @@ import { ButtonSecondary } from 'components/Button'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
 import { useTokenBalance } from 'state/wallet/hooks'
-import { currencyId } from 'utils/currencyId'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 
 import { Card } from 'components/Card'
@@ -22,13 +23,14 @@ import { Loader } from 'components/Loader'
 const PairChartModal = lazy(() => import('components/pool/PairChartModal').then((m) => ({ default: m.PairChartModal })))
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import { PoolBalanceBar } from 'components/pool/PoolBalanceBar'
+import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween } from 'components/Row'
 import { isMainnet } from 'connectors'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
-import { shouldReversePair } from 'utils/pair'
+import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
@@ -49,14 +51,22 @@ const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   position: relative;
   overflow: hidden;
   padding: 12px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  transition: background 0.15s ease, gap 0.2s ease;
   background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#1E1915')};
   gap: ${({ $expanded }) => ($expanded ? '24px' : '4px')};
 
+  /* Hover only affects collapsed rows. When expanded, the card is already
+     in its "active" #2F2823 tint and a hover bump would feel jittery as
+     the user moves between sub-sections. Matches the Portfolio row's
+     hover treatment so the two surfaces feel consistent. */
+  &:hover {
+    background: ${({ $expanded }) => ($expanded ? '#2F2823' : '#252019')};
+  }
+
   @media (min-width: 720px) {
     padding: 16px;
-    border-radius: 16px;
+    border-radius: 12px;
   }
 `
 
@@ -88,7 +98,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const [{ isFavorite }] = usePairStorage({ pair })
   const enableBgt = !!pairBGT[pair.liquidityToken.address]
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
-  const devStats = useDevStats({ pair, enabled: !isMainnet })
+  const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
 
   const [showMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
@@ -118,7 +128,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
-  const shouldReverse = shouldReversePair(pair)
+  // Base/quote order: V3 pools use the indexer's authoritative quoteTokenIndex;
+  // V2 / unknown fall back to the unwrapped-symbol whitelist. Same source as
+  // the pair name (DoubleCurrencySymbol) and the Pool Detail page, so the
+  // balance bar, name, and detail all agree.
+  const shouldReverse = shouldReverseDisplay(currency0, currency1, chainId, pairStats?.quoteTokenIndex)
 
   const pythPrices = usePythPrices({
     chainId,
@@ -136,12 +150,18 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
     const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(6)) || 1)
+    // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
+    // values (e.g. 6,606,088% / 2,378,191,932%). Below a $1 TVL floor the
+    // numbers are meaningless — zero them so the columns render their default
+    // "--" instead. Threshold, not `tvl > 0`, because a $0.50 pool still blows up.
+    const MIN_TVL_FOR_RATIOS = 1
+    const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS
     // 24h Fees / TVL — simple daily ratio, no annualization
     const feeDay = Number(pairStats?.feeDay) || 0
-    const feeOverTvl = tvl > 0 ? (feeDay / tvl) * 100 : 0
+    const feeOverTvl = ratiosMeaningful ? (feeDay / tvl) * 100 : 0
     // Annualized fee APR (LP share)
     const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
-    const feeAPR = shouldUseIndexer ? feeAPRIndexer : feeAPRFallback
+    const feeAPR = ratiosMeaningful ? (shouldUseIndexer ? feeAPRIndexer : feeAPRFallback) : 0
     return { tvl, lpPrice, feeOverTvl, feeAPR }
   }, [token0Price, token1Price, pair, totalPoolTokens, pairStats?.feeDay, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
 
@@ -174,24 +194,41 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         <div
           className="flex items-center cursor-pointer max-md:flex-wrap max-md:gap-2"
           style={{ gap: '8px', minHeight: '60px' }}
-          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}`)}
+          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${versionToSlug(pair.version)}`)}
         >
           {/* Pool name */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
             <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0 hidden sm:block">
-              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={40} />
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={40} quoteTokenIndex={pairStats?.quoteTokenIndex} />
             </div>
             <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0 sm:hidden flex items-center">
               <CurrencyLogo currency={currency0} size="28px" />
               <CurrencyLogo currency={currency1} size="28px" style={{ marginLeft: '-8px' }} />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-[16px] sm:text-[20px]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '30px', color: '#FBFBFD', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} />
-              </span>
+              <div className="inline-flex items-center gap-2.5 max-w-full">
+                <span className="text-[16px] sm:text-[20px]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '30px', color: '#FBFBFD', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairStats?.quoteTokenIndex} />
+                </span>
+                <a
+                  href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="hover:opacity-80 shrink-0 inline-flex items-center"
+                  style={{ color: '#978A80' }}
+                  title={`View pair on ${getScanText(chainId)}`}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '24px', letterSpacing: '-0.02em', color: '#83CF84' }}>
-                  {formatNumber(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+                  {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
                 </span>
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
@@ -206,7 +243,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
-                  Incentive APR: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
+                  {enableBgt ? 'BGT APR' : 'Incentive APR'}: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
                   {enableBgt && (
                     <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 14, height: 14, borderRadius: '50%' }} />
                   )}
@@ -259,11 +296,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           {/* Actions */}
           <div className="hidden md:flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
             <Link
-              to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+              to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
               className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
               style={{
                 background: '#985C2A',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 padding: '6px 12px',
                 height: '40px',
                 fontFamily: 'Inter',
@@ -280,16 +317,28 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
         {!isMainnet && (
           <div
-            className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2 justify-center md:justify-start"
+            className="flex flex-wrap items-center gap-3 text-[#8A7D66] text-xs py-2 justify-start"
             onClick={(e) => e.stopPropagation()}
           >
-            <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
-            <Text>Kappa: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}</Text>
+            {devStats.lambda !== undefined && (
+              <Text>Lambda: {formatNumberLambda(devStats.lambda, { maximumFractionDigits: 4 })}</Text>
+            )}
+            {devStats.kappa !== undefined && (
+              <Text>
+                {isV3Like(version) ? 'kB' : 'Kappa'}: {formatNumberLambda(devStats.kappa, { maximumFractionDigits: 4 })}
+              </Text>
+            )}
+            {isV3Like(version) && devStats.kQ !== undefined && (
+              <Text>kQ: {formatNumberLambda(devStats.kQ, { maximumFractionDigits: 4 })}</Text>
+            )}
             {/* Fee is already shown in green under the pair name — drop it here */}
-            <Text>
-              {version === 3 ? 'FeeSplit' : 'ProtocolFee'}:{' '}
-              {formatNumberLambda(version === 3 ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
-            </Text>
+            {(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee) !== undefined && (
+              <Text>
+                {isV3Like(version) ? 'FeeSplit' : 'ProtocolFee'}:{' '}
+                {formatNumberLambda(isV3Like(version) ? devStats.feeSplit : devStats.protocolFee, { maximumFractionDigits: 4 })}
+              </Text>
+            )}
+            {isV3Like(version) && <V3ExtraParams devStats={devStats} />}
             {canEditSettings && (
               <Settings size="14" className="cursor-pointer text-[#c4943a] hover:text-[#d4a94f]" onClick={() => setShowSettings(true)} />
             )}
@@ -300,7 +349,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
         {showMore && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             {/* Left panel: Pool stats */}
-            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '16px', background: 'transparent' }}>
+            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '12px', background: 'transparent' }}>
               <div className="flex items-center gap-3 mb-4">
                 <span
                   style={{
@@ -327,7 +376,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   <PairChartModal
                     enableAdvancedZoom
                     pair={pair}
-                    name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} />}
+                    name={<DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairStats?.quoteTokenIndex} />}
                   />
                 </Suspense>
                 {isTest && <PairFavorite pair={pair} />}
@@ -358,7 +407,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
 
             {/* Right panel: Your position */}
-            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '16px', background: 'transparent' }}>
+            <div className="p-[16px] sm:p-[24px]" style={{ border: '1px solid #493E35', borderRadius: '12px', background: 'transparent' }}>
               <span
                 className="block mb-4"
                 style={{
@@ -418,11 +467,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   {/* Action buttons */}
                   <div className="pt-2 flex gap-3">
                     <Link
-                      to={`/add/${currencyId(currency0)}/${currencyId(currency1)}`}
+                      to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
                       className="no-underline flex items-center justify-center flex-1"
                       style={{
                         background: '#985C2A',
-                        borderRadius: '12px',
+                        borderRadius: '8px',
                         padding: '10px 16px',
                         height: '44px',
                         fontFamily: 'Inter',
@@ -435,11 +484,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       Add
                     </Link>
                     <Link
-                      to={`/remove/${currencyId(currency0)}/${currencyId(currency1)}`}
+                      to={`/remove/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
                       className="no-underline flex items-center justify-center flex-1"
                       style={{
                         background: '#985C2A',
-                        borderRadius: '12px',
+                        borderRadius: '8px',
                         padding: '10px 16px',
                         height: '44px',
                         fontFamily: 'Inter',
@@ -467,7 +516,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                           color: '#FFFFFF',
                           background: '#985C2A',
                           border: 'none',
-                          borderRadius: '12px',
+                          borderRadius: '8px',
                           padding: '12px 24px',
                           height: '48px',
                           cursor: 'pointer',

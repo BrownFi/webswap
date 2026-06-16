@@ -13,6 +13,16 @@ import { TokenAmount } from './fractions/tokenAmount'
 import { Fraction } from './fractions/fraction'
 import { Percent } from './fractions/percent'
 import { sortedInsert } from '../utils'
+import { InsufficientReservesError, InsufficientInputAmountError } from '../errors'
+
+// Expected business-as-usual rejections when a candidate pool can't satisfy
+// the requested amount — happens on every thin pool and shouldn't pollute the
+// console. We surface only unexpected errors.
+const isExpectedTradeError = (error: unknown): boolean =>
+  error instanceof InsufficientReservesError ||
+  error instanceof InsufficientInputAmountError ||
+  (!!error && typeof (error as any).isInsufficientReservesError === 'boolean') ||
+  (!!error && typeof (error as any).isInsufficientInputAmountError === 'boolean')
 
 /**
  * Returns the wrapped version of a CurrencyAmount for use within the SDK
@@ -111,6 +121,32 @@ async function asyncForTo<T>(
 export interface BestTradeOptions {
   maxNumResults?: number
   maxHops?: number
+}
+
+/**
+ * Result of bestTradeExactIn/Out: the sorted trade list, plus flags set during
+ * the search. The flags ride on the array (accumulated through recursion) —
+ * typed here so callers read them without `as any`.
+ *
+ * - maxExceeded: a candidate pool was skipped because the trade exceeds its
+ *   per-swap cap (vs a genuinely empty pool). Lets the UI show "reduce amount"
+ *   instead of "insufficient liquidity".
+ * - transientError: a candidate quote threw a NON-business error (RPC timeout,
+ *   Hermes fetch failure, JSON-RPC rate-limit) and was skipped. This is
+ *   indistinguishable from "thin pool" at the result level (both yield no
+ *   trade), so we flag it explicitly — the hook layer retries on this but NOT
+ *   on a clean insufficient-liquidity result, so a momentary network blip
+ *   doesn't leave the route permanently missing while a genuinely empty pool
+ *   still reports "insufficient" immediately.
+ */
+export type TradeList = Trade[] & {
+  maxExceeded?: boolean
+  transientError?: boolean
+  maxInputRaw?: string
+  /** Raw revert info from a non-cap business rejection (insufficient reserves,
+   *  oracle guard, …), carried verbatim so the hook layer can decode it into a
+   *  user-facing reason without coupling the SDK to the app's error registry. */
+  failRevert?: { selector?: string; data?: string; message?: string }
 }
 
 export class Trade {
@@ -275,8 +311,8 @@ export class Trade {
     { maxNumResults = 3, maxHops = 3 }: BestTradeOptions = {},
     currentPairs: Pair[] = [],
     originalAmountIn: CurrencyAmount = currencyAmountIn,
-    bestTrades: Trade[] = []
-  ): Promise<Trade[]> {
+    bestTrades: TradeList = []
+  ): Promise<TradeList> {
     invariant(pairs.length > 0, 'PAIRS')
     invariant(maxHops > 0, 'MAX_HOPS')
     invariant(originalAmountIn === currencyAmountIn || currentPairs.length > 0, 'INVALID_RECURSION')
@@ -324,7 +360,24 @@ export class Trade {
         )
         amountOut = result[0]
       } catch (error) {
-        console.warn('======= getOutputAmountAsync error', error)
+        if (!isExpectedTradeError(error)) {
+          // A non-business error (RPC/Hermes/network) — the quote didn't get a
+          // real answer. Flag it so the hook layer can retry rather than treat
+          // this as a settled "no route".
+          bestTrades.transientError = true
+        }
+        // Tag the result when the pool rejected because the trade exceeds its
+        // per-swap cap (not an empty pool) so the UI can say "reduce amount".
+        if ((error as any)?.isMaxAmountOutExceededError) {
+          bestTrades.maxExceeded = true
+          if ((error as any).maxIn) bestTrades.maxInputRaw = (error as any).maxIn
+        } else if (!bestTrades.failRevert && (error as any)?.revertSelector !== undefined) {
+          bestTrades.failRevert = {
+            selector: (error as any).revertSelector,
+            data: (error as any).revertData,
+            message: (error as any).revertMessage,
+          }
+        }
         return
       }
 
@@ -353,7 +406,10 @@ export class Trade {
           )
         }
       } catch (error) {
-        console.warn('======= bestTradeExactIn iteration error', error)
+        // Recursion / Route / computeAmount threw unexpectedly — treat as
+        // transient so the hook retries rather than locking in a missing route.
+        bestTrades.transientError = true
+        console.warn('bestTradeExactIn iteration error', error)
         return
       }
     })
@@ -372,8 +428,8 @@ export class Trade {
     { maxNumResults = 3, maxHops = 3 }: BestTradeOptions = {},
     currentPairs: Pair[] = [],
     originalAmountOut: CurrencyAmount = currencyAmountOut,
-    bestTrades: Trade[] = []
-  ): Promise<Trade[]> {
+    bestTrades: TradeList = []
+  ): Promise<TradeList> {
     invariant(pairs.length > 0, 'PAIRS')
     invariant(maxHops > 0, 'MAX_HOPS')
     invariant(originalAmountOut === currencyAmountOut || currentPairs.length > 0, 'INVALID_RECURSION')
@@ -418,7 +474,20 @@ export class Trade {
         )
         amountIn = result[0]
       } catch (error) {
-        console.error('======= getInputAmountAsync error', error)
+        if (!isExpectedTradeError(error)) {
+          // Non-business error — flag for retry (see bestTradeExactIn).
+          bestTrades.transientError = true
+        }
+        if ((error as any)?.isMaxAmountOutExceededError) {
+          bestTrades.maxExceeded = true
+          if ((error as any).maxIn) bestTrades.maxInputRaw = (error as any).maxIn
+        } else if (!bestTrades.failRevert && (error as any)?.revertSelector !== undefined) {
+          bestTrades.failRevert = {
+            selector: (error as any).revertSelector,
+            data: (error as any).revertData,
+            message: (error as any).revertMessage,
+          }
+        }
         continue
       }
 
@@ -445,7 +514,8 @@ export class Trade {
           )
         }
       } catch (error) {
-        console.warn('======= bestTradeExactOut iteration error', error)
+        bestTrades.transientError = true
+        console.warn('bestTradeExactOut iteration error', error)
         continue
       }
     }

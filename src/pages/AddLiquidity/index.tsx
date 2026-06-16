@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { addLiquidity, Currency, currencyEquals, getRouterAddress, TokenAmount, WETH } from '@brownfi/sdk'
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { LightCard } from 'components/Card'
@@ -7,7 +8,7 @@ import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { AddRemoveTabs } from 'components/NavigationTabs'
 import { MinimalInfoCard } from 'components/pool/MinimalInfoCard'
 import Row, { RowBetween, RowFlat } from 'components/Row'
-import { ConfirmationModalContent, TransactionConfirmationModal } from 'components/TransactionConfirmationModal'
+import { ConfirmationModalContent, TransactionConfirmationModal, TransactionErrorContent } from 'components/TransactionConfirmationModal'
 import { useCallback, useMemo, useState } from 'react'
 import { Plus } from 'react-feather'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
@@ -20,14 +21,16 @@ import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { Field } from 'state/mint/actions'
 import { useDerivedMintInfo, useMintActionHandlers, useMintState } from 'state/mint/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 
 import ConnectWallet from 'components/ConnectWallet'
 import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter'
-import { useToast } from 'containers/ToastProvider'
 import { useQueryClient } from '@tanstack/react-query'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
+import { decodeContractError } from 'utils/decodeContractError'
+import { isUserRejection } from 'utils/zapErrors'
 import { AppBody } from 'pages/AppBody'
 import { Dots, Wrapper } from 'pages/Pool/styleds'
 import { useIsExpertMode, useUserSlippageTolerance } from 'state/user/hooks'
@@ -49,8 +52,8 @@ export default function AddLiquidity() {
   const location = useLocation()
   const { account, chainId, library } = useActiveWeb3React()
   const { version } = useVersion({ chainId })
-  const { createToast } = useToast()
   const queryClient = useQueryClient()
+  const addTransaction = useTransactionAdder()
 
   const [useZap, setUseZap] = useState(false)
 
@@ -79,6 +82,7 @@ export default function AddLiquidity() {
     parsedAmounts,
     price,
     noLiquidity,
+    requiresPoolCreation,
     liquidityMinted,
     poolTokenPercentage,
     error,
@@ -100,6 +104,13 @@ export default function AddLiquidity() {
   // modal and loading
   const [showConfirm, setShowConfirm] = useState<boolean>(false)
   const [attemptingTxn, setAttemptingTxn] = useState<boolean>(false) // clicked confirm
+  // In-modal failure message. Pre-submission reverts (wallet rejection, gas
+  // estimation failure, contract revert during simulation) never produce a
+  // tx hash, so the TransactionConfirmationModal falls back to `content()`.
+  // Routing the error through this state — same pattern as Swap's
+  // `swapErrorMessage` — lets the modal show TransactionErrorContent
+  // instead of dumping the user back at the form review.
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
 
   // txn values
   const deadline = useTransactionDeadline() // custom from users settings
@@ -151,6 +162,7 @@ export default function AddLiquidity() {
     try {
       const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
       setAttemptingTxn(true)
+      setErrorMessage(undefined)
       const response = await addLiquidity(
         chainId,
         library as any,
@@ -159,7 +171,13 @@ export default function AddLiquidity() {
         parsedAmountB,
         exactFieldInput,
         deadline as any,
-        noLiquidity ?? false,
+        // Pass `requiresPoolCreation` (factory has no pair) rather than
+        // `noLiquidity` (pool exists but empty) so the SDK only zeroes out
+        // slippage when the V2 router will actually run the first-mint
+        // path. V3 empty pools still go through Pyth-driven amount
+        // recomputation, and zero slippage there reverts `InsufficientBAmount`
+        // on harmless integer-precision deltas between FE and router.
+        requiresPoolCreation ?? false,
         allowedSlippage,
         version,
       )
@@ -167,28 +185,38 @@ export default function AddLiquidity() {
       if (response) {
         setAttemptingTxn(false)
         setTxHash(response.hash)
+        addTransaction(response, {
+          summary: `Add ${parsedAmountA?.toSignificant(3)} ${getTokenSymbol(currencies[Field.CURRENCY_A], chainId)} and ${parsedAmountB?.toSignificant(3)} ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}`,
+        })
         setTimeout(() => queryClient.invalidateQueries(), 5000)
       }
     } catch (error) {
       setAttemptingTxn(false)
-      if ((error as any)?.code !== 4001) {
-        console.error(error)
-      }
-      if (typeof (error as any)?.reason === 'string') {
-        createToast((error as any)?.reason, 'error')
-      }
+      if (isUserRejection(error)) return
+      console.error(error)
+      // Surface decoded failure in the open modal, NOT a toast. The modal
+      // is already showing the user's "confirming…" state — popping a toast
+      // outside it while the modal silently drops back to the form view
+      // produces a confusing two-surface UX. Matches Swap's pattern.
+      const msg = decodeContractError(error, 'Add liquidity failed. Please try again.')
+      if (msg) setErrorMessage(msg)
     }
   }
 
   const modalHeader = () => {
-    return noLiquidity ? (
+    // Show the "you are initializing this pair" card only when the user is
+    // actually deploying the pool contract (V2 first-mint). V3 empty pools
+    // are EXISTS-but-zero-supply and should go through the normal "you will
+    // receive N LP tokens" header instead.
+    return requiresPoolCreation ? (
       <AutoColumn gap="20px">
         <LightCard borderRadius="16px" style={{ marginTop: '20px' }}>
           <RowFlat className="px-2">
             <Text fontSize="36px" fontWeight={600} lineHeight="42px" marginRight={10} color="white">
-              {getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
-                '/' +
-                getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}
+              <DoubleCurrencySymbol
+                currency0={currencies[Field.CURRENCY_A]}
+                currency1={currencies[Field.CURRENCY_B]}
+              />
             </Text>
             <DoubleCurrencyLogo
               currency0={currencies[Field.CURRENCY_A]}
@@ -212,10 +240,11 @@ export default function AddLiquidity() {
         </RowFlat>
         <Row>
           <span style={{ fontFamily: 'Inter', fontSize: '24px', fontWeight: 600, color: '#FBFBFD' }}>
-            {getTokenSymbol(currencies[Field.CURRENCY_A], chainId) +
-              '/' +
-              getTokenSymbol(currencies[Field.CURRENCY_B], chainId) +
-              ' Pool Tokens'}
+            <DoubleCurrencySymbol
+              currency0={currencies[Field.CURRENCY_A]}
+              currency1={currencies[Field.CURRENCY_B]}
+            />
+            {' Pool Tokens'}
           </span>
         </Row>
         <span style={{ fontFamily: 'Inter', fontSize: '12px', fontStyle: 'italic', color: '#978A80', textAlign: 'left', padding: '8px 0 0 0' }}>
@@ -232,7 +261,12 @@ export default function AddLiquidity() {
         price={price}
         currencies={currencies}
         parsedAmounts={parsedAmounts}
+        // `noLiquidity` (zero-supply pool, including V3 pre-deployed) still
+        // drives the "Share of Pool: 100%" first-LP display. The button label,
+        // however, follows `requiresPoolCreation` so users on a V3 empty pool
+        // see "Confirm Supply" rather than "Create Pool & Supply".
         noLiquidity={noLiquidity}
+        requiresPoolCreation={requiresPoolCreation}
         onAdd={onAdd}
         poolTokenPercentage={poolTokenPercentage}
       />
@@ -240,6 +274,10 @@ export default function AddLiquidity() {
   }
 
   const pendingText = `Supplying ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)} ${getTokenSymbol(
+    currencies[Field.CURRENCY_A],
+    chainId,
+  )} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)} ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}`
+  const submittedText = `Supplied ${parsedAmounts[Field.CURRENCY_A]?.toSignificant(6)} ${getTokenSymbol(
     currencies[Field.CURRENCY_A],
     chainId,
   )} and ${parsedAmounts[Field.CURRENCY_B]?.toSignificant(6)} ${getTokenSymbol(currencies[Field.CURRENCY_B], chainId)}`
@@ -278,6 +316,9 @@ export default function AddLiquidity() {
       onFieldAInput('')
     }
     setTxHash('')
+    // Clear any failure message so the next confirm opens fresh on the
+    // review screen instead of replaying the previous error.
+    setErrorMessage(undefined)
   }, [onFieldAInput, txHash])
 
   const isCreate = location.pathname.includes('/create')
@@ -327,11 +368,11 @@ export default function AddLiquidity() {
             </span>
           )}
           <div className="ml-auto">
-            <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} version={version} />
+            <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} />
           </div>
         </div>
 
-        {useZap && version === 3 && pair ? (
+        {useZap && isV3Like(version) && pair ? (
           <Wrapper>
             <V3ZapForm pair={pair} pairState={pairState} currencies={currencies} allowedSlippage={allowedSlippage} />
           </Wrapper>
@@ -346,15 +387,29 @@ export default function AddLiquidity() {
               onDismiss={handleDismissConfirmation}
               attemptingTxn={attemptingTxn}
               hash={txHash}
-              content={() => (
-                <ConfirmationModalContent
-                  title={noLiquidity ? 'You are creating a pool' : 'You will receive'}
-                  onDismiss={handleDismissConfirmation}
-                  topContent={modalHeader}
-                  bottomContent={modalBottom}
-                />
-              )}
+              content={() =>
+                // Swap-style failure surface: when a pre-submission error
+                // settled into `errorMessage`, render the failed view in
+                // place of the review form so the user sees the failure
+                // where they expected the success.
+                errorMessage ? (
+                  <TransactionErrorContent
+                    message={errorMessage}
+                    onDismiss={handleDismissConfirmation}
+                    headerTitle="Add Liquidity"
+                    failedTitle="Add liquidity failed"
+                  />
+                ) : (
+                  <ConfirmationModalContent
+                    title={requiresPoolCreation ? 'You are creating a pool' : 'You will receive'}
+                    onDismiss={handleDismissConfirmation}
+                    topContent={modalHeader}
+                    bottomContent={modalBottom}
+                  />
+                )
+              }
               pendingText={pendingText}
+              submittedText={submittedText}
               currencyToAdd={pair?.liquidityToken}
             />
             <AutoColumn gap="20px">

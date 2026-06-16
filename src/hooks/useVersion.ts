@@ -3,8 +3,8 @@ import { ChainId, Pair } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
-import { isMainnet } from 'connectors'
-import { ROUTER_ADDRESS_V1, ROUTER_ADDRESS_V3 } from 'lib/sdk/constants/addresses'
+import { isMainnet, isV3Enabled } from 'connectors'
+import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen, hasV3Official, VERSION } from 'lib/sdk/constants/addresses'
 
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
   const location = useLocation()
@@ -19,17 +19,26 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
   }, [location.search])
 
   const [version, isDisabled] = useMemo(() => {
-    // Mainnet: lock specific chains to their version
+    // V3 not available when API doesn't support /indexer/v3 (prod API today).
+    // Mainnet keeps its per-chain lock list because the V1 chains (Viction,
+    // U2U) live on mainnet only.
     if (isMainnet) {
       if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
         return [1, true]
       }
+      // Chains with V3 Official deployed honor the V2 / V3-Official toggle on
+      // production. V3 Pilot is hidden on mainnet, so a stale Pilot (3) stored
+      // selection falls back to V2. (This is what makes the V3-Official release
+      // selectable — previously every mainnet chain was locked to V2.)
+      if (hasV3Official(chainId ?? undefined)) {
+        return [stableVersion === VERSION.V3_OFFICIAL ? VERSION.V3_OFFICIAL : 2, false]
+      }
+      // Remaining mainnet chains are V2-only (no V3 deployment).
       if (
         [
           ChainId.ARBITRUM_MAINNET,
           ChainId.BASE_MAINNET,
           ChainId.BSC_MAINNET,
-          ChainId.HYPER_EVM,
           ChainId.LINEA_MAINNET,
           ChainId.SEI_MAINNET,
           ChainId.MONAD,
@@ -41,12 +50,15 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       }
       return [2, false]
     }
-    // Beta/testnet: allow version switching, but validate stored version has a router
+    // Non-mainnet env (beta/testnet). If the API doesn't have V3 (e.g. beta
+    // deployment pointing at prod API), force V2 to prevent /indexer/v3
+    // 404s. Otherwise honour the user's stored version selection.
+    if (!isV3Enabled) return [2, true]
     const selectedVersion = stableVersion
     if (selectedVersion === 1 && !ROUTER_ADDRESS_V1[chainId as number]) return [2, false]
-    if (selectedVersion === 3 && !ROUTER_ADDRESS_V3[chainId as number]) return [2, false]
+    if (isV3Like(selectedVersion) && !routerV3Gen(selectedVersion)[chainId as number]) return [2, false]
     return [selectedVersion, false]
-  }, [isMainnet, chainId, stableVersion])
+  }, [chainId, stableVersion])
 
   const dispatchSwitchVersion = (version: number) => {
     dispatch(switchVersion(version))
@@ -90,23 +102,28 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
     const pairAddr = pair?.liquidityToken.address?.toLowerCase()
     const isPromoted = pairAddr ? promoted.has(pairAddr) : false
 
-    return (version === 2 || version === 3) && !isPromoted
+    return (version === 2 || isV3Like(version)) && !isPromoted
   }, [pair?.liquidityToken.address, version])
 
   const enableGraphQL = useMemo(() => {
-    return (
-      [
-        //
-        ChainId.BERA_MAINNET,
-        ChainId.ARBITRUM_MAINNET,
-        ChainId.BASE_MAINNET,
-        ChainId.BSC_MAINNET,
-        ChainId.HYPER_EVM,
-        ChainId.LINEA_MAINNET,
-        ChainId.SEI_MAINNET,
-        ChainId.MONAD,
-      ].includes(chainId as number) && version === 2
-    )
+    // V2 indexer chains are listed explicitly because not every V2 deployment
+    // also has an indexer. V3 follows a simpler rule: any chain with a V3
+    // router has a V3 indexer (router + indexer ship together), so we derive
+    // from the address map directly. Adding a chain to ROUTER_ADDRESS_V3_PILOT
+    // unlocks both contract calls and indexer queries.
+    const v2Chains = [
+      ChainId.BERA_MAINNET,
+      ChainId.ARBITRUM_MAINNET,
+      ChainId.BASE_MAINNET,
+      ChainId.BSC_MAINNET,
+      ChainId.HYPER_EVM,
+      ChainId.LINEA_MAINNET,
+      ChainId.SEI_MAINNET,
+      ChainId.MONAD,
+    ]
+    if (version === 2) return v2Chains.includes(chainId as number)
+    if (isV3Like(version)) return !!routerV3Gen(version)[chainId as number]
+    return false
   }, [chainId, version])
 
   return {

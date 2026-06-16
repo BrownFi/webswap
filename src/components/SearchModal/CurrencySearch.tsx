@@ -21,6 +21,8 @@ import { useOnClickOutside } from 'hooks/useOnClickOutside'
 import useTheme from 'hooks/useTheme'
 import ImportRow from './ImportRow'
 import useDebounce from 'hooks/useDebounce'
+import { useRecentTokens } from 'hooks/useRecentTokens'
+import RecentTokens from './RecentTokens'
 
 const ContentWrapper = styled(Column)`
   width: 100%;
@@ -30,7 +32,7 @@ const ContentWrapper = styled(Column)`
 
 const Footer = styled.div`
   width: 100%;
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 20px;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
@@ -66,8 +68,12 @@ export function CurrencySearch({
 
   // refs for fixed size lists
   const fixedList = useRef<FixedSizeList>()
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const [searchQuery] = useState<string>('')
+  // Search input — was previously wired but never given an input element. The
+  // `filterTokens` helper at `./filtering` already handles name/symbol/address
+  // matching, so once we send real keystrokes here the whole list filters.
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const debouncedQuery = useDebounce(searchQuery, 200)
 
   const [invertSearchOrder] = useState<boolean>(false)
@@ -102,17 +108,29 @@ export function CurrencySearch({
 
   const filteredSortedTokens = useSortedTokensByQuery(sortedTokens, debouncedQuery)
 
+  const { recent: recentAddresses, trackSelection } = useRecentTokens(chainId)
   const handleCurrencySelect = useCallback(
     (currency: Currency) => {
+      trackSelection(currency)
       onCurrencySelect(currency)
       onDismiss()
     },
-    [onDismiss, onCurrencySelect],
+    [onDismiss, onCurrencySelect, trackSelection],
   )
 
-  // clear the input on open
+  // Clear the input on open + focus the search box for instant typing.
+  // Skip the focus on touch devices — pulling up the soft keyboard hides the
+  // suggested-bases chips and "Your tokens" section users want to tap.
   useEffect(() => {
-    if (isOpen) { /* searchQuery is always empty */ }
+    if (isOpen) {
+      setSearchQuery('')
+      const isPointerDevice =
+        typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)')?.matches
+      if (isPointerDevice) {
+        // Slight delay so the modal mount transition doesn't steal focus.
+        setTimeout(() => inputRef.current?.focus(), 50)
+      }
+    }
   }, [isOpen])
 
   // menu ui
@@ -133,12 +151,44 @@ export function CurrencySearch({
           </Text>
           <CloseIcon onClick={onDismiss} color="white" />
         </RowBetween>
+        {/* Search box — matches Uniswap/Kodiak/CowSwap. Supports name, symbol,
+            and contract address (the existing filterTokens helper handles all
+            three). */}
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Search name, symbol or paste address"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+          style={{
+            width: '100%',
+            height: 44,
+            background: '#120F0D',
+            border: '1px solid #2F2823',
+            borderRadius: 8,
+            padding: '0 16px',
+            fontFamily: 'Inter',
+            fontSize: 14,
+            color: '#FBFBFD',
+            outline: 'none',
+          }}
+        />
         {showCommonBases && (
           <CommonBases chainId={chainId} onSelect={handleCurrencySelect} selectedCurrency={selectedCurrency} />
         )}
+        {recentAddresses.length > 0 && (
+          <RecentTokens
+            addresses={recentAddresses}
+            allTokens={allTokens}
+            onSelect={handleCurrencySelect}
+            selectedCurrency={selectedCurrency}
+          />
+        )}
       </PaddedColumn>
 
-      <Column style={{ padding: '20px 0', flex: 1 }}>
+      <Column style={{ paddingBottom: '20px', flex: 1 }}>
         {filteredSortedTokens?.length > 0 || filteredInactiveTokens?.length > 0 ? (
           <AutoSizer disableWidth>
             {({ height }: { height: number }) => (

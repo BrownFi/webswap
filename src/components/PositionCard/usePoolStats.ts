@@ -1,3 +1,4 @@
+import { isV3Like } from '@brownfi/sdk'
 import { ChainId, JSBI, Pair, TokenAmount } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { useTotalSupply } from 'data/TotalSupply'
@@ -33,6 +34,29 @@ export type PairStats = {
   volumeDay: number
   volume7Day: number
   updatedAt: number
+  // V2 indexer ships `k` (single kappa). V3 indexer ships kB+kQ; we alias
+  // kB → k below for backward compat with consumers that read `pairStats.k`.
+  lambda?: number
+  k?: number
+  // V3-only extras (undefined on V2). Indexer queries select these for V3
+  // pools so the FE can show all 13 config params + uni reference price
+  // without an extra on-chain call.
+  kB?: number
+  kQ?: number
+  feeSplit?: number
+  compress?: number
+  sSell?: number
+  sBuy?: number
+  fixS?: number
+  disThreshold?: number
+  sBound?: number
+  pythWeight?: number
+  gamma?: number
+  uniV2Price?: number
+  // V3-only: which token is the quote (0 = token0, 1 = token1). The
+  // authoritative base/quote designation — drives display order via
+  // shouldReverseDisplay. Undefined on V2.
+  quoteTokenIndex?: number
   token0?: Token | null
   token1?: Token | null
 }
@@ -54,7 +78,12 @@ const GET_PAIR_ACCOUNT = `
   }
 `
 
-const pairBGT: Record<string, string[]> = {
+// Whitelist of Bera pools that have a BGT vault — i.e. pools the
+// /igbt-vault-apr endpoint actually has data for. Exported so the pool list
+// can gate its fan-out useQueries on the same set instead of firing one
+// REST call per Bera pool (most of which return apr=0 today). Add a new
+// pair address here whenever a fresh BGT vault is deployed.
+export const pairBGT: Record<string, string[]> = {
   '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': ['0x7488174f1f518caf2faae4f30cbba65ea57cf4f9'], // BERA/HONEY
   '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': ['0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc'], // BERA/USDC.e
 }
@@ -84,13 +113,14 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       unrealizedBnHPnL: number
     }
   }>({
-    queryKey: ['PairAccount', pair?.chainId, pair?.liquidityToken.address, account],
+    queryKey: ['PairAccount', pair?.chainId, pair?.liquidityToken.address, account, pair?.version],
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairAccount',
         query: GET_PAIR_ACCOUNT,
         variables: {
           chainId: pair.chainId,
+          version: pair.version,
           id: `${account!.toLowerCase()}-${pair.liquidityToken.address.toLowerCase()}`,
         },
       }),
@@ -138,10 +168,24 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       )
     : rpcTotalSupply
 
+  // V2: indexer's `apr` is the gross fee APR (volume × fee / tvl × 365). Apply
+  // `1 − protocolFee` to surface the LP-side share.
+  //
+  // V3: every deployed pool today has feeSplit ≈ 1.0 (100% of trading fees
+  // routed to factory.feeTo), which would zero the LP-share computation out
+  // and the column would just show "--". Per product call, display the gross
+  // pool APR for V3 instead — it represents the pool's earning activity even
+  // though LPs aren't currently receiving a share. Revisit if/when feeSplit
+  // is lowered and LPs start earning fees directly.
+  const isV3 = isV3Like(pair.version)
+  const feeAPR =
+    shouldUseIndexer && pairStats
+      ? pairStats.apr * (isV3 ? 1 : 1 - pairStats.protocolFee)
+      : 0
   return {
     tradingFee,
     totalSupply,
-    feeAPR: (shouldUseIndexer ? pairStats.apr * (1 - pairStats.protocolFee) : 0) || 0,
+    feeAPR: feeAPR || 0,
     bgtAPR: (poolApr?.apr || 0) * 100,
     volume24h: (shouldUseIndexer ? pairStats.volumeDay : 0) || 0,
     volume7d: (shouldUseIndexer ? pairStats.volume7Day : 0) || 0,

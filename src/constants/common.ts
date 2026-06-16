@@ -12,29 +12,16 @@ export const USDC = new Token(ChainId.MAINNET, '0xA0b86991c6218b36c1d19D4a2e9Eb0
 export const USDT = new Token(ChainId.MAINNET, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6, 'USDT', 'Tether USD')
 export const WBTC = new Token(ChainId.MAINNET, '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', 8, 'WBTC', 'Wrapped BTC')
 
-// Berachain base tokens for multi-hop route discovery. Without these in
-// BASES_TO_CHECK_TRADES_AGAINST, routes like DOLO→HONEY→BERA can't be
-// found — router only checks pairs against WBERA otherwise, missing the
-// healthy DOLO/HONEY + HONEY/WBERA path.
-const BERA_HONEY = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'HONEY', 'Honey')
-const BERA_USDCE = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6E4e9568C1D3241', 6,  'USDC.e', 'Bridged USDC (Stargate)')
-const BERA_WBTC  = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
-const BERA_WETH  = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
-
 // used to construct intermediary pairs for trading
 export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   ...WETH_ONLY,
   [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET]],
   [ChainId.HYPER_EVM]: [
     ...WETH_ONLY[ChainId.HYPER_EVM],
-    new Token(ChainId.HYPER_EVM, '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb', 8, 'USDT', 'USDT'),
-  ],
-  [ChainId.BERA_MAINNET]: [
-    ...WETH_ONLY[ChainId.BERA_MAINNET],
-    BERA_HONEY,
-    BERA_USDCE,
-    BERA_WBTC,
-    BERA_WETH,
+    // USD₮0 — 6 decimals on-chain (was wrongly 8 here; the token list + pinned
+    // config already use 6). Wrong base decimals corrupt reserve math for any
+    // multi-hop route that passes through USD₮0 (off by 100×).
+    new Token(ChainId.HYPER_EVM, '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb', 6, 'USDT', 'USDT'),
   ],
 }
 
@@ -48,10 +35,22 @@ export const ADDITIONAL_BASES: { [chainId in ChainId]?: { [tokenAddress: string]
  */
 export const CUSTOM_BASES: { [chainId in ChainId]?: { [tokenAddress: string]: Token[] } } = {}
 
-// used for display in the default list when adding liquidity
+// Featured chips shown above the full token list in the search modal.
+// Per UX feedback (boss + reviewer): replace the BERA/WBERA-only chip row
+// with the top-6 by 30d volume on each chain. Currently only defined for
+// Bera; other chains fall back to WETH-only.
+const BERA_HONEY  = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'HONEY', 'Honey')
+const BERA_USDCE  = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6E4e9568C1D3241', 6,  'USDC.e', 'Bridged USDC (Stargate)')
+const BERA_WBTC   = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
+const BERA_WETH   = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
+
 export const SUGGESTED_BASES: ChainTokenList = {
   ...WETH_ONLY,
   [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET], DAI, USDC, USDT, WBTC],
+  // WBERA is already in WETH_ONLY for Bera; native BERA is added via the
+  // ETHER chip rendered separately by CommonBases. So the rendered chip row
+  // becomes: BERA, WBERA, HONEY, USDC.e, WBTC, WETH.
+  [ChainId.BERA_MAINNET]: [...WETH_ONLY[ChainId.BERA_MAINNET], BERA_HONEY, BERA_USDCE, BERA_WBTC, BERA_WETH],
 }
 
 // used to construct the list of all pairs we consider by default in the frontend
@@ -71,10 +70,15 @@ export const PINNED_PAIRS: { readonly [chainId in ChainId]?: [Token, Token][] } 
   ],
 }
 
-// default allowed slippage, in bips (0.5% — suitable for BrownFi's K=0.01 low-impact AMM)
-export const INITIAL_ALLOWED_SLIPPAGE = 1000
-// 20 minutes, denominated in seconds
-export const DEFAULT_DEADLINE_FROM_NOW = 60 * 20
+// Default allowed slippage, in 1/10000 (1 = 0.01%). 50 = 0.5%.
+// Was 1000 (10%), which is too permissive for new users — caused the kind of
+// price-impact loss the reviewer flagged. CowSwap is at 0.56%, Kodiak 0.3%,
+// Uniswap uses dynamic auto-slippage. 0.5% is a safe middle ground; advanced
+// users can raise it explicitly.
+export const INITIAL_ALLOWED_SLIPPAGE = 50
+// 10 minutes, denominated in seconds. Was 20 — long enough that stuck txns
+// became a real complaint. Reduced to 10 to surface pending issues faster.
+export const DEFAULT_DEADLINE_FROM_NOW = 60 * 10
 
 // used for rewards deadlines
 export const BIG_INT_SECONDS_IN_WEEK = JSBI.BigInt(60 * 60 * 24 * 7)

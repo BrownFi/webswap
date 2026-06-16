@@ -1,27 +1,30 @@
-import { Currency, ETHER, Pair, getRouterAddress } from '@brownfi/sdk'
-import { useQuery } from '@tanstack/react-query'
+import { ChainId, Currency, ETHER, Field as PythField, Pair, RPC_URLS } from '@brownfi/sdk'
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { Dots } from 'components/swap/styleds'
-import { useToast } from 'containers/ToastProvider'
+import { TransactionConfirmationModal, TransactionErrorContent } from 'components/TransactionConfirmationModal'
 import { PairState } from 'data/Reserves'
 import { useActiveWeb3React } from 'hooks'
 import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
+import { useBestZapInRoute, ZapChoice } from 'hooks/useBestZapRoute'
+import { usePythPrices } from 'hooks/usePythPrices'
+import { ZapRouteComparison } from 'components/swap/ZapRouteComparison'
+import { ZapRoutePreview } from './ZapRoutePreview'
 import { useCallback, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Field } from 'state/mint/actions'
 import { tryParseAmount } from 'state/swap/hooks'
 import { useCurrencyBalance } from 'state/wallet/hooks'
+import { useTransactionAdder } from 'state/transactions/hooks'
 import { useUserSlippageTolerance } from 'state/user/hooks'
+import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-import { getV3ZapEstimate, buildV3UpdateData, executeV3ZapIn } from 'utils/v3Zap'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
-import { Text } from 'components/Rebass'
-import { BigNumber } from '@ethersproject/bignumber'
-import { formatNumber } from 'utils/prices'
+import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
 
 type V3ZapFormProps = {
   pair?: Pair
@@ -30,87 +33,71 @@ type V3ZapFormProps = {
   allowedSlippage: number
 }
 
-export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3ZapFormProps) {
+export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   const { account, chainId, library } = useActiveWeb3React()
-  const { createToast } = useToast()
   const deadline = useTransactionDeadline()
   const [slippage] = useUserSlippageTolerance()
+  const addTransaction = useTransactionAdder()
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | undefined>(
     currencies[Field.CURRENCY_A] ?? undefined,
   )
   const [amount, setAmount] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [txHash, setTxHash] = useState<string>('')
+  const [errorMessage, setErrorMessage] = useState<string | undefined>()
 
   const balance = useCurrencyBalance(account ?? undefined, selectedCurrency)
   const parsedAmount = useMemo(() => tryParseAmount(amount, selectedCurrency), [amount, selectedCurrency])
 
   const isNativeETH = selectedCurrency === ETHER
-
-  const wrappedTokenIn = useMemo(
-    () => wrappedCurrency(selectedCurrency, chainId ?? undefined),
-    [selectedCurrency, chainId],
-  )
-
-  // Determine the "other" token in the pair
-  const wrappedTokenOther = useMemo(() => {
-    if (!pair || !wrappedTokenIn) return undefined
-    if (pair.token0.address === wrappedTokenIn.address) return pair.token1
-    if (pair.token1.address === wrappedTokenIn.address) return pair.token0
-    return undefined
-  }, [pair, wrappedTokenIn])
-
   const symbol = useMemo(() => getTokenSymbol(selectedCurrency, chainId ?? undefined), [selectedCurrency, chainId])
-  const otherSymbol = useMemo(() => {
-    if (!wrappedTokenOther) return ''
-    return wrappedTokenOther.symbol ?? ''
-  }, [wrappedTokenOther])
 
-  // Approval to V3 router
-  const routerAddress = useMemo(() => (chainId ? getRouterAddress(chainId, 3) : undefined), [chainId])
-  const [approval, approveCallback] = useApproveCallback(parsedAmount, routerAddress)
-  const needsApproval = !isNativeETH && approval !== ApprovalState.APPROVED
+  // Hand the orchestration hook a stable inputs array — useMemo so identity
+  // changes only when the underlying amount/token changes, not on every render.
+  const zapInputs = useMemo(() => {
+    if (!selectedCurrency || !parsedAmount) return []
+    return [{ currency: selectedCurrency, amountRaw: parsedAmount.raw.toString() }]
+  }, [selectedCurrency, parsedAmount])
 
-  // Fetch V3 zap estimate
-  const estimateQueryKey = useMemo(
-    () => [
-      'v3ZapEstimate',
-      chainId,
-      wrappedTokenIn?.address,
-      wrappedTokenOther?.address,
-      parsedAmount?.raw.toString(),
-      slippage,
-    ],
-    [chainId, wrappedTokenIn, wrappedTokenOther, parsedAmount, slippage],
-  )
+  const deadlineSeconds = useMemo(() => (deadline ? Number(deadline.toString()) : 0), [deadline])
 
-  const isEstimateEnabled = Boolean(
-    chainId && wrappedTokenIn && wrappedTokenOther && parsedAmount?.greaterThan('0'),
-  )
+  // User's manual engine preference. 'auto' = best LP-out wins (default);
+  // 'native' = pin BrownFi V3 router; 'kyber' = pin Kyber zap. The hook
+  // honors the pin when that source has a route; falls back to native
+  // then best-available when the pinned source returns no route, so the
+  // user is never stuck.
+  const [zapSource, setZapSource] = useState<ZapChoice>('auto')
 
-  const { data: estimatedOutput, isFetching: isFetchingEstimate } = useQuery({
-    queryKey: estimateQueryKey,
-    queryFn: () =>
-      getV3ZapEstimate(
-        chainId!,
-        wrappedTokenIn!.address,
-        wrappedTokenOther!.address,
-        parsedAmount!.raw.toString(),
-        slippage,
-      ),
-    enabled: isEstimateEnabled,
-    refetchInterval: 15_000,
+  // Fans out native + Kyber zap quotes in parallel; returns the winner +
+  // every adapter's status (success / no-route / loading). The form
+  // renders all attempts so the user can see why an engine didn't show
+  // up (e.g. Kyber doesn't index V3 pools yet) instead of guessing.
+  const { best, attempts, isLoading: isLoadingRoutes } = useBestZapInRoute({
+    pair,
+    inputs: zapInputs,
+    account: account ?? undefined,
+    slippageBps: slippage,
+    deadline: deadlineSeconds,
+    selected: zapSource,
   })
 
-  // Validation
+  // Approval target moves with the chosen engine. Native = V3 router;
+  // Kyber = Kyber's router. If the winner flips across refetches and
+  // the user already approved the previous one, useApproveCallback will
+  // surface the new approval state automatically.
+  const [approval, approveCallback] = useApproveCallback(parsedAmount, best?.routerAddress)
+  const needsApproval = !isNativeETH && approval !== ApprovalState.APPROVED
+
   const error = useMemo(() => {
     if (!chainId || !account || !library) return 'Connect Wallet'
     if (!selectedCurrency) return 'Select a token'
     if (!parsedAmount || !parsedAmount.greaterThan('0')) return 'Enter an amount'
-    if (!wrappedTokenOther) return 'Token not in this pool'
     if (balance && parsedAmount.greaterThan(balance)) return `Insufficient ${symbol ?? ''} balance`.trim()
+    if (!isLoadingRoutes && !best) return 'No zap route'
     return undefined
-  }, [chainId, account, library, selectedCurrency, parsedAmount, wrappedTokenOther, balance, symbol])
+  }, [chainId, account, library, selectedCurrency, parsedAmount, balance, symbol, isLoadingRoutes, best])
 
   const isValid = !error
 
@@ -124,53 +111,195 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
     setAmount('')
   }, [])
 
+  const summaryAmount = parsedAmount?.toSignificant(6)
+  const pairLabel = useMemo(
+    () => (pair ? `${pair.token0.symbol ?? '?'}/${pair.token1.symbol ?? '?'}` : 'pool'),
+    [pair],
+  )
+  const pendingText = useMemo(
+    () => `Zapping ${summaryAmount ?? ''} ${symbol ?? ''} into ${pairLabel}`,
+    [summaryAmount, symbol, pairLabel],
+  )
+  const submittedText = useMemo(
+    () => `Zapped ${summaryAmount ?? ''} ${symbol ?? ''} into ${pairLabel}`,
+    [summaryAmount, symbol, pairLabel],
+  )
+
+  const handleDismissConfirm = useCallback(() => {
+    setShowConfirm(false)
+    if (txHash) setAmount('')
+    setTxHash('')
+    setErrorMessage(undefined)
+  }, [txHash])
+
   const handleSubmit = useCallback(async () => {
-    if (!chainId || !account || !library || !parsedAmount || !wrappedTokenIn || !wrappedTokenOther || !deadline) return
+    if (!chainId || !account || !library || !best || !deadline) return
+
+    setErrorMessage(undefined)
+    setTxHash('')
+    setShowConfirm(true)
+    setIsSubmitting(true)
 
     try {
-      setIsSubmitting(true)
+      // Look up the adapter that produced this quote and ask it to build
+      // calldata. The orchestration hook keeps `quote` opaque — only the
+      // adapter knows how to translate its own routeSummary back into a tx.
+      const adapter = getZapAggregatorById(best.source)
+      if (!adapter) throw new Error(`Zap adapter ${best.source} not registered`)
 
-      const updateData = await buildV3UpdateData(
-        [wrappedTokenIn.address, wrappedTokenOther.address],
+      const built = await adapter.buildZapIn({
         chainId,
-      )
-
-      const amountOtherMin = estimatedOutput?.amountOtherMin?.toString() ?? '0'
-
-      const response = await executeV3ZapIn({
-        chainId,
-        library,
         account,
-        tokenIn: wrappedTokenIn.address,
-        tokenOther: wrappedTokenOther.address,
-        amountIn: parsedAmount.raw.toString(),
-        amountOtherMin,
-        deadline: BigNumber.from(deadline.toString()),
-        updateData,
-        isNativeETH,
+        quote: best.quote,
         slippageBps: slippage,
+        deadline: deadlineSeconds,
       })
 
+      const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : undefined
+      if (!signer) throw new Error('No signer available')
+
+      // Kyber under-estimates gas on multi-hop routes; resolve a live estimate
+      // (×1.25) at send time, falling back to the adapter hint. See
+      // utils/estimateGasWithMargin.
+      const gasLimit = await estimateGasWithMargin(
+        signer,
+        { to: built.to, data: built.data, value: built.value },
+        built.gasLimit,
+      )
+
+      const tx = await signer.sendTransaction({
+        to: built.to,
+        data: built.data,
+        ...(built.value ? { value: built.value } : {}),
+        ...(gasLimit ? { gasLimit } : {}),
+      })
+
+      setTxHash(tx.hash)
+      addTransaction(tx, { summary: submittedText })
       setIsSubmitting(false)
-      setAmount('')
-      if (response) {
-        createToast('Zap Successful', 'success')
-      }
     } catch (err) {
       setIsSubmitting(false)
-      if (isUserRejection(err as any)) return
       console.error('V3 Zap transaction failed:', err)
-      createToast(parseZapError(err), 'error')
+      if (isUserRejection(err as any)) {
+        setShowConfirm(false)
+        return
+      }
+      setErrorMessage(parseZapError(err))
     }
-  }, [chainId, account, library, parsedAmount, wrappedTokenIn, wrappedTokenOther, deadline, estimatedOutput, isNativeETH, createToast])
+  }, [chainId, account, library, best, deadline, deadlineSeconds, slippage, addTransaction, submittedText])
 
-  const halfAmount = parsedAmount ? Number(parsedAmount.toExact()) / 2 : 0
-  const estimatedOther = estimatedOutput
-    ? Number(estimatedOutput.amountOut) / Math.pow(10, wrappedTokenOther?.decimals ?? 18)
-    : 0
+  const showRoutesCard = Boolean(parsedAmount?.greaterThan('0') && pair)
+
+  // -- Zap route preview (Initial USD / Estimated USD / Price impact) --
+  // Computed client-side from Pyth prices + pool reserves + a one-shot
+  // totalSupply read. Mirrors what V2 zap shows from Kyber's zapDetails
+  // when its Kyber-driven, except here we synthesize the figures from
+  // first principles since native V3 quotes don't ship USD-denominated
+  // fields. When Kyber V3 indexing lands later, the same panel can
+  // switch to best.quote.routeSummary.zapDetails for `best.source === 'kyber'`.
+  const pythPrices = usePythPrices({
+    chainId: (chainId ?? 0) as ChainId,
+    currencyA: pair?.token0,
+    currencyB: pair?.token1,
+  })
+  const pythPrice0 = pythPrices[PythField.CURRENCY_A]
+  const pythPrice1 = pythPrices[PythField.CURRENCY_B]
+
+  // Pair's LP totalSupply. Not on Pair instance — one-shot viem read,
+  // cached 60s. Skipped until pair is determined.
+  const { data: totalSupplyRaw } = useQuery({
+    queryKey: ['v3-zap-total-supply', chainId, pair?.liquidityToken.address],
+    queryFn: async () => {
+      const { createPublicClient, http } = await import('viem')
+      const client = createPublicClient({ transport: http(RPC_URLS[chainId!]) })
+      const supply = await client.readContract({
+        address: pair!.liquidityToken.address as `0x${string}`,
+        abi: [{ inputs: [], name: 'totalSupply', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,
+        functionName: 'totalSupply',
+      })
+      return supply as bigint
+    },
+    enabled: Boolean(chainId && pair?.liquidityToken.address),
+    staleTime: 60_000,
+  })
+
+  const zapPreview = useMemo(() => {
+    if (!best || !pair || !parsedAmount) return null
+    if (!pythPrice0 || !pythPrice1) return null
+
+    // Input USD — resolve which pool side matches the selected input.
+    // ETHER maps to whichever pool token is the wrapped native.
+    const wrapped = wrappedCurrency(selectedCurrency, chainId)
+    let inputPythPrice = 0
+    let inputIsToken0 = false
+    if (wrapped) {
+      if (wrapped.address.toLowerCase() === pair.token0.address.toLowerCase()) {
+        inputPythPrice = pythPrice0
+        inputIsToken0 = true
+      } else if (wrapped.address.toLowerCase() === pair.token1.address.toLowerCase()) {
+        inputPythPrice = pythPrice1
+      }
+    }
+    const inputAmount = Number(parsedAmount.toExact())
+    const initialUsd = inputAmount * inputPythPrice
+    if (!isFinite(initialUsd) || initialUsd <= 0) return null
+
+    // Estimated value after zap — computed from VALUE FLOW, not from the LP
+    // reserve formula. BrownFi V3 is oracle-priced (reserves aren't pinned to
+    // price), so a reserve-share estimate misreports impact on imbalanced
+    // pools. A single-sided zap keeps ~half the input as-is and swaps the
+    // other half into `other`; the only real value change is the swap
+    // spread/fee on the swapped half:
+    //   estimatedUsd = (kept half value) + (swap output value)
+    // `amountOther` is the raw (pre-slippage) half-swap output from the
+    // native quote, in `other` token units.
+    const route = best.quote?.routeSummary as { amountOther?: string } | undefined
+    let estimatedUsd: number | undefined
+    if (route?.amountOther != null) {
+      const otherToken = inputIsToken0 ? pair.token1 : pair.token0
+      const otherPythPrice = inputIsToken0 ? pythPrice1 : pythPrice0
+      const amountOtherTokens = Number(route.amountOther) / 10 ** otherToken.decimals
+      const swapOutputUsd = amountOtherTokens * otherPythPrice
+      const keptHalfUsd = (inputAmount / 2) * inputPythPrice
+      estimatedUsd = keptHalfUsd + swapOutputUsd
+    } else if (totalSupplyRaw) {
+      // Fallback (e.g. future Kyber V3): value the minted LP by reserve share.
+      // estimateLpOut is now oracle-aware, so this stays consistent.
+      const reserve0 = Number(pair.reserve0.raw.toString()) / 10 ** pair.token0.decimals
+      const reserve1 = Number(pair.reserve1.raw.toString()) / 10 ** pair.token1.decimals
+      const tvlUsd = reserve0 * pythPrice0 + reserve1 * pythPrice1
+      const supply = Number(totalSupplyRaw) / 10 ** 18 // LP always 18 decimals
+      const lpOut = Number(best.lpOut.toString()) / 10 ** 18
+      if (isFinite(tvlUsd) && tvlUsd > 0 && supply > 0 && lpOut > 0) {
+        estimatedUsd = (lpOut / supply) * tvlUsd
+      }
+    }
+    if (estimatedUsd === undefined || !isFinite(estimatedUsd)) return null
+
+    // Price impact = value lost going from raw input to LP. Negative = loss
+    // (typical: the swap spread/fee); positive = rounding gain.
+    const impactPct = ((estimatedUsd - initialUsd) / initialUsd) * 100
+    return { initialUsd, estimatedUsd, impactPct }
+  }, [best, pair, parsedAmount, totalSupplyRaw, pythPrice0, pythPrice1, selectedCurrency, chainId])
 
   return (
     <AutoColumn gap="20px">
+      <TransactionConfirmationModal
+        isOpen={showConfirm}
+        onDismiss={handleDismissConfirm}
+        attemptingTxn={isSubmitting}
+        hash={txHash}
+        pendingText={pendingText}
+        submittedText={submittedText}
+        content={() =>
+          errorMessage ? (
+            <TransactionErrorContent onDismiss={handleDismissConfirm} message={errorMessage} />
+          ) : (
+            <div />
+          )
+        }
+      />
+
       <CurrencyInputPanel
         value={amount}
         onUserInput={setAmount}
@@ -183,35 +312,37 @@ export function V3ZapForm({ pair, pairState, currencies, allowedSlippage }: V3Za
         label="You Pay"
       />
 
-      {isEstimateEnabled && (isFetchingEstimate || estimatedOutput) && (
-        <div className="px-4 py-3 rounded-lg bg-white/5 text-sm text-white/70">
-          {isFetchingEstimate ? (
-            <Dots>Fetching estimate</Dots>
-          ) : estimatedOutput ? (
-            <>
-              <Text fontSize={13} color="white" opacity={0.7}>
-                Estimated: swap {formatNumber(halfAmount)} {symbol} &rarr; {formatNumber(estimatedOther)} {otherSymbol}
-              </Text>
-              <Text fontSize={12} color="white" opacity={0.5} style={{ marginTop: 4 }}>
-                Then add liquidity with both tokens
-              </Text>
-            </>
-          ) : null}
-        </div>
+      {showRoutesCard && (
+        <ZapRouteComparison
+          attempts={attempts}
+          selected={zapSource}
+          onSelect={setZapSource}
+          isLoading={isLoadingRoutes && attempts.every((a) => a.status === 'loading')}
+        />
+      )}
+
+      {/* Shared ZapRoutePreview component — same look as V2 zap so users
+          see one consistent panel across both versions. Synthesizes USD
+          figures client-side for V3 (native quote has no USD fields);
+          will switch to Kyber's zapDetails when V3 indexing lands and
+          best.source becomes 'kyber'. */}
+      {showRoutesCard && zapPreview && (
+        <ZapRoutePreview
+          initialUsd={zapPreview.initialUsd}
+          finalUsd={zapPreview.estimatedUsd}
+          priceImpactPct={zapPreview.impactPct}
+        />
       )}
 
       {needsApproval && isValid && (
-        <ButtonPrimary
-          onClick={approveCallback}
-          disabled={approval === ApprovalState.PENDING}
-        >
+        <ButtonPrimary onClick={approveCallback} disabled={approval === ApprovalState.PENDING}>
           {approval === ApprovalState.PENDING ? <Dots>Approving {symbol}</Dots> : `Approve ${symbol}`}
         </ButtonPrimary>
       )}
 
       <ButtonError
         onClick={handleSubmit}
-        disabled={!isValid || (needsApproval && !isNativeETH) || isSubmitting || (!estimatedOutput && isEstimateEnabled)}
+        disabled={!isValid || (needsApproval && !isNativeETH) || isSubmitting || isLoadingRoutes}
         error={Boolean(error && parsedAmount?.greaterThan('0'))}
       >
         {error ?? (isSubmitting ? <Dots>Submitting</Dots> : 'Zap & Supply')}

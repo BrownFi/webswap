@@ -1,3 +1,4 @@
+import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId } from '../constants/chainId'
@@ -301,7 +302,7 @@ export async function addLiquidity(
       amountsMin[tokenBIsETH ? Field.CURRENCY_B : Field.CURRENCY_A].toString(),
       // V3 router takes an extra minLiquidity before `to`. We don't expose
       // a minimum LP value yet, so pass 0 to match the "no minimum" semantics.
-      ...(version === 3 ? ['0'] : []),
+      ...(isV3Like(version) ? ['0'] : []),
       account,
       deadline.toHexString(),
     ]
@@ -338,7 +339,7 @@ export async function addLiquidity(
       amountsMin[Field.CURRENCY_A].toString(),
       amountsMin[Field.CURRENCY_B].toString(),
       // V3 router takes an extra minLiquidity before `to`; see note above.
-      ...(version === 3 ? ['0'] : []),
+      ...(isV3Like(version) ? ['0'] : []),
       account,
       deadline.toHexString(),
     ]
@@ -361,7 +362,7 @@ export async function addLiquidity(
   // `(1 - allowedSlippage)` on it. Pyth prices move between simulation and
   // inclusion, so this prevents the user from receiving fewer LP tokens than
   // they bargained for — same model `amountAMin` uses for the inputs.
-  if (version === 3) {
+  if (isV3Like(version)) {
     const isEthPair = currencyA === ETHER || currencyB === ETHER
     const methodName = isEthPair ? 'addLiquidityETH' : 'addLiquidity'
     // Slot of minLiquidity in args (right before `to`).

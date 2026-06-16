@@ -1,6 +1,7 @@
 import { INITIAL_ALLOWED_SLIPPAGE, DEFAULT_DEADLINE_FROM_NOW } from 'constants/common'
 import { createReducer } from '@reduxjs/toolkit'
 import { updateVersion } from 'state/global/actions'
+import type { AggregatorChoice } from 'services/aggregators/types'
 import {
   addSerializedPair,
   addSerializedToken,
@@ -15,6 +16,7 @@ import {
   updateUserDeadline,
   toggleURLWarning,
   updateUserSingleHopOnly,
+  updateSelectedAggregator,
 } from './actions'
 
 const currentTimestamp = () => new Date().getTime()
@@ -22,6 +24,11 @@ const currentTimestamp = () => new Date().getTime()
 export interface UserState {
   // the timestamp of the last updateVersion action
   lastUpdateVersionTimestamp?: number
+
+  // One-shot flag for the 10%→0.5% slippage / 20m→10m deadline migration.
+  // updateVersion fires on every app load, so we need a persisted marker to
+  // avoid overwriting users who deliberately set 10% slippage themselves.
+  safeDefaultsMigrated?: boolean
 
   userDarkMode: boolean | null // the user's choice for dark mode or light mode
   matchesDarkMode: boolean // whether the dark mode media query matches
@@ -35,6 +42,11 @@ export interface UserState {
 
   // deadline set by user in minutes, used in all txns
   userDeadline: number
+
+  // Smart-router preference. 'auto' = pick best amountOut among native +
+  // every supported aggregator; 'native' = force BrownFi pools only; any
+  // AggregatorId = force that aggregator (falls back to native if no route).
+  selectedAggregator: AggregatorChoice
 
   tokens: {
     [chainId: number]: {
@@ -64,6 +76,7 @@ export const initialState: UserState = {
   userSingleHopOnly: false,
   userSlippageTolerance: INITIAL_ALLOWED_SLIPPAGE,
   userDeadline: DEFAULT_DEADLINE_FROM_NOW,
+  selectedAggregator: 'auto',
   tokens: {},
   pairs: {},
   timestamp: currentTimestamp(),
@@ -83,6 +96,30 @@ export default createReducer(initialState, (builder) =>
       // noinspection SuspiciousTypeOfGuard
       if (typeof state.userDeadline !== 'number') {
         state.userDeadline = DEFAULT_DEADLINE_FROM_NOW
+      }
+
+      // Smart-router policy: ALWAYS reset to 'auto' on app boot.
+      // updateVersion fires once on store init (state/index.ts), so this
+      // gives the user a fresh auto-tracking session every page load —
+      // a stale pin from yesterday won't silently route them through a
+      // worse-amountOut source today. The pin still works within a
+      // session (click a row to override for this swap), it just
+      // doesn't survive a reload.
+      state.selectedAggregator = 'auto'
+
+      // One-time migration: existing users who never customized their slippage
+      // / deadline carried the old unsafe defaults (10% slippage, 20m deadline)
+      // in their persisted Redux state. Move them onto the new safer defaults
+      // (0.5% / 10m), ONCE. After this runs we flip safeDefaultsMigrated so a
+      // user who deliberately re-selects 10% won't get reset on next reload.
+      if (!state.safeDefaultsMigrated) {
+        if (state.userSlippageTolerance === 1000) {
+          state.userSlippageTolerance = INITIAL_ALLOWED_SLIPPAGE
+        }
+        if (state.userDeadline === 60 * 20) {
+          state.userDeadline = DEFAULT_DEADLINE_FROM_NOW
+        }
+        state.safeDefaultsMigrated = true
       }
 
       state.lastUpdateVersionTimestamp = currentTimestamp()
@@ -148,5 +185,9 @@ export default createReducer(initialState, (builder) =>
     })
     .addCase(toggleURLWarning, (state) => {
       state.URLWarningVisible = !state.URLWarningVisible
+    })
+    .addCase(updateSelectedAggregator, (state, action) => {
+      state.selectedAggregator = action.payload.selectedAggregator
+      state.timestamp = currentTimestamp()
     }),
 )
