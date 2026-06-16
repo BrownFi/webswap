@@ -368,7 +368,7 @@ export default function AddLiquidity() {
             </span>
           )}
           <div className="ml-auto">
-            <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} version={version} />
+            <SwitchZap enabled={useZap} onToggle={() => setUseZap((prev) => !prev)} />
           </div>
         </div>
 

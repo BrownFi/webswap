@@ -550,7 +550,6 @@ export default function RemoveLiquidity() {
 
                   <SwitchZap
                     enabled={useZap}
-                    version={version}
                     onToggle={() => {
                       setUseZap((prev) => !prev)
                     }}

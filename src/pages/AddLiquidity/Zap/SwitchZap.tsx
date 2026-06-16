@@ -1,16 +1,15 @@
-import { isV3Like } from '@brownfi/sdk'
 import { isMainnet } from 'connectors'
 
 type SwitchZapProps = {
   enabled: boolean
   onToggle: () => void
-  version?: number
 }
 
-export const SwitchZap = ({ enabled, onToggle, version }: SwitchZapProps) => {
-  // V3: always show zap toggle (not gated by mainnet)
-  // V2 and below: keep existing behavior
-  if (!isV3Like(version) && isMainnet) return null
+export const SwitchZap = ({ enabled, onToggle }: SwitchZapProps) => {
+  // Zap is HIDDEN on production (mainnet) for ALL versions (V2 + V3). beta/dev
+  // keep it for testing. `useZap` defaults false and this toggle is the only
+  // way to enable it, so hiding it = classic-only on production.
+  if (isMainnet) return null
   return (
     <div
       onClick={onToggle}
