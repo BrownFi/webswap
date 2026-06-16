@@ -148,9 +148,8 @@ const SERIES_ALL: SeriesMeta[] = [
   { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
-// Gitbook explainer for the LP-vs-UniV2 benchmark shown under the V3 chart.
-// TODO(team): replace '#' with the final gitbook page URL when provided.
-const LEARN_MORE_URL = '#'
+// GitBook explainer for the LP-vs-UniV2 benchmark shown under the V3 chart.
+const LEARN_MORE_URL = 'https://brownfi.gitbook.io/brownfi-docs/brownfi-v3/benchmark'
 
 type Props = {
   pair: Pair

@@ -78,13 +78,16 @@ const Footer = () => {
           >
             Blog
           </a>
-          <span
-            aria-disabled="true"
-            style={{ fontFamily: 'Inter', fontSize: '18px', fontWeight: 500, color: '#A1A1A1', opacity: 0.5, cursor: 'not-allowed' }}
-            title="Docs coming soon"
+          <a
+            href="https://brownfi.gitbook.io/brownfi-docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontFamily: 'Inter', fontSize: '18px', fontWeight: 500, color: '#A1A1A1', textDecoration: 'none' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#FBFBFD')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#A1A1A1')}
           >
             Docs
-          </span>
+          </a>
           {/* Social icons */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {[
