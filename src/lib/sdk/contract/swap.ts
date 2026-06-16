@@ -146,10 +146,16 @@ export async function callSwapContract(
             const expectedIn = BigNumber.from(amounts[0])
             args[limitIdx] = expectedIn.mul(10000 + slippageBps).div(10000).toString()
           }
-        } catch (simErr) {
-          // Let the existing gas-estimation path catch this and surface the
-          // real revert reason to the user. Don't silently proceed with the
-          // stale bound.
+        } catch {
+          // Pre-sim failed (transient RPC/Pyth blip, or a genuine revert).
+          // `simArgs` was a throwaway COPY — `args[limitIdx]` still holds the
+          // original slippage-protected bound from trade construction
+          // (minimumAmountOut / maximumAmountIn), so it is safe to proceed; we
+          // simply skip the tighter re-derived bound for this attempt. We
+          // intentionally do NOT re-throw: a transient simulation failure must
+          // not block a swap whose constructed bound is already valid. The
+          // gas-estimation + callStatic below still surface any genuine revert
+          // reason to the user.
         }
       }
 

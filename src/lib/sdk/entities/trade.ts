@@ -409,7 +409,7 @@ export class Trade {
         // Recursion / Route / computeAmount threw unexpectedly — treat as
         // transient so the hook retries rather than locking in a missing route.
         bestTrades.transientError = true
-        console.warn('======= bestTradeExactIn iteration error', error)
+        console.warn('bestTradeExactIn iteration error', error)
         return
       }
     })
@@ -515,7 +515,7 @@ export class Trade {
         }
       } catch (error) {
         bestTrades.transientError = true
-        console.warn('======= bestTradeExactOut iteration error', error)
+        console.warn('bestTradeExactOut iteration error', error)
         continue
       }
     }
