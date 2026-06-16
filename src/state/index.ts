@@ -13,7 +13,11 @@ import multicall from './multicall/reducer'
 import { chainSlice } from './chainSlice'
 import { versionSlice } from './versionSlice'
 
-const PERSISTED_KEYS: string[] = ['user', 'transactions', 'lists', chainSlice.name, versionSlice.name]
+// `version` is intentionally NOT persisted: the toggle always defaults to V3
+// (see versionSlice initialState) so every visitor — new or returning — lands
+// on V3. Persisting it would keep returning users on a stale V2 selection and
+// defeat the V3-by-default behavior. In-session toggling still works.
+const PERSISTED_KEYS: string[] = ['user', 'transactions', 'lists', chainSlice.name]
 
 const store = configureStore({
   reducer: {
