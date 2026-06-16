@@ -407,7 +407,7 @@ export function useDerivedSwapInfo(): {
     },
     {
       source: 'brownfi-v3-official' as const,
-      sourceName: 'BrownFi V3 Official',
+      sourceName: 'BrownFi V3',
       supported: chainSupportsV3Official,
       reason: nativeReason(v3OfficialTrade, officialFlags),
     },
