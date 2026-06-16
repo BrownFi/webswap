@@ -160,16 +160,17 @@ const PairChartTVInner = ({ pair }: Props) => {
   const showExtendedMetrics = !isMainnet
   const supportsUniV2 = hasUniV2Price(pair.chainId)
   const isV3 = isV3Like(pair.version)
-  // Production V3 chart shows exactly three lines: LP price, UniV2 price, and
-  // LP − UniV2 (per release spec). The default-visible flags below mirror this.
+  // Production V3 chart shows LP price, UniV2 price, LP − UniV2, and volume.
+  // The default-visible flags below mirror this.
   const v3ProdChart = isV3 && !showExtendedMetrics && supportsUniV2
   const availableSeries = useMemo(() => {
     if (!showExtendedMetrics) {
-      // Production: V3 → LP price + UniV2 price + LP−UniV2 (when uniV2 data is
-      // available, e.g. V3-Official Bera via Goldsky); V2 → minimal LP + volume.
+      // Production: V3 → LP price + UniV2 price + LP−UniV2 + volume (when uniV2
+      // data is available, e.g. V3-Official Bera via Goldsky); V2 → LP + volume.
       if (v3ProdChart) {
         return SERIES_ALL.filter(
-          (s) => s.key === 'lpPrice' || s.key === 'uniV2Price' || s.key === 'lpMinusUniV2',
+          (s) =>
+            s.key === 'lpPrice' || s.key === 'uniV2Price' || s.key === 'lpMinusUniV2' || s.key === 'volume',
         )
       }
       return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
