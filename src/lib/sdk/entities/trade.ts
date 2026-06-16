@@ -139,7 +139,15 @@ export interface BestTradeOptions {
  *   doesn't leave the route permanently missing while a genuinely empty pool
  *   still reports "insufficient" immediately.
  */
-export type TradeList = Trade[] & { maxExceeded?: boolean; transientError?: boolean; maxInputRaw?: string }
+export type TradeList = Trade[] & {
+  maxExceeded?: boolean
+  transientError?: boolean
+  maxInputRaw?: string
+  /** Raw revert info from a non-cap business rejection (insufficient reserves,
+   *  oracle guard, …), carried verbatim so the hook layer can decode it into a
+   *  user-facing reason without coupling the SDK to the app's error registry. */
+  failRevert?: { selector?: string; data?: string; message?: string }
+}
 
 export class Trade {
   public readonly route: Route
@@ -363,6 +371,12 @@ export class Trade {
         if ((error as any)?.isMaxAmountOutExceededError) {
           bestTrades.maxExceeded = true
           if ((error as any).maxIn) bestTrades.maxInputRaw = (error as any).maxIn
+        } else if (!bestTrades.failRevert && (error as any)?.revertSelector !== undefined) {
+          bestTrades.failRevert = {
+            selector: (error as any).revertSelector,
+            data: (error as any).revertData,
+            message: (error as any).revertMessage,
+          }
         }
         return
       }
@@ -467,6 +481,12 @@ export class Trade {
         if ((error as any)?.isMaxAmountOutExceededError) {
           bestTrades.maxExceeded = true
           if ((error as any).maxIn) bestTrades.maxInputRaw = (error as any).maxIn
+        } else if (!bestTrades.failRevert && (error as any)?.revertSelector !== undefined) {
+          bestTrades.failRevert = {
+            selector: (error as any).revertSelector,
+            data: (error as any).revertData,
+            message: (error as any).revertMessage,
+          }
         }
         continue
       }

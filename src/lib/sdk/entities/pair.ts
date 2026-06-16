@@ -293,7 +293,18 @@ function v3QuoteError(err: any): Error {
     }
     return new MaxAmountOutExceededError(maxIn)
   }
-  return new InsufficientReservesError()
+  // Non-cap revert (insufficient reserves, oracle guard, stale price, …). The
+  // SDK stays decoupled from the app's error registry, so we only ATTACH the
+  // raw revert bytes/message here; the hook layer (decodeContractErrorLabel)
+  // turns them into a user-facing reason for the route comparison.
+  const e = new InsufficientReservesError()
+  ;(e as any).revertSelector = sel
+  ;(e as any).revertData = extractRevertData(err)
+  ;(e as any).revertMessage =
+    (typeof err?.shortMessage === 'string' && err.shortMessage) ||
+    (typeof err?.message === 'string' && err.message) ||
+    undefined
+  return e
 }
 
 let PAIR_ADDRESS_CACHE: Record<string, Record<string, string>> = {}
