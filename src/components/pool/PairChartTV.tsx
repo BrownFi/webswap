@@ -148,6 +148,10 @@ const SERIES_ALL: SeriesMeta[] = [
   { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
+// Gitbook explainer for the LP-vs-UniV2 benchmark shown under the V3 chart.
+// TODO(team): replace '#' with the final gitbook page URL when provided.
+const LEARN_MORE_URL = '#'
+
 type Props = {
   pair: Pair
 }
@@ -622,7 +626,28 @@ const PairChartTVInner = ({ pair }: Props) => {
         ))}
       </div>
 
-    
+      {/* V3 benchmark hint — explains the LP-vs-UniV2 comparison. Shown only on
+          the V3 chart where the UniV2 benchmark line is present. */}
+      {isV3 && supportsUniV2 && (
+        <p
+          className="text-[11px] sm:text-[12px] mt-3 leading-snug w-full text-center"
+          style={{ color: '#978A80', fontFamily: 'Inter' }}
+        >
+          The UniV2 constant-product curve serves as the benchmark for measuring BrownFi pool performance. The LP line
+          should sit above the UniV2 line, with the gap widening over time, reflecting BrownFi V3&apos;s lower IL and
+          higher fee yield compared to UniV2.{' '}
+          <a
+            href={LEARN_MORE_URL}
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: '#D8A072', textDecoration: 'underline', whiteSpace: 'nowrap' }}
+          >
+            Learn More
+          </a>
+        </p>
+      )}
+
+
     </div>
   )
 }
