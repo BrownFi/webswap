@@ -15,10 +15,32 @@ const QUOTE_RETRY_DELAY_MS = 1500
 import { BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES, ADDITIONAL_BASES } from 'constants/common'
 import { PairState, usePairs } from 'data/Reserves'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
-
+import { decodeContractErrorLabel, decodeContractErrorCode } from 'utils/decodeContractError'
+import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from './index'
 import { useUnsupportedTokens } from './Tokens'
 import { useUserSingleHopOnly } from 'state/user/hooks'
+
+/**
+ * Turn a raw revert carrier into the route-comparison reason string. Production
+ * shows the friendly label (e.g. "Price feed unstable"); beta/dev appends the
+ * raw contract code (e.g. "… (Oracle: DISCREPANCY_TOO_HIGH)") so the team can
+ * grep/identify the exact revert without a wallet trace.
+ */
+const buildReason = (failRevert?: { selector?: string; data?: string; message?: string }): string | undefined => {
+  if (!failRevert) return undefined
+  const friendly = decodeContractErrorLabel(failRevert)
+  const code = decodeContractErrorCode(failRevert)
+  // Production: only ever show decoded words. If the revert is an unmapped
+  // custom error (selector-only, no on-chain text), return undefined so the
+  // caller falls back to its generic copy — never surface a raw 0x… hex to
+  // end users.
+  if (isMainnet) return friendly
+  // Beta/dev: surface the raw contract code so the team can grep/identify it,
+  // paired with the friendly label when we have one.
+  if (friendly && code && friendly.toLowerCase() !== code.toLowerCase()) return `${friendly} (${code})`
+  return code ?? friendly
+}
 
 function useAllCommonPairs(
   currencyA?: Currency,
@@ -123,6 +145,10 @@ type TradeExactIn = {
   /** True when at least one pool exists for this pair at this version. Lets the
    *  UI tell "no pool deployed" apart from "pool exists but too thin". */
   hasPools?: boolean
+  /** Decoded, user-facing reason for a non-cap rejection (e.g. "Price feed
+   *  unstable" for the oracle discrepancy guard). Preferred over the generic
+   *  "Pool too thin" copy in the route comparison when present. */
+  reason?: string
 }
 /**
  * Returns the best trade for the exact amount of tokens in to the given token out
@@ -137,6 +163,7 @@ export function useTradeExactIn(
   const [isInsufficient, setInsufficient] = useState(false)
   const [maxExceeded, setMaxExceeded] = useState(false)
   const [maxInputRaw, setMaxInputRaw] = useState<string | undefined>(undefined)
+  const [reason, setReason] = useState<string | undefined>(undefined)
 
   const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
     currencyAmountIn?.currency,
@@ -190,6 +217,7 @@ export function useTradeExactIn(
       setLoading(true)
       setInsufficient(false)
       setMaxExceeded(false)
+      setReason(undefined)
       if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeIn = await Trade.bestTradeExactIn(account ?? '', allowedPairs, currencyAmountIn, currencyOut, {
@@ -213,6 +241,7 @@ export function useTradeExactIn(
             setMaxExceeded(true)
             setMaxInputRaw(bestTradeIn?.maxInputRaw)
           }
+            if (!foundTrade && bestTradeIn?.failRevert) setReason(buildReason(bestTradeIn.failRevert))
             const retrying = scheduleRetryIfTransient(foundTrade, bestTradeIn ?? undefined)
             setTrade(foundTrade)
             setLoading(retrying)
@@ -240,6 +269,7 @@ export function useTradeExactIn(
             setMaxExceeded(true)
             setMaxInputRaw(bestTradeIn?.maxInputRaw)
           }
+          if (!foundTrade && bestTradeIn?.failRevert) setReason(buildReason(bestTradeIn.failRevert))
           const retrying = scheduleRetryIfTransient(foundTrade, bestTradeIn ?? undefined)
           setTrade(foundTrade)
           setLoading(retrying)
@@ -273,6 +303,7 @@ export function useTradeExactIn(
     maxExceeded: maxExceeded && !trade,
     maxInputRaw,
     hasPools: allowedPairs.length > 0,
+    reason: !trade ? reason : undefined,
   }
 }
 
@@ -285,6 +316,8 @@ type TradeExactOut = {
   maxInputRaw?: string
   /** True when at least one pool exists for this pair at this version. */
   hasPools?: boolean
+  /** Decoded, user-facing reason for a non-cap rejection (see TradeExactIn). */
+  reason?: string
 }
 /**
  * Returns the best trade for the token in to the exact amount of token out
@@ -299,6 +332,7 @@ export function useTradeExactOut(
   const [isInsufficient, setInsufficient] = useState(false)
   const [maxExceeded, setMaxExceeded] = useState(false)
   const [maxInputRaw, setMaxInputRaw] = useState<string | undefined>(undefined)
+  const [reason, setReason] = useState<string | undefined>(undefined)
 
   const { pairs: allowedPairs, loading: pairsLoading } = useAllCommonPairs(
     currencyIn,
@@ -345,6 +379,7 @@ export function useTradeExactOut(
       setLoading(true)
       setInsufficient(false)
       setMaxExceeded(false)
+      setReason(undefined)
       if (currencyIn && currencyAmountOut && allowedPairs.length > 0) {
         if (singleHopOnly) {
           const bestTradeOut = await Trade.bestTradeExactOut(
@@ -374,6 +409,7 @@ export function useTradeExactOut(
             setMaxExceeded(true)
             setMaxInputRaw(bestTradeOut?.maxInputRaw)
           }
+            if (!foundTrade && bestTradeOut?.failRevert) setReason(buildReason(bestTradeOut.failRevert))
             const retrying = scheduleRetryIfTransient(foundTrade, bestTradeOut ?? undefined)
             setTrade(foundTrade)
             setLoading(retrying)
@@ -402,6 +438,7 @@ export function useTradeExactOut(
             setMaxExceeded(true)
             setMaxInputRaw(bestTradeOut?.maxInputRaw)
           }
+          if (!foundTrade && bestTradeOut?.failRevert) setReason(buildReason(bestTradeOut.failRevert))
           const retrying = scheduleRetryIfTransient(foundTrade, bestTradeOut ?? undefined)
           setTrade(foundTrade)
           setLoading(retrying)
@@ -431,6 +468,7 @@ export function useTradeExactOut(
     maxExceeded: maxExceeded && !trade,
     maxInputRaw,
     hasPools: allowedPairs.length > 0,
+    reason: !trade ? reason : undefined,
   }
 }
 

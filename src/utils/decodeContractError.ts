@@ -108,6 +108,24 @@ const STRING_REVERT_REGISTRY: Record<string, ErrorEntry> = {
     hint: 'A token transfer reverted. Check your balance and approvals.',
   },
 
+  // OracleGateway guard (custom Pyth gateway, e.g. HyperEVM). Fires when the
+  // oracle's price for a token diverges from its safe band (spot vs EMA /
+  // confidence) beyond the gateway threshold. Swaps are blocked for ALL sizes
+  // until the feed settles — this is unrelated to pool depth, so "reduce the
+  // amount" does NOT help.
+  'Oracle: DISCREPANCY_TOO_HIGH': {
+    label: 'Price feed unstable',
+    hint: 'The oracle price for one of these tokens is moving beyond its safe range right now, so the pool has paused swaps until it settles. This is temporary and unrelated to pool size — changing the amount won’t help. Try again shortly.',
+  },
+  'Oracle: STALE_PRICE': {
+    label: 'Oracle price stale',
+    hint: 'The oracle has no fresh price for one of these tokens. Try again in a few seconds.',
+  },
+  'Oracle: INVALID_PRICE': {
+    label: 'Oracle price unavailable',
+    hint: 'The oracle returned an invalid price for one of these tokens. Try again shortly.',
+  },
+
   // BrownFi V2 string reverts. Same pattern as V3 but a separate prefix
   // ("BrownFi:" without the V3 suffix) and a different error vocabulary.
   // The 80/90% reserve caps are V2-only and the most common slippage-style
@@ -307,6 +325,13 @@ const ERROR_REGISTRY: Record<string, ErrorEntry> = {
     label: 'Cutoff limit reached',
     hint: 'Requested output exceeds the maximum achievable for this pool. Reduce amount.',
   },
+  // BrownFiV3 oracle-AMM inventory guard (PoolPastGamma(bool)). The trade would
+  // push the pool past its gamma (inventory) bound — the custom-error cousin of
+  // 'BrownFiV3: INVALID_INVENTORY'. The opposite direction usually works.
+  '0xf40f860e': {
+    label: 'Pool inventory limit — try reverse direction',
+    hint: 'This trade would push the BrownFi V3 pool past its gamma (inventory) bound. The opposite direction usually works — otherwise reduce the size or wait for the pool to rebalance.',
+  },
 
   // BrownFiV3Library custom errors
   '0xbd969eb0': { label: 'Identical addresses', hint: 'Token A and token B must differ.' },
@@ -416,6 +441,106 @@ function extractSelector(err: unknown): string | undefined {
 }
 
 /**
+ * Decode an ABI-encoded `Error(string)` revert (selector 0x08c379a0) back to
+ * its message. Solidity `require(cond, "msg")` and `revert("msg")` encode as
+ * 0x08c379a0 + offset(32) + length(32) + utf8 bytes. viem/ethers don't always
+ * surface this as `.reason`, so we decode the raw data ourselves when present.
+ */
+function decodeErrorString(dataHex: unknown): string | undefined {
+  if (typeof dataHex !== 'string' || !dataHex.toLowerCase().startsWith('0x08c379a0')) return undefined
+  try {
+    const body = dataHex.slice(10)
+    const len = parseInt(body.slice(64, 128), 16)
+    if (!len || len > 2000) return undefined
+    const hex = body.slice(128, 128 + len * 2)
+    let s = ''
+    for (let i = 0; i + 1 < hex.length; i += 2) s += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16))
+    return s.replace(/\0+$/, '').trim() || undefined
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Best-effort pull of a Solidity string-revert message out of whatever shape
+ * ethers/viem/wagmi (or our own raw-revert carrier `{selector,data,message}`)
+ * handed us. Covers explicit `.reason`, viem's decoded `cause.data.args[0]`,
+ * raw `Error(string)` data, and a "Prefix: REASON" token embedded in a message.
+ */
+function extractStringReason(input: unknown): string | undefined {
+  if (!input || typeof input !== 'object') return undefined
+  const o = input as Record<string, any>
+  // 1) explicit reason fields (ethers / our carrier)
+  for (const v of [o.reason, o.revertReason, o.cause?.reason, o.cause?.cause?.reason]) {
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  }
+  // 2) viem decoded Error(string) args
+  const args = o.cause?.data?.args ?? o.data?.args
+  if (Array.isArray(args) && typeof args[0] === 'string' && args[0].trim()) return args[0].trim()
+  // 3) raw Error(string) data hex
+  for (const v of [o.data, o.revertData, o.error?.data, o.cause?.data, o.cause?.cause?.data, o.data?.data]) {
+    const s = decodeErrorString(v)
+    if (s) return s
+  }
+  // 4) a "<KnownNamespace>: SCREAMING_SNAKE" token embedded in any message
+  // field. Restricted to our contract namespaces so we never mis-grab a token
+  // out of generic RPC noise (e.g. "Internal JSON-RPC error: FOO").
+  for (const v of [o.revertMessage, o.shortMessage, o.details, o.message]) {
+    if (typeof v !== 'string') continue
+    const m = v.match(/\b(BrownFiV3|BrownFi|UniswapV2|Oracle|PairConfig)\s*:\s*([A-Z][A-Z0-9_]+)/)
+    if (m) return `${m[1]}: ${m[2]}`
+  }
+  return undefined
+}
+
+/**
+ * Short, row-friendly label for a contract revert — the same registry as
+ * `decodeContractError` but returns just the LABEL (no hint), for compact
+ * surfaces like the route-comparison rows. Accepts either an error object or
+ * our raw-revert carrier `{ selector, data, message }`. Returns undefined when
+ * nothing maps (callers fall back to their generic copy).
+ */
+export function decodeContractErrorLabel(input: unknown): string | undefined {
+  if (isUserRejection(input)) return undefined
+  if (!input || typeof input !== 'object') return undefined
+  const o = input as Record<string, any>
+  const selector =
+    (typeof o.selector === 'string' && o.selector.toLowerCase()) ||
+    (typeof o.revertSelector === 'string' && o.revertSelector.toLowerCase()) ||
+    extractSelector(input)
+  // Error(string) selector carries its message in the data — handle via the
+  // string path below, not the selector registry.
+  if (selector && selector !== '0x08c379a0' && ERROR_REGISTRY[selector]) return ERROR_REGISTRY[selector].label
+  const reason = extractStringReason(input)
+  if (reason) {
+    const friendly = STRING_REVERT_REGISTRY[reason]
+    // Known → friendly label; unknown but parseable → show the contract's own
+    // words (honest "the rest show like this" fallback) rather than hiding it.
+    return friendly ? friendly.label : reason
+  }
+  return undefined
+}
+
+/**
+ * Raw contract error code, verbatim — the string the contract actually
+ * reverted with (e.g. "Oracle: DISCREPANCY_TOO_HIGH") or, failing a decodable
+ * string, the 4-byte selector. Intended for dev/beta surfaces so the team can
+ * grep the exact code; production prefers `decodeContractErrorLabel`.
+ */
+export function decodeContractErrorCode(input: unknown): string | undefined {
+  if (!input || typeof input !== 'object') return undefined
+  const reason = extractStringReason(input)
+  if (reason) return reason
+  const o = input as Record<string, any>
+  return (
+    (typeof o.selector === 'string' && o.selector.toLowerCase()) ||
+    (typeof o.revertSelector === 'string' && o.revertSelector.toLowerCase()) ||
+    extractSelector(input) ||
+    undefined
+  )
+}
+
+/**
  * Decode an error from a contract call into a user-friendly string.
  *
  * Resolution order:
@@ -439,13 +564,16 @@ export function decodeContractError(err: unknown, fallback = 'Transaction failed
     return `${entry.label}. ${entry.hint}`
   }
 
-  // String-revert path: `require(cond, "BrownFiV3: ...")` populates
-  // `error.reason` directly. Prefer the friendly remap when we have one,
-  // fall through to the raw reason otherwise so users still see SOMETHING.
-  if (typeof e?.reason === 'string' && e.reason.length > 0) {
-    const friendly = STRING_REVERT_REGISTRY[e.reason]
+  // String-revert path: `require(cond, "BrownFiV3: ...")` surfaces either as
+  // ethers `error.reason`, viem's decoded args, or raw Error(string) data —
+  // extractStringReason covers all three. Prefer the friendly remap when we
+  // have one, fall through to the raw reason otherwise so users still see
+  // SOMETHING identifiable.
+  const stringReason = extractStringReason(err)
+  if (stringReason) {
+    const friendly = STRING_REVERT_REGISTRY[stringReason]
     if (friendly) return `${friendly.label}. ${friendly.hint}`
-    return e.reason
+    return stringReason
   }
 
   if (typeof e?.shortMessage === 'string' && e.shortMessage.length > 0) {

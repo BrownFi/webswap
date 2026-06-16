@@ -382,7 +382,7 @@ export function useDerivedSwapInfo(): {
   }
   const nativeReason = (
     t: Trade | undefined | null,
-    f: { isInsufficient?: boolean; maxExceeded?: boolean; hasPools?: boolean; maxInputRaw?: string },
+    f: { isInsufficient?: boolean; maxExceeded?: boolean; hasPools?: boolean; maxInputRaw?: string; reason?: string },
   ): string | undefined => {
     if (t) return undefined
     if (!settled) return undefined
@@ -390,6 +390,11 @@ export function useDerivedSwapInfo(): {
     // short generic message. (Boss request: short + the value the user can input.)
     if (f.maxExceeded) return fmtMaxIn(f.maxInputRaw) ?? 'Exceeds pool max swap size'
     if (!f.hasPools) return 'No pool' // no pool deployed for this pair at this version
+    // Decoded contract revert (e.g. "Price feed unstable" for the oracle
+    // discrepancy guard). Preferred over the generic "Pool too thin" because the
+    // real revert often has nothing to do with depth — and tells the user
+    // whether reducing the amount would even help.
+    if (f.reason) return f.reason
     if (f.isInsufficient) return 'Pool too thin' // pool exists but can't fill the trade
     return 'No route'
   }

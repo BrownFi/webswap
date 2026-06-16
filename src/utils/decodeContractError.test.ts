@@ -4,7 +4,14 @@
  * extractor or registry catches regressions without needing a live RPC.
  */
 import { describe, it, expect } from 'vitest'
-import { decodeContractError } from './decodeContractError'
+import { decodeContractError, decodeContractErrorLabel, decodeContractErrorCode } from './decodeContractError'
+
+// Real on-chain revert captured from the HyperEVM V3 router quote for the
+// de-pegged WHYPE/UBTC pool: Error(string) "Oracle: DISCREPANCY_TOO_HIGH".
+const DISCREPANCY_DATA =
+  '0x08c379a00000000000000000000000000000000000000000000000000000000000000020' +
+  '000000000000000000000000000000000000000000000000000000000000001c' +
+  '4f7261636c653a2044495343524550414e43595f544f4f5f4849474800000000'
 
 describe('decodeContractError', () => {
   it('decodes a V3 router custom error selector from ethers v5 shape', () => {
@@ -74,5 +81,61 @@ describe('decodeContractError', () => {
     const msg = decodeContractError({ message: 'user has insufficient balance' })
     expect(msg).toBeDefined()
     expect(msg).toMatch(/insufficient balance/i)
+  })
+
+  // ── Error(string) decode + Oracle gateway guard ──────────────────────────
+  it('decodes raw Error(string) revert data into the friendly oracle label', () => {
+    expect(decodeContractError({ data: DISCREPANCY_DATA })).toMatch(/Price feed unstable/)
+  })
+
+  it('decodes the oracle guard from a viem shortMessage shape', () => {
+    const msg = decodeContractError({ shortMessage: 'execution reverted: revert: Oracle: DISCREPANCY_TOO_HIGH' })
+    expect(msg).toMatch(/Price feed unstable/)
+  })
+})
+
+describe('decodeContractErrorLabel (short, row-friendly)', () => {
+  it('maps the oracle discrepancy guard to a short label from raw data', () => {
+    expect(decodeContractErrorLabel({ data: DISCREPANCY_DATA })).toBe('Price feed unstable')
+  })
+
+  it('maps from our raw-revert carrier { selector, data, message }', () => {
+    expect(decodeContractErrorLabel({ message: 'revert: Oracle: DISCREPANCY_TOO_HIGH' })).toBe('Price feed unstable')
+  })
+
+  it('maps a known selector to its short label', () => {
+    expect(decodeContractErrorLabel({ selector: '0xc64511c2' })).toMatch(/Amount exceeds pool limit/)
+  })
+
+  it('maps the BrownFiV3 PoolPastGamma(bool) custom error (0xf40f860e)', () => {
+    // selector + abi-encoded bool arg — only the 4-byte selector is needed
+    expect(decodeContractErrorLabel({ data: '0xf40f860e' + '0'.repeat(64) })).toBe(
+      'Pool inventory limit — try reverse direction',
+    )
+    expect(decodeContractErrorLabel({ selector: '0xf40f860e' })).toBe('Pool inventory limit — try reverse direction')
+  })
+
+  it('falls back to the contract’s own words for an unmapped string revert', () => {
+    expect(decodeContractErrorLabel({ message: 'revert: Oracle: SOME_NEW_CODE' })).toBe('Oracle: SOME_NEW_CODE')
+  })
+
+  it('returns undefined when nothing is decodable', () => {
+    expect(decodeContractErrorLabel({})).toBeUndefined()
+  })
+})
+
+describe('decodeContractErrorCode (raw, for dev/beta)', () => {
+  it('returns the verbatim contract code from raw data', () => {
+    expect(decodeContractErrorCode({ data: DISCREPANCY_DATA })).toBe('Oracle: DISCREPANCY_TOO_HIGH')
+  })
+
+  it('returns the verbatim code from a message shape', () => {
+    expect(decodeContractErrorCode({ shortMessage: 'execution reverted: revert: Oracle: DISCREPANCY_TOO_HIGH' })).toBe(
+      'Oracle: DISCREPANCY_TOO_HIGH',
+    )
+  })
+
+  it('falls back to the selector when no string is decodable', () => {
+    expect(decodeContractErrorCode({ data: '0xc64511c2' })).toBe('0xc64511c2')
   })
 })
