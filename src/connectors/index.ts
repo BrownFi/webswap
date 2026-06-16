@@ -158,8 +158,12 @@ export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
 export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.test(
   import.meta.env.VITE_API_URL ?? '',
 )
-// V3 indexer (/indexer/v3) and uniV2Price field only exist on the non-prod APIs.
-export const isV3Enabled = isBetaApi
+// V3 is enabled when the main API is a beta/dev alias (its /indexer/v3 +
+// uniV2Price), OR when a dedicated V3 indexer is configured (VITE_INDEXER_V3_URL
+// — the Goldsky v3-final subgraph). The latter is how the V3-Official mainnet
+// release serves V3 data while VITE_API_URL points at prod api.brownfi.io.
+// Bera-V2 prod has no VITE_INDEXER_V3_URL → stays V2-only.
+export const isV3Enabled = isBetaApi || !!import.meta.env.VITE_INDEXER_V3_URL
 
 const mainChains: readonly [Chain, ...Chain[]] = [
   berachain,

@@ -107,6 +107,9 @@ export const slugToVersion = (slug: string | null | undefined): number | undefin
 }
 
 // version 3 — PILOT (pre-v3-final, Bera only; zap on router)
+// V3 Pilot addresses stay defined (contracts still exist) — Pilot is HIDDEN on
+// mainnet via the !isMainnet env gate in `hasV3Pilot` below, so beta/dev keep
+// it testable with one codebase (no per-branch address divergence).
 export const ROUTER_ADDRESS_V3_PILOT: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0xFB473aEAe9b0d03c6974BCf5f2B67dA4AF7F6043',
 }
@@ -152,8 +155,12 @@ export const useV3Indexer = (chainId: number | undefined, version?: number): boo
 }
 
 // Availability checks for the version toggle (variant-agnostic).
+// V3 Pilot is HIDDEN on the production (mainnet) build — env-gated here so the
+// single codebase serves both: beta/dev (non-mainnet) keep Pilot for testing,
+// the mainnet release shows only V3 Official. Contracts/addresses stay defined.
+const IS_MAINNET_BUILD = import.meta.env.VITE_ENVIRONMENT === 'mainnet'
 export const hasV3Pilot = (chainId: number | undefined): boolean =>
-  chainId != null && !!ROUTER_ADDRESS_V3_PILOT[chainId]
+  chainId != null && !!ROUTER_ADDRESS_V3_PILOT[chainId] && !IS_MAINNET_BUILD
 export const hasV3Official = (chainId: number | undefined): boolean =>
   chainId != null && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId]
 

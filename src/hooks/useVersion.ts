@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
 import { isMainnet, isV3Enabled } from 'connectors'
-import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen, hasV3Official, VERSION } from 'lib/sdk/constants/addresses'
 
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
   const location = useLocation()
@@ -26,13 +26,19 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
         return [1, true]
       }
-      // Mainnet locks to V2 across the V2-deployed chain set.
+      // Chains with V3 Official deployed honor the V2 / V3-Official toggle on
+      // production. V3 Pilot is hidden on mainnet, so a stale Pilot (3) stored
+      // selection falls back to V2. (This is what makes the V3-Official release
+      // selectable — previously every mainnet chain was locked to V2.)
+      if (hasV3Official(chainId ?? undefined)) {
+        return [stableVersion === VERSION.V3_OFFICIAL ? VERSION.V3_OFFICIAL : 2, false]
+      }
+      // Remaining mainnet chains are V2-only (no V3 deployment).
       if (
         [
           ChainId.ARBITRUM_MAINNET,
           ChainId.BASE_MAINNET,
           ChainId.BSC_MAINNET,
-          ChainId.HYPER_EVM,
           ChainId.LINEA_MAINNET,
           ChainId.SEI_MAINNET,
           ChainId.MONAD,

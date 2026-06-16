@@ -1,4 +1,4 @@
-import { ChainId, Pair } from '@brownfi/sdk'
+import { ChainId, Pair, isV3Like } from '@brownfi/sdk'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { isMainnet, isV3Enabled } from 'connectors'
 import {
@@ -154,25 +154,40 @@ type Props = {
 const PairChartTVInner = ({ pair }: Props) => {
   const showExtendedMetrics = !isMainnet
   const supportsUniV2 = hasUniV2Price(pair.chainId)
+  const isV3 = isV3Like(pair.version)
+  // Production V3 chart shows exactly three lines: LP price, UniV2 price, and
+  // LP − UniV2 (per release spec). The default-visible flags below mirror this.
+  const v3ProdChart = isV3 && !showExtendedMetrics && supportsUniV2
   const availableSeries = useMemo(() => {
-    if (!showExtendedMetrics) return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
-    // Hide both the UniV2 reference AND the LP−UniV2 divergence line on
-    // chains without uniV2Price indexer data — the diff would be
-    // misleading (lpPrice − 0 = lpPrice) otherwise.
+    if (!showExtendedMetrics) {
+      // Production: V3 → LP price + UniV2 price + LP−UniV2 (when uniV2 data is
+      // available, e.g. V3-Official Bera via Goldsky); V2 → minimal LP + volume.
+      if (v3ProdChart) {
+        return SERIES_ALL.filter(
+          (s) => s.key === 'lpPrice' || s.key === 'uniV2Price' || s.key === 'lpMinusUniV2',
+        )
+      }
+      return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
+    }
+    // beta/dev: full set, minus the UniV2 reference + LP−UniV2 divergence on
+    // chains without uniV2Price indexer data (diff would be misleading).
     return supportsUniV2
       ? SERIES_ALL
       : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
-  }, [showExtendedMetrics, supportsUniV2])
+  }, [showExtendedMetrics, supportsUniV2, v3ProdChart])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
     lpPrice: true,
     bnhPrice: showExtendedMetrics,
-    uniV2Price: showExtendedMetrics,
+    // On the production V3 chart, UniV2 price + LP−UniV2 are the two extra
+    // lines we DO want on by default (alongside LP price); elsewhere they
+    // follow the extended-metrics gate.
+    uniV2Price: showExtendedMetrics || v3ProdChart,
     // LP−UniV2 divergence default-on with the other extended metrics, but
     // gated on the chain actually exposing uniV2Price downstream via the
     // availableSeries filter below — otherwise the line would just show
     // raw lpPrice values.
-    lpMinusUniV2: showExtendedMetrics,
+    lpMinusUniV2: showExtendedMetrics || v3ProdChart,
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
     volume: true,
