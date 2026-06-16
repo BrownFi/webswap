@@ -1,5 +1,5 @@
 import { Token, TokenAmount, Pair, Currency } from '@brownfi/sdk'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import IUniswapV2PairABI from '@uniswap/v2-core/build/IUniswapV2Pair.json'
 import { Interface } from '@ethersproject/abi'
 import { useActiveWeb3React } from 'hooks'
@@ -49,15 +49,37 @@ type ReserveSlot = { result?: { reserve0: bigint; reserve1: bigint }; loading: b
 // only has a handful of candidate pairs (V2 + V3 pilot + V3 official), so a
 // dedicated batched read here costs ~1 extra multicall but resolves on time and
 // independent of that contention. Pool/mint/burn keep the shared multicall.
+// A whole-multicall failure (RPC down / rate-limited under the swap's parallel
+// call load on flaky chains like HyperEVM) used to leave every slot undefined →
+// every V2 pair read as NOT_EXISTS → a sticky, MISLEADING "No pool" / "no route"
+// that only cleared on the next input change. Retry the multicall a bounded
+// number of times, keeping the slots LOADING in between, so a transient RPC blip
+// self-heals instead of flashing "No pool".
+const RESERVES_MAX_RETRIES = 2
+const RESERVES_RETRY_DELAY_MS = 1200
+
 function useReservesMulticall(pairAddresses: (string | undefined)[], chainId: number): ReserveSlot[] {
   const addrKey = pairAddresses.join(',')
   const [state, setState] = useState<{ key: string; slots: ReserveSlot[] }>(() => ({
     key: '',
     slots: pairAddresses.map(() => ({ result: undefined, loading: true })),
   }))
+  // Bounded retry on transient (whole-multicall) failure. `retryTick` re-runs the
+  // effect without an address change; `retryCountRef` caps attempts and resets
+  // only when the address SET actually changes (tracked via `lastKeyRef`).
+  const [retryTick, setRetryTick] = useState(0)
+  const retryCountRef = useRef(0)
+  const lastKeyRef = useRef('')
 
   useEffect(() => {
     let stale = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+
+    if (lastKeyRef.current !== addrKey) {
+      lastKeyRef.current = addrKey
+      retryCountRef.current = 0
+    }
+
     const lookups: { index: number; address: string }[] = []
     pairAddresses.forEach((a, i) => {
       if (a) lookups.push({ index: i, address: a })
@@ -95,16 +117,28 @@ function useReservesMulticall(pairAddresses: (string | undefined)[], chainId: nu
           next[lookups[i].index] = { result: { reserve0, reserve1 }, loading: false }
         })
       } catch {
-        // RPC/multicall down → leave slots undefined (renders NOT_EXISTS), same
-        // outcome as the legacy path's per-call failure.
+        // The WHOLE multicall threw (RPC down / rate-limited / network) — TRANSIENT,
+        // distinct from a per-pair allowFailure miss (a genuinely non-existent pair,
+        // which we must NOT retry forever). Retry a bounded number of times, holding
+        // the slots in LOADING so the caller doesn't render a false NOT_EXISTS.
+        if (retryCountRef.current < RESERVES_MAX_RETRIES) {
+          retryCountRef.current += 1
+          retryTimer = setTimeout(() => {
+            if (!stale) setRetryTick((t) => t + 1)
+          }, RESERVES_RETRY_DELAY_MS)
+          if (!stale) setState({ key: addrKey, slots: pairAddresses.map(() => ({ result: undefined, loading: true })) })
+          return
+        }
+        // Retries exhausted → fall through with undefined slots (NOT_EXISTS).
       }
       if (!stale) setState({ key: addrKey, slots: next })
     }
     run()
     return () => {
       stale = true
+      if (retryTimer) clearTimeout(retryTimer)
     }
-  }, [addrKey, chainId])
+  }, [addrKey, chainId, retryTick])
 
   // Length-safe view (state can lag a render behind a fast address change).
   return pairAddresses.map((_, i) => state.slots[i] ?? { result: undefined, loading: true })
