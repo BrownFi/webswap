@@ -84,10 +84,11 @@ export const VERSION = { V2: 2, V3_PILOT: 3, V3_OFFICIAL: 4 } as const
 export const isV3Like = (version: number | undefined | null): boolean =>
   version === VERSION.V3_PILOT || version === VERSION.V3_OFFICIAL
 
-/** User-facing label for a protocol version. Internal version 4 is the
- *  OFFICIAL V3 deployment — never show "V4" to users. */
+/** User-facing label for a protocol version. Internal version 4 (the OFFICIAL
+ *  V3 deployment) shows as just "V3" — never "V4", and the "Official" suffix is
+ *  dropped per design. The URL slug stays `v3-official` (see versionToSlug). */
 export const versionLabel = (version: number | undefined | null): string =>
-  version === VERSION.V3_OFFICIAL ? 'V3 Official' : version === VERSION.V3_PILOT ? 'V3 Pilot' : `V${version ?? 2}`
+  version === VERSION.V3_OFFICIAL ? 'V3' : version === VERSION.V3_PILOT ? 'V3 Pilot' : `V${version ?? 2}`
 
 /** URL slug for a version — keeps the raw internal number out of the address
  *  bar (users see `v3-official`, never `v=4`). */

@@ -235,7 +235,7 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
     // trade, marked supported so they still render.
     const statuses: NativeRouteStatus[] = nativeStatuses ?? [
       { source: 'brownfi-v2', sourceName: 'BrownFi V2', supported: !!v2Trade },
-      { source: 'brownfi-v3-official', sourceName: 'BrownFi V3 Official', supported: !!v3OfficialTrade },
+      { source: 'brownfi-v3-official', sourceName: 'BrownFi V3', supported: !!v3OfficialTrade },
       { source: 'brownfi-v3-pilot', sourceName: 'BrownFi V3 Pilot', supported: !!v3PilotTrade },
     ]
     statuses.forEach((s) => {
