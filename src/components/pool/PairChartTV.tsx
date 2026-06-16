@@ -137,7 +137,7 @@ const SERIES_ALL: SeriesMeta[] = [
   // LP line. Cyan keeps it distinct from the palette (LP orange, HODL
   // gray, UniV2 red, TVL purple, NetPnL/Volume green) — and avoids the
   // volume green + the old HODL blue it used to clash with.
-  { key: 'lpMinusUniV2',  label: 'LP − UniV2',     color: '#22D3EE99', type: 'line',      priceScaleId: 'left',  yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'lpMinusUniV2',  label: 'LP vs. UniV2',   color: '#22D3EE99', type: 'line',      priceScaleId: 'left',  yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
   // Display label is "LP − BH" (LP minus Buy & Hold) to read as a sibling
   // of "LP − UniV2" — same comparator pattern, just against the HODL
