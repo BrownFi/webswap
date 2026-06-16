@@ -127,16 +127,17 @@ type SeriesMeta = {
 // difference keeps them visually separable on the same chart.
 const SERIES_ALL: SeriesMeta[] = [
   { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice',      label: 'HODL Price',     color: '#6FB3E699', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'bnhPrice',      label: 'HODL Price',     color: '#9CA3AF99', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'uniV2Price',    label: 'UniV2 Price',    color: '#E0484899', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   // LP − UniV2 divergence. Plotted on the RIGHT (price) axis next to the
   // LP/HODL/UniV2 series since per Jason's 2026-06-04 ask, the divergence
   // reads more naturally beside its parent series. Visual style mirrors
   // UniV2 Price — 1px dotted at ~60% opacity (alpha `99` ≈ 0.6) so it
   // reads as a paired reference rather than competing with the primary
-  // LP line. Yellow keeps it distinct from the palette (LP orange, HODL
-  // blue, UniV2 red, TVL purple, NetPnL green).
-  { key: 'lpMinusUniV2',  label: 'LP − UniV2',     color: '#F5C84B99', type: 'line',      priceScaleId: 'left',  yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // LP line. Cyan keeps it distinct from the palette (LP orange, HODL
+  // gray, UniV2 red, TVL purple, NetPnL/Volume green) — and avoids the
+  // volume green + the old HODL blue it used to clash with.
+  { key: 'lpMinusUniV2',  label: 'LP − UniV2',     color: '#22D3EE99', type: 'line',      priceScaleId: 'left',  yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
   // Display label is "LP − BH" (LP minus Buy & Hold) to read as a sibling
   // of "LP − UniV2" — same comparator pattern, just against the HODL
