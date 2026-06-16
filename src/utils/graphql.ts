@@ -16,20 +16,28 @@ export const graphqlFetcher = async ({
   if (chainId !== ChainId.BERA_MAINNET) {
     query = query.replace(/stakeLP/g, '')
   }
-  // V3-gen routing per (chain, version):
-  // - V3 Pilot (version 3): standard VITE_API_URL/indexer/v3 — the beta-api
-  //   multi-chain indexer tracks the pilot factory (Bera 0x83A329E9).
-  // - V3 Official (version 4): Bera uses the Goldsky override
-  //   (VITE_INDEXER_V3_URL, which indexes the v3-final factory 0x6Ccf36d3);
-  //   HyperEVM falls through to VITE_API_URL/indexer/v3 (the BE multi-chain
-  //   indexer tracks the official HL factory). The override is OFFICIAL-only,
-  //   so pilot queries never hit the official subgraph and vice-versa.
+  // V3-gen routing per (chain, version). Each V3 generation has its OWN Goldsky
+  // subgraph on Bera so Pilot and Official stay separate (the BE merged v3-final
+  // into /indexer/v3, so that endpoint now serves Official for BOTH versions —
+  // hence the per-version overrides below):
+  // - V3 Official (version 4): VITE_INDEXER_V3_URL → bf-v3-berachain/0.0.2
+  //   (indexes the v3-final factory 0x6Ccf36d3). HyperEVM falls through to
+  //   VITE_API_URL/indexer/v3 (BE multi-chain indexer tracks the official HL
+  //   factory).
+  // - V3 Pilot (version 3): VITE_INDEXER_V3_PILOT_URL → bf-v3-berachain/0.0.1
+  //   (indexes the pilot factory 0x83A329E9). BETA/DEV ONLY — Pilot is hidden on
+  //   mainnet, so this var is absent on prod and the override never fires there.
+  //   Without it, Pilot would route to /indexer/v3 and show the merged Official
+  //   data (the bug this fixes).
   // - V2 always uses VITE_API_URL/indexer.
-  const V3_OVERRIDE_URL: Record<number, string | undefined> = {
+  const V3_OFFICIAL_OVERRIDE: Record<number, string | undefined> = {
     [ChainId.BERA_MAINNET]: import.meta.env.VITE_INDEXER_V3_URL,
   }
-  // Goldsky override only for the OFFICIAL deployment (version 4).
-  const override = version === 4 ? V3_OVERRIDE_URL[chainId] : undefined
+  const V3_PILOT_OVERRIDE: Record<number, string | undefined> = {
+    [ChainId.BERA_MAINNET]: import.meta.env.VITE_INDEXER_V3_PILOT_URL,
+  }
+  const override =
+    version === 4 ? V3_OFFICIAL_OVERRIDE[chainId] : version === 3 ? V3_PILOT_OVERRIDE[chainId] : undefined
   const useOverride = !!override && useV3Indexer(chainId, version)
   const url = useOverride
     ? override
