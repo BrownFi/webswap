@@ -239,8 +239,7 @@ export async function getPythPrice(address: string, chainId: number, version: nu
     const price = getPriceFromUnsafe(priceUnsafe)
     _priceCache.set(priceKey, { value: price, ts: Date.now() })
     return price
-  } catch (error) {
-    console.warn('Cannot get Pyth price', error)
+  } catch {
     return 0
   }
 }
@@ -334,8 +333,7 @@ export async function getPythPricesBatch(
           _feedIdCache.set(`${factoryAddr}:${addr}`.toLowerCase(), id)
         }
       })
-    } catch (e) {
-      console.warn('getPythPricesBatch: feedIds multicall failed', e)
+    } catch {
       return result
     }
   }
@@ -380,8 +378,8 @@ export async function getPythPricesBatch(
         }
       }
     })
-  } catch (e) {
-    console.warn('getPythPricesBatch: prices multicall failed', e)
+  } catch {
+    // silent: transient multicall failure — caller handles the partial result
   }
 
   return result
@@ -511,8 +509,7 @@ export async function getPythPricePair(pair: any, chainId: number): Promise<[num
 
     const prices: [number, number] = [getPriceFromUnsafe(priceUnsafe0), getPriceFromUnsafe(priceUnsafe1)]
     return Number(qti) === 0 ? (prices.reverse() as [number, number]) : prices
-  } catch (error) {
-    console.warn('Cannot get Pyth price', error)
+  } catch {
     return [0, 0]
   }
 }
