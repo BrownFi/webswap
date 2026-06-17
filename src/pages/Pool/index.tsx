@@ -13,6 +13,7 @@ import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
 import { PairStats, pairBGT, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
+import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
 import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
@@ -386,14 +387,16 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
                   <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label="Annualized Return" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
-                  <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                  <SortHeader label="Annualized Return" flex={1.3} info={isV3Like(version) ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  {chainId === ChainId.BERA_MAINNET && (
+                    <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                  )}
                   <span style={{ flex: 1, textAlign: 'right' }} />
                 </div>
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton />
+              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -491,35 +494,45 @@ function SortHeader({
   active,
   dir,
   onClick,
+  flex = 1,
+  info,
 }: {
   label: string
   active: boolean
   dir: 'asc' | 'desc'
   onClick: () => void
+  // Column width relative to other columns (default 1). Longer headers like
+  // "Annualized Return" use a wider basis so they don't crowd their neighbours.
+  flex?: number
+  // Optional (?) helper rendered OUTSIDE the sort button (so a click on it
+  // doesn't trigger sorting) — used for the Annualized Return tooltip.
+  info?: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center justify-end gap-1 cursor-pointer hover:text-[#FBFBFD] transition-colors"
-      style={{
-        flex: 1,
-        background: 'transparent',
-        border: 'none',
-        padding: 0,
-        fontFamily: 'inherit',
-        fontWeight: 'inherit',
-        fontSize: 'inherit',
-        color: active ? '#FBFBFD' : 'inherit',
-        textAlign: 'right',
-      }}
-    >
-      <span>{label}</span>
-      {/* DefiLlama-style sort indicator: ↕ on every clickable column so users
-          know they're sortable; flips to ↓/↑ on the active one. SVG instead
-          of unicode so all three states render at identical dimensions. */}
-      <SortIcon state={active ? (dir === 'desc' ? 'down' : 'up') : 'both'} />
-    </button>
+    <div className="inline-flex items-center justify-start gap-1" style={{ flex, textAlign: 'left' }}>
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex items-center gap-1 cursor-pointer hover:text-[#FBFBFD] transition-colors"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          fontFamily: 'inherit',
+          fontWeight: 'inherit',
+          fontSize: 'inherit',
+          color: active ? '#FBFBFD' : 'inherit',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <span>{label}</span>
+        {/* DefiLlama-style sort indicator: ↕ on every clickable column so users
+            know they're sortable; flips to ↓/↑ on the active one. SVG instead
+            of unicode so all three states render at identical dimensions. */}
+        <SortIcon state={active ? (dir === 'desc' ? 'down' : 'up') : 'both'} />
+      </button>
+      {info}
+    </div>
   )
 }
 
@@ -544,7 +557,7 @@ function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
   )
 }
 
-function PairListSkeleton() {
+function PairListSkeleton({ showBgt }: { showBgt: boolean }) {
   return (
     <>
       {/* Table header */}
@@ -560,10 +573,10 @@ function PairListSkeleton() {
         }}
       >
         <span style={{ flex: 2 }}>Pool</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>24h Volume</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Annualized Return</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>BGT APR</span>
+        <span style={{ flex: 1, textAlign: 'left' }}>TVL</span>
+        <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
+        <span style={{ flex: 1.3, textAlign: 'left' }}>Annualized Return</span>
+        {showBgt && <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>}
         <span style={{ flex: 1, textAlign: 'right' }} />
       </div>
       {[0, 1, 2, 3, 4].map((i) => (
@@ -587,11 +600,11 @@ function PairListSkeleton() {
               <div className="animate-pulse rounded" style={{ background: '#493E35', height: 14, width: '35%' }} />
             </div>
           </div>
-          {/* Desktop-only columns: TVL, 24h Volume, Fee APR, BGT APR, actions */}
+          {/* Desktop-only columns: TVL, 24h Volume, Annualized Return, [BGT APR], actions */}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
-          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
-          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1.3, height: 20, background: '#493E35' }} />
+          {showBgt && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 40, background: '#493E35' }} />
         </div>
       ))}

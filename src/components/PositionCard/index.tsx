@@ -1,4 +1,4 @@
-import { isV3Like } from '@brownfi/sdk'
+import { isV3Like, ChainId } from '@brownfi/sdk'
 import { Pair, TokenAmount } from '@brownfi/sdk'
 import { versionToSlug } from 'lib/sdk/constants/addresses'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
@@ -265,26 +265,28 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
           </div>
           {/* TVL */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
+          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
-          {/* Annualized Return — V3: LP-vs-UniV2 formula; V2: indexer apr. */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
+          {/* Annualized Return — V3: LP-vs-UniV2 formula; V2: indexer apr. Wider column for the long label. */}
+          <span className="max-md:hidden text-left" style={{ flex: 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
             {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
-          {/* Incentive / BGT APR (green with BGT icon when applicable) */}
-          <span className="max-md:hidden text-right inline-flex items-center justify-end gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
-            {enableBgt || enableMerklCampaignApr ? (
-              <>
-                +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
-                {enableBgt && (
-                  <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 16, height: 16, borderRadius: '50%' }} />
-                )}
-              </>
-            ) : (
-              '--'
-            )}
-          </span>
+          {/* BGT APR — Berachain only (BGT is Bera-specific). */}
+          {chainId === ChainId.BERA_MAINNET && (
+            <span className="max-md:hidden text-left inline-flex items-center justify-start gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+              {enableBgt || enableMerklCampaignApr ? (
+                <>
+                  +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
+                  {enableBgt && (
+                    <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 16, height: 16, borderRadius: '50%' }} />
+                  )}
+                </>
+              ) : (
+                '--'
+              )}
+            </span>
+          )}
           {/* Actions */}
           <div className="hidden md:flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
             <Link

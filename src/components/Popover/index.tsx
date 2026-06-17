@@ -6,7 +6,7 @@ import styled from 'styled-components'
 import useInterval from 'hooks/useInterval'
 import { createPortal } from 'react-dom'
 
-const PopoverContainer = styled.div<{ show: boolean }>`
+const PopoverContainer = styled.div<{ show: boolean; $shadow: boolean }>`
   z-index: 9999;
 
   visibility: ${(props) => (props.show ? 'visible' : 'hidden')};
@@ -15,7 +15,7 @@ const PopoverContainer = styled.div<{ show: boolean }>`
 
   background: #323038;
   border: 0;
-  box-shadow: 0 4px 8px 0 ${({ theme }) => transparentize(0.9, theme.shadow1)};
+  box-shadow: ${({ $shadow, theme }) => ($shadow ? `0 4px 8px 0 ${transparentize(0.9, theme.shadow1)}` : 'none')};
   color: ${({ theme }) => theme.white};
   border-radius: 0;
 `
@@ -81,9 +81,12 @@ export interface PopoverProps {
   children: React.ReactNode
   placement?: Placement
   arrow?: boolean
+  // Drop the drop-shadow for a flat tooltip. Defaults to true (shadow on) so
+  // every existing popover/tooltip is unchanged.
+  shadow?: boolean
 }
 
-export default function Popover({ content, show, children, placement = 'auto', arrow = true }: PopoverProps) {
+export default function Popover({ content, show, children, placement = 'auto', arrow = true, shadow = true }: PopoverProps) {
   const [referenceElement, setReferenceElement] = useState<HTMLDivElement | null>(null)
   const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(null)
   const [arrowElement, setArrowElement] = useState<HTMLDivElement | null>(null)
@@ -104,7 +107,7 @@ export default function Popover({ content, show, children, placement = 'auto', a
     <>
       <ReferenceElement ref={setReferenceElement as any}>{children}</ReferenceElement>
       {createPortal(
-        <PopoverContainer show={show} ref={setPopperElement as any} style={styles.popper} {...attributes.popper}>
+        <PopoverContainer show={show} $shadow={shadow} ref={setPopperElement as any} style={styles.popper} {...attributes.popper}>
           {content}
           {arrow && (
             <Arrow

@@ -1,7 +1,7 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Settings } from 'react-feather'
 import { Address, checksumAddress } from 'viem'
 
@@ -23,6 +23,7 @@ import { unwrappedToken } from 'utils/wrappedCurrency'
 import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
+import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
 import { getRestakers } from 'constants/restakers'
 import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
 
@@ -272,12 +273,8 @@ function PoolDetailInner({
   // creation (stable on thin pools, so shown on prod too); V2 keeps the
   // indexer-derived feeAPR exactly as before.
   const feeAprDisplay = !ratiosMeaningful ? 0 : isV3Like(version) ? computeV3FeeApr(pairRaw) : feeAPR ?? 0
-  // "Annualized Return" label is shared by V2 + V3. The hint is V3-only — it's
-  // measured vs the UniV2 baseline, which doesn't describe V2's trading-fee APR.
-  // Shown inline on the card (not a tooltip) so "Learn More" stays clickable.
-  // TODO(jason): real Learn More URL.
-  const APR_LEARN_MORE_URL = '#'
-  const aprHint = 'Annualized return vs. UniV2 baseline. For reference only. Short-term estimates may differ from long-term results.'
+  // "Annualized Return" label is shared by V2 + V3. The V3-only (?) hint lives
+  // in <AnnualizedReturnInfo/> (interactive tooltip with a clickable Learn More).
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   const incentiveIcon = bgtAPR
     ? 'https://furthermore.app/icons/bgt.svg'
@@ -710,24 +707,16 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* Returns — Annualized Return + BGT/Incentive APR. Visual
-                treatment mirrors Stats so the rail reads as a consistent stack. */}
+            {/* Returns card (title removed per Jason) — Annualized Return +
+                BGT/Incentive APR. */}
             <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
-              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
-                Returns
-              </div>
-
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
-                <div>
-                  <StatInline label="Annualized Return" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />
-                  {isV3Like(version) && (
-                    <div className="text-[11px]" style={{ fontFamily: 'Inter', fontWeight: 400, color: '#978A80', lineHeight: '16px', marginTop: '2px' }}>
-                      {aprHint}{' '}
-                      <a href={APR_LEARN_MORE_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#D8A072', textDecoration: 'underline' }}>Learn More</a>
-                    </div>
-                  )}
-                </div>
+                <StatInline
+                  label={isV3Like(version) ? (<span className="inline-flex items-center">Annualized Return<AnnualizedReturnInfo /></span>) : 'Annualized Return'}
+                  value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                  valueColor="#83CF84"
+                />
                 {incentiveApr > 0 && (
                   <div>
                     <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
@@ -762,18 +751,13 @@ function PoolDetailInner({
               {/* Desktop: stacked label/value rows matching Stats. */}
               <div className="hidden lg:block">
                 <div className="mb-3 lg:mb-4">
-                  <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                  <div className="text-[12px] lg:text-[13px] inline-flex items-center" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
                     Annualized Return
+                    {isV3Like(version) && <AnnualizedReturnInfo />}
                   </div>
                   <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
                     {(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   </div>
-                  {isV3Like(version) && (
-                    <div className="text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 400, color: '#978A80', lineHeight: '16px', marginTop: '4px' }}>
-                      {aprHint}{' '}
-                      <a href={APR_LEARN_MORE_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#D8A072', textDecoration: 'underline' }}>Learn More</a>
-                    </div>
-                  )}
                 </div>
                 {incentiveApr > 0 && (
                   <div className="mb-3 lg:mb-4">
@@ -897,7 +881,7 @@ function StatRow({
   )
 }
 
-function StatInline({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+function StatInline({ label, value, valueColor }: { label: ReactNode; value: string; valueColor?: string }) {
   return (
     <div className="flex items-center justify-between">
       <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>
