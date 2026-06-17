@@ -53,12 +53,41 @@ export type PairStats = {
   pythWeight?: number
   gamma?: number
   uniV2Price?: number
+  // V3-only: current LP-token price + pool creation unix-seconds. Used to
+  // compute Fee APR as the annualized LP-vs-UniV2 outperformance since
+  // inception. Indexer returns them as numeric strings.
+  lpPrice?: number
+  createdAt?: number
   // V3-only: which token is the quote (0 = token0, 1 = token1). The
   // authoritative base/quote designation — drives display order via
   // shouldReverseDisplay. Undefined on V2.
   quoteTokenIndex?: number
   token0?: Token | null
   token1?: Token | null
+}
+
+/**
+ * V3 Fee APR = annualized LP-vs-UniV2 outperformance since the pool was created:
+ *   (lpPrice − uniV2Price) / uniV2Price / daysAlive × 360 × 100
+ *   daysAlive = (now − createdAt) / 86400
+ * lpPrice/uniV2Price are the indexer's ~1.0 performance indices (same units),
+ * createdAt is unix-seconds. Returns 0 when inputs are missing/degenerate.
+ * Single source of truth shared by the pool detail page, pool list rows, and
+ * the list's APR sort.
+ */
+export function computeV3FeeApr(p?: {
+  lpPrice?: number | string | null
+  uniV2Price?: number | string | null
+  createdAt?: number | string | null
+} | null): number {
+  if (!p) return 0
+  const lp = Number(p.lpPrice)
+  const uni = Number(p.uniV2Price)
+  const createdAt = Number(p.createdAt)
+  if (!lp || !uni || !createdAt) return 0
+  const daysAlive = (Date.now() / 1000 - createdAt) / 86400
+  if (daysAlive <= 0) return 0
+  return ((lp - uni) / uni / daysAlive) * 360 * 100
 }
 
 const GET_PAIR_ACCOUNT = `

@@ -12,7 +12,7 @@ import { Flex, Text } from 'components/Rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
-import { PairStats, pairBGT } from 'components/PositionCard/usePoolStats'
+import { PairStats, pairBGT, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
 import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
@@ -100,6 +100,8 @@ const LIST_ALL_PAIRS_V3 = `
       pythWeight
       gamma
       uniV2Price
+      lpPrice
+      createdAt
       quoteTokenIndex
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
@@ -152,7 +154,7 @@ export default function Pool() {
   // version-agnostic. Extra V3 fields pass through unchanged.
   // Sortable columns. Default: TVL desc. Fee APR uses indexer's `apr`. The
   // 24h-Fees/TVL and BGT APR columns are computed client-side below.
-  type SortKey = 'tvl' | 'volumeDay' | 'feeOverTvl' | 'apr' | 'bgtAPR'
+  type SortKey = 'tvl' | 'volumeDay' | 'apr' | 'bgtAPR'
   type SortDir = 'asc' | 'desc'
   const [sortKey, setSortKey] = useState<SortKey>('tvl')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -205,13 +207,13 @@ export default function Pool() {
       : raw
     const dir = sortDir === 'desc' ? 1 : -1
     const valueOf = (p: PairStats): number => {
-      if (sortKey === 'feeOverTvl') {
-        const t = Number(p.tvl) || 0
-        const f = Number(p.feeDay) || 0
-        return t > 0 ? (f / t) * 100 : 0
-      }
       if (sortKey === 'bgtAPR') {
         return bgtAprByAddr[p.id.toLowerCase()] ?? 0
+      }
+      // Fee APR sort: V3 uses the LP-vs-UniV2 formula (matches the column);
+      // V2 keeps the indexer `apr`.
+      if (sortKey === 'apr' && isV3Like(version)) {
+        return computeV3FeeApr(p)
       }
       return Number((p as any)[sortKey]) || 0
     }
@@ -384,10 +386,7 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
                   <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label="24h Fees / TVL" active={sortKey === 'feeOverTvl'} dir={sortDir} onClick={() => handleSort('feeOverTvl')} />
-                  {!isMainnet && (
-                    <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
-                  )}
+                  <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   <span style={{ flex: 1, textAlign: 'right' }} />
                 </div>
@@ -563,8 +562,7 @@ function PairListSkeleton() {
         <span style={{ flex: 2 }}>Pool</span>
         <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'right' }}>24h Volume</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
-        {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>Fee APR</span>}
+        <span style={{ flex: 1, textAlign: 'right' }}>Fee APR</span>
         <span style={{ flex: 1, textAlign: 'right' }}>BGT APR</span>
         <span style={{ flex: 1, textAlign: 'right' }} />
       </div>
@@ -589,11 +587,10 @@ function PairListSkeleton() {
               <div className="animate-pulse rounded" style={{ background: '#493E35', height: 14, width: '35%' }} />
             </div>
           </div>
-          {/* Desktop-only columns */}
+          {/* Desktop-only columns: TVL, 24h Volume, Fee APR, BGT APR, actions */}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
-          {!isMainnet && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 40, background: '#493E35' }} />
         </div>
