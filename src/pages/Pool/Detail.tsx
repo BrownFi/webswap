@@ -272,6 +272,12 @@ function PoolDetailInner({
   // creation (stable on thin pools, so shown on prod too); V2 keeps the
   // indexer-derived feeAPR exactly as before.
   const feeAprDisplay = !ratiosMeaningful ? 0 : isV3Like(version) ? computeV3FeeApr(pairRaw) : feeAPR ?? 0
+  // "Annualized Return" label is shared by V2 + V3. The hint is V3-only — it's
+  // measured vs the UniV2 baseline, which doesn't describe V2's trading-fee APR.
+  // Shown inline on the card (not a tooltip) so "Learn More" stays clickable.
+  // TODO(jason): real Learn More URL.
+  const APR_LEARN_MORE_URL = '#'
+  const aprHint = 'Annualized return vs. UniV2 baseline. For reference only. Short-term estimates may differ from long-term results.'
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   const incentiveIcon = bgtAPR
     ? 'https://furthermore.app/icons/bgt.svg'
@@ -704,16 +710,24 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* APR — yield metrics (Fee APR, BGT/Incentive APR). Visual
+            {/* Returns — Annualized Return + BGT/Incentive APR. Visual
                 treatment mirrors Stats so the rail reads as a consistent stack. */}
             <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
-                APR
+                Returns
               </div>
 
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
-                <StatInline label="Fee APR" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />
+                <div>
+                  <StatInline label="Annualized Return" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />
+                  {isV3Like(version) && (
+                    <div className="text-[11px]" style={{ fontFamily: 'Inter', fontWeight: 400, color: '#978A80', lineHeight: '16px', marginTop: '2px' }}>
+                      {aprHint}{' '}
+                      <a href={APR_LEARN_MORE_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#D8A072', textDecoration: 'underline' }}>Learn More</a>
+                    </div>
+                  )}
+                </div>
                 {incentiveApr > 0 && (
                   <div>
                     <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
@@ -748,13 +762,18 @@ function PoolDetailInner({
               {/* Desktop: stacked label/value rows matching Stats. */}
               <div className="hidden lg:block">
                 <div className="mb-3 lg:mb-4">
-                  <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                    Fee APR
-                    <QuestionHelper text="The annual fee yield." />
+                  <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                    Annualized Return
                   </div>
                   <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
                     {(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   </div>
+                  {isV3Like(version) && (
+                    <div className="text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 400, color: '#978A80', lineHeight: '16px', marginTop: '4px' }}>
+                      {aprHint}{' '}
+                      <a href={APR_LEARN_MORE_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#D8A072', textDecoration: 'underline' }}>Learn More</a>
+                    </div>
+                  )}
                 </div>
                 {incentiveApr > 0 && (
                   <div className="mb-3 lg:mb-4">

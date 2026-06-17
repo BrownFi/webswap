@@ -386,7 +386,7 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
                   <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  <SortHeader label="Annualized Return" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   <span style={{ flex: 1, textAlign: 'right' }} />
                 </div>
@@ -562,7 +562,7 @@ function PairListSkeleton() {
         <span style={{ flex: 2 }}>Pool</span>
         <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'right' }}>24h Volume</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Fee APR</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>Annualized Return</span>
         <span style={{ flex: 1, textAlign: 'right' }}>BGT APR</span>
         <span style={{ flex: 1, textAlign: 'right' }} />
       </div>
