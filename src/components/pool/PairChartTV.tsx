@@ -129,14 +129,11 @@ const SERIES_ALL: SeriesMeta[] = [
   { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
   { key: 'bnhPrice',      label: 'HODL Price',     color: '#9CA3AF99', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'uniV2Price',    label: 'UniV2 Price',    color: '#E0484899', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  // LP − UniV2 divergence. Plotted on the RIGHT (price) axis next to the
-  // LP/HODL/UniV2 series since per Jason's 2026-06-04 ask, the divergence
-  // reads more naturally beside its parent series. Visual style mirrors
-  // UniV2 Price — 1px dotted at ~60% opacity (alpha `99` ≈ 0.6) so it
-  // reads as a paired reference rather than competing with the primary
-  // LP line. Cyan keeps it distinct from the palette (LP orange, HODL
-  // gray, UniV2 red, TVL purple, NetPnL/Volume green) — and avoids the
-  // volume green + the old HODL blue it used to clash with.
+  // LP − UniV2 divergence (= lp − uni). The delta is tiny (~0.006) next to the
+  // ~$1 price lines, so it lives on its OWN LEFT axis — same single pane as the
+  // prices, but a separate scale so its small magnitude is readable. The left
+  // axis is made visible on the prod V3 chart (see leftPriceScale below) so the
+  // values map to real numbers. Cyan 1px dotted keeps the original look.
   { key: 'lpMinusUniV2',  label: 'LP vs. UniV2',   color: '#22D3EE99', type: 'line',      priceScaleId: 'left',  yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
   // Display label is "LP − BH" (LP minus Buy & Hold) to read as a sibling
@@ -252,12 +249,14 @@ const PairChartTVInner = ({ pair }: Props) => {
         lpPrice: lp,
         bnhPrice: bnh,
         uniV2Price: uni,
-        // Use uniRaw (not the scaled `uni`) so the formula stays
-        // self-consistent with the unscaled lpRaw/tvlRaw it's mixed with.
-        // For non-HYPE pools uni === uniRaw so this is identical; only the
-        // kHYPE/USDT pool (`iskHYPEUSDT`) is affected, where the scaled
-        // `uni` would have produced a value 1e9× too small.
-        lpMinusUniV2:  tvlRaw - (uniRaw * tvlRaw) / (lpRaw || 1),
+        // "LP vs. UniV2" = the pure price gap between BrownFi's LP price and
+        // the UniV2 constant-product price (Jason 2026-06-17). He only wants
+        // the correlation between the two tokens — NOT the whole-pool /
+        // NAV-scaled figure used on the Beta page (the old
+        // `tvlRaw − uniRaw·tvlRaw/lpRaw` ≡ `tvl·(1 − uniV2/lp)` form). Use the
+        // scaled lp/uni so the delta is in the same price units as the
+        // lpPrice/uniV2Price lines (both are /1e9 for the kHYPE/USDT pool).
+        lpMinusUniV2:  lp - uni,
         tvl: tvlRaw,
         netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
         volume: volRaw,
@@ -329,7 +328,9 @@ const PairChartTVInner = ({ pair }: Props) => {
         scaleMargins: { top: 0.05, bottom: 0.25 },
       },
       leftPriceScale: {
-        visible: showExtendedMetrics,
+        // Visible on the prod V3 chart too — it carries the small
+        // "LP vs. UniV2" delta, which is unreadable without its own labels.
+        visible: showExtendedMetrics || v3ProdChart,
         borderVisible: false,
         ticksVisible: false,
         scaleMargins: { top: 0.05, bottom: 0.25 },
@@ -570,9 +571,11 @@ const PairChartTVInner = ({ pair }: Props) => {
                 .map((meta) => {
                   const v = hovered[meta.key] as number
                   const formatted =
+                    // lpMinusUniV2 is now a pure price delta (lp − uni), so it
+                    // formats like the price lines (3 dp), NOT the whole-dollar
+                    // group (tvl/netPnL/volume) it used to belong to.
                     meta.key === 'tvl' ||
                     meta.key === 'netPnL' ||
-                    meta.key === 'lpMinusUniV2' ||
                     meta.key === 'volume'
                       ? formatPrice(v, { maximumFractionDigits: 0 })
                       : formatPrice(v, { maximumFractionDigits: 3 })
