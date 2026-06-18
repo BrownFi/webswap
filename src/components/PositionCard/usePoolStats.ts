@@ -71,7 +71,7 @@ export type PairStats = {
 // to the V2 math (indexer apr, never negative) and its (?) tooltip is hidden,
 // and the chart's "LP vs. UniV2" line + its tooltip are hidden too. Everything
 // stays wired so flipping this back to `true` re-enables all of it at once.
-export const USE_V3_UNIV2_COMPARISON: boolean = false
+export const USE_V3_UNIV2_COMPARISON: boolean = true
 
 /**
  * V3 Fee APR = annualized LP-vs-UniV2 outperformance since the pool was created:
