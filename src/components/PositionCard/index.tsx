@@ -34,7 +34,7 @@ import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
-import { merklCampaignPool, PairStats, usePoolStats } from './usePoolStats'
+import { merklCampaignPool, PairStats, usePoolStats, computeV3FeeApr } from './usePoolStats'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -145,25 +145,23 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  const { tvl, lpPrice, feeOverTvl, feeAPR } = useMemo(() => {
+  const { tvl, lpPrice, annualizedReturn, feeAPR } = useMemo(() => {
     const r0 = token0Price * Number(pair.reserve0.toSignificant(6))
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
     const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(6)) || 1)
-    // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
-    // values (e.g. 6,606,088% / 2,378,191,932%). Below a $1 TVL floor the
-    // numbers are meaningless — zero them so the columns render their default
-    // "--" instead. Threshold, not `tvl > 0`, because a $0.50 pool still blows up.
+    // APR/ratio columns divide by TVL, so a near-empty pool produces absurd
+    // values. Below a $1 TVL floor zero them so the column renders "--".
     const MIN_TVL_FOR_RATIOS = 1
     const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS
-    // 24h Fees / TVL — simple daily ratio, no annualization
-    const feeDay = Number(pairStats?.feeDay) || 0
-    const feeOverTvl = ratiosMeaningful ? (feeDay / tvl) * 100 : 0
-    // Annualized fee APR (LP share)
+    // Fee APR (LP share) — indexer/volume-based; shown for V2 + V3 (unchanged).
     const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
     const feeAPR = ratiosMeaningful ? (shouldUseIndexer ? feeAPRIndexer : feeAPRFallback) : 0
-    return { tvl, lpPrice, feeOverTvl, feeAPR }
-  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats?.feeDay, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
+    // Annualized Return = V3-only LP-vs-UniV2 metric. V2 pools lack the inputs,
+    // so computeV3FeeApr returns 0 → the column renders '--' for them.
+    const annualizedReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairStats)
+    return { tvl, lpPrice, annualizedReturn, feeAPR }
+  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
 
   const stakedLiquidityTokenAmount = parseStakeLpAmount(pairAccount?.stakeLP, pair.liquidityToken)
 
@@ -232,12 +230,14 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 </span>
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
-                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD' }}>
-                  24h Fees / TVL: {feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--'}
-                </span>
+                {isV3Like(pair.version) && (
+                  <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD' }}>
+                    Annual Return: <span style={{ color: annualizedReturn >= 0 ? '#83CF84' : '#E04848' }}>{annualizedReturn ? `${formatNumberLambda(annualizedReturn, { maximumFractionDigits: 2 })}%` : '--'}</span>
+                  </span>
+                )}
                 {!isMainnet && (
                   <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84' }}>
-                    APR: {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
+                    Fee APR: {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
                   </span>
                 )}
               </div>
@@ -267,21 +267,23 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
           </div>
           {/* TVL */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
+          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
-          {/* 24h Fees / TVL (white) */}
-          <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>
-            {feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--'}
-          </span>
-          {/* APR (annualized, LP share) — beta/non-mainnet only */}
+          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
+          {/* Annualized Return — V3 only (V2 has no LP-vs-UniV2 data). Green ≥0 / red <0. */}
+          {isV3Like(pair.version) && (
+            <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: annualizedReturn >= 0 ? '#83CF84' : '#E04848' }}>
+              {annualizedReturn ? `${formatNumberLambda(annualizedReturn, { maximumFractionDigits: 2 })}%` : '--'}
+            </span>
+          )}
+          {/* Fee APR — indexer apr (V2 + V3); beta/non-mainnet only */}
           {!isMainnet && (
-            <span className="max-md:hidden text-right" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+            <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
               {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
             </span>
           )}
           {/* Incentive APR (green with BGT icon when applicable) */}
-          <span className="max-md:hidden text-right inline-flex items-center justify-end gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+          <span className="max-md:hidden text-left inline-flex items-center justify-start gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
             {enableBgt || enableMerklCampaignApr ? (
               <>
                 +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%

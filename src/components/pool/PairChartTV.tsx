@@ -1,5 +1,6 @@
-import { ChainId, Pair } from '@brownfi/sdk'
+import { ChainId, Pair, isV3Like } from '@brownfi/sdk'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { isMainnet, isV3Enabled } from 'connectors'
 import {
   AreaSeries,
@@ -99,7 +100,13 @@ type DayData = {
 
 type HourData = Omit<DayData, 'dayStartUnix'> & { hourStartUnix: number }
 
-type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpMinusUniV2' | 'tvl' | 'netPnL' | 'volume'
+type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpMinusUniV2' | 'lpVsUniV2' | 'tvl' | 'netPnL' | 'volume'
+
+// GitBook explainer for the LP-vs-UniV2 benchmark (the per-token price-gap
+// line). Mirrors the develop branch's chart.
+const LEARN_MORE_URL = 'https://brownfi.gitbook.io/brownfi-docs/brownfi-v3/benchmark'
+const BENCHMARK_HINT =
+  "The UniV2 constant-product curve serves as the benchmark for measuring BrownFi pool performance. The LP line should sit above the UniV2 line, with the gap widening over time, reflecting BrownFi V3's lower IL and higher fee yield compared to UniV2."
 
 type SeriesMeta = {
   key: SeriesKey
@@ -138,6 +145,15 @@ const SERIES_ALL: SeriesMeta[] = [
   // gray, UniV2 red, TVL purple, NetPnL/Volume green) — and avoids the
   // volume green + the old HODL blue it used to clash with.
   { key: 'lpMinusUniV2',  label: 'LP − UniV2',     color: '#22D3EE99', type: 'line',      priceScaleId: 'left',  yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // "LP vs. UniV2" = the pure per-LP-token price gap (lp − uni), matching the
+  // develop branch. This is a DIFFERENT quantity from the "LP − UniV2" line
+  // above (which is the NAV/whole-pool figure `tvl·(1 − uniV2/lp)`): this one
+  // is a tiny price delta (~0.006) while that one is pool-total dollars. It
+  // gets its OWN overlay price scale ('lpvs') because at price-delta magnitude
+  // it would be invisible squashed against the pool-total left axis. Magenta
+  // keeps it distinct from the cyan "LP − UniV2" line; read exact values via
+  // the hover tooltip (the overlay scale has no axis gutter).
+  { key: 'lpVsUniV2',     label: 'LP vs. UniV2',   color: '#F472B699', type: 'line',      priceScaleId: 'lpvs',   yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
   // Display label is "LP − BH" (LP minus Buy & Hold) to read as a sibling
   // of "LP − UniV2" — same comparator pattern, just against the HODL
@@ -155,14 +171,15 @@ type Props = {
 const PairChartTVInner = ({ pair }: Props) => {
   const showExtendedMetrics = !isMainnet
   const supportsUniV2 = hasUniV2Price(pair.chainId)
+  const isV3 = isV3Like(pair.version)
   const availableSeries = useMemo(() => {
     if (!showExtendedMetrics) return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
-    // Hide both the UniV2 reference AND the LP−UniV2 divergence line on
-    // chains without uniV2Price indexer data — the diff would be
-    // misleading (lpPrice − 0 = lpPrice) otherwise.
+    // Hide the UniV2 reference AND both divergence lines (LP−UniV2 NAV figure +
+    // LP vs. UniV2 price gap) on chains without uniV2Price indexer data — the
+    // diff would be misleading (lpPrice − 0 = lpPrice) otherwise.
     return supportsUniV2
       ? SERIES_ALL
-      : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
+      : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2' && s.key !== 'lpVsUniV2')
   }, [showExtendedMetrics, supportsUniV2])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
@@ -174,6 +191,9 @@ const PairChartTVInner = ({ pair }: Props) => {
     // availableSeries filter below — otherwise the line would just show
     // raw lpPrice values.
     lpMinusUniV2: showExtendedMetrics,
+    // LP vs. UniV2 (per-token price gap) — same gating as the NAV line; the
+    // availableSeries filter hides it on chains without uniV2Price.
+    lpVsUniV2: showExtendedMetrics,
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
     volume: true,
@@ -239,6 +259,11 @@ const PairChartTVInner = ({ pair }: Props) => {
         // kHYPE/USDT pool (`iskHYPEUSDT`) is affected, where the scaled
         // `uni` would have produced a value 1e9× too small.
         lpMinusUniV2:  tvlRaw - (uniRaw * tvlRaw) / (lpRaw || 1),
+        // "LP vs. UniV2" = the pure price gap between BrownFi's LP price and the
+        // UniV2 constant-product price (Jason 2026-06-17 — the develop formula).
+        // Uses the SCALED lp/uni so the delta is in the same price units as the
+        // lpPrice/uniV2Price lines (both /1e9 for the kHYPE/USDT pool).
+        lpVsUniV2: lp - uni,
         tvl: tvlRaw,
         netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
         volume: volRaw,
@@ -369,6 +394,15 @@ const PairChartTVInner = ({ pair }: Props) => {
     if (seriesRefs.current.volume) {
       chart.priceScale('volume').applyOptions({
         scaleMargins: { top: 0.8, bottom: 0 },
+      })
+    }
+
+    // The "LP vs. UniV2" price gap rides its own invisible overlay scale so it
+    // auto-fits to its own (tiny) range instead of flat-lining against the
+    // pool-total left axis. Keep it clear of the volume band at the bottom.
+    if (seriesRefs.current.lpVsUniV2) {
+      chart.priceScale('lpvs').applyOptions({
+        scaleMargins: { top: 0.1, bottom: 0.35 },
       })
     }
 
@@ -601,6 +635,11 @@ const PairChartTVInner = ({ pair }: Props) => {
             <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>
               {meta.label}
             </span>
+            {/* LP vs. UniV2 benchmark explainer — interactive tooltip with a
+                clickable Learn More (V3 chart only). */}
+            {meta.key === 'lpVsUniV2' && isV3 && supportsUniV2 && (
+              <InfoTooltip text={BENCHMARK_HINT} learnMoreUrl={LEARN_MORE_URL} />
+            )}
             {/* Values live in the floating tooltip on both desktop (hover) and
                 mobile (tap) — no need to duplicate them here. */}
           </button>

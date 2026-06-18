@@ -21,7 +21,7 @@ import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { currencyId } from 'utils/currencyId'
-import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
+import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
 import { getRestakers } from 'constants/restakers'
 import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
@@ -90,6 +90,8 @@ const GET_PAIR_V3 = `
       pythWeight
       gamma
       uniV2Price
+      lpPrice
+      createdAt
       quoteTokenIndex
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
@@ -266,12 +268,10 @@ function PoolDetailInner({
   // meaningless — zero them so the cards render their "--" default. (Matches
   // the pool-list behavior in PositionCard.)
   const ratiosMeaningful = Number(pairRaw?.tvl) >= 1
-  // 24h fee / TVL (simple ratio, no annualization)
-  const feeOverTvl =
-    ratiosMeaningful && Number(pairRaw.feeDay) > 0
-      ? (Number(pairRaw.feeDay) / Number(pairRaw.tvl)) * 100
-      : 0
-  // Fee APR comes from the indexer (usePoolStats) and explodes the same way.
+  // Annual Return = V3-only LP-vs-UniV2 outperformance since creation (green/red);
+  // V2 lacks the inputs → 0/'--' (the metric is hidden on V2). Mirrors the list.
+  const annualReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairRaw)
+  // Fee APR = indexer-derived APR (V2 + V3), shown alongside.
   const feeAprDisplay = ratiosMeaningful ? feeAPR ?? 0 : 0
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   const incentiveIcon = bgtAPR
@@ -705,9 +705,9 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* APR — the three yield metrics combined into a single card
-                (Fee APR, 24h Fees / TVL, BGT/Incentive APR). Visual treatment
-                mirrors Stats so the rail reads as a consistent stack. */}
+            {/* APR — Annualized Return (green ≥0 / red <0) + BGT/Incentive APR.
+                Visual treatment mirrors Stats so the rail reads as a consistent
+                stack. */}
             <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
                 APR
@@ -715,8 +715,8 @@ function PoolDetailInner({
 
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
+                {isV3Like(version) && <StatInline label="Annual Return" value={(annualReturn ? `${formatNumberLambda(annualReturn, { maximumFractionDigits: 2 })}%` : '--')} valueColor={annualReturn >= 0 ? '#83CF84' : '#E04848'} />}
                 {!isMainnet && <StatInline label="Fee APR" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />}
-                <StatInline label="24h Fees / TVL" value={(feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--')} />
                 {incentiveApr > 0 && (
                   <div>
                     <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
@@ -750,6 +750,16 @@ function PoolDetailInner({
 
               {/* Desktop: stacked label/value rows matching Stats. */}
               <div className="hidden lg:block">
+                {isV3Like(version) && (
+                  <div className="mb-3 lg:mb-4">
+                    <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                      Annual Return
+                    </div>
+                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: annualReturn >= 0 ? '#83CF84' : '#E04848', marginTop: '2px' }}>
+                      {(annualReturn ? `${formatNumberLambda(annualReturn, { maximumFractionDigits: 2 })}%` : '--')}
+                    </div>
+                  </div>
+                )}
                 {!isMainnet && (
                   <div className="mb-3 lg:mb-4">
                     <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
@@ -760,15 +770,6 @@ function PoolDetailInner({
                     </div>
                   </div>
                 )}
-                <div className="mb-3 lg:mb-4">
-                  <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                    24h Fees / TVL
-                    <QuestionHelper text="Last 24h fees as a percentage of current TVL — the pool's daily fee yield." />
-                  </div>
-                  <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
-                    {(feeOverTvl ? `${formatNumberLambda(feeOverTvl, { maximumFractionDigits: 2 })}%` : '--')}
-                  </div>
-                </div>
                 {incentiveApr > 0 && (
                   <div className="mb-3 lg:mb-4">
                     <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>

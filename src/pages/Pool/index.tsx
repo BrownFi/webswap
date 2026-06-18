@@ -12,7 +12,7 @@ import { Flex, Text } from 'components/Rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
-import { PairStats, pairBGT } from 'components/PositionCard/usePoolStats'
+import { PairStats, pairBGT, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
 import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
@@ -100,6 +100,8 @@ const LIST_ALL_PAIRS_V3 = `
       pythWeight
       gamma
       uniV2Price
+      lpPrice
+      createdAt
       quoteTokenIndex
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
@@ -150,9 +152,9 @@ export default function Pool() {
   // V3 indexer ships `feeSplit` / `kB` (not `protocolFee` / `k`). Alias them
   // client-side so downstream code (PositionCard, devStats, etc.) stays
   // version-agnostic. Extra V3 fields pass through unchanged.
-  // Sortable columns. Default: TVL desc. Fee APR uses indexer's `apr`. The
-  // 24h-Fees/TVL and BGT APR columns are computed client-side below.
-  type SortKey = 'tvl' | 'volumeDay' | 'feeOverTvl' | 'apr' | 'bgtAPR'
+  // Sortable columns. Default: TVL desc. Annualized Return and BGT APR columns
+  // are computed client-side below.
+  type SortKey = 'tvl' | 'volumeDay' | 'annualizedReturn' | 'apr' | 'bgtAPR'
   type SortDir = 'asc' | 'desc'
   const [sortKey, setSortKey] = useState<SortKey>('tvl')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -205,10 +207,10 @@ export default function Pool() {
       : raw
     const dir = sortDir === 'desc' ? 1 : -1
     const valueOf = (p: PairStats): number => {
-      if (sortKey === 'feeOverTvl') {
-        const t = Number(p.tvl) || 0
-        const f = Number(p.feeDay) || 0
-        return t > 0 ? (f / t) * 100 : 0
+      if (sortKey === 'annualizedReturn') {
+        // V3-only LP-vs-UniV2 formula; V2 has no inputs → 0. ('apr' sortKey
+        // below handles the Fee APR column for both versions.)
+        return computeV3FeeApr(p)
       }
       if (sortKey === 'bgtAPR') {
         return bgtAprByAddr[p.id.toLowerCase()] ?? 0
@@ -384,17 +386,19 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
                   <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label="24h Fees / TVL" active={sortKey === 'feeOverTvl'} dir={sortDir} onClick={() => handleSort('feeOverTvl')} />
+                  {isV3Like(version) && (
+                    <SortHeader label="Annual Return" active={sortKey === 'annualizedReturn'} dir={sortDir} onClick={() => handleSort('annualizedReturn')} />
+                  )}
                   {!isMainnet && (
                     <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   )}
                   <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
-                  <span style={{ flex: 1, textAlign: 'right' }} />
+                  <span style={{ flex: 1, textAlign: 'left' }} />
                 </div>
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton />
+              <PairListSkeleton showAnnualizedReturn={isV3Like(version)} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -502,7 +506,7 @@ function SortHeader({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center justify-end gap-1 cursor-pointer hover:text-[#FBFBFD] transition-colors"
+      className="inline-flex items-center justify-start gap-1 cursor-pointer hover:text-[#FBFBFD] transition-colors"
       style={{
         flex: 1,
         background: 'transparent',
@@ -512,7 +516,7 @@ function SortHeader({
         fontWeight: 'inherit',
         fontSize: 'inherit',
         color: active ? '#FBFBFD' : 'inherit',
-        textAlign: 'right',
+        textAlign: 'left',
       }}
     >
       <span>{label}</span>
@@ -545,7 +549,7 @@ function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
   )
 }
 
-function PairListSkeleton() {
+function PairListSkeleton({ showAnnualizedReturn }: { showAnnualizedReturn: boolean }) {
   return (
     <>
       {/* Table header */}
@@ -561,12 +565,12 @@ function PairListSkeleton() {
         }}
       >
         <span style={{ flex: 2 }}>Pool</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>24h Volume</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>24h Fees / TVL</span>
-        {!isMainnet && <span style={{ flex: 1, textAlign: 'right' }}>Fee APR</span>}
-        <span style={{ flex: 1, textAlign: 'right' }}>BGT APR</span>
-        <span style={{ flex: 1, textAlign: 'right' }} />
+        <span style={{ flex: 1, textAlign: 'left' }}>TVL</span>
+        <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
+        {showAnnualizedReturn && <span style={{ flex: 1, textAlign: 'left' }}>Annual Return</span>}
+        {!isMainnet && <span style={{ flex: 1, textAlign: 'left' }}>Fee APR</span>}
+        <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>
+        <span style={{ flex: 1, textAlign: 'left' }} />
       </div>
       {[0, 1, 2, 3, 4].map((i) => (
         <div
@@ -592,7 +596,7 @@ function PairListSkeleton() {
           {/* Desktop-only columns */}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
-          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+          {showAnnualizedReturn && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           {!isMainnet && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 40, background: '#493E35' }} />
