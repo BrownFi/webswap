@@ -158,10 +158,11 @@ export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
 export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.test(
   import.meta.env.VITE_API_URL ?? '',
 )
-// V3 is enabled when the API serves /indexer/v3 + uniV2Price — true for the
-// beta-api alias (which production now uses) and dev. The legacy api.brownfi.io
-// alias doesn't have V3 yet, so a deployment pointed at it stays V2-only.
-export const isV3Enabled = isBetaApi
+// V3 is enabled when the API serves /indexer/v3 + uniV2Price — the beta/dev
+// APIs (isBetaApi) and, as of 2026-06-18, production api.brownfi.io too (Manh
+// promoted V3 for Bera + HyperEVM, verified 1:1 with beta-api). The `//api.`
+// anchor matches the prod host without also matching `beta-api`/`dev-api`.
+export const isV3Enabled = isBetaApi || /\/\/api\.brownfi\.io/.test(import.meta.env.VITE_API_URL ?? '')
 
 const mainChains: readonly [Chain, ...Chain[]] = [
   berachain,
