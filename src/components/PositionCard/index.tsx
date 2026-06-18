@@ -111,11 +111,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const {
     tradingFee,
     totalSupply: totalPoolTokens,
-    feeAPR: feeAPRIndexer,
     bgtAPR,
     volume24h,
     volume7d,
-    shouldUseIndexer,
     pairAccount,
     merklCampaignApr,
   } = usePoolStats({
@@ -145,7 +143,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  const { tvl, lpPrice, feeAPR } = useMemo(() => {
+  const { tvl, lpPrice, columnValue } = useMemo(() => {
     const r0 = token0Price * Number(pair.reserve0.toSignificant(6))
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
@@ -155,18 +153,18 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     // "--". Threshold, not `tvl > 0`, because a $0.50 pool still blows up.
     const MIN_TVL_FOR_RATIOS = 1
     const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS
-    // Fee APR. V3 = LP-vs-UniV2 outperformance since pool creation (matches the
-    // pool detail page); V2 keeps the indexer/volume-based value.
-    const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
-    const feeAPR = !ratiosMeaningful
+    // Returns column. V3 (with the LP-vs-UniV2 comparison enabled) shows the
+    // annualized LP-vs-UniV2 outperformance ("Annualized Return"); V2 shows the
+    // simple 24h-fees/TVL daily ratio ("24h Fees / TVL") — Jason 2026-06-18.
+    const feeDay = Number(pairStats?.feeDay) || 0
+    const feeOverTvl = ratiosMeaningful ? (feeDay / tvl) * 100 : 0
+    const columnValue = !ratiosMeaningful
       ? 0
       : isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON
         ? computeV3FeeApr(pairStats)
-        : shouldUseIndexer
-          ? feeAPRIndexer
-          : feeAPRFallback
-    return { tvl, lpPrice, feeAPR }
-  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
+        : feeOverTvl
+    return { tvl, lpPrice, columnValue }
+  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats])
 
   const stakedLiquidityTokenAmount = parseStakeLpAmount(pairAccount?.stakeLP, pair.liquidityToken)
 
@@ -236,7 +234,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                  Annualized Return: <span style={{ color: '#83CF84' }}>{feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}</span>
+                  {isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'}: <span style={{ color: '#83CF84' }}>{columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}</span>
                 </span>
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
@@ -268,9 +266,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
           <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
-          {/* Annualized Return — V3: LP-vs-UniV2 formula; V2: indexer apr. Wider column for the long label. */}
+          {/* Returns column — V3: annualized LP-vs-UniV2 return; V2: 24h fees / TVL. Wider column for the long label. */}
           <span className="max-md:hidden text-left" style={{ flex: 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
-            {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
+            {columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
           {/* BGT APR — Berachain only (BGT is Bera-specific). */}
           {chainId === ChainId.BERA_MAINNET && (
