@@ -16,6 +16,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatPrice } from 'utils/prices'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
+import { USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
 
 // `uniV2Price` is indexed per chain. Verified on bf-v2-api-beta.brownfi.io
 // on 2026-05-12: every chain currently on the indexer supports the field.
@@ -163,22 +164,28 @@ const PairChartTVInner = ({ pair }: Props) => {
   // The default-visible flags below mirror this.
   const v3ProdChart = isV3 && !showExtendedMetrics && supportsUniV2
   const availableSeries = useMemo(() => {
-    if (!showExtendedMetrics) {
-      // Production: V3 → LP price + UniV2 price + LP−UniV2 + volume (when uniV2
-      // data is available, e.g. V3-Official Bera via Goldsky); V2 → LP + volume.
-      if (v3ProdChart) {
-        return SERIES_ALL.filter(
-          (s) =>
-            s.key === 'lpPrice' || s.key === 'uniV2Price' || s.key === 'lpMinusUniV2' || s.key === 'volume',
-        )
+    const base = (() => {
+      if (!showExtendedMetrics) {
+        // Production: V3 → LP price + UniV2 price + LP−UniV2 + volume (when uniV2
+        // data is available, e.g. V3-Official Bera via Goldsky); V2 → LP + volume.
+        if (v3ProdChart) {
+          return SERIES_ALL.filter(
+            (s) =>
+              s.key === 'lpPrice' || s.key === 'uniV2Price' || s.key === 'lpMinusUniV2' || s.key === 'volume',
+          )
+        }
+        return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
       }
-      return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
-    }
-    // beta/dev: full set, minus the UniV2 reference + LP−UniV2 divergence on
-    // chains without uniV2Price indexer data (diff would be misleading).
-    return supportsUniV2
-      ? SERIES_ALL
-      : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
+      // beta/dev: full set, minus the UniV2 reference + LP−UniV2 divergence on
+      // chains without uniV2Price indexer data (diff would be misleading).
+      return supportsUniV2
+        ? SERIES_ALL
+        : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
+    })()
+    // Paven (2026-06-18): hide the "LP vs. UniV2" divergence line until the
+    // comparison is re-enabled. Dropping it from availableSeries removes the
+    // line, its legend item, AND the (?) tooltip in one go.
+    return USE_V3_UNIV2_COMPARISON ? base : base.filter((s) => s.key !== 'lpMinusUniV2')
   }, [showExtendedMetrics, supportsUniV2, v3ProdChart])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({

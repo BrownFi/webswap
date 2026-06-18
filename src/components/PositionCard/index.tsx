@@ -34,7 +34,7 @@ import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
-import { merklCampaignPool, PairStats, usePoolStats, computeV3FeeApr } from './usePoolStats'
+import { merklCampaignPool, PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from './usePoolStats'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -160,7 +160,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
     const feeAPR = !ratiosMeaningful
       ? 0
-      : isV3Like(pair.version)
+      : isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON
         ? computeV3FeeApr(pairStats)
         : shouldUseIndexer
           ? feeAPRIndexer

@@ -12,7 +12,7 @@ import { Flex, Text } from 'components/Rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
-import { PairStats, pairBGT, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
+import { PairStats, pairBGT, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
 import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
 import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
@@ -211,9 +211,9 @@ export default function Pool() {
       if (sortKey === 'bgtAPR') {
         return bgtAprByAddr[p.id.toLowerCase()] ?? 0
       }
-      // Fee APR sort: V3 uses the LP-vs-UniV2 formula (matches the column);
-      // V2 keeps the indexer `apr`.
-      if (sortKey === 'apr' && isV3Like(version)) {
+      // Annualized Return sort: V3 uses the LP-vs-UniV2 formula only when the
+      // flag is on; otherwise (and for V2) sort by the indexer `apr`.
+      if (sortKey === 'apr' && isV3Like(version) && USE_V3_UNIV2_COMPARISON) {
         return computeV3FeeApr(p)
       }
       return Number((p as any)[sortKey]) || 0
@@ -387,7 +387,7 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
                   <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label="Annualized Return" flex={1.3} info={isV3Like(version) ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  <SortHeader label="Annualized Return" flex={1.3} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   {chainId === ChainId.BERA_MAINNET && (
                     <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}

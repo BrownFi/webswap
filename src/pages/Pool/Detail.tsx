@@ -21,7 +21,7 @@ import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { currencyId } from 'utils/currencyId'
-import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
+import { PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
 import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
 import { getRestakers } from 'constants/restakers'
@@ -272,7 +272,11 @@ function PoolDetailInner({
   // Fee APR. V3 uses the annualized LP-vs-UniV2 outperformance since pool
   // creation (stable on thin pools, so shown on prod too); V2 keeps the
   // indexer-derived feeAPR exactly as before.
-  const feeAprDisplay = !ratiosMeaningful ? 0 : isV3Like(version) ? computeV3FeeApr(pairRaw) : feeAPR ?? 0
+  const feeAprDisplay = !ratiosMeaningful
+    ? 0
+    : isV3Like(version) && USE_V3_UNIV2_COMPARISON
+      ? computeV3FeeApr(pairRaw)
+      : feeAPR ?? 0
   // "Annualized Return" label is shared by V2 + V3. The V3-only (?) hint lives
   // in <AnnualizedReturnInfo/> (interactive tooltip with a clickable Learn More).
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
@@ -713,7 +717,7 @@ function PoolDetailInner({
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
                 <StatInline
-                  label={isV3Like(version) ? (<span className="inline-flex items-center">Annualized Return<AnnualizedReturnInfo /></span>) : 'Annualized Return'}
+                  label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? (<span className="inline-flex items-center">Annualized Return<AnnualizedReturnInfo /></span>) : 'Annualized Return'}
                   value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   valueColor="#83CF84"
                 />
@@ -753,7 +757,7 @@ function PoolDetailInner({
                 <div className="mb-3 lg:mb-4">
                   <div className="text-[12px] lg:text-[13px] inline-flex items-center" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
                     Annualized Return
-                    {isV3Like(version) && <AnnualizedReturnInfo />}
+                    {isV3Like(version) && USE_V3_UNIV2_COMPARISON && <AnnualizedReturnInfo />}
                   </div>
                   <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
                     {(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}

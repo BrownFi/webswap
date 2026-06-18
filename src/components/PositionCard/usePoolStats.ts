@@ -66,6 +66,13 @@ export type PairStats = {
   token1?: Token | null
 }
 
+// Feature flag (Paven, 2026-06-18): when false, ALL the V3 LP-vs-UniV2
+// comparison UI is hidden together — the "Annualized Return" metric falls back
+// to the V2 math (indexer apr, never negative) and its (?) tooltip is hidden,
+// and the chart's "LP vs. UniV2" line + its tooltip are hidden too. Everything
+// stays wired so flipping this back to `true` re-enables all of it at once.
+export const USE_V3_UNIV2_COMPARISON: boolean = false
+
 /**
  * V3 Fee APR = annualized LP-vs-UniV2 outperformance since the pool was created:
  *   (lpPrice − uniV2Price) / uniV2Price / daysAlive × 360 × 100
