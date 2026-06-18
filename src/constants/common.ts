@@ -12,7 +12,20 @@ export const USDC = new Token(ChainId.MAINNET, '0xA0b86991c6218b36c1d19D4a2e9Eb0
 export const USDT = new Token(ChainId.MAINNET, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6, 'USDT', 'Tether USD')
 export const WBTC = new Token(ChainId.MAINNET, '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', 8, 'WBTC', 'Wrapped BTC')
 
-// used to construct intermediary pairs for trading
+// Berachain base tokens — referenced both by BASES_TO_CHECK_TRADES_AGAINST
+// (multi-hop route discovery) and SUGGESTED_BASES (featured chips in the
+// token picker). Declared once at module top so both lists can reference.
+const BERA_HONEY  = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'HONEY', 'Honey')
+const BERA_USDCE  = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6E4e9568C1D3241', 6,  'USDC.e', 'Bridged USDC (Stargate)')
+const BERA_WBTC   = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
+const BERA_WETH   = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
+
+// used to construct intermediary pairs for trading.
+// `BERA_*` constants are declared further down — referenced via a thunk so
+// the lookup happens after they're initialized. Multi-hop route discovery
+// uses this list: for a swap A→B, the router checks A↔base and base↔B
+// pairs for every base. Empty/short lists hide multi-hop routes (e.g.,
+// DOLO/HONEY→HONEY/BERA was invisible until HONEY was added here).
 export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   ...WETH_ONLY,
   [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET]],
@@ -22,6 +35,16 @@ export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
     // config already use 6). Wrong base decimals corrupt reserve math for any
     // multi-hop route that passes through USD₮0 (off by 100×).
     new Token(ChainId.HYPER_EVM, '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb', 6, 'USDT', 'USDT'),
+  ],
+  // Without these, multi-hop routes like DOLO→HONEY→BERA can't be found —
+  // the router only checks pairs against WBERA otherwise, missing the
+  // healthy DOLO/HONEY + HONEY/WBERA path.
+  [ChainId.BERA_MAINNET]: [
+    ...WETH_ONLY[ChainId.BERA_MAINNET],
+    BERA_HONEY,
+    BERA_USDCE,
+    BERA_WBTC,
+    BERA_WETH,
   ],
 }
 
@@ -38,12 +61,8 @@ export const CUSTOM_BASES: { [chainId in ChainId]?: { [tokenAddress: string]: To
 // Featured chips shown above the full token list in the search modal.
 // Per UX feedback (boss + reviewer): replace the BERA/WBERA-only chip row
 // with the top-6 by 30d volume on each chain. Currently only defined for
-// Bera; other chains fall back to WETH-only.
-const BERA_HONEY  = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'HONEY', 'Honey')
-const BERA_USDCE  = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6E4e9568C1D3241', 6,  'USDC.e', 'Bridged USDC (Stargate)')
-const BERA_WBTC   = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
-const BERA_WETH   = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
-
+// Bera; other chains fall back to WETH-only. BERA_* token constants are
+// declared at top of file (also used by BASES_TO_CHECK_TRADES_AGAINST).
 export const SUGGESTED_BASES: ChainTokenList = {
   ...WETH_ONLY,
   [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET], DAI, USDC, USDT, WBTC],
