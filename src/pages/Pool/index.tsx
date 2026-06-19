@@ -30,6 +30,10 @@ import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
 
+// Minimum TVL (USD) for a pool to appear in the prod (mainnet) list. Below
+// this, pools are dust — hidden to declutter the table.
+const MIN_TVL_FOR_LIST = 10
+
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
     pairs {
@@ -254,6 +258,10 @@ export default function Pool() {
           return false
         }
         if (isMainnet) {
+          // Hide dust pools (< $10 TVL) from the prod list — they clutter the
+          // table and their fee/APR math is meaningless. Non-mainnet keeps them
+          // so test pools stay visible on beta/dev.
+          if (Number(pair.tvl) < MIN_TVL_FOR_LIST) return false
           const token0Address = pair.token0?.id.toLowerCase() ?? ''
           const token1Address = pair.token1?.id.toLowerCase() ?? ''
           return allowedTokenAddresses.has(token0Address) || allowedTokenAddresses.has(token1Address)
