@@ -42,8 +42,11 @@ const CHAINS_WITH_UNIV2_PRICE = !isV3Enabled
       ChainId.MONAD,
     ])
 const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
-const buildQuery = (template: string, chainId: number) =>
-  hasUniV2Price(chainId) ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
+// `uniV2Price` only exists on the V3 indexer schema. Keep it only when the
+// chain exposes it AND the pair is V3 — V2 pairs route to the V2 schema, which
+// has no uniV2Price field (querying it is a GraphQL validation error).
+const buildQuery = (template: string, keepUniV2: boolean) =>
+  keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
 
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {
@@ -172,15 +175,20 @@ const PairChartTVInner = ({ pair }: Props) => {
   const showExtendedMetrics = !isMainnet
   const supportsUniV2 = hasUniV2Price(pair.chainId)
   const isV3 = isV3Like(pair.version)
+  // uniV2Price is a V3-indexer field — only request/show it for V3 pairs on a
+  // chain that exposes it (else the V2 schema rejects the query). Same predicate
+  // graphql.ts uses to route /indexer/v3 vs /indexer.
+  const keepUniV2 = supportsUniV2 && isV3
   const availableSeries = useMemo(() => {
     if (!showExtendedMetrics) return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
     // Hide the UniV2 reference AND both divergence lines (LP−UniV2 NAV figure +
-    // LP vs. UniV2 price gap) on chains without uniV2Price indexer data — the
-    // diff would be misleading (lpPrice − 0 = lpPrice) otherwise.
-    return supportsUniV2
+    // LP vs. UniV2 price gap) on V2 pairs / chains without uniV2Price indexer
+    // data — the field is stripped from the query, so the diff would be
+    // misleading (lpPrice − 0 = lpPrice) otherwise.
+    return keepUniV2
       ? SERIES_ALL
       : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2' && s.key !== 'lpVsUniV2')
-  }, [showExtendedMetrics, supportsUniV2])
+  }, [showExtendedMetrics, supportsUniV2, keepUniV2])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
     lpPrice: true,
@@ -213,7 +221,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: buildQuery(GET_PAIR_STATS, pair.chainId),
+        query: buildQuery(GET_PAIR_STATS, keepUniV2),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -227,7 +235,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStatsHour',
-        query: buildQuery(GET_PAIR_STATS_HOUR, pair.chainId),
+        query: buildQuery(GET_PAIR_STATS_HOUR, keepUniV2),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
