@@ -32,7 +32,7 @@ import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
-import { KodiakPairData } from 'services/kodiakService'
+import { CompetitorPairData } from 'services/competitors'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
 import { merklCampaignPool, PairStats, usePoolStats, computeV3FeeApr } from './usePoolStats'
@@ -93,13 +93,15 @@ interface PositionCardProps {
   showUnwrapped?: boolean
   border?: string
   stakedBalance?: TokenAmount
-  // Competitor (Kodiak) stats for this pair, when it also exists on Kodiak.
-  kodiak?: KodiakPairData
-  // Whether to render the Kodiak columns at all (must mirror the table header).
-  showKodiakColumns?: boolean
+  // Competitor stats for this pair, when it also exists on the rival DEX.
+  competitor?: CompetitorPairData
+  // Competitor display name (e.g. "Kodiak", "Project X") — used on the mobile row.
+  competitorName?: string
+  // Whether to render the competitor columns at all (must mirror the table header).
+  showCompetitorColumns?: boolean
 }
 
-export default function FullPositionCard({ pair, pairStats, border, kodiak, showKodiakColumns }: PositionCardProps) {
+export default function FullPositionCard({ pair, pairStats, border, competitor, competitorName, showCompetitorColumns }: PositionCardProps) {
   const navigate = useNavigate()
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
@@ -257,9 +259,9 @@ export default function FullPositionCard({ pair, pairStats, border, kodiak, show
                   )}
                 </div>
               )}
-              {showKodiakColumns && kodiak && (
+              {showCompetitorColumns && competitor && (
                 <div className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD', marginTop: '2px' }}>
-                  Kodiak: {formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}% fee · TVL {formatCompactPrice(kodiak.tvlUSD)} · 24h {formatCompactPrice(kodiak.vol24hUSD)}
+                  {competitorName}: {formatNumberLambda(competitor.feeTier / 10000, { maximumFractionDigits: 2 })}% fee · TVL {formatCompactPrice(competitor.tvlUSD)} · 24h {formatCompactPrice(competitor.vol24hUSD)}
                 </div>
               )}
               {!isMainnet && (
@@ -310,18 +312,18 @@ export default function FullPositionCard({ pair, pairStats, border, kodiak, show
               )}
             </span>
           )}
-          {/* Kodiak (competitor) Fee / TVL / 24h Volume — only for pairs that
-              also exist on Kodiak; '--' otherwise. Gated to mirror the header. */}
-          {showKodiakColumns && (
+          {/* Competitor Fee / TVL / 24h Volume — only for pairs that also exist
+              on the rival DEX; '--' otherwise. Gated to mirror the header. */}
+          {showCompetitorColumns && (
             <>
               <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
-                {kodiak ? `${formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'}
+                {competitor ? `${formatNumberLambda(competitor.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'}
               </span>
               <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
-                {kodiak ? formatCompactPrice(kodiak.tvlUSD) : '--'}
+                {competitor ? formatCompactPrice(competitor.tvlUSD) : '--'}
               </span>
               <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
-                {kodiak ? formatCompactPrice(kodiak.vol24hUSD) : '--'}
+                {competitor ? formatCompactPrice(competitor.vol24hUSD) : '--'}
               </span>
             </>
           )}

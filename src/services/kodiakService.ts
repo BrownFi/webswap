@@ -2,27 +2,11 @@
 // We fetch Kodiak's public subgraph once, then match their pools to ours by
 // token-pair address (order-independent) so the list can show Kodiak's Fee /
 // TVL / 24h Volume next to ours for pairs that exist on both DEXes.
+import { CompetitorPairData, competitorPairKey } from './competitors'
 
 const KODIAK_SUBGRAPH_URL =
   import.meta.env.VITE_KODIAK_SUBGRAPH_URL ||
   'https://api.subgraph.ormilabs.com/api/public/d7eed6cc-ad4a-4862-8017-89893c4095d3/subgraphs/kodiak-v3/latest/gn'
-
-export interface KodiakPairData {
-  // feeTier is in hundredths of a bip (500 = 0.05%, 3000 = 0.3%).
-  feeTier: number
-  tvlUSD: number
-  // Latest daily snapshot volume == trailing 24h volume. The pool entity's
-  // `volumeUSD` is cumulative all-time, so we read poolDayData instead.
-  vol24hUSD: number
-  // Latest daily snapshot fees == trailing 24h fees (same poolDayData source).
-  fees24hUSD: number
-}
-
-// Map key for a token pair: both addresses lowercased and sorted so token order
-// (token0/token1) never matters when matching across DEXes.
-export function kodiakPairKey(a: string, b: string): string {
-  return [a.toLowerCase(), b.toLowerCase()].sort().join('-')
-}
 
 interface KodiakPoolRaw {
   feeTier: string
@@ -45,7 +29,7 @@ const KODIAK_POOLS_QUERY = `{
 // Returns a map keyed by `kodiakPairKey`. When a pair has multiple Kodiak pools
 // (different fee tiers), the highest-TVL pool wins — pools come back sorted by
 // TVL desc, so the first one seen for a pair is the largest.
-export async function fetchKodiakPairMap(): Promise<Record<string, KodiakPairData>> {
+export async function fetchKodiakPairMap(): Promise<Record<string, CompetitorPairData>> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10_000)
   try {
@@ -58,9 +42,9 @@ export async function fetchKodiakPairMap(): Promise<Record<string, KodiakPairDat
     if (!res.ok) return {}
     const json = (await res.json()) as { data?: { pools?: KodiakPoolRaw[] } }
     const pools = json.data?.pools ?? []
-    const map: Record<string, KodiakPairData> = {}
+    const map: Record<string, CompetitorPairData> = {}
     for (const p of pools) {
-      const key = kodiakPairKey(p.token0.id, p.token1.id)
+      const key = competitorPairKey(p.token0.id, p.token1.id)
       if (map[key]) continue // first (highest-TVL) pool per pair wins
       map[key] = {
         feeTier: Number(p.feeTier) || 0,

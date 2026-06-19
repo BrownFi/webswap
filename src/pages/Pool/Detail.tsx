@@ -1,4 +1,4 @@
-import { Pair, Token, TokenAmount, JSBI, ChainId } from '@brownfi/sdk'
+import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
@@ -25,7 +25,7 @@ import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCar
 import QuestionHelper from 'components/QuestionHelper'
 import { getRestakers } from 'constants/restakers'
 import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
-import { fetchKodiakPairMap, kodiakPairKey, KodiakPairData } from 'services/kodiakService'
+import { getCompetitor, competitorPairKey, CompetitorPairData } from 'services/competitors'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -264,20 +264,21 @@ function PoolDetailInner({
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
   const [showSettings, setShowSettings] = useState(false)
 
-  // Kodiak (competitor) comparison — Berachain only. Reuses the same cached
-  // 'kodiakPairMap' query as the pool list, then looks up this pair by its
-  // token addresses (order-independent).
-  const showKodiak = chainId === ChainId.BERA_MAINNET
-  const { data: kodiakPairMap } = useQuery<Record<string, KodiakPairData>>({
-    queryKey: ['kodiakPairMap'],
-    queryFn: fetchKodiakPairMap,
-    enabled: showKodiak,
+  // Competitor comparison — chain-specific (Kodiak on Bera, Project X on
+  // HyperEVM). Reuses the same cached query as the pool list, then looks up this
+  // pair by its token addresses (order-independent).
+  const competitor = getCompetitor(chainId)
+  const showCompetitor = !!competitor
+  const { data: competitorPairMap } = useQuery<Record<string, CompetitorPairData>>({
+    queryKey: [competitor?.queryKey ?? 'competitorPairMap'],
+    queryFn: () => competitor!.fetch(),
+    enabled: showCompetitor,
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   })
-  const kodiak =
-    showKodiak && pairRaw?.token0?.id && pairRaw?.token1?.id
-      ? kodiakPairMap?.[kodiakPairKey(pairRaw.token0.id, pairRaw.token1.id)]
+  const competitorData =
+    showCompetitor && pairRaw?.token0?.id && pairRaw?.token1?.id
+      ? competitorPairMap?.[competitorPairKey(pairRaw.token0.id, pairRaw.token1.id)]
       : undefined
 
   // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
@@ -865,18 +866,18 @@ function PoolDetailInner({
                 )}
               </StatRow>
 
-              {showKodiak ? (
-                // BrownFi vs Kodiak comparison: two value columns per metric.
+              {showCompetitor && competitor ? (
+                // BrownFi vs competitor comparison: two value columns per metric.
                 <div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '12px', marginBottom: '10px' }}>
                     <span />
                     <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#F4A340', textAlign: 'right' }}>BrownFi</span>
-                    <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#978A80', textAlign: 'right' }}>Kodiak</span>
+                    <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#978A80', textAlign: 'right' }}>{competitor.name}</span>
                   </div>
-                  <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`} kodiak={kodiak ? `${formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'} />
-                  <StatCompareRow label="TVL" ours={formatPrice(pairRaw?.tvl ?? 0)} kodiak={kodiak ? formatCompactPrice(kodiak.tvlUSD) : '--'} />
-                  <StatCompareRow label="24H volume" ours={formatPrice(volume24h ?? 0)} kodiak={kodiak ? formatCompactPrice(kodiak.vol24hUSD) : '--'} />
-                  <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={kodiak ? formatCompactPrice(kodiak.fees24hUSD) : '--'} />
+                  <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`} kodiak={competitorData ? `${formatNumberLambda(competitorData.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'} />
+                  <StatCompareRow label="TVL" ours={formatPrice(pairRaw?.tvl ?? 0)} kodiak={competitorData ? formatCompactPrice(competitorData.tvlUSD) : '--'} />
+                  <StatCompareRow label="24H volume" ours={formatPrice(volume24h ?? 0)} kodiak={competitorData ? formatCompactPrice(competitorData.vol24hUSD) : '--'} />
+                  <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={competitorData ? formatCompactPrice(competitorData.fees24hUSD) : '--'} />
                 </div>
               ) : (
                 <>

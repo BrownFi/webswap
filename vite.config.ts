@@ -43,6 +43,16 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    // Dev mirror of the Vercel rewrite in vercel.json: proxy /prjx/* to the
+    // Project X API (server-side) so the browser hits same-origin and dodges
+    // their CORS allowlist. Prod uses the vercel.json rewrite instead.
+    proxy: {
+      '/prjx': {
+        target: 'https://api.prjx.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/prjx/, ''),
+      },
+    },
   },
   test: {
     globals: true,

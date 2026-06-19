@@ -21,7 +21,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { graphqlFetcher } from 'utils/graphql'
 import { apiV2Service } from 'services'
 import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
-import { fetchKodiakPairMap, kodiakPairKey, KodiakPairData } from 'services/kodiakService'
+import { getCompetitor, competitorPairKey, CompetitorPairData } from 'services/competitors'
 import { usePairs } from 'data/Reserves'
 import { useV3PoolsOnChain } from 'hooks/useV3PoolsOnChain'
 import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
@@ -33,9 +33,9 @@ import { ButtonPrimary } from 'components/Button'
 // Toggle the BGT/Incentive APR column on the pool list. Set true to re-enable.
 const SHOW_BGT_APR = false
 
-// Toggle the Kodiak competitor columns (Fee / TVL / 24h Volume). Berachain only
-// — Kodiak is a Bera DEX, so the columns are also gated on chainId below.
-const SHOW_KODIAK = true
+// Toggle the competitor columns (Fee / TVL / 24h Volume). The competitor itself
+// is chain-specific (Kodiak on Bera, Project X on HyperEVM) — see getCompetitor.
+const SHOW_COMPETITOR = true
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
@@ -202,13 +202,14 @@ export default function Pool() {
     return m
   }, [pairAddresses, bgtAprQueries])
 
-  // Kodiak (competitor) Fee / TVL / 24h Volume — Berachain only. One subgraph
-  // fetch builds a pair-keyed map; rows look up their own pair below.
-  const enableKodiak = SHOW_KODIAK && chainId === ChainId.BERA_MAINNET
-  const { data: kodiakPairMap } = useQuery<Record<string, KodiakPairData>>({
-    queryKey: ['kodiakPairMap'],
-    queryFn: fetchKodiakPairMap,
-    enabled: enableKodiak,
+  // Competitor Fee / TVL / 24h Volume — chain-specific (Kodiak on Bera, Project X
+  // on HyperEVM). One fetch builds a pair-keyed map; rows look up their own pair.
+  const competitor = getCompetitor(chainId)
+  const enableCompetitor = SHOW_COMPETITOR && !!competitor
+  const { data: competitorPairMap } = useQuery<Record<string, CompetitorPairData>>({
+    queryKey: [competitor?.queryKey ?? 'competitorPairMap'],
+    queryFn: () => competitor!.fetch(),
+    enabled: enableCompetitor,
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   })
@@ -414,11 +415,11 @@ export default function Pool() {
                   {SHOW_BGT_APR && (
                     <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
-                  {enableKodiak && (
+                  {enableCompetitor && competitor && (
                     <>
-                      <span style={{ flex: 1, textAlign: 'left' }}>Kodiak Fee</span>
-                      <span style={{ flex: 1, textAlign: 'left' }}>Kodiak TVL</span>
-                      <span style={{ flex: 1, textAlign: 'left' }}>Kodiak 24h Vol</span>
+                      <span style={{ flex: 1, textAlign: 'left' }}>{competitor.name} Fee</span>
+                      <span style={{ flex: 1, textAlign: 'left' }}>{competitor.name} TVL</span>
+                      <span style={{ flex: 1, textAlign: 'left' }}>{competitor.name} 24h Vol</span>
                     </>
                   )}
                   <span style={{ flex: 1, textAlign: 'left' }} />
@@ -427,12 +428,13 @@ export default function Pool() {
                   pairs={searchFilteredPairs}
                   chainId={chainId}
                   version={version}
-                  showKodiak={enableKodiak}
-                  kodiakPairMap={kodiakPairMap}
+                  showCompetitor={enableCompetitor}
+                  competitorName={competitor?.name}
+                  competitorPairMap={competitorPairMap}
                 />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton showAnnualizedReturn={isV3Like(version)} showKodiak={enableKodiak} />
+              <PairListSkeleton showAnnualizedReturn={isV3Like(version)} showCompetitor={enableCompetitor} competitorName={competitor?.name} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -583,7 +585,7 @@ function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
   )
 }
 
-function PairListSkeleton({ showAnnualizedReturn, showKodiak }: { showAnnualizedReturn: boolean; showKodiak?: boolean }) {
+function PairListSkeleton({ showAnnualizedReturn, showCompetitor, competitorName }: { showAnnualizedReturn: boolean; showCompetitor?: boolean; competitorName?: string }) {
   return (
     <>
       {/* Table header */}
@@ -604,11 +606,11 @@ function PairListSkeleton({ showAnnualizedReturn, showKodiak }: { showAnnualized
         {showAnnualizedReturn && <span style={{ flex: 1, textAlign: 'left' }}>Annual Return</span>}
         {!isMainnet && <span style={{ flex: 1, textAlign: 'left' }}>Fee APR</span>}
         {SHOW_BGT_APR && <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>}
-        {showKodiak && (
+        {showCompetitor && (
           <>
-            <span style={{ flex: 1, textAlign: 'left' }}>Kodiak Fee</span>
-            <span style={{ flex: 1, textAlign: 'left' }}>Kodiak TVL</span>
-            <span style={{ flex: 1, textAlign: 'left' }}>Kodiak 24h Vol</span>
+            <span style={{ flex: 1, textAlign: 'left' }}>{competitorName} Fee</span>
+            <span style={{ flex: 1, textAlign: 'left' }}>{competitorName} TVL</span>
+            <span style={{ flex: 1, textAlign: 'left' }}>{competitorName} 24h Vol</span>
           </>
         )}
         <span style={{ flex: 1, textAlign: 'left' }} />
@@ -640,7 +642,7 @@ function PairListSkeleton({ showAnnualizedReturn, showKodiak }: { showAnnualized
           {showAnnualizedReturn && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           {!isMainnet && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           {SHOW_BGT_APR && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
-          {showKodiak && (
+          {showCompetitor && (
             <>
               <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
               <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
@@ -658,14 +660,16 @@ function MemoizedPairList({
   pairs,
   chainId,
   version,
-  showKodiak,
-  kodiakPairMap,
+  showCompetitor,
+  competitorName,
+  competitorPairMap,
 }: {
   pairs: PairStats[]
   chainId: number
   version: number
-  showKodiak?: boolean
-  kodiakPairMap?: Record<string, KodiakPairData>
+  showCompetitor?: boolean
+  competitorName?: string
+  competitorPairMap?: Record<string, CompetitorPairData>
 }) {
   const pairsWithObjects = useMemo(
     () =>
@@ -702,17 +706,18 @@ function MemoizedPairList({
   return (
     <>
       {pairsWithObjects.map(({ pair, stats }) => {
-        const kodiak =
-          kodiakPairMap && stats.token0?.id && stats.token1?.id
-            ? kodiakPairMap[kodiakPairKey(stats.token0.id, stats.token1.id)]
+        const competitor =
+          competitorPairMap && stats.token0?.id && stats.token1?.id
+            ? competitorPairMap[competitorPairKey(stats.token0.id, stats.token1.id)]
             : undefined
         return (
           <FullPositionCard
             key={pair.liquidityToken.address}
             pair={pair}
             pairStats={stats}
-            kodiak={kodiak}
-            showKodiakColumns={showKodiak}
+            competitor={competitor}
+            competitorName={competitorName}
+            showCompetitorColumns={showCompetitor}
           />
         )
       })}
