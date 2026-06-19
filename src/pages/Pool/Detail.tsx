@@ -265,10 +265,10 @@ function PoolDetailInner({
   const [showSettings, setShowSettings] = useState(false)
 
   // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
-  // values (6,606,088% / 2,378,191,932%). Below a $1 TVL floor they're
+  // values (6,606,088% / 2,378,191,932%). Below a $10 TVL floor they're
   // meaningless — zero them so the cards render their "--" default. (Matches
   // the pool-list behavior in PositionCard.)
-  const ratiosMeaningful = Number(pairRaw?.tvl) >= 1
+  const ratiosMeaningful = Number(pairRaw?.tvl) >= 10
   // Returns metric. V3 (with the LP-vs-UniV2 comparison enabled) shows the
   // annualized LP-vs-UniV2 outperformance ("Annualized Return"); V2 shows the
   // simple 24h-fees/TVL daily ratio ("24h Fees / TVL") — Jason 2026-06-18.

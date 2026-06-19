@@ -149,9 +149,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     const tvl = r0 + r1
     const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(6)) || 1)
     // APR divides by TVL, so a near-empty pool produces absurd values. Below a
-    // $1 TVL floor the numbers are meaningless — zero them so the column renders
-    // "--". Threshold, not `tvl > 0`, because a $0.50 pool still blows up.
-    const MIN_TVL_FOR_RATIOS = 1
+    // $10 TVL floor the numbers are meaningless — zero them so the column renders
+    // "--". Threshold, not `tvl > 0`, because a low-TVL pool still blows up.
+    const MIN_TVL_FOR_RATIOS = 10
     const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS
     // Returns column. V3 (with the LP-vs-UniV2 comparison enabled) shows the
     // annualized LP-vs-UniV2 outperformance ("Annualized Return"); V2 shows the
