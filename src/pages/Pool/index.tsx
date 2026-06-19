@@ -21,6 +21,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { graphqlFetcher } from 'utils/graphql'
 import { apiV2Service } from 'services'
 import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
+import { fetchKodiakPairMap, kodiakPairKey, KodiakPairData } from 'services/kodiakService'
 import { usePairs } from 'data/Reserves'
 import { useV3PoolsOnChain } from 'hooks/useV3PoolsOnChain'
 import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
@@ -28,6 +29,13 @@ import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
+
+// Toggle the BGT/Incentive APR column on the pool list. Set true to re-enable.
+const SHOW_BGT_APR = false
+
+// Toggle the Kodiak competitor columns (Fee / TVL / 24h Volume). Berachain only
+// — Kodiak is a Bera DEX, so the columns are also gated on chainId below.
+const SHOW_KODIAK = true
 
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
@@ -193,6 +201,17 @@ export default function Pool() {
     })
     return m
   }, [pairAddresses, bgtAprQueries])
+
+  // Kodiak (competitor) Fee / TVL / 24h Volume — Berachain only. One subgraph
+  // fetch builds a pair-keyed map; rows look up their own pair below.
+  const enableKodiak = SHOW_KODIAK && chainId === ChainId.BERA_MAINNET
+  const { data: kodiakPairMap } = useQuery<Record<string, KodiakPairData>>({
+    queryKey: ['kodiakPairMap'],
+    queryFn: fetchKodiakPairMap,
+    enabled: enableKodiak,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+  })
 
   const sortedPairs = useMemo(() => {
     // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer.
@@ -375,10 +394,10 @@ export default function Pool() {
                 <div
                   className="hidden md:flex items-center"
                   style={{
-                    padding: '8px 16px',
+                    padding: '8px 12px',
                     fontFamily: 'Inter',
                     fontWeight: 500,
-                    fontSize: '16px',
+                    fontSize: '13px',
                     color: '#978A80',
                     gap: '8px',
                   }}
@@ -392,13 +411,28 @@ export default function Pool() {
                   {!isMainnet && (
                     <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   )}
-                  <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                  {SHOW_BGT_APR && (
+                    <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                  )}
+                  {enableKodiak && (
+                    <>
+                      <span style={{ flex: 1, textAlign: 'left' }}>Kodiak Fee</span>
+                      <span style={{ flex: 1, textAlign: 'left' }}>Kodiak TVL</span>
+                      <span style={{ flex: 1, textAlign: 'left' }}>Kodiak 24h Vol</span>
+                    </>
+                  )}
                   <span style={{ flex: 1, textAlign: 'left' }} />
                 </div>
-                <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
+                <MemoizedPairList
+                  pairs={searchFilteredPairs}
+                  chainId={chainId}
+                  version={version}
+                  showKodiak={enableKodiak}
+                  kodiakPairMap={kodiakPairMap}
+                />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton showAnnualizedReturn={isV3Like(version)} />
+              <PairListSkeleton showAnnualizedReturn={isV3Like(version)} showKodiak={enableKodiak} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -549,17 +583,17 @@ function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
   )
 }
 
-function PairListSkeleton({ showAnnualizedReturn }: { showAnnualizedReturn: boolean }) {
+function PairListSkeleton({ showAnnualizedReturn, showKodiak }: { showAnnualizedReturn: boolean; showKodiak?: boolean }) {
   return (
     <>
       {/* Table header */}
       <div
         className="hidden md:flex items-center"
         style={{
-          padding: '8px 16px',
+          padding: '8px 12px',
           fontFamily: 'Inter',
           fontWeight: 500,
-          fontSize: '16px',
+          fontSize: '13px',
           color: '#978A80',
           gap: '8px',
         }}
@@ -569,7 +603,14 @@ function PairListSkeleton({ showAnnualizedReturn }: { showAnnualizedReturn: bool
         <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
         {showAnnualizedReturn && <span style={{ flex: 1, textAlign: 'left' }}>Annual Return</span>}
         {!isMainnet && <span style={{ flex: 1, textAlign: 'left' }}>Fee APR</span>}
-        <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>
+        {SHOW_BGT_APR && <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>}
+        {showKodiak && (
+          <>
+            <span style={{ flex: 1, textAlign: 'left' }}>Kodiak Fee</span>
+            <span style={{ flex: 1, textAlign: 'left' }}>Kodiak TVL</span>
+            <span style={{ flex: 1, textAlign: 'left' }}>Kodiak 24h Vol</span>
+          </>
+        )}
         <span style={{ flex: 1, textAlign: 'left' }} />
       </div>
       {[0, 1, 2, 3, 4].map((i) => (
@@ -577,9 +618,9 @@ function PairListSkeleton({ showAnnualizedReturn }: { showAnnualizedReturn: bool
           key={i}
           className="flex items-center max-md:flex-wrap max-md:gap-2"
           style={{
-            padding: '16px',
+            padding: '12px',
             gap: '8px',
-            minHeight: '60px',
+            minHeight: '52px',
             background: '#1E1915',
             borderRadius: '8px',
             marginBottom: '8px',
@@ -598,8 +639,15 @@ function PairListSkeleton({ showAnnualizedReturn }: { showAnnualizedReturn: bool
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           {showAnnualizedReturn && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           {!isMainnet && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
-          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
-          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 40, background: '#493E35' }} />
+          {SHOW_BGT_APR && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
+          {showKodiak && (
+            <>
+              <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+              <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+              <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
+            </>
+          )}
+          <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 34, background: '#493E35' }} />
         </div>
       ))}
     </>
@@ -610,10 +658,14 @@ function MemoizedPairList({
   pairs,
   chainId,
   version,
+  showKodiak,
+  kodiakPairMap,
 }: {
   pairs: PairStats[]
   chainId: number
   version: number
+  showKodiak?: boolean
+  kodiakPairMap?: Record<string, KodiakPairData>
 }) {
   const pairsWithObjects = useMemo(
     () =>
@@ -649,9 +701,21 @@ function MemoizedPairList({
 
   return (
     <>
-      {pairsWithObjects.map(({ pair, stats }) => (
-        <FullPositionCard key={pair.liquidityToken.address} pair={pair} pairStats={stats} />
-      ))}
+      {pairsWithObjects.map(({ pair, stats }) => {
+        const kodiak =
+          kodiakPairMap && stats.token0?.id && stats.token1?.id
+            ? kodiakPairMap[kodiakPairKey(stats.token0.id, stats.token1.id)]
+            : undefined
+        return (
+          <FullPositionCard
+            key={pair.liquidityToken.address}
+            pair={pair}
+            pairStats={stats}
+            kodiak={kodiak}
+            showKodiakColumns={showKodiak}
+          />
+        )
+      })}
     </>
   )
 }

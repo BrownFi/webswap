@@ -1,4 +1,4 @@
-import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
+import { Pair, Token, TokenAmount, JSBI, ChainId } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
@@ -25,6 +25,7 @@ import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCar
 import QuestionHelper from 'components/QuestionHelper'
 import { getRestakers } from 'constants/restakers'
 import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
+import { fetchKodiakPairMap, kodiakPairKey, KodiakPairData } from 'services/kodiakService'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -262,6 +263,22 @@ function PoolDetailInner({
 
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
   const [showSettings, setShowSettings] = useState(false)
+
+  // Kodiak (competitor) comparison — Berachain only. Reuses the same cached
+  // 'kodiakPairMap' query as the pool list, then looks up this pair by its
+  // token addresses (order-independent).
+  const showKodiak = chainId === ChainId.BERA_MAINNET
+  const { data: kodiakPairMap } = useQuery<Record<string, KodiakPairData>>({
+    queryKey: ['kodiakPairMap'],
+    queryFn: fetchKodiakPairMap,
+    enabled: showKodiak,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+  })
+  const kodiak =
+    showKodiak && pairRaw?.token0?.id && pairRaw?.token1?.id
+      ? kodiakPairMap?.[kodiakPairKey(pairRaw.token0.id, pairRaw.token1.id)]
+      : undefined
 
   // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
   // values (6,606,088% / 2,378,191,932%). Below a $1 TVL floor they're
@@ -848,17 +865,34 @@ function PoolDetailInner({
                 )}
               </StatRow>
 
-              {/* Mobile: one row per stat, label + value inline. Desktop: stacked. */}
-              <div className="flex flex-col gap-2 lg:hidden">
-                <StatInline label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
-                <StatInline label="24H volume" value={formatPrice(volume24h ?? 0)} />
-                <StatInline label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
-              </div>
-              <div className="hidden lg:block">
-                <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
-                <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
-                <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
-              </div>
+              {showKodiak ? (
+                // BrownFi vs Kodiak comparison: two value columns per metric.
+                <div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '12px', marginBottom: '10px' }}>
+                    <span />
+                    <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#F4A340', textAlign: 'right' }}>BrownFi</span>
+                    <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#978A80', textAlign: 'right' }}>Kodiak</span>
+                  </div>
+                  <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`} kodiak={kodiak ? `${formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'} />
+                  <StatCompareRow label="TVL" ours={formatPrice(pairRaw?.tvl ?? 0)} kodiak={kodiak ? formatPrice(kodiak.tvlUSD) : '--'} />
+                  <StatCompareRow label="24H volume" ours={formatPrice(volume24h ?? 0)} kodiak={kodiak ? formatPrice(kodiak.vol24hUSD) : '--'} />
+                  <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={kodiak ? formatPrice(kodiak.fees24hUSD) : '--'} />
+                </div>
+              ) : (
+                <>
+                  {/* Mobile: one row per stat, label + value inline. Desktop: stacked. */}
+                  <div className="flex flex-col gap-2 lg:hidden">
+                    <StatInline label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
+                    <StatInline label="24H volume" value={formatPrice(volume24h ?? 0)} />
+                    <StatInline label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+                  </div>
+                  <div className="hidden lg:block">
+                    <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
+                    <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
+                    <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Your position used to render here at the bottom of the rail —
@@ -888,6 +922,16 @@ function StatRow({
         </div>
       )}
       {children}
+    </div>
+  )
+}
+
+function StatCompareRow({ label, ours, kodiak }: { label: string; ours: string; kodiak: string }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '12px', alignItems: 'baseline', marginBottom: '12px' }}>
+      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>{label}</span>
+      <span style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '15px', color: '#FBFBFD', textAlign: 'right' }}>{ours}</span>
+      <span style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '15px', color: '#FBFBFD', textAlign: 'right' }}>{kodiak}</span>
     </div>
   )
 }

@@ -32,6 +32,7 @@ import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
+import { KodiakPairData } from 'services/kodiakService'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
 import { merklCampaignPool, PairStats, usePoolStats, computeV3FeeApr } from './usePoolStats'
@@ -65,7 +66,7 @@ const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   }
 
   @media (min-width: 720px) {
-    padding: 16px;
+    padding: 12px;
     border-radius: 12px;
   }
 `
@@ -83,15 +84,22 @@ const pairBGT: Record<string, [string, string]> = {
   ],
 }
 
+// Toggle the BGT/Incentive APR column on the pool list. Set true to re-enable.
+const SHOW_BGT_APR = false
+
 interface PositionCardProps {
   pair: Pair
   pairStats?: PairStats
   showUnwrapped?: boolean
   border?: string
   stakedBalance?: TokenAmount
+  // Competitor (Kodiak) stats for this pair, when it also exists on Kodiak.
+  kodiak?: KodiakPairData
+  // Whether to render the Kodiak columns at all (must mirror the table header).
+  showKodiakColumns?: boolean
 }
 
-export default function FullPositionCard({ pair, pairStats, border }: PositionCardProps) {
+export default function FullPositionCard({ pair, pairStats, border, kodiak, showKodiakColumns }: PositionCardProps) {
   const navigate = useNavigate()
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
@@ -205,7 +213,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
             <div className="min-w-0 flex-1">
               <div className="inline-flex items-center gap-2.5 max-w-full">
-                <span className="text-[16px] sm:text-[20px]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '30px', color: '#FBFBFD', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '24px', color: '#FBFBFD', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairStats?.quoteTokenIndex} />
                 </span>
                 <a
@@ -229,7 +237,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
                 </span>
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
-                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
+                <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD' }}>TVL: {formatPrice(tvl)}</span>
                 {isV3Like(pair.version) && (
                   <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD' }}>
                     Annual Return: <span style={{ color: annualizedReturn >= 0 ? '#83CF84' : '#E04848' }}>{annualizedReturn ? `${formatNumberLambda(annualizedReturn, { maximumFractionDigits: 2 })}%` : '--'}</span>
@@ -241,12 +249,17 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   </span>
                 )}
               </div>
-              {(enableBgt || enableMerklCampaignApr) && (
+              {SHOW_BGT_APR && (enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
                   {enableBgt ? 'BGT APR' : 'Incentive APR'}: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
                   {enableBgt && (
                     <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 14, height: 14, borderRadius: '50%' }} />
                   )}
+                </div>
+              )}
+              {showKodiakColumns && kodiak && (
+                <div className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD', marginTop: '2px' }}>
+                  Kodiak: {formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}% fee · TVL {formatPrice(kodiak.tvlUSD)} · 24h {formatPrice(kodiak.vol24hUSD)}
                 </div>
               )}
               {!isMainnet && (
@@ -267,34 +280,51 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
           </div>
           {/* TVL */}
-          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
+          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
-          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
+          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
           {/* Annualized Return — V3 only (V2 has no LP-vs-UniV2 data). Green ≥0 / red <0. */}
           {isV3Like(pair.version) && (
-            <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: annualizedReturn >= 0 ? '#83CF84' : '#E04848' }}>
+            <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: annualizedReturn >= 0 ? '#83CF84' : '#E04848' }}>
               {annualizedReturn ? `${formatNumberLambda(annualizedReturn, { maximumFractionDigits: 2 })}%` : '--'}
             </span>
           )}
           {/* Fee APR — indexer apr (V2 + V3); beta/non-mainnet only */}
           {!isMainnet && (
-            <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+            <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#83CF84' }}>
               {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
             </span>
           )}
           {/* Incentive APR (green with BGT icon when applicable) */}
-          <span className="max-md:hidden text-left inline-flex items-center justify-start gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
-            {enableBgt || enableMerklCampaignApr ? (
-              <>
-                +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
-                {enableBgt && (
-                  <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 16, height: 16, borderRadius: '50%' }} />
-                )}
-              </>
-            ) : (
-              '--'
-            )}
-          </span>
+          {SHOW_BGT_APR && (
+            <span className="max-md:hidden text-left inline-flex items-center justify-start gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#83CF84' }}>
+              {enableBgt || enableMerklCampaignApr ? (
+                <>
+                  +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
+                  {enableBgt && (
+                    <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 16, height: 16, borderRadius: '50%' }} />
+                  )}
+                </>
+              ) : (
+                '--'
+              )}
+            </span>
+          )}
+          {/* Kodiak (competitor) Fee / TVL / 24h Volume — only for pairs that
+              also exist on Kodiak; '--' otherwise. Gated to mirror the header. */}
+          {showKodiakColumns && (
+            <>
+              <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
+                {kodiak ? `${formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'}
+              </span>
+              <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
+                {kodiak ? formatPrice(kodiak.tvlUSD) : '--'}
+              </span>
+              <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
+                {kodiak ? formatPrice(kodiak.vol24hUSD) : '--'}
+              </span>
+            </>
+          )}
           {/* Actions */}
           <div className="hidden md:flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
             <Link
@@ -303,11 +333,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               style={{
                 background: '#985C2A',
                 borderRadius: '8px',
-                padding: '6px 12px',
-                height: '40px',
+                padding: '6px 10px',
+                height: '34px',
                 fontFamily: 'Inter',
                 fontWeight: 500,
-                fontSize: '14px',
+                fontSize: '13px',
                 color: 'white',
                 border: 'none',
               }}
