@@ -17,7 +17,7 @@ import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
 import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
-import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
+import { formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { currencyId } from 'utils/currencyId'
@@ -874,9 +874,9 @@ function PoolDetailInner({
                     <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#978A80', textAlign: 'right' }}>Kodiak</span>
                   </div>
                   <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`} kodiak={kodiak ? `${formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'} />
-                  <StatCompareRow label="TVL" ours={formatPrice(pairRaw?.tvl ?? 0)} kodiak={kodiak ? formatPrice(kodiak.tvlUSD) : '--'} />
-                  <StatCompareRow label="24H volume" ours={formatPrice(volume24h ?? 0)} kodiak={kodiak ? formatPrice(kodiak.vol24hUSD) : '--'} />
-                  <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={kodiak ? formatPrice(kodiak.fees24hUSD) : '--'} />
+                  <StatCompareRow label="TVL" ours={formatPrice(pairRaw?.tvl ?? 0)} kodiak={kodiak ? formatCompactPrice(kodiak.tvlUSD) : '--'} />
+                  <StatCompareRow label="24H volume" ours={formatPrice(volume24h ?? 0)} kodiak={kodiak ? formatCompactPrice(kodiak.vol24hUSD) : '--'} />
+                  <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={kodiak ? formatCompactPrice(kodiak.fees24hUSD) : '--'} />
                 </div>
               ) : (
                 <>

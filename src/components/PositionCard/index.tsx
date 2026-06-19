@@ -31,7 +31,7 @@ import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
-import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
+import { formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
 import { KodiakPairData } from 'services/kodiakService'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
@@ -259,7 +259,7 @@ export default function FullPositionCard({ pair, pairStats, border, kodiak, show
               )}
               {showKodiakColumns && kodiak && (
                 <div className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD', marginTop: '2px' }}>
-                  Kodiak: {formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}% fee · TVL {formatPrice(kodiak.tvlUSD)} · 24h {formatPrice(kodiak.vol24hUSD)}
+                  Kodiak: {formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}% fee · TVL {formatCompactPrice(kodiak.tvlUSD)} · 24h {formatCompactPrice(kodiak.vol24hUSD)}
                 </div>
               )}
               {!isMainnet && (
@@ -318,10 +318,10 @@ export default function FullPositionCard({ pair, pairStats, border, kodiak, show
                 {kodiak ? `${formatNumberLambda(kodiak.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'}
               </span>
               <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
-                {kodiak ? formatPrice(kodiak.tvlUSD) : '--'}
+                {kodiak ? formatCompactPrice(kodiak.tvlUSD) : '--'}
               </span>
               <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
-                {kodiak ? formatPrice(kodiak.vol24hUSD) : '--'}
+                {kodiak ? formatCompactPrice(kodiak.vol24hUSD) : '--'}
               </span>
             </>
           )}

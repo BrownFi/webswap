@@ -97,6 +97,18 @@ export function formatPrice(price = 0, options?: Intl.NumberFormatOptions) {
   return formatNumberString(formattedNumber)
 }
 
+// Compact USD: 1220 -> "$1.22K", 1_500_000 -> "$1.5M". Trailing zeros trimmed.
+export function formatCompactPrice(price = 0, options?: Intl.NumberFormatOptions) {
+  const formattedNumber = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: 'compact',
+    maximumFractionDigits: 2,
+    ...options,
+  }).format(price)
+  return formatNumberString(formattedNumber)
+}
+
 export function formatNumber(value: string | number | undefined | null, options?: Intl.NumberFormatOptions) {
   const number = Number(value || 0)
   const min = number > 1000 ? 1 : number > 1 ? 2 : 6
