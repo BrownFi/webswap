@@ -97,15 +97,21 @@ export function formatPrice(price = 0, options?: Intl.NumberFormatOptions) {
   return formatNumberString(formattedNumber)
 }
 
-// Compact USD: 1220 -> "$1.22K", 1_500_000 -> "$1.5M". Trailing zeros trimmed.
+// Compact USD with magnitude-dependent rounding: thousands round to whole
+// ($1K, $120K, $508K), millions+ keep 1 decimal ($1.2M, $1.5B). Sub-thousand
+// rounds to whole dollars ($950). Trailing zeros trimmed ($1.0M -> $1M). Used
+// for the competitor (Kodiak / Project X) TVL / volume / fee figures on the
+// pool list + detail.
 export function formatCompactPrice(price = 0, options?: Intl.NumberFormatOptions) {
+  const n = Number(price) || 0
+  const maximumFractionDigits = Math.abs(n) >= 1_000_000 ? 1 : 0
   const formattedNumber = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     notation: 'compact',
-    maximumFractionDigits: 2,
+    maximumFractionDigits,
     ...options,
-  }).format(price)
+  }).format(n)
   return formatNumberString(formattedNumber)
 }
 
