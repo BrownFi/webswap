@@ -16,7 +16,7 @@ import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies
 import { SwapState } from './reducer'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { computeSlippageAdjustedAmounts } from 'utils/prices'
-import { ROUTER_ADDRESS_V3_PILOT, ROUTER_ADDRESS_V3_OFFICIAL } from 'lib/sdk/constants/addresses'
+import { hasV3Pilot, ROUTER_ADDRESS_V3_OFFICIAL } from 'lib/sdk/constants/addresses'
 
 export function useSwapState(): AppState['swap'] {
   return useSelector<AppState, AppState['swap']>((state) => state.swap)
@@ -184,7 +184,7 @@ export function useDerivedSwapInfo(): {
   // Each pipeline is gated by whether that deployment's router exists on the
   // chain; hook call order stays stable (we always call the hooks, feeding
   // `undefined` amount to skip the multicall when inert).
-  const chainSupportsV3Pilot = !!chainId && !!ROUTER_ADDRESS_V3_PILOT[chainId] // pilot
+  const chainSupportsV3Pilot = hasV3Pilot(chainId) // pilot — env-gated (hidden on beta/mainnet)
   const chainSupportsV3Official = !!chainId && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId] // official
   const tradeInV2 = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 2)
   const tradeOutV2 = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined, 2)
@@ -407,7 +407,7 @@ export function useDerivedSwapInfo(): {
     },
     {
       source: 'brownfi-v3-official' as const,
-      sourceName: 'BrownFi V3 Official',
+      sourceName: 'BrownFi V3',
       supported: chainSupportsV3Official,
       reason: nativeReason(v3OfficialTrade, officialFlags),
     },

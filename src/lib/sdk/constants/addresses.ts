@@ -84,10 +84,11 @@ export const VERSION = { V2: 2, V3_PILOT: 3, V3_OFFICIAL: 4 } as const
 export const isV3Like = (version: number | undefined | null): boolean =>
   version === VERSION.V3_PILOT || version === VERSION.V3_OFFICIAL
 
-/** User-facing label for a protocol version. Internal version 4 is the
- *  OFFICIAL V3 deployment — never show "V4" to users. */
+/** User-facing label for a protocol version. Internal version 4 (the OFFICIAL
+ *  V3 deployment) shows as just "V3" — never "V4", and the "Official" suffix is
+ *  dropped per design. The URL slug stays `v3-official` (see versionToSlug). */
 export const versionLabel = (version: number | undefined | null): string =>
-  version === VERSION.V3_OFFICIAL ? 'V3 Official' : version === VERSION.V3_PILOT ? 'V3 Pilot' : `V${version ?? 2}`
+  version === VERSION.V3_OFFICIAL ? 'V3' : version === VERSION.V3_PILOT ? 'V3 Pilot' : `V${version ?? 2}`
 
 /** URL slug for a version — keeps the raw internal number out of the address
  *  bar (users see `v3-official`, never `v=4`). */
@@ -152,8 +153,13 @@ export const useV3Indexer = (chainId: number | undefined, version?: number): boo
 }
 
 // Availability checks for the version toggle (variant-agnostic).
+// V3 Pilot is the pre-v3-final testbed — shown ONLY on the dev build; beta and
+// mainnet HIDE it (users see just V2 / V3). beta and the dev build share the
+// same VITE_ENVIRONMENT, so VITE_ENV_LABEL='dev' (set only on develop) is the
+// reliable dev discriminator. Pilot addresses stay defined so dev can test it.
+const IS_DEV_BUILD = import.meta.env.VITE_ENV_LABEL === 'dev'
 export const hasV3Pilot = (chainId: number | undefined): boolean =>
-  chainId != null && !!ROUTER_ADDRESS_V3_PILOT[chainId]
+  chainId != null && !!ROUTER_ADDRESS_V3_PILOT[chainId] && IS_DEV_BUILD
 export const hasV3Official = (chainId: number | undefined): boolean =>
   chainId != null && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId]
 

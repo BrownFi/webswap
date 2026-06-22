@@ -19,11 +19,14 @@ const SwitchVersion = ({ isMobile }: Props) => {
   // list correctly showed the fallback (V2).
   const { version, isDisabled, switchVersion } = useVersion({ chainId })
 
-  // Build from the deployment tables: Bera has both V3s → V2 / V3 Official /
-  // V3 Pilot; HyperEVM has official only → V2 / V3 Official.
+  // Build from the deployment tables: Bera has both V3s → V2 / V3 / V3 Pilot;
+  // HyperEVM has official only → V2 / V3. The official deployment shows as just
+  // "V3" (the "Official" suffix dropped per design); the pilot stays "V3 Pilot"
+  // (dev-build only — hasV3Pilot is false on beta/mainnet) to distinguish the
+  // two when both are visible.
   const options: Option[] = [
     { label: 'V2', version: 2 },
-    ...(hasV3Official(chainId) ? [{ label: 'V3 Official', version: 4 }] : []),
+    ...(hasV3Official(chainId) ? [{ label: 'V3', version: 4 }] : []),
     ...(hasV3Pilot(chainId) ? [{ label: 'V3 Pilot', version: 3 }] : []),
   ]
 
