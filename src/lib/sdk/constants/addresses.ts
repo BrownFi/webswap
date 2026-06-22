@@ -124,16 +124,19 @@ export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
   [ChainId.HYPER_EVM]: '0xc0E55d0085266E9A33456610E08172f9c173F908',
   [ChainId.BASE_MAINNET]: '0x38c91c64169c7B5eBe02DcE39060B6180065C38d',
+  [ChainId.LINEA_MAINNET]: '0xB3c31fDc0a22D5725C47B1fC430F5B87353D8C3e',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
   [ChainId.HYPER_EVM]: '0x6A4Bd89709b67eC846F02cF9E95A0dd2Fb515720',
   [ChainId.BASE_MAINNET]: '0x5c4B5b07AE5EaeC428C23DbC96564Bb5A3BE7aaa',
+  [ChainId.LINEA_MAINNET]: '0xD9a702839510ee2859bCE697F51Aae49bF8949d7',
 }
 export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
   [ChainId.HYPER_EVM]: '0xE5dEbF39457fa6e7FFcdDb5af40435AD2D52438b',
   [ChainId.BASE_MAINNET]: '0xb77197484d77340040cC9969bd475E4a082D3f4C',
+  [ChainId.LINEA_MAINNET]: '0x92b2639F1BDd8eD5c359200Fb6CAe045CC71ca3b',
 }
 export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
@@ -141,6 +144,9 @@ export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   // Base V3 deployed 2026-06-22 — on-chain reads (useV3PoolsOnChain) until the
   // BE /indexer/v3 indexes chainId 8453; flip to true once it's live.
   [ChainId.BASE_MAINNET]: false,
+  // Linea V3 deployed 2026-06-22 — on-chain reads until the BE /indexer/v3
+  // indexes chainId 59144; flip to true once it's live.
+  [ChainId.LINEA_MAINNET]: false,
 }
 
 /** Per-version address-map resolvers (used by the SDK getters + readers). */

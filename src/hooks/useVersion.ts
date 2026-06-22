@@ -38,7 +38,6 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
         [
           ChainId.ARBITRUM_MAINNET,
           ChainId.BSC_MAINNET,
-          ChainId.LINEA_MAINNET,
           ChainId.SEI_MAINNET,
           ChainId.MONAD,
           ChainId.ARBITRUM_SEPOLIA,
