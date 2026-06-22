@@ -1,4 +1,5 @@
-import { ChainId, Currency, ETHER, Field as PythField, Pair, RPC_URLS } from '@brownfi/sdk'
+import { ChainId, Currency, ETHER, Field as PythField, Pair } from '@brownfi/sdk'
+import { createReadClient } from 'lib/sdk/rpc'
 import { ButtonError, ButtonPrimary } from 'components/Button'
 import { AutoColumn } from 'components/Column'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
@@ -210,8 +211,7 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   const { data: totalSupplyRaw } = useQuery({
     queryKey: ['v3-zap-total-supply', chainId, pair?.liquidityToken.address],
     queryFn: async () => {
-      const { createPublicClient, http } = await import('viem')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId!]) })
+      const client = createReadClient(chainId!)
       const supply = await client.readContract({
         address: pair!.liquidityToken.address as `0x${string}`,
         abi: [{ inputs: [], name: 'totalSupply', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' }] as const,

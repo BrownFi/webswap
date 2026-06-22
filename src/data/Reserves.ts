@@ -7,7 +7,8 @@ import { useActiveWeb3React } from 'hooks'
 import { useMultipleContractSingleData } from 'state/multicall/hooks'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { useVersion } from 'hooks/useVersion'
-import { RPC_URLS, isV3Like, factoryV3Gen } from 'lib/sdk/constants/addresses'
+import { isV3Like, factoryV3Gen } from 'lib/sdk/constants/addresses'
+import { createReadClient } from 'lib/sdk/rpc'
 
 const PAIR_INTERFACE = new Interface(IUniswapV2PairABI.abi)
 
@@ -76,8 +77,7 @@ function useReservesMulticall(pairAddresses: (string | undefined)[], chainId: nu
     }))
 
     const run = async () => {
-      const { createPublicClient, http } = await import('viem')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+      const client = createReadClient(chainId)
       const next: ReserveSlot[] = pairAddresses.map(() => ({ result: undefined, loading: false }))
       try {
         const responses = await client.multicall({
@@ -147,8 +147,7 @@ function useV3PairAddresses(
     }
 
     const fetchAddresses = async () => {
-      const { createPublicClient, http } = await import('viem')
-      const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+      const client = createReadClient(chainId)
       const factoryAddr = factoryV3Gen(version)[chainId]
 
       // Pre-filter: track which slots correspond to valid token pairs that

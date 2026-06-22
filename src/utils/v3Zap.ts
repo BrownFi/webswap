@@ -8,9 +8,10 @@ import { isV3Like } from '@brownfi/sdk'
 import { ChainId, WETH } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
 import { Contract } from '@ethersproject/contracts'
-import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
+import { encodeAbiParameters, parseAbiParameters } from 'viem'
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
-import { routerV3Gen, zapV3Gen, RPC_URLS } from 'lib/sdk/constants/addresses'
+import { routerV3Gen, zapV3Gen } from 'lib/sdk/constants/addresses'
+import { createReadClient } from 'lib/sdk/rpc'
 
 // On v3-final deployments zap entrypoints live on a separate BrownFiV3Zap
 // contract. On older deployments the router still hosts them, so we fall
@@ -65,7 +66,7 @@ export async function getV3ZapEstimate(
   const routerAddress = getRouterAddress(chainId, version)
   if (!routerAddress) throw new Error('V3 router not deployed on this chain')
 
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const client = createReadClient(chainId)
   const halfAmount = BigInt(amountIn) / 2n
 
   const updateData = await buildV3UpdateData([tokenIn, tokenOther], chainId, version)
@@ -102,7 +103,7 @@ export async function buildV3UpdateData(
     return encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
   }
 
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const client = createReadClient(chainId)
   const factoryAbi = [{
     inputs: [{ name: 'token', type: 'address' }],
     name: 'priceFeedIds',

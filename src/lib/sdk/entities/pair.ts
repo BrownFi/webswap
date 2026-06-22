@@ -3,7 +3,8 @@ import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { getCreate2Address } from '@ethersproject/address'
 import { keccak256, pack } from '@ethersproject/solidity'
-import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
+import { encodeAbiParameters, parseAbiParameters } from 'viem'
+import { createReadClient } from '../rpc'
 import { ChainId } from '../constants/chainId'
 import {
   BigintIsh,
@@ -22,7 +23,7 @@ import {
   isContractWithPrice,
   getRouterAddress,
 } from '../utils'
-import { RPC_URLS, ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/addresses'
+import { ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/addresses'
 
 // ── Caches: reduce redundant RPC calls per quote ──────────────────────
 // priceFeedId cache is shared with utils/index.ts — imported via getCachedPriceFeedId
@@ -70,7 +71,7 @@ async function getCachedUpdateData(feedIds: string[]): Promise<string> {
 
 // Helper: fetch Pyth price feed data and update fee for WithPrice router calls
 async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[string[], number]> {
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const client = createReadClient(chainId)
 
   const allIds = (await Promise.all(pairs.map(async (pair) => {
     const priceFeedAddress = await client.readContract({
@@ -129,7 +130,7 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
 
 // Helper: fetch Pyth price update data and encode for V2/V3 router
 async function solidityPackHelper(addresses: string[], chainId: number, version: number = 2): Promise<string> {
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const client = createReadClient(chainId)
   const { getFactoryAddress: getFactory, getCachedPriceFeedId } = await import('../utils')
   const factoryAddr = getFactory(chainId, version)
   const priceFeedIds = await Promise.all(
@@ -475,7 +476,7 @@ export class Pair {
     const inputReserve = this.reserveOf(inputAmount.token)
     const outputReserve = this.reserveOf(inputAmount.token.equals(this.token0) ? this.token1 : this.token0)
 
-    const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+    const client = createReadClient(chainId)
     const pathAddresses = path.map((t: Token) => t.address) as `0x${string}`[]
 
     let priceUpdate: string[] = []
@@ -622,7 +623,7 @@ export class Pair {
     const outputReserve = this.reserveOf(outputAmount.token)
     const inputReserve = this.reserveOf(outputAmount.token.equals(this.token0) ? this.token1 : this.token0)
 
-    const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+    const client = createReadClient(chainId)
     const pathAddresses = path.map((t: Token) => t.address) as `0x${string}`[]
 
     let priceUpdate: string[] = []

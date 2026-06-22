@@ -13,8 +13,8 @@ import {
   calculateSlippageAmount,
   getRouterContract,
 } from './helpers'
-import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
-import { RPC_URLS } from '../constants/addresses'
+import { encodeAbiParameters, parseAbiParameters } from 'viem'
+import { createReadClient } from '../rpc'
 import { getFactoryAddress } from '../utils'
 
 // Fetch Pyth price data from Hermes for the given tokens
@@ -22,7 +22,7 @@ async function fetchPythData(tokenAddresses: string[], chainId: number, version:
   const factoryAddr = getFactoryAddress(chainId, version)
   if (!factoryAddr) return []
 
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const client = createReadClient(chainId)
   const priceFeedIds = await Promise.all(
     tokenAddresses.map((addr) =>
       client.readContract({
