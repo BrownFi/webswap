@@ -105,7 +105,7 @@ const linea = overrideChain({
   fallbackRpcs: [
     //
     'https://1rpc.io/linea',
-    'https://linea.therpc.io',
+    'https://linea.drpc.org',
   ],
 })
 
@@ -115,7 +115,7 @@ const sei = overrideChain({
   fallbackRpcs: [
     //
     'https://sei.drpc.org',
-    'https://sei.therpc.io',
+    'https://sei-evm-rpc.publicnode.com',
   ],
 })
 
