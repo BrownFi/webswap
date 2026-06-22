@@ -126,18 +126,24 @@ export const V3_PILOT_USE_INDEXER: Record<number, boolean> = {
 export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
   [ChainId.HYPER_EVM]: '0xc0E55d0085266E9A33456610E08172f9c173F908',
+  [ChainId.ARBITRUM_MAINNET]: '0x96cE2973581C5bF362e0fc9f40e6B5f12AA59b61',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
   [ChainId.HYPER_EVM]: '0x6A4Bd89709b67eC846F02cF9E95A0dd2Fb515720',
+  [ChainId.ARBITRUM_MAINNET]: '0xe49805412EDFDF4C458B297e7C1534588Fa3F1F0',
 }
 export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
   [ChainId.HYPER_EVM]: '0xE5dEbF39457fa6e7FFcdDb5af40435AD2D52438b',
+  [ChainId.ARBITRUM_MAINNET]: '0x0df2D3B2219aacfD87Dd7051ea9CB6382CA38B30',
 }
 export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
   [ChainId.HYPER_EVM]: true,
+  // Arbitrum V3 — prod indexer (api.brownfi.io/indexer/v3) serves chainId 42161,
+  // so use the indexer. (Base/Linea V3 not enabled on prod yet.)
+  [ChainId.ARBITRUM_MAINNET]: true,
 }
 
 /** Per-version address-map resolvers (used by the SDK getters + readers). */

@@ -36,7 +36,6 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       // Remaining mainnet chains are V2-only (no V3 deployment).
       if (
         [
-          ChainId.ARBITRUM_MAINNET,
           ChainId.BASE_MAINNET,
           ChainId.BSC_MAINNET,
           ChainId.LINEA_MAINNET,
