@@ -13,9 +13,9 @@
  * window between contract deploy and indexer catch-up.
  */
 import { useQuery } from '@tanstack/react-query'
-import { createPublicClient, http } from 'viem'
 import type { PairStats } from 'components/PositionCard/usePoolStats'
-import { FACTORY_ADDRESS_V3_PILOT, RPC_URLS } from 'lib/sdk/constants/addresses'
+import { factoryV3Gen } from 'lib/sdk/constants/addresses'
+import { createReadClient, rpcUrlsFor } from 'lib/sdk/rpc'
 import { GET_CONFIG_ABI, fromQ64, fromPrec } from 'utils/v3Config'
 
 const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11' as const
@@ -83,12 +83,11 @@ type FetchedToken = {
   totalSupply: number
 }
 
-async function fetchV3PoolsOnChain(chainId: number): Promise<PairStats[]> {
-  const factory = FACTORY_ADDRESS_V3_PILOT[chainId]
-  const rpc = RPC_URLS[chainId]
-  if (!factory || !rpc) return []
+async function fetchV3PoolsOnChain(chainId: number, version: number): Promise<PairStats[]> {
+  const factory = factoryV3Gen(version)[chainId]
+  if (!factory || !rpcUrlsFor(chainId).length) return []
 
-  const client = createPublicClient({ transport: http(rpc) })
+  const client = createReadClient(chainId)
 
   // Resolve PairConfig + allPairsLength in parallel — both are factory-level
   // reads that don't depend on per-pool data.
@@ -242,11 +241,11 @@ async function fetchV3PoolsOnChain(chainId: number): Promise<PairStats[]> {
   })
 }
 
-export function useV3PoolsOnChain(chainId: number | undefined, enabled: boolean) {
+export function useV3PoolsOnChain(chainId: number | undefined, version: number, enabled: boolean) {
   return useQuery<PairStats[]>({
-    queryKey: ['v3PoolsOnChain', chainId],
-    queryFn: () => fetchV3PoolsOnChain(chainId as number),
-    enabled: enabled && !!chainId && !!FACTORY_ADDRESS_V3_PILOT[chainId as number],
+    queryKey: ['v3PoolsOnChain', chainId, version],
+    queryFn: () => fetchV3PoolsOnChain(chainId as number, version),
+    enabled: enabled && !!chainId && !!factoryV3Gen(version)[chainId as number],
     // Reserves/supply move every block on an active pool — 30s keeps the
     // numbers reasonably fresh without hammering RPC.
     staleTime: 30_000,
@@ -254,12 +253,11 @@ export function useV3PoolsOnChain(chainId: number | undefined, enabled: boolean)
   })
 }
 
-async function fetchV3PoolOnChain(chainId: number, pairAddress: string): Promise<PairStats | null> {
-  const factory = FACTORY_ADDRESS_V3_PILOT[chainId]
-  const rpc = RPC_URLS[chainId]
-  if (!factory || !rpc) return null
+async function fetchV3PoolOnChain(chainId: number, version: number, pairAddress: string): Promise<PairStats | null> {
+  const factory = factoryV3Gen(version)[chainId]
+  if (!factory || !rpcUrlsFor(chainId).length) return null
 
-  const client = createPublicClient({ transport: http(rpc) })
+  const client = createReadClient(chainId)
   // Need PairConfig address to fetch per-pair config. Read it in parallel with
   // pair state below; one extra factory hop avoids hardcoding the PairConfig
   // address (it can change via factory.setPairConfig).
@@ -335,11 +333,11 @@ async function fetchV3PoolOnChain(chainId: number, pairAddress: string): Promise
   }
 }
 
-export function useV3PoolOnChain(chainId: number | undefined, pairAddress: string | undefined, enabled: boolean) {
+export function useV3PoolOnChain(chainId: number | undefined, version: number, pairAddress: string | undefined, enabled: boolean) {
   return useQuery<PairStats | null>({
-    queryKey: ['v3PoolOnChain', chainId, pairAddress?.toLowerCase()],
-    queryFn: () => fetchV3PoolOnChain(chainId as number, pairAddress as string),
-    enabled: enabled && !!chainId && !!pairAddress && !!FACTORY_ADDRESS_V3_PILOT[chainId as number],
+    queryKey: ['v3PoolOnChain', chainId, version, pairAddress?.toLowerCase()],
+    queryFn: () => fetchV3PoolOnChain(chainId as number, version, pairAddress as string),
+    enabled: enabled && !!chainId && !!pairAddress && !!factoryV3Gen(version)[chainId as number],
     staleTime: 30_000,
     refetchInterval: 30_000,
   })

@@ -37,7 +37,6 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       if (
         [
           ChainId.ARBITRUM_MAINNET,
-          ChainId.BASE_MAINNET,
           ChainId.BSC_MAINNET,
           ChainId.LINEA_MAINNET,
           ChainId.SEI_MAINNET,

@@ -143,6 +143,7 @@ export default function PoolDetail() {
 
   const { data: onChainPool, isLoading: isOnChainLoading } = useV3PoolOnChain(
     chainId,
+    version,
     pairAddress,
     isV3Like(version) && !v3UseIndexer,
   )
