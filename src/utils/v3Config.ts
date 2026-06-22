@@ -1,5 +1,5 @@
-import { createPublicClient, http } from 'viem'
 import { RPC_URLS, factoryV3Gen } from 'lib/sdk/constants/addresses'
+import { createReadClient } from 'lib/sdk/rpc'
 
 // Single source of truth for reading a BrownFi V3 pool's per-pair config.
 // Previously the PairConfig→getConfig read + the 13-field tuple ABI + the
@@ -79,7 +79,7 @@ export async function readV3PairConfig(
 ): Promise<RawV3Config | null> {
   const factoryAddr = factoryV3Gen(version)[chainId]
   if (!factoryAddr || !RPC_URLS[chainId]) return null
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const client = createReadClient(chainId)
   const configAddr = await client.readContract({
     address: factoryAddr as `0x${string}`,
     abi: PAIR_CONFIG_GETTER_ABI,
