@@ -723,11 +723,12 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* APR — Annualized Return (green ≥0 / red <0) + BGT/Incentive APR.
-                Visual treatment mirrors Stats so the rail reads as a consistent
-                stack. */}
-            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
-              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
+            {/* APR + Stats — combined into one card (beta only). APR section on
+                top (Annual Return / Fee APR / Incentive), a full-bleed divider,
+                then the Stats section (pool balances, TVL, volume, fees, and the
+                competitor comparison). bera keeps them as two separate cards. */}
+            <div className="px-4 py-3.5 lg:px-5 lg:py-4" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
+              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD', marginBottom: '10px' }}>
                 APR
               </div>
 
@@ -766,37 +767,39 @@ function PoolDetailInner({
                 )}
               </div>
 
-              {/* Desktop: stacked label/value rows matching Stats. */}
+              {/* Desktop: inline label/value rows — one line each. */}
               <div className="hidden lg:block">
                 {isV3Like(version) && (
-                  <div className="mb-3 lg:mb-4">
-                    <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                  <div className="mb-2 lg:mb-2.5 flex items-center justify-between">
+                    <span className="text-[11px] lg:text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
                       Annual Return
-                    </div>
-                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: annualReturn >= 0 ? '#83CF84' : '#E04848', marginTop: '2px' }}>
+                    </span>
+                    <span className="text-[14px] lg:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: annualReturn >= 0 ? '#83CF84' : '#E04848' }}>
                       {(annualReturn ? `${formatNumberLambda(annualReturn, { maximumFractionDigits: 2 })}%` : '--')}
-                    </div>
+                    </span>
                   </div>
                 )}
                 {!isMainnet && (
-                  <div className="mb-3 lg:mb-4">
-                    <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                  <div className="mb-2 lg:mb-2.5 flex items-center justify-between">
+                    <span className="text-[11px] lg:text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
                       Fee APR
-                    </div>
-                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
+                    </span>
+                    <span className="text-[14px] lg:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84' }}>
                       {(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
-                    </div>
+                    </span>
                   </div>
                 )}
                 {incentiveApr > 0 && (
-                  <div className="mb-3 lg:mb-4">
-                    <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                      {incentiveLabel}
-                      {incentiveIcon && <img src={incentiveIcon} alt="BGT" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
-                      {isBgt && <QuestionHelper text="Stake your LP token on a restaker vault to earn BGT." />}
-                    </div>
-                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
-                      +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%
+                  <div className="mb-2 lg:mb-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] lg:text-[12px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                        {incentiveLabel}
+                        {incentiveIcon && <img src={incentiveIcon} alt="BGT" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
+                        {isBgt && <QuestionHelper text="Stake your LP token on a restaker vault to earn BGT." />}
+                      </span>
+                      <span className="text-[14px] lg:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84' }}>
+                        +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%
+                      </span>
                     </div>
                     {restakers.length > 0 && (
                       <div className="inline-flex items-center gap-x-3 gap-y-1 flex-wrap" style={{ marginTop: '6px' }}>
@@ -825,11 +828,8 @@ function PoolDetailInner({
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Stats */}
-            <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
-              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD', marginBottom: '16px' }}>
+              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD', marginTop: '16px', marginBottom: '10px' }}>
                 Stats
               </div>
 
@@ -915,10 +915,10 @@ function StatRow({
   children?: React.ReactNode
 }) {
   return (
-    <div className="mb-3 lg:mb-4">
-      <div className="text-[12px] lg:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>{label}</div>
+    <div className="mb-2 lg:mb-2.5">
+      <div className="text-[11px] lg:text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>{label}</div>
       {value !== undefined && (
-        <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
+        <div className="text-[14px] lg:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
           {value}
         </div>
       )}
@@ -940,10 +940,10 @@ function StatCompareRow({ label, ours, kodiak }: { label: string; ours: string; 
 function StatInline({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>
+      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '12px', color: '#978A80' }}>
         {label}
       </span>
-      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', color: valueColor ?? '#FBFBFD' }}>
+      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: valueColor ?? '#FBFBFD' }}>
         {value}
       </span>
     </div>
