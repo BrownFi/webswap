@@ -234,7 +234,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                  {isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'}: <span style={{ color: '#83CF84' }}>{columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}</span>
+                  {isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'}: <span style={{ color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>{columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}</span>
                 </span>
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
@@ -266,8 +266,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
           <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
-          {/* Returns column — V3: annualized LP-vs-UniV2 return; V2: 24h fees / TVL. Wider column for the long label. */}
-          <span className="max-md:hidden text-left" style={{ flex: 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+          {/* Returns column — V3: annualized LP-vs-UniV2 return (green); V2: 24h
+              fees / TVL (white, per Jason — green is reserved for the V3 return). */}
+          <span className="max-md:hidden text-left" style={{ flex: 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>
             {columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
           {/* BGT APR — Berachain only (BGT is Bera-specific). */}

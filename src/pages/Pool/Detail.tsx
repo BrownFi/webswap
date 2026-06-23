@@ -721,7 +721,7 @@ function PoolDetailInner({
                 <StatInline
                   label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? (<span className="inline-flex items-center">Annualized Return<AnnualizedReturnInfo /></span>) : '24h Fees / TVL'}
                   value={(feeAprDisplay > 0 ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
-                  valueColor="#83CF84"
+                  valueColor={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD'}
                 />
                 {incentiveApr > 0 && (
                   <div>
@@ -761,7 +761,7 @@ function PoolDetailInner({
                     {isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'}
                     {isV3Like(version) && USE_V3_UNIV2_COMPARISON && <AnnualizedReturnInfo />}
                   </div>
-                  <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
+                  <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: isV3Like(version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD', marginTop: '2px' }}>
                     {(feeAprDisplay > 0 ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   </div>
                 </div>
