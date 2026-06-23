@@ -125,19 +125,29 @@ const GET_PAIR_ACCOUNT = `
 // can gate its fan-out useQueries on the same set instead of firing one
 // REST call per Bera pool (most of which return apr=0 today). Add a new
 // pair address here whenever a fresh BGT vault is deployed.
+//
+// Keys are LOWERCASE — callers pass either a checksummed SDK address (detail
+// page / position card) or a lowercase indexer id (pool list), so always look
+// up via `getPairBgt()` which normalizes. (Checksummed keys here silently
+// missed the lowercase indexer ids on the pool list → BGT column stayed blank.)
 export const pairBGT: Record<string, string[]> = {
   // V2 pools — cutting board disposed 2026-06-23, but their reward vaults keep
   // emitting until the current period ends, so the API APR fades to 0 on its
   // own. Left untouched (kept showing per product call). Value = stake links.
-  '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': ['0x7488174f1f518caf2faae4f30cbba65ea57cf4f9'], // BERA/HONEY V2
-  '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': ['0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc'], // BERA/USDC.e V2
+  '0xd932c344e21ef6c3a94971bf4d4cc71304e2a66c': ['0x7488174f1f518caf2faae4f30cbba65ea57cf4f9'], // BERA/HONEY V2
+  '0xd57da672354905b9e42df077df77e554dc5fd1cc': ['0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc'], // BERA/USDC.e V2
   // V3 pools — new cutting board allocation 2026-06-23. Whitelisting them makes
   // the UI call /igbt-vault-apr (getPoolBgt) so the BGT APR shows once Manh's BE
   // serves these vaults. Value[0] = the BeraHub stake link for the new vault.
-  '0xC123bc9259D1a99add5A2C512498ac146DD2BADe': ['https://hub.berachain.com/earn/0xa57d4c595a000e20f8ea8f82663a9c7b15d60168'], // WETH/USDC.e V3 (1.45%)
-  '0xF2D50928f33eF0F9E8DC20881bc475dE2c484e26': ['https://hub.berachain.com/earn/0xd54ec45cca5d428c3aef05993195c389c0b82b4e'], // BERA/USDC.e V3 (1.94%)
-  '0x3E0Fd2Ce4d5B7e5F6c34E26C48A2DBd9F8d7D88C': ['https://hub.berachain.com/earn/0x3f0cf0c62e5d7617c3f965bfefc656af650e459e'], // WBERA/HONEY V3 (3.00%)
+  '0xc123bc9259d1a99add5a2c512498ac146dd2bade': ['https://hub.berachain.com/earn/0xa57d4c595a000e20f8ea8f82663a9c7b15d60168'], // WETH/USDC.e V3 (1.45%)
+  '0xf2d50928f33ef0f9e8dc20881bc475de2c484e26': ['https://hub.berachain.com/earn/0xd54ec45cca5d428c3aef05993195c389c0b82b4e'], // BERA/USDC.e V3 (1.94%)
+  '0x3e0fd2ce4d5b7e5f6c34e26c48a2dbd9f8d7d88c': ['https://hub.berachain.com/earn/0x3f0cf0c62e5d7617c3f965bfefc656af650e459e'], // WBERA/HONEY V3 (3.00%)
 }
+
+/** Case-insensitive lookup into `pairBGT`. Use this instead of `pairBGT[addr]`
+ *  — addresses reach us both checksummed (SDK) and lowercase (indexer ids). */
+export const getPairBgt = (address?: string | null): string[] | undefined =>
+  address ? pairBGT[address.toLowerCase()] : undefined
 
 export const merklCampaignPool: string[] = [
   '0xA87E2c65F2b79164bab690Ec6808431D8c419598'.toLowerCase(), // WETH/USDC.e on LINEA
@@ -195,7 +205,7 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
     queryFn: () => {
       return apiV2Service.getPoolBgt({ address: pair.liquidityToken.address })
     },
-    enabled: pair.chainId === ChainId.BERA_MAINNET && !!pairBGT[pair.liquidityToken.address],
+    enabled: pair.chainId === ChainId.BERA_MAINNET && !!getPairBgt(pair.liquidityToken.address),
   })
 
   // Merkl Campaign APR
