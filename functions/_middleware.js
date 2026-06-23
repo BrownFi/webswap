@@ -73,6 +73,10 @@ function loginPage(error) {
   input:focus{border-color:#985C2A;box-shadow:0 0 0 3px rgba(152,92,42,.18)}
   button{width:100%;padding:13px;font-size:14px;font-weight:600;font-family:inherit;color:#fff;border:none;border-radius:11px;cursor:pointer;background:linear-gradient(180deg,#AC6A31 0%,#8A4F22 100%);transition:filter .15s}
   button:hover{filter:brightness(1.08)}
+  .pw{position:relative;display:flex}
+  .pw input{padding-right:44px}
+  .toggle{position:absolute;top:50%;right:5px;transform:translateY(-50%);width:34px;height:34px;padding:0;background:transparent;border:none;border-radius:8px;color:#8A7D72;display:flex;align-items:center;justify-content:center;cursor:pointer;filter:none}
+  .toggle:hover{color:#D8A072;background:transparent;filter:none}
   .foot{margin-top:22px;font-size:11px;color:#6B5F56;letter-spacing:.02em}
 </style>
 </head>
@@ -84,11 +88,29 @@ function loginPage(error) {
     <p class="sub">This is the BrownFi development build. Enter your dev access key to continue.</p>
     <form method="POST" action="/__gate">
       ${err}
-      <input type="password" name="key" placeholder="Access key" autocomplete="off" autofocus required />
+      <div class="pw">
+        <input id="key" type="password" name="key" placeholder="Access key" autocomplete="off" autofocus required />
+        <button type="button" class="toggle" id="toggle" aria-label="Show password" title="Show / hide"></button>
+      </div>
       <button type="submit">Unlock</button>
     </form>
     <div class="foot">Authorized developers only</div>
   </div>
+  <script>
+    (function () {
+      var EYE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      var OFF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+      var inp = document.getElementById('key'), btn = document.getElementById('toggle');
+      btn.innerHTML = EYE;
+      btn.addEventListener('click', function () {
+        var show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        btn.innerHTML = show ? OFF : EYE;
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        inp.focus();
+      });
+    })();
+  </script>
 </body>
 </html>`
 }
