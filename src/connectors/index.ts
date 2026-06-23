@@ -197,15 +197,18 @@ const popularIdx = Math.max(
   0,
   defaultWallets.findIndex((group) => group.groupName === 'Popular'),
 )
-// `safeWallet` lets BrownFi run as a custom Safe App: it auto-connects to the
-// Safe when the app is loaded inside Safe's iframe and is hidden in a normal
-// browser tab, so it doesn't affect regular users (kept in the Popular group
-// rather than its own so no empty "Safe" header shows outside the iframe).
-// Pairs with the Safe-App fields in public/manifest.json + the /manifest.json
-// CORS header (public/_headers) that Safe needs to load the app.
-const wallets = defaultWallets.map((group, i) =>
-  i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet, safeWallet] } : group,
-)
+// Inside a Safe App (BrownFi loaded in Safe's iframe), offer ONLY the Safe
+// wallet — the user is already operating their Safe, so other EOA wallets must
+// not be selectable (per team request). `window.parent !== window` is the same
+// iframe check the Safe connector uses for `installed`. Outside the iframe, show
+// the full list with Rabby in Popular (safeWallet self-hides there). Pairs with
+// the Safe-App fields in public/manifest.json + the /manifest.json CORS header.
+const inSafeApp = typeof window !== 'undefined' && window.parent !== window
+const wallets = inSafeApp
+  ? [{ groupName: 'Safe', wallets: [safeWallet] }]
+  : defaultWallets.map((group, i) =>
+      i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet, safeWallet] } : group,
+    )
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
