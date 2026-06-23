@@ -52,6 +52,15 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/prjx/, ''),
       },
+      // Dev mirror of functions/uniswap (CF) + api/uniswap (Vercel): proxy
+      // /uniswap/* to the Uniswap gateway with an allowlisted Origin header so
+      // the browser hits same-origin and the gateway doesn't 409 ACCESS_DENIED.
+      '/uniswap': {
+        target: 'https://interface.gateway.uniswap.org',
+        changeOrigin: true,
+        headers: { origin: 'https://app.uniswap.org', referer: 'https://app.uniswap.org/' },
+        rewrite: (path) => path.replace(/^\/uniswap/, ''),
+      },
     },
   },
   test: {

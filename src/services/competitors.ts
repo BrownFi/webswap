@@ -4,6 +4,7 @@
 import { ChainId } from '@brownfi/sdk'
 import { fetchKodiakPairMap } from './kodiakService'
 import { fetchProjectXPairMap } from './projectXService'
+import { fetchUniswapPairMap } from './uniswapService'
 
 export interface CompetitorPairData {
   // feeTier in hundredths of a bip (500 = 0.05%, 3000 = 0.3%).
@@ -35,6 +36,8 @@ export function getCompetitor(chainId: number): CompetitorConfig | undefined {
       return { name: 'Kodiak', queryKey: 'kodiakPairMap', fetch: fetchKodiakPairMap }
     case ChainId.HYPER_EVM:
       return { name: 'Project X', queryKey: 'projectXPairMap', fetch: fetchProjectXPairMap }
+    case ChainId.ARBITRUM_MAINNET:
+      return { name: 'Uniswap', queryKey: 'uniswapPairMap', fetch: fetchUniswapPairMap }
     default:
       return undefined
   }
