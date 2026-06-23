@@ -19,7 +19,6 @@ import { isV3Like } from '@brownfi/sdk'
  */
 import { Currency, Token, ETHER, WETH } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
-import { createPublicClient, http } from 'viem'
 import {
   buildV3UpdateData,
   buildV3ZapInTx,
@@ -28,7 +27,7 @@ import {
   getV3ZapEstimate,
   isV3ZapSupported,
 } from 'utils/v3Zap'
-import { RPC_URLS } from 'lib/sdk/constants/addresses'
+import { createReadClient } from 'lib/sdk/rpc'
 import type { BrownFiVersion } from '../types'
 import type {
   BuildZapInParams,
@@ -138,7 +137,7 @@ async function estimateLpOut({
   amountAfterSwap: BigNumber
   amountOther: BigNumber
 }): Promise<BigNumber> {
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const client = createReadClient(chainId)
   const totalSupplyRaw = await client.readContract({
     address: pairAddress as `0x${string}`,
     abi: ERC20_TOTAL_SUPPLY_ABI,
@@ -313,7 +312,7 @@ export const nativeZapAggregator: ZapAggregatorAdapter<NativeZapInRoute, NativeZ
     let totalSupply: BigNumber
     let updateData: string
     try {
-      const client = createPublicClient({ transport: http(RPC_URLS[params.chainId]) })
+      const client = createReadClient(params.chainId)
       const totalSupplyRaw = await client.readContract({
         address: params.pair.liquidityToken.address as `0x${string}`,
         abi: ERC20_TOTAL_SUPPLY_ABI,

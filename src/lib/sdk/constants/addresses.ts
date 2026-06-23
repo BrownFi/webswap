@@ -265,7 +265,7 @@ export const RPC_URLS: Record<number, string> = {
   [ChainId.VICTION_TESTNET]: 'https://rpc-testnet.viction.xyz',
   [ChainId.VICTION_MAINNET]: 'https://rpc.viction.xyz',
   [ChainId.BASE_SEPOLIA]: 'https://base-sepolia-rpc.publicnode.com',
-  [ChainId.BASE_MAINNET]: 'https://base.drpc.org',
+  [ChainId.BASE_MAINNET]: 'https://mainnet.base.org',
   [ChainId.BOBA_TESTNET]: 'https://sepolia.boba.network',
   [ChainId.U2U_MAINNET]: 'https://rpc-mainnet.u2u.xyz',
   [ChainId.ARBITRUM_SEPOLIA]: 'https://sepolia-rollup.arbitrum.io/rpc',
@@ -277,4 +277,27 @@ export const RPC_URLS: Record<number, string> = {
   [ChainId.MONAD]: 'https://rpc.monad.xyz',
   [ChainId.OP_MAINNET]: 'https://optimism.llamarpc.com',
   [ChainId.BOBA_MAINNET]: 'https://mainnet.boba.network',
+}
+
+// Per-chain RPC endpoints to try in order. Single public RPCs rate-limit (429),
+// 500, or go down under the on-chain read burst (pool list, quotes, reserves),
+// so reads go through a viem `fallback()` that rotates to the next endpoint on
+// failure (see lib/sdk/rpc.ts). First entry is the primary (mirrors RPC_URLS);
+// the rest are fallbacks. Chains absent here fall back to their single RPC_URLS
+// entry. (Base list verified reliable 2026-06-22 — drpc/llama/meow/blockpi were
+// flaky/blocked; the rest reuse the connectors' wallet fallbackRpcs.)
+export const RPC_FALLBACKS: Record<number, string[]> = {
+  [ChainId.BERA_MAINNET]: ['https://rpc.berachain.com', 'https://rpc.berachain-apis.com', 'https://berachain.drpc.org'],
+  [ChainId.HYPER_EVM]: ['https://rpc.hyperliquid.xyz/evm', 'https://hyperliquid.drpc.org'],
+  [ChainId.BASE_MAINNET]: [
+    'https://mainnet.base.org',
+    'https://base-rpc.publicnode.com',
+    'https://1rpc.io/base',
+    'https://developer-access-mainnet.base.org',
+  ],
+  [ChainId.ARBITRUM_MAINNET]: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.drpc.org', 'https://arbitrum.therpc.io'],
+  [ChainId.BSC_MAINNET]: ['https://bsc-dataseed1.defibit.io', 'https://bsc-dataseed1.ninicoin.io', 'https://bsc.drpc.org'],
+  [ChainId.LINEA_MAINNET]: ['https://rpc.linea.build', 'https://1rpc.io/linea', 'https://linea.drpc.org'],
+  [ChainId.SEI_MAINNET]: ['https://evm-rpc.sei-apis.com', 'https://sei.drpc.org', 'https://sei-evm-rpc.publicnode.com'],
+  [ChainId.MONAD]: ['https://rpc.monad.xyz', 'https://rpc3.monad.xyz'],
 }

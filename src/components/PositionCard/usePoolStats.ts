@@ -66,11 +66,17 @@ export type PairStats = {
   token1?: Token | null
 }
 
-// Feature flag (Paven, 2026-06-18): when false, ALL the V3 LP-vs-UniV2
-// comparison UI is hidden together — the "Annualized Return" metric falls back
-// to the V2 math (indexer apr, never negative) and its (?) tooltip is hidden,
-// and the chart's "LP vs. UniV2" line + its tooltip are hidden too. Everything
-// stays wired so flipping this back to `true` re-enables all of it at once.
+// Feature flag (Paven, 2026-06-18): toggles ALL the V3 LP-vs-UniV2 comparison
+// UI together — the "Annualized Return" metric (V3 LP-vs-UniV2 math vs. the V2
+// indexer apr fallback) and its (?) tooltip, plus the chart's "LP vs. UniV2"
+// line + tooltip.
+//
+// Re-enabled on prod 2026-06-18 (Paven "enable it"): the V3 math can go briefly
+// negative on thin/imbalanced pools (short-term noise that doesn't represent
+// the pool's real performance — see Jason's HYPE/USDT 70/30 example). Rather
+// than show a scary negative %, the render sites now display "--" for any
+// non-positive Annualized Return (treated as "not yet reliable"), which makes
+// it safe to surface on prod.
 export const USE_V3_UNIV2_COMPARISON: boolean = true
 
 /**

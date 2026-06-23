@@ -1,4 +1,5 @@
-import { createPublicClient, http, parseAbiItem } from 'viem'
+import { parseAbiItem } from 'viem'
+import { createReadClient, rpcUrlsFor } from 'lib/sdk/rpc'
 
 export type OnchainTxn = {
   id: string
@@ -61,10 +62,8 @@ export async function fetchOnchainPairTransactions({
   lookbackBlocks?: number
   limit?: number
 }): Promise<OnchainTxn[]> {
-  const { RPC_URLS } = await import('lib/sdk/constants/addresses')
-  const rpc = RPC_URLS[chainId]
-  if (!rpc) return []
-  const client = createPublicClient({ transport: http(rpc) })
+  if (!rpcUrlsFor(chainId).length) return []
+  const client = createReadClient(chainId)
 
   const currentBlock = await client.getBlockNumber()
   const fromBlock = currentBlock > BigInt(lookbackBlocks) ? currentBlock - BigInt(lookbackBlocks) : 0n

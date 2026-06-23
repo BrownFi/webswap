@@ -14,8 +14,8 @@ import {
   getRouterContract,
   getRouterContractWithPrice,
 } from './helpers'
-import { createPublicClient, http, encodeAbiParameters, parseAbiParameters } from 'viem'
-import { RPC_URLS } from '../constants/addresses'
+import { encodeAbiParameters, parseAbiParameters } from 'viem'
+import { createReadClient } from '../rpc'
 
 export { SwapCallbackState }
 
@@ -24,7 +24,7 @@ async function buildSwapUpdateData(tokenAddresses: string[], chainId: number, ve
   const factoryAddr = getFactoryAddress(chainId, version)
   if (!factoryAddr) return encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
 
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const client = createReadClient(chainId)
   const priceFeedIds = await Promise.all(
     tokenAddresses.map((addr) =>
       client.readContract({

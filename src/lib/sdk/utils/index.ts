@@ -2,7 +2,7 @@ import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import warning from 'tiny-warning'
 import { getAddress } from '@ethersproject/address'
-import { createPublicClient, http } from 'viem'
+import { createReadClient } from '../rpc'
 import {
   ChainId,
   SolidityType,
@@ -197,9 +197,9 @@ export async function getCachedPriceFeedId(client: any, factoryAddr: string, tok
 export async function getPythPrice(address: string, chainId: number, version: number): Promise<number> {
   if (!address || !chainId) return 0
   try {
-    const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
+    const { PYTH_ADDRESS } = await import('../constants/addresses')
 
-    const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+    const client = createReadClient(chainId)
     const factoryAddr = getFactoryAddress(chainId, version)
 
     const priceFeedId = await getCachedPriceFeedId(client, factoryAddr, address)
@@ -288,8 +288,8 @@ export async function getPythPricesBatch(
   const result: Record<string, number> = {}
   if (!addresses.length || !chainId) return result
 
-  const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
-  const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+  const { PYTH_ADDRESS } = await import('../constants/addresses')
+  const client = createReadClient(chainId)
   const factoryAddr = getFactoryAddress(chainId, version)
   if (!factoryAddr) return result
 
@@ -391,9 +391,9 @@ export async function getPythPricesBatch(
 export async function getPythPricePair(pair: any, chainId: number): Promise<[number, number]> {
   if (!pair || !chainId) return [0, 0]
   try {
-    const { RPC_URLS, PYTH_ADDRESS } = await import('../constants/addresses')
+    const { PYTH_ADDRESS } = await import('../constants/addresses')
 
-    const client = createPublicClient({ transport: http(RPC_URLS[chainId]) })
+    const client = createReadClient(chainId)
 
     const ABI_PAIR = [{
       inputs: [], name: 'priceFeed',

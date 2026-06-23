@@ -30,6 +30,10 @@ import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
 
+// Minimum TVL (USD) for a pool to appear in the prod (mainnet) list. Below
+// this, pools are dust — hidden to declutter the table.
+const MIN_TVL_FOR_LIST = 10
+
 const LIST_ALL_PAIRS = `
   query PairList($chainId: Int) {
     pairs {
@@ -211,10 +215,14 @@ export default function Pool() {
       if (sortKey === 'bgtAPR') {
         return bgtAprByAddr[p.id.toLowerCase()] ?? 0
       }
-      // Annualized Return sort: V3 uses the LP-vs-UniV2 formula only when the
-      // flag is on; otherwise (and for V2) sort by the indexer `apr`.
-      if (sortKey === 'apr' && isV3Like(version) && USE_V3_UNIV2_COMPARISON) {
-        return computeV3FeeApr(p)
+      // Returns-column sort. V3 (flag on) sorts by the annualized LP-vs-UniV2
+      // return; V2 sorts by the 24h-fees/TVL daily ratio it now displays.
+      if (sortKey === 'apr') {
+        if (isV3Like(version) && USE_V3_UNIV2_COMPARISON) {
+          return computeV3FeeApr(p)
+        }
+        const feeDayTvl = Number(p.tvl) > 0 ? (Number(p.feeDay) || 0) / Number(p.tvl) : 0
+        return feeDayTvl
       }
       return Number((p as any)[sortKey]) || 0
     }
@@ -250,6 +258,10 @@ export default function Pool() {
           return false
         }
         if (isMainnet) {
+          // Hide dust pools (< $10 TVL) from the prod list — they clutter the
+          // table and their fee/APR math is meaningless. Non-mainnet keeps them
+          // so test pools stay visible on beta/dev.
+          if (Number(pair.tvl) < MIN_TVL_FOR_LIST) return false
           const token0Address = pair.token0?.id.toLowerCase() ?? ''
           const token1Address = pair.token1?.id.toLowerCase() ?? ''
           return allowedTokenAddresses.has(token0Address) || allowedTokenAddresses.has(token1Address)
@@ -387,7 +399,7 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
                   <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label="Annualized Return" flex={1.3} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  <SortHeader label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'} flex={1.3} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   {chainId === ChainId.BERA_MAINNET && (
                     <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
@@ -396,7 +408,7 @@ export default function Pool() {
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET} />
+              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET} showV3Return={isV3Like(version) && USE_V3_UNIV2_COMPARISON} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -557,7 +569,7 @@ function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
   )
 }
 
-function PairListSkeleton({ showBgt }: { showBgt: boolean }) {
+function PairListSkeleton({ showBgt, showV3Return }: { showBgt: boolean; showV3Return: boolean }) {
   return (
     <>
       {/* Table header */}
@@ -575,7 +587,7 @@ function PairListSkeleton({ showBgt }: { showBgt: boolean }) {
         <span style={{ flex: 2 }}>Pool</span>
         <span style={{ flex: 1, textAlign: 'left' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
-        <span style={{ flex: 1.3, textAlign: 'left' }}>Annualized Return</span>
+        <span style={{ flex: 1.3, textAlign: 'left' }}>{showV3Return ? 'Annualized Return' : '24h Fees / TVL'}</span>
         {showBgt && <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>}
         <span style={{ flex: 1, textAlign: 'right' }} />
       </div>
