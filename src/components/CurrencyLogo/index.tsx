@@ -2,6 +2,7 @@ import { ChainId, Currency, ETHER, Token } from '@brownfi/sdk'
 import { useActiveWeb3React } from 'hooks'
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
+import arbLogo from 'assets/images/arb.png'
 import BNBLogo from 'assets/images/bnb.svg'
 import EthereumLogo from 'assets/images/ethereum-logo.png'
 import hyperevmLogo from 'assets/images/hyperevm.png'
@@ -121,6 +122,12 @@ export function CurrencyLogo({
   }
   if (currency?.symbol === 'WMON') {
     return <StyledEthereumLogo src={monadLogo} size={size} style={style} />
+  }
+  // ARB governance token isn't in our token list; reuse the Arbitrum chain logo
+  // (same asset as the chain selector). Chain-gated so an 'ARB' symbol on another
+  // chain doesn't get mislabeled.
+  if (currency?.symbol === 'ARB' && chainId === ChainId.ARBITRUM_MAINNET) {
+    return <StyledEthereumLogo src={arbLogo} size={size} style={style} />
   }
   if (currency?.symbol === 'WETH') {
     return <StyledEthereumLogo src={EthereumLogo} size={size} style={style} />

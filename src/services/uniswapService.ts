@@ -43,7 +43,7 @@ export async function fetchUniswapPairMap(): Promise<Record<string, CompetitorPa
     const res = await fetch(`${UNISWAP_PROXY_BASE}${UNISWAP_GRAPHQL_PATH}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: TOP_V3_POOLS_QUERY, variables: { chain: 'ARBITRUM', first: 100 } }),
+      body: JSON.stringify({ query: TOP_V3_POOLS_QUERY, variables: { chain: 'ARBITRUM', first: 50 } }),
       signal: controller.signal,
     })
     if (!res.ok) return {}
