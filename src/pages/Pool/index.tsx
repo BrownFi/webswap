@@ -12,7 +12,7 @@ import { Flex, Text } from 'components/Rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
-import { PairStats, pairBGT, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
+import { PairStats, getPairBgt, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
 import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
 import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
@@ -186,7 +186,7 @@ export default function Pool() {
     queries: pairAddresses.map((addr) => ({
       queryKey: ['getBgtApr', addr],
       queryFn: () => apiV2Service.getPoolBgt({ address: addr }),
-      enabled: chainId === ChainId.BERA_MAINNET && !!addr && !!pairBGT[addr],
+      enabled: chainId === ChainId.BERA_MAINNET && !!addr && !!getPairBgt(addr),
       staleTime: 5 * 60_000,
     })),
   })
