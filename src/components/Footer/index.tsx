@@ -22,6 +22,14 @@ const ParagraphIcon = () => (
   </svg>
 )
 
+// Docs → GitBook: the official GitBook brand mark (filled, matching the X /
+// Telegram icons' fill style). Source: simpleicons.org "GitBook".
+const DocsIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+    <path d="M10.802 17.77a.703.703 0 1 1-.002 1.406.703.703 0 0 1 .002-1.406m11.024-4.347a.703.703 0 1 1 .001-1.406.703.703 0 0 1-.001 1.406m0-2.876a2.176 2.176 0 0 0-2.174 2.174c0 .233.039.465.115.691l-7.181 3.823a2.165 2.165 0 0 0-1.784-.937c-.829 0-1.589.475-1.95 1.216l-6.451-3.402c-.682-.358-1.192-1.48-1.138-2.502.028-.533.212-.947.493-1.107.178-.1.392-.092.62.027l.042.023c1.71.9 7.304 3.847 7.54 3.956.363.169.565.237 1.185-.057l11.564-6.014c.17-.064.368-.227.368-.474 0-.342-.354-.477-.355-.477-.658-.315-1.669-.788-2.655-1.25-2.108-.987-4.497-2.105-5.546-2.655-.906-.474-1.635-.074-1.765.006l-.252.125C7.78 6.048 1.46 9.178 1.1 9.394.457 9.78.058 10.575.006 11.628c-.08 1.67.779 3.41 1.952 3.96l6.86 3.516a2.17 2.17 0 0 0 2.043 1.446 2.176 2.176 0 0 0 2.174-2.174c0-.124-.013-.247-.032-.367l7.317-3.844c.378.337.872.523 1.378.523A2.176 2.176 0 0 0 24 12.519a2.176 2.176 0 0 0-2.174-2.072"/>
+  </svg>
+)
+
 const Footer = () => {
   return (
     <footer
@@ -64,33 +72,17 @@ const Footer = () => {
             the 24px social icons. On mobile, the parent's `space-between` would
             leave this row left-aligned after wrapping — `mx-auto md:mx-0`
             centers it on narrow screens and resets on md+. */}
+        {/* All links are icons (per UX feedback — text + icons read messy).
+            Blog = the Paragraph "P" glyph; Docs = the GitBook book glyph. */}
         <div
           className="mx-auto md:mx-0 justify-center md:justify-start"
-          style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}
+          style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}
         >
-          <a
-            href="https://paragraph.com/@brownfi-amm"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontFamily: 'Inter', fontSize: '18px', fontWeight: 500, color: '#A1A1A1', textDecoration: 'none' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#FBFBFD')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#A1A1A1')}
-          >
-            Blog
-          </a>
-          <span
-            aria-disabled="true"
-            style={{ fontFamily: 'Inter', fontSize: '18px', fontWeight: 500, color: '#A1A1A1', opacity: 0.5, cursor: 'not-allowed' }}
-            title="Docs coming soon"
-          >
-            Docs
-          </span>
-          {/* Social icons */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {[
-            { icon: <XIcon />, href: 'https://x.com/BrownFiAMM' },
-            { icon: <TelegramIcon />, href: 'https://t.me/brownfiammcommunity' },
-            { icon: <ParagraphIcon />, href: 'https://paragraph.com/@brownfi-amm' },
+            { icon: <XIcon />, href: 'https://x.com/BrownFiAMM', label: 'X' },
+            { icon: <TelegramIcon />, href: 'https://t.me/brownfiammcommunity', label: 'Telegram' },
+            { icon: <ParagraphIcon />, href: 'https://paragraph.com/@brownfi-amm', label: 'Blog' },
+            { icon: <DocsIcon />, href: 'https://brownfi.gitbook.io/brownfi-docs', label: 'Docs' },
           ].map((item, i) => (
             <a
               key={i}
@@ -114,7 +106,6 @@ const Footer = () => {
               {item.icon}
             </a>
           ))}
-          </div>
         </div>
       </div>
 
