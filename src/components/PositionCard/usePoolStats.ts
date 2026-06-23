@@ -126,8 +126,17 @@ const GET_PAIR_ACCOUNT = `
 // REST call per Bera pool (most of which return apr=0 today). Add a new
 // pair address here whenever a fresh BGT vault is deployed.
 export const pairBGT: Record<string, string[]> = {
-  '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': ['0x7488174f1f518caf2faae4f30cbba65ea57cf4f9'], // BERA/HONEY
-  '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': ['0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc'], // BERA/USDC.e
+  // V2 pools — cutting board disposed 2026-06-23, but their reward vaults keep
+  // emitting until the current period ends, so the API APR fades to 0 on its
+  // own. Left untouched (kept showing per product call). Value = stake links.
+  '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': ['0x7488174f1f518caf2faae4f30cbba65ea57cf4f9'], // BERA/HONEY V2
+  '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': ['0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc'], // BERA/USDC.e V2
+  // V3 pools — new cutting board allocation 2026-06-23. Whitelisting them makes
+  // the UI call /igbt-vault-apr (getPoolBgt) so the BGT APR shows once Manh's BE
+  // serves these vaults. Value[0] = the BeraHub stake link for the new vault.
+  '0xC123bc9259D1a99add5A2C512498ac146DD2BADe': ['https://hub.berachain.com/earn/0xa57d4c595a000e20f8ea8f82663a9c7b15d60168'], // WETH/USDC.e V3 (1.45%)
+  '0xF2D50928f33eF0F9E8DC20881bc475dE2c484e26': ['https://hub.berachain.com/earn/0xd54ec45cca5d428c3aef05993195c389c0b82b4e'], // BERA/USDC.e V3 (1.94%)
+  '0x3E0Fd2Ce4d5B7e5F6c34E26C48A2DBd9F8d7D88C': ['https://hub.berachain.com/earn/0x3f0cf0c62e5d7617c3f965bfefc656af650e459e'], // WBERA/HONEY V3 (3.00%)
 }
 
 export const merklCampaignPool: string[] = [
