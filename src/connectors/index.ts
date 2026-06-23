@@ -9,7 +9,8 @@ import {
   monad as monadChain,
 } from 'viem/chains'
 
-import { Chain, getDefaultConfig } from '@rainbow-me/rainbowkit'
+import { Chain, getDefaultConfig, getDefaultWallets } from '@rainbow-me/rainbowkit'
+import { rabbyWallet } from '@rainbow-me/rainbowkit/wallets'
 
 import hyperevmIcon from 'assets/images/hyperevm.png'
 import ethereumIcon from 'assets/images/ethereum-logo.png'
@@ -186,9 +187,24 @@ const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
+// RainbowKit's default wallet groups (Rainbow, MetaMask, Coinbase, WalletConnect,
+// plus EIP-6963 auto-detected injected wallets). We add Rabby into the "Popular"
+// group so it sits alongside the main wallets — by name, with icon + install
+// link — rather than in a separate section. Fall back to the first group if the
+// "Popular" group is ever renamed upstream.
+const { wallets: defaultWallets } = getDefaultWallets()
+const popularIdx = Math.max(
+  0,
+  defaultWallets.findIndex((group) => group.groupName === 'Popular'),
+)
+const wallets = defaultWallets.map((group, i) =>
+  i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet] } : group,
+)
+
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
   chains: availableChains,
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? '',
   ssr: false,
+  wallets,
 })
