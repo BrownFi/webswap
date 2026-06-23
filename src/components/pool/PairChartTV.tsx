@@ -142,8 +142,10 @@ const SERIES_ALL: SeriesMeta[] = [
   // "LP vs. UniV2" = LP's % outperformance over the UniV2 constant-product
   // benchmark: (lp − uni) / uni × 100. Shares the hidden 'pct' overlay scale
   // with "LP vs. BH" — both are percentages, so they auto-fit together and are
-  // directly comparable; read exact values via the hover tooltip. Magenta.
-  { key: 'lpVsUniV2',     label: 'LP vs. UniV2',   color: '#F472B699', type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // directly comparable; read exact values via the hover tooltip. Cyan — kept
+  // distinct from TVL's purple (they read too similar otherwise) and the green
+  // "LP vs. BH".
+  { key: 'lpVsUniV2',     label: 'LP vs. UniV2',   color: '#22D3EE99', type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
   // "LP vs. BH" = LP's % outperformance over Buy & Hold (HODL):
   // (lp − bnh) / bnh × 100. Same 'pct' overlay scale as LP vs. UniV2 — and kept
   // right next to it in the legend so the two % benchmarks read together.
