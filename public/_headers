@@ -1,0 +1,5 @@
+# Cloudflare Pages headers (copied to the build root by vite).
+# Safe{Wallet} fetches a custom app's manifest cross-origin (from app.safe.global)
+# to validate + load it, so /manifest.json must allow CORS.
+/manifest.json
+  Access-Control-Allow-Origin: *
