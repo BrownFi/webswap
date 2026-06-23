@@ -103,7 +103,7 @@ type DayData = {
 
 type HourData = Omit<DayData, 'dayStartUnix'> & { hourStartUnix: number }
 
-type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpMinusUniV2' | 'lpVsUniV2' | 'tvl' | 'netPnL' | 'volume'
+type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpVsUniV2' | 'tvl' | 'netPnL' | 'volume'
 
 // GitBook explainer for the LP-vs-UniV2 benchmark (the per-token price-gap
 // line). Mirrors the develop branch's chart.
@@ -139,31 +139,17 @@ const SERIES_ALL: SeriesMeta[] = [
   { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
   { key: 'bnhPrice',      label: 'HODL Price',     color: '#9CA3AF99', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'uniV2Price',    label: 'UniV2 Price',    color: '#E0484899', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  // LP − UniV2 divergence. Plotted on the RIGHT (price) axis next to the
-  // LP/HODL/UniV2 series since per Jason's 2026-06-04 ask, the divergence
-  // reads more naturally beside its parent series. Visual style mirrors
-  // UniV2 Price — 1px dotted at ~60% opacity (alpha `99` ≈ 0.6) so it
-  // reads as a paired reference rather than competing with the primary
-  // LP line. Cyan keeps it distinct from the palette (LP orange, HODL
-  // gray, UniV2 red, TVL purple, NetPnL/Volume green) — and avoids the
-  // volume green + the old HODL blue it used to clash with.
-  { key: 'lpMinusUniV2',  label: 'LP − UniV2',     color: '#22D3EE99', type: 'line',      priceScaleId: 'left',  yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  // "LP vs. UniV2" = the pure per-LP-token price gap (lp − uni), matching the
-  // develop branch. This is a DIFFERENT quantity from the "LP − UniV2" line
-  // above (which is the NAV/whole-pool figure `tvl·(1 − uniV2/lp)`): this one
-  // is a tiny price delta (~0.006) while that one is pool-total dollars. It
-  // gets its OWN overlay price scale ('lpvs') because at price-delta magnitude
-  // it would be invisible squashed against the pool-total left axis. Magenta
-  // keeps it distinct from the cyan "LP − UniV2" line; read exact values via
-  // the hover tooltip (the overlay scale has no axis gutter).
-  { key: 'lpVsUniV2',     label: 'LP vs. UniV2',   color: '#F472B699', type: 'line',      priceScaleId: 'lpvs',   yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // "LP vs. UniV2" = LP's % outperformance over the UniV2 constant-product
+  // benchmark: (lp − uni) / uni × 100. Shares the hidden 'pct' overlay scale
+  // with "LP vs. BH" — both are percentages, so they auto-fit together and are
+  // directly comparable; read exact values via the hover tooltip. Magenta.
+  { key: 'lpVsUniV2',     label: 'LP vs. UniV2',   color: '#F472B699', type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // "LP vs. BH" = LP's % outperformance over Buy & Hold (HODL):
+  // (lp − bnh) / bnh × 100. Same 'pct' overlay scale as LP vs. UniV2 — and kept
+  // right next to it in the legend so the two % benchmarks read together.
+  // Internal key stays `netPnL` to avoid a sweep across the indexer field name.
+  { key: 'netPnL',        label: 'LP vs. BH',      color: '#83CF84',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden' },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
-  // Display label is "LP − BH" (LP minus Buy & Hold) to read as a sibling
-  // of "LP − UniV2" — same comparator pattern, just against the HODL
-  // reference instead of UniV2. Internal key stays `netPnL` to avoid a
-  // sweep across the indexer field name and downstream consumers; this
-  // is a pure copy change.
-  { key: 'netPnL',        label: 'LP − BH',        color: '#83CF84',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
   { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
@@ -181,26 +167,21 @@ const PairChartTVInner = ({ pair }: Props) => {
   const keepUniV2 = supportsUniV2 && isV3
   const availableSeries = useMemo(() => {
     if (!showExtendedMetrics) return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
-    // Hide the UniV2 reference AND both divergence lines (LP−UniV2 NAV figure +
-    // LP vs. UniV2 price gap) on V2 pairs / chains without uniV2Price indexer
-    // data — the field is stripped from the query, so the diff would be
-    // misleading (lpPrice − 0 = lpPrice) otherwise.
+    // Hide the UniV2 reference AND the "LP vs. UniV2" % line on V2 pairs / chains
+    // without uniV2Price indexer data — the field is stripped from the query, so
+    // the comparison would be misleading (lpPrice − 0) otherwise. "LP vs. BH"
+    // stays (it uses bnhPrice, which is always available).
     return keepUniV2
       ? SERIES_ALL
-      : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2' && s.key !== 'lpVsUniV2')
+      : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpVsUniV2')
   }, [showExtendedMetrics, supportsUniV2, keepUniV2])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
     lpPrice: true,
     bnhPrice: showExtendedMetrics,
     uniV2Price: showExtendedMetrics,
-    // LP−UniV2 divergence default-on with the other extended metrics, but
-    // gated on the chain actually exposing uniV2Price downstream via the
-    // availableSeries filter below — otherwise the line would just show
-    // raw lpPrice values.
-    lpMinusUniV2: showExtendedMetrics,
-    // LP vs. UniV2 (per-token price gap) — same gating as the NAV line; the
-    // availableSeries filter hides it on chains without uniV2Price.
+    // LP vs. UniV2 (% outperformance) — gated on the chain exposing uniV2Price
+    // via the availableSeries filter below.
     lpVsUniV2: showExtendedMetrics,
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
@@ -261,19 +242,14 @@ const PairChartTVInner = ({ pair }: Props) => {
         lpPrice: lp,
         bnhPrice: bnh,
         uniV2Price: uni,
-        // Use uniRaw (not the scaled `uni`) so the formula stays
-        // self-consistent with the unscaled lpRaw/tvlRaw it's mixed with.
-        // For non-HYPE pools uni === uniRaw so this is identical; only the
-        // kHYPE/USDT pool (`iskHYPEUSDT`) is affected, where the scaled
-        // `uni` would have produced a value 1e9× too small.
-        lpMinusUniV2:  tvlRaw - (uniRaw * tvlRaw) / (lpRaw || 1),
-        // "LP vs. UniV2" = the pure price gap between BrownFi's LP price and the
-        // UniV2 constant-product price (Jason 2026-06-17 — the develop formula).
-        // Uses the SCALED lp/uni so the delta is in the same price units as the
-        // lpPrice/uniV2Price lines (both /1e9 for the kHYPE/USDT pool).
-        lpVsUniV2: lp - uni,
+        // "LP vs. UniV2" = LP's % outperformance over the UniV2 constant-product
+        // benchmark: (lp − uni) / uni × 100. Scale-invariant, so the iskHYPEUSDT
+        // /1e9 factor cancels (lp and uni are both scaled).
+        lpVsUniV2: uni ? ((lp - uni) / uni) * 100 : 0,
         tvl: tvlRaw,
-        netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
+        // "LP vs. BH" = LP's % outperformance over Buy & Hold (HODL):
+        // (lp − bnh) / bnh × 100.
+        netPnL: bnh ? ((lp - bnh) / bnh) * 100 : 0,
         volume: volRaw,
       }
     }
@@ -405,11 +381,11 @@ const PairChartTVInner = ({ pair }: Props) => {
       })
     }
 
-    // The "LP vs. UniV2" price gap rides its own invisible overlay scale so it
-    // auto-fits to its own (tiny) range instead of flat-lining against the
-    // pool-total left axis. Keep it clear of the volume band at the bottom.
-    if (seriesRefs.current.lpVsUniV2) {
-      chart.priceScale('lpvs').applyOptions({
+    // The "LP vs. UniV2" + "LP vs. BH" % lines share their own invisible overlay
+    // scale ('pct') so they auto-fit to the same percentage range together and
+    // stay directly comparable. Keep them clear of the volume band at the bottom.
+    if (seriesRefs.current.lpVsUniV2 || seriesRefs.current.netPnL) {
+      chart.priceScale('pct').applyOptions({
         scaleMargins: { top: 0.1, bottom: 0.35 },
       })
     }
@@ -593,12 +569,11 @@ const PairChartTVInner = ({ pair }: Props) => {
                 .map((meta) => {
                   const v = hovered[meta.key] as number
                   const formatted =
-                    meta.key === 'tvl' ||
-                    meta.key === 'netPnL' ||
-                    meta.key === 'lpMinusUniV2' ||
-                    meta.key === 'volume'
-                      ? formatPrice(v, { maximumFractionDigits: 0 })
-                      : formatPrice(v, { maximumFractionDigits: 3 })
+                    meta.key === 'lpVsUniV2' || meta.key === 'netPnL'
+                      ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
+                      : meta.key === 'tvl' || meta.key === 'volume'
+                        ? formatPrice(v, { maximumFractionDigits: 0 })
+                        : formatPrice(v, { maximumFractionDigits: 3 })
                   return (
                     <div
                       key={meta.key}
