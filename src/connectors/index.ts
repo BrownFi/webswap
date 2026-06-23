@@ -10,7 +10,7 @@ import {
 } from 'viem/chains'
 
 import { Chain, getDefaultConfig, getDefaultWallets } from '@rainbow-me/rainbowkit'
-import { rabbyWallet } from '@rainbow-me/rainbowkit/wallets'
+import { rabbyWallet, safeWallet } from '@rainbow-me/rainbowkit/wallets'
 
 import hyperevmIcon from 'assets/images/hyperevm.png'
 import ethereumIcon from 'assets/images/ethereum-logo.png'
@@ -200,8 +200,14 @@ const popularIdx = Math.max(
   0,
   defaultWallets.findIndex((group) => group.groupName === 'Popular'),
 )
+// `safeWallet` lets BrownFi run as a custom Safe App: it auto-connects to the
+// Safe when the app is loaded inside Safe's iframe and is hidden in a normal
+// browser tab, so it doesn't affect regular users (kept in the Popular group
+// rather than its own so no empty "Safe" header shows outside the iframe).
+// Pairs with the Safe-App fields in public/manifest.json + the /manifest.json
+// CORS header (public/_headers) that Safe needs to load the app.
 const wallets = defaultWallets.map((group, i) =>
-  i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet] } : group,
+  i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet, safeWallet] } : group,
 )
 
 export const wagmiConfig = getDefaultConfig({
