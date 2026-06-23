@@ -10,7 +10,7 @@ import {
 } from 'viem/chains'
 
 import { Chain, getDefaultConfig, getDefaultWallets } from '@rainbow-me/rainbowkit'
-import { rabbyWallet } from '@rainbow-me/rainbowkit/wallets'
+import { rabbyWallet, safeWallet } from '@rainbow-me/rainbowkit/wallets'
 
 import hyperevmIcon from 'assets/images/hyperevm.png'
 import ethereumIcon from 'assets/images/ethereum-logo.png'
@@ -200,9 +200,18 @@ const popularIdx = Math.max(
   0,
   defaultWallets.findIndex((group) => group.groupName === 'Popular'),
 )
-const wallets = defaultWallets.map((group, i) =>
-  i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet] } : group,
-)
+// Inside a Safe App (BrownFi loaded in Safe's iframe), offer ONLY the Safe
+// wallet — the user is already operating their Safe, so other EOA wallets must
+// not be selectable (per team request). `window.parent !== window` is the same
+// iframe check the Safe connector uses for `installed`. Outside the iframe, show
+// the full list with Rabby in Popular (safeWallet self-hides there). Pairs with
+// the Safe-App fields in public/manifest.json + the /manifest.json CORS header.
+const inSafeApp = typeof window !== 'undefined' && window.parent !== window
+const wallets = inSafeApp
+  ? [{ groupName: 'Safe', wallets: [safeWallet] }]
+  : defaultWallets.map((group, i) =>
+      i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet, safeWallet] } : group,
+    )
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',

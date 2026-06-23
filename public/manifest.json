@@ -11,8 +11,10 @@
     }
   ],
   "orientation": "portrait",
-  "name": "brownfi",
-  "short_name": "brownfi",
+  "name": "BrownFi",
+  "short_name": "BrownFi",
+  "description": "Capital-efficient AMM — swap and provide liquidity across chains.",
+  "iconPath": "favicon.png",
   "start_url": ".",
   "theme_color": "#ff007a"
 }
