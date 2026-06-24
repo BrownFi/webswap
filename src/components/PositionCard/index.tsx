@@ -226,7 +226,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${versionToSlug(pair.version)}`)}
         >
           {/* Pool name */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: isV3Like(pair.version) ? 2 : 3 }}>
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
             <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0 hidden sm:block">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={40} quoteTokenIndex={pairStats?.quoteTokenIndex} />
             </div>
@@ -291,12 +291,12 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
           </div>
           {/* TVL */}
-          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
+          <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1 : 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
-          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
+          <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1 : 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
           {/* Returns column — V3: annualized LP-vs-UniV2 return (green); V2: 24h
               fees / TVL (white, per Jason — green is reserved for the V3 return). */}
-          <span className="max-md:hidden text-left" style={{ flex: 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>
+          <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1.3 : 1.7, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>
             {columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
           {/* BGT APR — Berachain + V3-only (V2 BGT hidden; see enableBgt note). */}

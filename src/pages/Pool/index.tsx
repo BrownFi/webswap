@@ -396,12 +396,14 @@ export default function Pool() {
                     gap: '8px',
                   }}
                 >
-                  {/* On V2 the BGT column is hidden — give its freed width to the
-                      names column so the other columns keep their V3 pixel widths. */}
-                  <span style={{ flex: isV3Like(version) ? 2 : 3 }}>Pool</span>
-                  <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
-                  <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'} flex={1.3} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  {/* On V2 the BGT column is hidden. Keep Pool at flex 2 so the TVL
+                      column starts at the same x as on V3, and widen the data
+                      columns (TVL/Vol/Returns) to absorb BGT's freed width — V2
+                      total stays 7.3, identical to V3. */}
+                  <span style={{ flex: 2 }}>Pool</span>
+                  <SortHeader label="TVL" flex={isV3Like(version) ? 1 : 1.3} active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
+                  <SortHeader label="24h Volume" flex={isV3Like(version) ? 1 : 1.3} active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
+                  <SortHeader label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'} flex={isV3Like(version) ? 1.3 : 1.7} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   {chainId === ChainId.BERA_MAINNET && isV3Like(version) && (
                     <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
