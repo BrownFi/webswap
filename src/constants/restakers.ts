@@ -47,6 +47,36 @@ const BERA_RESTAKERS: Record<string, RestakerConfig[]> = {
         'https://hub.berachain.com/earn/0x2cb34eeadb1e7ae9cc7bafb84a189e9d921e193a',
     },
   ],
+
+  // ── V3 pools (new cutting board 2026-06-23, BeraHub-only). Vault addresses
+  // verified on-chain: each vault's stakeToken() returns the matching LP token.
+  // WETH / USDC.e V3
+  '0xc123bc9259d1a99add5a2c512498ac146dd2bade': [
+    {
+      platform: 'BeraHub',
+      vaultAddress: '0xa57d4c595a000e20f8ea8f82663a9c7b15d60168',
+      stakePageUrl:
+        'https://hub.berachain.com/earn/0xa57d4c595a000e20f8ea8f82663a9c7b15d60168',
+    },
+  ],
+  // BERA / USDC.e V3
+  '0xf2d50928f33ef0f9e8dc20881bc475de2c484e26': [
+    {
+      platform: 'BeraHub',
+      vaultAddress: '0xd54ec45cca5d428c3aef05993195c389c0b82b4e',
+      stakePageUrl:
+        'https://hub.berachain.com/earn/0xd54ec45cca5d428c3aef05993195c389c0b82b4e',
+    },
+  ],
+  // WBERA / HONEY V3
+  '0x3e0fd2ce4d5b7e5f6c34e26c48a2dbd9f8d7d88c': [
+    {
+      platform: 'BeraHub',
+      vaultAddress: '0x3f0cf0c62e5d7617c3f965bfefc656af650e459e',
+      stakePageUrl:
+        'https://hub.berachain.com/earn/0x3f0cf0c62e5d7617c3f965bfefc656af650e459e',
+    },
+  ],
 }
 
 const RESTAKERS_BY_CHAIN: Record<number, Record<string, RestakerConfig[]>> = {

@@ -34,7 +34,7 @@ import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
-import { merklCampaignPool, PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from './usePoolStats'
+import { merklCampaignPool, getPairBgt, PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from './usePoolStats'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -70,18 +70,41 @@ const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   }
 `
 
-const pairBGT: Record<string, [string, string]> = {
-  '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': [
+// Human-facing "where to stake your LP" links for the BGT staking-info blurb.
+// Keys are LOWERCASE (look up via `getBgtStakeLinks` — pool ids reach us both
+// checksummed and lowercase). `infrared` is optional: the new V3 cutting-board
+// vaults (2026-06-23) currently stake on BeraHub only. Whether the BGT APR % is
+// shown is gated separately on the shared `getPairBgt()` whitelist — this map
+// only supplies the stake URLs.
+const pairBGT: Record<string, { berahub: string; infrared?: string }> = {
+  // V2
+  '0xd932c344e21ef6c3a94971bf4d4cc71304e2a66c': {
     // BERA/HONEY
-    'https://hub.berachain.com/earn/0x2cb34eeadb1e7ae9cc7bafb84a189e9d921e193a',
-    'https://infrared.finance/pol-vaults/brownfi-wbera-honey',
-  ],
-  '0xd57Da672354905B9E42Df077Df77E554dC5Fd1Cc': [
+    berahub: 'https://hub.berachain.com/earn/0x2cb34eeadb1e7ae9cc7bafb84a189e9d921e193a',
+    infrared: 'https://infrared.finance/pol-vaults/brownfi-wbera-honey',
+  },
+  '0xd57da672354905b9e42df077df77e554dc5fd1cc': {
     // BERA/USDC.e
-    'https://hub.berachain.com/earn/0x519cef5cc2913bcefdd03d0a22601c19794c4581',
-    'https://infrared.finance/pol-vaults/brownfi-wbera-usdc.e',
-  ],
+    berahub: 'https://hub.berachain.com/earn/0x519cef5cc2913bcefdd03d0a22601c19794c4581',
+    infrared: 'https://infrared.finance/pol-vaults/brownfi-wbera-usdc.e',
+  },
+  // V3 (new cutting board 2026-06-23 — BeraHub only for now)
+  '0xc123bc9259d1a99add5a2c512498ac146dd2bade': {
+    // WETH/USDC.e V3
+    berahub: 'https://hub.berachain.com/earn/0xa57d4c595a000e20f8ea8f82663a9c7b15d60168',
+  },
+  '0xf2d50928f33ef0f9e8dc20881bc475de2c484e26': {
+    // BERA/USDC.e V3
+    berahub: 'https://hub.berachain.com/earn/0xd54ec45cca5d428c3aef05993195c389c0b82b4e',
+  },
+  '0x3e0fd2ce4d5b7e5f6c34e26c48a2dbd9f8d7d88c': {
+    // WBERA/HONEY V3
+    berahub: 'https://hub.berachain.com/earn/0x3f0cf0c62e5d7617c3f965bfefc656af650e459e',
+  },
 }
+
+/** Case-insensitive lookup into `pairBGT` (stake links). */
+const getBgtStakeLinks = (address?: string | null) => (address ? pairBGT[address.toLowerCase()] : undefined)
 
 interface PositionCardProps {
   pair: Pair
@@ -96,7 +119,10 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const { account, chainId } = useActiveWeb3React()
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
-  const enableBgt = !!pairBGT[pair.liquidityToken.address]
+  // Gate the BGT APR % on the shared whitelist (case-insensitive, includes the
+  // new V3 vaults) — NOT on the local stake-links map, which is incomplete.
+  const enableBgt = !!getPairBgt(pair.liquidityToken.address)
+  const bgtStakeLinks = getBgtStakeLinks(pair.liquidityToken.address)
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
 
@@ -524,13 +550,17 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
 
             {/* BGT staking info */}
-            {enableBgt && account && (
+            {bgtStakeLinks && account && (
               <div className="md:col-span-2 hidden sm:flex gap-2 justify-center items-center text-sm text-[#b2ada9]">
                 Stake your LP tokens on{' '}
-                <a href={pairBGT[pair.liquidityToken.address][0]} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">BeraHub</a>{' '}
-                (earn BGT), or on{' '}
-                <a href={pairBGT[pair.liquidityToken.address][1]} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">Infrared</a>{' '}
-                (earn iBGT)
+                <a href={bgtStakeLinks.berahub} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">BeraHub</a>{' '}
+                (earn BGT){bgtStakeLinks.infrared ? ', or on ' : ' '}
+                {bgtStakeLinks.infrared && (
+                  <>
+                    <a href={bgtStakeLinks.infrared} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">Infrared</a>{' '}
+                    (earn iBGT)
+                  </>
+                )}
                 <img src="https://furthermore.app/icons/bgt.svg" className="h-5" alt="BGT" />
               </div>
             )}
