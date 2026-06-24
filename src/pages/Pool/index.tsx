@@ -184,9 +184,9 @@ export default function Pool() {
   )
   const bgtAprQueries = useQueries({
     queries: pairAddresses.map((addr) => ({
-      queryKey: ['getBgtApr', addr],
-      queryFn: () => apiV2Service.getPoolBgt({ address: addr }),
-      enabled: chainId === ChainId.BERA_MAINNET && !!addr && !!getPairBgt(addr),
+      queryKey: ['getBgtApr', addr.toLowerCase()],
+      queryFn: () => apiV2Service.getPoolBgt({ address: addr.toLowerCase() }),
+      enabled: chainId === ChainId.BERA_MAINNET && !!addr && !!getPairBgt(addr) && isV3Like(version),
       staleTime: 5 * 60_000,
     })),
   })
@@ -396,11 +396,13 @@ export default function Pool() {
                     gap: '8px',
                   }}
                 >
-                  <span style={{ flex: 2 }}>Pool</span>
+                  {/* On V2 the BGT column is hidden — give its freed width to the
+                      names column so the other columns keep their V3 pixel widths. */}
+                  <span style={{ flex: isV3Like(version) ? 2 : 3 }}>Pool</span>
                   <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
                   <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
                   <SortHeader label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'} flex={1.3} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
-                  {chainId === ChainId.BERA_MAINNET && (
+                  {chainId === ChainId.BERA_MAINNET && isV3Like(version) && (
                     <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
                   <span style={{ flex: 1, textAlign: 'right' }} />
@@ -408,7 +410,7 @@ export default function Pool() {
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET} showV3Return={isV3Like(version) && USE_V3_UNIV2_COMPARISON} />
+              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET && isV3Like(version)} showV3Return={isV3Like(version) && USE_V3_UNIV2_COMPARISON} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (

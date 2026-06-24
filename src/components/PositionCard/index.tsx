@@ -120,8 +120,10 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
   // Gate the BGT APR % on the shared whitelist (case-insensitive, includes the
-  // new V3 vaults) — NOT on the local stake-links map, which is incomplete.
-  const enableBgt = !!getPairBgt(pair.liquidityToken.address)
+  // new V3 vaults) AND V3-only: V2 pools no longer surface BGT — the cutting
+  // board moved emissions to V3, and the fading V2 APR misled users into
+  // thinking V2 rewards were still high.
+  const enableBgt = !!getPairBgt(pair.liquidityToken.address) && isV3Like(pair.version)
   const bgtStakeLinks = getBgtStakeLinks(pair.liquidityToken.address)
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
@@ -224,7 +226,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${versionToSlug(pair.version)}`)}
         >
           {/* Pool name */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: isV3Like(pair.version) ? 2 : 3 }}>
             <div onClick={(e) => { e.stopPropagation(); handleCopyPoolAddress() }} className="cursor-pointer shrink-0 hidden sm:block">
               <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={40} quoteTokenIndex={pairStats?.quoteTokenIndex} />
             </div>
@@ -297,8 +299,8 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           <span className="max-md:hidden text-left" style={{ flex: 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>
             {columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
-          {/* BGT APR — Berachain only (BGT is Bera-specific). */}
-          {chainId === ChainId.BERA_MAINNET && (
+          {/* BGT APR — Berachain + V3-only (V2 BGT hidden; see enableBgt note). */}
+          {chainId === ChainId.BERA_MAINNET && isV3Like(pair.version) && (
             <span className="max-md:hidden text-left inline-flex items-center justify-start gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
               {enableBgt || enableMerklCampaignApr ? (
                 <>
