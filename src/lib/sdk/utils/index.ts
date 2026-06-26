@@ -244,6 +244,55 @@ export async function getPythPrice(address: string, chainId: number, version: nu
   }
 }
 
+/**
+ * Live Hermes prices for the given tokens — read straight from Pyth's off-chain
+ * service, the SAME source the router self-updates the on-chain oracle to from
+ * the tx blob. Sizing add-liquidity with these makes the FE preview price equal
+ * the contract's execution price on EVERY chain, with no dependency on any
+ * on-chain oracle's freshness or a per-chain keeper. Returns a
+ * lowercase-address -> USD price map; tokens without a feed are simply absent.
+ */
+export async function getHermesPrices(
+  tokenAddresses: string[],
+  chainId: number,
+  version: number,
+): Promise<Record<string, number>> {
+  const result: Record<string, number> = {}
+  if (!tokenAddresses.length || !chainId) return result
+
+  const client = createReadClient(chainId)
+  const factoryAddr = getFactoryAddress(chainId, version)
+
+  // token address (lowercase) -> Pyth feed id (0x-prefixed, lowercase)
+  const feedByAddr: Record<string, string> = {}
+  await Promise.all(
+    tokenAddresses.map(async (addr) => {
+      const feed = await getCachedPriceFeedId(client, factoryAddr, addr)
+      if (feed && !/^0x0+$/.test(feed)) feedByAddr[addr.toLowerCase()] = feed.toLowerCase()
+    }),
+  )
+  const feeds = Array.from(new Set(Object.values(feedByAddr)))
+  if (!feeds.length) return result
+
+  const url = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
+  feeds.forEach((f) => url.searchParams.append('ids[]', f))
+  const resp = await fetch(url.toString())
+  if (!resp.ok) throw new Error(`Hermes HTTP ${resp.status}`)
+  const data = await resp.json()
+
+  // feed id (0x-prefixed, lowercase) -> price (price * 10^expo)
+  const priceByFeed: Record<string, number> = {}
+  for (const p of (data.parsed ?? []) as Array<{ id: string; price: { price: string; expo: number } }>) {
+    const id = (p.id.startsWith('0x') ? p.id : `0x${p.id}`).toLowerCase()
+    priceByFeed[id] = Number(p.price.price) * Math.pow(10, Number(p.price.expo))
+  }
+  for (const [addr, feed] of Object.entries(feedByAddr)) {
+    const price = priceByFeed[feed]
+    if (typeof price === 'number' && price > 0) result[addr] = price
+  }
+  return result
+}
+
 // ABI fragments used by both single + batch helpers below.
 const PRICE_FEED_IDS_ABI = [{
   inputs: [{ name: '', type: 'address' }],

@@ -28,6 +28,7 @@ import UnsupportedCurrencyFooter from 'components/swap/UnsupportedCurrencyFooter
 import { useQueryClient } from '@tanstack/react-query'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
 import { usePythPrices } from 'hooks/usePythPrices'
+import { useHermesPrices } from 'hooks/useHermesPrices'
 import { useVersion } from 'hooks/useVersion'
 import { decodeContractError } from 'utils/decodeContractError'
 import { isUserRejection } from 'utils/zapErrors'
@@ -60,7 +61,16 @@ export default function AddLiquidity() {
   const currencyA = useCurrency(currencyIdA)
   const currencyB = useCurrency(currencyIdB)
 
-  const pythPrices = usePythPrices({ currencyA, currencyB, chainId })
+  // Hermes-direct sizing: the router self-updates the on-chain oracle from the
+  // fresh Hermes blob inside the add tx, so the contract always executes at the
+  // live price. Size the amounts from that SAME live Hermes price so the FE's
+  // preview equals the contract's execution on every chain — independent of any
+  // on-chain oracle's staleness or whether a keeper is running. Fall back to the
+  // on-chain oracle read when Hermes hasn't returned both sides.
+  const onChainPrices = usePythPrices({ currencyA, currencyB, chainId })
+  const hermesPrices = useHermesPrices({ currencyA, currencyB, chainId, version })
+  const pythPrices =
+    hermesPrices[Field.CURRENCY_A] > 0 && hermesPrices[Field.CURRENCY_B] > 0 ? hermesPrices : onChainPrices
   const hasPythPrices = pythPrices.CURRENCY_A + pythPrices.CURRENCY_B > 0
 
   const oneCurrencyIsWETH = Boolean(
