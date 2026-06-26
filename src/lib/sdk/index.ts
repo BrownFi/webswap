@@ -33,6 +33,7 @@ export {
   getPythPrice,
   getPythPricesBatch,
   getPythPricePair,
+  getHermesPrices,
   isContractWithPrice,
   validateAndParseAddress,
   parseBigintIsh,
