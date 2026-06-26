@@ -265,6 +265,23 @@ export const PYTH_ADDRESS: Record<number, string> = {
   [ChainId.BOBA_MAINNET]: '0x4374e5a8b9C22271E9EB878A2AA31DE97DF15DAF',
 }
 
+// Keeper-fed BrownFi price oracle that the on-chain routers actually read for
+// pricing (`router.PYTH()`). On Bera this is NOT the raw official Pyth
+// (`PYTH_ADDRESS` = 0x2880…): the official feed leaves some listed tokens
+// unmaintained (e.g. DOLO was frozen ~107 days at $0.033 while the real price
+// was $0.023), whereas this oracle is kept fresh for every listed token. All
+// price READS must hit this so the FE's preview/sizing matches what the
+// contract computes — otherwise add-liquidity reverts with INSUFFICIENT_B_AMOUNT
+// on tokens whose official feed has drifted. Absent an override it falls back
+// to PYTH_ADDRESS (chains where the two are the same). Reads only — never use
+// for getUpdateFee/updatePriceFeeds (those stay on PYTH_ADDRESS).
+export const PRICE_ORACLE_ADDRESS: Record<number, string> = {
+  [ChainId.BERA_MAINNET]: '0xB7EAADA6A64479E09E7B0F0b6D1C9d2a33c70Aeb',
+}
+
+export const getPriceOracleAddress = (chainId: number): string =>
+  PRICE_ORACLE_ADDRESS[chainId] ?? PYTH_ADDRESS[chainId]
+
 export const RPC_URLS: Record<number, string> = {
   [ChainId.SEPOLIA]: 'https://sepolia.drpc.org',
   [ChainId.BSC_TESTNET]: 'https://bsc-testnet.drpc.org',
