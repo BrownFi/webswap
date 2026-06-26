@@ -197,7 +197,7 @@ export async function getCachedPriceFeedId(client: any, factoryAddr: string, tok
 export async function getPythPrice(address: string, chainId: number, version: number): Promise<number> {
   if (!address || !chainId) return 0
   try {
-    const { PYTH_ADDRESS } = await import('../constants/addresses')
+    const { getPriceOracleAddress } = await import('../constants/addresses')
 
     const client = createReadClient(chainId)
     const factoryAddr = getFactoryAddress(chainId, version)
@@ -217,7 +217,7 @@ export async function getPythPrice(address: string, chainId: number, version: nu
     if (cached && Date.now() - cached.ts < _PRICE_TTL) return cached.value
 
     const priceUnsafe = await client.readContract({
-      address: PYTH_ADDRESS[chainId] as `0x${string}`,
+      address: getPriceOracleAddress(chainId) as `0x${string}`,
       abi: [{
         inputs: [{ name: 'id', type: 'bytes32' }],
         name: 'getPriceUnsafe',
@@ -289,7 +289,7 @@ export async function getPythPricesBatch(
   const result: Record<string, number> = {}
   if (!addresses.length || !chainId) return result
 
-  const { PYTH_ADDRESS } = await import('../constants/addresses')
+  const { getPriceOracleAddress } = await import('../constants/addresses')
   const client = createReadClient(chainId)
   const factoryAddr = getFactoryAddress(chainId, version)
   if (!factoryAddr) return result
@@ -362,7 +362,7 @@ export async function getPythPricesBatch(
   try {
     const priceResults = await client.multicall({
       contracts: priced.map(({ feedId }) => ({
-        address: PYTH_ADDRESS[chainId] as `0x${string}`,
+        address: getPriceOracleAddress(chainId) as `0x${string}`,
         abi: GET_PRICE_UNSAFE_ABI,
         functionName: 'getPriceUnsafe',
         args: [feedId as `0x${string}`],
@@ -393,7 +393,7 @@ export async function getPythPricesBatch(
 export async function getPythPricePair(pair: any, chainId: number): Promise<[number, number]> {
   if (!pair || !chainId) return [0, 0]
   try {
-    const { PYTH_ADDRESS } = await import('../constants/addresses')
+    const { getPriceOracleAddress } = await import('../constants/addresses')
 
     const client = createReadClient(chainId)
 
@@ -489,7 +489,7 @@ export async function getPythPricePair(pair: any, chainId: number): Promise<[num
       isZeroHash(basePriceId as string)
         ? null
         : client.readContract({
-            address: PYTH_ADDRESS[chainId] as `0x${string}`,
+            address: getPriceOracleAddress(chainId) as `0x${string}`,
             abi: ABI_PYTH_UPGRADABLE,
             functionName: 'getPriceUnsafe',
             args: [basePriceId],
@@ -497,7 +497,7 @@ export async function getPythPricePair(pair: any, chainId: number): Promise<[num
       isZeroHash(quotePriceId as string)
         ? null
         : client.readContract({
-            address: PYTH_ADDRESS[chainId] as `0x${string}`,
+            address: getPriceOracleAddress(chainId) as `0x${string}`,
             abi: ABI_PYTH_UPGRADABLE,
             functionName: 'getPriceUnsafe',
             args: [quotePriceId],
