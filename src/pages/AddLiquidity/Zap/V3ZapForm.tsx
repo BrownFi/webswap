@@ -11,6 +11,7 @@ import { ApprovalState, useApproveCallback } from 'hooks/useApproveCallback'
 import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useBestZapInRoute, ZapChoice } from 'hooks/useBestZapRoute'
 import { usePythPrices } from 'hooks/usePythPrices'
+import { useHermesPrices } from 'hooks/useHermesPrices'
 import { ZapRouteComparison } from 'components/swap/ZapRouteComparison'
 import { ZapRoutePreview } from './ZapRoutePreview'
 import { useCallback, useMemo, useState } from 'react'
@@ -198,11 +199,24 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   // first principles since native V3 quotes don't ship USD-denominated
   // fields. When Kyber V3 indexing lands later, the same panel can
   // switch to best.quote.routeSummary.zapDetails for `best.source === 'kyber'`.
-  const pythPrices = usePythPrices({
+  // Hermes-direct prices for the USD value / price-impact display, consistent
+  // with the main add page. NOTE: the zap TX itself is sized from the route
+  // quote (`best`), not these — so this only keeps the displayed USD / impact
+  // accurate on tokens whose on-chain oracle feed has drifted. Falls back to the
+  // on-chain read when Hermes hasn't returned both sides.
+  const onChainPrices = usePythPrices({
     chainId: (chainId ?? 0) as ChainId,
     currencyA: pair?.token0,
     currencyB: pair?.token1,
   })
+  const hermesPrices = useHermesPrices({
+    chainId: (chainId ?? 0) as ChainId,
+    currencyA: pair?.token0,
+    currencyB: pair?.token1,
+    version: pair?.version ?? 0,
+  })
+  const pythPrices =
+    hermesPrices[PythField.CURRENCY_A] > 0 && hermesPrices[PythField.CURRENCY_B] > 0 ? hermesPrices : onChainPrices
   const pythPrice0 = pythPrices[PythField.CURRENCY_A]
   const pythPrice1 = pythPrices[PythField.CURRENCY_B]
 
