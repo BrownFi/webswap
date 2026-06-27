@@ -17,28 +17,53 @@ import { encodeAbiParameters, parseAbiParameters } from 'viem'
 import { createReadClient } from '../rpc'
 import { getFactoryAddress } from '../utils'
 
-// Fetch Pyth price data from Hermes for the given tokens
-async function fetchPythData(tokenAddresses: string[], chainId: number, version: number): Promise<`0x${string}`[]> {
+// Fetch Pyth price data from Hermes for the given tokens. Returns BOTH the blob
+// the router self-updates the oracle with AND the parsed prices from the same
+// response (lowercase-address -> USD price), so the caller can size the tx's
+// slippage floors from the exact prices the contract will execute at.
+async function fetchPythData(
+  tokenAddresses: string[],
+  chainId: number,
+  version: number,
+): Promise<{ updateData: `0x${string}`[]; prices: Record<string, number> }> {
+  const empty = { updateData: [] as `0x${string}`[], prices: {} as Record<string, number> }
   const factoryAddr = getFactoryAddress(chainId, version)
-  if (!factoryAddr) return []
+  if (!factoryAddr) return empty
 
   const client = createReadClient(chainId)
+  // token address (lowercase) -> Pyth feed id (lowercase, 0x-prefixed)
+  const feedByAddr: Record<string, string> = {}
   const priceFeedIds = await Promise.all(
-    tokenAddresses.map((addr) =>
-      client.readContract({
+    tokenAddresses.map(async (addr) => {
+      const id = (await client.readContract({
         address: factoryAddr as `0x${string}`,
         abi: [{ inputs: [{ name: 'token', type: 'address' }], name: 'priceFeedIds', outputs: [{ name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' }] as const,
         functionName: 'priceFeedIds',
         args: [addr as `0x${string}`],
-      })
-    )
+      })) as string
+      feedByAddr[addr.toLowerCase()] = id.toLowerCase()
+      return id
+    })
   )
   const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
   priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()
-  return (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+
+  const updateData = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+
+  // parsed prices (same response) -> feed id (0x, lowercase) -> price, then map to address
+  const priceByFeed: Record<string, number> = {}
+  for (const p of (data.parsed ?? []) as Array<{ id: string; price: { price: string; expo: number } }>) {
+    const id = (p.id.startsWith('0x') ? p.id : `0x${p.id}`).toLowerCase()
+    priceByFeed[id] = Number(p.price.price) * Math.pow(10, Number(p.price.expo))
+  }
+  const prices: Record<string, number> = {}
+  for (const [addr, feed] of Object.entries(feedByAddr)) {
+    if (priceByFeed[feed] > 0) prices[addr] = priceByFeed[feed]
+  }
+  return { updateData, prices }
 }
 
 // Wraps a currency for liquidity operations (returns undefined if not wrappable)
@@ -262,6 +287,25 @@ export async function addLiquidity(
     return
   }
 
+  // (b) Same-snapshot pricing: fetch the live Hermes blob + parsed prices ONCE.
+  // The router self-updates the on-chain oracle from THIS exact blob, so the
+  // slippage floors below are derived from the SAME prices the contract will
+  // execute at — eliminating preview-vs-execution drift. Only the MINS use these
+  // prices; the desired/approved amounts are untouched, so the router can never
+  // pull more than the user approved.
+  const tokenAWrapped = (wrappedCurrency(currencyA, chainId)?.address ?? '').toLowerCase()
+  const tokenBWrapped = (wrappedCurrency(currencyB, chainId)?.address ?? '').toLowerCase()
+  let pythUpdateEncoded: `0x${string}` | null = null
+  let hermesPrices: Record<string, number> = {}
+  if (version >= 2) {
+    const { updateData, prices } = await fetchPythData([tokenAWrapped, tokenBWrapped], chainId, version)
+    hermesPrices = prices
+    pythUpdateEncoded =
+      updateData.length > 0
+        ? encodeAbiParameters(parseAbiParameters('bytes[]'), [updateData])
+        : encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
+  }
+
   const shouldExactAmountInput = false
   const amountsMin = {
     [Field.CURRENCY_A]: calculateSlippageAmount(
@@ -272,6 +316,23 @@ export async function addLiquidity(
       parsedAmountB,
       noLiquidity || (shouldExactAmountInput && exactFieldInput === Field.CURRENCY_B) ? 0 : allowedSlippage
     )[0],
+  }
+
+  // (b) Override the floors with the fresh-price optimal amounts so they track
+  // what `mint()`/`_addLiquidity` computes from the blob: optimalB = amountA·pA/pB,
+  // optimalA = amountB·pB/pA, then apply the slippage haircut. Skipped on the
+  // first add (noLiquidity sets the price) or when a feed price is missing.
+  const pA = hermesPrices[tokenAWrapped]
+  const pB = hermesPrices[tokenBWrapped]
+  if (!noLiquidity && version >= 2 && pA > 0 && pB > 0) {
+    const slipNum = JSBI.BigInt(Math.max(0, 10000 - allowedSlippage))
+    const TEN_K = JSBI.BigInt(10000)
+    const optimalA = parseFloat(parsedAmountB.toExact()) * (pB / pA)
+    const optimalB = parseFloat(parsedAmountA.toExact()) * (pA / pB)
+    const rawA = JSBI.BigInt(Math.round(optimalA * 10 ** currencyA.decimals))
+    const rawB = JSBI.BigInt(Math.round(optimalB * 10 ** currencyB.decimals))
+    amountsMin[Field.CURRENCY_A] = JSBI.divide(JSBI.multiply(rawA, slipNum), TEN_K)
+    amountsMin[Field.CURRENCY_B] = JSBI.divide(JSBI.multiply(rawB, slipNum), TEN_K)
   }
 
   let estimate: any
@@ -307,15 +368,9 @@ export async function addLiquidity(
       deadline.toHexString(),
     ]
 
-    // Append Pyth updateData for V2/V3 (router pays Pyth fee from its own balance)
-    if (version >= 2) {
-      const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
-      const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
-      const dataBytes = await fetchPythData([tokenAAddr, tokenBAddr], chainId, version)
-      const updateData = dataBytes.length > 0
-        ? encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
-        : encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
-      args.push(updateData)
+    // Append the Pyth updateData fetched once above (router pays the Pyth fee).
+    if (version >= 2 && pythUpdateEncoded) {
+      args.push(pythUpdateEncoded)
     }
   } else {
     estimate = router.estimateGas.addLiquidity
@@ -344,15 +399,9 @@ export async function addLiquidity(
       deadline.toHexString(),
     ]
 
-    // Append Pyth updateData for V2/V3 (router pays Pyth fee from its own balance)
-    if (version >= 2) {
-      const tokenAAddr = wrappedCurrency(currencyA, chainId)?.address ?? ''
-      const tokenBAddr = wrappedCurrency(currencyB, chainId)?.address ?? ''
-      const dataBytes = await fetchPythData([tokenAAddr, tokenBAddr], chainId, version)
-      const updateData = dataBytes.length > 0
-        ? encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
-        : encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
-      args.push(updateData)
+    // Append the Pyth updateData fetched once above (router pays the Pyth fee).
+    if (version >= 2 && pythUpdateEncoded) {
+      args.push(pythUpdateEncoded)
     }
     value = null
   }
