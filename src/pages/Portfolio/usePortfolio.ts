@@ -11,9 +11,9 @@
  * merge by descending USD value. Each row carries its chainId so the
  * UI badge can show the chain icon.
  *
- * V3 is currently Bera-only (only chain in ROUTER_ADDRESS_V3_PILOT) — that
- * map is the source of truth. V2 indexer chains are listed explicitly
- * since not every V2 deployment has an indexer.
+ * V2 chains = the app's supported set (availableChains) so the list can't
+ * drift out of sync. V3 (Official; pilot retired) = the chains where the V3
+ * indexer is live (V3_OFFICIAL_USE_INDEXER). Per-chain failures are tolerated.
  *
  * Sui is excluded — different account model, different indexer (when
  * it ships), and zero positions exist there today. Added separately
@@ -27,7 +27,8 @@ import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useActiveWeb3React } from 'hooks'
 import { ChainId } from '@brownfi/sdk'
-import { ROUTER_ADDRESS_V3_PILOT } from 'lib/sdk/constants/addresses'
+import { V3_OFFICIAL_USE_INDEXER, VERSION } from 'lib/sdk/constants/addresses'
+import { availableChains } from 'connectors'
 import { graphqlFetcher } from 'utils/graphql'
 
 const PAIR_ACCOUNTS_QUERY = `
@@ -65,27 +66,18 @@ const PAIR_ACCOUNTS_QUERY = `
   }
 `
 
-// Chains with a V2 indexer endpoint. Mirrors the list in useVersion's
-// enableGraphQL — not every V2 deployment also has an indexer, so we
-// enumerate the supported set explicitly rather than guessing from chain
-// configuration. Adding a chain here unlocks portfolio queries for it.
-const V2_INDEXER_CHAINS: ChainId[] = [
-  ChainId.BERA_MAINNET,
-  ChainId.ARBITRUM_MAINNET,
-  ChainId.BASE_MAINNET,
-  ChainId.BSC_MAINNET,
-  ChainId.HYPER_EVM,
-  ChainId.LINEA_MAINNET,
-  ChainId.SEI_MAINNET,
-  ChainId.MONAD,
-]
+// V2 positions are queried on every SUPPORTED chain (availableChains), so this
+// tracks the live chain set automatically — no hardcoded list to drift (that's
+// how BSC/SEI lingered after being turned off). Per-chain query failures are
+// handled gracefully, so a chain without a V2 indexer just adds nothing.
+const V2_INDEXER_CHAINS: ChainId[] = availableChains.map((c) => c.id as ChainId)
 
-// V3 indexer chains are derived directly from ROUTER_ADDRESS_V3_PILOT — V3
-// router and V3 indexer ship together, so the address map is the source
-// of truth. Currently Bera-only.
-const V3_INDEXER_CHAINS: ChainId[] = (Object.keys(ROUTER_ADDRESS_V3_PILOT) as unknown as ChainId[])
+// V3 (Official) indexer chains — where V3_OFFICIAL_USE_INDEXER is on (the BE /
+// Goldsky V3 indexer is live). Pilot is retired, so the portfolio reads Official
+// only. Currently Bera + HyperEVM + Arbitrum.
+const V3_INDEXER_CHAINS: ChainId[] = (Object.keys(V3_OFFICIAL_USE_INDEXER) as unknown as ChainId[])
   .map((k) => Number(k) as ChainId)
-  .filter((id) => !!ROUTER_ADDRESS_V3_PILOT[id])
+  .filter((id) => V3_OFFICIAL_USE_INDEXER[id])
 
 export interface PortfolioPair {
   id: string
@@ -103,7 +95,7 @@ export interface PortfolioPair {
 export interface PortfolioPosition {
   id: string
   /** Source indexer version. UI shows "V2" / "V3" badge from this. */
-  version: 2 | 3
+  version: 2 | 4
   /** EVM chainId this position lives on. UI shows chain icon from this. */
   chainId: ChainId
   lp: number
@@ -146,7 +138,7 @@ function asNumber(v: string | number | null | undefined): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function rowToPosition(raw: any, version: 2 | 3, chainId: ChainId): PortfolioPosition {
+function rowToPosition(raw: any, version: 2 | 4, chainId: ChainId): PortfolioPosition {
   return {
     id: `${chainId}-${raw.id}`,
     version,
@@ -167,7 +159,7 @@ function rowToPosition(raw: any, version: 2 | 3, chainId: ChainId): PortfolioPos
 
 interface FetchTask {
   chainId: ChainId
-  version: 2 | 3
+  version: 2 | 4
 }
 
 export function usePortfolio(): PortfolioResult {
@@ -180,8 +172,8 @@ export function usePortfolio(): PortfolioResult {
   // network cost reasonable.
   const tasks: FetchTask[] = useMemo(
     () => [
-      ...V2_INDEXER_CHAINS.map((chainId) => ({ chainId, version: 2 as const })),
-      ...V3_INDEXER_CHAINS.map((chainId) => ({ chainId, version: 3 as const })),
+      ...V2_INDEXER_CHAINS.map((chainId) => ({ chainId, version: VERSION.V2 })),
+      ...V3_INDEXER_CHAINS.map((chainId) => ({ chainId, version: VERSION.V3_OFFICIAL })),
     ],
     [],
   )
@@ -197,7 +189,7 @@ export function usePortfolio(): PortfolioResult {
         }),
       enabled: !!accountLower,
       // Aggressive cache lifetime. The portfolio query fan-out is currently
-      // 8 V2 + 1 V3 = 9 parallel HTTP requests (one per chain × version,
+      // ~6 V2 + ~3 V3 = ~9 parallel HTTP requests (one per chain × version,
       // since the indexer is sharded by chainId in the URL). Without a
       // backend batch endpoint we can't reduce request count, but we CAN
       // reduce request frequency. With staleTime = 5 min, navigating

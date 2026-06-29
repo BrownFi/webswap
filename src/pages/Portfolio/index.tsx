@@ -138,7 +138,7 @@ function PortfolioStatsBar({
 // Version pill rendered next to each position. Distinct from BrownFi's
 // V2/V3 toggle elsewhere — this is a read-only badge so the user knows
 // which contract surface holds the position.
-function VersionBadge({ version }: { version: 2 | 3 }) {
+function VersionBadge({ version }: { version: 2 | 4 }) {
   const v3 = isV3Like(version)
   return (
     <span
