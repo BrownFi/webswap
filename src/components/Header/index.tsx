@@ -212,12 +212,9 @@ export default function Header() {
             <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
               Pool
             </StyledNavLink>
-            {/* Portfolio temporarily hidden on beta — re-enable by uncommenting
-                this link AND the lazy import + /portfolio route in App.tsx.
             <StyledNavLink id="portfolio-nav-link" to="/portfolio">
               Portfolio
             </StyledNavLink>
-            */}
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them
                 in the nav at all — avoids the duplicate on mobile. */}

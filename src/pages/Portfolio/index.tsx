@@ -1,20 +1,15 @@
 import { versionLabel, versionToSlug } from 'lib/sdk/constants/addresses'
 import { isV3Like } from '@brownfi/sdk'
 /**
- * My Portfolio page — single-chain view of the connected user's LP
- * positions, with aggregate stats up top and a sortable per-position
- * table below. Closed positions (lp = 0 but historical PnL exists) live
- * in a collapsed section underneath the active list.
+ * My Portfolio page — ALL-CHAIN view of the connected user's LP positions,
+ * with aggregate stats up top and a sortable per-position table below. Closed
+ * positions (lp = 0 but historical PnL exists) live in a collapsed section
+ * underneath the active list.
  *
- * Data comes from `usePortfolio`, which fans out V2 + V3 indexer queries
- * and merges by descending USD value. Each row carries its version
- * badge so the unified list still tells the user where each position
- * lives.
- *
- * Multi-chain aggregation is intentionally out of scope — the indexer
- * is per-chain and most users LP on one chain. Adding cross-chain would
- * require fanning the query out to every available chain + a chain
- * column in the table; deferred until product asks for it.
+ * Data comes from `usePortfolio`, which fans out V2 + V3 indexer queries across
+ * every indexer chain and merges by descending USD value. Each row carries its
+ * chain + version badge so the unified list tells the user where each position
+ * lives — no chain-switching needed.
  */
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
