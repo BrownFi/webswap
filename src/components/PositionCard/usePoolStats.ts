@@ -219,10 +219,12 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
   // though LPs aren't currently receiving a share. Revisit if/when feeSplit
   // is lowered and LPs start earning fees directly.
   const isV3 = isV3Like(pair.version)
-  const feeAPR =
-    shouldUseIndexer && pairStats
-      ? pairStats.apr * (isV3 ? 1 : 1 - pairStats.protocolFee)
-      : 0
+  // APR, like volume, is a historical aggregate with no RPC fallback — read it
+  // from the indexer regardless of last-trade freshness so quiet pools (e.g. ARB
+  // V3 traded >2h ago) don't show 0. (NaN from a missing apr coerces to 0 below.)
+  const feeAPR = pairStats
+    ? pairStats.apr * (isV3 ? 1 : 1 - pairStats.protocolFee)
+    : 0
   return {
     tradingFee,
     totalSupply,
