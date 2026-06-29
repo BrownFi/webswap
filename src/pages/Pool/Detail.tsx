@@ -535,17 +535,24 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* Pool balance / imbalance over time — pool-wide (reserve0USD/reserve1USD per tx), replaces the old per-wallet activity table */}
-            <PoolBalanceChart
-              pairAddress={pairAddress}
-              chainId={chainId}
-              version={version}
-              symbol0={symbol0}
-              symbol1={symbol1}
-            />
+            {/* Pool analytics charts (balance/imbalance + oracle spread) — beta/dev
+                ONLY, hidden on production (mainnet) per product. Same gate the
+                dev-stats editor uses. */}
+            {!isMainnet && (
+              <>
+                {/* Pool balance / imbalance over time — pool-wide (reserve0USD/reserve1USD per tx), replaces the old per-wallet activity table */}
+                <PoolBalanceChart
+                  pairAddress={pairAddress}
+                  chainId={chainId}
+                  version={version}
+                  symbol0={symbol0}
+                  symbol1={symbol1}
+                />
 
-            {/* Oracle spread (oSpread) over time — (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel per SWAP */}
-            <PoolSpreadChart pairAddress={pairAddress} chainId={chainId} version={version} />
+                {/* Oracle spread (oSpread) over time — (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel per SWAP */}
+                <PoolSpreadChart pairAddress={pairAddress} chainId={chainId} version={version} />
+              </>
+            )}
           </div>
 
           {/* Right sidebar */}
