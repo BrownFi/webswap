@@ -428,7 +428,18 @@ const PairChartTVInner = ({ pair }: Props) => {
   // Toggle x-axis time labels when switching between hourly and daily modes.
   useEffect(() => {
     chartRef.current?.applyOptions({
-      timeScale: { timeVisible: isHourly, secondsVisible: false },
+      timeScale: {
+        timeVisible: isHourly,
+        secondsVisible: false,
+        // Match the recharts charts (Pool Balance / Oracle Spread): HH:mm for the
+        // intraday (1h) view, MMM D for the daily ranges.
+        tickMarkFormatter: (time: any) => {
+          const d = new Date(Number(time) * 1000)
+          return isHourly
+            ? d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+            : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        },
+      },
     })
     chartRef.current?.timeScale().fitContent()
   }, [isHourly])
