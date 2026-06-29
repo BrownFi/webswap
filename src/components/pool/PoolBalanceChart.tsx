@@ -1,15 +1,14 @@
 import { useMemo, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { graphqlFetcher } from 'utils/graphql'
-import { formatNumber } from 'utils/prices'
 
-// Pool balance / imbalance over time, sourced from the indexer's `Transaction`
-// entity which snapshots reserve0USD/reserve1USD at EVERY tx (swap/add/remove).
-// Stacked area: total height = TVL, the split = the pool's balance composition,
-// so you can watch it drift (imbalance) trade by trade. Pool-wide (not
-// per-wallet) — replaces the old per-wallet "Your recent activity" table.
+// Pool balance over time as a PERCENTAGE split, sourced from the indexer's
+// `Transaction` entity (reserve0USD/reserve1USD snapshot at every tx). Two lines
+// — each token's % of pool value — with a 50% reference line: 50% = perfectly
+// balanced, drift away from it = imbalance. Shows the composition %, NOT the TVL.
+// Pool-wide (not per-wallet).
 //
 // Fetches the most recent 1000 trades once; the timeframe selector filters
 // client-side (instant, no refetch). 'All' = the full fetched window.
@@ -28,7 +27,7 @@ type Range = keyof typeof RANGES
 const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
 
 type Txn = { timestamp: number | string; reserve0USD: number | string; reserve1USD: number | string }
-type Point = { t: number; r0: number; r1: number; total: number }
+type Point = { t: number; pct0: number; pct1: number } // each token's % of pool value
 
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
 const COLOR1 = '#4DA3FF' // token1 (blue)
@@ -44,13 +43,10 @@ type Props = {
 function BalanceTooltip({ active, payload, symbol0, symbol1 }: any) {
   if (!active || !payload?.length) return null
   const p: Point = payload[0].payload
-  const pct0 = p.total > 0 ? (p.r0 / p.total) * 100 : 0
-  const row = (color: string, label: string, usd: number, pct: number) => (
+  const row = (color: string, label: string, pct: number) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
       <span style={{ color }}>{label}</span>
-      <span style={{ color: '#FBFBFD' }}>
-        ${formatNumber(usd, { maximumFractionDigits: 2 })} <span style={{ color: '#978A80' }}>({pct.toFixed(2)}%)</span>
-      </span>
+      <span style={{ color: '#FBFBFD' }}>{pct.toFixed(2)}%</span>
     </div>
   )
   return (
@@ -62,16 +58,12 @@ function BalanceTooltip({ active, payload, symbol0, symbol1 }: any) {
         padding: '10px 12px',
         fontFamily: 'Inter',
         fontSize: 12,
-        minWidth: 180,
+        minWidth: 160,
       }}
     >
       <div style={{ color: '#978A80', marginBottom: 6 }}>{dayjs.unix(p.t).format('MMM D, YYYY HH:mm')}</div>
-      {row(COLOR0, symbol0, p.r0, pct0)}
-      {row(COLOR1, symbol1, p.r1, 100 - pct0)}
-      <div style={{ borderTop: '1px solid #2F2823', marginTop: 6, paddingTop: 6, display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ color: '#978A80' }}>TVL</span>
-        <span style={{ color: '#FBFBFD' }}>${formatNumber(p.total, { maximumFractionDigits: 2 })}</span>
-      </div>
+      {row(COLOR0, symbol0, p.pct0)}
+      {row(COLOR1, symbol1, p.pct1)}
     </div>
   )
 }
@@ -92,7 +84,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     placeholderData: keepPreviousData,
   })
 
-  // Full fetched series, chronological (indexer returns newest-first).
+  // Full fetched series as a % split, chronological (indexer returns newest-first).
   const allPoints = useMemo<Point[]>(() => {
     const txs = data?.transactions ?? []
     return [...txs]
@@ -100,9 +92,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       .map((t) => {
         const r0 = Number(t.reserve0USD)
         const r1 = Number(t.reserve1USD)
-        return { t: Number(t.timestamp), r0, r1, total: r0 + r1 }
+        const total = r0 + r1
+        const pct0 = total > 0 ? (r0 / total) * 100 : NaN
+        return { t: Number(t.timestamp), pct0, pct1: 100 - pct0 }
       })
-      .filter((p) => p.total > 0 && Number.isFinite(p.t))
+      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
   }, [data])
 
   // Apply the selected timeframe (client-side).
@@ -115,7 +109,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
 
   // The "now" split is always the latest trade, independent of the zoom level.
   const latest = allPoints[allPoints.length - 1]
-  const pct0 = latest && latest.total > 0 ? (latest.r0 / latest.total) * 100 : null
+  const pct0 = latest ? latest.pct0 : null
 
   return (
     <div>
@@ -173,17 +167,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={points} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
-              <defs>
-                <linearGradient id="bal0" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={COLOR0} stopOpacity={0.6} />
-                  <stop offset="100%" stopColor={COLOR0} stopOpacity={0.15} />
-                </linearGradient>
-                <linearGradient id="bal1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={COLOR1} stopOpacity={0.6} />
-                  <stop offset="100%" stopColor={COLOR1} stopOpacity={0.15} />
-                </linearGradient>
-              </defs>
+            <LineChart data={points} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2F2823" vertical={false} />
               <XAxis
                 dataKey="t"
@@ -196,15 +180,19 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                 minTickGap={40}
               />
               <YAxis
-                tickFormatter={(v) => '$' + formatNumber(v, { maximumFractionDigits: 2 })}
+                domain={[0, 100]}
+                ticks={[0, 25, 50, 75, 100]}
+                tickFormatter={(v) => `${v}%`}
                 tick={{ fill: '#978A80', fontSize: 11, fontFamily: 'Inter' }}
                 stroke="#2F2823"
-                width={56}
+                width={44}
               />
+              {/* 50% = perfectly balanced */}
+              <ReferenceLine y={50} stroke="#493E35" strokeDasharray="4 4" />
               <Tooltip content={<BalanceTooltip symbol0={symbol0} symbol1={symbol1} />} />
-              <Area type="monotone" dataKey="r0" stackId="1" stroke={COLOR0} fill="url(#bal0)" name={symbol0} isAnimationActive={false} />
-              <Area type="monotone" dataKey="r1" stackId="1" stroke={COLOR1} fill="url(#bal1)" name={symbol1} isAnimationActive={false} />
-            </AreaChart>
+              <Line type="monotone" dataKey="pct0" stroke={COLOR0} strokeWidth={1.5} dot={false} name={symbol0} isAnimationActive={false} />
+              <Line type="monotone" dataKey="pct1" stroke={COLOR1} strokeWidth={1.5} dot={false} name={symbol1} isAnimationActive={false} />
+            </LineChart>
           </ResponsiveContainer>
         )}
       </div>

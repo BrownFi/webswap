@@ -118,13 +118,17 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
   return (
     <div>
       {/* Section title — sits OUTSIDE the chart card */}
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
         <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD' }}>Oracle Spread</div>
         {latest && (
           <div style={{ fontFamily: 'Inter', fontSize: 13, color: '#978A80' }}>
             now <span style={{ color: COLOR }}>{latest.s >= 0 ? '+' : ''}{latest.s.toFixed(4)}%</span>
           </div>
         )}
+      </div>
+      {/* Math description */}
+      <div style={{ fontFamily: 'Inter', fontSize: 12, color: '#978A80', marginBottom: 10, lineHeight: 1.5 }}>
+        oSpread = (oracle price − AMM price) ÷ adjusted price
       </div>
 
       <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
