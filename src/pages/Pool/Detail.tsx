@@ -547,6 +547,7 @@ function PoolDetailInner({
                   version={version}
                   symbol0={symbol0}
                   symbol1={symbol1}
+                  reversed={isReversed}
                 />
 
                 {/* Oracle spread (oSpread) over time — (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel per SWAP */}

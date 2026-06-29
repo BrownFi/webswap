@@ -100,7 +100,10 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
         const rB = p0 !== 0 ? p1 / p0 : NaN
         const ratio =
           Number.isFinite(rA) && (!Number.isFinite(rB) || Math.abs(rA - amm) <= Math.abs(rB - amm)) ? rA : rB
-        const s = adj !== 0 && Number.isFinite(ratio) ? ((ratio - amm) / adj) * 100 : NaN
+        // Skip swaps with a missing AMM price (ammPriceRel = 0) — early-pool data
+        // anomalies that otherwise compute to a bogus ~100% spread (the "100% at
+        // the start"). Only amm > 0 (and adj > 0) is a real trade price.
+        const s = amm > 0 && adj > 0 && Number.isFinite(ratio) ? ((ratio - amm) / adj) * 100 : NaN
         return { t: Number(t.timestamp), s }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s))
@@ -109,6 +112,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
   const points = useMemo<Point[]>(() => {
     const span = RANGES[range]
     if (span == null) return allPoints
+    // eslint-disable-next-line react-hooks/purity -- time-window filter; sub-second drift across renders is harmless
     const cutoff = Math.floor(Date.now() / 1000) - span
     return allPoints.filter((p) => p.t >= cutoff)
   }, [allPoints, range])

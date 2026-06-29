@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { graphqlFetcher } from 'utils/graphql'
 
 // Pool balance over time as a PERCENTAGE split, sourced from the indexer's
@@ -9,6 +9,11 @@ import { graphqlFetcher } from 'utils/graphql'
 // — each token's % of pool value — with a 50% reference line: 50% = perfectly
 // balanced, drift away from it = imbalance. Shows the composition %, NOT the TVL.
 // Pool-wide (not per-wallet).
+//
+// Colors stay tied to each RAW token (token0 → orange, token1 → blue); the
+// `reversed` prop only flips DISPLAY ORDER (badge + tooltip rows) so the base
+// token lists first, matching the pool's base/quote display rule. (Same approach
+// as the "Pool balances" stat on the detail page.)
 //
 // Fetches the most recent 1000 trades once; the timeframe selector filters
 // client-side (instant, no refetch). 'All' = the full fetched window.
@@ -27,7 +32,16 @@ type Range = keyof typeof RANGES
 const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
 
 type Txn = { timestamp: number | string; reserve0USD: number | string; reserve1USD: number | string }
-type Point = { t: number; pct0: number; pct1: number } // each token's % of pool value
+// pct0/pct1 = each token's % of pool value. The gap between them is shaded with
+// the dominant token's color: band0 (token0 ≥50%) vs band1 (token1 ≥50%); the
+// inactive one is null so each Area only paints its own segments. Zero-width at 50/50.
+type Point = {
+  t: number
+  pct0: number
+  pct1: number
+  band0: [number, number] | null
+  band1: [number, number] | null
+}
 
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
 const COLOR1 = '#4DA3FF' // token1 (blue)
@@ -38,17 +52,22 @@ type Props = {
   version: number
   symbol0: string
   symbol1: string
+  // Pool base/quote display order (shouldReverseDisplay). When true the base is
+  // raw token1, so list it first — colors stay attached to their raw token.
+  reversed?: boolean
 }
 
-function BalanceTooltip({ active, payload, symbol0, symbol1 }: any) {
+function BalanceTooltip({ active, payload, symbol0, symbol1, reversed }: any) {
   if (!active || !payload?.length) return null
   const p: Point = payload[0].payload
   const row = (color: string, label: string, pct: number) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
       <span style={{ color }}>{label}</span>
       <span style={{ color: '#FBFBFD' }}>{pct.toFixed(2)}%</span>
     </div>
   )
+  // Each token keeps its own color; only the row order follows base/quote.
+  const rows = [row(COLOR0, symbol0, p.pct0), row(COLOR1, symbol1, p.pct1)]
   return (
     <div
       style={{
@@ -62,13 +81,12 @@ function BalanceTooltip({ active, payload, symbol0, symbol1 }: any) {
       }}
     >
       <div style={{ color: '#978A80', marginBottom: 6 }}>{dayjs.unix(p.t).format('MMM D, YYYY HH:mm')}</div>
-      {row(COLOR0, symbol0, p.pct0)}
-      {row(COLOR1, symbol1, p.pct1)}
+      {reversed ? [rows[1], rows[0]] : rows}
     </div>
   )
 }
 
-export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1 }: Props) {
+export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false }: Props) {
   const [range, setRange] = useState<Range>('ALL')
 
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
@@ -85,6 +103,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   })
 
   // Full fetched series as a % split, chronological (indexer returns newest-first).
+  // Kept in RAW token order — colors/lines are tied to each raw token.
   const allPoints = useMemo<Point[]>(() => {
     const txs = data?.transactions ?? []
     return [...txs]
@@ -94,7 +113,15 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         const r1 = Number(t.reserve1USD)
         const total = r0 + r1
         const pct0 = total > 0 ? (r0 / total) * 100 : NaN
-        return { t: Number(t.timestamp), pct0, pct1: 100 - pct0 }
+        const pct1 = 100 - pct0
+        const span = [Math.min(pct0, pct1), Math.max(pct0, pct1)] as [number, number]
+        return {
+          t: Number(t.timestamp),
+          pct0,
+          pct1,
+          band0: pct0 >= pct1 ? span : null, // token0 over-weighted → orange
+          band1: pct1 >= pct0 ? span : null, // token1 over-weighted → blue
+        }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
   }, [data])
@@ -103,6 +130,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const points = useMemo<Point[]>(() => {
     const span = RANGES[range]
     if (span == null) return allPoints
+    // eslint-disable-next-line react-hooks/purity -- time-window filter; sub-second drift across renders is harmless
     const cutoff = Math.floor(Date.now() / 1000) - span
     return allPoints.filter((p) => p.t >= cutoff)
   }, [allPoints, range])
@@ -110,16 +138,23 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   // The "now" split is always the latest trade, independent of the zoom level.
   const latest = allPoints[allPoints.length - 1]
   const pct0 = latest ? latest.pct0 : null
+  // Badge sides — base first (display order); each side keeps its raw color.
+  const sides =
+    pct0 == null
+      ? null
+      : reversed
+      ? [{ pct: 100 - pct0, sym: symbol1, color: COLOR1 }, { pct: pct0, sym: symbol0, color: COLOR0 }]
+      : [{ pct: pct0, sym: symbol0, color: COLOR0 }, { pct: 100 - pct0, sym: symbol1, color: COLOR1 }]
 
   return (
     <div>
       {/* Section title — sits OUTSIDE the chart card */}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
         <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD' }}>Pool Balance Over Time</div>
-        {pct0 != null && (
+        {sides && (
           <div style={{ fontFamily: 'Inter', fontSize: 13, color: '#978A80' }}>
-            now <span style={{ color: COLOR0 }}>{pct0.toFixed(2)}% {symbol0}</span> /{' '}
-            <span style={{ color: COLOR1 }}>{(100 - pct0).toFixed(2)}% {symbol1}</span>
+            now <span style={{ color: sides[0].color }}>{sides[0].pct.toFixed(2)}% {sides[0].sym}</span> /{' '}
+            <span style={{ color: sides[1].color }}>{sides[1].pct.toFixed(2)}% {sides[1].sym}</span>
           </div>
         )}
       </div>
@@ -167,7 +202,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={points} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
+            <ComposedChart data={points} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2F2823" vertical={false} />
               <XAxis
                 dataKey="t"
@@ -187,12 +222,16 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                 stroke="#2F2823"
                 width={44}
               />
+              {/* Shaded gap between the two %s, colored by the dominant token —
+                  widens with imbalance, ~0 at 50/50 */}
+              <Area type="monotone" dataKey="band0" stroke="none" fill={COLOR0} fillOpacity={0.18} connectNulls={false} isAnimationActive={false} />
+              <Area type="monotone" dataKey="band1" stroke="none" fill={COLOR1} fillOpacity={0.18} connectNulls={false} isAnimationActive={false} />
               {/* 50% = perfectly balanced */}
               <ReferenceLine y={50} stroke="#493E35" strokeDasharray="4 4" />
-              <Tooltip content={<BalanceTooltip symbol0={symbol0} symbol1={symbol1} />} />
+              <Tooltip content={<BalanceTooltip symbol0={symbol0} symbol1={symbol1} reversed={reversed} />} />
               <Line type="monotone" dataKey="pct0" stroke={COLOR0} strokeWidth={1.5} dot={false} name={symbol0} isAnimationActive={false} />
               <Line type="monotone" dataKey="pct1" stroke={COLOR1} strokeWidth={1.5} dot={false} name={symbol1} isAnimationActive={false} />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         )}
       </div>
