@@ -228,8 +228,14 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
     totalSupply,
     feeAPR: feeAPR || 0,
     bgtAPR: (poolApr?.apr || 0) * 100,
-    volume24h: (shouldUseIndexer ? pairStats.volumeDay : 0) || 0,
-    volume7d: (shouldUseIndexer ? pairStats.volume7Day : 0) || 0,
+    // Volume is a historical aggregate with no RPC fallback, and the indexer's
+    // value is accurate no matter how recently the pool last traded — so do NOT
+    // gate it on shouldUseIndexer (a freshness check meant for live fields like
+    // tvl/reserves). Low-activity pools (e.g. ARB V3) last traded >2h ago but
+    // still have real 24h/7d volume; gating it zeroed them out. Coerce since the
+    // indexer returns these as numeric strings.
+    volume24h: Number(pairStats?.volumeDay) || 0,
+    volume7d: Number(pairStats?.volume7Day) || 0,
     shouldUseIndexer,
     pairAccount: data?.pairAccount,
     merklCampaignApr: merklCampaignApr?.apr || 0,
