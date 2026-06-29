@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { ZoomIn, ZoomOut } from 'react-feather'
 import { graphqlFetcher } from 'utils/graphql'
 
 // Pool balance over time as a PERCENTAGE split, sourced from the indexer's
@@ -30,6 +31,25 @@ const GET_POOL_BALANCES = `
 const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as const
 type Range = keyof typeof RANGES
 const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
+
+// Y-axis is a zoomable [lo, hi] % window centered on the 50% midline. The −/+
+// buttons step ±5% per edge; double-click the chart to reset. Default 20–80%,
+// tightest [45, 55].
+const Y_DEFAULT: [number, number] = [20, 80]
+const Y_MIN_RANGE = 10 // tightest window = [45, 55] (5% each side of the midline)
+function yTicks([lo, hi]: [number, number]): number[] {
+  const range = hi - lo
+  const step = range > 70 ? 20 : range > 35 ? 10 : range > 16 ? 5 : 2
+  const ticks: number[] = []
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) ticks.push(Math.round(v))
+  if (lo <= 50 && hi >= 50 && !ticks.includes(50)) ticks.push(50)
+  return ticks.sort((a, b) => a - b)
+}
+// Step each edge by ±delta% — the −/+ buttons (round 5% jumps). Clamped.
+const stepWindow = ([lo, hi]: [number, number], delta: number): [number, number] => {
+  const h = Math.min(50, Math.max(Y_MIN_RANGE / 2, (hi - lo) / 2 + delta))
+  return [50 - h, 50 + h]
+}
 
 type Txn = { timestamp: number | string; reserve0USD: number | string; reserve1USD: number | string }
 // pct0/pct1 = each token's % of pool value. The gap between them is shaded with
@@ -88,6 +108,8 @@ function BalanceTooltip({ active, payload, symbol0, symbol1, reversed }: any) {
 
 export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false }: Props) {
   const [range, setRange] = useState<Range>('ALL')
+  const [yDomain, setYDomain] = useState<[number, number]>(Y_DEFAULT)
+  const yRange = yDomain[1] - yDomain[0]
 
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolBalances', chainId, pairAddress, version],
@@ -160,8 +182,35 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       </div>
 
       <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
-        {/* Timeframe selector — matches the LP chart's segmented control */}
-        <div className="flex items-center justify-end mb-3">
+        {/* Y-axis zoom (left) + timeframe selector (right) */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Y-axis zoom — zoom-out / zoom-in icons; hover for the current window + reset hint */}
+          <div
+            className="inline-flex items-center gap-1"
+            title={`Zoom Y axis · ${Math.round(yDomain[0])}–${Math.round(yDomain[1])}% · ±5% per click · double-click chart to reset`}
+          >
+            <button
+              type="button"
+              onClick={() => setYDomain((d) => stepWindow(d, 5))}
+              disabled={yRange >= 100}
+              className="inline-flex items-center justify-center px-[9px] py-[6px] rounded-[7px] bg-transparent enabled:hover:bg-[#493E35] enabled:cursor-pointer disabled:cursor-default transition-colors"
+              style={{ color: yRange >= 100 ? '#5B524A' : '#978A80', border: 'none' }}
+              aria-label="Zoom out Y axis"
+            >
+              <ZoomOut size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setYDomain((d) => stepWindow(d, -5))}
+              disabled={yRange <= Y_MIN_RANGE}
+              className="inline-flex items-center justify-center px-[9px] py-[6px] rounded-[7px] bg-transparent enabled:hover:bg-[#493E35] enabled:cursor-pointer disabled:cursor-default transition-colors"
+              style={{ color: yRange <= Y_MIN_RANGE ? '#5B524A' : '#978A80', border: 'none' }}
+              aria-label="Zoom in Y axis"
+            >
+              <ZoomIn size={15} />
+            </button>
+          </div>
+          {/* Timeframe selector — matches the LP chart's segmented control */}
           <div
             className="inline-flex items-center gap-0.5 sm:gap-1"
             style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 8, padding: 2 }}
@@ -188,52 +237,56 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
           </div>
         </div>
 
-        {isLoading && allPoints.length === 0 ? (
-          <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}>
-            Loading pool balance…
-          </div>
-        ) : allPoints.length === 0 ? (
-          <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}>
-            No activity on this pool yet.
-          </div>
-        ) : points.length === 0 ? (
-          <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}>
-            No trades in the last {range === '1D' ? '24 hours' : range === '7D' ? '7 days' : '30 days'}.
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={260}>
-            <ComposedChart data={points} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2F2823" vertical={false} />
-              <XAxis
-                dataKey="t"
-                type="number"
-                domain={['dataMin', 'dataMax']}
-                scale="time"
-                tickFormatter={(t) => dayjs.unix(t).format(range === '1D' ? 'HH:mm' : 'MMM D')}
-                tick={{ fill: '#978A80', fontSize: 11, fontFamily: 'Inter' }}
-                stroke="#2F2823"
-                minTickGap={40}
-              />
-              <YAxis
-                domain={[0, 100]}
-                ticks={[0, 25, 50, 75, 100]}
-                tickFormatter={(v) => `${v}%`}
-                tick={{ fill: '#978A80', fontSize: 11, fontFamily: 'Inter' }}
-                stroke="#2F2823"
-                width={44}
-              />
-              {/* Shaded gap between the two %s, colored by the dominant token —
-                  widens with imbalance, ~0 at 50/50 */}
-              <Area type="monotone" dataKey="band0" stroke="none" fill={COLOR0} fillOpacity={0.18} connectNulls={false} isAnimationActive={false} />
-              <Area type="monotone" dataKey="band1" stroke="none" fill={COLOR1} fillOpacity={0.18} connectNulls={false} isAnimationActive={false} />
-              {/* 50% = perfectly balanced */}
-              <ReferenceLine y={50} stroke="#493E35" strokeDasharray="4 4" />
-              <Tooltip content={<BalanceTooltip symbol0={symbol0} symbol1={symbol1} reversed={reversed} />} />
-              <Line type="monotone" dataKey="pct0" stroke={COLOR0} strokeWidth={1.5} dot={false} name={symbol0} isAnimationActive={false} />
-              <Line type="monotone" dataKey="pct1" stroke={COLOR1} strokeWidth={1.5} dot={false} name={symbol1} isAnimationActive={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        )}
+        {/* Double-click the chart to reset the Y zoom to default. */}
+        <div onDoubleClick={() => setYDomain(Y_DEFAULT)}>
+          {isLoading && allPoints.length === 0 ? (
+            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13, cursor: 'default' }}>
+              Loading pool balance…
+            </div>
+          ) : allPoints.length === 0 ? (
+            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13, cursor: 'default' }}>
+              No activity on this pool yet.
+            </div>
+          ) : points.length === 0 ? (
+            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13, cursor: 'default' }}>
+              No trades in the last {range === '1D' ? '24 hours' : range === '7D' ? '7 days' : '30 days'}.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={points} margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2F2823" vertical={false} />
+                <XAxis
+                  dataKey="t"
+                  type="number"
+                  domain={['dataMin', 'dataMax']}
+                  scale="time"
+                  tickFormatter={(t) => dayjs.unix(t).format(range === '1D' ? 'HH:mm' : 'MMM D')}
+                  tick={{ fill: '#978A80', fontSize: 11, fontFamily: 'Inter' }}
+                  stroke="#2F2823"
+                  minTickGap={40}
+                />
+                <YAxis
+                  domain={yDomain}
+                  ticks={yTicks(yDomain)}
+                  allowDataOverflow
+                  tickFormatter={(v) => `${v}%`}
+                  tick={{ fill: '#978A80', fontSize: 11, fontFamily: 'Inter' }}
+                  stroke="#2F2823"
+                  width={44}
+                />
+                {/* Shaded gap between the two %s, colored by the dominant token —
+                    widens with imbalance, ~0 at 50/50 */}
+                <Area type="monotone" dataKey="band0" stroke="none" fill={COLOR0} fillOpacity={0.18} connectNulls={false} isAnimationActive={false} />
+                <Area type="monotone" dataKey="band1" stroke="none" fill={COLOR1} fillOpacity={0.18} connectNulls={false} isAnimationActive={false} />
+                {/* 50% = perfectly balanced */}
+                <ReferenceLine y={50} stroke="#493E35" strokeDasharray="4 4" />
+                <Tooltip content={<BalanceTooltip symbol0={symbol0} symbol1={symbol1} reversed={reversed} />} />
+                <Line type="monotone" dataKey="pct0" stroke={COLOR0} strokeWidth={1.5} dot={false} name={symbol0} isAnimationActive={false} />
+                <Line type="monotone" dataKey="pct1" stroke={COLOR1} strokeWidth={1.5} dot={false} name={symbol1} isAnimationActive={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </div>
     </div>
   )
