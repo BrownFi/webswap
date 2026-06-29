@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -10,9 +10,12 @@ import { formatNumber } from 'utils/prices'
 // Stacked area: total height = TVL, the split = the pool's balance composition,
 // so you can watch it drift (imbalance) trade by trade. Pool-wide (not
 // per-wallet) — replaces the old per-wallet "Your recent activity" table.
+//
+// Fetches the most recent 1000 trades once; the timeframe selector filters
+// client-side (instant, no refetch). 'All' = the full fetched window.
 const GET_POOL_BALANCES = `
   query PoolBalances($pair: String) {
-    transactions(first: 500, where: { pair: $pair }, orderBy: timestamp, orderDirection: desc) {
+    transactions(first: 1000, where: { pair: $pair }, orderBy: timestamp, orderDirection: desc) {
       timestamp
       reserve0USD
       reserve1USD
@@ -20,8 +23,11 @@ const GET_POOL_BALANCES = `
   }
 `
 
-type Txn = { timestamp: number | string; reserve0USD: number | string; reserve1USD: number | string }
+const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as const
+type Range = keyof typeof RANGES
+const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
 
+type Txn = { timestamp: number | string; reserve0USD: number | string; reserve1USD: number | string }
 type Point = { t: number; r0: number; r1: number; total: number }
 
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
@@ -71,6 +77,8 @@ function BalanceTooltip({ active, payload, symbol0, symbol1 }: any) {
 }
 
 export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1 }: Props) {
+  const [range, setRange] = useState<Range>('ALL')
+
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolBalances', chainId, pairAddress, version],
     queryFn: () =>
@@ -84,8 +92,8 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     placeholderData: keepPreviousData,
   })
 
-  // Indexer returns newest-first; reverse to chronological for the x-axis.
-  const points = useMemo<Point[]>(() => {
+  // Full fetched series, chronological (indexer returns newest-first).
+  const allPoints = useMemo<Point[]>(() => {
     const txs = data?.transactions ?? []
     return [...txs]
       .reverse()
@@ -97,9 +105,17 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       .filter((p) => p.total > 0 && Number.isFinite(p.t))
   }, [data])
 
-  // Current split for the header badge.
-  const last = points[points.length - 1]
-  const pct0 = last && last.total > 0 ? (last.r0 / last.total) * 100 : null
+  // Apply the selected timeframe (client-side).
+  const points = useMemo<Point[]>(() => {
+    const span = RANGES[range]
+    if (span == null) return allPoints
+    const cutoff = Math.floor(Date.now() / 1000) - span
+    return allPoints.filter((p) => p.t >= cutoff)
+  }, [allPoints, range])
+
+  // The "now" split is always the latest trade, independent of the zoom level.
+  const latest = allPoints[allPoints.length - 1]
+  const pct0 = latest && latest.total > 0 ? (latest.r0 / latest.total) * 100 : null
 
   return (
     <div>
@@ -115,13 +131,45 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       </div>
 
       <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
-        {isLoading && points.length === 0 ? (
+        {/* Timeframe selector — matches the LP chart's segmented control */}
+        <div className="flex items-center justify-end mb-3">
+          <div
+            className="inline-flex items-center gap-0.5 sm:gap-1"
+            style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 8, padding: 2 }}
+          >
+            {RANGE_KEYS.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRange(r)}
+                className="cursor-pointer text-[11px] sm:text-[12px] px-[8px] sm:px-[10px] py-[4px] sm:py-[5px]"
+                style={{
+                  background: range === r ? '#985C2A' : 'transparent',
+                  color: range === r ? '#FFFFFF' : '#978A80',
+                  fontFamily: 'Inter',
+                  fontWeight: 500,
+                  border: 'none',
+                  borderRadius: 7,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {r === 'ALL' ? 'All' : r}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {isLoading && allPoints.length === 0 ? (
           <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}>
             Loading pool balance…
           </div>
-        ) : points.length === 0 ? (
+        ) : allPoints.length === 0 ? (
           <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}>
             No activity on this pool yet.
+          </div>
+        ) : points.length === 0 ? (
+          <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}>
+            No trades in the last {range === '1D' ? '24 hours' : range === '7D' ? '7 days' : '30 days'}.
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
@@ -142,7 +190,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                 type="number"
                 domain={['dataMin', 'dataMax']}
                 scale="time"
-                tickFormatter={(t) => dayjs.unix(t).format('MMM D')}
+                tickFormatter={(t) => dayjs.unix(t).format(range === '1D' ? 'HH:mm' : 'MMM D')}
                 tick={{ fill: '#978A80', fontSize: 11, fontFamily: 'Inter' }}
                 stroke="#2F2823"
                 minTickGap={40}
