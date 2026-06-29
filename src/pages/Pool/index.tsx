@@ -288,8 +288,14 @@ export default function Pool() {
   const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
   const [showIndexerModal, setShowIndexerModal] = useState(false)
 
+  // A real indexer lag stops updates on EVERY pool, so only flag it when all
+  // high-TVL pools have gone stale. A single quiet pool is normal on low-activity
+  // chains (e.g. a $1k ARB pool may not trade for hours) and must NOT trip this.
+  // eslint-disable-next-line react-hooks/purity -- staleness check vs wall clock; re-running each render is fine
+  const indexerStaleBefore = Date.now() / 1000 - 12 * 3600
+  const highTvlPairs = filteredPairs.filter((pair) => pair.tvl > 1000)
   const hasIndexerIssue =
-    !!error || filteredPairs.some((pair) => pair.tvl > 1000 && pair.updatedAt < Date.now() / 1000 - 8 * 3600)
+    !!error || (highTvlPairs.length > 0 && highTvlPairs.every((pair) => pair.updatedAt < indexerStaleBefore))
 
   useEffect(() => {
     if (hasIndexerIssue) {
