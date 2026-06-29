@@ -17,6 +17,7 @@ import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
 import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
+import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
 import { formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
@@ -24,7 +25,6 @@ import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
 import { getRestakers } from 'constants/restakers'
-import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
 import { getCompetitor, competitorPairKey, CompetitorPairData } from 'services/competitors'
 
 const PairChartTV = lazy(() =>
@@ -99,13 +99,6 @@ const GET_PAIR_V3 = `
     }
   }
 `
-
-function secondsToAgo(seconds: number) {
-  if (seconds < 60) return `${Math.floor(seconds)}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`
-  return `${Math.floor(seconds / 86400)}d`
-}
 
 // The detail-page pair row is exactly the shared PairStats shape (V2 + V3
 // fields, token0/token1). Alias rather than re-declaring it.
@@ -236,23 +229,6 @@ function PoolDetailInner({
       navigate('/pool', { replace: true })
     }
   }, [walletChainId, chainId, navigate])
-
-  const { data: userTxs, isLoading: userTxsLoading } = useQuery<OnchainTxn[]>({
-    queryKey: ['userPairTxs', chainId, pairAddress, account, pair.token0.decimals, pair.token1.decimals],
-    queryFn: () =>
-      fetchOnchainPairTransactions({
-        chainId,
-        pairAddress,
-        decimals0: pair.token0.decimals,
-        decimals1: pair.token1.decimals,
-        user: account!,
-        lookbackBlocks: 5000,
-        limit: 10,
-      }),
-    enabled: !!account && chainId === walletChainId,
-    retry: false,
-    staleTime: 2 * 60_000,
-  })
 
   const pairStats: PairStats | undefined = pairRaw as unknown as PairStats | undefined
 
@@ -558,95 +534,14 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* Your recent activity — only shown when wallet is connected on this pool's chain */}
-            {account && chainId === walletChainId && (
-              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
-                <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD', marginBottom: '12px' }}>
-                  Your recent activity
-                </div>
-                <div className="overflow-x-auto">
-                  <table style={{ width: '100%', fontFamily: 'Inter', fontSize: '13px', color: '#CFC7C1' }}>
-                    <thead style={{ color: '#978A80' }}>
-                      <tr>
-                        <th style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Time</th>
-                        <th className="hidden md:table-cell" style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Type</th>
-                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol0}</th>
-                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol1}</th>
-                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>Tx</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(userTxs ?? []).map((tx) => {
-                        const desc =
-                          tx.kind === 'Mint'
-                            ? { type: 'Add', icon: '+', color: '#83CF84' }
-                            : tx.kind === 'Burn'
-                            ? { type: 'Remove', icon: '−', color: '#E57373' }
-                            : tx.amount0In > 0
-                            ? { type: `Swap ${symbol0} → ${symbol1}`, icon: '↔', color: '#D8A072' }
-                            : { type: `Swap ${symbol1} → ${symbol0}`, icon: '↔', color: '#D8A072' }
-                        const amt0 = tx.amount0In + tx.amount0Out
-                        const amt1 = tx.amount1In + tx.amount1Out
-                        return (
-                          <tr key={tx.id} style={{ borderTop: '1px solid #2F2823' }}>
-                            <td style={{ padding: '10px 8px' }}>
-                              <span className="inline-flex items-center gap-1.5">
-                                {/* Mobile-only type icon — desktop has its own column */}
-                                <span
-                                  className="md:hidden inline-flex items-center justify-center"
-                                  title={desc.type}
-                                  style={{
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: '50%',
-                                    background: `${desc.color}22`,
-                                    color: desc.color,
-                                    fontWeight: 700,
-                                    fontSize: 12,
-                                    lineHeight: 1,
-                                  }}
-                                >
-                                  {desc.icon}
-                                </span>
-                                {secondsToAgo(tx.secondsAgo)}
-                              </span>
-                            </td>
-                            <td className="hidden md:table-cell" style={{ padding: '10px 8px', color: desc.color, fontWeight: 500 }}>{desc.type}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt0, { maximumFractionDigits: 4 })}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt1, { maximumFractionDigits: 4 })}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>
-                              <a
-                                href={getEtherscanLink(chainId, tx.transactionHash, 'transaction')}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="hover:underline"
-                                style={{ color: '#978A80' }}
-                              >
-                                View
-                              </a>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                      {userTxsLoading && (
-                        <tr>
-                          <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#978A80' }}>
-                            Loading your activity…
-                          </td>
-                        </tr>
-                      )}
-                      {!userTxsLoading && userTxs && userTxs.length === 0 && (
-                        <tr>
-                          <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#978A80' }}>
-                            No recent activity from your wallet on this pool.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+            {/* Pool balance / imbalance over time — pool-wide (reserve0USD/reserve1USD per tx), replaces the old per-wallet activity table */}
+            <PoolBalanceChart
+              pairAddress={pairAddress}
+              chainId={chainId}
+              version={version}
+              symbol0={symbol0}
+              symbol1={symbol1}
+            />
           </div>
 
           {/* Right sidebar */}
