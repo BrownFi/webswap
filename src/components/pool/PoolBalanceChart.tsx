@@ -11,10 +11,13 @@ import { graphqlFetcher } from 'utils/graphql'
 // balanced, drift away from it = imbalance. Shows the composition %, NOT the TVL.
 // Pool-wide (not per-wallet).
 //
+// Overlaid (right axis): LP vs BH % = (lpPrice / bnhPrice − 1) × 100 from
+// pairDayDatas (same data the LP chart uses) — how much LPing has out/under-
+// performed buying-and-holding. Daily series, step-attached to each trade point.
+//
 // Colors stay tied to each RAW token (token0 → orange, token1 → blue); the
 // `reversed` prop only flips DISPLAY ORDER (badge + tooltip rows) so the base
-// token lists first, matching the pool's base/quote display rule. (Same approach
-// as the "Pool balances" stat on the detail page.)
+// token lists first, matching the pool's base/quote display rule.
 //
 // Fetches the most recent 1000 trades once; the timeframe selector filters
 // client-side (instant, no refetch). 'All' = the full fetched window.
@@ -28,13 +31,24 @@ const GET_POOL_BALANCES = `
   }
 `
 
+// LP-vs-BH series (daily) — same source as the LP chart's lpPrice/bnhPrice lines.
+const GET_POOL_LPBH = `
+  query PoolLpBh($pair: String) {
+    pairDayDatas(first: 1000, where: { pair: $pair }, orderBy: dayStartUnix, orderDirection: asc) {
+      dayStartUnix
+      lpPrice
+      bnhPrice
+    }
+  }
+`
+
 const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as const
 type Range = keyof typeof RANGES
 const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
 
-// Y-axis is a zoomable [lo, hi] % window centered on the 50% midline. The −/+
-// buttons step ±5% per edge; double-click the chart to reset. Default 20–80%,
-// tightest [45, 55].
+// Y-axis (left) is a zoomable [lo, hi] % window centered on the 50% midline. The
+// −/+ buttons step ±5% per edge; double-click the chart to reset. Default 20–80%,
+// tightest [45, 55]. (The right axis — LP vs BH % — auto-fits.)
 const Y_DEFAULT: [number, number] = [20, 80]
 const Y_MIN_RANGE = 10 // tightest window = [45, 55] (5% each side of the midline)
 function yTicks([lo, hi]: [number, number]): number[] {
@@ -52,19 +66,21 @@ const stepWindow = ([lo, hi]: [number, number], delta: number): [number, number]
 }
 
 type Txn = { timestamp: number | string; reserve0USD: number | string; reserve1USD: number | string }
-// pct0/pct1 = each token's % of pool value. The gap between them is shaded with
-// the dominant token's color: band0 (token0 ≥50%) vs band1 (token1 ≥50%); the
-// inactive one is null so each Area only paints its own segments. Zero-width at 50/50.
+type DayRow = { dayStartUnix: number | string; lpPrice: number | string; bnhPrice: number | string }
+// pct0/pct1 = each token's % of pool value; band0/band1 = the dominant-token
+// shaded gap. lpVsBh = LP-vs-buy&hold % (right axis), step-attached from daily data.
 type Point = {
   t: number
   pct0: number
   pct1: number
   band0: [number, number] | null
   band1: [number, number] | null
+  lpVsBh: number | null
 }
 
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
 const COLOR1 = '#4DA3FF' // token1 (blue)
+const COLOR_LPBH = '#83CF84' // LP vs BH (green)
 
 type Props = {
   pairAddress: string
@@ -80,14 +96,14 @@ type Props = {
 function BalanceTooltip({ active, payload, symbol0, symbol1, reversed }: any) {
   if (!active || !payload?.length) return null
   const p: Point = payload[0].payload
-  const row = (color: string, label: string, pct: number) => (
+  const row = (color: string, label: string, value: string) => (
     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
       <span style={{ color }}>{label}</span>
-      <span style={{ color: '#FBFBFD' }}>{pct.toFixed(2)}%</span>
+      <span style={{ color: '#FBFBFD' }}>{value}</span>
     </div>
   )
   // Each token keeps its own color; only the row order follows base/quote.
-  const rows = [row(COLOR0, symbol0, p.pct0), row(COLOR1, symbol1, p.pct1)]
+  const rows = [row(COLOR0, symbol0, `${p.pct0.toFixed(2)}%`), row(COLOR1, symbol1, `${p.pct1.toFixed(2)}%`)]
   return (
     <div
       style={{
@@ -97,11 +113,17 @@ function BalanceTooltip({ active, payload, symbol0, symbol1, reversed }: any) {
         padding: '10px 12px',
         fontFamily: 'Inter',
         fontSize: 12,
-        minWidth: 160,
+        minWidth: 180,
       }}
     >
       <div style={{ color: '#978A80', marginBottom: 6 }}>{dayjs.unix(p.t).format('MMM D, YYYY HH:mm')}</div>
       {reversed ? [rows[1], rows[0]] : rows}
+      {p.lpVsBh != null && (
+        <div style={{ borderTop: '1px solid #2F2823', marginTop: 6, paddingTop: 6, display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+          <span style={{ color: COLOR_LPBH }}>LP vs BH</span>
+          <span style={{ color: '#FBFBFD' }}>{p.lpVsBh >= 0 ? '+' : ''}{p.lpVsBh.toFixed(2)}%</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -110,6 +132,8 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const [range, setRange] = useState<Range>('ALL')
   const [yDomain, setYDomain] = useState<[number, number]>(Y_DEFAULT)
   const yRange = yDomain[1] - yDomain[0]
+  // Per-series visibility, toggled by the bottom legend (like the LP chart).
+  const [visible, setVisible] = useState({ t0: true, t1: true, lpbh: true })
 
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolBalances', chainId, pairAddress, version],
@@ -124,11 +148,38 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     placeholderData: keepPreviousData,
   })
 
+  const { data: dayData } = useQuery<{ pairDayDatas: DayRow[] }>({
+    queryKey: ['poolLpBh', chainId, pairAddress, version],
+    queryFn: () =>
+      graphqlFetcher({
+        operationName: 'PoolLpBh',
+        query: GET_POOL_LPBH,
+        variables: { chainId, version, pair: pairAddress.toLowerCase() },
+      }),
+    enabled: !!pairAddress && !!chainId,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+
+  // Daily LP-vs-BH %, ascending — the step source for each trade point.
+  const dailyLpBh = useMemo(() => {
+    const rows = dayData?.pairDayDatas ?? []
+    return rows
+      .map((r) => {
+        const lp = Number(r.lpPrice)
+        const bnh = Number(r.bnhPrice)
+        return { t: Number(r.dayStartUnix), lpVsBh: lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : NaN }
+      })
+      .filter((d) => Number.isFinite(d.t) && Number.isFinite(d.lpVsBh))
+      .sort((a, b) => a.t - b.t)
+  }, [dayData])
+
   // Full fetched series as a % split, chronological (indexer returns newest-first).
-  // Kept in RAW token order — colors/lines are tied to each raw token.
+  // Kept in RAW token order — colors/lines are tied to each raw token. Each point
+  // also carries the LP-vs-BH value from the latest daily bucket ≤ its timestamp.
   const allPoints = useMemo<Point[]>(() => {
     const txs = data?.transactions ?? []
-    return [...txs]
+    const base = [...txs]
       .reverse()
       .map((t) => {
         const r0 = Number(t.reserve0USD)
@@ -146,13 +197,19 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
-  }, [data])
+    // Step-attach LP-vs-BH: both arrays are ascending, so walk a pointer.
+    let di = 0
+    let last: number | null = null
+    return base.map((p) => {
+      while (di < dailyLpBh.length && dailyLpBh[di].t <= p.t) last = dailyLpBh[di++].lpVsBh
+      return { ...p, lpVsBh: last }
+    })
+  }, [data, dailyLpBh])
 
   // Apply the selected timeframe (client-side).
   const points = useMemo<Point[]>(() => {
     const span = RANGES[range]
     if (span == null) return allPoints
-    // eslint-disable-next-line react-hooks/purity -- time-window filter; sub-second drift across renders is harmless
     const cutoff = Math.floor(Date.now() / 1000) - span
     return allPoints.filter((p) => p.t >= cutoff)
   }, [allPoints, range])
@@ -160,25 +217,32 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   // The "now" split is always the latest trade, independent of the zoom level.
   const latest = allPoints[allPoints.length - 1]
   const pct0 = latest ? latest.pct0 : null
-  // Badge sides — base first (display order); each side keeps its raw color.
-  const sides =
+  // Legend items — base first (display order); each keeps its raw color + a
+  // toggle key. LP vs BH appended when available.
+  const legendItems: { key: 't0' | 't1' | 'lpbh'; label: string; color: string; value: string }[] =
     pct0 == null
-      ? null
-      : reversed
-      ? [{ pct: 100 - pct0, sym: symbol1, color: COLOR1 }, { pct: pct0, sym: symbol0, color: COLOR0 }]
-      : [{ pct: pct0, sym: symbol0, color: COLOR0 }, { pct: 100 - pct0, sym: symbol1, color: COLOR1 }]
+      ? []
+      : [
+          ...(reversed
+            ? [
+                { key: 't1' as const, label: symbol1, color: COLOR1, value: `${(100 - pct0).toFixed(2)}%` },
+                { key: 't0' as const, label: symbol0, color: COLOR0, value: `${pct0.toFixed(2)}%` },
+              ]
+            : [
+                { key: 't0' as const, label: symbol0, color: COLOR0, value: `${pct0.toFixed(2)}%` },
+                { key: 't1' as const, label: symbol1, color: COLOR1, value: `${(100 - pct0).toFixed(2)}%` },
+              ]),
+          ...(latest?.lpVsBh != null
+            ? [{ key: 'lpbh' as const, label: 'LP vs BH', color: COLOR_LPBH, value: `${latest.lpVsBh >= 0 ? '+' : ''}${latest.lpVsBh.toFixed(2)}%` }]
+            : []),
+        ]
 
   return (
     <div>
-      {/* Section title — sits OUTSIDE the chart card */}
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+      {/* Section title — sits OUTSIDE the chart card. The "now" values moved to
+          the clickable legend at the bottom of the card. */}
+      <div style={{ marginBottom: 10 }}>
         <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD' }}>Pool Balance Over Time</div>
-        {sides && (
-          <div style={{ fontFamily: 'Inter', fontSize: 13, color: '#978A80' }}>
-            now <span style={{ color: sides[0].color }}>{sides[0].pct.toFixed(2)}% {sides[0].sym}</span> /{' '}
-            <span style={{ color: sides[1].color }}>{sides[1].pct.toFixed(2)}% {sides[1].sym}</span>
-          </div>
-        )}
       </div>
 
       <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
@@ -265,7 +329,9 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                   stroke="#2F2823"
                   minTickGap={40}
                 />
+                {/* Left axis — balance % */}
                 <YAxis
+                  yAxisId="left"
                   domain={yDomain}
                   ticks={yTicks(yDomain)}
                   allowDataOverflow
@@ -274,19 +340,49 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                   stroke="#2F2823"
                   width={44}
                 />
-                {/* Shaded gap between the two %s, colored by the dominant token —
-                    widens with imbalance, ~0 at 50/50 */}
-                <Area type="monotone" dataKey="band0" stroke="none" fill={COLOR0} fillOpacity={0.18} connectNulls={false} isAnimationActive={false} />
-                <Area type="monotone" dataKey="band1" stroke="none" fill={COLOR1} fillOpacity={0.18} connectNulls={false} isAnimationActive={false} />
+                {/* Right axis — LP vs BH % (auto-fit) */}
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  domain={['auto', 'auto']}
+                  tickFormatter={(v) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`}
+                  tick={{ fill: '#978A80', fontSize: 11, fontFamily: 'Inter' }}
+                  stroke="#2F2823"
+                  width={52}
+                />
+                {/* Shaded gap between the two %s, colored by the dominant token */}
+                <Area yAxisId="left" type="monotone" dataKey="band0" stroke="none" fill={COLOR0} fillOpacity={0.18} connectNulls={false} hide={!visible.t0} isAnimationActive={false} />
+                <Area yAxisId="left" type="monotone" dataKey="band1" stroke="none" fill={COLOR1} fillOpacity={0.18} connectNulls={false} hide={!visible.t1} isAnimationActive={false} />
                 {/* 50% = perfectly balanced */}
-                <ReferenceLine y={50} stroke="#493E35" strokeDasharray="4 4" />
+                <ReferenceLine yAxisId="left" y={50} stroke="#493E35" strokeDasharray="4 4" />
                 <Tooltip content={<BalanceTooltip symbol0={symbol0} symbol1={symbol1} reversed={reversed} />} />
-                <Line type="monotone" dataKey="pct0" stroke={COLOR0} strokeWidth={1.5} dot={false} name={symbol0} isAnimationActive={false} />
-                <Line type="monotone" dataKey="pct1" stroke={COLOR1} strokeWidth={1.5} dot={false} name={symbol1} isAnimationActive={false} />
+                <Line yAxisId="left" type="monotone" dataKey="pct0" stroke={COLOR0} strokeWidth={1.5} dot={false} name={symbol0} hide={!visible.t0} isAnimationActive={false} />
+                <Line yAxisId="left" type="monotone" dataKey="pct1" stroke={COLOR1} strokeWidth={1.5} dot={false} name={symbol1} hide={!visible.t1} isAnimationActive={false} />
+                {/* LP vs BH % — right axis */}
+                <Line yAxisId="right" type="monotone" dataKey="lpVsBh" stroke={COLOR_LPBH} strokeWidth={1.5} dot={false} connectNulls name="LP vs BH" hide={!visible.lpbh} isAnimationActive={false} />
               </ComposedChart>
             </ResponsiveContainer>
           )}
         </div>
+
+        {/* Legend + per-series toggles (bottom, like the LP chart) — click to show/hide */}
+        {legendItems.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-3">
+            {legendItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setVisible((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
+                className="inline-flex items-center gap-1.5 cursor-pointer"
+                style={{ background: 'transparent', border: 'none', padding: 0, opacity: visible[item.key] ? 1 : 0.4 }}
+              >
+                <span style={{ width: 14, height: 3, borderRadius: 2, background: item.color, display: 'inline-block' }} />
+                <span style={{ fontFamily: 'Inter', fontSize: 12, color: '#978A80' }}>{item.label}</span>
+                <span style={{ fontFamily: 'Inter', fontSize: 12, fontWeight: 600, color: '#FBFBFD' }}>{item.value}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
