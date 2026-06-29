@@ -18,6 +18,7 @@ import { useVersion } from 'hooks/useVersion'
 import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
+import { PoolSpreadChart } from 'components/pool/PoolSpreadChart'
 import { formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
@@ -542,6 +543,9 @@ function PoolDetailInner({
               symbol0={symbol0}
               symbol1={symbol1}
             />
+
+            {/* Oracle spread (oSpread) over time — (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel per SWAP */}
+            <PoolSpreadChart pairAddress={pairAddress} chainId={chainId} version={version} />
           </div>
 
           {/* Right sidebar */}
