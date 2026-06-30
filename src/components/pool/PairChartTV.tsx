@@ -305,7 +305,19 @@ const PairChartTVInner = ({ pair }: Props) => {
     }
 
     const chart = createChart(container, {
-      localization: { priceFormatter },
+      localization: {
+        priceFormatter,
+        // Crosshair time badge → LOCAL time, matching the x-axis ticks + tooltip
+        // (lightweight-charts' default badge is UTC, off by the timezone offset).
+        timeFormatter: (time: any) =>
+          new Date(Number(time) * 1000).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }),
+      },
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#CFC7C1',

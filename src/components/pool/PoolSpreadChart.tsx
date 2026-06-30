@@ -133,6 +133,18 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
     if (!container) return
 
     const chart = createChart(container, {
+      // Crosshair time badge uses LOCAL time, matching the x-axis ticks + tooltip
+      // (lightweight-charts' default badge is UTC, which mismatched by the tz offset).
+      localization: {
+        timeFormatter: (time: any) =>
+          new Date(Number(time) * 1000).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }),
+      },
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#CFC7C1',
@@ -189,7 +201,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
       lastValueVisible: false,
       priceLineVisible: false,
       color: COLOR,
-      lineWidth: 2,
+      lineWidth: 1,
       priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(3)}%`, minMove: 0.0001 },
     })
     // Zero reference — oSpread oscillates around 0.

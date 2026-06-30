@@ -222,6 +222,18 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     if (!container) return
 
     const chart = createChart(container, {
+      // Crosshair time badge uses LOCAL time, matching the x-axis ticks + tooltip
+      // (lightweight-charts' default badge is UTC, which mismatched by the tz offset).
+      localization: {
+        timeFormatter: (time: any) =>
+          new Date(Number(time) * 1000).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }),
+      },
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#CFC7C1',
@@ -288,13 +300,15 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       priceScaleId: 'left',
       baseValue: { type: 'price', price: 50 },
       relativeGradient: false,
+      // token0's LINE stays orange on both sides of 50% (its own color); only the
+      // FILL is two-tone — orange above 50% (token0-heavy) / blue below (token1-heavy).
       topLineColor: COLOR0,
       topFillColor1: COLOR0_FILL_NEAR,
       topFillColor2: COLOR0_FILL_FAR,
-      bottomLineColor: COLOR1,
+      bottomLineColor: COLOR0,
       bottomFillColor1: COLOR1_FILL_FAR,
       bottomFillColor2: COLOR1_FILL_NEAR,
-      lineWidth: 2,
+      lineWidth: 1,
       priceFormat: { type: 'custom', formatter: (v: number) => `${v.toFixed(0)}%`, minMove: 1 },
       // Pin the left % scale to 0–100 (50% centered). Computed on every autoscale
       // pass, so it's timing-independent — no autoScale:false race that could
@@ -323,7 +337,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       ...commonNoLabels,
       priceScaleId: 'right',
       color: COLOR_LPBH,
-      lineWidth: 2,
+      lineWidth: 1,
       priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
     })
 
