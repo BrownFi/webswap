@@ -312,9 +312,9 @@ function PoolDetailInner({
         {/* Mobile-only section: pair title + dev stats + rate, always on top */}
         <div className="lg:hidden flex flex-col gap-3 mt-4 mb-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={26} margin quoteTokenIndex={pairRaw.quoteTokenIndex} />
+            <DoubleCurrencyLogo currency0={currency0} currency1={currency1} chainId={chainId} size={26} margin quoteTokenIndex={pairRaw.quoteTokenIndex} />
             <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', color: '#FBFBFD' }}>
-              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairRaw.quoteTokenIndex} />
+              <DoubleCurrencySymbol currency0={currency0} currency1={currency1} chainId={chainId} quoteTokenIndex={pairRaw.quoteTokenIndex} />
             </span>
             <span
               style={{
@@ -411,9 +411,9 @@ function PoolDetailInner({
                 pool chain. A standalone banner here was redundant. */}
             {/* Header — shown on desktop only; mobile header is above the grid */}
             <div className="hidden lg:flex items-center gap-3 flex-wrap">
-              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} size={44} quoteTokenIndex={pairRaw.quoteTokenIndex} />
+              <DoubleCurrencyLogo currency0={currency0} currency1={currency1} chainId={chainId} size={44} quoteTokenIndex={pairRaw.quoteTokenIndex} />
               <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '28px', color: '#FBFBFD' }}>
-                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} quoteTokenIndex={pairRaw.quoteTokenIndex} />
+                <DoubleCurrencySymbol currency0={currency0} currency1={currency1} chainId={chainId} quoteTokenIndex={pairRaw.quoteTokenIndex} />
               </span>
               <span
                 style={{
