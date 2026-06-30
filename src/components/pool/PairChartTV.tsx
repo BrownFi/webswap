@@ -177,7 +177,11 @@ const PairChartTVInner = ({ pair }: Props) => {
         if (v3ProdChart) {
           return SERIES_ALL.filter(
             (s) =>
-              s.key === 'lpPrice' || s.key === 'uniV2Price' || s.key === 'lpMinusUniV2' || s.key === 'volume',
+              s.key === 'lpPrice' ||
+              s.key === 'bnhPrice' ||
+              s.key === 'uniV2Price' ||
+              s.key === 'lpMinusUniV2' ||
+              s.key === 'volume',
           )
         }
         return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
@@ -197,7 +201,8 @@ const PairChartTVInner = ({ pair }: Props) => {
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
     lpPrice: true,
-    bnhPrice: showExtendedMetrics,
+    // HODL price is shown on the prod V3 chart too (default-on, matching beta).
+    bnhPrice: showExtendedMetrics || v3ProdChart,
     // On the production V3 chart, UniV2 price + LP−UniV2 are the two extra
     // lines we DO want on by default (alongside LP price); elsewhere they
     // follow the extended-metrics gate.
