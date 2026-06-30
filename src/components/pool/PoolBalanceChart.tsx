@@ -185,29 +185,20 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const nowPct0 = latest ? latest.pct0 : null
   // Legend items — base first (display order); each keeps its raw color + a
   // toggle key. LP vs BH appended when available.
-  const legendItems: { key: ToggleKey; label: string; color: string; value: string }[] =
+  const legendItems: { key: ToggleKey; label: string; color: string }[] =
     nowPct0 == null
       ? []
       : [
           ...(reversed
             ? [
-                { key: 't1' as const, label: symbol1, color: COLOR1, value: `${(100 - nowPct0).toFixed(2)}%` },
-                { key: 't0' as const, label: symbol0, color: COLOR0, value: `${nowPct0.toFixed(2)}%` },
+                { key: 't1' as const, label: symbol1, color: COLOR1 },
+                { key: 't0' as const, label: symbol0, color: COLOR0 },
               ]
             : [
-                { key: 't0' as const, label: symbol0, color: COLOR0, value: `${nowPct0.toFixed(2)}%` },
-                { key: 't1' as const, label: symbol1, color: COLOR1, value: `${(100 - nowPct0).toFixed(2)}%` },
+                { key: 't0' as const, label: symbol0, color: COLOR0 },
+                { key: 't1' as const, label: symbol1, color: COLOR1 },
               ]),
-          ...(latest?.lpVsBh != null
-            ? [
-                {
-                  key: 'lpbh' as const,
-                  label: 'LP vs BH',
-                  color: COLOR_LPBH,
-                  value: `${latest.lpVsBh >= 0 ? '+' : ''}${latest.lpVsBh.toFixed(2)}%`,
-                },
-              ]
-            : []),
+          ...(latest?.lpVsBh != null ? [{ key: 'lpbh' as const, label: 'LP vs BH', color: COLOR_LPBH }] : []),
         ]
 
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -219,7 +210,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   // The green LP-vs-BH LineSeries (right scale).
   const lpbhRef = useRef<ISeriesApi<'Line'> | null>(null)
 
-  // Hovered values for the bottom legend ("now" → hovered while crosshair moves).
+  // Hovered values for the floating tooltip (set while the crosshair moves).
   const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number } | null>(null)
   // Floating tooltip anchor — container-relative pixels + the hovered time.
   // null when the cursor is outside the plot area. Mirrors PairChartTV's `tip`.
@@ -305,10 +296,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       bottomFillColor2: COLOR1_FILL_NEAR,
       lineWidth: 2,
       priceFormat: { type: 'custom', formatter: (v: number) => `${v.toFixed(0)}%`, minMove: 1 },
+      // Pin the left % scale to 0–100 (50% centered). Computed on every autoscale
+      // pass, so it's timing-independent — no autoScale:false race that could
+      // freeze an empty range before data arrives and push the lines off-screen.
+      autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }),
     })
-    // Pin the visible range to ~0–100 so 50 sits in the middle (autoScale off so
-    // the baseline midline stays centered regardless of data spread).
-    baseSeries.priceScale().applyOptions({ autoScale: false })
     baseSeries.createPriceLine({
       price: 50,
       color: '#493E35',
@@ -370,19 +362,13 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     }
   }, [])
 
-  // Push data into series + pin the left scale to 0–100.
+  // Push data into series. The left scale is pinned to 0–100 by the baseline's
+  // autoscaleInfoProvider, so no scale juggling here — just fit the time axis.
   useEffect(() => {
     baseSeriesRef.current?.setData(seriesData.pct0)
     line1Ref.current?.setData(seriesData.pct1)
     lpbhRef.current?.setData(seriesData.lpVsBh)
-    // Force the left % scale to the full 0–100 window so 50% is centered.
-    baseSeriesRef.current?.priceScale().applyOptions({
-      autoScale: false,
-    })
     if (seriesData.pct0.length) {
-      // setData clamps autoScale-off scales to data; explicitly set the visible
-      // range via two invisible anchor price lines is overkill — instead use the
-      // baseline midline + scale margins. fitContent for the time axis only.
       chartRef.current?.timeScale().fitContent()
     }
   }, [seriesData])
@@ -393,16 +379,6 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     line1Ref.current?.applyOptions({ visible: visible.t1 })
     lpbhRef.current?.applyOptions({ visible: visible.lpbh })
   }, [visible])
-
-  // Legend values prefer the hovered crosshair value, falling back to "now".
-  const legendValue = (item: { key: ToggleKey; value: string }): string => {
-    if (!hovered) return item.value
-    if (item.key === 't0' && hovered.pct0 !== undefined) return `${hovered.pct0.toFixed(2)}%`
-    if (item.key === 't1' && hovered.pct1 !== undefined) return `${hovered.pct1.toFixed(2)}%`
-    if (item.key === 'lpbh' && hovered.lpVsBh !== undefined)
-      return `${hovered.lpVsBh >= 0 ? '+' : ''}${hovered.lpVsBh.toFixed(2)}%`
-    return item.value
-  }
 
   return (
     <div>
@@ -559,14 +535,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                 key={item.key}
                 type="button"
                 onClick={() => setVisible((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
-                className="inline-flex items-center gap-1.5 cursor-pointer"
+                className="inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
                 style={{ background: 'transparent', border: 'none', padding: 0, opacity: visible[item.key] ? 1 : 0.4 }}
               >
-                <span style={{ width: 14, height: 3, borderRadius: 2, background: item.color, display: 'inline-block' }} />
-                <span style={{ fontFamily: 'Inter', fontSize: 12, color: '#978A80' }}>{item.label}</span>
-                <span style={{ fontFamily: 'Inter', fontSize: 12, fontWeight: 600, color: '#FBFBFD' }}>
-                  {legendValue(item)}
-                </span>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: item.color, display: 'inline-block' }} />
+                <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>{item.label}</span>
               </button>
             ))}
           </div>
