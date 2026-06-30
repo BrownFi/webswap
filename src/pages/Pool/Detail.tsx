@@ -537,9 +537,10 @@ function PoolDetailInner({
             </div>
 
             {/* Pool analytics charts (balance/imbalance + oracle spread) — beta/dev
-                ONLY, hidden on production (mainnet) per product. Same gate the
-                dev-stats editor uses. */}
-            {!isMainnet && (
+                ONLY (hidden on mainnet per product) AND V3-only: both query the
+                indexer's `transactions` entity, which the V2 indexer doesn't have
+                (it 500s), so they'd error on V2 pools. */}
+            {!isMainnet && isV3Like(version) && (
               <>
                 {/* Pool balance / imbalance over time — pool-wide (reserve0USD/reserve1USD per tx), lightweight-charts (TradingView) */}
                 <PoolBalanceChart
