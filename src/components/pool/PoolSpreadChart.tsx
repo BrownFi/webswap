@@ -450,7 +450,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
             const date = new Date(tip.time * 1000)
             const dateStr =
               range === '1D'
-                ? date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                ? date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                 : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
             return (
               <div

@@ -654,7 +654,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
             const date = new Date(tip.time * 1000)
             const dateStr =
               range === '1D'
-                ? date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                ? date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                 : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
             const p0 = hovered.pct0 as number
             const p1 = hovered.pct1 !== undefined ? hovered.pct1 : 100 - p0
