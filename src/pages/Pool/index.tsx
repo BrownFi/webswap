@@ -73,6 +73,7 @@ const LIST_ALL_PAIRS = `
         totalSupply
       }
     }
+    _meta { block { timestamp } hasIndexingErrors }
   }
 `
 
@@ -114,6 +115,7 @@ const LIST_ALL_PAIRS_V3 = `
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
     }
+    _meta { block { timestamp } hasIndexingErrors }
   }
 `
 
@@ -139,7 +141,10 @@ export default function Pool() {
   //   on-chain reads via useV3PoolsOnChain
   // Flip v3UseIndexer in lib/sdk/constants/addresses.ts when the indexer
   // is caught up — no other code changes required.
-  const { data, error, isLoading: isLoadingPairs } = useQuery<{ pairs: PairStats[] }>({
+  const { data, error, isLoading: isLoadingPairs } = useQuery<{
+    pairs: PairStats[]
+    _meta?: { block: { timestamp: number }; hasIndexingErrors: boolean }
+  }>({
     queryKey: ['pairList', chainId, version],
     queryFn: () =>
       graphqlFetcher({
@@ -296,14 +301,16 @@ export default function Pool() {
   const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
   const [showIndexerModal, setShowIndexerModal] = useState(false)
 
-  // A real indexer lag stops updates on EVERY pool, so only flag it when all
-  // high-TVL pools have gone stale. A single quiet pool is normal on low-activity
-  // chains (e.g. a $1k ARB pool may not trade for hours) and must NOT trip this.
-  // eslint-disable-next-line react-hooks/purity -- staleness check vs wall clock; re-running each render is fine
-  const indexerStaleBefore = Date.now() / 1000 - 12 * 3600
-  const highTvlPairs = filteredPairs.filter((pair) => pair.tvl > 1000)
-  const hasIndexerIssue =
-    !!error || (highTvlPairs.length > 0 && highTvlPairs.every((pair) => pair.updatedAt < indexerStaleBefore))
+  // Key the "indexer syncing" banner off the indexer's OWN reported sync head
+  // (`_meta`), not pool trade-staleness. The latter false-positives on quiet
+  // chains where every pool can sit idle for hours while the indexer is fully
+  // synced (e.g. ARB's only 2 big pools idle >12h tripped the old heuristic).
+  // Real lag = the head block falling meaningfully behind wall-clock (>15 min),
+  // or the indexer reporting indexing errors.
+  const indexerMeta = data?._meta
+  // eslint-disable-next-line react-hooks/purity -- head-lag vs wall clock; re-running each render is fine
+  const indexerLagSec = indexerMeta?.block ? Date.now() / 1000 - Number(indexerMeta.block.timestamp) : 0
+  const hasIndexerIssue = !!error || !!indexerMeta?.hasIndexingErrors || indexerLagSec > 15 * 60
 
   useEffect(() => {
     if (hasIndexerIssue) {
