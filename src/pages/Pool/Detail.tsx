@@ -296,15 +296,16 @@ function PoolDetailInner({
 
   // Pool balances panel renders in base/quote order so the bar + labels
   // stay consistent with the page title. V3 uses the indexer's authoritative
-  // quoteTokenIndex; V2 / unknown fall back to the symbol whitelist. All four
-  // bound values flip together to keep each row internally correct (reserve
-  // amount stays attached to its own symbol + color).
+  // quoteTokenIndex; V2 / unknown fall back to the symbol whitelist. The sym/cur/
+  // reserve/pct flip together to keep each row internally correct. Color, however,
+  // follows BASE/QUOTE (not the raw token): the BASE (left) is ALWAYS gold, the
+  // QUOTE (right) ALWAYS blue — consistent across every pool, regardless of isReversed.
   const isReversed = shouldReverseDisplay(currency0, currency1, chainId, pairRaw.quoteTokenIndex)
   const balanceL = isReversed
-    ? { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
+    ? { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#D8A072' }
     : { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
   const balanceR = isReversed
-    ? { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
+    ? { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#6FB3E6' }
     : { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
 
   return (

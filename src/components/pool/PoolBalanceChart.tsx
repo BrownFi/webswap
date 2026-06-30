@@ -27,9 +27,10 @@ import { graphqlFetcher } from 'utils/graphql'
 // BELOW 50 is blue (token1-heavy), so the dominant token is read directly from the
 // fill color of one continuous series.
 //
-// Colors stay tied to each RAW token (token0 → orange, token1 → blue); the
-// `reversed` prop only flips DISPLAY ORDER of the legend rows so the base token
-// lists first, matching the pool's base/quote display rule.
+// Colors follow BASE/QUOTE (via the `reversed` prop = shouldReverseDisplay): the
+// BASE token is always GOLD (COLOR0) and the QUOTE always BLUE (COLOR1), consistent
+// across every pool — not tied to raw token0/token1. `reversed` also flips the
+// legend/tooltip DISPLAY ORDER so the base token lists first.
 const GET_POOL_BALANCES = `
   query PoolBalances($pair: String) {
     transactions(first: 1000, where: { pair: $pair }, orderBy: timestamp, orderDirection: desc) {
@@ -96,16 +97,16 @@ const COLOR1 = '#4DA3FF' // token1 (blue)
 const COLOR_LPBH = '#83CF84' // LP vs BH (green)
 const COLOR_PRICE0 = '#EC4899' // token0 USD price (pink/magenta) — distinct from the three above
 
-// USD price formatter that adapts to magnitude: keeps ~2–4 significant digits so a
-// ~$1 stable, a ~$0.0001 micro-cap, and a ~$60k WBTC all read cleanly.
-const formatUsd = (v: number): string => {
+// Relative-price formatter that adapts decimals to magnitude (no `$` — the value
+// is base priced in the quote token, e.g. ~1581 USDC.e per WETH). Keeps precision
+// for tiny ratios and stays tidy for large ones.
+const formatRel = (v: number): string => {
   if (!Number.isFinite(v)) return '—'
   const abs = Math.abs(v)
   const sign = v < 0 ? '-' : ''
-  if (abs === 0) return '$0'
-  // Choose decimals so small prices keep precision and large prices stay tidy.
+  if (abs === 0) return '0'
   const digits = abs >= 1000 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : abs >= 0.0001 ? 6 : 8
-  return `${sign}$${abs.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits })}`
+  return `${sign}${abs.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits })}`
 }
 
 // Low-opacity fills for the dominant-token Baseline shading. Two stops each so
@@ -121,26 +122,36 @@ type Props = {
   version: number
   symbol0: string
   symbol1: string
-  // Pool base/quote display order (shouldReverseDisplay). When true the base is
-  // raw token1, so list it first — colors stay attached to their raw token.
+  // Pool base/quote display order + color mapping (shouldReverseDisplay). When true
+  // the base is raw token1, so it lists first AND the base/quote colors swap (base
+  // stays gold, quote blue) — colors follow base/quote, not the raw token.
   reversed?: boolean
-  // Indexer's authoritative quote-token index (V3). The price line plots the BASE
-  // (non-quote) token's USD price. null/undefined (V2/unknown) → default base = token0.
+  // Accepted for caller compatibility but UNUSED: base/quote now derives from the
+  // canonical `reversed` prop (single source of truth = shouldReverseDisplay).
   quoteTokenIndex?: number | null
 }
 
 type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0'
 
-export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false, quoteTokenIndex }: Props) {
+export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false }: Props) {
   const [range, setRange] = useState<Range>('ALL')
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
   const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true })
 
-  // The price line plots the BASE (non-quote) token's USD price. The base is the
-  // NON-quote token per the indexer's quoteTokenIndex; default to token0 when it's
-  // null/undefined (V2/unknown pools).
-  const baseIdx = quoteTokenIndex == null ? 0 : Number(quoteTokenIndex) === 0 ? 1 : 0
+  // The price line plots the BASE token priced in the QUOTE token (the pool
+  // exchange rate, e.g. USDC.e per WETH). Base/quote comes from the canonical
+  // `reversed` (= shouldReverseDisplay) so the chart agrees with the pair title
+  // everywhere — base is token0 when not reversed, token1 when reversed.
+  const baseIdx = reversed ? 1 : 0
+  const quoteIdx = baseIdx === 0 ? 1 : 0
   const baseSymbol = baseIdx === 0 ? symbol0 : symbol1
+  const quoteSymbol = baseIdx === 0 ? symbol1 : symbol0
+
+  // Colors follow BASE/QUOTE, not raw token0/token1: the BASE token is always GOLD
+  // (COLOR0) and the QUOTE always BLUE (COLOR1), consistent across every pool. Base
+  // is token0 when not reversed, token1 when reversed — so the raw-token colors swap.
+  const token0Color = reversed ? COLOR1 : COLOR0
+  const token1Color = reversed ? COLOR0 : COLOR1
 
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolBalances', chainId, pairAddress, version],
@@ -219,11 +230,17 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         const total = r0 + r1
         const pct0 = total > 0 ? (r0 / total) * 100 : NaN
         const pct1 = 100 - pct0
-        // BASE token USD price = its USD reserve / its token reserve. Which token
-        // is "base" depends on quoteTokenIndex (base = non-quote token).
+        // RELATIVE price = base token priced in the quote token (the pool exchange
+        // rate). Computed as base's USD price ÷ quote's USD price — correct even
+        // though BrownFi reserves aren't value-balanced. base/quote chosen via
+        // `reversed` (base = non-quote token).
         const baseAmt = Number(baseIdx === 0 ? t.reserve0 : t.reserve1)
         const baseUsd = baseIdx === 0 ? r0 : r1
-        const price0 = baseAmt > 0 ? baseUsd / baseAmt : NaN
+        const quoteAmt = Number(quoteIdx === 0 ? t.reserve0 : t.reserve1)
+        const quoteUsd = quoteIdx === 0 ? r0 : r1
+        const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
+        const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
+        const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
         return { t: Number(t.timestamp), pct0, pct1, price0 }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
@@ -234,7 +251,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       while (di < dailyLpBh.length && dailyLpBh[di].t <= p.t) last = dailyLpBh[di++].lpVsBh
       return { ...p, lpVsBh: last }
     })
-  }, [combinedTxs, dailyLpBh, baseIdx])
+  }, [combinedTxs, dailyLpBh, baseIdx, quoteIdx])
 
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
   // unique time values; two trades can share a second). Keep the latest reserve
@@ -270,16 +287,16 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       : [
           ...(reversed
             ? [
-                { key: 't1' as const, label: symbol1, color: COLOR1 },
-                { key: 't0' as const, label: symbol0, color: COLOR0 },
+                { key: 't1' as const, label: symbol1, color: token1Color },
+                { key: 't0' as const, label: symbol0, color: token0Color },
               ]
             : [
-                { key: 't0' as const, label: symbol0, color: COLOR0 },
-                { key: 't1' as const, label: symbol1, color: COLOR1 },
+                { key: 't0' as const, label: symbol0, color: token0Color },
+                { key: 't1' as const, label: symbol1, color: token1Color },
               ]),
           ...(latest?.lpVsBh != null ? [{ key: 'lpbh' as const, label: 'LP vs BH', color: COLOR_LPBH }] : []),
           ...(latest && Number.isFinite(latest.price0)
-            ? [{ key: 'price0' as const, label: `${baseSymbol} price`, color: COLOR_PRICE0 }]
+            ? [{ key: 'price0' as const, label: `${baseSymbol}/${quoteSymbol}`, color: COLOR_PRICE0 }]
             : []),
         ]
 
@@ -428,11 +445,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
 
     const commonNoLabels = { lastValueVisible: false, priceLineVisible: false }
 
-    // BACKMOST layer: base-token USD price as a subtle ambient AREA on its OWN
-    // overlay scale ('price') — a custom id with no edge axis, so it auto-scales
-    // independently of the 0–100 left % axis and the right LP-vs-BH % axis (the
-    // price magnitude won't distort either). Created FIRST so lightweight-charts
-    // (which draws in creation order) renders it behind the three data lines.
+    // BACKMOST layer: base-token RELATIVE price (priced in the quote) as a subtle
+    // ambient AREA on its OWN overlay scale ('price') — a custom id with no edge
+    // axis, so it auto-scales independently of the 0–100 left % axis and the right
+    // LP-vs-BH % axis (the price magnitude won't distort either). Created FIRST so
+    // lightweight-charts (which draws in creation order) renders it behind the lines.
     const price0 = chart.addSeries(AreaSeries, {
       ...commonNoLabels,
       priceScaleId: 'price',
@@ -440,28 +457,39 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       lineWidth: 1,
       topColor: 'rgba(236, 72, 153, 0.18)',
       bottomColor: 'rgba(236, 72, 153, 0.00)',
-      priceFormat: { type: 'custom', formatter: (v: number) => formatUsd(v), minMove: 0.00000001 },
+      priceFormat: { type: 'custom', formatter: (v: number) => formatRel(v), minMove: 0.00000001 },
     })
     // Give the isolated price overlay a little vertical breathing room.
     price0.priceScale().applyOptions({ scaleMargins: { top: 0.15, bottom: 0.15 } })
 
+    // Dominance FILL follows BASE/QUOTE color too: above-50% = token0's color,
+    // below-50% = token1's color. When not reversed token0=gold/token1=blue → gold
+    // above / blue below; when reversed those swap (token0=quote=blue above,
+    // token1=base=gold below). So the fill PAIR swaps with `reversed` just like the
+    // line colors.
+    const topFillNear = reversed ? COLOR1_FILL_NEAR : COLOR0_FILL_NEAR
+    const topFillFar = reversed ? COLOR1_FILL_FAR : COLOR0_FILL_FAR
+    const bottomFillNear = reversed ? COLOR0_FILL_NEAR : COLOR1_FILL_NEAR
+    const bottomFillFar = reversed ? COLOR0_FILL_FAR : COLOR1_FILL_FAR
+
     // LEFT scale — balance %. token0 % as a Baseline pinned at 50: ABOVE 50 fills
-    // orange (token0-heavy), BELOW 50 fills blue (token1-heavy). This single
-    // series replaces recharts' two band Areas. The baseline's own line is the
-    // token0 line. Created after the price area so it renders on top of it.
+    // with token0's color (token0-heavy), BELOW 50 fills with token1's color. This
+    // single series replaces recharts' two band Areas. The baseline's own line is
+    // the token0 line. Created after the price area so it renders on top of it.
     const baseSeries = chart.addSeries(BaselineSeries, {
       ...commonNoLabels,
       priceScaleId: 'left',
       baseValue: { type: 'price', price: 50 },
       relativeGradient: false,
-      // token0's LINE stays orange on both sides of 50% (its own color); only the
-      // FILL is two-tone — orange above 50% (token0-heavy) / blue below (token1-heavy).
-      topLineColor: COLOR0,
-      topFillColor1: COLOR0_FILL_NEAR,
-      topFillColor2: COLOR0_FILL_FAR,
-      bottomLineColor: COLOR0,
-      bottomFillColor1: COLOR1_FILL_FAR,
-      bottomFillColor2: COLOR1_FILL_NEAR,
+      // token0's LINE stays its own color on both sides of 50% (so the line is
+      // solid across the midline); only the FILL is two-tone (token0 above /
+      // token1 below).
+      topLineColor: token0Color,
+      topFillColor1: topFillNear,
+      topFillColor2: topFillFar,
+      bottomLineColor: token0Color,
+      bottomFillColor1: bottomFillFar,
+      bottomFillColor2: bottomFillNear,
       lineWidth: 1,
       priceFormat: { type: 'custom', formatter: (v: number) => `${v.toFixed(0)}%`, minMove: 1 },
       // Pin the left % scale to 0–100 (50% centered). Computed on every autoscale
@@ -478,11 +506,12 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       title: '',
     })
 
-    // token1 % — thin blue line on the same left scale so both token lines show.
+    // token1 % — thin line (token1's base/quote color) on the same left scale so
+    // both token lines show.
     const line1 = chart.addSeries(LineSeries, {
       ...commonNoLabels,
       priceScaleId: 'left',
-      color: COLOR1,
+      color: token1Color,
       lineWidth: 1,
     })
 
@@ -542,7 +571,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       lpbhRef.current = null
       price0Ref.current = null
     }
-  }, [])
+  }, [reversed, token0Color, token1Color])
 
   // Push data into series. The left scale is pinned to 0–100 by the baseline's
   // autoscaleInfoProvider, so no scale juggling here — just fit the time axis.
@@ -665,8 +694,8 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
             const p1 = hovered.pct1 !== undefined ? hovered.pct1 : 100 - p0
             // Each token keeps its own color; only row ORDER follows base/quote.
             const tokenRows = [
-              { color: COLOR0, label: symbol0, value: `${p0.toFixed(2)}%` },
-              { color: COLOR1, label: symbol1, value: `${p1.toFixed(2)}%` },
+              { color: token0Color, label: symbol0, value: `${p0.toFixed(2)}%` },
+              { color: token1Color, label: symbol1, value: `${p1.toFixed(2)}%` },
             ]
             const orderedRows = reversed ? [tokenRows[1], tokenRows[0]] : tokenRows
             return (
@@ -726,8 +755,8 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                       gap: 16,
                     }}
                   >
-                    <span style={{ color: COLOR_PRICE0 }}>{baseSymbol} price</span>
-                    <span style={{ color: '#FBFBFD' }}>{formatUsd(hovered.price0)}</span>
+                    <span style={{ color: COLOR_PRICE0 }}>{baseSymbol}/{quoteSymbol}</span>
+                    <span style={{ color: '#FBFBFD' }}>{formatRel(hovered.price0)}</span>
                   </div>
                 )}
               </div>
