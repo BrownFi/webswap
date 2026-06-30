@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
+  AreaSeries,
   BaselineSeries,
   ColorType,
   CrosshairMode,
@@ -290,8 +291,8 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const line1Ref = useRef<ISeriesApi<'Line'> | null>(null)
   // The green LP-vs-BH LineSeries (right scale).
   const lpbhRef = useRef<ISeriesApi<'Line'> | null>(null)
-  // The violet token0 USD-price LineSeries (own isolated 'price' overlay scale).
-  const price0Ref = useRef<ISeriesApi<'Line'> | null>(null)
+  // The base-token USD-price AreaSeries (backmost, own isolated 'price' overlay scale).
+  const price0Ref = useRef<ISeriesApi<'Area'> | null>(null)
 
   // Hovered values for the floating tooltip (set while the crosshair moves).
   const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number; price0?: number } | null>(null)
@@ -427,10 +428,27 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
 
     const commonNoLabels = { lastValueVisible: false, priceLineVisible: false }
 
+    // BACKMOST layer: base-token USD price as a subtle ambient AREA on its OWN
+    // overlay scale ('price') — a custom id with no edge axis, so it auto-scales
+    // independently of the 0–100 left % axis and the right LP-vs-BH % axis (the
+    // price magnitude won't distort either). Created FIRST so lightweight-charts
+    // (which draws in creation order) renders it behind the three data lines.
+    const price0 = chart.addSeries(AreaSeries, {
+      ...commonNoLabels,
+      priceScaleId: 'price',
+      lineColor: COLOR_PRICE0,
+      lineWidth: 1,
+      topColor: 'rgba(236, 72, 153, 0.18)',
+      bottomColor: 'rgba(236, 72, 153, 0.00)',
+      priceFormat: { type: 'custom', formatter: (v: number) => formatUsd(v), minMove: 0.00000001 },
+    })
+    // Give the isolated price overlay a little vertical breathing room.
+    price0.priceScale().applyOptions({ scaleMargins: { top: 0.15, bottom: 0.15 } })
+
     // LEFT scale — balance %. token0 % as a Baseline pinned at 50: ABOVE 50 fills
     // orange (token0-heavy), BELOW 50 fills blue (token1-heavy). This single
     // series replaces recharts' two band Areas. The baseline's own line is the
-    // token0 line.
+    // token0 line. Created after the price area so it renders on top of it.
     const baseSeries = chart.addSeries(BaselineSeries, {
       ...commonNoLabels,
       priceScaleId: 'left',
@@ -476,19 +494,6 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       lineWidth: 1,
       priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
     })
-
-    // token0 USD price (violet) on its OWN overlay scale ('price') — a custom id
-    // with no edge axis, so it auto-scales independently of the 0–100 left % axis
-    // and the right LP-vs-BH % axis (the price magnitude won't distort either).
-    const price0 = chart.addSeries(LineSeries, {
-      ...commonNoLabels,
-      priceScaleId: 'price',
-      color: COLOR_PRICE0,
-      lineWidth: 1,
-      priceFormat: { type: 'custom', formatter: (v: number) => formatUsd(v), minMove: 0.00000001 },
-    })
-    // Give the isolated price overlay a little vertical breathing room.
-    price0.priceScale().applyOptions({ scaleMargins: { top: 0.15, bottom: 0.15 } })
 
     const crosshairHandler = (param: {
       time?: number
