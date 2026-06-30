@@ -4,13 +4,15 @@ import {
   ColorType,
   CrosshairMode,
   IChartApi,
+  IRange,
   ISeriesApi,
   LineSeries,
   LineStyle,
   TickMarkType,
+  Time,
   createChart,
 } from 'lightweight-charts'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
@@ -30,6 +32,18 @@ import { graphqlFetcher } from 'utils/graphql'
 const GET_POOL_BALANCES = `
   query PoolBalances($pair: String) {
     transactions(first: 1000, where: { pair: $pair }, orderBy: timestamp, orderDirection: desc) {
+      timestamp
+      reserve0USD
+      reserve1USD
+    }
+  }
+`
+
+// Same shape as GET_POOL_BALANCES but pages OLDER txs via `timestamp_lt`
+// (numeric unix seconds, no quotes — indexer-verified). Used by loadMore.
+const GET_POOL_BALANCES_OLDER = `
+  query PoolBalancesOlder($pair: String, $before: BigInt) {
+    transactions(first: 1000, where: { pair: $pair, timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
       timestamp
       reserve0USD
       reserve1USD
@@ -118,6 +132,27 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     placeholderData: keepPreviousData,
   })
 
+  // Older tx batches accumulated by scroll-to-load-more (newest-first, like the
+  // initial fetch). Combined with the initial batch in `combinedTxs`, so the
+  // pct/LP-vs-BH step-attach math below is unchanged.
+  const [olderTxs, setOlderTxs] = useState<Txn[]>([])
+  // No concurrent fetches; stop once a batch returns < 1000 (older end reached).
+  const loadingRef = useRef(false)
+  const exhaustedRef = useRef(false)
+  // Scroll-position preservation: capture the visible TIME range before a prepend
+  // and restore it after setData (so the view doesn't jump as bars grow left).
+  const pendingRestoreRef = useRef(false)
+  const savedRangeRef = useRef<IRange<Time> | null>(null)
+
+  // Reset accumulation + paging guards when the pool identity changes.
+  useEffect(() => {
+    setOlderTxs([])
+    loadingRef.current = false
+    exhaustedRef.current = false
+    pendingRestoreRef.current = false
+    savedRangeRef.current = null
+  }, [pairAddress, chainId, version])
+
   // Daily LP-vs-BH %, ascending — the step source for each trade point.
   const dailyLpBh = useMemo(() => {
     const rows = dayData?.pairDayDatas ?? []
@@ -131,12 +166,16 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       .sort((a, b) => a.t - b.t)
   }, [dayData])
 
+  // Initial batch (newest-first) + accumulated older batches (also newest-first),
+  // so the whole thing stays a single descending list. The oldest accumulated
+  // timestamp (last element) is the cursor for the next `timestamp_lt` page.
+  const combinedTxs = useMemo<Txn[]>(() => [...(data?.transactions ?? []), ...olderTxs], [data, olderTxs])
+
   // Full fetched series as a % split, chronological (indexer returns newest-first).
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point
   // also carries the LP-vs-BH value from the latest daily bucket ≤ its timestamp.
   const allPoints = useMemo<Point[]>(() => {
-    const txs = data?.transactions ?? []
-    const base = [...txs]
+    const base = [...combinedTxs]
       .reverse()
       .map((t) => {
         const r0 = Number(t.reserve0USD)
@@ -154,22 +193,18 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       while (di < dailyLpBh.length && dailyLpBh[di].t <= p.t) last = dailyLpBh[di++].lpVsBh
       return { ...p, lpVsBh: last }
     })
-  }, [data, dailyLpBh])
-
-  // Apply the selected timeframe (client-side).
-  const points = useMemo<Point[]>(() => {
-    const span = RANGES[range]
-    if (span == null) return allPoints
-    const cutoff = Math.floor(Date.now() / 1000) - span
-    return allPoints.filter((p) => p.t >= cutoff)
-  }, [allPoints, range])
+  }, [combinedTxs, dailyLpBh])
 
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
   // unique time values; two trades can share a second). Keep the latest reserve
   // snapshot for a given second by overwriting as we walk ascending.
+  //
+  // The chart always holds the FULL accumulated set — the timeframe selector is a
+  // zoom preset (visible TIME range), not a data filter, so every range can
+  // scroll left and trigger load-more.
   const seriesData = useMemo(() => {
     const byTime = new Map<number, Point>()
-    points.forEach((p) => byTime.set(p.t, p))
+    allPoints.forEach((p) => byTime.set(p.t, p))
     const sorted = [...byTime.values()].sort((a, b) => a.t - b.t)
     return {
       pct0: sorted.map((p) => ({ time: p.t as any, value: p.pct0 })),
@@ -178,7 +213,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
         .map((p) => ({ time: p.t as any, value: p.lpVsBh as number })),
     }
-  }, [points])
+  }, [allPoints])
 
   // The "now" split is always the latest trade, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
@@ -215,6 +250,59 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   // Floating tooltip anchor — container-relative pixels + the hovered time.
   // null when the cursor is outside the plot area. Mirrors PairChartTV's `tip`.
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
+
+  // Latest `loadMore`, read from the once-created chart subscription.
+  const loadMoreRef = useRef<() => void>(() => {})
+
+  // Apply the current timeframe as a VISIBLE-RANGE (zoom) preset — the chart
+  // always holds the full data, so this only changes what's on screen. 'ALL' =
+  // fit everything; bounded ranges = the last N seconds up to the newest point.
+  // If the data doesn't reach `from`, lightweight-charts clamps to the data start.
+  const applyRangePreset = useCallback(() => {
+    const ts = chartRef.current?.timeScale()
+    if (!ts) return
+    const span = RANGES[range]
+    const last = seriesData.pct0.length ? (seriesData.pct0[seriesData.pct0.length - 1].time as number) : null
+    if (span == null || last == null) {
+      ts.fitContent()
+      return
+    }
+    ts.setVisibleRange({ from: (last - span) as Time, to: last as Time })
+  }, [range, seriesData])
+  // Stable handle so the data-push effect can apply the preset without taking
+  // `applyRangePreset` as a dependency (which would re-fire it on every range tick).
+  const applyRangePresetRef = useRef(applyRangePreset)
+  applyRangePresetRef.current = applyRangePreset
+
+  // Fetch the next older batch and prepend it. Guarded so only one fetch runs at
+  // a time, and stops once a batch comes back < 1000 (older end reached). Capture
+  // the visible TIME range first so the post-setData effect can restore the view.
+  const loadMore = useCallback(async () => {
+    if (loadingRef.current || exhaustedRef.current) return
+    const oldest = combinedTxs[combinedTxs.length - 1]
+    if (!oldest) return
+    const before = Number(oldest.timestamp)
+    if (!Number.isFinite(before)) return
+    loadingRef.current = true
+    try {
+      const res = (await graphqlFetcher({
+        operationName: 'PoolBalancesOlder',
+        query: GET_POOL_BALANCES_OLDER,
+        variables: { chainId, version, pair: pairAddress.toLowerCase(), before },
+      })) as { transactions?: Txn[] } | null
+      const batch = res?.transactions ?? []
+      if (batch.length < 1000) exhaustedRef.current = true
+      if (batch.length > 0) {
+        // Times of existing bars don't change, so the saved TIME range stays valid.
+        savedRangeRef.current = chartRef.current?.timeScale().getVisibleRange() ?? null
+        pendingRestoreRef.current = true
+        setOlderTxs((prev) => [...prev, ...batch])
+      }
+    } finally {
+      loadingRef.current = false
+    }
+  }, [combinedTxs, chainId, version, pairAddress])
+  loadMoreRef.current = loadMore
 
   // Create chart + series once.
   useEffect(() => {
@@ -363,6 +451,16 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
+    // Scroll-to-load-more: when the left edge of the visible logical range nears
+    // the start of the loaded data, page older txs. Fires on ANY timeframe — the
+    // selector is now a zoom preset, not a data filter, so every range holds the
+    // full set and can scroll past the loaded edge to extend it.
+    const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
+      if (!logical) return
+      if (logical.from < 10) loadMoreRef.current()
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
+
     baseSeriesRef.current = baseSeries
     line1Ref.current = line1
     lpbhRef.current = lpbh
@@ -382,10 +480,27 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     baseSeriesRef.current?.setData(seriesData.pct0)
     line1Ref.current?.setData(seriesData.pct1)
     lpbhRef.current?.setData(seriesData.lpVsBh)
-    if (seriesData.pct0.length) {
-      chartRef.current?.timeScale().fitContent()
+    if (!seriesData.pct0.length) return
+    if (pendingRestoreRef.current) {
+      // A load-more prepend just grew the series on the LEFT — keep the same TIME
+      // window so the view doesn't jump (older bars slide in off-screen to the
+      // left). Do NOT re-apply the preset here, or we'd yank the user back.
+      const saved = savedRangeRef.current
+      if (saved) chartRef.current?.timeScale().setVisibleRange(saved)
+      pendingRestoreRef.current = false
+      savedRangeRef.current = null
+    } else {
+      // Initial load (or a range-change-triggered data refresh) — zoom to the
+      // current timeframe preset.
+      applyRangePresetRef.current()
     }
   }, [seriesData])
+
+  // Re-zoom when the timeframe button changes (data unchanged).
+  useEffect(() => {
+    if (pendingRestoreRef.current) return
+    applyRangePresetRef.current()
+  }, [range])
 
   // Toggle visibility from the bottom legend.
   useEffect(() => {
@@ -449,14 +564,6 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
               style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}
             >
               No activity on this pool yet.
-            </div>
-          )}
-          {allPoints.length > 0 && points.length === 0 && (
-            <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}
-            >
-              No trades in the last {range === '1D' ? '24 hours' : range === '7D' ? '7 days' : '30 days'}.
             </div>
           )}
 

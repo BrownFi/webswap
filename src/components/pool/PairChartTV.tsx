@@ -8,13 +8,15 @@ import {
   CrosshairMode,
   HistogramSeries,
   IChartApi,
+  IRange,
   ISeriesApi,
   LineSeries,
   LineStyle,
   TickMarkType,
+  Time,
   createChart,
 } from 'lightweight-charts'
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatPrice } from 'utils/prices'
 
@@ -76,6 +78,29 @@ const GET_PAIR_STATS_HOUR = `
     pairHourDatas(
       first: 24
       where: {pair: $pair}
+      orderBy: hourStartUnix
+      orderDirection: desc
+    ) {
+      hourStartUnix
+      tvl
+      totalVolume
+      totalFee
+      apr
+      lpPrice
+      bnhPrice
+      uniV2Price
+    }
+  }
+`
+
+// 1H paging: older hourly buckets before a cursor (`hourStartUnix_lt`, numeric/
+// unquoted), 168 (~7 days) at a time. Same field selection as GET_PAIR_STATS_HOUR.
+// Only the 1h mode pages — the daily ranges already cover everything at first:1000.
+const GET_PAIR_STATS_HOUR_OLDER = `
+  query PairStatsHourOlder($pair: String, $before: Int) {
+    pairHourDatas(
+      first: 168
+      where: {pair: $pair, hourStartUnix_lt: $before}
       orderBy: hourStartUnix
       orderDirection: desc
     ) {
@@ -231,6 +256,43 @@ const PairChartTVInner = ({ pair }: Props) => {
   const isPending = isHourly ? isPendingHour : isPendingDay
   const data = isHourly ? hourResp : dayResp
 
+  // 1H-only scroll-to-load-more: older hourly buckets accumulated as the user
+  // scrolls left past the initial 24. Combined with the live hourly rows below so
+  // all LP/BH/UniV2 math is unchanged. The daily path is never paged.
+  const [olderHours, setOlderHours] = useState<HourData[]>([])
+  // One fetch at a time; stop once a batch comes back < 168 (older end reached).
+  const loadingRef = useRef(false)
+  const exhaustedRef = useRef(false)
+  // Scroll-position preservation across a prepend: capture the visible TIME range
+  // before appending, restore it after setData (so the view doesn't jump).
+  const pendingRestoreRef = useRef(false)
+  const savedRangeRef = useRef<IRange<Time> | null>(null)
+  // Latest `loadMore` + hourly-mode flag, read by the once-created subscription.
+  const loadMoreRef = useRef<() => void>(() => {})
+  const isHourlyRef = useRef(isHourly)
+  isHourlyRef.current = isHourly
+
+  // Reset accumulation + guards when the pool identity changes OR the range
+  // switches. Entering 1h must start fresh from the latest 24.
+  useEffect(() => {
+    setOlderHours([])
+    loadingRef.current = false
+    exhaustedRef.current = false
+    pendingRestoreRef.current = false
+    savedRangeRef.current = null
+  }, [pair.chainId, pair.liquidityToken.address, pair.version, range])
+
+  // Combined hourly rows (live initial 24 + accumulated older batches). Both are
+  // desc; merged + de-duped by hourStartUnix. Empty when not in 1h mode.
+  const combinedHours = useMemo<HourData[]>(() => {
+    if (!isHourly) return []
+    const live = (hourResp as { pairHourDatas?: HourData[] } | undefined)?.pairHourDatas ?? []
+    const byTime = new Map<number, HourData>()
+    ;[...live, ...olderHours].forEach((h) => byTime.set(Number(h.hourStartUnix), h))
+    // desc (newest-first), so the oldest accumulated bucket is the last element.
+    return [...byTime.values()].sort((a, b) => Number(b.hourStartUnix) - Number(a.hourStartUnix))
+  }, [isHourly, hourResp, olderHours])
+
   const fullChartData = useMemo(() => {
     const toPoint = (lpRaw: number, bnhRaw: number, uniRaw: number, tvlRaw: number, volRaw: number, time: number) => {
       // Apply the iskHYPEUSDT scale BEFORE computing the diff so we don't
@@ -257,9 +319,9 @@ const PairChartTVInner = ({ pair }: Props) => {
       }
     }
     if (isHourly) {
-      const rows = (data as { pairHourDatas?: HourData[] } | undefined)?.pairHourDatas
-      if (!rows) return []
-      // Hourly query is desc — flip to asc so the chart renders left→right.
+      const rows = combinedHours
+      if (!rows.length) return []
+      // Combined rows are desc — flip to asc so the chart renders left→right.
       return [...rows]
         .sort((a, b) => Number(a.hourStartUnix) - Number(b.hourStartUnix))
         .map((d) => toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.hourStartUnix)))
@@ -269,10 +331,10 @@ const PairChartTVInner = ({ pair }: Props) => {
     return rows.map((d) =>
       toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
     )
-  }, [data, isHourly, iskHYPEUSDT])
+  }, [data, isHourly, iskHYPEUSDT, combinedHours])
 
   const chartData = useMemo(() => {
-    if (isHourly) return fullChartData // already capped to 24 by the query
+    if (isHourly) return fullChartData // full accumulated hourly set (24 + paged)
     const days = RANGE_DAYS[range as Exclude<Range, '1h'>]
     if (!days || fullChartData.length <= days) return fullChartData
     return fullChartData.slice(-days)
@@ -285,6 +347,37 @@ const PairChartTVInner = ({ pair }: Props) => {
   // Floating tooltip state — anchor x/y in container-relative pixels.
   // null when cursor is outside the plot area.
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
+
+  // 1H-only: fetch the next older hourly batch and prepend it. Guarded so only
+  // one fetch runs at a time, and stops once a batch comes back < 168. Captures
+  // the visible TIME range first so the post-setData effect can restore the view.
+  const loadMore = useCallback(async () => {
+    if (loadingRef.current || exhaustedRef.current) return
+    // combinedHours is desc — the oldest accumulated bucket is the last element.
+    const oldest = combinedHours[combinedHours.length - 1]
+    if (!oldest) return
+    const before = Number(oldest.hourStartUnix)
+    if (!Number.isFinite(before)) return
+    loadingRef.current = true
+    try {
+      const res = (await graphqlFetcher({
+        operationName: 'PairStatsHourOlder',
+        query: buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2),
+        variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase(), before },
+      })) as { pairHourDatas?: HourData[] } | null
+      const batch = res?.pairHourDatas ?? []
+      if (batch.length < 168) exhaustedRef.current = true
+      if (batch.length > 0) {
+        // Times of existing bars don't change, so the saved TIME range stays valid.
+        savedRangeRef.current = chartRef.current?.timeScale().getVisibleRange() ?? null
+        pendingRestoreRef.current = true
+        setOlderHours((prev) => [...prev, ...batch])
+      }
+    } finally {
+      loadingRef.current = false
+    }
+  }, [combinedHours, keepUniV2, pair.chainId, pair.version, pair.liquidityToken.address])
+  loadMoreRef.current = loadMore
 
   // Create chart once
   useEffect(() => {
@@ -430,6 +523,17 @@ const PairChartTVInner = ({ pair }: Props) => {
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
+    // Scroll-to-load-more — 1h mode ONLY. When the left edge of the visible
+    // logical range nears the start of the loaded data, page older hourly
+    // buckets. Gated on `isHourlyRef` so the daily ranges (which already cover
+    // everything at first:1000) never trigger a fetch.
+    const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
+      if (!logical) return
+      if (!isHourlyRef.current) return
+      if (logical.from < 10) loadMoreRef.current()
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
+
     chartRef.current = chart
     return () => {
       chart.remove()
@@ -487,7 +591,16 @@ const PairChartTVInner = ({ pair }: Props) => {
         .filter((p) => Number.isFinite(p.value))
       s.setData(mapped)
     })
-    chartRef.current?.timeScale().fitContent()
+    if (pendingRestoreRef.current) {
+      // A 1h load-more prepend just grew the series on the LEFT — keep the same
+      // TIME window so the view doesn't jump (older bars slide in off-screen).
+      const saved = savedRangeRef.current
+      if (saved) chartRef.current?.timeScale().setVisibleRange(saved)
+      pendingRestoreRef.current = false
+      savedRangeRef.current = null
+    } else {
+      chartRef.current?.timeScale().fitContent()
+    }
   }, [chartData, availableSeries])
 
   // Toggle visibility

@@ -3,13 +3,15 @@ import {
   ColorType,
   CrosshairMode,
   IChartApi,
+  IRange,
   ISeriesApi,
   LineSeries,
   LineStyle,
   TickMarkType,
+  Time,
   createChart,
 } from 'lightweight-charts'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 
 // "oSpread" = the oracle-vs-AMM price spread per SWAP, from the indexer
@@ -24,6 +26,20 @@ import { graphqlFetcher } from 'utils/graphql'
 const GET_POOL_SPREAD = `
   query PoolSpread($pair: String) {
     transactions(first: 1000, where: { pair: $pair, type: "SWAP" }, orderBy: timestamp, orderDirection: desc) {
+      timestamp
+      pythPrice0
+      pythPrice1
+      ammPriceRel
+      adjPriceRel
+    }
+  }
+`
+
+// Same shape as GET_POOL_SPREAD but pages OLDER swaps via `timestamp_lt`
+// (numeric unix seconds, no quotes — indexer-verified). Used by loadMore.
+const GET_POOL_SPREAD_OLDER = `
+  query PoolSpreadOlder($pair: String, $before: BigInt) {
+    transactions(first: 1000, where: { pair: $pair, type: "SWAP", timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
       timestamp
       pythPrice0
       pythPrice1
@@ -70,10 +86,37 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
     placeholderData: keepPreviousData,
   })
 
+  // Older swap batches accumulated by scroll-to-load-more (newest-first, like the
+  // initial fetch). Combined with the initial batch in `allPoints`, so the
+  // oSpread math below is unchanged.
+  const [olderTxs, setOlderTxs] = useState<Txn[]>([])
+  // No concurrent fetches; stop once a batch returns < 1000 (older end reached).
+  const loadingRef = useRef(false)
+  const exhaustedRef = useRef(false)
+  // Scroll-position preservation: capture the visible TIME range before a prepend
+  // and restore it after setData (so the view doesn't jump as bars grow left).
+  const pendingRestoreRef = useRef(false)
+  const savedRangeRef = useRef<IRange<Time> | null>(null)
+  // Latest `loadMore`, read from the once-created chart subscription.
+  const loadMoreRef = useRef<() => void>(() => {})
+
+  // Reset accumulation + paging guards when the pool identity changes.
+  useEffect(() => {
+    setOlderTxs([])
+    loadingRef.current = false
+    exhaustedRef.current = false
+    pendingRestoreRef.current = false
+    savedRangeRef.current = null
+  }, [pairAddress, chainId, version])
+
+  // Initial batch (newest-first) + accumulated older batches (also newest-first),
+  // so the whole thing stays a single descending list. The oldest accumulated
+  // timestamp (last element) is the cursor for the next `timestamp_lt` page.
+  const combinedTxs = useMemo<Txn[]>(() => [...(data?.transactions ?? []), ...olderTxs], [data, olderTxs])
+
   // oSpread per swap (× 100 for %), chronological (indexer returns newest-first).
   const allPoints = useMemo<Point[]>(() => {
-    const txs = data?.transactions ?? []
-    return [...txs]
+    return [...combinedTxs]
       .reverse()
       .map((t) => {
         const p0 = Number(t.pythPrice0)
@@ -95,29 +138,55 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
         return { t: Number(t.timestamp), s }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s))
-  }, [data])
-
-  const points = useMemo<Point[]>(() => {
-    const span = RANGES[range]
-    if (span == null) return allPoints
-    // eslint-disable-next-line react-hooks/purity -- time-window filter; sub-second drift across renders is harmless
-    const cutoff = Math.floor(Date.now() / 1000) - span
-    return allPoints.filter((p) => p.t >= cutoff)
-  }, [allPoints, range])
+  }, [combinedTxs])
 
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
   // unique time values; two swaps can share a second). Keep the latest spread
   // for a given second by overwriting as we walk ascending.
+  //
+  // The chart always holds the FULL accumulated set — the timeframe selector is a
+  // zoom preset (visible TIME range), not a data filter, so every range can
+  // scroll left and trigger load-more.
   const seriesData = useMemo(() => {
     const byTime = new Map<number, Point>()
-    points.forEach((p) => byTime.set(p.t, p))
+    allPoints.forEach((p) => byTime.set(p.t, p))
     return [...byTime.values()]
       .sort((a, b) => a.t - b.t)
       .map((p) => ({ time: p.t as any, value: p.s }))
-  }, [points])
+  }, [allPoints])
 
   // The "now" spread is always the latest swap, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
+
+  // Fetch the next older batch and prepend it. Guarded so only one fetch runs at
+  // a time, and stops once a batch comes back < 1000 (older end reached). Capture
+  // the visible TIME range first so the post-setData effect can restore the view.
+  const loadMore = useCallback(async () => {
+    if (loadingRef.current || exhaustedRef.current) return
+    const oldest = combinedTxs[combinedTxs.length - 1]
+    if (!oldest) return
+    const before = Number(oldest.timestamp)
+    if (!Number.isFinite(before)) return
+    loadingRef.current = true
+    try {
+      const res = (await graphqlFetcher({
+        operationName: 'PoolSpreadOlder',
+        query: GET_POOL_SPREAD_OLDER,
+        variables: { chainId, version, pair: pairAddress.toLowerCase(), before },
+      })) as { transactions?: Txn[] } | null
+      const batch = res?.transactions ?? []
+      if (batch.length < 1000) exhaustedRef.current = true
+      if (batch.length > 0) {
+        // Times of existing bars don't change, so the saved TIME range stays valid.
+        savedRangeRef.current = chartRef.current?.timeScale().getVisibleRange() ?? null
+        pendingRestoreRef.current = true
+        setOlderTxs((prev) => [...prev, ...batch])
+      }
+    } finally {
+      loadingRef.current = false
+    }
+  }, [combinedTxs, chainId, version, pairAddress])
+  loadMoreRef.current = loadMore
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -126,6 +195,26 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
   // Floating tooltip anchor — container-relative pixels + the hovered time +
   // value. null when the cursor is outside the plot area.
   const [tip, setTip] = useState<{ x: number; y: number; time: number; value: number } | null>(null)
+
+  // Apply the current timeframe as a VISIBLE-RANGE (zoom) preset — the chart
+  // always holds the full data, so this only changes what's on screen. 'ALL' =
+  // fit everything; bounded ranges = the last N seconds up to the newest point.
+  // If the data doesn't reach `from`, lightweight-charts clamps to the data start.
+  const applyRangePreset = useCallback(() => {
+    const ts = chartRef.current?.timeScale()
+    if (!ts) return
+    const span = RANGES[range]
+    const last = seriesData.length ? (seriesData[seriesData.length - 1].time as number) : null
+    if (span == null || last == null) {
+      ts.fitContent()
+      return
+    }
+    ts.setVisibleRange({ from: (last - span) as Time, to: last as Time })
+  }, [range, seriesData])
+  // Stable handle so the data-push effect can apply the preset without taking
+  // `applyRangePreset` as a dependency (which would re-fire it on every range tick).
+  const applyRangePresetRef = useRef(applyRangePreset)
+  applyRangePresetRef.current = applyRangePreset
 
   // Create chart + series once.
   useEffect(() => {
@@ -232,6 +321,16 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
+    // Scroll-to-load-more: when the left edge of the visible logical range nears
+    // the start of the loaded data, page older swaps. Fires on ANY timeframe —
+    // the selector is now a zoom preset, not a data filter, so every range holds
+    // the full set and can scroll past the loaded edge to extend it.
+    const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
+      if (!logical) return
+      if (logical.from < 10) loadMoreRef.current()
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
+
     seriesRef.current = series
     chartRef.current = chart
     return () => {
@@ -244,8 +343,27 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
   // Push data into the series.
   useEffect(() => {
     seriesRef.current?.setData(seriesData)
-    if (seriesData.length) chartRef.current?.timeScale().fitContent()
+    if (!seriesData.length) return
+    if (pendingRestoreRef.current) {
+      // A load-more prepend just grew the series on the LEFT — keep the same TIME
+      // window so the view doesn't jump (older bars slide in off-screen to the
+      // left). Do NOT re-apply the preset here, or we'd yank the user back.
+      const saved = savedRangeRef.current
+      if (saved) chartRef.current?.timeScale().setVisibleRange(saved)
+      pendingRestoreRef.current = false
+      savedRangeRef.current = null
+    } else {
+      // Initial load (or a range-change-triggered data refresh) — zoom to the
+      // current timeframe preset.
+      applyRangePresetRef.current()
+    }
   }, [seriesData])
+
+  // Re-zoom when the timeframe button changes (data unchanged).
+  useEffect(() => {
+    if (pendingRestoreRef.current) return
+    applyRangePresetRef.current()
+  }, [range])
 
   return (
     <div>
@@ -309,14 +427,6 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
               style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}
             >
               No swaps on this pool yet.
-            </div>
-          )}
-          {allPoints.length > 0 && points.length === 0 && (
-            <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}
-            >
-              No swaps in the last {range === '1D' ? '24 hours' : range === '7D' ? '7 days' : '30 days'}.
             </div>
           )}
 
