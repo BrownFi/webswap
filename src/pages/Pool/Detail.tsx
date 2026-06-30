@@ -540,7 +540,7 @@ function PoolDetailInner({
                 dev-stats editor uses. */}
             {!isMainnet && (
               <>
-                {/* Pool balance / imbalance over time — pool-wide (reserve0USD/reserve1USD per tx), replaces the old per-wallet activity table */}
+                {/* Pool balance / imbalance over time — pool-wide (reserve0USD/reserve1USD per tx), lightweight-charts (TradingView) */}
                 <PoolBalanceChart
                   pairAddress={pairAddress}
                   chainId={chainId}
