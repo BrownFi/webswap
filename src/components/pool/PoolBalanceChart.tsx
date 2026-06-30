@@ -33,6 +33,8 @@ const GET_POOL_BALANCES = `
   query PoolBalances($pair: String) {
     transactions(first: 1000, where: { pair: $pair }, orderBy: timestamp, orderDirection: desc) {
       timestamp
+      reserve0
+      reserve1
       reserve0USD
       reserve1USD
     }
@@ -45,6 +47,8 @@ const GET_POOL_BALANCES_OLDER = `
   query PoolBalancesOlder($pair: String, $before: BigInt) {
     transactions(first: 1000, where: { pair: $pair, timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
       timestamp
+      reserve0
+      reserve1
       reserve0USD
       reserve1USD
     }
@@ -66,20 +70,42 @@ const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as 
 type Range = keyof typeof RANGES
 const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
 
-type Txn = { timestamp: number | string; reserve0USD: number | string; reserve1USD: number | string }
+type Txn = {
+  timestamp: number | string
+  reserve0: number | string
+  reserve1: number | string
+  reserve0USD: number | string
+  reserve1USD: number | string
+}
 type DayRow = { dayStartUnix: number | string; lpPrice: number | string; bnhPrice: number | string }
 // pct0/pct1 = each token's % of pool value; lpVsBh = LP-vs-buy&hold % (right
-// axis), step-attached from daily data.
+// axis), step-attached from daily data; basePrice = the BASE (non-quote) token's
+// USD price for this tx (its reserveUSD / its reserve), drawn on its own isolated
+// overlay scale. Base is chosen via quoteTokenIndex.
 type Point = {
   t: number
   pct0: number
   pct1: number
   lpVsBh: number | null
+  price0: number
 }
 
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
 const COLOR1 = '#4DA3FF' // token1 (blue)
 const COLOR_LPBH = '#83CF84' // LP vs BH (green)
+const COLOR_PRICE0 = '#EC4899' // token0 USD price (pink/magenta) — distinct from the three above
+
+// USD price formatter that adapts to magnitude: keeps ~2–4 significant digits so a
+// ~$1 stable, a ~$0.0001 micro-cap, and a ~$60k WBTC all read cleanly.
+const formatUsd = (v: number): string => {
+  if (!Number.isFinite(v)) return '—'
+  const abs = Math.abs(v)
+  const sign = v < 0 ? '-' : ''
+  if (abs === 0) return '$0'
+  // Choose decimals so small prices keep precision and large prices stay tidy.
+  const digits = abs >= 1000 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : abs >= 0.0001 ? 6 : 8
+  return `${sign}$${abs.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits })}`
+}
 
 // Low-opacity fills for the dominant-token Baseline shading. Two stops each so
 // the gradient fades toward the 50% midline (matches recharts' fillOpacity 0.18).
@@ -97,14 +123,23 @@ type Props = {
   // Pool base/quote display order (shouldReverseDisplay). When true the base is
   // raw token1, so list it first — colors stay attached to their raw token.
   reversed?: boolean
+  // Indexer's authoritative quote-token index (V3). The price line plots the BASE
+  // (non-quote) token's USD price. null/undefined (V2/unknown) → default base = token0.
+  quoteTokenIndex?: number | null
 }
 
-type ToggleKey = 't0' | 't1' | 'lpbh'
+type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0'
 
-export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false }: Props) {
+export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false, quoteTokenIndex }: Props) {
   const [range, setRange] = useState<Range>('ALL')
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
-  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true })
+  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true })
+
+  // The price line plots the BASE (non-quote) token's USD price. The base is the
+  // NON-quote token per the indexer's quoteTokenIndex; default to token0 when it's
+  // null/undefined (V2/unknown pools).
+  const baseIdx = quoteTokenIndex == null ? 0 : Number(quoteTokenIndex) === 0 ? 1 : 0
+  const baseSymbol = baseIdx === 0 ? symbol0 : symbol1
 
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolBalances', chainId, pairAddress, version],
@@ -183,7 +218,12 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         const total = r0 + r1
         const pct0 = total > 0 ? (r0 / total) * 100 : NaN
         const pct1 = 100 - pct0
-        return { t: Number(t.timestamp), pct0, pct1 }
+        // BASE token USD price = its USD reserve / its token reserve. Which token
+        // is "base" depends on quoteTokenIndex (base = non-quote token).
+        const baseAmt = Number(baseIdx === 0 ? t.reserve0 : t.reserve1)
+        const baseUsd = baseIdx === 0 ? r0 : r1
+        const price0 = baseAmt > 0 ? baseUsd / baseAmt : NaN
+        return { t: Number(t.timestamp), pct0, pct1, price0 }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
     // Step-attach LP-vs-BH: both arrays are ascending, so walk a pointer.
@@ -193,7 +233,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       while (di < dailyLpBh.length && dailyLpBh[di].t <= p.t) last = dailyLpBh[di++].lpVsBh
       return { ...p, lpVsBh: last }
     })
-  }, [combinedTxs, dailyLpBh])
+  }, [combinedTxs, dailyLpBh, baseIdx])
 
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
   // unique time values; two trades can share a second). Keep the latest reserve
@@ -212,6 +252,9 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       lpVsBh: sorted
         .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
         .map((p) => ({ time: p.t as any, value: p.lpVsBh as number })),
+      price0: sorted
+        .filter((p) => Number.isFinite(p.price0))
+        .map((p) => ({ time: p.t as any, value: p.price0 })),
     }
   }, [allPoints])
 
@@ -234,6 +277,9 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                 { key: 't1' as const, label: symbol1, color: COLOR1 },
               ]),
           ...(latest?.lpVsBh != null ? [{ key: 'lpbh' as const, label: 'LP vs BH', color: COLOR_LPBH }] : []),
+          ...(latest && Number.isFinite(latest.price0)
+            ? [{ key: 'price0' as const, label: `${baseSymbol} price`, color: COLOR_PRICE0 }]
+            : []),
         ]
 
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -244,9 +290,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const line1Ref = useRef<ISeriesApi<'Line'> | null>(null)
   // The green LP-vs-BH LineSeries (right scale).
   const lpbhRef = useRef<ISeriesApi<'Line'> | null>(null)
+  // The violet token0 USD-price LineSeries (own isolated 'price' overlay scale).
+  const price0Ref = useRef<ISeriesApi<'Line'> | null>(null)
 
   // Hovered values for the floating tooltip (set while the crosshair moves).
-  const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number } | null>(null)
+  const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number; price0?: number } | null>(null)
   // Floating tooltip anchor — container-relative pixels + the hovered time.
   // null when the cursor is outside the plot area. Mirrors PairChartTV's `tip`.
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
@@ -429,6 +477,19 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
     })
 
+    // token0 USD price (violet) on its OWN overlay scale ('price') — a custom id
+    // with no edge axis, so it auto-scales independently of the 0–100 left % axis
+    // and the right LP-vs-BH % axis (the price magnitude won't distort either).
+    const price0 = chart.addSeries(LineSeries, {
+      ...commonNoLabels,
+      priceScaleId: 'price',
+      color: COLOR_PRICE0,
+      lineWidth: 1,
+      priceFormat: { type: 'custom', formatter: (v: number) => formatUsd(v), minMove: 0.00000001 },
+    })
+    // Give the isolated price overlay a little vertical breathing room.
+    price0.priceScale().applyOptions({ scaleMargins: { top: 0.15, bottom: 0.15 } })
+
     const crosshairHandler = (param: {
       time?: number
       seriesData: Map<ISeriesApi<any>, { value?: number } | undefined>
@@ -442,10 +503,12 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       const p0 = param.seriesData.get(baseSeries) as { value?: number } | undefined
       const p1 = param.seriesData.get(line1) as { value?: number } | undefined
       const pl = param.seriesData.get(lpbh) as { value?: number } | undefined
+      const pp = param.seriesData.get(price0) as { value?: number } | undefined
       setHovered({
         pct0: typeof p0?.value === 'number' ? p0.value : undefined,
         pct1: typeof p1?.value === 'number' ? p1.value : undefined,
         lpVsBh: typeof pl?.value === 'number' ? pl.value : undefined,
+        price0: typeof pp?.value === 'number' ? pp.value : undefined,
       })
       setTip({ x: param.point.x, y: param.point.y, time: Number(param.time) })
     }
@@ -464,6 +527,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     baseSeriesRef.current = baseSeries
     line1Ref.current = line1
     lpbhRef.current = lpbh
+    price0Ref.current = price0
     chartRef.current = chart
     return () => {
       chart.remove()
@@ -471,6 +535,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       baseSeriesRef.current = null
       line1Ref.current = null
       lpbhRef.current = null
+      price0Ref.current = null
     }
   }, [])
 
@@ -480,6 +545,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     baseSeriesRef.current?.setData(seriesData.pct0)
     line1Ref.current?.setData(seriesData.pct1)
     lpbhRef.current?.setData(seriesData.lpVsBh)
+    price0Ref.current?.setData(seriesData.price0)
     if (!seriesData.pct0.length) return
     if (pendingRestoreRef.current) {
       // A load-more prepend just grew the series on the LEFT — keep the same TIME
@@ -507,6 +573,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     baseSeriesRef.current?.applyOptions({ visible: visible.t0 })
     line1Ref.current?.applyOptions({ visible: visible.t1 })
     lpbhRef.current?.applyOptions({ visible: visible.lpbh })
+    price0Ref.current?.applyOptions({ visible: visible.price0 })
   }, [visible])
 
   return (
@@ -641,6 +708,21 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                       {hovered.lpVsBh >= 0 ? '+' : ''}
                       {hovered.lpVsBh.toFixed(2)}%
                     </span>
+                  </div>
+                )}
+                {hovered.price0 !== undefined && (
+                  <div
+                    style={{
+                      borderTop: '1px solid #2F2823',
+                      marginTop: 6,
+                      paddingTop: 6,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 16,
+                    }}
+                  >
+                    <span style={{ color: COLOR_PRICE0 }}>{baseSymbol} price</span>
+                    <span style={{ color: '#FBFBFD' }}>{formatUsd(hovered.price0)}</span>
                   </div>
                 )}
               </div>
