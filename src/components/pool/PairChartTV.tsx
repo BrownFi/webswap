@@ -11,6 +11,7 @@ import {
   ISeriesApi,
   LineSeries,
   LineStyle,
+  TickMarkType,
   createChart,
 } from 'lightweight-charts'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
@@ -429,15 +430,26 @@ const PairChartTVInner = ({ pair }: Props) => {
   useEffect(() => {
     chartRef.current?.applyOptions({
       timeScale: {
-        timeVisible: isHourly,
+        timeVisible: true,
         secondsVisible: false,
-        // Match the recharts charts (Pool Balance / Oracle Spread): HH:mm for the
-        // intraday (1h) view, MMM D for the daily ranges.
-        tickMarkFormatter: (time: any) => {
+        // Labels adapt to the zoom level (same as the Pool charts): lightweight-
+        // charts passes the tick granularity, so zooming out shows month/day and
+        // zooming into a day shows HH:mm — instead of a format fixed by range.
+        tickMarkFormatter: (time: any, tickMarkType: TickMarkType) => {
           const d = new Date(Number(time) * 1000)
-          return isHourly
-            ? d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
-            : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+          switch (tickMarkType) {
+            case TickMarkType.Year:
+              return d.toLocaleDateString(undefined, { year: 'numeric' })
+            case TickMarkType.Month:
+              return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+            case TickMarkType.Time:
+              return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+            case TickMarkType.TimeWithSeconds:
+              return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+            case TickMarkType.DayOfMonth:
+            default:
+              return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+          }
         },
       },
     })
