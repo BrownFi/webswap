@@ -147,9 +147,10 @@ export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   // Base V3 deployed 2026-06-22 — on-chain reads (useV3PoolsOnChain) until the
   // BE /indexer/v3 indexes chainId 8453; flip to true once it's live.
   [ChainId.BASE_MAINNET]: false,
-  // Linea V3 deployed 2026-06-22 — on-chain reads until the BE /indexer/v3
-  // indexes chainId 59144; flip to true once it's live.
-  [ChainId.LINEA_MAINNET]: false,
+  // Linea V3 deployed 2026-06-22 — BE /indexer/v3 indexes chainId 59144 as of
+  // 2026-07-01 (live + synced on both prod + beta APIs, head current, 1:1 vs
+  // on-chain), so use the indexer (volume/TVL/fee-APR the on-chain path can't).
+  [ChainId.LINEA_MAINNET]: true,
   // Arbitrum V3 deployed 2026-06-22 — BE /indexer/v3 indexes chainId 42161 as of
   // 2026-06-24 (live on both prod + beta APIs, validated 1:1 vs on-chain), so use
   // the indexer (gives volume/TVL/fee-APR/annualized-return the on-chain path can't).
