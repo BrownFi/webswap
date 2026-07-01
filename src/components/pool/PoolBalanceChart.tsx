@@ -4,6 +4,7 @@ import {
   BaselineSeries,
   ColorType,
   CrosshairMode,
+  HistogramSeries,
   IChartApi,
   IRange,
   ISeriesApi,
@@ -39,6 +40,11 @@ const GET_POOL_BALANCES = `
       reserve1
       reserve0USD
       reserve1USD
+      amount0In
+      amount0Out
+      amount1In
+      amount1Out
+      type
     }
   }
 `
@@ -53,6 +59,11 @@ const GET_POOL_BALANCES_OLDER = `
       reserve1
       reserve0USD
       reserve1USD
+      amount0In
+      amount0Out
+      amount1In
+      amount1Out
+      type
     }
   }
 `
@@ -78,18 +89,24 @@ type Txn = {
   reserve1: number | string
   reserve0USD: number | string
   reserve1USD: number | string
+  amount0In: number | string
+  amount0Out: number | string
+  amount1In: number | string
+  amount1Out: number | string
+  type: string
 }
 type DayRow = { dayStartUnix: number | string; lpPrice: number | string; bnhPrice: number | string }
 // pct0/pct1 = each token's % of pool value; lpVsBh = LP-vs-buy&hold % (right
-// axis), step-attached from daily data; basePrice = the BASE (non-quote) token's
-// USD price for this tx (its reserveUSD / its reserve), drawn on its own isolated
-// overlay scale. Base is chosen via quoteTokenIndex.
+// axis), step-attached from daily data; price0 = the BASE token's RELATIVE price
+// (priced in the quote), drawn on its own isolated overlay scale; vol = this
+// swap's USD volume (0 for non-SWAP / zero-vol), used by the signed histogram.
 type Point = {
   t: number
   pct0: number
   pct1: number
   lpVsBh: number | null
   price0: number
+  vol: number
 }
 
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
@@ -108,6 +125,21 @@ const formatRel = (v: number): string => {
   const digits = abs >= 1000 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : abs >= 0.0001 ? 6 : 8
   return `${sign}${abs.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits })}`
 }
+
+// Compact USD formatter for the signed volume histogram (e.g. $1.2k, $3.4M).
+// Uses the magnitude — the sign only encodes bar direction, not a negative amount.
+const formatVolUsd = (v: number): string => {
+  const abs = Math.abs(v)
+  if (!Number.isFinite(abs) || abs === 0) return '$0'
+  if (abs >= 1_000_000) return `$${(abs / 1_000_000).toFixed(2)}M`
+  if (abs >= 1_000) return `$${(abs / 1_000).toFixed(1)}k`
+  if (abs >= 1) return `$${abs.toFixed(2)}`
+  return `$${abs.toFixed(4)}`
+}
+
+const COLOR_VOL_UP = '#26A69A' // green — price rose that swap (bar up)
+const COLOR_VOL_DOWN = '#EF5350' // red — price fell that swap (bar down)
+const COLOR_VOL_LEGEND = '#9CA3AF' // gray legend swatch (bars are per-point colored)
 
 // Low-opacity fills for the dominant-token Baseline shading. Two stops each so
 // the gradient fades toward the 50% midline (matches recharts' fillOpacity 0.18).
@@ -131,12 +163,12 @@ type Props = {
   quoteTokenIndex?: number | null
 }
 
-type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0'
+type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0' | 'vol'
 
 export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false }: Props) {
   const [range, setRange] = useState<Range>('ALL')
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
-  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true })
+  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true, vol: true })
 
   // The price line plots the BASE token priced in the QUOTE token (the pool
   // exchange rate, e.g. USDC.e per WETH). Base/quote comes from the canonical
@@ -241,7 +273,12 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
         const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
         const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
-        return { t: Number(t.timestamp), pct0, pct1, price0 }
+        // Per-swap USD volume: token0 amount traded × token0's USD price. SWAP only
+        // (Mint/Burn liquidity events aren't trades). 0 otherwise.
+        const amt0 = Number(t.amount0In) + Number(t.amount0Out)
+        const amt0Reserve = Number(t.reserve0)
+        const vol = t.type === 'SWAP' && amt0Reserve > 0 ? amt0 * (r0 / amt0Reserve) : 0
+        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0 }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
     // Step-attach LP-vs-BH: both arrays are ascending, so walk a pointer.
@@ -264,6 +301,25 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     const byTime = new Map<number, Point>()
     allPoints.forEach((p) => byTime.set(p.t, p))
     const sorted = [...byTime.values()].sort((a, b) => a.t - b.t)
+
+    // Signed volume histogram (interpretation B): green bar UP from 0 when the
+    // relative price rose vs the previous point, red bar DOWN when it fell; bar
+    // height = the swap's USD volume. Only SWAP txs with vol > 0 emit a bar. First
+    // point / flat / non-finite change → treated as up.
+    const volume: { time: any; value: number; color: string }[] = []
+    let prevPrice: number | null = null
+    for (const p of sorted) {
+      if (p.vol > 0) {
+        const up = prevPrice == null || !Number.isFinite(p.price0) || p.price0 >= prevPrice
+        volume.push({
+          time: p.t as any,
+          value: up ? p.vol : -p.vol,
+          color: up ? COLOR_VOL_UP : COLOR_VOL_DOWN,
+        })
+      }
+      if (Number.isFinite(p.price0)) prevPrice = p.price0
+    }
+
     return {
       pct0: sorted.map((p) => ({ time: p.t as any, value: p.pct0 })),
       pct1: sorted.map((p) => ({ time: p.t as any, value: p.pct1 })),
@@ -273,6 +329,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       price0: sorted
         .filter((p) => Number.isFinite(p.price0))
         .map((p) => ({ time: p.t as any, value: p.price0 })),
+      volume,
     }
   }, [allPoints])
 
@@ -298,6 +355,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
           ...(latest && Number.isFinite(latest.price0)
             ? [{ key: 'price0' as const, label: `${baseSymbol}/${quoteSymbol}`, color: COLOR_PRICE0 }]
             : []),
+          ...(seriesData.volume.length > 0 ? [{ key: 'vol' as const, label: 'Volume', color: COLOR_VOL_LEGEND }] : []),
         ]
 
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -310,9 +368,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const lpbhRef = useRef<ISeriesApi<'Line'> | null>(null)
   // The base-token USD-price AreaSeries (backmost, own isolated 'price' overlay scale).
   const price0Ref = useRef<ISeriesApi<'Area'> | null>(null)
+  // The signed-volume HistogramSeries (bottom pane, own 'vol' scale).
+  const volSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
   // Hovered values for the floating tooltip (set while the crosshair moves).
-  const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number; price0?: number } | null>(null)
+  const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number; price0?: number; vol?: number } | null>(null)
   // Floating tooltip anchor — container-relative pixels + the hovered time.
   // null when the cursor is outside the plot area. Mirrors PairChartTV's `tip`.
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
@@ -401,13 +461,15 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         visible: true,
         borderVisible: false,
         ticksVisible: false,
-        scaleMargins: { top: 0.08, bottom: 0.08 },
+        // Top ~75% — the volume histogram owns the bottom 20%.
+        scaleMargins: { top: 0.05, bottom: 0.25 },
       },
       rightPriceScale: {
         visible: true,
         borderVisible: false,
         ticksVisible: false,
-        scaleMargins: { top: 0.1, bottom: 0.1 },
+        // Top ~75% — matches the left/price scales so all sit above the volume pane.
+        scaleMargins: { top: 0.05, bottom: 0.25 },
       },
       timeScale: {
         borderColor: '#493E35',
@@ -439,7 +501,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         horzLine: { visible: false, labelVisible: false },
       },
       width: container.clientWidth,
-      height: container.clientHeight || 260,
+      height: container.clientHeight || 320,
       autoSize: true,
     })
 
@@ -459,8 +521,9 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       bottomColor: 'rgba(236, 72, 153, 0.00)',
       priceFormat: { type: 'custom', formatter: (v: number) => formatRel(v), minMove: 0.00000001 },
     })
-    // Give the isolated price overlay a little vertical breathing room.
-    price0.priceScale().applyOptions({ scaleMargins: { top: 0.15, bottom: 0.15 } })
+    // Keep the price overlay in the top ~75% too (the volume histogram owns the
+    // bottom 20%), so it doesn't overlap the bars.
+    price0.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } })
 
     // Dominance FILL follows BASE/QUOTE color too: above-50% = token0's color,
     // below-50% = token1's color. When not reversed token0=gold/token1=blue → gold
@@ -524,6 +587,19 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
     })
 
+    // BOTTOM pane — signed volume histogram on its own 'vol' scale, based at 0 so
+    // bars go up (green, price rose) or down (red, price fell). Per-point color
+    // drives each bar (no single series color).
+    const volSeries = chart.addSeries(HistogramSeries, {
+      priceScaleId: 'vol',
+      base: 0,
+      lastValueVisible: false,
+      priceLineVisible: false,
+      priceFormat: { type: 'custom', formatter: (v: number) => formatVolUsd(v), minMove: 0.01 },
+    })
+    // Park the histogram in the bottom ~20% so it never overlaps the % / price / LP lines.
+    volSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } })
+
     const crosshairHandler = (param: {
       time?: number
       seriesData: Map<ISeriesApi<any>, { value?: number } | undefined>
@@ -538,11 +614,13 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       const p1 = param.seriesData.get(line1) as { value?: number } | undefined
       const pl = param.seriesData.get(lpbh) as { value?: number } | undefined
       const pp = param.seriesData.get(price0) as { value?: number } | undefined
+      const pv = param.seriesData.get(volSeries) as { value?: number } | undefined
       setHovered({
         pct0: typeof p0?.value === 'number' ? p0.value : undefined,
         pct1: typeof p1?.value === 'number' ? p1.value : undefined,
         lpVsBh: typeof pl?.value === 'number' ? pl.value : undefined,
         price0: typeof pp?.value === 'number' ? pp.value : undefined,
+        vol: typeof pv?.value === 'number' ? pv.value : undefined,
       })
       setTip({ x: param.point.x, y: param.point.y, time: Number(param.time) })
     }
@@ -562,6 +640,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     line1Ref.current = line1
     lpbhRef.current = lpbh
     price0Ref.current = price0
+    volSeriesRef.current = volSeries
     chartRef.current = chart
     return () => {
       chart.remove()
@@ -570,6 +649,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       line1Ref.current = null
       lpbhRef.current = null
       price0Ref.current = null
+      volSeriesRef.current = null
     }
   }, [reversed, token0Color, token1Color])
 
@@ -580,6 +660,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     line1Ref.current?.setData(seriesData.pct1)
     lpbhRef.current?.setData(seriesData.lpVsBh)
     price0Ref.current?.setData(seriesData.price0)
+    volSeriesRef.current?.setData(seriesData.volume)
     if (!seriesData.pct0.length) return
     if (pendingRestoreRef.current) {
       // A load-more prepend just grew the series on the LEFT — keep the same TIME
@@ -608,6 +689,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     line1Ref.current?.applyOptions({ visible: visible.t1 })
     lpbhRef.current?.applyOptions({ visible: visible.lpbh })
     price0Ref.current?.applyOptions({ visible: visible.price0 })
+    volSeriesRef.current?.applyOptions({ visible: visible.vol })
   }, [visible])
 
   return (
@@ -649,7 +731,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         </div>
 
         {/* Chart container — native scroll/pinch zoom stays enabled. */}
-        <div style={{ position: 'relative', width: '100%', height: 260 }}>
+        <div style={{ position: 'relative', width: '100%', height: 320 }}>
           <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
           {isLoading && allPoints.length === 0 && (
             <div
@@ -757,6 +839,22 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                   >
                     <span style={{ color: COLOR_PRICE0 }}>{baseSymbol}/{quoteSymbol}</span>
                     <span style={{ color: '#FBFBFD' }}>{formatRel(hovered.price0)}</span>
+                  </div>
+                )}
+                {hovered.vol !== undefined && (
+                  <div
+                    style={{
+                      borderTop: '1px solid #2F2823',
+                      marginTop: 6,
+                      paddingTop: 6,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 16,
+                    }}
+                  >
+                    {/* Neutral label; the VALUE carries the direction color (up = green, down = red). */}
+                    <span style={{ color: COLOR_VOL_LEGEND }}>Volume</span>
+                    <span style={{ color: hovered.vol >= 0 ? COLOR_VOL_UP : COLOR_VOL_DOWN }}>{formatVolUsd(hovered.vol)}</span>
                   </div>
                 )}
               </div>
