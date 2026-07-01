@@ -326,7 +326,8 @@ function TableHeader() {
 
 export default function Portfolio() {
   const { account } = useActiveWeb3React()
-  const { active, closed, stats, isLoading, isError } = usePortfolio()
+  const { active, small, closed, stats, isLoading, isError } = usePortfolio()
+  const [showSmall, setShowSmall] = useState(false)
   const [showClosed, setShowClosed] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -350,6 +351,7 @@ export default function Portfolio() {
     }
   }, [searchQuery])
   const activeFiltered = filterByQuery ? active.filter(filterByQuery) : active
+  const smallFiltered = filterByQuery ? small.filter(filterByQuery) : small
   const closedFiltered = filterByQuery ? closed.filter(filterByQuery) : closed
 
   // Hero stats row computed inside the hook; this just renders.
@@ -422,7 +424,7 @@ export default function Portfolio() {
                   and closed positions by token symbol/name (case-insensitive
                   substring). Only renders once there's at least one position
                   to filter; pointless on the empty state. */}
-              {(active.length > 0 || closed.length > 0) && (
+              {(active.length > 0 || small.length > 0 || closed.length > 0) && (
                 <div className="relative">
                   <input
                     type="text"
@@ -458,7 +460,7 @@ export default function Portfolio() {
                     Indexer query failed. Try again in a moment.
                   </TYPE.body>
                 </EmptyProposals>
-              ) : active.length === 0 ? (
+              ) : active.length === 0 && small.length === 0 ? (
                 <EmptyProposals>
                   <TYPE.body color="#978A80" textAlign="center">
                     You don&apos;t have any active liquidity positions on any supported chain.
@@ -466,22 +468,65 @@ export default function Portfolio() {
                     Open the Pool page to start LPing.
                   </TYPE.body>
                 </EmptyProposals>
-              ) : activeFiltered.length === 0 ? (
+              ) : active.length > 0 && activeFiltered.length === 0 && smallFiltered.length === 0 ? (
                 // Active list is non-empty but the search query filters
-                // everything out. Distinct empty state so the user knows
-                // it's a search-no-result, not "no positions at all".
+                // everything out (of both active + small). Distinct empty state
+                // so the user knows it's a search-no-result, not "no positions".
                 <EmptyProposals>
                   <TYPE.body color="#978A80" textAlign="center">
                     No active positions match &ldquo;{searchQuery}&rdquo;.
                   </TYPE.body>
                 </EmptyProposals>
-              ) : (
+              ) : activeFiltered.length > 0 ? (
                 <>
                   <TableHeader />
                   {activeFiltered.map((p) => (
                     <PositionRow key={p.id} position={p} />
                   ))}
                 </>
+              ) : null}
+
+              {/* Small positions (< $1) — collapsed by default. Dust bucket so
+                  the main list stays uncluttered. Mirrors the Closed section. */}
+              {smallFiltered.length > 0 && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowSmall((s) => !s)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '8px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontFamily: 'Inter',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#978A80',
+                    }}
+                  >
+                    Small positions ({smallFiltered.length}{smallFiltered.length !== small.length ? ` of ${small.length}` : ''})
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      style={{ transform: showSmall ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }}
+                    >
+                      <path d="M5 7.5L10 12.5L15 7.5" stroke="#978A80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {showSmall && (
+                    <>
+                      <TableHeader />
+                      {smallFiltered.map((p) => (
+                        <PositionRow key={p.id} position={p} />
+                      ))}
+                    </>
+                  )}
+                </div>
               )}
 
               {/* Closed positions — collapsed by default. Useful for users who

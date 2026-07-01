@@ -19,9 +19,11 @@
  * it ships), and zero positions exist there today. Added separately
  * once Sui contracts deploy.
  *
- * Closed-position split: rows where lp = 0 and stakeLP = 0 are filtered
- * into a separate bucket. Active positions go front-and-center; closed
- * ones live in a collapsible section.
+ * Bucketing: rows where lp = 0 and stakeLP = 0 are "closed". Open rows are
+ * split by USD value — "active" (≥ $1) go front-and-center, "small" dust
+ * (< $1) into their own bucket. Closed + small each live in a collapsible
+ * section. Headline stat sums span all OPEN positions (active + small) so
+ * the totals don't drop when dust is bucketed out.
  */
 import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
@@ -117,15 +119,19 @@ export interface PortfolioStats {
   totalBasePortfolio: number
   /** lpPortfolio − bnhPortfolio, summed. Positive = LPing beat HODL. */
   vsHodl: number
-  /** Count of positions where lp > 0 OR stakeLP > 0. */
+  /** Count of MAIN-LIST open positions (lpPortfolio ≥ $1). */
   activeCount: number
+  /** Count of dust open positions (lpPortfolio < $1) in the small bucket. */
+  smallCount: number
   closedCount: number
-  /** Distinct chains that contributed at least one active position. */
+  /** Distinct chains that contributed at least one OPEN position (active + small). */
   activeChainCount: number
 }
 
 interface PortfolioResult {
   active: PortfolioPosition[]
+  /** Open positions worth < $1 — dust, shown in a collapsible section. */
+  small: PortfolioPosition[]
   closed: PortfolioPosition[]
   stats: PortfolioStats
   isLoading: boolean
@@ -236,23 +242,33 @@ export function usePortfolio(): PortfolioResult {
       return accPart !== pairPart
     })
 
-    // Active = LP balance OR staked LP > 0. Sort by current USD value desc.
-    const active = filtered
-      .filter((p) => p.lp > 0 || p.stakeLP > 0)
+    // Open = LP balance OR staked LP > 0. Split by USD value so dust (< $1)
+    // doesn't clutter the main list.
+    const open = filtered.filter((p) => p.lp > 0 || p.stakeLP > 0)
+    // Active = the MAIN list: open positions worth ≥ $1. Sort by USD value desc.
+    const active = open
+      .filter((p) => p.lpPortfolio >= 1)
+      .sort((a, b) => b.lpPortfolio - a.lpPortfolio)
+    // Small = dust: open positions worth < $1. Same sort, shown collapsed.
+    const small = open
+      .filter((p) => p.lpPortfolio < 1)
       .sort((a, b) => b.lpPortfolio - a.lpPortfolio)
     // Closed = previously held but now empty. Keeps PnL history visible.
     const closed = filtered
       .filter((p) => p.lp === 0 && p.stakeLP === 0)
       .sort((a, b) => b.updatedAt - a.updatedAt)
 
-    const totalValue = active.reduce((acc, p) => acc + p.lpPortfolio, 0)
-    const totalBasePortfolio = active.reduce((acc, p) => acc + p.basePortfolio, 0)
-    const totalPnL = active.reduce((acc, p) => acc + p.unrealizedPnL, 0)
-    const vsHodl = active.reduce((acc, p) => acc + (p.lpPortfolio - p.bnhPortfolio), 0)
-    const activeChainCount = new Set(active.map((p) => p.chainId)).size
+    // Headline sums span ALL open positions (active + small), so moving dust to
+    // its own bucket doesn't drop the totals. activeCount stays the main-list count.
+    const totalValue = open.reduce((acc, p) => acc + p.lpPortfolio, 0)
+    const totalBasePortfolio = open.reduce((acc, p) => acc + p.basePortfolio, 0)
+    const totalPnL = open.reduce((acc, p) => acc + p.unrealizedPnL, 0)
+    const vsHodl = open.reduce((acc, p) => acc + (p.lpPortfolio - p.bnhPortfolio), 0)
+    const activeChainCount = new Set(open.map((p) => p.chainId)).size
 
     return {
       active,
+      small,
       closed,
       stats: {
         totalValue,
@@ -260,6 +276,7 @@ export function usePortfolio(): PortfolioResult {
         totalPnL,
         vsHodl,
         activeCount: active.length,
+        smallCount: small.length,
         closedCount: closed.length,
         activeChainCount,
       },
