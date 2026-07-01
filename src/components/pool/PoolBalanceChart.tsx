@@ -46,6 +46,8 @@ const GET_POOL_BALANCES = `
       amount1In
       amount1Out
       type
+      lpPrice
+      bnhPrice
     }
   }
 `
@@ -65,15 +67,6 @@ const GET_POOL_BALANCES_OLDER = `
       amount1In
       amount1Out
       type
-    }
-  }
-`
-
-// LP-vs-BH series (daily) — same source as the LP chart's lpPrice/bnhPrice lines.
-const GET_POOL_LPBH = `
-  query PoolLpBh($pair: String) {
-    pairDayDatas(first: 1000, where: { pair: $pair }, orderBy: dayStartUnix, orderDirection: asc) {
-      dayStartUnix
       lpPrice
       bnhPrice
     }
@@ -95,8 +88,11 @@ type Txn = {
   amount1In: number | string
   amount1Out: number | string
   type: string
+  // Per-swap benchmark prices (added on the indexer's Transaction entity) — so
+  // LP-vs-BH lines up with the actual swap timestamps instead of daily buckets.
+  lpPrice: number | string
+  bnhPrice: number | string
 }
-type DayRow = { dayStartUnix: number | string; lpPrice: number | string; bnhPrice: number | string }
 // pct0/pct1 = each token's % of pool value; lpVsBh = LP-vs-buy&hold % (right
 // axis), step-attached from daily data; price0 = the BASE token's RELATIVE price
 // (priced in the quote), drawn on its own isolated overlay scale; vol = this
@@ -202,19 +198,6 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     placeholderData: keepPreviousData,
   })
 
-  const { data: dayData } = useQuery<{ pairDayDatas: DayRow[] }>({
-    queryKey: ['poolLpBh', chainId, pairAddress, version],
-    queryFn: () =>
-      graphqlFetcher({
-        operationName: 'PoolLpBh',
-        query: GET_POOL_LPBH,
-        variables: { chainId, version, pair: pairAddress.toLowerCase() },
-      }),
-    enabled: !!pairAddress && !!chainId,
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
-  })
-
   // Older tx batches accumulated by scroll-to-load-more (newest-first, like the
   // initial fetch). Combined with the initial batch in `combinedTxs`, so the
   // pct/LP-vs-BH step-attach math below is unchanged.
@@ -236,19 +219,6 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     savedRangeRef.current = null
   }, [pairAddress, chainId, version])
 
-  // Daily LP-vs-BH %, ascending — the step source for each trade point.
-  const dailyLpBh = useMemo(() => {
-    const rows = dayData?.pairDayDatas ?? []
-    return rows
-      .map((r) => {
-        const lp = Number(r.lpPrice)
-        const bnh = Number(r.bnhPrice)
-        return { t: Number(r.dayStartUnix), lpVsBh: lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : NaN }
-      })
-      .filter((d) => Number.isFinite(d.t) && Number.isFinite(d.lpVsBh))
-      .sort((a, b) => a.t - b.t)
-  }, [dayData])
-
   // Initial batch (newest-first) + accumulated older batches (also newest-first),
   // so the whole thing stays a single descending list. The oldest accumulated
   // timestamp (last element) is the cursor for the next `timestamp_lt` page.
@@ -256,7 +226,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
 
   // Full fetched series as a % split, chronological (indexer returns newest-first).
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point
-  // also carries the LP-vs-BH value from the latest daily bucket ≤ its timestamp.
+  // also carries its own LP-vs-BH % from the per-swap benchmark prices on the tx.
   const allPoints = useMemo<Point[]>(() => {
     // Drop swaps with a future timestamp — a bad indexer record dated ahead of
     // now sits at the end of the series, so the chart frames right up to it
@@ -292,17 +262,16 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         const baseOut = Number(baseIdx === 0 ? t.amount0Out : t.amount1Out)
         const baseIn = Number(baseIdx === 0 ? t.amount0In : t.amount1In)
         const volUp = baseOut >= baseIn
-        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0, volUp }
+        // LP-vs-BH % straight from the per-swap benchmark prices on the tx — so it
+        // lines up with the actual swap timestamp (no daily-bucket step-attach).
+        const lp = Number(t.lpPrice)
+        const bnh = Number(t.bnhPrice)
+        const lpVsBh = lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null
+        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0, volUp, lpVsBh }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0) && p.t <= futureCutoff)
-    // Step-attach LP-vs-BH: both arrays are ascending, so walk a pointer.
-    let di = 0
-    let last: number | null = null
-    return base.map((p) => {
-      while (di < dailyLpBh.length && dailyLpBh[di].t <= p.t) last = dailyLpBh[di++].lpVsBh
-      return { ...p, lpVsBh: last }
-    })
-  }, [combinedTxs, dailyLpBh, baseIdx, quoteIdx])
+    return base
+  }, [combinedTxs, baseIdx, quoteIdx])
 
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
   // unique time values; two trades can share a second). Keep the latest reserve
