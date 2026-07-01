@@ -131,6 +131,26 @@ const GET_PAIR_SWAPS = `
   }
 `
 
+// Older page (cursor = oldest timestamp of the previous batch) so we can loop past
+// the 1000/query cap and cover full history for the buy/sell volume split. Dropped
+// once the indexer exposes buyVolume/sellVolume on pairDayData/pairHourData.
+const GET_PAIR_SWAPS_OLDER = `
+  query PairSwapsOlder($pair: String, $before: BigInt) {
+    transactions(first: 1000, where: { pair: $pair, type: "SWAP", timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
+      timestamp
+      amount0In
+      amount0Out
+      reserve0
+      reserve0USD
+    }
+  }
+`
+
+// Safety cap on the pagination loop: 20 batches = up to 20k swaps. Busy/old pools
+// beyond that keep only the most-recent 20k (logged) — still far past the old
+// 1000-swap limit, and moot once the indexer returns aggregate buy/sell volume.
+const MAX_SWAP_BATCHES = 20
+
 type SwapTxn = {
   timestamp: number | string
   amount0In: number | string
@@ -297,14 +317,33 @@ const PairChartTVInner = ({ pair }: Props) => {
   // (daily buckets by day, 1h by hour) — the recent first:1000 swaps cover both.
   const { data: swapResp } = useQuery<{ transactions: SwapTxn[] }>({
     queryKey: ['pairSwaps', pair.chainId, pair.liquidityToken.address, pair.version],
-    queryFn: () =>
-      graphqlFetcher({
-        operationName: 'PairSwaps',
-        query: GET_PAIR_SWAPS,
-        variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
-      }),
-    refetchInterval: 60_000,
-    staleTime: 60_000,
+    // Loop with a timestamp_lt cursor to pull FULL swap history (not just the
+    // newest 1000) so the buy/sell volume has no gap. Stops when a batch returns
+    // < 1000 (oldest reached) or the MAX_SWAP_BATCHES safety cap is hit.
+    queryFn: async () => {
+      const base = { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() }
+      const all: SwapTxn[] = []
+      let before: string | undefined
+      for (let i = 0; i < MAX_SWAP_BATCHES; i++) {
+        const resp = (await graphqlFetcher({
+          operationName: before ? 'PairSwapsOlder' : 'PairSwaps',
+          query: before ? GET_PAIR_SWAPS_OLDER : GET_PAIR_SWAPS,
+          variables: before ? { ...base, before } : base,
+        })) as { transactions?: SwapTxn[] } | null
+        const txs = resp?.transactions ?? []
+        all.push(...txs)
+        if (txs.length < 1000) break
+        before = String(txs[txs.length - 1].timestamp)
+        if (i === MAX_SWAP_BATCHES - 1) {
+          console.warn(`[PairChartTV] swap history capped at ${MAX_SWAP_BATCHES}k — older volume buckets omitted`)
+        }
+      }
+      return { transactions: all }
+    },
+    // Full-history fetch is heavier than a single page, so refresh less often than
+    // the 60s price polling — volume bars don't need sub-minute freshness.
+    refetchInterval: 5 * 60_000,
+    staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
     enabled: !!pair.liquidityToken.address && !!pair.chainId,
   })
