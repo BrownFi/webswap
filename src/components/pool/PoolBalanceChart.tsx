@@ -16,6 +16,7 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
@@ -214,11 +215,15 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolBalances', chainId, pairAddress, version],
     queryFn: () =>
-      fetchBalancesWithFallback('PoolBalances', GET_POOL_BALANCES, {
-        chainId,
-        version,
-        pair: pairAddress.toLowerCase(),
-      }) as Promise<{ transactions: Txn[] }>,
+      fetchBalancesWithFallback(
+        'PoolBalances',
+        withFirstActivityGte(GET_POOL_BALANCES, 'timestamp', chainId, pairAddress),
+        {
+          chainId,
+          version,
+          pair: pairAddress.toLowerCase(),
+        },
+      ) as Promise<{ transactions: Txn[] }>,
     enabled: !!pairAddress && !!chainId,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
@@ -417,12 +422,16 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const res = (await fetchBalancesWithFallback('PoolBalancesOlder', GET_POOL_BALANCES_OLDER, {
-        chainId,
-        version,
-        pair: pairAddress.toLowerCase(),
-        before,
-      })) as { transactions?: Txn[] } | null
+      const res = (await fetchBalancesWithFallback(
+        'PoolBalancesOlder',
+        withFirstActivityGte(GET_POOL_BALANCES_OLDER, 'timestamp', chainId, pairAddress),
+        {
+          chainId,
+          version,
+          pair: pairAddress.toLowerCase(),
+          before,
+        },
+      )) as { transactions?: Txn[] } | null
       const batch = res?.transactions ?? []
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {

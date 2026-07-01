@@ -4,6 +4,7 @@ import { AutoColumn } from 'components/Column'
 import { Modal } from 'components/Modal'
 import QuestionHelper from 'components/QuestionHelper'
 import { isMainnet } from 'connectors'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import dayjs from 'dayjs'
 import { memo, ReactNode, useEffect, useMemo, useState } from 'react'
 import { BarChart2 } from 'react-feather'
@@ -74,7 +75,7 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom, inline }: Props) 
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: GET_PAIR_STATS,
+        query: withFirstActivityGte(GET_PAIR_STATS, 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     enabled: inline || isOpen,

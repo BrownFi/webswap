@@ -13,6 +13,7 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 
 // "oSpread" = the oracle-vs-AMM price spread per SWAP, from the indexer
 // Transaction entity: (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel.
@@ -78,7 +79,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PoolSpread',
-        query: GET_POOL_SPREAD,
+        query: withFirstActivityGte(GET_POOL_SPREAD, 'timestamp', chainId, pairAddress),
         variables: { chainId, version, pair: pairAddress.toLowerCase() },
       }),
     enabled: !!pairAddress && !!chainId,
@@ -176,7 +177,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
     try {
       const res = (await graphqlFetcher({
         operationName: 'PoolSpreadOlder',
-        query: GET_POOL_SPREAD_OLDER,
+        query: withFirstActivityGte(GET_POOL_SPREAD_OLDER, 'timestamp', chainId, pairAddress),
         variables: { chainId, version, pair: pairAddress.toLowerCase(), before },
       })) as { transactions?: Txn[] } | null
       const batch = res?.transactions ?? []

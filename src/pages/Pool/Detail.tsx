@@ -266,7 +266,7 @@ function PoolDetailInner({
   const ratiosMeaningful = Number(pairRaw?.tvl) >= 1
   // Annual Return = V3-only LP-vs-UniV2 outperformance since creation (green/red);
   // V2 lacks the inputs → 0/'--' (the metric is hidden on V2). Mirrors the list.
-  const annualReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairRaw)
+  const annualReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairRaw, chainId)
   // Fee APR = indexer-derived APR (V2 + V3), shown alongside.
   const feeAprDisplay = ratiosMeaningful ? feeAPR ?? 0 : 0
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)

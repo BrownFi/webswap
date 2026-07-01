@@ -236,7 +236,7 @@ export default function Pool() {
       if (sortKey === 'annualizedReturn') {
         // V3-only LP-vs-UniV2 formula; V2 has no inputs → 0. ('apr' sortKey
         // below handles the Fee APR column for both versions.)
-        return computeV3FeeApr(p)
+        return computeV3FeeApr(p, chainId)
       }
       if (sortKey === 'bgtAPR') {
         return bgtAprByAddr[p.id.toLowerCase()] ?? 0

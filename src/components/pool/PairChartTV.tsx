@@ -1,5 +1,6 @@
 import { ChainId, Pair, isV3Like } from '@brownfi/sdk'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { isMainnet, isV3Enabled } from 'connectors'
 import {
@@ -290,7 +291,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: buildQuery(GET_PAIR_STATS, keepUniV2),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -304,7 +305,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStatsHour',
-        query: buildQuery(GET_PAIR_STATS_HOUR, keepUniV2),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -327,7 +328,12 @@ const PairChartTVInner = ({ pair }: Props) => {
       for (let i = 0; i < MAX_SWAP_BATCHES; i++) {
         const resp = (await graphqlFetcher({
           operationName: before ? 'PairSwapsOlder' : 'PairSwaps',
-          query: before ? GET_PAIR_SWAPS_OLDER : GET_PAIR_SWAPS,
+          query: withFirstActivityGte(
+            before ? GET_PAIR_SWAPS_OLDER : GET_PAIR_SWAPS,
+            'timestamp',
+            pair.chainId,
+            pair.liquidityToken.address,
+          ),
           variables: before ? { ...base, before } : base,
         })) as { transactions?: SwapTxn[] } | null
         const txs = resp?.transactions ?? []
@@ -530,7 +536,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     try {
       const res = (await graphqlFetcher({
         operationName: 'PairStatsHourOlder',
-        query: buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase(), before },
       })) as { pairHourDatas?: HourData[] } | null
       const batch = res?.pairHourDatas ?? []

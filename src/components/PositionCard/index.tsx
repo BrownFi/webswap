@@ -169,7 +169,7 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
     const feeAPR = ratiosMeaningful ? (shouldUseIndexer ? feeAPRIndexer : feeAPRFallback) : 0
     // Annualized Return = V3-only LP-vs-UniV2 metric. V2 pools lack the inputs,
     // so computeV3FeeApr returns 0 → the column renders '--' for them.
-    const annualizedReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairStats)
+    const annualizedReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairStats, pair.chainId)
     return { tvl, lpPrice, annualizedReturn, feeAPR }
   }, [token0Price, token1Price, pair, totalPoolTokens, pairStats, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
 

@@ -1,5 +1,6 @@
 import { isV3Like } from '@brownfi/sdk'
 import { ChainId, JSBI, Pair, TokenAmount } from '@brownfi/sdk'
+import { getPoolFirstActivity } from 'lib/sdk/constants/poolFirstActivity'
 import { useQuery } from '@tanstack/react-query'
 import { useTotalSupply } from 'data/TotalSupply'
 import { useActiveWeb3React } from 'hooks'
@@ -67,21 +68,29 @@ export type PairStats = {
 
 /**
  * V3 "Annualized Return" = annualized LP-vs-UniV2 outperformance since the pool
- * was created: (lpPrice − uniV2Price) / uniV2Price / daysAlive × 360 × 100,
- * daysAlive = (now − createdAt) / 86400. Can be negative on thin/early pools.
- * Returns 0 when inputs are missing. Shared by the pool list (and later detail).
+ * started trading: (lpPrice − uniV2Price) / uniV2Price / daysAlive × 360 × 100,
+ * daysAlive = (now − start) / 86400. `start` is the pool's first-activity date if
+ * one is configured (poolFirstActivity), else `createdAt` — this trims the idle
+ * period for pools created well before their first trade (which would otherwise
+ * over-dilute the return). Can be negative on thin/early pools. Returns 0 when
+ * inputs are missing. Shared by the pool list, detail, and portfolio card.
  */
-export function computeV3FeeApr(p?: {
-  lpPrice?: number | string | null
-  uniV2Price?: number | string | null
-  createdAt?: number | string | null
-} | null): number {
+export function computeV3FeeApr(
+  p?: {
+    id?: string | null
+    lpPrice?: number | string | null
+    uniV2Price?: number | string | null
+    createdAt?: number | string | null
+  } | null,
+  chainId?: number | null,
+): number {
   if (!p) return 0
   const lp = Number(p.lpPrice)
   const uni = Number(p.uniV2Price)
-  const createdAt = Number(p.createdAt)
-  if (!lp || !uni || !createdAt) return 0
-  const daysAlive = (Date.now() / 1000 - createdAt) / 86400
+  // First-activity override wins over createdAt (trims pre-trade dead days).
+  const start = getPoolFirstActivity(chainId, p.id) ?? Number(p.createdAt)
+  if (!lp || !uni || !start) return 0
+  const daysAlive = (Date.now() / 1000 - start) / 86400
   if (daysAlive <= 0) return 0
   return ((lp - uni) / uni / daysAlive) * 360 * 100
 }
