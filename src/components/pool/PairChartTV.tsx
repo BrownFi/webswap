@@ -345,7 +345,9 @@ const PairChartTVInner = ({ pair }: Props) => {
     refetchInterval: 5 * 60_000,
     staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
-    enabled: !!pair.liquidityToken.address && !!pair.chainId,
+    // V3 only — V2's indexer has no per-swap `transactions` for a buy/sell split
+    // (the query 500s), so V2 falls back to the aggregate totalVolume bars.
+    enabled: !!pair.liquidityToken.address && !!pair.chainId && isV3,
   })
 
   // PROTOTYPE: bucket swaps and split buy/sell USD volume. Bucket size follows the
@@ -784,9 +786,10 @@ const PairChartTVInner = ({ pair }: Props) => {
     availableSeries.forEach((meta) => {
       const s = refs[meta.key]
       if (!s) return
-      // PROTOTYPE: the single 'volume' histogram is replaced by the stacked
-      // buy/sell pair below in BOTH modes — feed it empty so it never draws.
-      if (meta.key === 'volume') {
+      // V3: the single 'volume' histogram is replaced by the stacked buy/sell
+      // pair below, so feed it empty. V2 has no per-swap indexer data for a
+      // buy/sell split, so it keeps the original single-color totalVolume bars.
+      if (meta.key === 'volume' && isV3) {
         s.setData([])
         return
       }
@@ -819,7 +822,7 @@ const PairChartTVInner = ({ pair }: Props) => {
       chartRef.current?.timeScale().fitContent()
       didFitRef.current = true
     }
-  }, [chartData, availableSeries, chartVolTotal, chartVolSell])
+  }, [chartData, availableSeries, chartVolTotal, chartVolSell, isV3])
 
   // Toggle visibility
   useEffect(() => {
@@ -1021,8 +1024,9 @@ const PairChartTVInner = ({ pair }: Props) => {
             {meta.key === 'lpVsUniV2' && isV3 && supportsUniV2 && (
               <InfoTooltip text={BENCHMARK_HINT} learnMoreUrl={LEARN_MORE_URL} />
             )}
-            {/* Volume explainer — buy/sell split description. */}
-            {meta.key === 'volume' && <InfoTooltip text={VOLUME_HINT} />}
+            {/* Volume explainer — buy/sell split description (V3 only; V2 shows a
+                plain total-volume bar with no split). */}
+            {meta.key === 'volume' && isV3 && <InfoTooltip text={VOLUME_HINT} />}
             {/* Values live in the floating tooltip on both desktop (hover) and
                 mobile (tap) — no need to duplicate them here. */}
           </button>
