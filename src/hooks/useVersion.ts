@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
 import { isMainnet, isV3Enabled } from 'connectors'
-import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen, hasV3Pilot, hasV3Official, VERSION } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen, hasV3Pilot, hasV3Official, VERSION, slugToVersion } from 'lib/sdk/constants/addresses'
 
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
   const location = useLocation()
@@ -18,7 +18,14 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
     return !!data.test
   }, [location.search])
 
+  // Explicit `?v=` slug from the URL takes precedence over the Redux toggle, so a
+  // V2 pool link (e.g. from Portfolio/Pool list) opens as V2 even when the header
+  // toggle is on V3. No `?v=` (most pages) → undefined → falls back to the toggle.
+  const urlVersion = useMemo(() => slugToVersion(new URLSearchParams(location.search).get('v')), [location.search])
+
   const [version, isDisabled] = useMemo(() => {
+    // Effective selection: an explicit URL `?v=` slug wins over the stored toggle.
+    const selected = urlVersion ?? stableVersion
     // V3 not available when API doesn't support /indexer/v3 (prod API today).
     // Mainnet keeps its per-chain lock list because the V1 chains (Viction,
     // U2U) live on mainnet only.
@@ -31,7 +38,7 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       // selection falls back to V2. (This is what makes the V3-Official release
       // selectable — previously every mainnet chain was locked to V2.)
       if (hasV3Official(chainId ?? undefined)) {
-        return [stableVersion === VERSION.V3_OFFICIAL ? VERSION.V3_OFFICIAL : 2, false]
+        return [selected === VERSION.V3_OFFICIAL ? VERSION.V3_OFFICIAL : 2, false]
       }
       // Remaining mainnet chains are V2-only (no V3 deployment).
       if (
@@ -49,16 +56,16 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
     }
     // Non-mainnet env (beta/testnet). If the API doesn't have V3 (e.g. beta
     // deployment pointing at prod API), force V2 to prevent /indexer/v3
-    // 404s. Otherwise honour the user's stored version selection.
+    // 404s. Otherwise honour the effective selection (URL slug or stored toggle).
     if (!isV3Enabled) return [2, true]
-    const selectedVersion = stableVersion
+    const selectedVersion = selected
     if (selectedVersion === 1 && !ROUTER_ADDRESS_V1[chainId as number]) return [2, false]
     if (isV3Like(selectedVersion) && !routerV3Gen(selectedVersion)[chainId as number]) return [2, false]
     // V3 Pilot is hidden on beta/prod (only the dev build shows it). A stale
     // stored Pilot selection has no toggle entry anymore, so fall back to V2.
     if (selectedVersion === VERSION.V3_PILOT && !hasV3Pilot(chainId ?? undefined)) return [2, false]
     return [selectedVersion, false]
-  }, [chainId, stableVersion])
+  }, [chainId, stableVersion, urlVersion])
 
   const dispatchSwitchVersion = (version: number) => {
     dispatch(switchVersion(version))
