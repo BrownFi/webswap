@@ -16,6 +16,7 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
+import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
 // Same data + computation as the recharts version: pool-balance % split from the
@@ -107,6 +108,9 @@ type Point = {
   lpVsBh: number | null
   price0: number
   vol: number
+  // true = this swap BOUGHT the base token (base left the pool) → green/up bar;
+  // false = SOLD the base (base entered) → red/down bar.
+  volUp: boolean
 }
 
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
@@ -278,7 +282,12 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         const amt0 = Number(t.amount0In) + Number(t.amount0Out)
         const amt0Reserve = Number(t.reserve0)
         const vol = t.type === 'SWAP' && amt0Reserve > 0 ? amt0 * (r0 / amt0Reserve) : 0
-        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0 }
+        // Bar direction = the swap's direction relative to the BASE token: base
+        // BOUGHT (leaves the pool → baseOut) = up/green; base SOLD (enters → baseIn) = down/red.
+        const baseOut = Number(baseIdx === 0 ? t.amount0Out : t.amount1Out)
+        const baseIn = Number(baseIdx === 0 ? t.amount0In : t.amount1In)
+        const volUp = baseOut >= baseIn
+        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0, volUp }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
     // Step-attach LP-vs-BH: both arrays are ascending, so walk a pointer.
@@ -302,22 +311,19 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     allPoints.forEach((p) => byTime.set(p.t, p))
     const sorted = [...byTime.values()].sort((a, b) => a.t - b.t)
 
-    // Signed volume histogram (interpretation B): green bar UP from 0 when the
-    // relative price rose vs the previous point, red bar DOWN when it fell; bar
-    // height = the swap's USD volume. Only SWAP txs with vol > 0 emit a bar. First
-    // point / flat / non-finite change → treated as up.
+    // Signed volume histogram (interpretation B): green bar UP from 0 when the swap
+    // BOUGHT the base token (base leaves the pool), red bar DOWN when it SOLD it;
+    // bar height = the swap's USD volume. Only SWAP txs with vol > 0 emit a bar.
     const volume: { time: any; value: number; color: string }[] = []
-    let prevPrice: number | null = null
     for (const p of sorted) {
       if (p.vol > 0) {
-        const up = prevPrice == null || !Number.isFinite(p.price0) || p.price0 >= prevPrice
+        const up = p.volUp
         volume.push({
           time: p.t as any,
           value: up ? p.vol : -p.vol,
           color: up ? COLOR_VOL_UP : COLOR_VOL_DOWN,
         })
       }
-      if (Number.isFinite(p.price0)) prevPrice = p.price0
     }
 
     return {
@@ -866,16 +872,22 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         {legendItems.length > 0 && (
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-3">
             {legendItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setVisible((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
-                className="inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
-                style={{ background: 'transparent', border: 'none', padding: 0, opacity: visible[item.key] ? 1 : 0.4 }}
-              >
-                <span style={{ width: 10, height: 10, borderRadius: 3, background: item.color, display: 'inline-block' }} />
-                <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>{item.label}</span>
-              </button>
+              <div key={item.key} className="inline-flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setVisible((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
+                  className="inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
+                  style={{ background: 'transparent', border: 'none', padding: 0, opacity: visible[item.key] ? 1 : 0.4 }}
+                >
+                  <span style={{ width: 10, height: 10, borderRadius: 3, background: item.color, display: 'inline-block' }} />
+                  <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>{item.label}</span>
+                </button>
+                {item.key === 'vol' && (
+                  <InfoTooltip
+                    text={`Green = bought ${baseSymbol}, red = sold ${baseSymbol}. Bar height = swap volume (USD).`}
+                  />
+                )}
+              </div>
             ))}
           </div>
         )}
