@@ -435,7 +435,8 @@ export function PoolBalanceChart({
             case TickMarkType.Year:
               return d.toLocaleDateString(undefined, { year: 'numeric' })
             case TickMarkType.Month:
-              return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+              // Full year, not '2-digit': "Jul '26" reads like "July 26th".
+              return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
             case TickMarkType.Time:
               return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
             case TickMarkType.TimeWithSeconds:
