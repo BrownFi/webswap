@@ -73,6 +73,32 @@ const GET_POOL_BALANCES_OLDER = `
   }
 `
 
+// Per-swap lpPrice/bnhPrice were added to the indexer's `Transaction` entity only
+// on some chains (partial rollout). On chains without them the query is rejected
+// ("Type `Transaction` has no field `lpPrice`") and the whole chart shows "no
+// activity". `buildBalancesQuery(t, false)` strips those two fields.
+const buildBalancesQuery = (template: string, keep: boolean) =>
+  keep ? template : template.replace(/\s*lpPrice\s*/g, '\n').replace(/\s*bnhPrice\s*/g, '\n')
+
+// Self-detecting fetch: try WITH the benchmark fields; if the chain's indexer
+// doesn't have them yet (null result or thrown error), retry WITHOUT them. So
+// LP-vs-BH auto-appears the moment Manh deploys the fields to a chain — no
+// hardcoded per-chain list to maintain. Where stripped, lpVsBh is null and the
+// LP-vs-BH line/legend simply don't render; the rest of the chart is unaffected.
+async function fetchBalancesWithFallback(
+  operationName: string,
+  template: string,
+  variables: Record<string, unknown>,
+) {
+  try {
+    const full = await graphqlFetcher({ operationName, query: template, variables })
+    if (full) return full
+  } catch {
+    // fall through to the stripped query
+  }
+  return graphqlFetcher({ operationName, query: buildBalancesQuery(template, false), variables })
+}
+
 const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as const
 type Range = keyof typeof RANGES
 const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
@@ -188,11 +214,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolBalances', chainId, pairAddress, version],
     queryFn: () =>
-      graphqlFetcher({
-        operationName: 'PoolBalances',
-        query: GET_POOL_BALANCES,
-        variables: { chainId, version, pair: pairAddress.toLowerCase() },
-      }),
+      fetchBalancesWithFallback('PoolBalances', GET_POOL_BALANCES, {
+        chainId,
+        version,
+        pair: pairAddress.toLowerCase(),
+      }) as Promise<{ transactions: Txn[] }>,
     enabled: !!pairAddress && !!chainId,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
@@ -391,10 +417,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const res = (await graphqlFetcher({
-        operationName: 'PoolBalancesOlder',
-        query: GET_POOL_BALANCES_OLDER,
-        variables: { chainId, version, pair: pairAddress.toLowerCase(), before },
+      const res = (await fetchBalancesWithFallback('PoolBalancesOlder', GET_POOL_BALANCES_OLDER, {
+        chainId,
+        version,
+        pair: pairAddress.toLowerCase(),
+        before,
       })) as { transactions?: Txn[] } | null
       const batch = res?.transactions ?? []
       if (batch.length < 1000) exhaustedRef.current = true
