@@ -116,6 +116,29 @@ const GET_PAIR_STATS_HOUR_OLDER = `
   }
 `
 
+// PROTOTYPE (research/lp-candlestick): recent swaps for the DAILY stacked
+// buy/sell volume. Client-side bucketed by day. `first: 1000` is a prototype
+// limitation — pools with >1000 swaps show partial data for the oldest days.
+const GET_PAIR_SWAPS = `
+  query PairSwaps($pair: String) {
+    transactions(first: 1000, where: { pair: $pair, type: "SWAP" }, orderBy: timestamp, orderDirection: desc) {
+      timestamp
+      amount0In
+      amount0Out
+      reserve0
+      reserve0USD
+    }
+  }
+`
+
+type SwapTxn = {
+  timestamp: number | string
+  amount0In: number | string
+  amount0Out: number | string
+  reserve0: number | string
+  reserve0USD: number | string
+}
+
 type DayData = {
   dayStartUnix: number
   tvl: number
@@ -136,6 +159,8 @@ type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpVsUniV2' | 'tvl' | '
 const LEARN_MORE_URL = 'https://brownfi.gitbook.io/brownfi-docs/brownfi-v3/benchmark'
 const BENCHMARK_HINT =
   "The UniV2 constant-product curve serves as the benchmark for measuring BrownFi pool performance. The LP line should sit above the UniV2 line, with the gap widening over time, reflecting BrownFi V3's lower IL and higher fee yield compared to UniV2."
+const VOLUME_HINT =
+  'Trading volume per bar (in USD). Green is buy volume (token0 bought), red is sell volume (token0 sold), stacked so the full bar is the total volume for that period.'
 
 type SeriesMeta = {
   key: SeriesKey
@@ -178,8 +203,23 @@ const SERIES_ALL: SeriesMeta[] = [
   // Internal key stays `netPnL` to avoid a sweep across the indexer field name.
   { key: 'netPnL',        label: 'LP vs. BH',      color: '#83CF84',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden' },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
-  { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
+  { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' }, // legend swatch = the candle's buy-green
 ]
+
+// PROTOTYPE: daily stacked buy/sell volume colors (green buys on top, red sells
+// on the bottom).
+const COLOR_BUY = '#16A34A' // buy — the LP chart's original volume green
+const COLOR_SELL = '#EF5350' // sell — same red as the Pool Balance volume chart
+
+// Compact USD for the buy/sell tooltip rows (e.g. $1.2k, $340).
+const fmtVolUsd = (v: number): string => {
+  const abs = Math.abs(v)
+  if (!Number.isFinite(abs) || abs === 0) return '$0'
+  if (abs >= 1_000_000) return `$${(abs / 1_000_000).toFixed(1)}M`
+  if (abs >= 1_000) return `$${(abs / 1_000).toFixed(1)}k`
+  if (abs >= 1) return `$${abs.toFixed(0)}`
+  return `$${abs.toFixed(2)}`
+}
 
 type Props = {
   pair: Pair
@@ -253,6 +293,59 @@ const PairChartTVInner = ({ pair }: Props) => {
     enabled: isHourly,
   })
 
+  // PROTOTYPE: recent swaps for the stacked buy/sell volume. Enabled in BOTH modes
+  // (daily buckets by day, 1h by hour) — the recent first:1000 swaps cover both.
+  const { data: swapResp } = useQuery<{ transactions: SwapTxn[] }>({
+    queryKey: ['pairSwaps', pair.chainId, pair.liquidityToken.address, pair.version],
+    queryFn: () =>
+      graphqlFetcher({
+        operationName: 'PairSwaps',
+        query: GET_PAIR_SWAPS,
+        variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
+      }),
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    enabled: !!pair.liquidityToken.address && !!pair.chainId,
+  })
+
+  // PROTOTYPE: bucket swaps and split buy/sell USD volume. Bucket size follows the
+  // mode — per HOUR in 1h, per DAY otherwise.
+  //  - vol (USD) = (amount0In + amount0Out) × token0-USD-price
+  //  - isBuy = amount0Out > amount0In (token0 LEFT the pool → someone bought token0)
+  //    NOTE (demo simplification): this is raw-token0 orientation. A base/quote-
+  //    aware buy/sell (flip when token0 is the quote) can layer on later.
+  // Produces two ASC-by-bucket arrays: volTotal (buy+sell) and volSell (sell only)
+  // — the stacked-histogram trick draws green(total) behind, red(sell) on top.
+  const { volTotal, volSell } = useMemo(() => {
+    const rows = swapResp?.transactions ?? []
+    const bucket = isHourly ? 3600 : 86400
+    // Drop any swap with a bad/future timestamp — a single future-dated bucket
+    // stretches the whole time axis and paints phantom future dates on it.
+    const nowSec = Math.floor(Date.now() / 1000)
+    const byBucket = new Map<number, { buy: number; sell: number }>()
+    rows.forEach((t) => {
+      const ts = Number(t.timestamp)
+      if (!Number.isFinite(ts) || ts > nowSec) return
+      const reserve0 = Number(t.reserve0)
+      const in0 = Number(t.amount0In)
+      const out0 = Number(t.amount0Out)
+      const vol = reserve0 > 0 ? (in0 + out0) * (Number(t.reserve0USD) / reserve0) : 0
+      if (!Number.isFinite(vol) || vol <= 0) return
+      const isBuy = out0 > in0
+      const bucketStart = Math.floor(ts / bucket) * bucket
+      const acc = byBucket.get(bucketStart) ?? { buy: 0, sell: 0 }
+      acc.buy += isBuy ? vol : 0
+      acc.sell += isBuy ? 0 : vol
+      byBucket.set(bucketStart, acc)
+    })
+    const buckets = [...byBucket.entries()].sort((a, b) => a[0] - b[0])
+    return {
+      volTotal: buckets.map(([time, v]) => ({ time: time as any, value: v.buy + v.sell })),
+      volSell: buckets.map(([time, v]) => ({ time: time as any, value: v.sell })),
+    }
+  }, [swapResp, isHourly])
+
   const isPending = isHourly ? isPendingHour : isPendingDay
   const data = isHourly ? hourResp : dayResp
 
@@ -267,6 +360,10 @@ const PairChartTVInner = ({ pair }: Props) => {
   // before appending, restore it after setData (so the view doesn't jump).
   const pendingRestoreRef = useRef(false)
   const savedRangeRef = useRef<IRange<Time> | null>(null)
+  // fitContent only ONCE per range/mode (initial framing). Otherwise the 60s
+  // refetch re-fits and yanks the user out of wherever they scrolled/zoomed
+  // (the "1h suddenly shows all data after a minute" bug). Reset on pool/range change.
+  const didFitRef = useRef(false)
   // Latest `loadMore` + hourly-mode flag, read by the once-created subscription.
   const loadMoreRef = useRef<() => void>(() => {})
   const isHourlyRef = useRef(isHourly)
@@ -280,6 +377,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     exhaustedRef.current = false
     pendingRestoreRef.current = false
     savedRangeRef.current = null
+    didFitRef.current = false
   }, [pair.chainId, pair.liquidityToken.address, pair.version, range])
 
   // Combined hourly rows (live initial 24 + accumulated older batches). Both are
@@ -294,6 +392,10 @@ const PairChartTVInner = ({ pair }: Props) => {
   }, [isHourly, hourResp, olderHours])
 
   const fullChartData = useMemo(() => {
+    // Guard against future-dated buckets from the indexer — a single point with a
+    // dayStartUnix/hourStartUnix in the future stretches the time axis and paints
+    // a phantom future date on it (e.g. a "Jul 26" tick when today is Jul 1).
+    const nowSec = Math.floor(Date.now() / 1000)
     const toPoint = (lpRaw: number, bnhRaw: number, uniRaw: number, tvlRaw: number, volRaw: number, time: number) => {
       // Apply the iskHYPEUSDT scale BEFORE computing the diff so we don't
       // mix raw and scaled values. The divergence is in the same price
@@ -323,14 +425,17 @@ const PairChartTVInner = ({ pair }: Props) => {
       if (!rows.length) return []
       // Combined rows are desc — flip to asc so the chart renders left→right.
       return [...rows]
+        .filter((d) => Number(d.hourStartUnix) <= nowSec)
         .sort((a, b) => Number(a.hourStartUnix) - Number(b.hourStartUnix))
         .map((d) => toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.hourStartUnix)))
     }
     const rows = (data as { pairDayDatas?: DayData[] } | undefined)?.pairDayDatas
     if (!rows) return []
-    return rows.map((d) =>
-      toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
-    )
+    return rows
+      .filter((d) => Number(d.dayStartUnix) <= nowSec)
+      .map((d) =>
+        toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
+      )
   }, [data, isHourly, iskHYPEUSDT, combinedHours])
 
   const chartData = useMemo(() => {
@@ -340,10 +445,32 @@ const PairChartTVInner = ({ pair }: Props) => {
     return fullChartData.slice(-days)
   }, [fullChartData, range, isHourly])
 
+  // PROTOTYPE: scope the stacked volume to the SAME window as the price data so the
+  // range selector zooms the chart (the volume no longer stretches it to all
+  // history). Scope the volume to the earliest VISIBLE price bucket
+  // (chartData[0].time) in EVERY mode — for 1h that's the loaded hourly window,
+  // for 'all' it's a no-op (all data), for 7d/1m/3m it's the sliced range — so
+  // fitContent always frames the price window, not the full swap history.
+  const { chartVolTotal, chartVolSell } = useMemo(() => {
+    const cutoff = chartData.length ? Number(chartData[0].time) : 0
+    return {
+      chartVolTotal: volTotal.filter((p) => Number(p.time) >= cutoff),
+      chartVolSell: volSell.filter((p) => Number(p.time) >= cutoff),
+    }
+  }, [volTotal, volSell, chartData])
+
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRefs = useRef<Partial<Record<SeriesKey, ISeriesApi<any>>>>({})
-  const [hovered, setHovered] = useState<Partial<Record<SeriesKey, number>> | null>(null)
+  // PROTOTYPE: the two stacked daily-volume histograms (green=total behind,
+  // red=sell on top). Separate from seriesRefs since they aren't SeriesKeys.
+  const volBuyRef = useRef<ISeriesApi<'Histogram'> | null>(null)
+  const volSellRef = useRef<ISeriesApi<'Histogram'> | null>(null)
+  // Hovered per-series values for the tooltip. `volTotal`/`volSell` carry the two
+  // stacked-histogram bars at the cursor (buy = total − sell).
+  const [hovered, setHovered] = useState<
+    (Partial<Record<SeriesKey, number>> & { volTotal?: number; volSell?: number }) | null
+  >(null)
   // Floating tooltip state — anchor x/y in container-relative pixels.
   // null when cursor is outside the plot area.
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
@@ -436,6 +563,14 @@ const PairChartTVInner = ({ pair }: Props) => {
         borderColor: '#493E35',
         timeVisible: false,
         secondsVisible: false,
+        // Clamp the right edge to the newest bar + kill the right margin. With
+        // gappy daily data lightweight-charts otherwise extrapolates tick labels
+        // into the empty space past the last bar — showing FUTURE dates on the
+        // axis (e.g. "Jul 26" when the latest bar is today) that match no bar and
+        // disagree with the tooltip. fixLeftEdge stays off so 1h scroll-to-load
+        // older buckets still works.
+        fixRightEdge: true,
+        rightOffset: 0,
       },
       crosshair: {
         mode: CrosshairMode.Normal,
@@ -489,6 +624,28 @@ const PairChartTVInner = ({ pair }: Props) => {
       })
     }
 
+    // PROTOTYPE: daily STACKED buy/sell volume on the same 'volume' scale. The
+    // trick: GREEN (total = buy+sell) is created FIRST so it draws BEHIND, then
+    // RED (sell) is created SECOND so it draws ON TOP — covering 0→sell. Net
+    // visual: red-bottom / green-top stack. Fed only in daily mode (empty in 1h,
+    // where the existing single 'volume' histogram is used instead).
+    const volBuy = chart.addSeries(HistogramSeries, {
+      ...commonNoLabels,
+      color: COLOR_BUY,
+      priceScaleId: 'volume',
+      base: 0,
+      priceFormat: { type: 'custom', formatter: priceFormatter, minMove: 0.01 },
+    })
+    const volSellSeries = chart.addSeries(HistogramSeries, {
+      ...commonNoLabels,
+      color: COLOR_SELL,
+      priceScaleId: 'volume',
+      base: 0,
+      priceFormat: { type: 'custom', formatter: priceFormatter, minMove: 0.01 },
+    })
+    volBuyRef.current = volBuy
+    volSellRef.current = volSellSeries
+
     // The "LP vs. UniV2" + "LP vs. BH" % lines share their own invisible overlay
     // scale ('pct') so they auto-fit to the same percentage range together and
     // stay directly comparable. Keep them clear of the volume band at the bottom.
@@ -509,7 +666,7 @@ const PairChartTVInner = ({ pair }: Props) => {
         setTip(null)
         return
       }
-      const next: Partial<Record<SeriesKey, number>> = {}
+      const next: Partial<Record<SeriesKey, number>> & { volTotal?: number; volSell?: number } = {}
       ;(Object.keys(seriesRefs.current) as SeriesKey[]).forEach((k) => {
         const s = seriesRefs.current[k]
         if (!s) return
@@ -518,6 +675,12 @@ const PairChartTVInner = ({ pair }: Props) => {
           next[k] = point.value
         }
       })
+      // PROTOTYPE: the stacked buy/sell bars aren't SeriesKeys — read them directly.
+      // Green = total (buy+sell), red = sell; the tooltip derives buy = total − sell.
+      const totalPt = volBuyRef.current ? (param.seriesData.get(volBuyRef.current) as { value?: number } | undefined) : undefined
+      const sellPt = volSellRef.current ? (param.seriesData.get(volSellRef.current) as { value?: number } | undefined) : undefined
+      if (totalPt && typeof totalPt.value === 'number') next.volTotal = totalPt.value
+      if (sellPt && typeof sellPt.value === 'number') next.volSell = sellPt.value
       setHovered(next)
       setTip({ x: param.point.x, y: param.point.y, time: Number(param.time) })
     }
@@ -539,6 +702,8 @@ const PairChartTVInner = ({ pair }: Props) => {
       chart.remove()
       chartRef.current = null
       seriesRefs.current = {}
+      volBuyRef.current = null
+      volSellRef.current = null
     }
   }, [availableSeries])
 
@@ -557,7 +722,8 @@ const PairChartTVInner = ({ pair }: Props) => {
             case TickMarkType.Year:
               return d.toLocaleDateString(undefined, { year: 'numeric' })
             case TickMarkType.Month:
-              return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+              // Full year, not '2-digit': "Jul '26" reads like "July 26th".
+              return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
             case TickMarkType.Time:
               return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
             case TickMarkType.TimeWithSeconds:
@@ -579,18 +745,27 @@ const PairChartTVInner = ({ pair }: Props) => {
     availableSeries.forEach((meta) => {
       const s = refs[meta.key]
       if (!s) return
+      // PROTOTYPE: the single 'volume' histogram is replaced by the stacked
+      // buy/sell pair below in BOTH modes — feed it empty so it never draws.
+      if (meta.key === 'volume') {
+        s.setData([])
+        return
+      }
       const mapped = chartData
         .map((p) => ({
           time: p.time as any,
           value: p[meta.key] as number,
-          // Volume bars get a per-point color so we can fade them via alpha
-          // independently of the series-level color. Derived from meta.color
-          // + 88 alpha so changing the palette entry propagates here.
-          ...(meta.key === 'volume' ? { color: `${meta.color}88` } : {}),
         }))
         .filter((p) => Number.isFinite(p.value))
       s.setData(mapped)
     })
+
+    // PROTOTYPE: stacked buy/sell volume in BOTH modes (per-hour in 1h, per-day
+    // otherwise) — green(total) drawn behind, red(sell) on top. Scoped to the
+    // selected range so the volume matches the visible price window (not stretched
+    // to all history) and the range selector actually zooms.
+    volBuyRef.current?.setData(chartVolTotal)
+    volSellRef.current?.setData(chartVolSell)
     if (pendingRestoreRef.current) {
       // A 1h load-more prepend just grew the series on the LEFT — keep the same
       // TIME window so the view doesn't jump (older bars slide in off-screen).
@@ -598,10 +773,14 @@ const PairChartTVInner = ({ pair }: Props) => {
       if (saved) chartRef.current?.timeScale().setVisibleRange(saved)
       pendingRestoreRef.current = false
       savedRangeRef.current = null
-    } else {
+    } else if (!didFitRef.current) {
+      // Frame the window once, on the first data arrival for this range/mode.
+      // Later 60s refetches update the series in place (setData preserves the
+      // visible range) so the user's scroll/zoom position is left alone.
       chartRef.current?.timeScale().fitContent()
+      didFitRef.current = true
     }
-  }, [chartData, availableSeries])
+  }, [chartData, availableSeries, chartVolTotal, chartVolSell])
 
   // Toggle visibility
   useEffect(() => {
@@ -609,6 +788,9 @@ const PairChartTVInner = ({ pair }: Props) => {
     availableSeries.forEach((meta) => {
       refs[meta.key]?.applyOptions({ visible: !!visible[meta.key] })
     })
+    // PROTOTYPE: the stacked buy/sell histograms follow the 'volume' toggle.
+    volBuyRef.current?.applyOptions({ visible: !!visible.volume })
+    volSellRef.current?.applyOptions({ visible: !!visible.volume })
   }, [visible, availableSeries])
 
   return (
@@ -737,6 +919,31 @@ const PairChartTVInner = ({ pair }: Props) => {
                     </div>
                   )
                 })}
+              {/* PROTOTYPE: stacked buy/sell split at the hovered bucket. Shown only
+                  when the volume stack is visible and a bar exists (total > 0). */}
+              {visible.volume && hovered.volTotal !== undefined && hovered.volTotal > 0 && (() => {
+                const total = hovered.volTotal as number
+                const sell = hovered.volSell ?? 0
+                const buy = total - sell
+                const row = (label: string, color: string, value: number) => (
+                  <div
+                    key={label}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, fontSize: 11, lineHeight: '16px' }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color }}>
+                      <span style={{ width: 7, height: 7, background: color, borderRadius: 2, display: 'inline-block' }} />
+                      {label}
+                    </span>
+                    <span style={{ color: '#FBFBFD', fontWeight: 600 }}>{fmtVolUsd(value)}</span>
+                  </div>
+                )
+                return (
+                  <>
+                    {row('Buy', COLOR_BUY, buy)}
+                    {row('Sell', COLOR_SELL, sell)}
+                  </>
+                )
+              })()}
             </div>
           )
         })()}
@@ -745,6 +952,8 @@ const PairChartTVInner = ({ pair }: Props) => {
       {/* Legend + toggles (bottom) */}
       <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-3">
         {availableSeries.map((meta) => (
+          // PROTOTYPE: a single 'Volume' item toggles the whole stacked buy/sell
+          // pair (its visibility flows to both histograms via the effect below).
           <button
             key={meta.key}
             onClick={() => setVisible((prev) => ({ ...prev, [meta.key]: !prev[meta.key] }))}
@@ -773,6 +982,8 @@ const PairChartTVInner = ({ pair }: Props) => {
             {meta.key === 'lpVsUniV2' && isV3 && supportsUniV2 && (
               <InfoTooltip text={BENCHMARK_HINT} learnMoreUrl={LEARN_MORE_URL} />
             )}
+            {/* Volume explainer — buy/sell split description. */}
+            {meta.key === 'volume' && <InfoTooltip text={VOLUME_HINT} />}
             {/* Values live in the floating tooltip on both desktop (hover) and
                 mobile (tap) — no need to duplicate them here. */}
           </button>

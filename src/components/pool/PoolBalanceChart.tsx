@@ -141,7 +141,7 @@ const formatVolUsd = (v: number): string => {
   return `$${abs.toFixed(4)}`
 }
 
-const COLOR_VOL_UP = '#26A69A' // green — price rose that swap (bar up)
+const COLOR_VOL_UP = '#16A34A' // green — price rose that swap (bar up)
 const COLOR_VOL_DOWN = '#EF5350' // red — price fell that swap (bar down)
 const COLOR_VOL_LEGEND = '#9CA3AF' // gray legend swatch (bars are per-point colored)
 
@@ -258,6 +258,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point
   // also carries the LP-vs-BH value from the latest daily bucket ≤ its timestamp.
   const allPoints = useMemo<Point[]>(() => {
+    // Drop swaps with a future timestamp — a bad indexer record dated ahead of
+    // now sits at the end of the series, so the chart frames right up to it
+    // (stretching the axis "today → Jul 26"). Real block timestamps are never
+    // ahead of now; a 1h margin absorbs any clock skew.
+    const futureCutoff = Math.floor(Date.now() / 1000) + 3600
     const base = [...combinedTxs]
       .reverse()
       .map((t) => {
@@ -289,7 +294,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         const volUp = baseOut >= baseIn
         return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0, volUp }
       })
-      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
+      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0) && p.t <= futureCutoff)
     // Step-attach LP-vs-BH: both arrays are ascending, so walk a pointer.
     let di = 0
     let last: number | null = null
@@ -481,6 +486,12 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
         borderColor: '#493E35',
         timeVisible: true,
         secondsVisible: false,
+        // No empty margin past the last bar: otherwise lightweight-charts fills
+        // the whitespace with extrapolated tick times that overshoot into the
+        // future ("Jul 26" phantom dates). fixLeftEdge stays off so scroll-to-
+        // load-more still works.
+        rightOffset: 0,
+        fixRightEdge: true,
         // Labels adapt to the zoom level — lightweight-charts passes the tick
         // granularity, so zooming out shows month/day and zooming into a day
         // shows HH:mm (professional, TradingView-style), instead of a fixed format.
@@ -490,7 +501,8 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
             case TickMarkType.Year:
               return d.toLocaleDateString(undefined, { year: 'numeric' })
             case TickMarkType.Month:
-              return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+              // Full year, not '2-digit': "Jul '26" reads like "July 26th".
+              return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
             case TickMarkType.Time:
               return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
             case TickMarkType.TimeWithSeconds:

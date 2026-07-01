@@ -116,6 +116,11 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
 
   // oSpread per swap (× 100 for %), chronological (indexer returns newest-first).
   const allPoints = useMemo<Point[]>(() => {
+    // Drop swaps with a future timestamp — a bad indexer record dated ahead of
+    // now sits at the end of the series, so the chart frames right up to it
+    // (stretching the axis "today → Jul 26"). Real block timestamps are never
+    // ahead of now; a 1h margin absorbs any clock skew.
+    const futureCutoff = Math.floor(Date.now() / 1000) + 3600
     return [...combinedTxs]
       .reverse()
       .map((t) => {
@@ -137,7 +142,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
         const s = amm > 0 && adj > 0 && Number.isFinite(ratio) ? ((ratio - amm) / adj) * 100 : NaN
         return { t: Number(t.timestamp), s }
       })
-      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s))
+      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s) && p.t <= futureCutoff)
   }, [combinedTxs])
 
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
@@ -254,6 +259,12 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
         borderColor: '#493E35',
         timeVisible: true,
         secondsVisible: false,
+        // No empty margin past the last bar: otherwise lightweight-charts fills
+        // the whitespace with extrapolated tick times that overshoot into the
+        // future ("Jul 26" phantom dates). fixLeftEdge stays off so scroll-to-
+        // load-more still works.
+        rightOffset: 0,
+        fixRightEdge: true,
         // Labels adapt to the zoom level — lightweight-charts passes the tick
         // granularity, so zooming out shows month/day and zooming into a day
         // shows HH:mm (professional, TradingView-style), instead of a fixed format.
@@ -263,7 +274,8 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
             case TickMarkType.Year:
               return d.toLocaleDateString(undefined, { year: 'numeric' })
             case TickMarkType.Month:
-              return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+              // Full year, not '2-digit': "Jul '26" reads like "July 26th".
+              return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
             case TickMarkType.Time:
               return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
             case TickMarkType.TimeWithSeconds:
