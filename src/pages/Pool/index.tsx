@@ -308,8 +308,13 @@ export default function Pool() {
   // Real lag = the head block falling meaningfully behind wall-clock (>15 min),
   // or the indexer reporting indexing errors.
   const indexerMeta = data?._meta
+  // The V2 indexer returns `_meta.block.timestamp = null` (only the block number),
+  // so Number(null) === 0 made the lag look ~56 years → false "syncing" banner on
+  // every V2 load. Only measure lag when the head timestamp is a real, positive
+  // number; otherwise rely on the error / hasIndexingErrors signals below.
+  const headTs = Number(indexerMeta?.block?.timestamp)
   // eslint-disable-next-line react-hooks/purity -- head-lag vs wall clock; re-running each render is fine
-  const indexerLagSec = indexerMeta?.block ? Date.now() / 1000 - Number(indexerMeta.block.timestamp) : 0
+  const indexerLagSec = headTs > 0 ? Date.now() / 1000 - headTs : 0
   const hasIndexerIssue = !!error || !!indexerMeta?.hasIndexingErrors || indexerLagSec > 15 * 60
 
   useEffect(() => {
