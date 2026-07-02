@@ -13,18 +13,42 @@ interface KodiakPoolRaw {
   totalValueLockedUSD: string
   token0: { id: string }
   token1: { id: string }
-  poolDayData: { volumeUSD: string; feesUSD: string }[]
+  poolDayData: { date: string; volumeUSD: string; feesUSD: string }[]
 }
 
+// first: 2 to reach today + yesterday's buckets — the trailing 24h spans both.
+// (Kodiak's subgraph has no hourly data, so 24h is interpolated from daily.)
 const KODIAK_POOLS_QUERY = `{
   pools(first: 1000, orderBy: totalValueLockedUSD, orderDirection: desc, where: { totalValueLockedUSD_gt: 0 }) {
     feeTier
     totalValueLockedUSD
     token0 { id }
     token1 { id }
-    poolDayData(first: 1, orderBy: date, orderDirection: desc) { volumeUSD feesUSD }
+    poolDayData(first: 2, orderBy: date, orderDirection: desc) { date volumeUSD feesUSD }
   }
 }`
+
+// Rolling 24h from Kodiak's DAILY buckets (their subgraph has no hourly data) —
+// matches how kodiak.finance itself shows "Volume 24H": today's volume (partial)
+// plus the portion of yesterday still inside the trailing-24h window. Any bucket
+// older than yesterday is outside the window → contributes 0, which fixes the old
+// bug where an inactive pool's latest (stale, days-old) bucket was shown as "24h".
+function trailing24h(rows: { date: string; volumeUSD: string; feesUSD: string }[]): { vol: number; fees: number } {
+  const now = Date.now() / 1000
+  const todayStart = Math.floor(now / 86400) * 86400
+  const yestStart = todayStart - 86400
+  const yestFrac = (86400 - (now - todayStart)) / 86400 // share of yesterday still within the last 24h
+  let vol = 0
+  let fees = 0
+  for (const r of rows) {
+    const date = Number(r.date)
+    const w = date === todayStart ? 1 : date === yestStart ? yestFrac : 0
+    if (w === 0) continue
+    vol += (Number(r.volumeUSD) || 0) * w
+    fees += (Number(r.feesUSD) || 0) * w
+  }
+  return { vol, fees }
+}
 
 // Returns a map keyed by `kodiakPairKey`. When a pair has multiple Kodiak pools
 // (different fee tiers), the highest-TVL pool wins — pools come back sorted by
@@ -46,11 +70,12 @@ export async function fetchKodiakPairMap(): Promise<Record<string, CompetitorPai
     for (const p of pools) {
       const key = competitorPairKey(p.token0.id, p.token1.id)
       if (map[key]) continue // first (highest-TVL) pool per pair wins
+      const { vol, fees } = trailing24h(p.poolDayData ?? [])
       map[key] = {
         feeTier: Number(p.feeTier) || 0,
         tvlUSD: Number(p.totalValueLockedUSD) || 0,
-        vol24hUSD: Number(p.poolDayData?.[0]?.volumeUSD) || 0,
-        fees24hUSD: Number(p.poolDayData?.[0]?.feesUSD) || 0,
+        vol24hUSD: vol,
+        fees24hUSD: fees,
       }
     }
     return map
