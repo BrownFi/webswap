@@ -1,10 +1,12 @@
 // Competitor (rival DEX) comparison data, keyed per chain. The pool list and
 // pool detail show a side-by-side of our pool vs the dominant competitor on the
-// same chain — Kodiak on Berachain, Project X on HyperEVM.
+// same chain — Kodiak (Bera), Project X (HyperEVM), Uniswap (Arbitrum),
+// Etherex (Linea). See getCompetitor.
 import { ChainId } from '@brownfi/sdk'
 import { fetchKodiakPairMap } from './kodiakService'
 import { fetchProjectXPairMap } from './projectXService'
 import { fetchUniswapPairMap } from './uniswapService'
+import { fetchEtherexPairMap } from './etherexService'
 
 export interface CompetitorPairData {
   // feeTier in hundredths of a bip (500 = 0.05%, 3000 = 0.3%).
@@ -38,6 +40,8 @@ export function getCompetitor(chainId: number): CompetitorConfig | undefined {
       return { name: 'Project X', queryKey: 'projectXPairMap', fetch: fetchProjectXPairMap }
     case ChainId.ARBITRUM_MAINNET:
       return { name: 'Uniswap', queryKey: 'uniswapPairMap', fetch: fetchUniswapPairMap }
+    case ChainId.LINEA_MAINNET:
+      return { name: 'Etherex', queryKey: 'etherexPairMap', fetch: fetchEtherexPairMap }
     default:
       return undefined
   }
