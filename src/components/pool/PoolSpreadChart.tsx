@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   ColorType,
   CrosshairMode,
+  HistogramSeries,
   IChartApi,
   IRange,
   ISeriesApi,
@@ -32,6 +33,12 @@ const GET_POOL_SPREAD = `
       pythPrice1
       ammPriceRel
       adjPriceRel
+      amount0In
+      amount0Out
+      amount1In
+      amount1Out
+      reserve0
+      reserve0USD
     }
   }
 `
@@ -46,6 +53,12 @@ const GET_POOL_SPREAD_OLDER = `
       pythPrice1
       ammPriceRel
       adjPriceRel
+      amount0In
+      amount0Out
+      amount1In
+      amount1Out
+      reserve0
+      reserve0USD
     }
   }
 `
@@ -60,18 +73,40 @@ type Txn = {
   pythPrice1: number | string
   ammPriceRel: number | string
   adjPriceRel: number | string
+  amount0In: number | string
+  amount0Out: number | string
+  amount1In: number | string
+  amount1Out: number | string
+  reserve0: number | string
+  reserve0USD: number | string
 }
-type Point = { t: number; s: number } // s = oSpread in %
+// s = oSpread in %; vol = this swap's USD volume; volUp = base token was net-bought.
+type Point = { t: number; s: number; vol: number; volUp: boolean }
 
 const COLOR = '#D8A072'
+const COLOR_VOL_UP = '#16A34A' // green — base bought that swap (bar up)
+const COLOR_VOL_DOWN = '#EF5350' // red — base sold that swap (bar down)
+
+// Compact USD formatter for the volume histogram (magnitude only; sign = direction).
+const formatVolUsd = (v: number): string => {
+  const abs = Math.abs(v)
+  if (!Number.isFinite(abs) || abs === 0) return '$0'
+  if (abs >= 1_000_000) return `$${(abs / 1_000_000).toFixed(2)}M`
+  if (abs >= 1_000) return `$${(abs / 1_000).toFixed(1)}k`
+  if (abs >= 1) return `$${abs.toFixed(2)}`
+  return `$${abs.toFixed(4)}`
+}
 
 type Props = {
   pairAddress: string
   chainId: number
   version: number
+  // Pool base/quote order (shouldReverseDisplay). Drives volume bar direction so
+  // it matches the Pool Balance chart: base bought → green up, base sold → red down.
+  reversed?: boolean
 }
 
-export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
+export function PoolSpreadChart({ pairAddress, chainId, version, reversed = false }: Props) {
   const [range, setRange] = useState<Range>('ALL')
 
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
@@ -122,6 +157,8 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
     // (stretching the axis "today → Jul 26"). Real block timestamps are never
     // ahead of now; a 1h margin absorbs any clock skew.
     const futureCutoff = Math.floor(Date.now() / 1000) + 3600
+    // base/quote for the volume bar direction — same source as the Pool Balance chart.
+    const baseIdx = reversed ? 1 : 0
     return [...combinedTxs]
       .reverse()
       .map((t) => {
@@ -141,10 +178,17 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
         // anomalies that otherwise compute to a bogus ~100% spread (the "100% at
         // the start"). Only amm > 0 (and adj > 0) is a real trade price.
         const s = amm > 0 && adj > 0 && Number.isFinite(ratio) ? ((ratio - amm) / adj) * 100 : NaN
-        return { t: Number(t.timestamp), s }
+        // Same per-swap USD volume as the Pool Balance chart:
+        // (amount0In + amount0Out) × (reserve0USD / reserve0). Direction relative to
+        // the BASE token: base bought (leaves pool → baseOut) = up, sold = down.
+        const r0 = Number(t.reserve0)
+        const vol = r0 > 0 ? (Number(t.amount0In) + Number(t.amount0Out)) * (Number(t.reserve0USD) / r0) : 0
+        const baseOut = Number(baseIdx === 0 ? t.amount0Out : t.amount1Out)
+        const baseIn = Number(baseIdx === 0 ? t.amount0In : t.amount1In)
+        return { t: Number(t.timestamp), s, vol: Number.isFinite(vol) ? vol : 0, volUp: baseOut >= baseIn }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s) && p.t <= futureCutoff)
-  }, [combinedTxs])
+  }, [combinedTxs, reversed])
 
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
   // unique time values; two swaps can share a second). Keep the latest spread
@@ -159,6 +203,27 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
     return [...byTime.values()]
       .sort((a, b) => a.t - b.t)
       .map((p) => ({ time: p.t as any, value: p.s }))
+  }, [allPoints])
+
+  // Signed volume histogram — identical to the Pool Balance chart: bar height =
+  // total USD volume that SECOND, sign/color = net direction (green base-buy / red
+  // base-sell). Aggregated per second (NOT the line's keep-last dedup) so blocks
+  // with several swaps in one second keep their full volume.
+  const volumeData = useMemo(() => {
+    const bySec = new Map<number, { gross: number; net: number }>()
+    for (const p of allPoints) {
+      if (!(p.vol > 0)) continue
+      const agg = bySec.get(p.t) ?? { gross: 0, net: 0 }
+      agg.gross += p.vol
+      agg.net += p.volUp ? p.vol : -p.vol
+      bySec.set(p.t, agg)
+    }
+    return [...bySec.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([t, { gross, net }]) => {
+        const up = net >= 0
+        return { time: t as any, value: up ? gross : -gross, color: up ? COLOR_VOL_UP : COLOR_VOL_DOWN }
+      })
   }, [allPoints])
 
   // The "now" spread is always the latest swap, independent of the timeframe.
@@ -197,10 +262,11 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const volSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
   // Floating tooltip anchor — container-relative pixels + the hovered time +
-  // value. null when the cursor is outside the plot area.
-  const [tip, setTip] = useState<{ x: number; y: number; time: number; value: number } | null>(null)
+  // value + that second's volume. null when the cursor is outside the plot area.
+  const [tip, setTip] = useState<{ x: number; y: number; time: number; value: number; vol?: number } | null>(null)
 
   // Apply the current timeframe as a VISIBLE-RANGE (zoom) preset — the chart
   // always holds the full data, so this only changes what's on screen. 'ALL' =
@@ -253,7 +319,8 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
         visible: true,
         borderVisible: false,
         ticksVisible: false,
-        scaleMargins: { top: 0.1, bottom: 0.1 },
+        // Leave the bottom ~25% for the volume histogram so the spread line clears it.
+        scaleMargins: { top: 0.1, bottom: 0.28 },
       },
       leftPriceScale: { visible: false },
       timeScale: {
@@ -316,6 +383,17 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
       title: '',
     })
 
+    // Signed volume histogram in the bottom ~20% (same as the Pool Balance chart) —
+    // its own 'vol' scale so it never overlaps the spread line.
+    const volSeries = chart.addSeries(HistogramSeries, {
+      priceScaleId: 'vol',
+      base: 0,
+      lastValueVisible: false,
+      priceLineVisible: false,
+      priceFormat: { type: 'custom', formatter: (v: number) => formatVolUsd(v), minMove: 0.01 },
+    })
+    volSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } })
+
     const crosshairHandler = (param: {
       time?: number
       seriesData: Map<ISeriesApi<any>, { value?: number } | undefined>
@@ -330,7 +408,16 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
         setTip(null)
         return
       }
-      setTip({ x: param.point.x, y: param.point.y, time: Number(param.time), value: pt.value })
+      const volPt = volSeriesRef.current
+        ? (param.seriesData.get(volSeriesRef.current) as { value?: number } | undefined)
+        : undefined
+      setTip({
+        x: param.point.x,
+        y: param.point.y,
+        time: Number(param.time),
+        value: pt.value,
+        vol: typeof volPt?.value === 'number' ? volPt.value : undefined,
+      })
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
@@ -345,17 +432,20 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 
     seriesRef.current = series
+    volSeriesRef.current = volSeries
     chartRef.current = chart
     return () => {
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
+      volSeriesRef.current = null
     }
   }, [])
 
   // Push data into the series.
   useEffect(() => {
     seriesRef.current?.setData(seriesData)
+    volSeriesRef.current?.setData(volumeData)
     if (!seriesData.length) return
     if (pendingRestoreRef.current) {
       // A load-more prepend just grew the series on the LEFT — keep the same TIME
@@ -370,7 +460,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
       // current timeframe preset.
       applyRangePresetRef.current()
     }
-  }, [seriesData])
+  }, [seriesData, volumeData])
 
   // Re-zoom when the timeframe button changes (data unchanged).
   useEffect(() => {
@@ -449,7 +539,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
             const containerW = containerRef.current?.clientWidth ?? 0
             const containerH = containerRef.current?.clientHeight ?? 0
             const TIP_W = 168
-            const TIP_H_EST = 60
+            const TIP_H_EST = 78
             const HGAP = 14
             const VGAP = 14
             // Default: upper-right of the cursor. Flip horizontally near the right
@@ -491,6 +581,12 @@ export function PoolSpreadChart({ pairAddress, chainId, version }: Props) {
                     {tip.value.toFixed(4)}%
                   </span>
                 </div>
+                {tip.vol !== undefined && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
+                    <span style={{ color: tip.vol >= 0 ? COLOR_VOL_UP : COLOR_VOL_DOWN }}>Volume</span>
+                    <span style={{ color: '#FBFBFD' }}>{formatVolUsd(tip.vol)}</span>
+                  </div>
+                )}
               </div>
             )
           })()}
