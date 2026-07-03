@@ -789,6 +789,11 @@ function PoolDetailInner({
                   <StatCompareRow label="TVL" ours={formatPrice(pairRaw?.tvl ?? 0)} kodiak={competitorData ? formatCompactPrice(competitorData.tvlUSD) : '--'} />
                   <StatCompareRow label="24H volume" ours={formatPrice(volume24h ?? 0)} kodiak={competitorData ? formatCompactPrice(competitorData.vol24hUSD) : '--'} />
                   <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={competitorData ? formatCompactPrice(competitorData.fees24hUSD) : '--'} />
+                  <StatCompareRow
+                    label="24H fees / TVL"
+                    ours={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)}
+                    kodiak={competitorData ? feesTvlPct(competitorData.fees24hUSD, competitorData.tvlUSD) : '--'}
+                  />
                 </div>
               ) : (
                 <>
@@ -797,11 +802,13 @@ function PoolDetailInner({
                     <StatInline label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
                     <StatInline label="24H volume" value={formatPrice(volume24h ?? 0)} />
                     <StatInline label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+                    <StatInline label="24H fees / TVL" value={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)} />
                   </div>
                   <div className="hidden lg:block">
                     <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
                     <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
                     <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+                    <StatRow label="24H fees / TVL" value={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)} />
                   </div>
                 </>
               )}
@@ -836,6 +843,13 @@ function StatRow({
       {children}
     </div>
   )
+}
+
+// 24h fee yield = 24h fees / TVL, as a %. The daily return LPs earn on their
+// liquidity — shown for both BrownFi and the reference DEX so they're comparable
+// even when TVL differs. '--' when TVL is 0 (ratio undefined).
+function feesTvlPct(fees: number, tvl: number): string {
+  return tvl > 0 ? `${formatNumberLambda((fees / tvl) * 100, { maximumFractionDigits: 3 })}%` : '--'
 }
 
 function StatCompareRow({ label, ours, kodiak }: { label: string; ours: string; kodiak: string }) {
