@@ -316,20 +316,25 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     allPoints.forEach((p) => byTime.set(p.t, p))
     const sorted = [...byTime.values()].sort((a, b) => a.t - b.t)
 
-    // Signed volume histogram (interpretation B): green bar UP from 0 when the swap
-    // BOUGHT the base token (base leaves the pool), red bar DOWN when it SOLD it;
-    // bar height = the swap's USD volume. Only SWAP txs with vol > 0 emit a bar.
-    const volume: { time: any; value: number; color: string }[] = []
-    for (const p of sorted) {
-      if (p.vol > 0) {
-        const up = p.volUp
-        volume.push({
-          time: p.t as any,
-          value: up ? p.vol : -p.vol,
-          color: up ? COLOR_VOL_UP : COLOR_VOL_DOWN,
-        })
-      }
+    // Signed volume histogram: bar height = total USD volume that SECOND, sign/color
+    // = the net direction (green UP if the base was net-BOUGHT, red DOWN if net-SOLD).
+    // Aggregated from ALL swaps per second (NOT the line series' keep-last dedup) —
+    // otherwise blocks with several swaps in the same second lose all but one bar,
+    // undercounting the total. Summing these bars now equals the LP chart's volume.
+    const volBySec = new Map<number, { gross: number; net: number }>()
+    for (const p of allPoints) {
+      if (!(p.vol > 0)) continue
+      const agg = volBySec.get(p.t) ?? { gross: 0, net: 0 }
+      agg.gross += p.vol
+      agg.net += p.volUp ? p.vol : -p.vol
+      volBySec.set(p.t, agg)
     }
+    const volume = [...volBySec.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([t, { gross, net }]) => {
+        const up = net >= 0
+        return { time: t as any, value: up ? gross : -gross, color: up ? COLOR_VOL_UP : COLOR_VOL_DOWN }
+      })
 
     return {
       pct0: sorted.map((p) => ({ time: p.t as any, value: p.pct0 })),
