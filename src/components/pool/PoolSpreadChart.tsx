@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
+import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
 
 // "oSpread" = the oracle-vs-AMM price spread per SWAP, from the indexer
 // Transaction entity: (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel.
@@ -63,9 +64,7 @@ const GET_POOL_SPREAD_OLDER = `
   }
 `
 
-const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as const
-type Range = keyof typeof RANGES
-const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
+type Range = RangeKey
 
 type Txn = {
   timestamp: number | string
@@ -190,41 +189,38 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s) && p.t <= futureCutoff)
   }, [combinedTxs, reversed])
 
-  // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
-  // unique time values; two swaps can share a second). Keep the latest spread
-  // for a given second by overwriting as we walk ascending.
-  //
-  // The chart always holds the FULL accumulated set — the timeframe selector is a
-  // zoom preset (visible TIME range), not a data filter, so every range can
-  // scroll left and trigger load-more.
-  const seriesData = useMemo(() => {
-    const byTime = new Map<number, Point>()
-    allPoints.forEach((p) => byTime.set(p.t, p))
-    return [...byTime.values()]
-      .sort((a, b) => a.t - b.t)
-      .map((p) => ({ time: p.t as any, value: p.s }))
-  }, [allPoints])
+  // Timeframe = a real time GRID, not a zoom preset. Per range we pick a bucket
+  // size + window (RANGE_BUCKETS) and resample the per-swap points onto it, so the
+  // x-axis is linear in clock time (busy and quiet hours are the same width) and a
+  // pool that's been quiet shows a flat stretch up to now. gridEnd is always "now"
+  // so the carried line reaches the present.
+  const { bucket, span } = RANGE_BUCKETS[range]
+  const grid = useMemo(
+    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, span, Math.floor(Date.now() / 1000)),
+    [allPoints, bucket, span],
+  )
 
-  // Signed volume histogram — identical to the Pool Balance chart: bar height =
-  // total USD volume that SECOND, sign/color = net direction (green base-buy / red
-  // base-sell). Aggregated per second (NOT the line's keep-last dedup) so blocks
-  // with several swaps in one second keep their full volume.
+  // Spread line = per-bucket close, carried forward across empty buckets (the
+  // spread persists between trades). Ascending + unique bucket times satisfy
+  // lightweight-charts directly — no separate dedup needed.
+  const seriesData = useMemo(() => {
+    if (!grid) return []
+    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd).map((p) => ({ time: p.t as any, value: p.s }))
+  }, [allPoints, bucket, grid])
+
+  // Signed volume histogram — bar height = total USD volume in the BUCKET, sign/
+  // color = net direction (green base-buy / red base-sell). Summed per bucket so
+  // it reconciles with the LP chart's volume over the same period.
   const volumeData = useMemo(() => {
-    const bySec = new Map<number, { gross: number; net: number }>()
-    for (const p of allPoints) {
-      if (!(p.vol > 0)) continue
-      const agg = bySec.get(p.t) ?? { gross: 0, net: 0 }
-      agg.gross += p.vol
-      agg.net += p.volUp ? p.vol : -p.vol
-      bySec.set(p.t, agg)
-    }
-    return [...bySec.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([t, { gross, net }]) => {
-        const up = net >= 0
-        return { time: t as any, value: up ? gross : -gross, color: up ? COLOR_VOL_UP : COLOR_VOL_DOWN }
-      })
-  }, [allPoints])
+    if (!grid) return []
+    return bucketVolume(allPoints, bucket, grid.gridStart, grid.gridEnd, COLOR_VOL_UP, COLOR_VOL_DOWN)
+  }, [allPoints, bucket, grid])
+
+  // Load-more gate: ALL can always extend history (older buckets), but a bounded
+  // window only needs older swaps until it's covered back to gridStart — past that
+  // more paging just wastes requests (the extra swaps fall outside the window).
+  const needMoreRef = useRef(true)
+  needMoreRef.current = span == null ? true : !!grid && (allPoints.length ? allPoints[0].t : Infinity) > grid.gridStart
 
   // The "now" spread is always the latest swap, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
@@ -275,13 +271,13 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
   const applyRangePreset = useCallback(() => {
     const ts = chartRef.current?.timeScale()
     if (!ts) return
-    const span = RANGES[range]
+    const rangeSpan = RANGE_BUCKETS[range].span
     const last = seriesData.length ? (seriesData[seriesData.length - 1].time as number) : null
-    if (span == null || last == null) {
+    if (rangeSpan == null || last == null) {
       ts.fitContent()
       return
     }
-    ts.setVisibleRange({ from: (last - span) as Time, to: last as Time })
+    ts.setVisibleRange({ from: (last - rangeSpan) as Time, to: last as Time })
   }, [range, seriesData])
   // Stable handle so the data-push effect can apply the preset without taking
   // `applyRangePreset` as a dependency (which would re-fire it on every range tick).
@@ -422,12 +418,12 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
     // Scroll-to-load-more: when the left edge of the visible logical range nears
-    // the start of the loaded data, page older swaps. Fires on ANY timeframe —
-    // the selector is now a zoom preset, not a data filter, so every range holds
-    // the full set and can scroll past the loaded edge to extend it.
+    // the start of the loaded data, page older swaps — gated by needMoreRef so a
+    // bounded window stops once it's covered back to gridStart (only ALL keeps
+    // extending indefinitely).
     const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
       if (!logical) return
-      if (logical.from < 10) loadMoreRef.current()
+      if (logical.from < 10 && needMoreRef.current) loadMoreRef.current()
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 

@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
+import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
 // Same data + computation as the recharts version: pool-balance % split from the
@@ -100,9 +101,7 @@ async function fetchBalancesWithFallback(
   return graphqlFetcher({ operationName, query: buildBalancesQuery(template, false), variables })
 }
 
-const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as const
-type Range = keyof typeof RANGES
-const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
+type Range = RangeKey
 
 type Txn = {
   timestamp: number | string
@@ -304,50 +303,43 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     return base
   }, [combinedTxs, baseIdx, quoteIdx])
 
-  // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
-  // unique time values; two trades can share a second). Keep the latest reserve
-  // snapshot for a given second by overwriting as we walk ascending.
-  //
-  // The chart always holds the FULL accumulated set — the timeframe selector is a
-  // zoom preset (visible TIME range), not a data filter, so every range can
-  // scroll left and trigger load-more.
+  // Timeframe = a real time GRID, not a zoom preset. Per range we pick a bucket
+  // size + window (RANGE_BUCKETS) and resample the per-swap points onto it, so the
+  // x-axis is linear in clock time (busy and quiet hours are the same width) and a
+  // pool that's been quiet shows a flat stretch up to now. gridEnd is always "now"
+  // so the carried lines reach the present.
+  const { bucket, span } = RANGE_BUCKETS[range]
+  const grid = useMemo(
+    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, span, Math.floor(Date.now() / 1000)),
+    [allPoints, bucket, span],
+  )
+
+  // Resample onto the grid. The % / price / LP-vs-BH LINES become per-bucket close
+  // values (last swap in the bucket), carried forward across empty buckets — the
+  // pool balance/price don't change without a trade, so a flat line during a gap is
+  // correct. Bucket times are strictly ascending + unique (no separate dedup). The
+  // volume histogram is SUMMED per bucket (so it still reconciles with the LP chart).
   const seriesData = useMemo(() => {
-    const byTime = new Map<number, Point>()
-    allPoints.forEach((p) => byTime.set(p.t, p))
-    const sorted = [...byTime.values()].sort((a, b) => a.t - b.t)
-
-    // Signed volume histogram: bar height = total USD volume that SECOND, sign/color
-    // = the net direction (green UP if the base was net-BOUGHT, red DOWN if net-SOLD).
-    // Aggregated from ALL swaps per second (NOT the line series' keep-last dedup) —
-    // otherwise blocks with several swaps in the same second lose all but one bar,
-    // undercounting the total. Summing these bars now equals the LP chart's volume.
-    const volBySec = new Map<number, { gross: number; net: number }>()
-    for (const p of allPoints) {
-      if (!(p.vol > 0)) continue
-      const agg = volBySec.get(p.t) ?? { gross: 0, net: 0 }
-      agg.gross += p.vol
-      agg.net += p.volUp ? p.vol : -p.vol
-      volBySec.set(p.t, agg)
-    }
-    const volume = [...volBySec.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([t, { gross, net }]) => {
-        const up = net >= 0
-        return { time: t as any, value: up ? gross : -gross, color: up ? COLOR_VOL_UP : COLOR_VOL_DOWN }
-      })
-
+    if (!grid) return { pct0: [], pct1: [], lpVsBh: [], price0: [], volume: [] }
+    const bucketed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
     return {
-      pct0: sorted.map((p) => ({ time: p.t as any, value: p.pct0 })),
-      pct1: sorted.map((p) => ({ time: p.t as any, value: p.pct1 })),
-      lpVsBh: sorted
+      pct0: bucketed.map((p) => ({ time: p.t as any, value: p.pct0 })),
+      pct1: bucketed.map((p) => ({ time: p.t as any, value: p.pct1 })),
+      lpVsBh: bucketed
         .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
         .map((p) => ({ time: p.t as any, value: p.lpVsBh as number })),
-      price0: sorted
+      price0: bucketed
         .filter((p) => Number.isFinite(p.price0))
         .map((p) => ({ time: p.t as any, value: p.price0 })),
-      volume,
+      volume: bucketVolume(allPoints, bucket, grid.gridStart, grid.gridEnd, COLOR_VOL_UP, COLOR_VOL_DOWN),
     }
-  }, [allPoints])
+  }, [allPoints, bucket, grid])
+
+  // Load-more gate: ALL can always extend history (older buckets), but a bounded
+  // window only needs older swaps until it's covered back to gridStart — past that
+  // more paging just wastes requests (the extra swaps fall outside the window).
+  const needMoreRef = useRef(true)
+  needMoreRef.current = span == null ? true : !!grid && (allPoints.length ? allPoints[0].t : Infinity) > grid.gridStart
 
   // The "now" split is always the latest trade, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
@@ -403,13 +395,13 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const applyRangePreset = useCallback(() => {
     const ts = chartRef.current?.timeScale()
     if (!ts) return
-    const span = RANGES[range]
+    const rangeSpan = RANGE_BUCKETS[range].span
     const last = seriesData.pct0.length ? (seriesData.pct0[seriesData.pct0.length - 1].time as number) : null
-    if (span == null || last == null) {
+    if (rangeSpan == null || last == null) {
       ts.fitContent()
       return
     }
-    ts.setVisibleRange({ from: (last - span) as Time, to: last as Time })
+    ts.setVisibleRange({ from: (last - rangeSpan) as Time, to: last as Time })
   }, [range, seriesData])
   // Stable handle so the data-push effect can apply the preset without taking
   // `applyRangePreset` as a dependency (which would re-fire it on every range tick).
@@ -655,12 +647,12 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
     // Scroll-to-load-more: when the left edge of the visible logical range nears
-    // the start of the loaded data, page older txs. Fires on ANY timeframe — the
-    // selector is now a zoom preset, not a data filter, so every range holds the
-    // full set and can scroll past the loaded edge to extend it.
+    // the start of the loaded data, page older txs — gated by needMoreRef so a
+    // bounded window stops once it's covered back to gridStart (only ALL keeps
+    // extending indefinitely).
     const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
       if (!logical) return
-      if (logical.from < 10) loadMoreRef.current()
+      if (logical.from < 10 && needMoreRef.current) loadMoreRef.current()
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 
@@ -906,7 +898,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                 </button>
                 {item.key === 'vol' && (
                   <InfoTooltip
-                    text={`Green = bought ${baseSymbol}, red = sold ${baseSymbol}. Bar height = swap volume (USD).`}
+                    text={`Green = net bought ${baseSymbol}, red = net sold ${baseSymbol}. Bar height = volume in that period (USD).`}
                   />
                 )}
               </div>
