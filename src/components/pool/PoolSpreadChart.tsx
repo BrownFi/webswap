@@ -45,6 +45,8 @@ const GET_POOL_SPREAD = `
       reserve1
       reserve0USD
       reserve1USD
+      lpPrice
+      bnhPrice
     }
   }
 `
@@ -67,9 +69,27 @@ const GET_POOL_SPREAD_OLDER = `
       reserve1
       reserve0USD
       reserve1USD
+      lpPrice
+      bnhPrice
     }
   }
 `
+
+// lpPrice/bnhPrice (the LP-vs-BH benchmark) are a partial indexer rollout — the
+// query is rejected on chains without them. Strip them so those chains still get
+// the spread + price lines; where present, LP-vs-BH renders. Mirrors the Balance chart.
+const buildSpreadQuery = (template: string, keep: boolean) =>
+  keep ? template : template.replace(/\s*lpPrice\s*/g, '\n').replace(/\s*bnhPrice\s*/g, '\n')
+
+async function fetchSpreadWithFallback(operationName: string, template: string, variables: Record<string, unknown>) {
+  try {
+    const full = await graphqlFetcher({ operationName, query: template, variables })
+    if (full) return full
+  } catch {
+    // fall through to the stripped query
+  }
+  return graphqlFetcher({ operationName, query: buildSpreadQuery(template, false), variables })
+}
 
 type Range = RangeKey
 
@@ -87,14 +107,18 @@ type Txn = {
   reserve1: number | string
   reserve0USD: number | string
   reserve1USD: number | string
+  // LP-vs-BH benchmark prices (partial indexer rollout — stripped where absent).
+  lpPrice: number | string
+  bnhPrice: number | string
 }
-// s = oSpread in %; price0 = pool exchange rate (base priced in quote); vol = this
-// swap's USD volume; volUp = base token was net-bought.
-type Point = { t: number; s: number; price0: number; vol: number; volUp: boolean }
+// s = oSpread in %; price0 = pool exchange rate (base priced in quote); lpVsBh =
+// LP-vs-buy&hold %; vol = this swap's USD volume; volUp = base token was net-bought.
+type Point = { t: number; s: number; price0: number; lpVsBh: number | null; vol: number; volUp: boolean }
 
 const COLOR = '#D8A072'
 const COLOR_PRICE0 = '#EC4899' // pink — pool's own price (matches the Pool Balance chart)
 const COLOR_MARKET = '#22D3EE' // cyan — market reference price (Pyth/TradingView)
+const COLOR_LPBH = '#83CF84' // green — LP vs BH (matches the Pool Balance chart)
 const COLOR_VOL_UP = '#16A34A' // green — base bought that swap (bar up)
 const COLOR_VOL_DOWN = '#EF5350' // red — base sold that swap (bar down)
 const COLOR_VOL_LEGEND = '#9CA3AF'
@@ -120,7 +144,7 @@ const formatVolUsd = (v: number): string => {
   return `$${abs.toFixed(4)}`
 }
 
-type ToggleKey = 'spread' | 'price0' | 'market' | 'vol'
+type ToggleKey = 'spread' | 'price0' | 'market' | 'lpbh' | 'vol'
 
 type Props = {
   pairAddress: string
@@ -147,7 +171,7 @@ export function PoolSpreadChart({
   token1FeedId,
 }: Props) {
   const [range, setRange] = useState<Range>('7D')
-  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ spread: true, price0: true, market: true, vol: true })
+  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ spread: true, price0: true, market: true, lpbh: true, vol: true })
 
   // Base/quote (via `reversed`) — the pool price + market lines are base priced in
   // quote, matching the Pool Balance chart.
@@ -162,11 +186,11 @@ export function PoolSpreadChart({
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolSpread', chainId, pairAddress, version],
     queryFn: () =>
-      graphqlFetcher({
-        operationName: 'PoolSpread',
-        query: withFirstActivityGte(GET_POOL_SPREAD, 'timestamp', chainId, pairAddress),
-        variables: { chainId, version, pair: pairAddress.toLowerCase() },
-      }),
+      fetchSpreadWithFallback(
+        'PoolSpread',
+        withFirstActivityGte(GET_POOL_SPREAD, 'timestamp', chainId, pairAddress),
+        { chainId, version, pair: pairAddress.toLowerCase() },
+      ) as Promise<{ transactions: Txn[] }>,
     enabled: !!pairAddress && !!chainId,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
@@ -245,7 +269,12 @@ export function PoolSpreadChart({
         const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
         const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
         const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
-        return { t: Number(t.timestamp), s, price0, vol: Number.isFinite(vol) ? vol : 0, volUp: baseOut >= baseIn }
+        // LP-vs-BH % from the per-swap benchmark prices (indexer) — same as the
+        // Pool Balance chart. null when the chain lacks the fields (stripped query).
+        const lp = Number(t.lpPrice)
+        const bnh = Number(t.bnhPrice)
+        const lpVsBh = lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null
+        return { t: Number(t.timestamp), s, price0, lpVsBh, vol: Number.isFinite(vol) ? vol : 0, volUp: baseOut >= baseIn }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s) && p.t <= futureCutoff)
   }, [combinedTxs, reversed, baseIdx, quoteIdx])
@@ -276,6 +305,16 @@ export function PoolSpreadChart({
     return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
       .filter((p) => Number.isFinite(p.price0))
       .map((p) => ({ time: p.t as any, value: p.price0 }))
+  }, [allPoints, bucket, grid])
+
+  // LP-vs-BH % line — per-bucket close, carried. On its own hidden 'pct' overlay
+  // scale (the spread is a tiny %, LP-vs-BH is a larger %, so they can't share an
+  // axis). Empty when the chain lacks the benchmark fields.
+  const lpVsBhData = useMemo(() => {
+    if (!grid) return []
+    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+      .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
+      .map((p) => ({ time: p.t as any, value: p.lpVsBh as number }))
   }, [allPoints, bucket, grid])
 
   // Signed volume histogram — bar height = total USD volume in the BUCKET, sign/
@@ -317,11 +356,11 @@ export function PoolSpreadChart({
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const res = (await graphqlFetcher({
-        operationName: 'PoolSpreadOlder',
-        query: withFirstActivityGte(GET_POOL_SPREAD_OLDER, 'timestamp', chainId, pairAddress),
-        variables: { chainId, version, pair: pairAddress.toLowerCase(), before },
-      })) as { transactions?: Txn[] } | null
+      const res = (await fetchSpreadWithFallback(
+        'PoolSpreadOlder',
+        withFirstActivityGte(GET_POOL_SPREAD_OLDER, 'timestamp', chainId, pairAddress),
+        { chainId, version, pair: pairAddress.toLowerCase(), before },
+      )) as { transactions?: Txn[] } | null
       const batch = res?.transactions ?? []
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {
@@ -343,12 +382,14 @@ export function PoolSpreadChart({
   // overlay scale — same as the Pool Balance chart.
   const price0Ref = useRef<ISeriesApi<'Line'> | null>(null)
   const marketRef = useRef<ISeriesApi<'Line'> | null>(null)
+  // LP-vs-BH % (green) on its own hidden 'pct' scale.
+  const lpbhRef = useRef<ISeriesApi<'Line'> | null>(null)
   const volSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
   // Floating tooltip anchor — container-relative pixels + the hovered time. The
-  // per-series values (spread, price, market, vol) are read on hover.
+  // per-series values (spread, price, market, lpVsBh, vol) are read on hover.
   const [tip, setTip] = useState<
-    { x: number; y: number; time: number; value: number; price0?: number; market?: number; vol?: number } | null
+    { x: number; y: number; time: number; value: number; price0?: number; market?: number; lpVsBh?: number; vol?: number } | null
   >(null)
 
   // Apply the current timeframe as a VISIBLE-RANGE (zoom) preset — the chart
@@ -480,6 +521,18 @@ export function PoolSpreadChart({
     const price0Line = chart.addSeries(LineSeries, { ...commonPrice, color: COLOR_PRICE0, lineWidth: 1 })
     marketLine.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.28 } })
 
+    // LP vs BH % on its OWN hidden 'pct' overlay scale (autoscaled) — the spread's
+    // tiny ± axis would squash it otherwise.
+    const lpbhLine = chart.addSeries(LineSeries, {
+      lastValueVisible: false,
+      priceLineVisible: false,
+      priceScaleId: 'pct',
+      color: COLOR_LPBH,
+      lineWidth: 1,
+      priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
+    })
+    lpbhLine.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.28 } })
+
     // Signed volume histogram in the bottom ~20% (same as the Pool Balance chart) —
     // its own 'vol' scale so it never overlaps the spread line.
     const volSeries = chart.addSeries(HistogramSeries, {
@@ -507,6 +560,7 @@ export function PoolSpreadChart({
       }
       const ppr = param.seriesData.get(price0Line) as { value?: number } | undefined
       const pmk = param.seriesData.get(marketLine) as { value?: number } | undefined
+      const plb = param.seriesData.get(lpbhLine) as { value?: number } | undefined
       const volPt = volSeriesRef.current
         ? (param.seriesData.get(volSeriesRef.current) as { value?: number } | undefined)
         : undefined
@@ -517,6 +571,7 @@ export function PoolSpreadChart({
         value: pt.value,
         price0: typeof ppr?.value === 'number' ? ppr.value : undefined,
         market: typeof pmk?.value === 'number' ? pmk.value : undefined,
+        lpVsBh: typeof plb?.value === 'number' ? plb.value : undefined,
         vol: typeof volPt?.value === 'number' ? volPt.value : undefined,
       })
     }
@@ -534,6 +589,7 @@ export function PoolSpreadChart({
     seriesRef.current = series
     price0Ref.current = price0Line
     marketRef.current = marketLine
+    lpbhRef.current = lpbhLine
     volSeriesRef.current = volSeries
     chartRef.current = chart
     return () => {
@@ -542,6 +598,7 @@ export function PoolSpreadChart({
       seriesRef.current = null
       price0Ref.current = null
       marketRef.current = null
+      lpbhRef.current = null
       volSeriesRef.current = null
     }
   }, [])
@@ -550,6 +607,7 @@ export function PoolSpreadChart({
   useEffect(() => {
     seriesRef.current?.setData(seriesData)
     price0Ref.current?.setData(price0Data)
+    lpbhRef.current?.setData(lpVsBhData)
     volSeriesRef.current?.setData(volumeData)
     if (!seriesData.length) return
     if (pendingRestoreRef.current) {
@@ -565,7 +623,7 @@ export function PoolSpreadChart({
       // current timeframe preset.
       applyRangePresetRef.current()
     }
-  }, [seriesData, price0Data, volumeData])
+  }, [seriesData, price0Data, lpVsBhData, volumeData])
 
   // Push the market reference line separately — it arrives async (Pyth fetch);
   // setData preserves the visible range, so this never re-zooms.
@@ -584,6 +642,7 @@ export function PoolSpreadChart({
     seriesRef.current?.applyOptions({ visible: visible.spread })
     price0Ref.current?.applyOptions({ visible: visible.price0 })
     marketRef.current?.applyOptions({ visible: visible.market })
+    lpbhRef.current?.applyOptions({ visible: visible.lpbh })
     volSeriesRef.current?.applyOptions({ visible: visible.vol })
   }, [visible])
 
@@ -712,6 +771,12 @@ export function PoolSpreadChart({
                     <span style={{ color: '#FBFBFD' }}>{formatRel(tip.market)}</span>
                   </div>
                 )}
+                {tip.lpVsBh !== undefined && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
+                    <span style={{ color: COLOR_LPBH }}>LP vs BH</span>
+                    <span style={{ color: '#FBFBFD' }}>{tip.lpVsBh >= 0 ? '+' : ''}{tip.lpVsBh.toFixed(2)}%</span>
+                  </div>
+                )}
                 {tip.vol !== undefined && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
                     <span style={{ color: tip.vol >= 0 ? COLOR_VOL_UP : COLOR_VOL_DOWN }}>Volume</span>
@@ -729,6 +794,7 @@ export function PoolSpreadChart({
             { key: 'spread' as const, label: 'oSpread', color: COLOR },
             ...(price0Data.length > 0 ? [{ key: 'price0' as const, label: `${baseSymbol}/${quoteSymbol}`, color: COLOR_PRICE0 }] : []),
             ...(hasMarket ? [{ key: 'market' as const, label: 'Market', color: COLOR_MARKET }] : []),
+            ...(lpVsBhData.length > 0 ? [{ key: 'lpbh' as const, label: 'LP vs BH', color: COLOR_LPBH }] : []),
             ...(volumeData.length > 0 ? [{ key: 'vol' as const, label: 'Volume', color: COLOR_VOL_LEGEND }] : []),
           ].map((item) => (
             <div key={item.key} className="inline-flex items-center gap-1">
