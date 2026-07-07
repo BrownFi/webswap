@@ -25,20 +25,19 @@ export const RANGE_BUCKETS: Record<RangeKey, { bucket: number; span: number | nu
 
 export const RANGE_KEYS: RangeKey[] = ['1D', '7D', '1M', 'ALL']
 
-// Compute the [gridStart, gridEnd] bucket-aligned window for a range. gridEnd is
-// always "now" (so the grid — and therefore the flat carried line — reaches the
-// present). gridStart is the window start, clamped to the first datum. null when
-// there's no data.
+// Compute the [gridStart, gridEnd] bucket-aligned grid. gridEnd is always "now"
+// (so the carried line reaches the present); gridStart follows the EARLIEST loaded
+// swap. The grid holds the full loaded history at this bucket size — the timeframe
+// is a zoom preset (visible window), NOT a data filter — so scrolling left reveals
+// older bars and triggers load-more, matching the LP chart. null when no data.
 export function bucketGrid(
   firstTs: number | null,
   bucket: number,
-  span: number | null,
   nowSec: number,
 ): { gridStart: number; gridEnd: number } | null {
   if (firstTs == null) return null
   const gridEnd = Math.floor(nowSec / bucket) * bucket
-  const firstBucket = Math.floor(firstTs / bucket) * bucket
-  const gridStart = span == null ? firstBucket : Math.max(firstBucket, Math.floor((nowSec - span) / bucket) * bucket)
+  const gridStart = Math.floor(firstTs / bucket) * bucket
   return { gridStart, gridEnd }
 }
 

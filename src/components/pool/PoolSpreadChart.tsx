@@ -189,15 +189,14 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s) && p.t <= futureCutoff)
   }, [combinedTxs, reversed])
 
-  // Timeframe = a real time GRID, not a zoom preset. Per range we pick a bucket
-  // size + window (RANGE_BUCKETS) and resample the per-swap points onto it, so the
-  // x-axis is linear in clock time (busy and quiet hours are the same width) and a
-  // pool that's been quiet shows a flat stretch up to now. gridEnd is always "now"
-  // so the carried line reaches the present.
-  const { bucket, span } = RANGE_BUCKETS[range]
+  // Timeframe = a real time GRID resampled from the per-swap points, so the x-axis
+  // is linear in clock time. The grid holds the FULL loaded history at this bucket
+  // size; the range is a zoom preset (visible window), so scroll-left reveals older
+  // bars + loads more (like the LP chart). gridEnd is always "now".
+  const { bucket } = RANGE_BUCKETS[range]
   const grid = useMemo(
-    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, span, Math.floor(Date.now() / 1000)),
-    [allPoints, bucket, span],
+    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
+    [allPoints, bucket],
   )
 
   // Spread line = per-bucket close, carried forward across empty buckets (the
@@ -216,11 +215,6 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
     return bucketVolume(allPoints, bucket, grid.gridStart, grid.gridEnd, COLOR_VOL_UP, COLOR_VOL_DOWN)
   }, [allPoints, bucket, grid])
 
-  // Load-more gate: ALL can always extend history (older buckets), but a bounded
-  // window only needs older swaps until it's covered back to gridStart — past that
-  // more paging just wastes requests (the extra swaps fall outside the window).
-  const needMoreRef = useRef(true)
-  needMoreRef.current = span == null ? true : !!grid && (allPoints.length ? allPoints[0].t : Infinity) > grid.gridStart
 
   // The "now" spread is always the latest swap, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
@@ -417,13 +411,12 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
-    // Scroll-to-load-more: when the left edge of the visible logical range nears
-    // the start of the loaded data, page older swaps — gated by needMoreRef so a
-    // bounded window stops once it's covered back to gridStart (only ALL keeps
-    // extending indefinitely).
+    // Scroll-to-load-more (every timeframe): when the left edge of the visible
+    // logical range nears the start of the loaded data, page older swaps. loadMore
+    // self-stops once a batch returns < 1000 (oldest reached).
     const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
       if (!logical) return
-      if (logical.from < 10 && needMoreRef.current) loadMoreRef.current()
+      if (logical.from < 10) loadMoreRef.current()
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 
