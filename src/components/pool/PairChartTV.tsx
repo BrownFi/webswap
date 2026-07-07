@@ -49,8 +49,14 @@ const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
 // `uniV2Price` only exists on the V3 indexer schema. Keep it only when the
 // chain exposes it AND the pair is V3 — V2 pairs route to the V2 schema, which
 // has no uniV2Price field (querying it is a GraphQL validation error).
-const buildQuery = (template: string, keepUniV2: boolean) =>
-  keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
+// `buyVolume`/`sellVolume` (stacked buy/sell bars) exist only on the V3 indexer
+// schema — V2's pairDayData has no such split, so querying them there is a GraphQL
+// validation error. Strip both (like uniV2Price) when the pair isn't V3.
+const buildQuery = (template: string, keepUniV2: boolean, keepBuySell: boolean) => {
+  let q = keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
+  if (!keepBuySell) q = q.replace(/\s*buyVolume\s*/g, '\n').replace(/\s*sellVolume\s*/g, '\n')
+  return q
+}
 
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {
@@ -63,6 +69,8 @@ const GET_PAIR_STATS = `
       dayStartUnix
       tvl
       totalVolume
+      buyVolume
+      sellVolume
       totalFee
       apr
       lpPrice
@@ -85,6 +93,8 @@ const GET_PAIR_STATS_HOUR = `
       hourStartUnix
       tvl
       totalVolume
+      buyVolume
+      sellVolume
       totalFee
       apr
       lpPrice
@@ -108,6 +118,8 @@ const GET_PAIR_STATS_HOUR_OLDER = `
       hourStartUnix
       tvl
       totalVolume
+      buyVolume
+      sellVolume
       totalFee
       apr
       lpPrice
@@ -117,53 +129,12 @@ const GET_PAIR_STATS_HOUR_OLDER = `
   }
 `
 
-// PROTOTYPE (research/lp-candlestick): recent swaps for the DAILY stacked
-// buy/sell volume. Client-side bucketed by day. `first: 1000` is a prototype
-// limitation — pools with >1000 swaps show partial data for the oldest days.
-const GET_PAIR_SWAPS = `
-  query PairSwaps($pair: String) {
-    transactions(first: 1000, where: { pair: $pair, type: "SWAP" }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      amount0In
-      amount0Out
-      reserve0
-      reserve0USD
-    }
-  }
-`
-
-// Older page (cursor = oldest timestamp of the previous batch) so we can loop past
-// the 1000/query cap and cover full history for the buy/sell volume split. Dropped
-// once the indexer exposes buyVolume/sellVolume on pairDayData/pairHourData.
-const GET_PAIR_SWAPS_OLDER = `
-  query PairSwapsOlder($pair: String, $before: BigInt) {
-    transactions(first: 1000, where: { pair: $pair, type: "SWAP", timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      amount0In
-      amount0Out
-      reserve0
-      reserve0USD
-    }
-  }
-`
-
-// Safety cap on the pagination loop: 20 batches = up to 20k swaps. Busy/old pools
-// beyond that keep only the most-recent 20k (logged) — still far past the old
-// 1000-swap limit, and moot once the indexer returns aggregate buy/sell volume.
-const MAX_SWAP_BATCHES = 20
-
-type SwapTxn = {
-  timestamp: number | string
-  amount0In: number | string
-  amount0Out: number | string
-  reserve0: number | string
-  reserve0USD: number | string
-}
-
 type DayData = {
   dayStartUnix: number
   tvl: number
   totalVolume: number
+  buyVolume?: number // V3 only (token0 amount); absent/stripped on V2
+  sellVolume?: number
   totalFee: number
   apr: number
   lpPrice: number
@@ -293,7 +264,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2, isV3), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -307,7 +278,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStatsHour',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2, isV3), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -315,85 +286,6 @@ const PairChartTVInner = ({ pair }: Props) => {
     placeholderData: keepPreviousData,
     enabled: isHourly,
   })
-
-  // PROTOTYPE: recent swaps for the stacked buy/sell volume. Enabled in BOTH modes
-  // (daily buckets by day, 1h by hour) — the recent first:1000 swaps cover both.
-  const { data: swapResp } = useQuery<{ transactions: SwapTxn[] }>({
-    queryKey: ['pairSwaps', pair.chainId, pair.liquidityToken.address, pair.version],
-    // Loop with a timestamp_lt cursor to pull FULL swap history (not just the
-    // newest 1000) so the buy/sell volume has no gap. Stops when a batch returns
-    // < 1000 (oldest reached) or the MAX_SWAP_BATCHES safety cap is hit.
-    queryFn: async () => {
-      const base = { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() }
-      const all: SwapTxn[] = []
-      let before: string | undefined
-      for (let i = 0; i < MAX_SWAP_BATCHES; i++) {
-        const resp = (await graphqlFetcher({
-          operationName: before ? 'PairSwapsOlder' : 'PairSwaps',
-          query: withFirstActivityGte(
-            before ? GET_PAIR_SWAPS_OLDER : GET_PAIR_SWAPS,
-            'timestamp',
-            pair.chainId,
-            pair.liquidityToken.address,
-          ),
-          variables: before ? { ...base, before } : base,
-        })) as { transactions?: SwapTxn[] } | null
-        const txs = resp?.transactions ?? []
-        all.push(...txs)
-        if (txs.length < 1000) break
-        before = String(txs[txs.length - 1].timestamp)
-        if (i === MAX_SWAP_BATCHES - 1) {
-          console.warn(`[PairChartTV] swap history capped at ${MAX_SWAP_BATCHES}k — older volume buckets omitted`)
-        }
-      }
-      return { transactions: all }
-    },
-    // Full-history fetch is heavier than a single page, so refresh less often than
-    // the 60s price polling — volume bars don't need sub-minute freshness.
-    refetchInterval: 5 * 60_000,
-    staleTime: 5 * 60_000,
-    placeholderData: keepPreviousData,
-    // V3 only — V2's indexer has no per-swap `transactions` for a buy/sell split
-    // (the query 500s), so V2 falls back to the aggregate totalVolume bars.
-    enabled: !!pair.liquidityToken.address && !!pair.chainId && isV3,
-  })
-
-  // PROTOTYPE: bucket swaps and split buy/sell USD volume. Bucket size follows the
-  // mode — per HOUR in 1h, per DAY otherwise.
-  //  - vol (USD) = (amount0In + amount0Out) × token0-USD-price
-  //  - isBuy = amount0Out > amount0In (token0 LEFT the pool → someone bought token0)
-  //    NOTE (demo simplification): this is raw-token0 orientation. A base/quote-
-  //    aware buy/sell (flip when token0 is the quote) can layer on later.
-  // Produces two ASC-by-bucket arrays: volTotal (buy+sell) and volSell (sell only)
-  // — the stacked-histogram trick draws green(total) behind, red(sell) on top.
-  const { volTotal, volSell } = useMemo(() => {
-    const rows = swapResp?.transactions ?? []
-    const bucket = isHourly ? 3600 : 86400
-    // Drop any swap with a bad/future timestamp — a single future-dated bucket
-    // stretches the whole time axis and paints phantom future dates on it.
-    const nowSec = Math.floor(Date.now() / 1000)
-    const byBucket = new Map<number, { buy: number; sell: number }>()
-    rows.forEach((t) => {
-      const ts = Number(t.timestamp)
-      if (!Number.isFinite(ts) || ts > nowSec) return
-      const reserve0 = Number(t.reserve0)
-      const in0 = Number(t.amount0In)
-      const out0 = Number(t.amount0Out)
-      const vol = reserve0 > 0 ? (in0 + out0) * (Number(t.reserve0USD) / reserve0) : 0
-      if (!Number.isFinite(vol) || vol <= 0) return
-      const isBuy = out0 > in0
-      const bucketStart = Math.floor(ts / bucket) * bucket
-      const acc = byBucket.get(bucketStart) ?? { buy: 0, sell: 0 }
-      acc.buy += isBuy ? vol : 0
-      acc.sell += isBuy ? 0 : vol
-      byBucket.set(bucketStart, acc)
-    })
-    const buckets = [...byBucket.entries()].sort((a, b) => a[0] - b[0])
-    return {
-      volTotal: buckets.map(([time, v]) => ({ time: time as any, value: v.buy + v.sell })),
-      volSell: buckets.map(([time, v]) => ({ time: time as any, value: v.sell })),
-    }
-  }, [swapResp, isHourly])
 
   const isPending = isHourly ? isPendingHour : isPendingDay
   const data = isHourly ? hourResp : dayResp
@@ -439,6 +331,39 @@ const PairChartTVInner = ({ pair }: Props) => {
     // desc (newest-first), so the oldest accumulated bucket is the last element.
     return [...byTime.values()].sort((a, b) => Number(b.hourStartUnix) - Number(a.hourStartUnix))
   }, [isHourly, hourResp, olderHours])
+
+  // Stacked buy/sell USD volume straight from the indexer's pre-bucketed day/hour
+  // aggregates — no per-swap walk. Each day/hour row IS a bucket. buyVolume/sellVolume
+  // are token0 amounts and totalVolume is USD, so the USD split is just the sell
+  // fraction of totalVolume:  volTotal = totalVolume ; volSell = totalVolume × sell/(buy+sell).
+  // "buy" = token0 bought (green), matching the tooltip legend. V3 only — for V2 this
+  // is empty and the single totalVolume 'volume' series renders instead.
+  const { volTotal, volSell } = useMemo(() => {
+    const empty = { volTotal: [] as { time: any; value: number }[], volSell: [] as { time: any; value: number }[] }
+    if (!isV3) return empty
+    const nowSec = Math.floor(Date.now() / 1000)
+    const rows: { t: number; total: number; buy: number; sell: number }[] = isHourly
+      ? combinedHours.map((h) => ({
+          t: Number(h.hourStartUnix),
+          total: Number(h.totalVolume) || 0,
+          buy: Number(h.buyVolume) || 0,
+          sell: Number(h.sellVolume) || 0,
+        }))
+      : ((data as { pairDayDatas?: DayData[] } | undefined)?.pairDayDatas ?? []).map((d) => ({
+          t: Number(d.dayStartUnix),
+          total: Number(d.totalVolume) || 0,
+          buy: Number(d.buyVolume) || 0,
+          sell: Number(d.sellVolume) || 0,
+        }))
+    const asc = rows.filter((r) => Number.isFinite(r.t) && r.t <= nowSec && r.total > 0).sort((a, b) => a.t - b.t)
+    return {
+      volTotal: asc.map((r) => ({ time: r.t as any, value: r.total })),
+      volSell: asc.map((r) => {
+        const denom = r.buy + r.sell
+        return { time: r.t as any, value: denom > 0 ? (r.total * r.sell) / denom : 0 }
+      }),
+    }
+  }, [isV3, isHourly, combinedHours, data])
 
   const fullChartData = useMemo(() => {
     // Guard against future-dated buckets from the indexer — a single point with a
@@ -538,7 +463,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     try {
       const res = (await graphqlFetcher({
         operationName: 'PairStatsHourOlder',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2, isV3), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase(), before },
       })) as { pairHourDatas?: HourData[] } | null
       const batch = res?.pairHourDatas ?? []
