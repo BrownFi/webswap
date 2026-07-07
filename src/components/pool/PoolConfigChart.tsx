@@ -2,7 +2,6 @@ import {
   ColorType,
   CrosshairMode,
   IChartApi,
-  IRange,
   ISeriesApi,
   LineSeries,
   LineStyle,
@@ -13,15 +12,15 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid } from './chartTimeBuckets'
-import { PoolTxn, useFetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
+import { usePoolConfigEvents } from 'hooks/usePoolConfigEvents'
 
-// Pool oracle CONFIG over time — lambda / kB / kQ / compress / sSell / sBuy. These
-// are recorded on the indexer's Transaction entity (already decoded), so every swap
-// is a config snapshot. Config only changes when an admin retunes the pool, so the
-// lines are STEP functions (flat, jumping at each change) — this chart is a config
-// history / audit view. Each param sits in its OWN horizontal lane (own auto-scaled
-// hidden axis) because their magnitudes span ~1000× (sSell ~1e-4 vs compress ~0.1).
-// Rows come from the SHARED usePoolTransactions fetch (one call for all pool charts).
+// Pool oracle CONFIG over time — lambda / kB / kQ / compress / sSell / sBuy. Sourced
+// from the indexer's `updatedEvents` change-log (one small query for the pool's whole
+// life — see usePoolConfigEvents), NOT the per-swap transaction walk. Config only
+// changes when an admin retunes the pool, so the lines are STEP functions (flat,
+// jumping at each change) — this chart is a config history / audit view. Each param
+// sits in its OWN horizontal lane (own auto-scaled hidden axis) because their
+// magnitudes span ~1000× (sSell ~1e-4 vs compress ~0.1).
 
 type Range = RangeKey
 type ParamKey = 'lambda' | 'kB' | 'kQ' | 'compress' | 'sSell' | 'sBuy'
@@ -62,43 +61,31 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
     sBuy: true,
   })
 
-  // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below.
-  const { txns: baseTxns, isLoading } = usePoolTransactions({ pairAddress, chainId, version })
-  const fetchPage = useFetchPoolTxnsPage()
+  // Config history from the updatedEvents change-log — the pool's whole life in one
+  // query (no pagination, no per-swap walk). Snapshots already carry every param.
+  const { snapshots, isLoading } = usePoolConfigEvents({ pairAddress, chainId, version })
 
-  const [olderTxs, setOlderTxs] = useState<PoolTxn[]>([])
-  const loadingRef = useRef(false)
-  const exhaustedRef = useRef(false)
-  const pendingRestoreRef = useRef(false)
-  const savedRangeRef = useRef<IRange<Time> | null>(null)
-  const loadMoreRef = useRef<() => void>(() => {})
-
-  useEffect(() => {
-    setOlderTxs([])
-    loadingRef.current = false
-    exhaustedRef.current = false
-    pendingRestoreRef.current = false
-    savedRangeRef.current = null
-  }, [pairAddress, chainId, version])
-
-  const combinedTxs = useMemo<PoolTxn[]>(() => [...baseTxns, ...olderTxs], [baseTxns, olderTxs])
+  // "now" captured once (lazy init keeps render pure) — used for the future-record
+  // cutoff and the grid's right edge. Config is an audit view, so a mount-time now
+  // is fine.
+  const [nowSec] = useState(() => Math.floor(Date.now() / 1000))
 
   const allPoints = useMemo<Point[]>(() => {
-    const futureCutoff = Math.floor(Date.now() / 1000) + 3600
-    return [...combinedTxs]
-      .reverse()
-      .map((t) => {
-        const p = { t: Number(t.timestamp) } as Point
-        for (const { key } of PARAMS) p[key] = Number(t[key])
+    const futureCutoff = nowSec + 3600
+    return snapshots
+      .filter((s) => Number.isFinite(s.t) && s.t <= futureCutoff)
+      .map((s) => {
+        const p = { t: s.t } as Point
+        for (const { key } of PARAMS) p[key] = Number(s[key])
         return p
       })
-      .filter((p) => Number.isFinite(p.t) && p.t <= futureCutoff && PARAMS.some(({ key }) => Number.isFinite(p[key])))
-  }, [combinedTxs])
+      .filter((p) => PARAMS.some(({ key }) => Number.isFinite(p[key])))
+  }, [snapshots, nowSec])
 
   const { bucket } = RANGE_BUCKETS[range]
   const grid = useMemo(
-    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
-    [allPoints, bucket],
+    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, nowSec),
+    [allPoints, bucket, nowSec],
   )
 
   // Per-param bucketed close series (carried — config persists between trades).
@@ -116,27 +103,6 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
   }, [allPoints, bucket, grid])
 
   const latest = allPoints[allPoints.length - 1]
-
-  const loadMore = useCallback(async () => {
-    if (loadingRef.current || exhaustedRef.current) return
-    const oldest = combinedTxs[combinedTxs.length - 1]
-    if (!oldest) return
-    const before = Number(oldest.timestamp)
-    if (!Number.isFinite(before)) return
-    loadingRef.current = true
-    try {
-      const batch = await fetchPage(chainId, version, pairAddress, before)
-      if (batch.length < 1000) exhaustedRef.current = true
-      if (batch.length > 0) {
-        savedRangeRef.current = chartRef.current?.timeScale().getVisibleRange() ?? null
-        pendingRestoreRef.current = true
-        setOlderTxs((prev) => [...prev, ...batch])
-      }
-    } finally {
-      loadingRef.current = false
-    }
-  }, [combinedTxs, chainId, version, pairAddress, fetchPage])
-  loadMoreRef.current = loadMore
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -255,12 +221,6 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
-    const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
-      if (!logical) return
-      if (logical.from < 10) loadMoreRef.current()
-    }
-    chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
-
     chartRef.current = chart
     return () => {
       chart.remove()
@@ -269,7 +229,7 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
     }
   }, [])
 
-  // Push data.
+  // Push data. All events load in one query (no paging), so just frame to the range.
   useEffect(() => {
     let any = false
     for (const p of PARAMS) {
@@ -277,18 +237,10 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
       if (seriesData[p.key].length) any = true
     }
     if (!any) return
-    if (pendingRestoreRef.current) {
-      const saved = savedRangeRef.current
-      if (saved) chartRef.current?.timeScale().setVisibleRange(saved)
-      pendingRestoreRef.current = false
-      savedRangeRef.current = null
-    } else {
-      applyRangePresetRef.current()
-    }
+    applyRangePresetRef.current()
   }, [seriesData])
 
   useEffect(() => {
-    if (pendingRestoreRef.current) return
     applyRangePresetRef.current()
   }, [range])
 
