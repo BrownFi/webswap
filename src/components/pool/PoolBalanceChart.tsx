@@ -20,13 +20,8 @@ import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
+import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 
-// PILOT: pools that get the market-price reference line (Pyth/TradingView) overlaid
-// on the balance chart to compare pool price vs the real market. Gated to specific
-// pairs while we evaluate it — key is `${chainId}-${lowercasePairAddress}`.
-const MARKET_REF_PAIRS = new Set<string>([
-  '80094-0xc123bc9259d1a99add5a2c512498ac146dd2bade', // WETH/USDC.e (Bera)
-])
 const COLOR_MARKET = '#22D3EE' // cyan — market reference line, distinct from the pink pool price
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
@@ -229,7 +224,7 @@ export function PoolBalanceChart({
   // Feed ids follow base/quote too — the market line is base priced in quote.
   const baseFeedId = baseIdx === 0 ? token0FeedId : token1FeedId
   const quoteFeedId = baseIdx === 0 ? token1FeedId : token0FeedId
-  const isMarketRefPair = MARKET_REF_PAIRS.has(`${chainId}-${pairAddress.toLowerCase()}`)
+  const isMarketRefPair = isMarketRef(chainId, pairAddress)
 
   // Colors follow BASE/QUOTE, not raw token0/token1: the BASE token is always GOLD
   // (COLOR0) and the QUOTE always BLUE (COLOR1), consistent across every pool. Base

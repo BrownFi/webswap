@@ -556,7 +556,16 @@ function PoolDetailInner({
                 />
 
                 {/* Oracle spread (oSpread) over time — (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel per SWAP */}
-                <PoolSpreadChart pairAddress={pairAddress} chainId={chainId} version={version} reversed={isReversed} />
+                <PoolSpreadChart
+                  pairAddress={pairAddress}
+                  chainId={chainId}
+                  version={version}
+                  reversed={isReversed}
+                  symbol0={symbol0}
+                  symbol1={symbol1}
+                  token0FeedId={pairRaw.token0?.priceFeedId}
+                  token1FeedId={pairRaw.token1?.priceFeedId}
+                />
               </>
             )}
           </div>

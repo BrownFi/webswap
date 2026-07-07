@@ -16,6 +16,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
+import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
+import { isMarketRefPair as isMarketRef } from './marketRefPairs'
+import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 
 // "oSpread" = the oracle-vs-AMM price spread per SWAP, from the indexer
 // Transaction entity: (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel.
@@ -39,7 +42,9 @@ const GET_POOL_SPREAD = `
       amount1In
       amount1Out
       reserve0
+      reserve1
       reserve0USD
+      reserve1USD
     }
   }
 `
@@ -59,7 +64,9 @@ const GET_POOL_SPREAD_OLDER = `
       amount1In
       amount1Out
       reserve0
+      reserve1
       reserve0USD
+      reserve1USD
     }
   }
 `
@@ -77,14 +84,31 @@ type Txn = {
   amount1In: number | string
   amount1Out: number | string
   reserve0: number | string
+  reserve1: number | string
   reserve0USD: number | string
+  reserve1USD: number | string
 }
-// s = oSpread in %; vol = this swap's USD volume; volUp = base token was net-bought.
-type Point = { t: number; s: number; vol: number; volUp: boolean }
+// s = oSpread in %; price0 = pool exchange rate (base priced in quote); vol = this
+// swap's USD volume; volUp = base token was net-bought.
+type Point = { t: number; s: number; price0: number; vol: number; volUp: boolean }
 
 const COLOR = '#D8A072'
+const COLOR_PRICE0 = '#EC4899' // pink — pool's own price (matches the Pool Balance chart)
+const COLOR_MARKET = '#22D3EE' // cyan — market reference price (Pyth/TradingView)
 const COLOR_VOL_UP = '#16A34A' // green — base bought that swap (bar up)
 const COLOR_VOL_DOWN = '#EF5350' // red — base sold that swap (bar down)
+const COLOR_VOL_LEGEND = '#9CA3AF'
+
+// Relative-price formatter (base priced in quote), adaptive decimals — matches the
+// Pool Balance chart so the two charts read the same price the same way.
+const formatRel = (v: number): string => {
+  if (!Number.isFinite(v)) return '—'
+  const abs = Math.abs(v)
+  const sign = v < 0 ? '-' : ''
+  if (abs === 0) return '0'
+  const digits = abs >= 1000 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : abs >= 0.0001 ? 6 : 8
+  return `${sign}${abs.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits })}`
+}
 
 // Compact USD formatter for the volume histogram (magnitude only; sign = direction).
 const formatVolUsd = (v: number): string => {
@@ -96,6 +120,8 @@ const formatVolUsd = (v: number): string => {
   return `$${abs.toFixed(4)}`
 }
 
+type ToggleKey = 'spread' | 'price0' | 'market' | 'vol'
+
 type Props = {
   pairAddress: string
   chainId: number
@@ -103,10 +129,35 @@ type Props = {
   // Pool base/quote order (shouldReverseDisplay). Drives volume bar direction so
   // it matches the Pool Balance chart: base bought → green up, base sold → red down.
   reversed?: boolean
+  symbol0?: string
+  symbol1?: string
+  // Pyth bytes32 feed ids (indexer token.priceFeedId) — for the gated market line.
+  token0FeedId?: string | null
+  token1FeedId?: string | null
 }
 
-export function PoolSpreadChart({ pairAddress, chainId, version, reversed = false }: Props) {
+export function PoolSpreadChart({
+  pairAddress,
+  chainId,
+  version,
+  reversed = false,
+  symbol0 = '',
+  symbol1 = '',
+  token0FeedId,
+  token1FeedId,
+}: Props) {
   const [range, setRange] = useState<Range>('7D')
+  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ spread: true, price0: true, market: true, vol: true })
+
+  // Base/quote (via `reversed`) — the pool price + market lines are base priced in
+  // quote, matching the Pool Balance chart.
+  const baseIdx = reversed ? 1 : 0
+  const quoteIdx = baseIdx === 0 ? 1 : 0
+  const baseSymbol = baseIdx === 0 ? symbol0 : symbol1
+  const quoteSymbol = baseIdx === 0 ? symbol1 : symbol0
+  const baseFeedId = baseIdx === 0 ? token0FeedId : token1FeedId
+  const quoteFeedId = baseIdx === 0 ? token1FeedId : token0FeedId
+  const isMarketRefPair = isMarketRef(chainId, pairAddress)
 
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolSpread', chainId, pairAddress, version],
@@ -156,8 +207,6 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
     // (stretching the axis "today → Jul 26"). Real block timestamps are never
     // ahead of now; a 1h margin absorbs any clock skew.
     const futureCutoff = Math.floor(Date.now() / 1000) + 3600
-    // base/quote for the volume bar direction — same source as the Pool Balance chart.
-    const baseIdx = reversed ? 1 : 0
     return [...combinedTxs]
       .reverse()
       .map((t) => {
@@ -181,13 +230,25 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
         // (amount0In + amount0Out) × (reserve0USD / reserve0). Direction relative to
         // the BASE token: base bought (leaves pool → baseOut) = up, sold = down.
         const r0 = Number(t.reserve0)
-        const vol = r0 > 0 ? (Number(t.amount0In) + Number(t.amount0Out)) * (Number(t.reserve0USD) / r0) : 0
+        const u0 = Number(t.reserve0USD)
+        const vol = r0 > 0 ? (Number(t.amount0In) + Number(t.amount0Out)) * (u0 / r0) : 0
         const baseOut = Number(baseIdx === 0 ? t.amount0Out : t.amount1Out)
         const baseIn = Number(baseIdx === 0 ? t.amount0In : t.amount1In)
-        return { t: Number(t.timestamp), s, vol: Number.isFinite(vol) ? vol : 0, volUp: baseOut >= baseIn }
+        // Pool exchange rate (base priced in quote) from reserve USD — identical to
+        // the Pool Balance chart's price0, so the two charts show the same pool price.
+        const r1 = Number(t.reserve1)
+        const u1 = Number(t.reserve1USD)
+        const baseAmt = baseIdx === 0 ? r0 : r1
+        const baseUsd = baseIdx === 0 ? u0 : u1
+        const quoteAmt = quoteIdx === 0 ? r0 : r1
+        const quoteUsd = quoteIdx === 0 ? u0 : u1
+        const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
+        const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
+        const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
+        return { t: Number(t.timestamp), s, price0, vol: Number.isFinite(vol) ? vol : 0, volUp: baseOut >= baseIn }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s) && p.t <= futureCutoff)
-  }, [combinedTxs, reversed])
+  }, [combinedTxs, reversed, baseIdx, quoteIdx])
 
   // Timeframe = a real time GRID resampled from the per-swap points, so the x-axis
   // is linear in clock time. The grid holds the FULL loaded history at this bucket
@@ -207,6 +268,16 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
     return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd).map((p) => ({ time: p.t as any, value: p.s }))
   }, [allPoints, bucket, grid])
 
+  // Pool price line (base priced in quote) = per-bucket close, carried between
+  // trades — the same pool price the Balance chart shows, on the isolated 'price'
+  // overlay scale here (the spread owns the visible right % axis).
+  const price0Data = useMemo(() => {
+    if (!grid) return []
+    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+      .filter((p) => Number.isFinite(p.price0))
+      .map((p) => ({ time: p.t as any, value: p.price0 }))
+  }, [allPoints, bucket, grid])
+
   // Signed volume histogram — bar height = total USD volume in the BUCKET, sign/
   // color = net direction (green base-buy / red base-sell). Summed per bucket so
   // it reconciles with the LP chart's volume over the same period.
@@ -214,6 +285,22 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
     if (!grid) return []
     return bucketVolume(allPoints, bucket, grid.gridStart, grid.gridEnd, COLOR_VOL_UP, COLOR_VOL_DOWN)
   }, [allPoints, bucket, grid])
+
+  // Market reference price (gated to MARKET_REF_PAIRS) — same hook + 'price' scale as
+  // the Pool Balance chart, so the pool price vs market comparison matches there.
+  const marketRaw = usePoolMarketPrice({
+    baseFeedId,
+    quoteFeedId,
+    bucket,
+    from: grid?.gridStart ?? null,
+    to: grid?.gridEnd ?? null,
+    enabled: isMarketRefPair,
+  })
+  const hasMarket = isMarketRefPair && marketRaw.length > 0
+  const marketData = useMemo(
+    () => (isMarketRefPair ? marketRaw.map((p) => ({ time: p.time as any, value: p.value })) : []),
+    [marketRaw, isMarketRefPair],
+  )
 
 
   // The "now" spread is always the latest swap, independent of the timeframe.
@@ -252,11 +339,17 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  // Pool price (solid pink) + market reference (dashed cyan) on the isolated 'price'
+  // overlay scale — same as the Pool Balance chart.
+  const price0Ref = useRef<ISeriesApi<'Line'> | null>(null)
+  const marketRef = useRef<ISeriesApi<'Line'> | null>(null)
   const volSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
-  // Floating tooltip anchor — container-relative pixels + the hovered time +
-  // value + that second's volume. null when the cursor is outside the plot area.
-  const [tip, setTip] = useState<{ x: number; y: number; time: number; value: number; vol?: number } | null>(null)
+  // Floating tooltip anchor — container-relative pixels + the hovered time. The
+  // per-series values (spread, price, market, vol) are read on hover.
+  const [tip, setTip] = useState<
+    { x: number; y: number; time: number; value: number; price0?: number; market?: number; vol?: number } | null
+  >(null)
 
   // Apply the current timeframe as a VISIBLE-RANGE (zoom) preset — the chart
   // always holds the full data, so this only changes what's on screen. 'ALL' =
@@ -373,6 +466,20 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
       title: '',
     })
 
+    // Pool price (solid pink) + market reference (dashed cyan) on an ISOLATED 'price'
+    // overlay scale — the spread owns the visible right % axis, so the prices sit on
+    // their own hidden auto-scaled axis (same as the Pool Balance chart). Market
+    // first (behind), pool price on top. Empty on non-gated pairs.
+    const commonPrice = {
+      lastValueVisible: false,
+      priceLineVisible: false,
+      priceScaleId: 'price',
+      priceFormat: { type: 'custom' as const, formatter: (v: number) => formatRel(v), minMove: 0.00000001 },
+    }
+    const marketLine = chart.addSeries(LineSeries, { ...commonPrice, color: COLOR_MARKET, lineWidth: 1, lineStyle: LineStyle.Dashed })
+    const price0Line = chart.addSeries(LineSeries, { ...commonPrice, color: COLOR_PRICE0, lineWidth: 1 })
+    marketLine.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.28 } })
+
     // Signed volume histogram in the bottom ~20% (same as the Pool Balance chart) —
     // its own 'vol' scale so it never overlaps the spread line.
     const volSeries = chart.addSeries(HistogramSeries, {
@@ -398,6 +505,8 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
         setTip(null)
         return
       }
+      const ppr = param.seriesData.get(price0Line) as { value?: number } | undefined
+      const pmk = param.seriesData.get(marketLine) as { value?: number } | undefined
       const volPt = volSeriesRef.current
         ? (param.seriesData.get(volSeriesRef.current) as { value?: number } | undefined)
         : undefined
@@ -406,6 +515,8 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
         y: param.point.y,
         time: Number(param.time),
         value: pt.value,
+        price0: typeof ppr?.value === 'number' ? ppr.value : undefined,
+        market: typeof pmk?.value === 'number' ? pmk.value : undefined,
         vol: typeof volPt?.value === 'number' ? volPt.value : undefined,
       })
     }
@@ -421,12 +532,16 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 
     seriesRef.current = series
+    price0Ref.current = price0Line
+    marketRef.current = marketLine
     volSeriesRef.current = volSeries
     chartRef.current = chart
     return () => {
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
+      price0Ref.current = null
+      marketRef.current = null
       volSeriesRef.current = null
     }
   }, [])
@@ -434,6 +549,7 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
   // Push data into the series.
   useEffect(() => {
     seriesRef.current?.setData(seriesData)
+    price0Ref.current?.setData(price0Data)
     volSeriesRef.current?.setData(volumeData)
     if (!seriesData.length) return
     if (pendingRestoreRef.current) {
@@ -449,13 +565,27 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
       // current timeframe preset.
       applyRangePresetRef.current()
     }
-  }, [seriesData, volumeData])
+  }, [seriesData, price0Data, volumeData])
+
+  // Push the market reference line separately — it arrives async (Pyth fetch);
+  // setData preserves the visible range, so this never re-zooms.
+  useEffect(() => {
+    marketRef.current?.setData(marketData)
+  }, [marketData])
 
   // Re-zoom when the timeframe button changes (data unchanged).
   useEffect(() => {
     if (pendingRestoreRef.current) return
     applyRangePresetRef.current()
   }, [range])
+
+  // Toggle visibility from the bottom legend.
+  useEffect(() => {
+    seriesRef.current?.applyOptions({ visible: visible.spread })
+    price0Ref.current?.applyOptions({ visible: visible.price0 })
+    marketRef.current?.applyOptions({ visible: visible.market })
+    volSeriesRef.current?.applyOptions({ visible: visible.vol })
+  }, [visible])
 
   return (
     <div>
@@ -570,6 +700,18 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
                     {tip.value.toFixed(4)}%
                   </span>
                 </div>
+                {tip.price0 !== undefined && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
+                    <span style={{ color: COLOR_PRICE0 }}>{baseSymbol}/{quoteSymbol}</span>
+                    <span style={{ color: '#FBFBFD' }}>{formatRel(tip.price0)}</span>
+                  </div>
+                )}
+                {tip.market !== undefined && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
+                    <span style={{ color: COLOR_MARKET }}>Market</span>
+                    <span style={{ color: '#FBFBFD' }}>{formatRel(tip.market)}</span>
+                  </div>
+                )}
                 {tip.vol !== undefined && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
                     <span style={{ color: tip.vol >= 0 ? COLOR_VOL_UP : COLOR_VOL_DOWN }}>Volume</span>
@@ -579,6 +721,33 @@ export function PoolSpreadChart({ pairAddress, chainId, version, reversed = fals
               </div>
             )
           })()}
+        </div>
+
+        {/* Legend + per-series toggles (bottom, like the Pool Balance chart) */}
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-3">
+          {[
+            { key: 'spread' as const, label: 'oSpread', color: COLOR },
+            ...(price0Data.length > 0 ? [{ key: 'price0' as const, label: `${baseSymbol}/${quoteSymbol}`, color: COLOR_PRICE0 }] : []),
+            ...(hasMarket ? [{ key: 'market' as const, label: 'Market', color: COLOR_MARKET }] : []),
+            ...(volumeData.length > 0 ? [{ key: 'vol' as const, label: 'Volume', color: COLOR_VOL_LEGEND }] : []),
+          ].map((item) => (
+            <div key={item.key} className="inline-flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setVisible((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
+                className="inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
+                style={{ background: 'transparent', border: 'none', padding: 0, opacity: visible[item.key] ? 1 : 0.4 }}
+              >
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: item.color, display: 'inline-block' }} />
+                <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>{item.label}</span>
+              </button>
+              {item.key === 'market' && (
+                <InfoTooltip
+                  text={`Real market price of ${baseSymbol}/${quoteSymbol} (Pyth / TradingView). The gap between it and the pink pool price is the spread.`}
+                />
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
