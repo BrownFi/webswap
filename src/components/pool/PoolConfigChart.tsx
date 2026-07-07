@@ -272,7 +272,7 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
         priceLineVisible: false,
         priceScaleId: p.key,
         color: p.color,
-        lineWidth: 2,
+        lineWidth: 1,
         lineType: LineType.WithSteps, // config is a step function
       })
       // Each param gets its own ~1/n horizontal lane so all 6 are readable despite
