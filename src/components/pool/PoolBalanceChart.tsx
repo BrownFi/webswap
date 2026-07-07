@@ -591,7 +591,7 @@ export function PoolBalanceChart({
       ...commonNoLabels,
       priceScaleId: 'price',
       color: COLOR_MARKET,
-      lineWidth: 2,
+      lineWidth: 1,
       priceFormat: { type: 'custom', formatter: (v: number) => formatRel(v), minMove: 0.00000001 },
     })
 
