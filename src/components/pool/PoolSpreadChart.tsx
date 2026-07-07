@@ -1,4 +1,3 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   ColorType,
   CrosshairMode,
@@ -13,104 +12,19 @@ import {
   createChart,
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { graphqlFetcher } from 'utils/graphql'
-import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
+import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
 
-// "oSpread" = the oracle-vs-AMM price spread per SWAP, from the indexer
-// Transaction entity: (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel.
-// It oscillates around 0 (positive = oracle above the AMM price, negative =
-// below), so we plot it as a single line in % with a zero reference. Pool-wide.
-// (Spec from Manh.)
-//
-// Lightweight-charts (TradingView v5) reimplementation of the recharts version —
-// same query + per-swap math, rendered as a single LineSeries with a zero
-// reference price line, adaptive time axis, and a floating crosshair tooltip.
-const GET_POOL_SPREAD = `
-  query PoolSpread($pair: String) {
-    transactions(first: 1000, where: { pair: $pair, type: "SWAP" }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      pythPrice0
-      pythPrice1
-      ammPriceRel
-      adjPriceRel
-      amount0In
-      amount0Out
-      amount1In
-      amount1Out
-      reserve0
-      reserve1
-      reserve0USD
-      reserve1USD
-      lpPrice
-      bnhPrice
-    }
-  }
-`
-
-// Same shape as GET_POOL_SPREAD but pages OLDER swaps via `timestamp_lt`
-// (numeric unix seconds, no quotes — indexer-verified). Used by loadMore.
-const GET_POOL_SPREAD_OLDER = `
-  query PoolSpreadOlder($pair: String, $before: BigInt) {
-    transactions(first: 1000, where: { pair: $pair, type: "SWAP", timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      pythPrice0
-      pythPrice1
-      ammPriceRel
-      adjPriceRel
-      amount0In
-      amount0Out
-      amount1In
-      amount1Out
-      reserve0
-      reserve1
-      reserve0USD
-      reserve1USD
-      lpPrice
-      bnhPrice
-    }
-  }
-`
-
-// lpPrice/bnhPrice (the LP-vs-BH benchmark) are a partial indexer rollout — the
-// query is rejected on chains without them. Strip them so those chains still get
-// the spread + price lines; where present, LP-vs-BH renders. Mirrors the Balance chart.
-const buildSpreadQuery = (template: string, keep: boolean) =>
-  keep ? template : template.replace(/\s*lpPrice\s*/g, '\n').replace(/\s*bnhPrice\s*/g, '\n')
-
-async function fetchSpreadWithFallback(operationName: string, template: string, variables: Record<string, unknown>) {
-  try {
-    const full = await graphqlFetcher({ operationName, query: template, variables })
-    if (full) return full
-  } catch {
-    // fall through to the stripped query
-  }
-  return graphqlFetcher({ operationName, query: buildSpreadQuery(template, false), variables })
-}
+// "oSpread" = the oracle-vs-AMM price spread per SWAP, from the indexer Transaction
+// entity: (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel. It oscillates around 0
+// (positive = oracle above the AMM price, negative = below). Rows come from the SHARED
+// usePoolTransactions fetch (one call for all pool charts); we filter to SWAPs here.
 
 type Range = RangeKey
 
-type Txn = {
-  timestamp: number | string
-  pythPrice0: number | string
-  pythPrice1: number | string
-  ammPriceRel: number | string
-  adjPriceRel: number | string
-  amount0In: number | string
-  amount0Out: number | string
-  amount1In: number | string
-  amount1Out: number | string
-  reserve0: number | string
-  reserve1: number | string
-  reserve0USD: number | string
-  reserve1USD: number | string
-  // LP-vs-BH benchmark prices (partial indexer rollout — stripped where absent).
-  lpPrice: number | string
-  bnhPrice: number | string
-}
 // s = oSpread in %; price0 = pool exchange rate (base priced in quote); lpVsBh =
 // LP-vs-buy&hold %; vol = this swap's USD volume; volUp = base token was net-bought.
 type Point = { t: number; s: number; price0: number; lpVsBh: number | null; vol: number; volUp: boolean }
@@ -185,23 +99,11 @@ export function PoolSpreadChart({
   const quoteFeedId = baseIdx === 0 ? token1FeedId : token0FeedId
   const isMarketRefPair = isMarketRef(chainId, pairAddress)
 
-  const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
-    queryKey: ['poolSpread', chainId, pairAddress, version],
-    queryFn: () =>
-      fetchSpreadWithFallback(
-        'PoolSpread',
-        withFirstActivityGte(GET_POOL_SPREAD, 'timestamp', chainId, pairAddress),
-        { chainId, version, pair: pairAddress.toLowerCase() },
-      ) as Promise<{ transactions: Txn[] }>,
-    enabled: !!pairAddress && !!chainId,
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
-  })
+  // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below.
+  const { txns: baseTxns, isLoading } = usePoolTransactions({ pairAddress, chainId, version })
 
-  // Older swap batches accumulated by scroll-to-load-more (newest-first, like the
-  // initial fetch). Combined with the initial batch in `allPoints`, so the
-  // oSpread math below is unchanged.
-  const [olderTxs, setOlderTxs] = useState<Txn[]>([])
+  // Older batches accumulated by scroll-to-load-more (newest-first, like the base).
+  const [olderTxs, setOlderTxs] = useState<PoolTxn[]>([])
   // No concurrent fetches; stop once a batch returns < 1000 (older end reached).
   const loadingRef = useRef(false)
   const exhaustedRef = useRef(false)
@@ -224,9 +126,14 @@ export function PoolSpreadChart({
   // Initial batch (newest-first) + accumulated older batches (also newest-first),
   // so the whole thing stays a single descending list. The oldest accumulated
   // timestamp (last element) is the cursor for the next `timestamp_lt` page.
-  const combinedTxs = useMemo<Txn[]>(() => [...(data?.transactions ?? []), ...olderTxs], [data, olderTxs])
+  // Unfiltered accumulated rows (all tx types) — the load-more cursor pages by the
+  // oldest LOADED row, so it mustn't be the SWAP-filtered subset (older non-swap rows
+  // are already loaded → paging by the oldest swap would re-fetch them).
+  const combinedTxs = useMemo<PoolTxn[]>(() => [...baseTxns, ...olderTxs], [baseTxns, olderTxs])
 
-  // oSpread per swap (× 100 for %), chronological (indexer returns newest-first).
+  // oSpread per swap (× 100 for %), chronological (indexer returns newest-first). The
+  // shared fetch returns ALL tx types; the spread + its volume are SWAP-only, so
+  // filter to swaps here (the old dedicated query used where:{type:"SWAP"}).
   const allPoints = useMemo<Point[]>(() => {
     // Drop swaps with a future timestamp — a bad indexer record dated ahead of
     // now sits at the end of the series, so the chart frames right up to it
@@ -234,6 +141,7 @@ export function PoolSpreadChart({
     // ahead of now; a 1h margin absorbs any clock skew.
     const futureCutoff = Math.floor(Date.now() / 1000) + 3600
     return [...combinedTxs]
+      .filter((t) => t.type === 'SWAP')
       .reverse()
       .map((t) => {
         const p0 = Number(t.pythPrice0)
@@ -358,12 +266,7 @@ export function PoolSpreadChart({
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const res = (await fetchSpreadWithFallback(
-        'PoolSpreadOlder',
-        withFirstActivityGte(GET_POOL_SPREAD_OLDER, 'timestamp', chainId, pairAddress),
-        { chainId, version, pair: pairAddress.toLowerCase(), before },
-      )) as { transactions?: Txn[] } | null
-      const batch = res?.transactions ?? []
+      const batch = await fetchPoolTxnsPage(chainId, version, pairAddress, before)
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {
         // Times of existing bars don't change, so the saved TIME range stays valid.

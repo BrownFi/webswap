@@ -1,4 +1,3 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   ColorType,
   CrosshairMode,
@@ -13,9 +12,8 @@ import {
   createChart,
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { graphqlFetcher } from 'utils/graphql'
-import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid } from './chartTimeBuckets'
+import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
 
 // Pool oracle CONFIG over time — lambda / kB / kQ / compress / sSell / sBuy. These
 // are recorded on the indexer's Transaction entity (already decoded), so every swap
@@ -23,38 +21,7 @@ import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid } from './
 // lines are STEP functions (flat, jumping at each change) — this chart is a config
 // history / audit view. Each param sits in its OWN horizontal lane (own auto-scaled
 // hidden axis) because their magnitudes span ~1000× (sSell ~1e-4 vs compress ~0.1).
-const CONFIG_FIELDS = 'lambda\n      kB\n      kQ\n      compress\n      sSell\n      sBuy'
-const GET_POOL_CONFIG = `
-  query PoolConfig($pair: String) {
-    transactions(first: 1000, where: { pair: $pair }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      ${CONFIG_FIELDS}
-    }
-  }
-`
-const GET_POOL_CONFIG_OLDER = `
-  query PoolConfigOlder($pair: String, $before: BigInt) {
-    transactions(first: 1000, where: { pair: $pair, timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      ${CONFIG_FIELDS}
-    }
-  }
-`
-
-// Config fields are a V3-schema addition — strip them if a chain's indexer lacks
-// them (the query would otherwise 4xx), so the chart just shows empty there.
-const buildConfigQuery = (template: string, keep: boolean) =>
-  keep ? template : template.replace(/\s*(lambda|kB|kQ|compress|sSell|sBuy)\s*/g, (m, name) => (name ? '\n' : m))
-
-async function fetchConfigWithFallback(operationName: string, template: string, variables: Record<string, unknown>) {
-  try {
-    const full = await graphqlFetcher({ operationName, query: template, variables })
-    if (full) return full
-  } catch {
-    // fall through
-  }
-  return graphqlFetcher({ operationName, query: buildConfigQuery(template, false), variables })
-}
+// Rows come from the SHARED usePoolTransactions fetch (one call for all pool charts).
 
 type Range = RangeKey
 type ParamKey = 'lambda' | 'kB' | 'kQ' | 'compress' | 'sSell' | 'sBuy'
@@ -68,7 +35,6 @@ const PARAMS: { key: ParamKey; label: string; color: string }[] = [
   { key: 'sBuy', label: 'sBuy', color: '#16A34A' },
 ]
 
-type Txn = { timestamp: number | string } & Record<ParamKey, number | string | null | undefined>
 type Point = { t: number } & Record<ParamKey, number>
 
 // Compact formatter — config values are small (1e-4 … 0.2). Significant digits keep
@@ -96,20 +62,10 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
     sBuy: true,
   })
 
-  const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
-    queryKey: ['poolConfig', chainId, pairAddress, version],
-    queryFn: () =>
-      fetchConfigWithFallback(
-        'PoolConfig',
-        withFirstActivityGte(GET_POOL_CONFIG, 'timestamp', chainId, pairAddress),
-        { chainId, version, pair: pairAddress.toLowerCase() },
-      ) as Promise<{ transactions: Txn[] }>,
-    enabled: !!pairAddress && !!chainId,
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
-  })
+  // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below.
+  const { txns: baseTxns, isLoading } = usePoolTransactions({ pairAddress, chainId, version })
 
-  const [olderTxs, setOlderTxs] = useState<Txn[]>([])
+  const [olderTxs, setOlderTxs] = useState<PoolTxn[]>([])
   const loadingRef = useRef(false)
   const exhaustedRef = useRef(false)
   const pendingRestoreRef = useRef(false)
@@ -124,7 +80,7 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
     savedRangeRef.current = null
   }, [pairAddress, chainId, version])
 
-  const combinedTxs = useMemo<Txn[]>(() => [...(data?.transactions ?? []), ...olderTxs], [data, olderTxs])
+  const combinedTxs = useMemo<PoolTxn[]>(() => [...baseTxns, ...olderTxs], [baseTxns, olderTxs])
 
   const allPoints = useMemo<Point[]>(() => {
     const futureCutoff = Math.floor(Date.now() / 1000) + 3600
@@ -168,12 +124,7 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const res = (await fetchConfigWithFallback(
-        'PoolConfigOlder',
-        withFirstActivityGte(GET_POOL_CONFIG_OLDER, 'timestamp', chainId, pairAddress),
-        { chainId, version, pair: pairAddress.toLowerCase(), before },
-      )) as { transactions?: Txn[] } | null
-      const batch = res?.transactions ?? []
+      const batch = await fetchPoolTxnsPage(chainId, version, pairAddress, before)
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {
         savedRangeRef.current = chartRef.current?.timeScale().getVisibleRange() ?? null

@@ -1,4 +1,3 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   AreaSeries,
   BaselineSeries,
@@ -15,11 +14,10 @@ import {
   createChart,
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { graphqlFetcher } from 'utils/graphql'
-import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
+import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 
 const COLOR_MARKET = '#22D3EE' // cyan — market reference line, distinct from the pink pool price
@@ -39,90 +37,10 @@ const COLOR_MARKET = '#22D3EE' // cyan — market reference line, distinct from 
 // BASE token is always GOLD (COLOR0) and the QUOTE always BLUE (COLOR1), consistent
 // across every pool — not tied to raw token0/token1. `reversed` also flips the
 // legend/tooltip DISPLAY ORDER so the base token lists first.
-const GET_POOL_BALANCES = `
-  query PoolBalances($pair: String) {
-    transactions(first: 1000, where: { pair: $pair }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      reserve0
-      reserve1
-      reserve0USD
-      reserve1USD
-      amount0In
-      amount0Out
-      amount1In
-      amount1Out
-      type
-      lpPrice
-      bnhPrice
-    }
-  }
-`
-
-// Same shape as GET_POOL_BALANCES but pages OLDER txs via `timestamp_lt`
-// (numeric unix seconds, no quotes — indexer-verified). Used by loadMore.
-const GET_POOL_BALANCES_OLDER = `
-  query PoolBalancesOlder($pair: String, $before: BigInt) {
-    transactions(first: 1000, where: { pair: $pair, timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      reserve0
-      reserve1
-      reserve0USD
-      reserve1USD
-      amount0In
-      amount0Out
-      amount1In
-      amount1Out
-      type
-      lpPrice
-      bnhPrice
-    }
-  }
-`
-
-// Per-swap lpPrice/bnhPrice were added to the indexer's `Transaction` entity only
-// on some chains (partial rollout). On chains without them the query is rejected
-// ("Type `Transaction` has no field `lpPrice`") and the whole chart shows "no
-// activity". `buildBalancesQuery(t, false)` strips those two fields.
-const buildBalancesQuery = (template: string, keep: boolean) =>
-  keep ? template : template.replace(/\s*lpPrice\s*/g, '\n').replace(/\s*bnhPrice\s*/g, '\n')
-
-// Self-detecting fetch: try WITH the benchmark fields; if the chain's indexer
-// doesn't have them yet (null result or thrown error), retry WITHOUT them. So
-// LP-vs-BH auto-appears the moment Manh deploys the fields to a chain — no
-// hardcoded per-chain list to maintain. Where stripped, lpVsBh is null and the
-// LP-vs-BH line/legend simply don't render; the rest of the chart is unaffected.
-async function fetchBalancesWithFallback(
-  operationName: string,
-  template: string,
-  variables: Record<string, unknown>,
-) {
-  try {
-    const full = await graphqlFetcher({ operationName, query: template, variables })
-    if (full) return full
-  } catch {
-    // fall through to the stripped query
-  }
-  return graphqlFetcher({ operationName, query: buildBalancesQuery(template, false), variables })
-}
-
+// Rows come from the SHARED usePoolTransactions fetch (one call for all pool charts).
+// lpPrice/bnhPrice (LP-vs-BH) are a partial indexer rollout; the shared fetch's field
+// tiers strip them where absent, so lpVsBh reads back null and the line just hides.
 type Range = RangeKey
-
-type Txn = {
-  timestamp: number | string
-  reserve0: number | string
-  reserve1: number | string
-  reserve0USD: number | string
-  reserve1USD: number | string
-  amount0In: number | string
-  amount0Out: number | string
-  amount1In: number | string
-  amount1Out: number | string
-  type: string
-  // Per-swap benchmark prices (added on the indexer's Transaction entity) — so
-  // LP-vs-BH lines up with the actual swap timestamps instead of daily buckets.
-  lpPrice: number | string
-  bnhPrice: number | string
-}
 // pct0/pct1 = each token's % of pool value; lpVsBh = LP-vs-buy&hold % (right
 // axis), step-attached from daily data; price0 = the BASE token's RELATIVE price
 // (priced in the quote), drawn on its own isolated overlay scale; vol = this
@@ -232,27 +150,13 @@ export function PoolBalanceChart({
   const token0Color = reversed ? COLOR1 : COLOR0
   const token1Color = reversed ? COLOR0 : COLOR1
 
-  const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
-    queryKey: ['poolBalances', chainId, pairAddress, version],
-    queryFn: () =>
-      fetchBalancesWithFallback(
-        'PoolBalances',
-        withFirstActivityGte(GET_POOL_BALANCES, 'timestamp', chainId, pairAddress),
-        {
-          chainId,
-          version,
-          pair: pairAddress.toLowerCase(),
-        },
-      ) as Promise<{ transactions: Txn[] }>,
-    enabled: !!pairAddress && !!chainId,
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
-  })
+  // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below.
+  const { txns: baseTxns, isLoading } = usePoolTransactions({ pairAddress, chainId, version })
 
   // Older tx batches accumulated by scroll-to-load-more (newest-first, like the
   // initial fetch). Combined with the initial batch in `combinedTxs`, so the
   // pct/LP-vs-BH step-attach math below is unchanged.
-  const [olderTxs, setOlderTxs] = useState<Txn[]>([])
+  const [olderTxs, setOlderTxs] = useState<PoolTxn[]>([])
   // No concurrent fetches; stop once a batch returns < 1000 (older end reached).
   const loadingRef = useRef(false)
   const exhaustedRef = useRef(false)
@@ -273,7 +177,7 @@ export function PoolBalanceChart({
   // Initial batch (newest-first) + accumulated older batches (also newest-first),
   // so the whole thing stays a single descending list. The oldest accumulated
   // timestamp (last element) is the cursor for the next `timestamp_lt` page.
-  const combinedTxs = useMemo<Txn[]>(() => [...(data?.transactions ?? []), ...olderTxs], [data, olderTxs])
+  const combinedTxs = useMemo<PoolTxn[]>(() => [...baseTxns, ...olderTxs], [baseTxns, olderTxs])
 
   // Full fetched series as a % split, chronological (indexer returns newest-first).
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point
@@ -459,17 +363,7 @@ export function PoolBalanceChart({
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const res = (await fetchBalancesWithFallback(
-        'PoolBalancesOlder',
-        withFirstActivityGte(GET_POOL_BALANCES_OLDER, 'timestamp', chainId, pairAddress),
-        {
-          chainId,
-          version,
-          pair: pairAddress.toLowerCase(),
-          before,
-        },
-      )) as { transactions?: Txn[] } | null
-      const batch = res?.transactions ?? []
+      const batch = await fetchPoolTxnsPage(chainId, version, pairAddress, before)
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {
         // Times of existing bars don't change, so the saved TIME range stays valid.
