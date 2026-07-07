@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 
@@ -86,9 +87,33 @@ export async function fetchPoolTxnsPage(
 }
 
 /**
+ * Cached older-page fetcher, shared across the pool charts. All three charts page
+ * older history from the SAME newest-1000 base, so their `before` cursors line up
+ * exactly (oldest-of-baseTxns, then oldest-of-page1, …). Keying the fetch by
+ * (pool, before) means whichever chart scrolls back first pays the network cost
+ * and the others reuse the cached page instead of re-fetching the same ~650 kB.
+ * Older tx pages are immutable history, so a long staleTime is safe.
+ *
+ * Concurrent calls with the same key (e.g. all three charts auto-loading on first
+ * render) share one in-flight request — react-query coalesces them.
+ */
+export function useFetchPoolTxnsPage() {
+  const queryClient = useQueryClient()
+  return useCallback(
+    (chainId: number, version: number, pairAddress: string, before?: number) =>
+      queryClient.fetchQuery({
+        queryKey: ['poolTxnsPage', chainId, version, pairAddress?.toLowerCase(), before ?? 'newest'],
+        queryFn: () => fetchPoolTxnsPage(chainId, version, pairAddress, before),
+        staleTime: 10 * 60_000,
+      }),
+    [queryClient],
+  )
+}
+
+/**
  * Shared newest-1000 transactions for a pool. All charts call this with the same
  * key, so react-query fires exactly ONE request and hands the rows to each.
- * Charts still page OLDER rows on scroll via fetchPoolTxnsPage(before) themselves.
+ * Charts still page OLDER rows on scroll via useFetchPoolTxnsPage (also shared).
  */
 export function usePoolTransactions({
   pairAddress,

@@ -17,7 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
-import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
+import { PoolTxn, useFetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 
 const COLOR_MARKET = '#22D3EE' // cyan — market reference line, distinct from the pink pool price
@@ -150,8 +150,10 @@ export function PoolBalanceChart({
   const token0Color = reversed ? COLOR1 : COLOR0
   const token1Color = reversed ? COLOR0 : COLOR1
 
-  // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below.
+  // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below
+  // via a shared, cached fetcher so the other charts reuse whatever this one loads.
   const { txns: baseTxns, isLoading } = usePoolTransactions({ pairAddress, chainId, version })
+  const fetchPage = useFetchPoolTxnsPage()
 
   // Older tx batches accumulated by scroll-to-load-more (newest-first, like the
   // initial fetch). Combined with the initial batch in `combinedTxs`, so the
@@ -363,7 +365,7 @@ export function PoolBalanceChart({
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const batch = await fetchPoolTxnsPage(chainId, version, pairAddress, before)
+      const batch = await fetchPage(chainId, version, pairAddress, before)
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {
         // Times of existing bars don't change, so the saved TIME range stays valid.
@@ -374,7 +376,7 @@ export function PoolBalanceChart({
     } finally {
       loadingRef.current = false
     }
-  }, [combinedTxs, chainId, version, pairAddress])
+  }, [combinedTxs, chainId, version, pairAddress, fetchPage])
   loadMoreRef.current = loadMore
 
   // Create chart + series once.

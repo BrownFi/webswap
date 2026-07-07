@@ -16,7 +16,7 @@ import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVol
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
-import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
+import { PoolTxn, useFetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
 
 // "oSpread" = the oracle-vs-AMM price spread per SWAP, from the indexer Transaction
 // entity: (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel. It oscillates around 0
@@ -101,6 +101,7 @@ export function PoolSpreadChart({
 
   // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below.
   const { txns: baseTxns, isLoading } = usePoolTransactions({ pairAddress, chainId, version })
+  const fetchPage = useFetchPoolTxnsPage()
 
   // Older batches accumulated by scroll-to-load-more (newest-first, like the base).
   const [olderTxs, setOlderTxs] = useState<PoolTxn[]>([])
@@ -266,7 +267,7 @@ export function PoolSpreadChart({
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const batch = await fetchPoolTxnsPage(chainId, version, pairAddress, before)
+      const batch = await fetchPage(chainId, version, pairAddress, before)
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {
         // Times of existing bars don't change, so the saved TIME range stays valid.
@@ -277,7 +278,7 @@ export function PoolSpreadChart({
     } finally {
       loadingRef.current = false
     }
-  }, [combinedTxs, chainId, version, pairAddress])
+  }, [combinedTxs, chainId, version, pairAddress, fetchPage])
   loadMoreRef.current = loadMore
 
   const containerRef = useRef<HTMLDivElement | null>(null)

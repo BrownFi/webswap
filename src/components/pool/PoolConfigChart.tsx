@@ -13,7 +13,7 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid } from './chartTimeBuckets'
-import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
+import { PoolTxn, useFetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
 
 // Pool oracle CONFIG over time — lambda / kB / kQ / compress / sSell / sBuy. These
 // are recorded on the indexer's Transaction entity (already decoded), so every swap
@@ -64,6 +64,7 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
 
   // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below.
   const { txns: baseTxns, isLoading } = usePoolTransactions({ pairAddress, chainId, version })
+  const fetchPage = useFetchPoolTxnsPage()
 
   const [olderTxs, setOlderTxs] = useState<PoolTxn[]>([])
   const loadingRef = useRef(false)
@@ -124,7 +125,7 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const batch = await fetchPoolTxnsPage(chainId, version, pairAddress, before)
+      const batch = await fetchPage(chainId, version, pairAddress, before)
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {
         savedRangeRef.current = chartRef.current?.timeScale().getVisibleRange() ?? null
@@ -134,7 +135,7 @@ export function PoolConfigChart({ pairAddress, chainId, version }: Props) {
     } finally {
       loadingRef.current = false
     }
-  }, [combinedTxs, chainId, version, pairAddress])
+  }, [combinedTxs, chainId, version, pairAddress, fetchPage])
   loadMoreRef.current = loadMore
 
   const containerRef = useRef<HTMLDivElement | null>(null)
