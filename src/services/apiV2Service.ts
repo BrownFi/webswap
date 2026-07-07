@@ -35,7 +35,7 @@ const getPoolPrices = (options?: { chainId: number; tokenA: string; tokenB: stri
   fetchJson<PoolPrices>(`/prices`, { params: options })
 
 const getPoolBgt = (options: { address: string }) =>
-  fetchJson<{ apr: number }>(`/igbt-vault-apr`, { params: { pool: options.address } })
+  fetchJson<{ apr: number }>(`/igbt-vault-apr`, { params: { pool: options.address.toLowerCase() } })
 
 const getMerklCampaignApr = (options: { address: string }) =>
   fetchJson<{ apr: number }>(`/merkl-campaign`, { params: { pool: options.address } })

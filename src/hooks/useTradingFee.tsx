@@ -9,9 +9,14 @@ import { useStorageCache } from './useStorageCache'
 
 type Props = {
   pair: Pair
+  // When false, skip the on-chain fee read entirely. The pool list already has
+  // the fee from the indexer (pairStats.fee) for every fresh pool, so firing
+  // readV3PairConfig per pool was pure waste — one RPC round-trip per card. The
+  // caller passes `!shouldUseIndexer` (mirrors how useTotalSupply is gated).
+  enabled?: boolean
 }
 
-export const useTradingFee = ({ pair }: Props) => {
+export const useTradingFee = ({ pair, enabled = true }: Props) => {
   const { chainId } = useActiveWeb3React()
   // Read version from the PAIR, not the global useVersion store. The global
   // store reflects the user's "default version" preference (V2/V3 toggle on
@@ -33,8 +38,10 @@ export const useTradingFee = ({ pair }: Props) => {
   const isV3 = isV3Like(version)
   const feeContract = version >= 1 && version <= 2 ? pairContract : null
   const precisionContract = isV2 ? pairContract : null
-  const feeResult = useSingleCallResult(feeContract, 'fee', undefined, { disabled: isAvailable() || isV3 })
-  const precisionResult = useSingleCallResult(precisionContract, 'PRECISION', undefined, { disabled: isAvailable() || isV3 })
+  const feeResult = useSingleCallResult(feeContract, 'fee', undefined, { disabled: !enabled || isAvailable() || isV3 })
+  const precisionResult = useSingleCallResult(precisionContract, 'PRECISION', undefined, {
+    disabled: !enabled || isAvailable() || isV3,
+  })
   const fee = (feeResult.result?.[0] || 0) * (isV2 ? 1 : 2)
   const precision = isV2 ? precisionResult.result?.[0] || 100000000 : 10000
   const v2TradingFee = (Number(fee) * 100) / precision
@@ -49,7 +56,7 @@ export const useTradingFee = ({ pair }: Props) => {
       if (!config) return 0
       return fromPrec(config.fee) * 100
     },
-    enabled: isV3 && !isAvailable(),
+    enabled: enabled && isV3 && !isAvailable(),
     staleTime: 2 * 60 * 1000,
   })
 
