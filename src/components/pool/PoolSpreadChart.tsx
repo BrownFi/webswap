@@ -171,7 +171,9 @@ export function PoolSpreadChart({
   token1FeedId,
 }: Props) {
   const [range, setRange] = useState<Range>('7D')
-  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ spread: true, price0: true, market: true, lpbh: true, vol: true })
+  // price0 (the pool's WETH/USDC.e price line) is hidden by default — it overlaps the
+  // Market line and clutters the spread view. Toggle it on from the legend if wanted.
+  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ spread: true, price0: false, market: true, lpbh: true, vol: true })
 
   // Base/quote (via `reversed`) — the pool price + market lines are base priced in
   // quote, matching the Pool Balance chart.
