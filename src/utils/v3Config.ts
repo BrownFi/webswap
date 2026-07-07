@@ -67,26 +67,56 @@ export const fromQ64 = (v: bigint): number => Number((v * 1_000_000n) / Q64) / 1
 /** Decode a 1e8-scaled value (fee / spread / gamma / …) to a JS number. */
 export const fromPrec = (v: number | bigint): number => Number(v) / Number(PRECISION)
 
+// factory.pairConfig() returns the PairConfig contract address, which is a
+// CONSTANT per (chain, version) — it does not vary per pool. The pool list read
+// this once per pool (N pools × every config-reading hook), producing a wasted
+// RPC round-trip each time. Cache the promise per `${chainId}-${version}` so it
+// resolves exactly once; every subsequent pool reuses it. Failures clear the
+// entry so the next caller retries.
+const pairConfigAddrCache = new Map<string, Promise<`0x${string}` | null>>()
+
+function getPairConfigAddress(chainId: number, version: number): Promise<`0x${string}` | null> {
+  const key = `${chainId}-${version}`
+  const cached = pairConfigAddrCache.get(key)
+  if (cached) return cached
+
+  const factoryAddr = factoryV3Gen(version)[chainId]
+  if (!factoryAddr || !RPC_URLS[chainId]) {
+    const none = Promise.resolve(null)
+    pairConfigAddrCache.set(key, none)
+    return none
+  }
+
+  const pending = createReadClient(chainId)
+    .readContract({
+      address: factoryAddr as `0x${string}`,
+      abi: PAIR_CONFIG_GETTER_ABI,
+      functionName: 'pairConfig',
+    })
+    .then((addr) => addr as `0x${string}`)
+    .catch((err) => {
+      pairConfigAddrCache.delete(key) // transient RPC failure — allow a retry
+      throw err
+    })
+  pairConfigAddrCache.set(key, pending)
+  return pending
+}
+
 /**
  * Read a V3 pool's config: factory.pairConfig() → pairConfig.getConfig(pool).
  * Resolves the factory for the pool's exact version (4 = Official, 3 = Pilot).
- * Returns null when the factory/RPC isn't available (caller falls back).
+ * The pairConfig() address is cached per (chain, version); only getConfig(pool)
+ * hits the RPC per pool. Returns null when the factory/RPC isn't available.
  */
 export async function readV3PairConfig(
   chainId: number,
   version: number,
   poolAddress: string,
 ): Promise<RawV3Config | null> {
-  const factoryAddr = factoryV3Gen(version)[chainId]
-  if (!factoryAddr || !RPC_URLS[chainId]) return null
-  const client = createReadClient(chainId)
-  const configAddr = await client.readContract({
-    address: factoryAddr as `0x${string}`,
-    abi: PAIR_CONFIG_GETTER_ABI,
-    functionName: 'pairConfig',
-  })
-  const config = await client.readContract({
-    address: configAddr as `0x${string}`,
+  const configAddr = await getPairConfigAddress(chainId, version).catch(() => null)
+  if (!configAddr) return null
+  const config = await createReadClient(chainId).readContract({
+    address: configAddr,
     abi: GET_CONFIG_ABI,
     functionName: 'getConfig',
     args: [poolAddress as `0x${string}`],

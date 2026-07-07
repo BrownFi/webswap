@@ -188,13 +188,17 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       return !!pairStats
     }, [pairStats]) && !!pairStats
 
-  // BGT APR
+  // BGT APR. Key + fetch address are lowercased so this shares a react-query
+  // entry with the pool list's own fan-out (Pool/index.tsx keys on the lowercase
+  // indexer id). Previously this used the checksummed SDK address, so the same
+  // pool was fetched twice — once per casing.
+  const bgtPoolAddr = pair.liquidityToken.address.toLowerCase()
   const { data: poolApr } = useQuery({
-    queryKey: ['getBgtApr', pair.liquidityToken.address],
+    queryKey: ['getBgtApr', bgtPoolAddr],
     queryFn: () => {
-      return apiV2Service.getPoolBgt({ address: pair.liquidityToken.address })
+      return apiV2Service.getPoolBgt({ address: bgtPoolAddr })
     },
-    enabled: pair.chainId === ChainId.BERA_MAINNET && !!getPairBgt(pair.liquidityToken.address),
+    enabled: pair.chainId === ChainId.BERA_MAINNET && !!getPairBgt(bgtPoolAddr),
   })
 
   // Merkl Campaign APR
@@ -207,7 +211,10 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       pair.chainId === ChainId.LINEA_MAINNET && merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase()),
   })
 
-  const rpcTradingFee = useTradingFee({ pair })
+  // Only read the fee on-chain when we're NOT already using the indexer value
+  // (pairStats.fee, applied below). Otherwise every card on the list fired a
+  // readV3PairConfig RPC per pool for a number it already had.
+  const rpcTradingFee = useTradingFee({ pair, enabled: !shouldUseIndexer })
   const rpcTotalSupply = useTotalSupply(shouldUseIndexer ? undefined : pair.liquidityToken)
 
   const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : rpcTradingFee
