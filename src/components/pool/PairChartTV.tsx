@@ -58,6 +58,45 @@ const buildQuery = (template: string, keepUniV2: boolean, keepBuySell: boolean) 
   return q
 }
 
+// Some chains' V3 indexers don't expose buyVolume/sellVolume on pairDay/HourData yet
+// (Bera/Arbitrum do; HyperEVM/Linea don't — Manh may migrate them later). A missing
+// field makes the indexer return `{errors:[…]}` with NO data (HTTP 200), which the
+// fetcher surfaces as null → the whole chart goes blank. So: try WITH the fields and,
+// if the result comes back null (field rejected), retry WITHOUT — price/tvl/volume
+// still render and buy/sell just falls back to the single totalVolume bar. Remember
+// per-chain rejections so we skip the wasted first attempt afterward. A thrown error
+// (network/timeout) is NOT treated as unsupported — we retry without but don't cache.
+const buySellUnsupportedChains = new Set<number>()
+
+async function fetchPairStats(opts: {
+  template: string
+  operationName: string
+  cursorField: 'timestamp' | 'dayStartUnix' | 'hourStartUnix'
+  keepUniV2: boolean
+  isV3: boolean
+  chainId: number
+  address: string
+  variables: object
+}) {
+  const { template, operationName, cursorField, keepUniV2, isV3, chainId, address, variables } = opts
+  const run = (keepBuySell: boolean) =>
+    graphqlFetcher({
+      operationName,
+      query: withFirstActivityGte(buildQuery(template, keepUniV2, keepBuySell), cursorField, chainId, address),
+      variables,
+    })
+  if (!isV3 || buySellUnsupportedChains.has(chainId)) return run(false)
+  let res: unknown
+  try {
+    res = await run(true)
+  } catch {
+    return run(false) // transient failure — retry without, but don't mark unsupported
+  }
+  if (res != null) return res
+  buySellUnsupportedChains.add(chainId) // HTTP 200 + null data = the field doesn't exist here
+  return run(false)
+}
+
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {
     pairDayDatas(
@@ -262,9 +301,14 @@ const PairChartTVInner = ({ pair }: Props) => {
   const { data: dayResp, isPending: isPendingDay } = useQuery<{ pairDayDatas: DayData[] }>({
     queryKey: ['pairStats', pair.chainId, pair.liquidityToken.address, pair.version],
     queryFn: () =>
-      graphqlFetcher({
+      fetchPairStats({
+        template: GET_PAIR_STATS,
         operationName: 'PairStats',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2, isV3), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
+        cursorField: 'dayStartUnix',
+        keepUniV2,
+        isV3,
+        chainId: pair.chainId,
+        address: pair.liquidityToken.address,
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -276,9 +320,14 @@ const PairChartTVInner = ({ pair }: Props) => {
   const { data: hourResp, isPending: isPendingHour } = useQuery<{ pairHourDatas: HourData[] }>({
     queryKey: ['pairStatsHour', pair.chainId, pair.liquidityToken.address, pair.version],
     queryFn: () =>
-      graphqlFetcher({
+      fetchPairStats({
+        template: GET_PAIR_STATS_HOUR,
         operationName: 'PairStatsHour',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2, isV3), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
+        cursorField: 'hourStartUnix',
+        keepUniV2,
+        isV3,
+        chainId: pair.chainId,
+        address: pair.liquidityToken.address,
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -336,25 +385,30 @@ const PairChartTVInner = ({ pair }: Props) => {
   // aggregates — no per-swap walk. Each day/hour row IS a bucket. buyVolume/sellVolume
   // are token0 amounts and totalVolume is USD, so the USD split is just the sell
   // fraction of totalVolume:  volTotal = totalVolume ; volSell = totalVolume × sell/(buy+sell).
-  // "buy" = token0 bought (green), matching the tooltip legend. V3 only — for V2 this
-  // is empty and the single totalVolume 'volume' series renders instead.
-  const { volTotal, volSell } = useMemo(() => {
-    const empty = { volTotal: [] as { time: any; value: number }[], volSell: [] as { time: any; value: number }[] }
+  // "buy" = token0 bought (green), matching the tooltip legend.
+  //
+  // `hasBuySellSplit` = the fetched rows actually carry buy/sell (some chains' indexers
+  // don't yet — see fetchPairStats). When false (V2, or a chain missing the fields) we
+  // return empty and the single totalVolume 'volume' series renders instead of the split.
+  const { volTotal, volSell, hasBuySellSplit } = useMemo(() => {
+    const empty = {
+      volTotal: [] as { time: any; value: number }[],
+      volSell: [] as { time: any; value: number }[],
+      hasBuySellSplit: false,
+    }
     if (!isV3) return empty
     const nowSec = Math.floor(Date.now() / 1000)
-    const rows: { t: number; total: number; buy: number; sell: number }[] = isHourly
-      ? combinedHours.map((h) => ({
-          t: Number(h.hourStartUnix),
-          total: Number(h.totalVolume) || 0,
-          buy: Number(h.buyVolume) || 0,
-          sell: Number(h.sellVolume) || 0,
-        }))
-      : ((data as { pairDayDatas?: DayData[] } | undefined)?.pairDayDatas ?? []).map((d) => ({
-          t: Number(d.dayStartUnix),
-          total: Number(d.totalVolume) || 0,
-          buy: Number(d.buyVolume) || 0,
-          sell: Number(d.sellVolume) || 0,
-        }))
+    const rawRows: (DayData | HourData)[] = isHourly
+      ? combinedHours
+      : ((data as { pairDayDatas?: DayData[] } | undefined)?.pairDayDatas ?? [])
+    // The indexer for this chain hasn't shipped buy/sell yet → fall back to totalVolume.
+    if (!rawRows.some((r) => r.buyVolume != null || r.sellVolume != null)) return empty
+    const rows = rawRows.map((r) => ({
+      t: Number((r as HourData).hourStartUnix ?? (r as DayData).dayStartUnix),
+      total: Number(r.totalVolume) || 0,
+      buy: Number(r.buyVolume) || 0,
+      sell: Number(r.sellVolume) || 0,
+    }))
     const asc = rows.filter((r) => Number.isFinite(r.t) && r.t <= nowSec && r.total > 0).sort((a, b) => a.t - b.t)
     return {
       volTotal: asc.map((r) => ({ time: r.t as any, value: r.total })),
@@ -362,6 +416,7 @@ const PairChartTVInner = ({ pair }: Props) => {
         const denom = r.buy + r.sell
         return { time: r.t as any, value: denom > 0 ? (r.total * r.sell) / denom : 0 }
       }),
+      hasBuySellSplit: true,
     }
   }, [isV3, isHourly, combinedHours, data])
 
@@ -461,9 +516,14 @@ const PairChartTVInner = ({ pair }: Props) => {
     if (!Number.isFinite(before)) return
     loadingRef.current = true
     try {
-      const res = (await graphqlFetcher({
+      const res = (await fetchPairStats({
+        template: GET_PAIR_STATS_HOUR_OLDER,
         operationName: 'PairStatsHourOlder',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2, isV3), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
+        cursorField: 'hourStartUnix',
+        keepUniV2,
+        isV3,
+        chainId: pair.chainId,
+        address: pair.liquidityToken.address,
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase(), before },
       })) as { pairHourDatas?: HourData[] } | null
       const batch = res?.pairHourDatas ?? []
@@ -719,10 +779,11 @@ const PairChartTVInner = ({ pair }: Props) => {
     availableSeries.forEach((meta) => {
       const s = refs[meta.key]
       if (!s) return
-      // V3: the single 'volume' histogram is replaced by the stacked buy/sell
-      // pair below, so feed it empty. V2 has no per-swap indexer data for a
-      // buy/sell split, so it keeps the original single-color totalVolume bars.
-      if (meta.key === 'volume' && isV3) {
+      // When we have the buy/sell split, the single 'volume' histogram is replaced
+      // by the stacked buy/sell pair below, so feed it empty. Without the split (V2,
+      // or a V3 chain whose indexer lacks buyVolume/sellVolume) it keeps the original
+      // single-color totalVolume bars.
+      if (meta.key === 'volume' && hasBuySellSplit) {
         s.setData([])
         return
       }
@@ -755,7 +816,7 @@ const PairChartTVInner = ({ pair }: Props) => {
       chartRef.current?.timeScale().fitContent()
       didFitRef.current = true
     }
-  }, [chartData, availableSeries, chartVolTotal, chartVolSell, isV3])
+  }, [chartData, availableSeries, chartVolTotal, chartVolSell, hasBuySellSplit])
 
   // Toggle visibility
   useEffect(() => {
@@ -959,7 +1020,7 @@ const PairChartTVInner = ({ pair }: Props) => {
             )}
             {/* Volume explainer — buy/sell split description (V3 only; V2 shows a
                 plain total-volume bar with no split). */}
-            {meta.key === 'volume' && isV3 && <InfoTooltip text={VOLUME_HINT} />}
+            {meta.key === 'volume' && hasBuySellSplit && <InfoTooltip text={VOLUME_HINT} />}
             {/* Values live in the floating tooltip on both desktop (hover) and
                 mobile (tap) — no need to duplicate them here. */}
           </button>
