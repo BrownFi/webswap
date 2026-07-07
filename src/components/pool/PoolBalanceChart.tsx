@@ -374,8 +374,14 @@ export function PoolBalanceChart({
     to: grid?.gridEnd ?? null,
     enabled: isMarketRefPair,
   })
-  const hasMarket = marketRaw.length > 0
-  const marketData = useMemo(() => marketRaw.map((p) => ({ time: p.time as any, value: p.value })), [marketRaw])
+  // Gate the RENDERED data on the pair too, not just the fetch: react-query's
+  // keepPreviousData would otherwise leak the previous (gated) pool's series onto a
+  // non-gated pool when the disabled query never overwrites it.
+  const hasMarket = isMarketRefPair && marketRaw.length > 0
+  const marketData = useMemo(
+    () => (isMarketRefPair ? marketRaw.map((p) => ({ time: p.time as any, value: p.value })) : []),
+    [marketRaw, isMarketRefPair],
+  )
 
   // The "now" split is always the latest trade, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
