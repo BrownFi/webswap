@@ -279,7 +279,7 @@ export function PoolSpreadChart({
         return { t: Number(t.timestamp), s, price0, lpVsBh, vol: Number.isFinite(vol) ? vol : 0, volUp: baseOut >= baseIn }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s) && p.t <= futureCutoff)
-  }, [combinedTxs, reversed, baseIdx, quoteIdx])
+  }, [combinedTxs, baseIdx, quoteIdx])
 
   // Timeframe = a real time GRID resampled from the per-swap points, so the x-axis
   // is linear in clock time. The grid holds the FULL loaded history at this bucket
@@ -761,12 +761,6 @@ export function PoolSpreadChart({
                     {tip.value.toFixed(4)}%
                   </span>
                 </div>
-                {tip.price0 !== undefined && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
-                    <span style={{ color: COLOR_PRICE0 }}>{baseSymbol}/{quoteSymbol}</span>
-                    <span style={{ color: '#FBFBFD' }}>{formatRel(tip.price0)}</span>
-                  </div>
-                )}
                 {tip.market !== undefined && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
                     <span style={{ color: COLOR_MARKET }}>Market</span>
@@ -794,7 +788,6 @@ export function PoolSpreadChart({
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-3">
           {[
             { key: 'spread' as const, label: 'oSpread', color: COLOR },
-            ...(price0Data.length > 0 ? [{ key: 'price0' as const, label: `${baseSymbol}/${quoteSymbol}`, color: COLOR_PRICE0 }] : []),
             ...(hasMarket ? [{ key: 'market' as const, label: 'Market', color: COLOR_MARKET }] : []),
             ...(lpVsBhData.length > 0 ? [{ key: 'lpbh' as const, label: 'LP vs BH', color: COLOR_LPBH }] : []),
             ...(volumeData.length > 0 ? [{ key: 'vol' as const, label: 'Volume', color: COLOR_VOL_LEGEND }] : []),
