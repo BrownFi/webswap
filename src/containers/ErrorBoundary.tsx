@@ -2,6 +2,7 @@ import { ButtonConfirmed } from 'components/Button'
 import React, { Component, ReactNode } from 'react'
 import { useNavigate, useLocation, NavigateFunction, Location } from 'react-router-dom'
 import StaticScreen from './StaticScreen'
+import { isChunkLoadError, tryReload } from 'utils/chunkReload'
 
 interface Props {
   children: ReactNode
@@ -13,6 +14,9 @@ interface State {
   hasError: boolean
   error: string
   countdown?: number | null
+  // True when the caught error is a stale-build chunk-load failure (deploy churn) —
+  // we reload immediately to pick up the new build instead of showing the error UI.
+  isChunkError?: boolean
 }
 
 class ErrorBoundaryBase extends Component<Props, State> {
@@ -28,6 +32,7 @@ class ErrorBoundaryBase extends Component<Props, State> {
     console.error(error)
     return {
       hasError: true,
+      isChunkError: isChunkLoadError(error?.message ?? ''),
       error: JSON.stringify(
         {
           name: error.name,
@@ -46,6 +51,13 @@ class ErrorBoundaryBase extends Component<Props, State> {
 
   componentDidUpdate(_: Props, prevState: State) {
     if (this.state.hasError && !prevState.hasError) {
+      // Stale-build chunk error (new deploy replaced the old hashed chunk): reload
+      // immediately to pick up the new build. tryReload reloads at most once per
+      // session; if it's already tried (persistent failure), fall through to the
+      // normal error UI below.
+      if (this.state.isChunkError && tryReload()) {
+        return
+      }
       if (this.props.location.pathname.includes('/add') || this.props.location.pathname.includes('/remove')) {
         // Keep original behavior for add/remove: reload immediately
         this.props.navigate('/pool', { replace: true })
@@ -87,6 +99,26 @@ class ErrorBoundaryBase extends Component<Props, State> {
   }
 
   render() {
+    if (this.state.hasError && this.state.isChunkError) {
+      // Stale build after a deploy — a reload is underway (or a countdown to one).
+      // Show a calm message instead of the raw error dump.
+      return (
+        <StaticScreen>
+          <div className="w-[1600px] max-w-[100vw] bg-[#12100b] text-white z-10 mx-auto px-6 py-10">
+            <div className="max-w-[480px] flex flex-col gap-2 items-center mx-auto text-center">
+              <div>A new version was just deployed.</div>
+              <div>Reloading to the latest version…</div>
+              <ButtonConfirmed
+                className="!w-[140px] !p-2"
+                onClick={() => window.location.reload()}
+              >
+                RELOAD
+              </ButtonConfirmed>
+            </div>
+          </div>
+        </StaticScreen>
+      )
+    }
     if (this.state.hasError) {
       return (
         <StaticScreen>

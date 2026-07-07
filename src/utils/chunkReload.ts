@@ -15,17 +15,21 @@ const CHUNK_ERROR_PATTERNS = [
   /error loading dynamically imported module/i,
 ]
 
-const isChunkLoadError = (message: string): boolean =>
+export const isChunkLoadError = (message: string): boolean =>
   !!message && CHUNK_ERROR_PATTERNS.some((re) => re.test(message))
 
-const tryReload = () => {
+// Reload once per session to pick up the new build. Returns true if it triggered
+// a reload, false if suppressed (already tried this session) — callers can then
+// fall back to a normal error UI instead of hanging on a "reloading" screen.
+export const tryReload = (): boolean => {
   try {
-    if (sessionStorage.getItem(RELOAD_FLAG)) return // already tried this session
+    if (sessionStorage.getItem(RELOAD_FLAG)) return false // already tried this session
     sessionStorage.setItem(RELOAD_FLAG, '1')
   } catch {
     // private mode / storage disabled — proceed anyway, reload at most once
   }
   window.location.reload()
+  return true
 }
 
 export function installChunkReloadHandler() {
@@ -44,12 +48,12 @@ export function installChunkReloadHandler() {
   // deploy can trigger another reload without being suppressed.
   if (document.readyState === 'complete') {
     setTimeout(() => {
-      try { sessionStorage.removeItem(RELOAD_FLAG) } catch {}
+      try { sessionStorage.removeItem(RELOAD_FLAG) } catch { /* storage disabled — ignore */ }
     }, 5000)
   } else {
     window.addEventListener('load', () => {
       setTimeout(() => {
-        try { sessionStorage.removeItem(RELOAD_FLAG) } catch {}
+        try { sessionStorage.removeItem(RELOAD_FLAG) } catch { /* storage disabled — ignore */ }
       }, 5000)
     })
   }
