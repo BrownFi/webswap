@@ -106,7 +106,7 @@ type Props = {
 }
 
 export function PoolSpreadChart({ pairAddress, chainId, version, reversed = false }: Props) {
-  const [range, setRange] = useState<Range>('ALL')
+  const [range, setRange] = useState<Range>('7D')
 
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolSpread', chainId, pairAddress, version],

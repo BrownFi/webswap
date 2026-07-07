@@ -283,7 +283,7 @@ const PairChartTVInner = ({ pair }: Props) => {
   // daily-aggregated ranges that slice the same `pairDayDatas` series.
   type Range = '1D' | '7D' | '1M' | 'ALL'
   const RANGE_DAYS: Record<Exclude<Range, '1D'>, number | null> = { '7D': 7, '1M': 30, ALL: null }
-  const [range, setRange] = useState<Range>('1M')
+  const [range, setRange] = useState<Range>('7D')
   const isHourly = range === '1D'
 
   const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3'

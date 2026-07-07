@@ -192,7 +192,7 @@ type Props = {
 type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0' | 'vol'
 
 export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false }: Props) {
-  const [range, setRange] = useState<Range>('ALL')
+  const [range, setRange] = useState<Range>('7D')
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
   const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true, vol: true })
 
