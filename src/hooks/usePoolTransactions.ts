@@ -30,6 +30,9 @@ const FIELD_TIERS = [
   CORE,
 ]
 
+// Stable empty ref (see usePoolTransactions return) — avoids a fresh [] per render.
+const EMPTY_TXNS: PoolTxn[] = []
+
 export type PoolTxn = {
   timestamp: number | string
   type?: string
@@ -133,5 +136,7 @@ export function usePoolTransactions({
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
-  return { txns: data ?? [], isLoading, isError }
+  // Stable empty ref while loading — a fresh [] each render would cascade through
+  // combinedTxs → allPoints → grid → setData every render (crosshair re-fire loop).
+  return { txns: data ?? EMPTY_TXNS, isLoading, isError }
 }

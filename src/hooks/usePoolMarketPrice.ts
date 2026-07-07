@@ -1,6 +1,12 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { fetchMarketRelativePrice } from 'services/pythBenchmarksService'
 
+// Stable empty reference. Returning a fresh `[]` while the query is disabled/loading
+// makes every consumer memo (marketData) recompute each render, which fires the
+// chart's setData effect every render → the crosshair re-fires → setState → render …
+// (a "Maximum update depth exceeded" loop). One shared const keeps the ref stable.
+const EMPTY: { time: number; value: number }[] = []
+
 type Props = {
   // Pyth bytes32 feed ids for the BASE and QUOTE tokens (base priced in quote).
   baseFeedId?: string | null
@@ -34,5 +40,5 @@ export function usePoolMarketPrice({ baseFeedId, quoteFeedId, bucket, from, to, 
     gcTime: 30 * 60_000,
     placeholderData: keepPreviousData,
   })
-  return data ?? []
+  return data ?? EMPTY
 }
