@@ -551,6 +551,8 @@ function PoolDetailInner({
                   symbol1={symbol1}
                   reversed={isReversed}
                   quoteTokenIndex={pairRaw.quoteTokenIndex}
+                  token0FeedId={pairRaw.token0?.priceFeedId}
+                  token1FeedId={pairRaw.token1?.priceFeedId}
                 />
 
                 {/* Oracle spread (oSpread) over time — (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel per SWAP */}

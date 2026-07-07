@@ -19,6 +19,15 @@ import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
+import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
+
+// PILOT: pools that get the market-price reference line (Pyth/TradingView) overlaid
+// on the balance chart to compare pool price vs the real market. Gated to specific
+// pairs while we evaluate it — key is `${chainId}-${lowercasePairAddress}`.
+const MARKET_REF_PAIRS = new Set<string>([
+  '80094-0xc123bc9259d1a99add5a2c512498ac146dd2bade', // WETH/USDC.e (Bera)
+])
+const COLOR_MARKET = '#22D3EE' // cyan — market reference line, distinct from the pink pool price
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
 // Same data + computation as the recharts version: pool-balance % split from the
@@ -187,14 +196,27 @@ type Props = {
   // Accepted for caller compatibility but UNUSED: base/quote now derives from the
   // canonical `reversed` prop (single source of truth = shouldReverseDisplay).
   quoteTokenIndex?: number | null
+  // Pyth bytes32 feed ids (indexer token.priceFeedId) — used for the gated market
+  // reference line (base priced in quote). Only fetched for MARKET_REF_PAIRS.
+  token0FeedId?: string | null
+  token1FeedId?: string | null
 }
 
-type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0' | 'vol'
+type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0' | 'vol' | 'market'
 
-export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbol1, reversed = false }: Props) {
+export function PoolBalanceChart({
+  pairAddress,
+  chainId,
+  version,
+  symbol0,
+  symbol1,
+  reversed = false,
+  token0FeedId,
+  token1FeedId,
+}: Props) {
   const [range, setRange] = useState<Range>('7D')
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
-  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true, vol: true })
+  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true, vol: true, market: true })
 
   // The price line plots the BASE token priced in the QUOTE token (the pool
   // exchange rate, e.g. USDC.e per WETH). Base/quote comes from the canonical
@@ -204,6 +226,10 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const quoteIdx = baseIdx === 0 ? 1 : 0
   const baseSymbol = baseIdx === 0 ? symbol0 : symbol1
   const quoteSymbol = baseIdx === 0 ? symbol1 : symbol0
+  // Feed ids follow base/quote too — the market line is base priced in quote.
+  const baseFeedId = baseIdx === 0 ? token0FeedId : token1FeedId
+  const quoteFeedId = baseIdx === 0 ? token1FeedId : token0FeedId
+  const isMarketRefPair = MARKET_REF_PAIRS.has(`${chainId}-${pairAddress.toLowerCase()}`)
 
   // Colors follow BASE/QUOTE, not raw token0/token1: the BASE token is always GOLD
   // (COLOR0) and the QUOTE always BLUE (COLOR1), consistent across every pool. Base
@@ -335,6 +361,21 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     }
   }, [allPoints, bucket, grid])
 
+  // PILOT (gated to MARKET_REF_PAIRS): a continuous market-price reference line
+  // (base priced in quote) from Pyth Benchmarks — the same feed TradingView shows —
+  // so you can compare our pool's price against the real market on the same axis.
+  // On the same 'price' overlay scale as price0, so the two lines are directly
+  // comparable. [] when off (non-gated pair) or a token has no Pyth feed.
+  const marketRaw = usePoolMarketPrice({
+    baseFeedId,
+    quoteFeedId,
+    bucket,
+    from: grid?.gridStart ?? null,
+    to: grid?.gridEnd ?? null,
+    enabled: isMarketRefPair,
+  })
+  const hasMarket = marketRaw.length > 0
+  const marketData = useMemo(() => marketRaw.map((p) => ({ time: p.time as any, value: p.value })), [marketRaw])
 
   // The "now" split is always the latest trade, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
@@ -358,6 +399,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
           ...(latest && Number.isFinite(latest.price0)
             ? [{ key: 'price0' as const, label: `${baseSymbol}/${quoteSymbol}`, color: COLOR_PRICE0 }]
             : []),
+          ...(hasMarket ? [{ key: 'market' as const, label: 'Market', color: COLOR_MARKET }] : []),
           ...(seriesData.volume.length > 0 ? [{ key: 'vol' as const, label: 'Volume', color: COLOR_VOL_LEGEND }] : []),
         ]
 
@@ -371,11 +413,13 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
   const lpbhRef = useRef<ISeriesApi<'Line'> | null>(null)
   // The base-token USD-price AreaSeries (backmost, own isolated 'price' overlay scale).
   const price0Ref = useRef<ISeriesApi<'Area'> | null>(null)
+  // PILOT: the market-price reference LineSeries (same 'price' scale as price0).
+  const marketRef = useRef<ISeriesApi<'Line'> | null>(null)
   // The signed-volume HistogramSeries (bottom pane, own 'vol' scale).
   const volSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
   // Hovered values for the floating tooltip (set while the crosshair moves).
-  const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number; price0?: number; vol?: number } | null>(null)
+  const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number; price0?: number; market?: number; vol?: number } | null>(null)
   // Floating tooltip anchor — container-relative pixels + the hovered time.
   // null when the cursor is outside the plot area. Mirrors PairChartTV's `tip`.
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
@@ -540,6 +584,17 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     // bottom 20%), so it doesn't overlap the bars.
     price0.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } })
 
+    // PILOT: market-price reference line on the SAME 'price' scale as price0, drawn
+    // AFTER it (on top) so the pool price (pink area) and the market (cyan line) sit
+    // together and their divergence is readable. Empty unless the pair is gated.
+    const marketLine = chart.addSeries(LineSeries, {
+      ...commonNoLabels,
+      priceScaleId: 'price',
+      color: COLOR_MARKET,
+      lineWidth: 2,
+      priceFormat: { type: 'custom', formatter: (v: number) => formatRel(v), minMove: 0.00000001 },
+    })
+
     // Dominance FILL follows BASE/QUOTE color too: above-50% = token0's color,
     // below-50% = token1's color. When not reversed token0=gold/token1=blue → gold
     // above / blue below; when reversed those swap (token0=quote=blue above,
@@ -629,12 +684,14 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       const p1 = param.seriesData.get(line1) as { value?: number } | undefined
       const pl = param.seriesData.get(lpbh) as { value?: number } | undefined
       const pp = param.seriesData.get(price0) as { value?: number } | undefined
+      const pmk = param.seriesData.get(marketLine) as { value?: number } | undefined
       const pv = param.seriesData.get(volSeries) as { value?: number } | undefined
       setHovered({
         pct0: typeof p0?.value === 'number' ? p0.value : undefined,
         pct1: typeof p1?.value === 'number' ? p1.value : undefined,
         lpVsBh: typeof pl?.value === 'number' ? pl.value : undefined,
         price0: typeof pp?.value === 'number' ? pp.value : undefined,
+        market: typeof pmk?.value === 'number' ? pmk.value : undefined,
         vol: typeof pv?.value === 'number' ? pv.value : undefined,
       })
       setTip({ x: param.point.x, y: param.point.y, time: Number(param.time) })
@@ -654,6 +711,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     line1Ref.current = line1
     lpbhRef.current = lpbh
     price0Ref.current = price0
+    marketRef.current = marketLine
     volSeriesRef.current = volSeries
     chartRef.current = chart
     return () => {
@@ -663,6 +721,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
       line1Ref.current = null
       lpbhRef.current = null
       price0Ref.current = null
+      marketRef.current = null
       volSeriesRef.current = null
     }
   }, [reversed, token0Color, token1Color])
@@ -691,6 +750,12 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     }
   }, [seriesData])
 
+  // Push the market reference line separately — it arrives async (Pyth fetch) after
+  // the main series; setData preserves the visible range, so this never re-zooms.
+  useEffect(() => {
+    marketRef.current?.setData(marketData)
+  }, [marketData])
+
   // Re-zoom when the timeframe button changes (data unchanged).
   useEffect(() => {
     if (pendingRestoreRef.current) return
@@ -703,6 +768,7 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
     line1Ref.current?.applyOptions({ visible: visible.t1 })
     lpbhRef.current?.applyOptions({ visible: visible.lpbh })
     price0Ref.current?.applyOptions({ visible: visible.price0 })
+    marketRef.current?.applyOptions({ visible: visible.market })
     volSeriesRef.current?.applyOptions({ visible: visible.vol })
   }, [visible])
 
@@ -855,6 +921,21 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                     <span style={{ color: '#FBFBFD' }}>{formatRel(hovered.price0)}</span>
                   </div>
                 )}
+                {hovered.market !== undefined && (
+                  <div
+                    style={{
+                      borderTop: '1px solid #2F2823',
+                      marginTop: 6,
+                      paddingTop: 6,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 16,
+                    }}
+                  >
+                    <span style={{ color: COLOR_MARKET }}>Market</span>
+                    <span style={{ color: '#FBFBFD' }}>{formatRel(hovered.market)}</span>
+                  </div>
+                )}
                 {hovered.vol !== undefined && (
                   <div
                     style={{
@@ -893,6 +974,11 @@ export function PoolBalanceChart({ pairAddress, chainId, version, symbol0, symbo
                 {item.key === 'vol' && (
                   <InfoTooltip
                     text={`Green = net bought ${baseSymbol}, red = net sold ${baseSymbol}. Bar height = volume in that period (USD).`}
+                  />
+                )}
+                {item.key === 'market' && (
+                  <InfoTooltip
+                    text={`Real market price of ${baseSymbol}/${quoteSymbol} (Pyth / TradingView) — a reference to compare against this pool's price. Not the pool's own price.`}
                   />
                 )}
               </div>
