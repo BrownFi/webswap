@@ -598,6 +598,7 @@ export function PoolBalanceChart({
       priceScaleId: 'price',
       color: COLOR_MARKET,
       lineWidth: 1,
+      lineStyle: LineStyle.Dashed,
       priceFormat: { type: 'custom', formatter: (v: number) => formatRel(v), minMove: 0.00000001 },
     })
 
