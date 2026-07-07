@@ -277,12 +277,14 @@ const PairChartTVInner = ({ pair }: Props) => {
     volume: true,
   }))
 
-  // '1h' = today's intraday (24 hourly buckets, separate query). The rest are
+  // Timeframes match the Pool Balance / Oracle Spread charts (1D / 7D / 1M / All).
+  // '1D' = today's intraday: 24 HOURLY epoch buckets (pairHourData) — gap-free even
+  // with no trades, since the indexer updates price on an hourly epoch. The rest are
   // daily-aggregated ranges that slice the same `pairDayDatas` series.
-  type Range = '1h' | '7d' | '1m' | '3m' | '1y' | 'all'
-  const RANGE_DAYS: Record<Exclude<Range, '1h'>, number | null> = { '7d': 7, '1m': 30, '3m': 90, '1y': 365, all: null }
-  const [range, setRange] = useState<Range>('1m')
-  const isHourly = range === '1h'
+  type Range = '1D' | '7D' | '1M' | 'ALL'
+  const RANGE_DAYS: Record<Exclude<Range, '1D'>, number | null> = { '7D': 7, '1M': 30, ALL: null }
+  const [range, setRange] = useState<Range>('1M')
+  const isHourly = range === '1D'
 
   const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3'
 
@@ -487,7 +489,7 @@ const PairChartTVInner = ({ pair }: Props) => {
 
   const chartData = useMemo(() => {
     if (isHourly) return fullChartData // full accumulated hourly set (24 + paged)
-    const days = RANGE_DAYS[range as Exclude<Range, '1h'>]
+    const days = RANGE_DAYS[range as Exclude<Range, '1D'>]
     if (!days || fullChartData.length <= days) return fullChartData
     return fullChartData.slice(-days)
   }, [fullChartData, range, isHourly])
@@ -495,8 +497,8 @@ const PairChartTVInner = ({ pair }: Props) => {
   // PROTOTYPE: scope the stacked volume to the SAME window as the price data so the
   // range selector zooms the chart (the volume no longer stretches it to all
   // history). Scope the volume to the earliest VISIBLE price bucket
-  // (chartData[0].time) in EVERY mode — for 1h that's the loaded hourly window,
-  // for 'all' it's a no-op (all data), for 7d/1m/3m it's the sliced range — so
+  // (chartData[0].time) in EVERY mode — for 1D that's the loaded hourly window,
+  // for ALL it's a no-op (all data), for 7D/1M it's the sliced range — so
   // fitContent always frames the price window, not the full swap history.
   const { chartVolTotal, chartVolSell } = useMemo(() => {
     const cutoff = chartData.length ? Number(chartData[0].time) : 0
@@ -857,7 +859,7 @@ const PairChartTVInner = ({ pair }: Props) => {
           className="inline-flex items-center gap-0.5 sm:gap-1"
           style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 8, padding: 2 }}
         >
-          {(['1h', '7d', '1m', '3m', '1y', 'all'] as Range[]).map((r) => (
+          {(['1D', '7D', '1M', 'ALL'] as Range[]).map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
@@ -872,7 +874,7 @@ const PairChartTVInner = ({ pair }: Props) => {
                 textTransform: 'uppercase',
               }}
             >
-              {r === 'all' ? 'All' : r}
+              {r === 'ALL' ? 'All' : r}
             </button>
           ))}
         </div>
