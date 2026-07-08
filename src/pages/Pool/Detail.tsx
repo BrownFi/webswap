@@ -19,7 +19,6 @@ import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/con
 import { graphqlFetcher } from 'utils/graphql'
 import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
 import { PoolSpreadChart } from 'components/pool/PoolSpreadChart'
-import { PoolConfigChart } from 'components/pool/PoolConfigChart'
 import { formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
@@ -567,9 +566,6 @@ function PoolDetailInner({
                   token0FeedId={pairRaw.token0?.priceFeedId}
                   token1FeedId={pairRaw.token1?.priceFeedId}
                 />
-
-                {/* Pool oracle config over time — lambda / kB / kQ / compress / sSell / sBuy (per-swap snapshots) */}
-                <PoolConfigChart pairAddress={pairAddress} chainId={chainId} version={version} />
               </>
             )}
           </div>
