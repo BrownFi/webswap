@@ -135,6 +135,13 @@ export function PoolSpreadChart({
   const savedRangeRef = useRef<IRange<Time> | null>(null)
   // Latest `loadMore`, read from the once-created chart subscription.
   const loadMoreRef = useRef<() => void>(() => {})
+  // Visible-window rendering: debounce timer for scroll-driven window updates, a stable
+  // handle to the latest updater (read from the once-created subscription), and a flag
+  // for "have we framed the preset for the current range yet" (so scroll rebuilds and
+  // background refetches don't yank the view back to the preset).
+  const winTimerRef = useRef<number | null>(null)
+  const updateWindowRef = useRef<() => void>(() => {})
+  const framedForRangeRef = useRef(false)
 
   // Reset accumulation + paging guards when the pool identity changes.
   useEffect(() => {
@@ -144,6 +151,13 @@ export function PoolSpreadChart({
     pendingRestoreRef.current = false
     savedRangeRef.current = null
   }, [pairAddress, chainId, version])
+
+  // Reset the render window + "framed" flag when the pool or timeframe changes, so the
+  // new view opens at the new timeframe's default preset (not a stale scrolled window).
+  useEffect(() => {
+    setRenderWindow(null)
+    framedForRangeRef.current = false
+  }, [pairAddress, chainId, version, range])
 
   // Initial batch (newest-first) + accumulated older batches (also newest-first),
   // so the whole thing stays a single descending list. The oldest accumulated
@@ -215,46 +229,63 @@ export function PoolSpreadChart({
   // is linear in clock time. The grid holds the FULL loaded history at this bucket
   // size; the range is a zoom preset (visible window), so scroll-left reveals older
   // bars + loads more (like the LP chart). gridEnd is always "now".
+  // Chart's current visible [from,to] in unix secs, updated on scroll (debounced).
+  // null = use the timeframe's default preset window. Drives VISIBLE-WINDOW RENDERING:
+  // gapped segments are built only for what's on screen, not the full loaded history.
+  const [renderWindow, setRenderWindow] = useState<{ from: number; to: number } | null>(null)
+
   const { bucket } = RANGE_BUCKETS[range]
   const grid = useMemo(
     () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
     [allPoints, bucket],
   )
 
-  // Spread line — no-trade buckets render as a GAP, not a carried-forward flat line
-  // (a dead period has no fresh observation, so hiding it is more honest than implying
-  // the spread held constant). lightweight-charts can't gap a single line, so we split
-  // into contiguous observed SEGMENTS and render each as its own series (see the pool
-  // below). PROOF on the spread line only for now — price0/LP-vs-BH stay carried.
-  const spreadSegments = useMemo(() => {
-    if (!grid) return [] as ReturnType<typeof toGappedSegments>
-    // Break on EVERY empty bucket so even tiny no-trade gaps ("dust") show — per
-    // product. The pool below is sized to the segment count so memory stays bounded.
-    return toGappedSegments(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.s)
-  }, [allPoints, bucket, grid])
-  // Newest observed time across all segments — used to frame the timeframe preset.
-  const lastSpreadTime = useMemo(() => {
-    const seg = spreadSegments[spreadSegments.length - 1]
-    return seg && seg.length ? (seg[seg.length - 1].time as number) : null
-  }, [spreadSegments])
+  // The window (+ pad) the gapped segment pools are materialized for. lightweight-charts
+  // can't gap a single line, so each no-trade segment is its own series — building that
+  // for the whole loaded history is ~hundreds of series at 1D/5-min. So we build only
+  // the on-screen slice. FULL data stays loaded; scrolling just rebuilds for the new
+  // window. Pad each side so moderate scrolls don't hit an empty edge before the rebuild.
+  const lastTime = allPoints.length ? allPoints[allPoints.length - 1].t : null
+  const effWin = useMemo(() => {
+    if (!grid || lastTime == null) return null
+    const span = RANGE_BUCKETS[range].span
+    const to = renderWindow?.to ?? lastTime
+    const from = renderWindow?.from ?? (span != null ? lastTime - span : grid.gridStart)
+    const pad = Math.max((to - from) * 0.25, bucket * 12)
+    return { from: from - pad, to: to + pad }
+  }, [renderWindow, lastTime, range, grid, bucket])
 
-  // Pool price line (base priced in quote) — carried, on the isolated 'price' overlay
-  // scale (the spread owns the visible right % axis).
-  const price0Data = useMemo(() => {
-    if (!grid) return []
-    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
-      .filter((p) => Number.isFinite(p.price0))
-      .map((p) => ({ time: p.t as any, value: p.price0 }))
-  }, [allPoints, bucket, grid])
+  // Full carried close series (a cheap array — no series yet). price0/volume use it whole
+  // (single series = cheap, and they anchor the time axis so scroll reveals history);
+  // the gapped pools use only the windowed slice.
+  const bucketed = useMemo(
+    () => (grid ? bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd) : []),
+    [allPoints, bucket, grid],
+  )
+  const windowedBucketed = useMemo(
+    () => (effWin ? bucketed.filter((b) => b.t >= effWin.from && b.t <= effWin.to) : bucketed),
+    [bucketed, effWin],
+  )
 
-  // LP-vs-BH % line — GAPPED across no-trade buckets, same as the spread line (its own
-  // segment pool). On its own hidden 'pct' overlay scale. Empty where the chain lacks
-  // the benchmark field (lpVsBh null → no observed points → no segments).
-  const lpVsBhSegments = useMemo(() => {
-    if (!grid) return [] as ReturnType<typeof toGappedSegments>
-    return toGappedSegments(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.lpVsBh)
-  }, [allPoints, bucket, grid])
+  // Spread + LP-vs-BH gap across no-trade buckets → segment pools, built for the WINDOW
+  // only. Break on every empty bucket so tiny "dust" gaps show (per product).
+  const spreadSegments = useMemo(() => toGappedSegments(windowedBucketed, (p) => p.s), [windowedBucketed])
+  const lpVsBhSegments = useMemo(() => toGappedSegments(windowedBucketed, (p) => p.lpVsBh), [windowedBucketed])
   const hasLpVsBh = lpVsBhSegments.some((seg) => seg.length > 0)
+  // Newest observed spread time from the FULL data (not the window) so the preset always
+  // frames to the latest trade even if the user has scrolled back.
+  const lastSpreadTime = useMemo(() => {
+    for (let i = bucketed.length - 1; i >= 0; i--) {
+      if (bucketed[i].observed && Number.isFinite(bucketed[i].s)) return bucketed[i].t
+    }
+    return null
+  }, [bucketed])
+
+  // Pool price line (base priced in quote) — carried, single series over the FULL grid.
+  const price0Data = useMemo(
+    () => bucketed.filter((p) => Number.isFinite(p.price0)).map((p) => ({ time: p.t as any, value: p.price0 })),
+    [bucketed],
+  )
 
   // Signed volume histogram — bar height = total USD volume in the BUCKET, sign/
   // color = net direction (green base-buy / red base-sell). Summed per bucket so
@@ -370,6 +401,20 @@ export function PoolSpreadChart({
   // `applyRangePreset` as a dependency (which would re-fire it on every range tick).
   const applyRangePresetRef = useRef(applyRangePreset)
   applyRangePresetRef.current = applyRangePreset
+
+  // Read the chart's current visible time range → the render window (so segments rebuild
+  // for wherever the user scrolled). Guarded so sub-bucket jitter doesn't churn rebuilds.
+  const updateWindow = useCallback(() => {
+    const vr = chartRef.current?.timeScale().getVisibleRange()
+    if (!vr) return
+    const from = Number(vr.from)
+    const to = Number(vr.to)
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return
+    setRenderWindow((prev) =>
+      prev && Math.abs(prev.from - from) < bucket * 5 && Math.abs(prev.to - to) < bucket * 5 ? prev : { from, to },
+    )
+  }, [bucket])
+  updateWindowRef.current = updateWindow
 
   // Create chart + series once.
   useEffect(() => {
@@ -535,12 +580,15 @@ export function PoolSpreadChart({
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
-    // Scroll-to-load-more (every timeframe): when the left edge of the visible
-    // logical range nears the start of the loaded data, page older swaps. loadMore
-    // self-stops once a batch returns < 1000 (oldest reached).
+    // On scroll/zoom: (1) page older swaps when near the left edge of loaded data;
+    // (2) rebuild the gapped segments for the new visible window (debounced so a fast
+    // scroll doesn't churn — the segment pad covers the interim). winTimerRef +
+    // updateWindowRef are stable refs, so this once-created handler stays valid.
     const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
       if (!logical) return
       if (logical.from < 10) loadMoreRef.current()
+      if (winTimerRef.current != null) clearTimeout(winTimerRef.current)
+      winTimerRef.current = window.setTimeout(() => updateWindowRef.current(), 120)
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 
@@ -553,6 +601,7 @@ export function PoolSpreadChart({
     volSeriesRef.current = volSeries
     chartRef.current = chart
     return () => {
+      if (winTimerRef.current != null) clearTimeout(winTimerRef.current)
       chart.remove()
       chartRef.current = null
       spreadAnchorRef.current = null
@@ -586,20 +635,23 @@ export function PoolSpreadChart({
           if (saved) chart.timeScale().setVisibleRange(saved)
           pendingRestoreRef.current = false
           savedRangeRef.current = null
-        } else {
-          // Initial load / range change — zoom to the current timeframe preset.
+        } else if (!framedForRangeRef.current) {
+          // First data for this timeframe → frame the preset. Scroll-driven rebuilds and
+          // 60s refetches (already framed) keep the current view instead of snapping back.
           applyRangePresetRef.current()
+          framedForRangeRef.current = true
         }
       }
       setRendering(false)
     }
 
-    // Heavy = this update must CREATE many new series (the blocking part; re-setData
-    // of an already-sized pool is cheap). Count both pools. Defer heavy builds one
-    // paint so the overlay shows; run cheap updates inline (no flicker on refetch).
+    // Heavy = the INITIAL per-timeframe build must create many new series (the blocking
+    // part; re-setData of an already-sized pool is cheap). Only the first build per
+    // timeframe (!framed) shows the overlay — scroll-driven rebuilds and refetches run
+    // inline so there's no overlay flash mid-scroll (the pool is already ~sized then).
     const toCreate =
       spreadSegments.length - spreadPoolRef.current.length + (lpVsBhSegments.length - lpbhPoolRef.current.length)
-    if (toCreate > 50) {
+    if (toCreate > 50 && !framedForRangeRef.current) {
       setRendering(true)
       // Double rAF: first fires before this frame's paint, second the frame AFTER —
       // guaranteeing the overlay painted before the sync blocks the thread.
@@ -620,11 +672,9 @@ export function PoolSpreadChart({
     marketRef.current?.setData(marketData)
   }, [marketData])
 
-  // Re-zoom when the timeframe button changes (data unchanged).
-  useEffect(() => {
-    if (pendingRestoreRef.current) return
-    applyRangePresetRef.current()
-  }, [range])
+  // (Timeframe framing is handled in the data-push effect via framedForRangeRef, which
+  // the reset effect clears on range change — so the preset applies once per timeframe,
+  // and scroll-driven segment rebuilds keep the current view.)
 
   // Toggle visibility from the bottom legend.
   useEffect(() => {
