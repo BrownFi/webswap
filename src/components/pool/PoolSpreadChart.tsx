@@ -266,11 +266,19 @@ export function PoolSpreadChart({
 
   // Market reference price (gated to MARKET_REF_PAIRS) — same hook + 'price' scale as
   // the Pool Balance chart, so the pool price vs market comparison matches there.
+  // Fetch only the VISIBLE window, not the full loaded grid: at 5-min the whole loaded
+  // history is ~1300 Pyth bars per feed (slow on the 7D→1D switch), while the view only
+  // shows `span` seconds. Bounds the fetch to the timeframe window (ALL = full grid).
+  const marketFrom = grid
+    ? RANGE_BUCKETS[range].span != null
+      ? Math.max(grid.gridStart, grid.gridEnd - (RANGE_BUCKETS[range].span as number))
+      : grid.gridStart
+    : null
   const marketRaw = usePoolMarketPrice({
     baseFeedId,
     quoteFeedId,
     bucket,
-    from: grid?.gridStart ?? null,
+    from: marketFrom,
     to: grid?.gridEnd ?? null,
     enabled: isMarketRefPair,
   })

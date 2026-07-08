@@ -265,11 +265,18 @@ export function PoolBalanceChart({
   // so you can compare our pool's price against the real market on the same axis.
   // On the same 'price' overlay scale as price0, so the two lines are directly
   // comparable. [] when off (non-gated pair) or a token has no Pyth feed.
+  // Fetch only the VISIBLE window (not the full loaded grid) so the 7D→1D switch doesn't
+  // pull ~1300 Pyth bars/feed at 5-min; the view only shows `span` seconds (ALL = full).
+  const marketFrom = grid
+    ? RANGE_BUCKETS[range].span != null
+      ? Math.max(grid.gridStart, grid.gridEnd - (RANGE_BUCKETS[range].span as number))
+      : grid.gridStart
+    : null
   const marketRaw = usePoolMarketPrice({
     baseFeedId,
     quoteFeedId,
     bucket,
-    from: grid?.gridStart ?? null,
+    from: marketFrom,
     to: grid?.gridEnd ?? null,
     enabled: isMarketRefPair,
   })
