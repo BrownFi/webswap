@@ -71,12 +71,12 @@ const SPREAD_LINE_OPTS = {
   priceFormat: { type: 'custom' as const, formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(3)}%`, minMove: 0.0001 },
 }
 
-// LP-vs-BH segment style — its own hidden 'pct' overlay scale (larger % than the tiny
-// spread, so they can't share an axis). Gapped the same way as the spread line.
+// LP-vs-BH segment style — on the visible LEFT scale (larger % than the tiny spread on
+// the right, so they get separate axes). Gapped the same way as the spread line.
 const LPBH_LINE_OPTS = {
   lastValueVisible: false,
   priceLineVisible: false,
-  priceScaleId: 'pct',
+  priceScaleId: 'left',
   color: COLOR_LPBH,
   lineWidth: 1 as const,
   priceFormat: { type: 'custom' as const, formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
@@ -450,7 +450,14 @@ export function PoolSpreadChart({
         // Leave the bottom ~25% for the volume histogram so the spread line clears it.
         scaleMargins: { top: 0.1, bottom: 0.28 },
       },
-      leftPriceScale: { visible: false },
+      // LEFT axis = LP vs BH % (its own scale, so the tiny spread on the right axis and
+      // the larger LP-vs-BH % don't squash each other).
+      leftPriceScale: {
+        visible: true,
+        borderVisible: false,
+        ticksVisible: false,
+        scaleMargins: { top: 0.1, bottom: 0.28 },
+      },
       timeScale: {
         borderColor: '#493E35',
         timeVisible: true,
@@ -684,6 +691,12 @@ export function PoolSpreadChart({
     lpbhPoolRef.current.forEach((s) => s.applyOptions({ visible: visible.lpbh }))
     volSeriesRef.current?.applyOptions({ visible: visible.vol })
   }, [visible])
+
+  // Show the LEFT axis only when LP-vs-BH exists AND is toggled on — otherwise it's an
+  // empty gutter (pools without benchmark fields, or the line hidden from the legend).
+  useEffect(() => {
+    chartRef.current?.priceScale('left').applyOptions({ visible: hasLpVsBh && visible.lpbh })
+  }, [hasLpVsBh, visible.lpbh])
 
   return (
     <div>
