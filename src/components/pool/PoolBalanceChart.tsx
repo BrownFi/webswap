@@ -15,7 +15,7 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
-import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
+import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume, gappedLine } from './chartTimeBuckets'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
 import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
@@ -248,14 +248,15 @@ export function PoolBalanceChart({
     if (!grid) return { pct0: [], pct1: [], lpVsBh: [], price0: [], volume: [] }
     const bucketed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
     return {
+      // Composition % stays CARRIED across empty buckets — reserves genuinely don't
+      // change without a trade, so a flat area during a quiet stretch is accurate
+      // (and gapping the primary area would blank the chart on quiet pools).
       pct0: bucketed.map((p) => ({ time: p.t as any, value: p.pct0 })),
       pct1: bucketed.map((p) => ({ time: p.t as any, value: p.pct1 })),
-      lpVsBh: bucketed
-        .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
-        .map((p) => ({ time: p.t as any, value: p.lpVsBh as number })),
-      price0: bucketed
-        .filter((p) => Number.isFinite(p.price0))
-        .map((p) => ({ time: p.t as any, value: p.price0 })),
+      // The price + LP-vs-BH LINES are GAPPED across no-trade buckets: no fresh
+      // observation, so hide them instead of implying the price held flat.
+      lpVsBh: gappedLine(bucketed, (p) => p.lpVsBh),
+      price0: gappedLine(bucketed, (p) => p.price0),
       volume: bucketVolume(allPoints, bucket, grid.gridStart, grid.gridEnd, COLOR_VOL_UP, COLOR_VOL_DOWN),
     }
   }, [allPoints, bucket, grid])

@@ -42,18 +42,21 @@ export function bucketGrid(
 }
 
 // Carry-forward CLOSE series: one point per bucket in [gridStart, gridEnd].
-//  - a bucket with swaps → the LAST swap's values (close);
-//  - an empty bucket → the previous close carried forward (flat);
+//  - a bucket with swaps → the LAST swap's values (close), flagged observed=true;
+//  - an empty bucket → the previous close carried forward (flat), observed=false;
 //  - buckets before the first datum → skipped (nothing to carry yet).
 // The last point before gridStart seeds the carry so a windowed view opens at the
 // right level instead of blank. Times are set to the bucket start (strictly
 // ascending + unique, as lightweight-charts requires). Input MUST be ascending.
+//
+// `observed` lets callers choose between two renderings of empty buckets: carry the
+// value forward (flat line) or hide it (see gappedLine → a GAP during no-trade time).
 export function bucketClose<P extends { t: number }>(
   pointsAsc: P[],
   bucket: number,
   gridStart: number,
   gridEnd: number,
-): P[] {
+): (P & { observed: boolean })[] {
   const closeByBucket = new Map<number, P>()
   let seed: P | undefined
   for (const p of pointsAsc) {
@@ -65,14 +68,32 @@ export function bucketClose<P extends { t: number }>(
     if (b > gridEnd) break
     closeByBucket.set(b, p) // ascending → last swap in the bucket wins
   }
-  const out: P[] = []
+  const out: (P & { observed: boolean })[] = []
   let last = seed
   for (let b = gridStart; b <= gridEnd; b += bucket) {
     const hit = closeByBucket.get(b)
     if (hit) last = hit
-    if (last) out.push({ ...last, t: b })
+    if (last) out.push({ ...last, t: b, observed: !!hit })
   }
   return out
+}
+
+// A lightweight-charts point can be real ({time, value}) or "whitespace" ({time},
+// no value). Whitespace BREAKS the line — so a run of whitespace renders as a gap.
+type LinePoint = { time: any; value: number } | { time: any }
+
+// Map bucketed close points to a line/area series that HIDES no-trade buckets:
+// observed buckets → {time, value}; carried (empty) buckets → whitespace {time}.
+// So a dead period (no swaps) shows a gap instead of a misleading flat carried line.
+// A non-finite value on an observed bucket is whitespace too (nothing to plot).
+export function gappedLine<P extends { t: number; observed: boolean }>(
+  bucketed: P[],
+  valueOf: (p: P) => number | null | undefined,
+): LinePoint[] {
+  return bucketed.map((p) => {
+    const v = valueOf(p)
+    return p.observed && v != null && Number.isFinite(v) ? { time: p.t as any, value: v as number } : { time: p.t as any }
+  })
 }
 
 // Signed volume bars per bucket: height = Σ|vol| in the bucket, sign/color = the

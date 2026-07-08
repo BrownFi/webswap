@@ -12,7 +12,7 @@ import {
   createChart,
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
+import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume, gappedLine } from './chartTimeBuckets'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
@@ -202,29 +202,27 @@ export function PoolSpreadChart({
   // Spread line = per-bucket close, carried forward across empty buckets (the
   // spread persists between trades). Ascending + unique bucket times satisfy
   // lightweight-charts directly — no separate dedup needed.
+  // No-trade buckets render as a GAP (whitespace), not a carried-forward flat line —
+  // a dead period has no fresh observation, so hiding it is more honest than implying
+  // the spread held constant. gappedLine handles the observed-vs-carried split.
   const seriesData = useMemo(() => {
     if (!grid) return []
-    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd).map((p) => ({ time: p.t as any, value: p.s }))
+    return gappedLine(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.s)
   }, [allPoints, bucket, grid])
 
-  // Pool price line (base priced in quote) = per-bucket close, carried between
-  // trades — the same pool price the Balance chart shows, on the isolated 'price'
-  // overlay scale here (the spread owns the visible right % axis).
+  // Pool price line (base priced in quote) — gapped across no-trade buckets, on the
+  // isolated 'price' overlay scale (the spread owns the visible right % axis).
   const price0Data = useMemo(() => {
     if (!grid) return []
-    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
-      .filter((p) => Number.isFinite(p.price0))
-      .map((p) => ({ time: p.t as any, value: p.price0 }))
+    return gappedLine(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.price0)
   }, [allPoints, bucket, grid])
 
-  // LP-vs-BH % line — per-bucket close, carried. On its own hidden 'pct' overlay
+  // LP-vs-BH % line — gapped across no-trade buckets. On its own hidden 'pct' overlay
   // scale (the spread is a tiny %, LP-vs-BH is a larger %, so they can't share an
-  // axis). Empty when the chain lacks the benchmark fields.
+  // axis). Whitespace where the chain lacks the benchmark field too.
   const lpVsBhData = useMemo(() => {
     if (!grid) return []
-    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
-      .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
-      .map((p) => ({ time: p.t as any, value: p.lpVsBh as number }))
+    return gappedLine(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.lpVsBh)
   }, [allPoints, bucket, grid])
 
   // Signed volume histogram — bar height = total USD volume in the BUCKET, sign/
