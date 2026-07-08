@@ -60,12 +60,6 @@ const formatVolUsd = (v: number): string => {
 
 type ToggleKey = 'spread' | 'price0' | 'market' | 'lpbh' | 'vol'
 
-// Only break the spread line when the pool is genuinely inactive for at least this
-// long — shorter lulls are carried across, so one-bucket noise doesn't shatter the
-// line into hundreds of series (perf) or read as constant flicker. A 1h dead period
-// (the motivating case) still gaps at any value ≤ 60. Tune here.
-const MIN_GAP_MINUTES = 30
-
 // Shared style for every spread segment series (the pool) — so all segments look
 // like one continuous line, just broken across no-trade gaps.
 const SPREAD_LINE_OPTS = {
@@ -222,10 +216,9 @@ export function PoolSpreadChart({
   // below). PROOF on the spread line only for now — price0/LP-vs-BH stay carried.
   const spreadSegments = useMemo(() => {
     if (!grid) return [] as ReturnType<typeof toGappedSegments>
-    // Convert the "min dead period" to buckets for this timeframe (≥1). On coarse
-    // timeframes (1h/4h/1d buckets) this is ~1, so any empty bucket is a real gap.
-    const minGapBuckets = Math.max(1, Math.round((MIN_GAP_MINUTES * 60) / bucket))
-    return toGappedSegments(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.s, minGapBuckets)
+    // Break on EVERY empty bucket so even tiny no-trade gaps ("dust") show — per
+    // product. The pool below is sized to the segment count so memory stays bounded.
+    return toGappedSegments(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.s)
   }, [allPoints, bucket, grid])
   // Newest observed time across all segments — used to frame the timeframe preset.
   const lastSpreadTime = useMemo(() => {
