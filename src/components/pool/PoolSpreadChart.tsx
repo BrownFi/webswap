@@ -324,6 +324,13 @@ export function PoolSpreadChart({
     { x: number; y: number; time: number; value: number; price0?: number; market?: number; lpVsBh?: number; vol?: number } | null
   >(null)
 
+  // Building the gapped spread as many segment series is a synchronous chunk of work
+  // (each no-trade gap = its own series; the 1D/5-min view can be ~150+). Show a brief
+  // "Rendering…" overlay for those heavy builds, and defer the work one paint so the
+  // overlay is actually visible instead of the click feeling frozen.
+  const [rendering, setRendering] = useState(false)
+  const rafRef = useRef<number | null>(null)
+
   // Apply the current timeframe as a VISIBLE-RANGE (zoom) preset — the chart
   // always holds the full data, so this only changes what's on screen. 'ALL' =
   // fit everything; bounded ranges = the last N seconds up to the newest point.
@@ -544,7 +551,11 @@ export function PoolSpreadChart({
   // Push data into the series.
   useEffect(() => {
     const chart = chartRef.current
-    if (chart) {
+    if (!chart) return
+
+    // The (potentially heavy) series sync, in a closure so a heavy build can run one
+    // paint behind the "Rendering…" overlay.
+    const sync = () => {
       const pool = spreadPoolRef.current
       // Keep the pool sized to EXACTLY the segment count — grow, then shrink excess so
       // it can't grow unbounded across scroll/timeframe changes (removed series free
@@ -559,24 +570,42 @@ export function PoolSpreadChart({
         if (s) chart.removeSeries(s)
       }
       pool.forEach((s, i) => s.setData(spreadSegments[i]))
+      price0Ref.current?.setData(price0Data)
+      lpbhRef.current?.setData(lpVsBhData)
+      volSeriesRef.current?.setData(volumeData)
+      if (spreadSegments.length) {
+        if (pendingRestoreRef.current) {
+          // A load-more prepend just grew the series on the LEFT — keep the same TIME
+          // window so the view doesn't jump. Do NOT re-apply the preset here.
+          const saved = savedRangeRef.current
+          if (saved) chart.timeScale().setVisibleRange(saved)
+          pendingRestoreRef.current = false
+          savedRangeRef.current = null
+        } else {
+          // Initial load / range change — zoom to the current timeframe preset.
+          applyRangePresetRef.current()
+        }
+      }
+      setRendering(false)
     }
-    price0Ref.current?.setData(price0Data)
-    lpbhRef.current?.setData(lpVsBhData)
-    volSeriesRef.current?.setData(volumeData)
-    if (!spreadSegments.length) return
-    if (pendingRestoreRef.current) {
-      // A load-more prepend just grew the series on the LEFT — keep the same TIME
-      // window so the view doesn't jump (older bars slide in off-screen to the
-      // left). Do NOT re-apply the preset here, or we'd yank the user back.
-      const saved = savedRangeRef.current
-      if (saved) chartRef.current?.timeScale().setVisibleRange(saved)
-      pendingRestoreRef.current = false
-      savedRangeRef.current = null
-    } else {
-      // Initial load (or a range-change-triggered data refresh) — zoom to the
-      // current timeframe preset.
-      applyRangePresetRef.current()
+
+    // Heavy = this update must CREATE many new series (the blocking part; re-setData
+    // of an already-sized pool is cheap). Defer heavy builds one paint so the overlay
+    // shows; run cheap updates inline (no flicker on the 60s refetch).
+    const toCreate = spreadSegments.length - spreadPoolRef.current.length
+    if (toCreate > 50) {
+      setRendering(true)
+      // Double rAF: first fires before this frame's paint, second the frame AFTER —
+      // guaranteeing the overlay painted before the sync blocks the thread.
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = requestAnimationFrame(sync)
+      })
+      return () => {
+        if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
+      }
     }
+    sync()
+    return undefined
   }, [spreadSegments, price0Data, lpVsBhData, volumeData])
 
   // Push the market reference line separately — it arrives async (Pyth fetch);
@@ -662,6 +691,14 @@ export function PoolSpreadChart({
               style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}
             >
               No swaps on this pool yet.
+            </div>
+          )}
+          {rendering && allPoints.length > 0 && (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: 'rgba(30,25,21,0.55)', color: '#CFC7C1', fontFamily: 'Inter', fontSize: 13 }}
+            >
+              Rendering…
             </div>
           )}
 
