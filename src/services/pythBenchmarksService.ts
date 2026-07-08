@@ -12,8 +12,10 @@
 //      (TradingView UDF shim — one request per feed covers the whole window).
 
 // Chart bucket size (seconds) → Benchmarks/TradingView resolution string.
-// Matches RANGE_BUCKETS in chartTimeBuckets.ts (15m / 1h / 4h / 1d).
+// Matches RANGE_BUCKETS in chartTimeBuckets.ts (5m / 1h / 4h / 1d; 15m kept for
+// safety though the 1D view now buckets at 5m).
 const RESOLUTION_BY_BUCKET: Record<number, string> = {
+  300: '5',
   900: '15',
   3600: '60',
   14400: '240',

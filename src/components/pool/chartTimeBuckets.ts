@@ -17,7 +17,7 @@ export type RangeKey = '1D' | '7D' | '1M' | 'ALL'
 // Sizes chosen so a window holds ~90–200 bars: enough detail, never so many that
 // gap-filling to `now` blows up the point count.
 export const RANGE_BUCKETS: Record<RangeKey, { bucket: number; span: number | null }> = {
-  '1D': { bucket: 15 * 60, span: 86400 }, // 15-min bars, last 24h (96 bars)
+  '1D': { bucket: 5 * 60, span: 86400 }, // 5-min bars, last 24h (288 bars)
   '7D': { bucket: 60 * 60, span: 7 * 86400 }, // 1-hour bars, last 7d (168 bars)
   '1M': { bucket: 4 * 60 * 60, span: 30 * 86400 }, // 4-hour bars, last 30d (180 bars)
   ALL: { bucket: 86400, span: null }, // daily bars, full loaded history
@@ -42,18 +42,21 @@ export function bucketGrid(
 }
 
 // Carry-forward CLOSE series: one point per bucket in [gridStart, gridEnd].
-//  - a bucket with swaps → the LAST swap's values (close);
-//  - an empty bucket → the previous close carried forward (flat);
+//  - a bucket with swaps → the LAST swap's values (close), flagged observed=true;
+//  - an empty bucket → the previous close carried forward (flat), observed=false;
 //  - buckets before the first datum → skipped (nothing to carry yet).
 // The last point before gridStart seeds the carry so a windowed view opens at the
 // right level instead of blank. Times are set to the bucket start (strictly
 // ascending + unique, as lightweight-charts requires). Input MUST be ascending.
+//
+// `observed` lets callers choose between two renderings of empty buckets: carry the
+// value forward (flat line) or hide it (see gappedLine → a GAP during no-trade time).
 export function bucketClose<P extends { t: number }>(
   pointsAsc: P[],
   bucket: number,
   gridStart: number,
   gridEnd: number,
-): P[] {
+): (P & { observed: boolean })[] {
   const closeByBucket = new Map<number, P>()
   let seed: P | undefined
   for (const p of pointsAsc) {
@@ -65,14 +68,67 @@ export function bucketClose<P extends { t: number }>(
     if (b > gridEnd) break
     closeByBucket.set(b, p) // ascending → last swap in the bucket wins
   }
-  const out: P[] = []
+  const out: (P & { observed: boolean })[] = []
   let last = seed
   for (let b = gridStart; b <= gridEnd; b += bucket) {
     const hit = closeByBucket.get(b)
     if (hit) last = hit
-    if (last) out.push({ ...last, t: b })
+    if (last) out.push({ ...last, t: b, observed: !!hit })
   }
   return out
+}
+
+export type LineDatum = { time: any; value: number }
+
+// Split bucketed close points into line SEGMENTS separated by real no-trade gaps.
+//
+// Why segments and not whitespace: lightweight-charts' line renderer connects EVERY
+// value point and skips whitespace entirely (whitespace only extends the time axis),
+// so a single line series can't show a gap. Rendering each segment as its OWN line
+// series is the only way to get a real visual gap during no-trade periods.
+//
+// `minGapBuckets` = only break the line when there are at least this many CONSECUTIVE
+// empty buckets (a genuine dead period). Shorter lulls are carried across (flat) so we
+// don't shatter the line into hundreds of series over one-bucket noise — that keeps
+// the series count (and perf) sane while still gapping real inactivity. minGapBuckets=1
+// breaks on every empty bucket (finest, most series).
+export function toGappedSegments<P extends { t: number; observed: boolean }>(
+  bucketed: P[],
+  valueOf: (p: P) => number | null | undefined,
+  minGapBuckets = 1,
+): LineDatum[][] {
+  const segments: LineDatum[][] = []
+  let cur: LineDatum[] = []
+  let buffer: LineDatum[] = [] // carried points held during a possible (short) gap
+  let gapRun = 0
+  for (const p of bucketed) {
+    const v = valueOf(p)
+    const val = v != null && Number.isFinite(v) ? (v as number) : null
+    if (p.observed && val != null) {
+      // real trade: a short gap just ended → flush the carried fill, keep the line
+      if (buffer.length) {
+        cur.push(...buffer)
+        buffer = []
+      }
+      gapRun = 0
+      cur.push({ time: p.t as any, value: val })
+    } else {
+      gapRun++
+      if (gapRun >= minGapBuckets) {
+        // genuine dead period → break the line here; drop the buffered carried fill
+        if (cur.length) {
+          segments.push(cur)
+          cur = []
+        }
+        buffer = []
+      } else if (val != null && cur.length) {
+        // short lull → hold the carried value; committed only if a trade resumes soon
+        buffer.push({ time: p.t as any, value: val })
+      }
+    }
+  }
+  if (cur.length) segments.push(cur)
+  return segments
 }
 
 // Signed volume bars per bucket: height = Σ|vol| in the bucket, sign/color = the
