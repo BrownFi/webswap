@@ -60,6 +60,12 @@ const formatVolUsd = (v: number): string => {
 
 type ToggleKey = 'spread' | 'price0' | 'market' | 'lpbh' | 'vol'
 
+// Only break the spread line when the pool is genuinely inactive for at least this
+// long — shorter lulls are carried across, so one-bucket noise doesn't shatter the
+// line into hundreds of series (perf) or read as constant flicker. A 1h dead period
+// (the motivating case) still gaps at any value ≤ 60. Tune here.
+const MIN_GAP_MINUTES = 30
+
 // Shared style for every spread segment series (the pool) — so all segments look
 // like one continuous line, just broken across no-trade gaps.
 const SPREAD_LINE_OPTS = {
@@ -216,7 +222,10 @@ export function PoolSpreadChart({
   // below). PROOF on the spread line only for now — price0/LP-vs-BH stay carried.
   const spreadSegments = useMemo(() => {
     if (!grid) return [] as ReturnType<typeof toGappedSegments>
-    return toGappedSegments(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.s)
+    // Convert the "min dead period" to buckets for this timeframe (≥1). On coarse
+    // timeframes (1h/4h/1d buckets) this is ~1, so any empty bucket is a real gap.
+    const minGapBuckets = Math.max(1, Math.round((MIN_GAP_MINUTES * 60) / bucket))
+    return toGappedSegments(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.s, minGapBuckets)
   }, [allPoints, bucket, grid])
   // Newest observed time across all segments — used to frame the timeframe preset.
   const lastSpreadTime = useMemo(() => {
@@ -544,14 +553,19 @@ export function PoolSpreadChart({
     const chart = chartRef.current
     if (chart) {
       const pool = spreadPoolRef.current
-      // Grow the pool so there's one series per segment (never shrink — extras below
-      // just get emptied). New series inherit the current spread visibility.
+      // Keep the pool sized to EXACTLY the segment count — grow, then shrink excess so
+      // it can't grow unbounded across scroll/timeframe changes (removed series free
+      // their memory + drop out of the crosshair scan). New series inherit visibility.
       while (pool.length < spreadSegments.length) {
         const s = chart.addSeries(LineSeries, SPREAD_LINE_OPTS)
         s.applyOptions({ visible: visibleRef.current.spread })
         pool.push(s)
       }
-      pool.forEach((s, i) => s.setData(spreadSegments[i] ?? []))
+      while (pool.length > spreadSegments.length) {
+        const s = pool.pop()
+        if (s) chart.removeSeries(s)
+      }
+      pool.forEach((s, i) => s.setData(spreadSegments[i]))
     }
     price0Ref.current?.setData(price0Data)
     lpbhRef.current?.setData(lpVsBhData)

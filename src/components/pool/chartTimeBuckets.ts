@@ -80,26 +80,51 @@ export function bucketClose<P extends { t: number }>(
 
 export type LineDatum = { time: any; value: number }
 
-// Split bucketed close points into contiguous OBSERVED segments (runs of buckets
-// that actually had a trade). Carried/empty buckets act as breaks between segments.
+// Split bucketed close points into line SEGMENTS separated by real no-trade gaps.
 //
 // Why segments and not whitespace: lightweight-charts' line renderer connects EVERY
 // value point and skips whitespace entirely (whitespace only extends the time axis),
 // so a single line series can't show a gap. Rendering each segment as its OWN line
 // series is the only way to get a real visual gap during no-trade periods.
+//
+// `minGapBuckets` = only break the line when there are at least this many CONSECUTIVE
+// empty buckets (a genuine dead period). Shorter lulls are carried across (flat) so we
+// don't shatter the line into hundreds of series over one-bucket noise — that keeps
+// the series count (and perf) sane while still gapping real inactivity. minGapBuckets=1
+// breaks on every empty bucket (finest, most series).
 export function toGappedSegments<P extends { t: number; observed: boolean }>(
   bucketed: P[],
   valueOf: (p: P) => number | null | undefined,
+  minGapBuckets = 1,
 ): LineDatum[][] {
   const segments: LineDatum[][] = []
   let cur: LineDatum[] = []
+  let buffer: LineDatum[] = [] // carried points held during a possible (short) gap
+  let gapRun = 0
   for (const p of bucketed) {
     const v = valueOf(p)
-    if (p.observed && v != null && Number.isFinite(v)) {
-      cur.push({ time: p.t as any, value: v as number })
-    } else if (cur.length) {
-      segments.push(cur)
-      cur = []
+    const val = v != null && Number.isFinite(v) ? (v as number) : null
+    if (p.observed && val != null) {
+      // real trade: a short gap just ended → flush the carried fill, keep the line
+      if (buffer.length) {
+        cur.push(...buffer)
+        buffer = []
+      }
+      gapRun = 0
+      cur.push({ time: p.t as any, value: val })
+    } else {
+      gapRun++
+      if (gapRun >= minGapBuckets) {
+        // genuine dead period → break the line here; drop the buffered carried fill
+        if (cur.length) {
+          segments.push(cur)
+          cur = []
+        }
+        buffer = []
+      } else if (val != null && cur.length) {
+        // short lull → hold the carried value; committed only if a trade resumes soon
+        buffer.push({ time: p.t as any, value: val })
+      }
     }
   }
   if (cur.length) segments.push(cur)
