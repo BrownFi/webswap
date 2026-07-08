@@ -12,7 +12,7 @@ import {
   createChart,
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume, gappedLine } from './chartTimeBuckets'
+import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume, toGappedSegments } from './chartTimeBuckets'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
@@ -59,6 +59,16 @@ const formatVolUsd = (v: number): string => {
 }
 
 type ToggleKey = 'spread' | 'price0' | 'market' | 'lpbh' | 'vol'
+
+// Shared style for every spread segment series (the pool) — so all segments look
+// like one continuous line, just broken across no-trade gaps.
+const SPREAD_LINE_OPTS = {
+  lastValueVisible: false,
+  priceLineVisible: false,
+  color: COLOR,
+  lineWidth: 1 as const,
+  priceFormat: { type: 'custom' as const, formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(3)}%`, minMove: 0.0001 },
+}
 
 type Props = {
   pairAddress: string
@@ -199,30 +209,38 @@ export function PoolSpreadChart({
     [allPoints, bucket],
   )
 
-  // Spread line = per-bucket close, carried forward across empty buckets (the
-  // spread persists between trades). Ascending + unique bucket times satisfy
-  // lightweight-charts directly — no separate dedup needed.
-  // No-trade buckets render as a GAP (whitespace), not a carried-forward flat line —
-  // a dead period has no fresh observation, so hiding it is more honest than implying
-  // the spread held constant. gappedLine handles the observed-vs-carried split.
-  const seriesData = useMemo(() => {
-    if (!grid) return []
-    return gappedLine(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.s)
+  // Spread line — no-trade buckets render as a GAP, not a carried-forward flat line
+  // (a dead period has no fresh observation, so hiding it is more honest than implying
+  // the spread held constant). lightweight-charts can't gap a single line, so we split
+  // into contiguous observed SEGMENTS and render each as its own series (see the pool
+  // below). PROOF on the spread line only for now — price0/LP-vs-BH stay carried.
+  const spreadSegments = useMemo(() => {
+    if (!grid) return [] as ReturnType<typeof toGappedSegments>
+    return toGappedSegments(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.s)
   }, [allPoints, bucket, grid])
+  // Newest observed time across all segments — used to frame the timeframe preset.
+  const lastSpreadTime = useMemo(() => {
+    const seg = spreadSegments[spreadSegments.length - 1]
+    return seg && seg.length ? (seg[seg.length - 1].time as number) : null
+  }, [spreadSegments])
 
-  // Pool price line (base priced in quote) — gapped across no-trade buckets, on the
-  // isolated 'price' overlay scale (the spread owns the visible right % axis).
+  // Pool price line (base priced in quote) — carried, on the isolated 'price' overlay
+  // scale (the spread owns the visible right % axis).
   const price0Data = useMemo(() => {
     if (!grid) return []
-    return gappedLine(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.price0)
+    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+      .filter((p) => Number.isFinite(p.price0))
+      .map((p) => ({ time: p.t as any, value: p.price0 }))
   }, [allPoints, bucket, grid])
 
-  // LP-vs-BH % line — gapped across no-trade buckets. On its own hidden 'pct' overlay
-  // scale (the spread is a tiny %, LP-vs-BH is a larger %, so they can't share an
-  // axis). Whitespace where the chain lacks the benchmark field too.
+  // LP-vs-BH % line — carried. On its own hidden 'pct' overlay scale (the spread is a
+  // tiny %, LP-vs-BH is a larger %, so they can't share an axis). Empty where the
+  // chain lacks the benchmark field.
   const lpVsBhData = useMemo(() => {
     if (!grid) return []
-    return gappedLine(bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd), (p) => p.lpVsBh)
+    return bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+      .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
+      .map((p) => ({ time: p.t as any, value: p.lpVsBh as number }))
   }, [allPoints, bucket, grid])
 
   // Signed volume histogram — bar height = total USD volume in the BUCKET, sign/
@@ -280,7 +298,16 @@ export function PoolSpreadChart({
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
-  const seriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  // The spread line is rendered as a POOL of line series — one per contiguous observed
+  // segment — so no-trade gaps are real breaks. spreadAnchorRef is an empty series that
+  // owns the right scale + the zero reference line (independent of how many segments
+  // exist). The pool grows on demand and never shrinks (extras just get empty data).
+  const spreadAnchorRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const spreadPoolRef = useRef<ISeriesApi<'Line'>[]>([])
+  // Always-current visibility, so the data effect can style newly-created pool series
+  // without taking `visible` as a dependency (which would re-zoom on every toggle).
+  const visibleRef = useRef(visible)
+  visibleRef.current = visible
   // Pool price (solid pink) + market reference (dashed cyan) on the isolated 'price'
   // overlay scale — same as the Pool Balance chart.
   const price0Ref = useRef<ISeriesApi<'Line'> | null>(null)
@@ -303,13 +330,12 @@ export function PoolSpreadChart({
     const ts = chartRef.current?.timeScale()
     if (!ts) return
     const rangeSpan = RANGE_BUCKETS[range].span
-    const last = seriesData.length ? (seriesData[seriesData.length - 1].time as number) : null
-    if (rangeSpan == null || last == null) {
+    if (rangeSpan == null || lastSpreadTime == null) {
       ts.fitContent()
       return
     }
-    ts.setVisibleRange({ from: (last - rangeSpan) as Time, to: last as Time })
-  }, [range, seriesData])
+    ts.setVisibleRange({ from: (lastSpreadTime - rangeSpan) as Time, to: lastSpreadTime as Time })
+  }, [range, lastSpreadTime])
   // Stable handle so the data-push effect can apply the preset without taking
   // `applyRangePreset` as a dependency (which would re-fire it on every range tick).
   const applyRangePresetRef = useRef(applyRangePreset)
@@ -391,17 +417,13 @@ export function PoolSpreadChart({
       autoSize: true,
     })
 
-    // Single oSpread % line on the default (right) scale, autoscaled — the
-    // spread is tiny (±fractions of a %), so let the value axis fit the data.
-    const series = chart.addSeries(LineSeries, {
-      lastValueVisible: false,
-      priceLineVisible: false,
-      color: COLOR,
-      lineWidth: 1,
-      priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(3)}%`, minMove: 0.0001 },
-    })
+    // oSpread % on the default (right) scale, autoscaled (the spread is tiny, ±fractions
+    // of a %). Rendered as a POOL of segment series (built in the data effect) so no-
+    // trade gaps break the line. This empty anchor owns the right scale + zero line so
+    // they persist regardless of the segment count.
+    const spreadAnchor = chart.addSeries(LineSeries, SPREAD_LINE_OPTS)
     // Zero reference — oSpread oscillates around 0.
-    series.createPriceLine({
+    spreadAnchor.createPriceLine({
       price: 0,
       color: '#493E35',
       lineWidth: 1,
@@ -456,8 +478,17 @@ export function PoolSpreadChart({
         setTip(null)
         return
       }
-      const pt = param.seriesData.get(series) as { value?: number } | undefined
-      if (!pt || typeof pt.value !== 'number') {
+      // The spread is split across a pool of segment series; at most one holds a value
+      // at the hovered time (they're disjoint). No value = hovering a no-trade gap.
+      let spreadVal: number | undefined
+      for (const s of spreadPoolRef.current) {
+        const v = param.seriesData.get(s) as { value?: number } | undefined
+        if (v && typeof v.value === 'number') {
+          spreadVal = v.value
+          break
+        }
+      }
+      if (spreadVal === undefined) {
         setTip(null)
         return
       }
@@ -471,7 +502,7 @@ export function PoolSpreadChart({
         x: param.point.x,
         y: param.point.y,
         time: Number(param.time),
-        value: pt.value,
+        value: spreadVal,
         price0: typeof ppr?.value === 'number' ? ppr.value : undefined,
         market: typeof pmk?.value === 'number' ? pmk.value : undefined,
         lpVsBh: typeof plb?.value === 'number' ? plb.value : undefined,
@@ -489,7 +520,8 @@ export function PoolSpreadChart({
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 
-    seriesRef.current = series
+    spreadAnchorRef.current = spreadAnchor
+    spreadPoolRef.current = []
     price0Ref.current = price0Line
     marketRef.current = marketLine
     lpbhRef.current = lpbhLine
@@ -498,7 +530,8 @@ export function PoolSpreadChart({
     return () => {
       chart.remove()
       chartRef.current = null
-      seriesRef.current = null
+      spreadAnchorRef.current = null
+      spreadPoolRef.current = []
       price0Ref.current = null
       marketRef.current = null
       lpbhRef.current = null
@@ -508,11 +541,22 @@ export function PoolSpreadChart({
 
   // Push data into the series.
   useEffect(() => {
-    seriesRef.current?.setData(seriesData)
+    const chart = chartRef.current
+    if (chart) {
+      const pool = spreadPoolRef.current
+      // Grow the pool so there's one series per segment (never shrink — extras below
+      // just get emptied). New series inherit the current spread visibility.
+      while (pool.length < spreadSegments.length) {
+        const s = chart.addSeries(LineSeries, SPREAD_LINE_OPTS)
+        s.applyOptions({ visible: visibleRef.current.spread })
+        pool.push(s)
+      }
+      pool.forEach((s, i) => s.setData(spreadSegments[i] ?? []))
+    }
     price0Ref.current?.setData(price0Data)
     lpbhRef.current?.setData(lpVsBhData)
     volSeriesRef.current?.setData(volumeData)
-    if (!seriesData.length) return
+    if (!spreadSegments.length) return
     if (pendingRestoreRef.current) {
       // A load-more prepend just grew the series on the LEFT — keep the same TIME
       // window so the view doesn't jump (older bars slide in off-screen to the
@@ -526,7 +570,7 @@ export function PoolSpreadChart({
       // current timeframe preset.
       applyRangePresetRef.current()
     }
-  }, [seriesData, price0Data, lpVsBhData, volumeData])
+  }, [spreadSegments, price0Data, lpVsBhData, volumeData])
 
   // Push the market reference line separately — it arrives async (Pyth fetch);
   // setData preserves the visible range, so this never re-zooms.
@@ -542,7 +586,7 @@ export function PoolSpreadChart({
 
   // Toggle visibility from the bottom legend.
   useEffect(() => {
-    seriesRef.current?.applyOptions({ visible: visible.spread })
+    spreadPoolRef.current.forEach((s) => s.applyOptions({ visible: visible.spread }))
     price0Ref.current?.applyOptions({ visible: visible.price0 })
     marketRef.current?.applyOptions({ visible: visible.market })
     lpbhRef.current?.applyOptions({ visible: visible.lpbh })

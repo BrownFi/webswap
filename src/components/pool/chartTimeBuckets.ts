@@ -78,22 +78,32 @@ export function bucketClose<P extends { t: number }>(
   return out
 }
 
-// A lightweight-charts point can be real ({time, value}) or "whitespace" ({time},
-// no value). Whitespace BREAKS the line — so a run of whitespace renders as a gap.
-type LinePoint = { time: any; value: number } | { time: any }
+export type LineDatum = { time: any; value: number }
 
-// Map bucketed close points to a line/area series that HIDES no-trade buckets:
-// observed buckets → {time, value}; carried (empty) buckets → whitespace {time}.
-// So a dead period (no swaps) shows a gap instead of a misleading flat carried line.
-// A non-finite value on an observed bucket is whitespace too (nothing to plot).
-export function gappedLine<P extends { t: number; observed: boolean }>(
+// Split bucketed close points into contiguous OBSERVED segments (runs of buckets
+// that actually had a trade). Carried/empty buckets act as breaks between segments.
+//
+// Why segments and not whitespace: lightweight-charts' line renderer connects EVERY
+// value point and skips whitespace entirely (whitespace only extends the time axis),
+// so a single line series can't show a gap. Rendering each segment as its OWN line
+// series is the only way to get a real visual gap during no-trade periods.
+export function toGappedSegments<P extends { t: number; observed: boolean }>(
   bucketed: P[],
   valueOf: (p: P) => number | null | undefined,
-): LinePoint[] {
-  return bucketed.map((p) => {
+): LineDatum[][] {
+  const segments: LineDatum[][] = []
+  let cur: LineDatum[] = []
+  for (const p of bucketed) {
     const v = valueOf(p)
-    return p.observed && v != null && Number.isFinite(v) ? { time: p.t as any, value: v as number } : { time: p.t as any }
-  })
+    if (p.observed && v != null && Number.isFinite(v)) {
+      cur.push({ time: p.t as any, value: v as number })
+    } else if (cur.length) {
+      segments.push(cur)
+      cur = []
+    }
+  }
+  if (cur.length) segments.push(cur)
+  return segments
 }
 
 // Signed volume bars per bucket: height = Σ|vol| in the bucket, sign/color = the
