@@ -17,7 +17,7 @@ export type RangeKey = '1D' | '7D' | '1M' | 'ALL'
 // Sizes chosen so a window holds ~90–200 bars: enough detail, never so many that
 // gap-filling to `now` blows up the point count.
 export const RANGE_BUCKETS: Record<RangeKey, { bucket: number; span: number | null }> = {
-  '1D': { bucket: 15 * 60, span: 86400 }, // 15-min bars, last 24h (96 bars)
+  '1D': { bucket: 5 * 60, span: 86400 }, // 5-min bars, last 24h (288 bars)
   '7D': { bucket: 60 * 60, span: 7 * 86400 }, // 1-hour bars, last 7d (168 bars)
   '1M': { bucket: 4 * 60 * 60, span: 30 * 86400 }, // 4-hour bars, last 30d (180 bars)
   ALL: { bucket: 86400, span: null }, // daily bars, full loaded history
