@@ -1,5 +1,6 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
+import beraIcon from 'assets/images/w-bera.png'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Settings } from 'react-feather'
@@ -258,12 +259,12 @@ function PoolDetailInner({
   // "Annualized Return" label is shared by V2 + V3. The V3-only (?) hint lives
   // in <AnnualizedReturnInfo/> (interactive tooltip with a clickable Learn More).
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
-  const incentiveIcon = bgtAPR
-    ? 'https://furthermore.app/icons/bgt.svg'
-    : null
+  // Berachain hardfork moved rewards from BGT → native BERA, so the incentive shows
+  // BERA branding (the `bgtAPR` data field name is kept — it's the same reward APR).
+  const incentiveIcon = bgtAPR ? beraIcon : null
   const restakers = getRestakers(chainId, pair.liquidityToken.address)
   const isBgt = bgtAPR > 0
-  const incentiveLabel = isBgt ? 'BGT APR' : 'Incentive APR'
+  const incentiveLabel = isBgt ? 'BERA APR' : 'Incentive APR'
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -673,8 +674,8 @@ function PoolDetailInner({
                   <div className="mb-3 lg:mb-4">
                     <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
                       {incentiveLabel}
-                      {incentiveIcon && <img src={incentiveIcon} alt="BGT" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
-                      {isBgt && <QuestionHelper text="Stake your LP token on a restaker vault to earn BGT." />}
+                      {incentiveIcon && <img src={incentiveIcon} alt="BERA" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
+                      {isBgt && <QuestionHelper text="Stake your LP token on a restaker vault to earn BERA." />}
                     </div>
                     <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
                       +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%

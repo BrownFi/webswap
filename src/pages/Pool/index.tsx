@@ -418,7 +418,7 @@ export default function Pool() {
                   <SortHeader label="24h Volume" flex={isV3Like(version) ? 1 : 1.3} active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
                   <SortHeader label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'} flex={isV3Like(version) ? 1.3 : 1.7} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   {chainId === ChainId.BERA_MAINNET && isV3Like(version) && (
-                    <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                    <SortHeader label="BERA APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
                   <span style={{ flex: 1, textAlign: 'right' }} />
                 </div>
@@ -605,7 +605,7 @@ function PairListSkeleton({ showBgt, showV3Return }: { showBgt: boolean; showV3R
         <span style={{ flex: 1, textAlign: 'left' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
         <span style={{ flex: 1.3, textAlign: 'left' }}>{showV3Return ? 'Annualized Return' : '24h Fees / TVL'}</span>
-        {showBgt && <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>}
+        {showBgt && <span style={{ flex: 1, textAlign: 'left' }}>BERA APR</span>}
         <span style={{ flex: 1, textAlign: 'right' }} />
       </div>
       {[0, 1, 2, 3, 4].map((i) => (
