@@ -432,7 +432,7 @@ export default function Pool() {
                     <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   )}
                   {SHOW_BGT_APR && (
-                    <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                    <SortHeader label="BERA APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
                   {enableCompetitor && competitor && (
                     <>
@@ -624,7 +624,7 @@ function PairListSkeleton({ showAnnualizedReturn, showCompetitor, competitorName
         <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
         {showAnnualizedReturn && <span style={{ flex: 1, textAlign: 'left' }}>Annual Return</span>}
         {!isMainnet && <span style={{ flex: 1, textAlign: 'left' }}>Fee APR</span>}
-        {SHOW_BGT_APR && <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>}
+        {SHOW_BGT_APR && <span style={{ flex: 1, textAlign: 'left' }}>BERA APR</span>}
         {showCompetitor && (
           <>
             <span style={{ flex: 1, textAlign: 'left' }}>{competitorName} Fee</span>

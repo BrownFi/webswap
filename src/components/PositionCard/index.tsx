@@ -1,5 +1,6 @@
 import { isV3Like } from '@brownfi/sdk'
 import { Pair, TokenAmount } from '@brownfi/sdk'
+import beraIcon from 'assets/images/w-bera.png'
 import { versionToSlug } from 'lib/sdk/constants/addresses'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
@@ -253,9 +254,9 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
               </div>
               {SHOW_BGT_APR && (enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
-                  {enableBgt ? 'BGT APR' : 'Incentive APR'}: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
+                  {enableBgt ? 'BERA APR' : 'Incentive APR'}: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
                   {enableBgt && (
-                    <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 14, height: 14, borderRadius: '50%' }} />
+                    <img src={beraIcon} alt="BERA" style={{ width: 14, height: 14, borderRadius: '50%' }} />
                   )}
                 </div>
               )}
@@ -297,14 +298,14 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
               {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
             </span>
           )}
-          {/* Incentive APR (green with BGT icon when applicable) */}
+          {/* Incentive APR (green with BERA icon when applicable) */}
           {SHOW_BGT_APR && (
             <span className="max-md:hidden text-left inline-flex items-center justify-start gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#83CF84' }}>
               {enableBgt || enableMerklCampaignApr ? (
                 <>
                   +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
                   {enableBgt && (
-                    <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 16, height: 16, borderRadius: '50%' }} />
+                    <img src={beraIcon} alt="BERA" style={{ width: 16, height: 16, borderRadius: '50%' }} />
                   )}
                 </>
               ) : (
@@ -564,15 +565,15 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
               )}
             </div>
 
-            {/* BGT staking info */}
+            {/* BERA staking info */}
             {enableBgt && account && (
               <div className="md:col-span-2 hidden sm:flex gap-2 justify-center items-center text-sm text-[#b2ada9]">
                 Stake your LP tokens on{' '}
                 <a href={pairBGT[pair.liquidityToken.address][0]} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">BeraHub</a>{' '}
-                (earn BGT), or on{' '}
+                (earn BERA), or on{' '}
                 <a href={pairBGT[pair.liquidityToken.address][1]} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">Infrared</a>{' '}
-                (earn iBGT)
-                <img src="https://furthermore.app/icons/bgt.svg" className="h-5" alt="BGT" />
+                (earn iBERA)
+                <img src={beraIcon} className="h-5" alt="BERA" />
               </div>
             )}
           </div>
