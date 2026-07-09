@@ -42,10 +42,10 @@ const A = '0x000000000000000000000000000000000000000A'
 const B = '0x000000000000000000000000000000000000000b'
 
 describe('beraFeeOverrides', () => {
-  it('returns a 30/40 Gwei EIP-1559 floor on Berachain', () => {
+  it('returns a 1/2 Gwei EIP-1559 floor on Berachain', () => {
     const ov = beraFeeOverrides(BERA) as any
-    expect(ov.maxPriorityFeePerGas.eq(GWEI.mul(30))).toBe(true)
-    expect(ov.maxFeePerGas.eq(GWEI.mul(40))).toBe(true)
+    expect(ov.maxPriorityFeePerGas.eq(GWEI.mul(1))).toBe(true)
+    expect(ov.maxFeePerGas.eq(GWEI.mul(2))).toBe(true)
   })
 
   it('is a no-op ({}) on every other chain', () => {
@@ -70,8 +70,8 @@ describe('withBeraFees signer wrap', () => {
     await wrapped.sendTransaction({ to: A, data: '0x1234' })
     expect(captured.to).toBe(A)
     expect(captured.data).toBe('0x1234')
-    expect(captured.maxPriorityFeePerGas.eq(GWEI.mul(30))).toBe(true)
-    expect(captured.maxFeePerGas.eq(GWEI.mul(40))).toBe(true)
+    expect(captured.maxPriorityFeePerGas.eq(GWEI.mul(1))).toBe(true)
+    expect(captured.maxFeePerGas.eq(GWEI.mul(2))).toBe(true)
   })
 
   it('returns the signer UNCHANGED off Bera (no override)', async () => {
@@ -93,8 +93,8 @@ describe('real ethers Contract tx-build path', () => {
     // Contract encoded the call AND our floor rode along to the signer.
     expect(captured.to?.toLowerCase()).toBe('0x00000000000000000000000000000000000000ff')
     expect(typeof captured.data).toBe('string')
-    expect(captured.maxPriorityFeePerGas.eq(GWEI.mul(30))).toBe(true)
-    expect(captured.maxFeePerGas.eq(GWEI.mul(40))).toBe(true)
+    expect(captured.maxPriorityFeePerGas.eq(GWEI.mul(1))).toBe(true)
+    expect(captured.maxFeePerGas.eq(GWEI.mul(2))).toBe(true)
   })
 
   it('spreading beraFeeOverrides into call overrides works too (swap/liquidity path)', async () => {
@@ -102,8 +102,8 @@ describe('real ethers Contract tx-build path', () => {
     const factory = new Contract('0x00000000000000000000000000000000000000Ff', ABI, signer)
     await factory.setGammaOfPair(A, B, 40000000, { gasLimit: 300000, ...beraFeeOverrides(BERA) })
     expect(captured.gasLimit.eq(300000)).toBe(true)
-    expect(captured.maxPriorityFeePerGas.eq(GWEI.mul(30))).toBe(true)
-    expect(captured.maxFeePerGas.eq(GWEI.mul(40))).toBe(true)
+    expect(captured.maxPriorityFeePerGas.eq(GWEI.mul(1))).toBe(true)
+    expect(captured.maxFeePerGas.eq(GWEI.mul(2))).toBe(true)
   })
 
   it('off Bera the same paths add NO fee fields', async () => {
@@ -142,8 +142,8 @@ describe('dev-stats config modal (PairSettingsModal) path', () => {
     expect(counts.call).toBe(1)
     expect(counts.send).toBe(1)
     expect(capturedCall.maxFeePerGas).toBeUndefined()
-    expect(captured.maxFeePerGas.eq(GWEI.mul(40))).toBe(true)
-    expect(captured.maxPriorityFeePerGas.eq(GWEI.mul(30))).toBe(true)
+    expect(captured.maxFeePerGas.eq(GWEI.mul(2))).toBe(true)
+    expect(captured.maxPriorityFeePerGas.eq(GWEI.mul(1))).toBe(true)
   })
 
   it('Bera V2: .connect(withBeraFees(signer)) sends the floor (feeFactory path)', async () => {
@@ -151,7 +151,7 @@ describe('dev-stats config modal (PairSettingsModal) path', () => {
     const base = new Contract(ADDR, ABI, signer)
     const feeFactory = base.connect(withBeraFees(signer, BERA)) // mirrors PairSettingsModal feeFactory
     await feeFactory.setGammaOfPair(A, B, 40000000)
-    expect(captured.maxFeePerGas.eq(GWEI.mul(40))).toBe(true)
+    expect(captured.maxFeePerGas.eq(GWEI.mul(2))).toBe(true)
   })
 
   it('OTHER CHAIN: send is UNCHANGED (no fee) and callStatic still works — nothing broken', async () => {

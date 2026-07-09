@@ -14,8 +14,14 @@ import { ChainId } from '@brownfi/sdk'
 // guarantees inclusion. We set an explicit floor on Bera and leave every other chain
 // to the wallet's own estimation (return {} → no override). Tune the two constants if
 // inclusion still lags on congested blocks.
-const BERA_PRIORITY_FEE_GWEI = 30
-const BERA_MAX_FEE_GWEI = 40 // priority + headroom for the (~0) base fee
+// Sized from REAL user txs on-chain (25 blocks, system txs excluded): base fee ≈ 0 and
+// the MEDIAN tip is ~0.05 Gwei — Bera blocks are mostly empty, so a low tip still gets
+// included. The RPC's eth_maxPriorityFeePerGas (~9 Gwei, what MetaMask over-charges
+// from) is inflated by an arb/MEV bot tail (p90 ~12 Gwei) that competes for ORDERING —
+// our swaps/LP/config txs don't need to outbid them, just land in a block. So a 1 Gwei
+// floor is ample and ~15× cheaper than the old 15. Bump only if inclusion actually lags.
+const BERA_PRIORITY_FEE_GWEI = 1
+const BERA_MAX_FEE_GWEI = 2 // priority + headroom; base fee is ~0 on Bera
 
 const gwei = (n: number) => BigNumber.from(n).mul(BigNumber.from(10).pow(9))
 
