@@ -11,6 +11,7 @@ import { SubmittedView, LoadingView } from 'components/ModalViews'
 import { TransactionResponse } from '@ethersproject/providers'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import { useActiveWeb3React } from 'hooks'
+import { beraFeeOverrides } from 'utils/beraGas'
 
 const ContentWrapper = styled(AutoColumn)`
   width: 100%;
@@ -24,7 +25,7 @@ interface StakingModalProps {
 }
 
 export default function ClaimRewardModal({ isOpen, onDismiss, stakingInfo }: StakingModalProps) {
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
 
   // monitor call to help UI loading state
   const addTransaction = useTransactionAdder()
@@ -43,7 +44,7 @@ export default function ClaimRewardModal({ isOpen, onDismiss, stakingInfo }: Sta
     if (stakingContract && stakingInfo?.stakedAmount) {
       setAttempting(true)
       await stakingContract
-        .getReward({ gasLimit: 350000 })
+        .getReward({ gasLimit: 350000, ...beraFeeOverrides(chainId) })
         .then((response: TransactionResponse) => {
           addTransaction(response, {
             summary: `Claim accumulated UNI rewards`,

@@ -24,6 +24,7 @@ import { useUserSlippageTolerance } from 'state/user/hooks'
 import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
+import { beraFeeOverrides } from 'utils/beraGas'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
 import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
@@ -174,6 +175,7 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
         data: built.data,
         ...(built.value ? { value: built.value } : {}),
         ...(gasLimit ? { gasLimit } : {}),
+        ...beraFeeOverrides(chainId),
       })
 
       setTxHash(tx.hash)
