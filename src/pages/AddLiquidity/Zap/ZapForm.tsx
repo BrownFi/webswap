@@ -19,6 +19,7 @@ import { useTransactionAdder } from 'state/transactions/hooks'
 import { ThemeContext } from 'styled-components'
 import { getTokenSymbol } from 'utils'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
+import { beraFeeOverrides } from 'utils/beraGas'
 import { getZapAggregatorById } from 'services/aggregators/zapRegistry'
 import { isZapSupportedOnChain, KyberZapRouteData } from './zapHelpers'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
@@ -358,6 +359,7 @@ export function ZapForm({ pair, pairState, currencies, allowedSlippage }: ZapFor
         data: built.data,
         ...(built.value ? { value: built.value } : {}),
         ...(gasLimit ? { gasLimit } : {}),
+        ...beraFeeOverrides(chainId),
       })
 
       // Set hash first so the modal moves Pending → Submitted in one render

@@ -2,6 +2,7 @@ import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId } from '../constants/chainId'
+import { beraFeeOverrides } from 'utils/beraGas'
 import { BIPS_BASE } from '../constants/types'
 import { SwapCallbackState } from '../constants/enums'
 import { Trade } from '../entities/trade'
@@ -205,6 +206,7 @@ export async function callSwapContract(
   try {
     const response = await contract[methodName](...args, {
       gasLimit: calculateGasMargin(gasEstimate),
+      ...beraFeeOverrides(chainId),
       ...(value && !isZero(value) ? { value, from: account } : { from: account }),
     })
     return response

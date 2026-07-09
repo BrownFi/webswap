@@ -2,6 +2,7 @@ import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId } from '../constants/chainId'
+import { beraFeeOverrides } from 'utils/beraGas'
 import { Field, ApprovalState } from '../constants/enums'
 import { WETH } from '../constants/tokens'
 import { Token } from '../entities/token'
@@ -249,7 +250,7 @@ export async function removeLiquidity(
   const safeGasEstimate = safeGasEstimates[indexOfSuccessfulEstimation]
 
   try {
-    const response = await router[methodName](...args, { gasLimit: safeGasEstimate })
+    const response = await router[methodName](...args, { gasLimit: safeGasEstimate, ...beraFeeOverrides(chainId) })
     return response
   } catch (e) {
     console.error('removeLiquidity transaction failed', e)
@@ -439,6 +440,7 @@ export async function addLiquidity(
     const response = await method(...args, {
       ...(value ? { value } : {}),
       gasLimit: calculateGasMargin(estimatedGasLimit),
+      ...beraFeeOverrides(chainId),
     })
     return response
   } catch (e) {
