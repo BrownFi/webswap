@@ -169,24 +169,20 @@ function WebswapNavItem({
   children: React.ReactNode
 }) {
   const { chainId } = useAccount()
-  const { switchChain } = useSwitchChain()
   const lastChain = useSelector(chainSelector)
   const onHemi = chainId === HEMI_CHAIN_ID
 
   if (onHemi) {
     return (
-      <button
+      <span
         id={id}
-        type="button"
-        title={lastChain?.name ? `Switch to ${lastChain.name} to use this` : 'Switch network to use this'}
-        onClick={() => lastChain && switchChain?.({ chainId: lastChain.id })}
-        className="flex items-center justify-center cursor-pointer no-underline text-white/40
-          text-[16px] font-medium py-2 px-6 rounded-md hover:text-white/70 transition-colors
-          bg-transparent border-none"
-        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
+        aria-disabled="true"
+        title={lastChain?.name ? `Available on ${lastChain.name} — switch network to use this` : 'Switch network to use this'}
+        className="flex items-center justify-center select-none no-underline text-[16px] font-medium py-2 px-6 rounded-md"
+        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px', color: '#FFFFFF', opacity: 0.3, cursor: 'not-allowed' }}
       >
         {children}
-      </button>
+      </span>
     )
   }
   return (
@@ -200,7 +196,6 @@ function WebswapNavItem({
 // main navbar; off Hemi it's greyed and clicking switches the network there.
 function ClmmNavItem() {
   const { chainId } = useAccount()
-  const { switchChain } = useSwitchChain()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const onHemi = chainId === HEMI_CHAIN_ID
@@ -208,18 +203,15 @@ function ClmmNavItem() {
 
   if (!onHemi) {
     return (
-      <button
+      <span
         id="clmm-nav-link"
-        type="button"
-        title="Available on Hemi — switch network"
-        onClick={() => switchChain?.({ chainId: HEMI_CHAIN_ID })}
-        className="flex items-center justify-center cursor-pointer no-underline text-white/40
-          text-[16px] font-medium py-2 px-6 rounded-md hover:text-white/70 transition-colors
-          bg-transparent border-none"
-        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
+        aria-disabled="true"
+        title="Available on Hemi — switch network to use CLMM"
+        className="flex items-center justify-center select-none no-underline text-[16px] font-medium py-2 px-6 rounded-md"
+        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px', color: '#FFFFFF', opacity: 0.3, cursor: 'not-allowed' }}
       >
         CLMM
-      </button>
+      </span>
     )
   }
 
