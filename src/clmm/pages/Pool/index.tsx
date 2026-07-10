@@ -314,7 +314,7 @@ const PoolPage = () => {
 };
 
 const NoPositions = ({ poolId }: { poolId: Address }) => (
-    <div className="flex flex-col items-start gap-4 p-6 bg-card border border-card-border rounded-xl animate-fade-in">
+    <div className="flex flex-col items-start justify-center gap-4 p-6 min-h-[377px] bg-card border border-card-border rounded-xl animate-fade-in">
         <h2 className="text-2xl font-bold text-left">You don't have positions for this pool</h2>
         <p className="text-md font-semibold">Let's create one!</p>
         <Button variant={"primary"} className="gap-2" asChild>
@@ -330,7 +330,7 @@ const NoAccount = () => {
     const { open } = useAppKit();
 
     return (
-        <div className="flex flex-col items-start p-6 bg-card border border-card-border rounded-xl animate-fade-in">
+        <div className="flex flex-col items-start justify-center p-6 min-h-[377px] bg-card border border-card-border rounded-xl animate-fade-in">
             <h2 className="text-2xl font-bold">Connect Wallet</h2>
             <p className="text-md font-semibold my-4">Connect your account to view or create positions</p>
             <Button variant={"primary"} size={"lg"} onClick={() => open()}>
@@ -340,10 +340,12 @@ const NoAccount = () => {
     );
 };
 
+// Mirror MyPositions' container (min-h-[377px], same bg/border/radius) so the
+// positions area reserves the same space while loading — no shift when data lands.
 const LoadingState = () => (
-    <div className="flex flex-col w-full gap-4 p-4 bg-card rounded-xl">
-        {[1, 2, 3, 4].map((v) => (
-            <Skeleton key={`position-skeleton-${v}`} className="w-full h-[50px] bg-card-light rounded-xl" />
+    <div className="flex flex-col min-h-[377px] pb-8 gap-4 p-4 bg-card border border-card-border/60 rounded-xl">
+        {[1, 2, 3].map((v) => (
+            <Skeleton key={`position-skeleton-${v}`} className="w-full h-[72px] bg-card-light rounded-xl" />
         ))}
     </div>
 );
