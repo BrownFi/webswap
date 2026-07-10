@@ -88,9 +88,10 @@ export const ChainModal = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {selectableChains.map((c) => {
             const isHemi = c.id === HEMI_CHAIN_ID
-            // Hemi is active by the wallet's actual chain; webswap chains by the
-            // redux-selected chain (Hemi is never stored in redux).
-            const isActive = isHemi ? walletChainId === HEMI_CHAIN_ID : chain?.id === c.id
+            const onHemi = walletChainId === HEMI_CHAIN_ID
+            // Only the wallet's actual chain highlights. On Hemi, the redux chain
+            // still holds the last webswap chain, so suppress its highlight.
+            const isActive = isHemi ? onHemi : !onHemi && chain?.id === c.id
 
             return (
               <button
