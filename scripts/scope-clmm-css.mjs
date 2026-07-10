@@ -24,7 +24,24 @@ if (!SRC || !OUT) {
 }
 
 const css = fs.readFileSync(SRC, 'utf8')
+
+// Flatten Tailwind 4's `@layer` wrappers. CSS cascade layers ALWAYS lose to
+// un-layered rules regardless of specificity, so webswap's un-layered globals
+// (e.g. `a { color: #2172E5 }`) would override CLMM's layered utilities. Hoisting
+// the rules out of @layer lets our .clmm-root-scoped utilities win on specificity.
+const flattenLayers = () => ({
+  postcssPlugin: 'flatten-layers',
+  Once(root) {
+    root.walkAtRules('layer', (atRule) => {
+      if (atRule.nodes && atRule.nodes.length) atRule.replaceWith(atRule.nodes)
+      else atRule.remove() // bare `@layer a, b;` declaration
+    })
+  },
+})
+flattenLayers.postcss = true
+
 const out = postcss([
+  flattenLayers(),
   prefixer({
     prefix: '.clmm-root',
     transform(prefix, selector, prefixed) {
