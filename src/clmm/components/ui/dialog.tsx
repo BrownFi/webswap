@@ -8,7 +8,15 @@ const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
-const DialogPortal = DialogPrimitive.Portal;
+// Radix portals render into document.body — outside the .clmm-root wrapper — so
+// CLMM's scoped Tailwind (.clmm-root .foo) + CSS vars wouldn't reach modal
+// content. Re-scope by wrapping the portaled content in .clmm-root.
+const DialogPortal = ({ children, ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) => (
+    <DialogPrimitive.Portal {...props}>
+        <div className="clmm-root">{children}</div>
+    </DialogPrimitive.Portal>
+);
+DialogPortal.displayName = DialogPrimitive.Portal.displayName;
 
 const DialogClose = DialogPrimitive.Close;
 
