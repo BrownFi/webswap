@@ -160,7 +160,6 @@ const mainChains: readonly [Chain, ...Chain[]] = [
   hyperEVM,
   linea,
   monad,
-  hemi,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
@@ -169,7 +168,6 @@ const betaChains: readonly [Chain, ...Chain[]] = [
   hyperEVM,
   linea,
   monad,
-  hemi,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 
@@ -199,9 +197,16 @@ const wallets = inSafeApp
       i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet, safeWallet] } : group,
     )
 
+// The wallet/wagmi config also includes Hemi so the wallet can connect/switch
+// there and CLMM (Hemi-only) can read it — WITHOUT adding Hemi to webswap's
+// product `availableChains` (which would make webswap's own pages try to operate
+// on Hemi and crash on missing token maps; useActiveWeb3React treats non-
+// availableChains as "wrong network" and falls back to a supported chain).
+const walletChains = [...availableChains, hemi] as [Chain, ...Chain[]]
+
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
-  chains: availableChains,
+  chains: walletChains,
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? '',
   ssr: false,
   wallets,
