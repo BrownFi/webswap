@@ -4,6 +4,8 @@ import Logo from 'assets/svg/logo.svg'
 
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useState } from 'react'
+import { useSelector } from 'react-redux'
+import { chainSelector } from 'state/chainSlice'
 import { ChainModal } from './CustomChainSelect'
 import { AccountModal } from './CustomAccountDisplay'
 import { useSwitchChain } from 'wagmi'
@@ -150,6 +152,50 @@ function StyledNavLink({
 
 const HEMI_CHAIN_ID = 43111
 
+// webswap's product pages (Swap/Pool/Portfolio) don't run on Hemi — Hemi is
+// CLMM-only. Grey these out on Hemi (symmetric to CLMM being greyed off-Hemi);
+// clicking switches the wallet back to the last webswap chain.
+function WebswapNavItem({
+  id,
+  to,
+  end,
+  active,
+  children,
+}: {
+  id: string
+  to: string
+  end?: boolean
+  active?: boolean
+  children: React.ReactNode
+}) {
+  const { chainId } = useAccount()
+  const { switchChain } = useSwitchChain()
+  const lastChain = useSelector(chainSelector)
+  const onHemi = chainId === HEMI_CHAIN_ID
+
+  if (onHemi) {
+    return (
+      <button
+        id={id}
+        type="button"
+        title={lastChain?.name ? `Switch to ${lastChain.name} to use this` : 'Switch network to use this'}
+        onClick={() => lastChain && switchChain?.({ chainId: lastChain.id })}
+        className="flex items-center justify-center cursor-pointer no-underline text-white/40
+          text-[16px] font-medium py-2 px-6 rounded-md hover:text-white/70 transition-colors
+          bg-transparent border-none"
+        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
+      >
+        {children}
+      </button>
+    )
+  }
+  return (
+    <StyledNavLink id={id} to={to} end={end} className={active ? 'active' : ''}>
+      {children}
+    </StyledNavLink>
+  )
+}
+
 // CLMM lives on Hemi only. On Hemi it's a dropdown (CLMM Swap / CLMM Pool) in the
 // main navbar; off Hemi it's greyed and clicking switches the network there.
 function ClmmNavItem() {
@@ -272,15 +318,15 @@ export default function Header() {
               borderRadius: '8px',
             }}
           >
-            <StyledNavLink id="swap-nav-link" to="/swap">
+            <WebswapNavItem id="swap-nav-link" to="/swap">
               Swap
-            </StyledNavLink>
-            <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
+            </WebswapNavItem>
+            <WebswapNavItem id="pool-nav-link" to="/pool" end active={isPoolActive}>
               Pool
-            </StyledNavLink>
-            <StyledNavLink id="portfolio-nav-link" to="/portfolio">
+            </WebswapNavItem>
+            <WebswapNavItem id="portfolio-nav-link" to="/portfolio">
               Portfolio
-            </StyledNavLink>
+            </WebswapNavItem>
             <ClmmNavItem />
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them
