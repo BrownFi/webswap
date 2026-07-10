@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { algebraFactoryABI } from "@clmm/config/abis/algebraFactory";
 import { ALGEBRA_FACTORY } from "@clmm/config";
 import { useEffect, useState } from "react";
@@ -16,7 +17,7 @@ const ALGEBRA_FACTORY_CREATION_BLOCK = 32610688n;
 export function usePoolsList() {
     const publicClient = usePublicClient();
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const [pools, updatePools] = useState<IPools[]>();
 

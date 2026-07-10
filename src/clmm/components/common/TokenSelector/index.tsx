@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { TokenFieldsFragment } from "@clmm/graphql/generated/graphql";
 import { useAlgebraToken } from "@clmm/hooks/common/useAlgebraToken";
 import { useCurrency } from "@clmm/hooks/common/useCurrency";
@@ -30,7 +31,7 @@ const Search = ({
     data: TokenFieldsFragment[];
     onSearch: (matchedTokens: TokenFieldsFragment[], importToken: Token | undefined) => void;
 }) => {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const [query, setQuery] = useState<Address | string | undefined>(undefined);
     const debouncedQuery = useDebounce(query, 200);

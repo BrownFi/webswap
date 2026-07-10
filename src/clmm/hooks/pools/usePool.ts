@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { ADDRESS_ZERO, Pool } from "@cryptoalgebra/integral-sdk";
 import { Address } from "viem";
 import { useCurrency } from "../common/useCurrency";
@@ -62,7 +63,7 @@ export function usePool(address: Address | undefined): [PoolStateType, Pool | nu
     const isPoolSecutiryStatusLoading = hasSecurityRegistry ? isRawPoolSecurityStatusLoading : false;
 
     const { infoClient } = useClients();
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const hasSubgraph = Boolean(INFO_GRAPH_URL[chainId]);
 
     const { data: poolDeployer, loading: isPoolDeployerLoading, error: isPoolDeployerError } = useCustomPoolDeployerQuery({

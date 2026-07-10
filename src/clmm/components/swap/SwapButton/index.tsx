@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import Loader from "@clmm/components/common/Loader";
 import { Button } from "@clmm/components/ui/button";
 import { DEFAULT_CHAIN_NAME, enabledModules, OMEGA_ROUTER } from "@clmm/config";
@@ -31,7 +32,7 @@ export enum AllowanceState {
 const SwapButton = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     const { open } = useAppKit();
 
-    const appChainId = useChainId();
+    const appChainId = DEFAULT_CHAIN_ID;
 
     const { chainId: userChainId } = useAppKitNetwork();
 
@@ -102,7 +103,7 @@ const SwapButton = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
         trade?.inputAmount &&
         currencyBalances[SwapField.INPUT]?.lessThan(trade.inputAmount.quotient.toString());
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const shouldUseOmegaRouter = enabledModules.BoostedPoolsModule;
 

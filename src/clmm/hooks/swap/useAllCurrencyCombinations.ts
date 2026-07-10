@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { BASES_TO_CHECK_TRADES_AGAINST, BOOSTED_TOKENS } from "@clmm/config";
 import { Currency, Token, BoostedToken, AnyToken } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
@@ -13,7 +14,7 @@ function getAllBoostedTokens(token: AnyToken, chainId: number): BoostedToken[] {
  * Includes base pairs, boosted pairs, and intermediate hops through base tokens.
  */
 export function useAllCurrencyCombinations(currencyA?: Currency, currencyB?: Currency): [AnyToken, AnyToken][] {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const [tokenA, tokenB] = chainId ? [currencyA?.wrapped, currencyB?.wrapped] : [undefined, undefined];
 

@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { wagmiConfig } from "@clmm/providers/WagmiProvider";
 import { ADDRESS_ZERO } from "@cryptoalgebra/integral-sdk";
 import { providers } from "ethers";
@@ -21,7 +22,7 @@ export function clientToJsonRpcProvider(client: Client<Transport, Chain>) {
 
 // /** Action to convert a viem Client to an ethers.js Provider. */
 // export function useEthersProvider() {
-//     const chainId = useChainId();
+//     const chainId = DEFAULT_CHAIN_ID;
 //     const client = usePublicClient({ chainId });
 
 //     return useMemo(() => {
@@ -43,7 +44,7 @@ function clientToWeb3Provider(client: Client<Transport, Chain, Account>) {
 
 /** Action to convert a viem Client to an ethers.js Provider. */
 export function useEthersProvider() {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const { data: client } = useConnectorClient({
         config: wagmiConfig,

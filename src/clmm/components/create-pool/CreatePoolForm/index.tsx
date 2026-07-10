@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { Button } from "@clmm/components/ui/button";
 import { useDerivedSwapInfo, useSwapState } from "@clmm/state/swapStore";
 import { useEffect, useMemo, useState } from "react";
@@ -38,7 +39,7 @@ const CreatePoolForm = () => {
         actions: { typeStartPriceInput },
     } = useMintState();
 
-    const chainid = useChainId();
+    const chainid = DEFAULT_CHAIN_ID;
 
     const [poolDeployer, setPoolDeployer] = useState<PoolDeployerType>(CUSTOM_POOL_DEPLOYER_TITLES.BASE_DYNAMIC);
 

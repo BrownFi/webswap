@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { useWriteNonfungiblePositionManagerMulticall } from "@clmm/generated";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
 import { TransactionType } from "@clmm/state/pendingTransactionsStore";
@@ -31,7 +32,7 @@ export const useBurnCallback = ({
 }: UseBurnCallbackParams) => {
     const { txDeadline } = useUserState();
     const { address: account } = useAccount();
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const { calldata, value } = useMemo(() => {
         if (!positionSDK || !positionId || !liquidityPercentage || !feeValue0 || !feeValue1 || !account || percent === 0)

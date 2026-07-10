@@ -9,7 +9,7 @@ import { useChainId } from "wagmi";
  * block actions.
  */
 export function useSecurityRegistryConfigured(): boolean {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const address = SECURITY_REGISTRY[chainId ?? DEFAULT_CHAIN_ID];
     return Boolean(address) && address !== ADDRESS_ZERO;
 }

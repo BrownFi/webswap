@@ -14,7 +14,7 @@ import { usePositions } from "../positions/usePositions";
  * ones with liquidity > 0.
  */
 export function useOnchainPoolsList(tokenAddress?: Address): { pools: FormattedPool[]; isLoading: boolean } {
-    const chainId = useChainId() ?? DEFAULT_CHAIN_ID;
+    const chainId = DEFAULT_CHAIN_ID ?? DEFAULT_CHAIN_ID;
     const { address: account } = useAccount();
     const { positions } = usePositions();
 

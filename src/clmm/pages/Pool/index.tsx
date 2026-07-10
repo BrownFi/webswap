@@ -86,7 +86,7 @@ const PoolPage = () => {
             }));
     }, [positions, poolEntity, poolId]);
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const hasSubgraph = Boolean(INFO_GRAPH_URL[chainId ?? DEFAULT_CHAIN_ID]);
 
     const { data: positionsFees, isLoading: positionsFeesLoading } = useSWR(

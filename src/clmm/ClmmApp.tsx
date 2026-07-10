@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 // CLMM sub-app entry, mounted at /clmm/* inside webswap's BrowserRouter so it
 // shares webswap's wagmi + RainbowKit wallet (one session, no reload). Uses
 // CLMM's own Layout (header/footer/nav) — webswap hides its chrome on /clmm.
@@ -27,7 +28,7 @@ const NewPositionPage = lazy(() => import('./pages/NewPosition'))
 const s = (n: React.ReactNode) => <Suspense fallback={<div className="min-h-[70vh] w-full" />}>{n}</Suspense>
 
 // CLMM's contracts/tokens are Hemi-only, and CLMM hooks read TOKENS[chainId] /
-// WNATIVE[chainId]. When the wallet isn't on Hemi, useChainId() returns
+// WNATIVE[chainId]. When the wallet isn't on Hemi, DEFAULT_CHAIN_ID returns
 // webswap's active chain and those lookups are undefined -> crash. Gate the
 // whole sub-app on Hemi and prompt to connect / switch otherwise.
 function HemiGate({ children }: { children: React.ReactNode }) {

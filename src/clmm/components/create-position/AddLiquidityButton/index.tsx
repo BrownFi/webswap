@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { NONFUNGIBLE_POSITION_MANAGER, DEFAULT_CHAIN_NAME } from "@clmm/config";
 import { useWriteNonfungiblePositionManagerMulticall } from "@clmm/generated";
 import { useApprove } from "@clmm/hooks/common/useApprove";
@@ -40,7 +41,7 @@ export const AddLiquidityButton = ({
 
     const { open } = useAppKit();
 
-    const appChainId = useChainId();
+    const appChainId = DEFAULT_CHAIN_ID;
 
     const { chainId: userChainId } = useAppKitNetwork();
 
@@ -85,7 +86,7 @@ export const AddLiquidityButton = ({
         isIncreaseMode,
     ]);
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const { approvalState: approvalStateA, approvalCallback: approvalCallbackA } = useApprove(
         mintInfo.parsedAmounts[Field.CURRENCY_A],

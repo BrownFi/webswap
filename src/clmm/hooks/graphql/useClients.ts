@@ -1,8 +1,9 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { infoClient, farmingClient, limitOrderClient, uniswapInfoClient, blocksClient } from "@clmm/graphql/clients";
 import { useChainId } from "wagmi";
 
 export function useClients() {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     return {
         infoClient: infoClient[chainId],

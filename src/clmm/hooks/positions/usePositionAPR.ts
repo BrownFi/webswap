@@ -8,7 +8,7 @@ import { useChainId } from "wagmi";
 
 export function usePositionAPR(poolId: Address | undefined, position: Position | undefined, positionId?: string | undefined) {
     const { infoClient } = useClients();
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const hasSubgraph = Boolean(INFO_GRAPH_URL[chainId ?? DEFAULT_CHAIN_ID]);
 
     const { data: liquidity } = useReadAlgebraPoolLiquidity({

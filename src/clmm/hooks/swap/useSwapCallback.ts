@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { Currency, Percent, Trade, TradeType } from "@cryptoalgebra/integral-sdk";
 import { useAccount, useChainId, usePublicClient } from "wagmi";
 import { useSwapCallArguments } from "./useSwapCallArguments";
@@ -36,7 +37,7 @@ export function useSwapCallback(
 ) {
     const { address: account } = useAccount();
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const client = usePublicClient({ chainId });
 
     const [bestCall, setBestCall] = useState<SuccessfulCall>();

@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import PageContainer from "@clmm/components/common/PageContainer";
 import PageTitle from "@clmm/components/common/PageTitle";
 import { useParams } from "react-router-dom";
@@ -18,7 +19,7 @@ const NewPositionPage = () => {
 
     const { pool: poolAddress } = useParams<NewPositionPageParams>();
 
-    // const chainId = useChainId();
+    // const chainId = DEFAULT_CHAIN_ID;
     // const { infoClient } = useClients();
 
     // const { data, loading: isCustomPoolDeployerLoading } = useCustomPoolDeployerQuery({

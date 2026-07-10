@@ -19,7 +19,7 @@ const Summary = ({ currencyA, currencyB }: ISummary) => {
     const { startPriceTypedValue } = useMintState();
 
     const { infoClient } = useClients();
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const hasSubgraph = Boolean(INFO_GRAPH_URL[chainId ?? DEFAULT_CHAIN_ID]);
 
     const token0 = currencyA?.wrapped.address.toLowerCase() as Address;

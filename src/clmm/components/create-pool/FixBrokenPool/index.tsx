@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { useCallback, useMemo } from "react";
 import { Address } from "viem";
 import { useAccount, useBalance, useChainId } from "wagmi";
@@ -27,7 +28,7 @@ const Notification = ({ tick }: { tick?: number }) => (
 );
 
 const FixBrokenPool = ({ currencyIn, currencyOut, deployer }: IFixBrokenPool) => {
-    const appChainId = useChainId();
+    const appChainId = DEFAULT_CHAIN_ID;
 
     const { chainId: userChainId } = useAppKitNetwork();
 

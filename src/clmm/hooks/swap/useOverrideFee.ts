@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { SWAP_ROUTER } from "@clmm/config";
 import { readAlgebraPoolPlugin, simulateAlgebraBasePluginV1BeforeSwap } from "@clmm/generated";
 import { wagmiConfig } from "@clmm/providers/WagmiProvider";
@@ -13,7 +14,7 @@ export function useOverrideFee(trade: SmartRouterTrade<TradeType> | Trade<Curren
         fees: number[][];
     }>({ fee: undefined, fees: [] });
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     useEffect(() => {
         if (!trade) return undefined;

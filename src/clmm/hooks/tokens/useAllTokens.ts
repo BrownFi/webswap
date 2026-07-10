@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { INFO_GRAPH_URL, NATIVE_NAME, NATIVE_SYMBOL, TOKENS } from "@clmm/config";
 import { TokenFieldsFragment, useAllTokensQuery } from "@clmm/graphql/generated/graphql";
 import { useTokensState } from "@clmm/state/tokensStore";
@@ -8,7 +9,7 @@ import { useChainId } from "wagmi";
 import { useClients } from "../graphql/useClients";
 
 export function useAllTokens(showNativeToken: boolean = true) {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const { infoClient } = useClients();
     const hasSubgraph = Boolean(INFO_GRAPH_URL[chainId]);

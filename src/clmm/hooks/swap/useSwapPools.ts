@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { ADDRESS_ZERO, Currency, Pool, computeCustomPoolAddress, computePoolAddress } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
 import { useAllCurrencyCombinations } from "./useAllCurrencyCombinations";
@@ -25,7 +26,7 @@ export function useSwapPools(
     pools: Pool[];
     isLoading: boolean;
 } {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const hasSubgraph = Boolean(INFO_GRAPH_URL[chainId]);
 
     const allCurrencyCombinations = useAllCurrencyCombinations(currencyIn, currencyOut);

@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { useUSDCValue } from "@clmm/hooks/common/useUSDCValue";
 import { IDerivedSwapInfo, useSwapActionHandlers, useSwapState } from "@clmm/state/swapStore";
 import { SwapField, SwapFieldType } from "@clmm/types/swap-field";
@@ -11,7 +12,7 @@ import { useChainId } from "wagmi";
 import { TradeState } from "@clmm/types/trade-state";
 
 const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const { independentField, typedValue } = useSwapState();
 

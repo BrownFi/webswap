@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { quoterV2ABI, QUOTER_V2 } from "@clmm/config";
 import { Currency, CurrencyAmount, encodeRouteToPath } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
@@ -30,7 +31,7 @@ export function useQuotesResults({
     isLoading: boolean;
     refetch: () => void;
 } {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const { normalRoutes: routes, loading: routesLoading } = useAllRoutes(
         exactInput ? amountIn?.currency : currencyIn,
         !exactInput ? amountOut?.currency : currencyOut

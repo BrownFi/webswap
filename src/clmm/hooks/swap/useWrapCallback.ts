@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { Currency, WNATIVE, tryParseAmount } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
 import { useAccount, useBalance, useChainId } from "wagmi";
@@ -21,7 +22,7 @@ export default function useWrapCallback(
     typedValue: string | undefined,
     onTransactionSuccess?: () => void
 ): { wrapType: typeof WrapType[keyof typeof WrapType]; execute?: undefined | (() => void); loading?: boolean; inputError?: string } {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const { address: account } = useAccount();
 
     const inputAmount = useMemo(() => tryParseAmount(typedValue, inputCurrency), [inputCurrency, typedValue]);

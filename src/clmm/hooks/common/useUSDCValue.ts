@@ -7,7 +7,7 @@ import { useClients } from "../graphql/useClients";
 
 export function useUSDCPrice(currency: Currency | undefined) {
     const { infoClient } = useClients();
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
     const hasSubgraph = Boolean(INFO_GRAPH_URL[chainId ?? DEFAULT_CHAIN_ID]);
 
     const { data: bundles } = useNativePriceQuery({

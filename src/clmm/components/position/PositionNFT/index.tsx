@@ -1,3 +1,4 @@
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { NONFUNGIBLE_POSITION_MANAGER } from "@clmm/config";
 import { useReadNonfungiblePositionManagerTokenUri } from "@clmm/generated";
 import { ChainId } from "@cryptoalgebra/integral-sdk";
@@ -10,7 +11,7 @@ interface PositionNFTProps {
 }
 
 const PositionNFT = ({ positionId }: PositionNFTProps) => {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const { data: uri } = useReadNonfungiblePositionManagerTokenUri({
         args: positionId ? [BigInt(positionId)] : undefined,
