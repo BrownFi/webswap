@@ -14,7 +14,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoadingState } from "./loadingState";
+import { Skeleton } from "@clmm/components/ui/skeleton";
 import { PositionsStatus } from "@clmm/types/position-filter-status";
 
 interface MyPositionsTableProps<TData, TValue> {
@@ -165,7 +165,7 @@ const MyPositionsTable = <TData, TValue>({
         [action, link, expandActive, expandOnFarming, expandClosed, selectedRow, table, navigate, expandALM]
     );
 
-    if (loading) return <LoadingState />;
+    const visibleColumns = table.getVisibleLeafColumns();
 
     return (
         <>
@@ -182,7 +182,17 @@ const MyPositionsTable = <TData, TValue>({
                     ))}
                 </TableHeader>
                 <TableBody className="[&_tr]:border-opacity-30 hover:bg-transparent text-[16px]">
-                    {table.getRowModel().rows?.length === 0 ||
+                    {loading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <TableRow key={`skeleton-row-${i}`} className="hover:bg-transparent border-0">
+                                {visibleColumns.map((col, j) => (
+                                    <TableCell key={col.id}>
+                                        <Skeleton className={`h-6 ${j === 0 ? "w-40" : "w-20"} bg-text-100/5 rounded-md`} />
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))
+                    ) : table.getRowModel().rows?.length === 0 ||
                     (!filterStatus.Open && !filterStatus.Closed && !filterStatus.OnFarming) ||
                     (noActivePositions && noFarmingPositions && !filterStatus.Closed) ||
                     (noActivePositions && noClosedPositions && !filterStatus.OnFarming) ||

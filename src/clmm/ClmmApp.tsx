@@ -22,7 +22,9 @@ const PoolPage = lazy(() => import('./pages/Pool'))
 const CreatePoolPage = lazy(() => import('./pages/CreatePool'))
 const NewPositionPage = lazy(() => import('./pages/NewPosition'))
 
-const s = (n: React.ReactNode) => <Suspense fallback={null}>{n}</Suspense>
+// Reserve vertical space while a lazy page chunk loads so the footer/layout
+// doesn't collapse then expand (avoids a jump between CLMM pages).
+const s = (n: React.ReactNode) => <Suspense fallback={<div className="min-h-[70vh] w-full" />}>{n}</Suspense>
 
 // CLMM's contracts/tokens are Hemi-only, and CLMM hooks read TOKENS[chainId] /
 // WNATIVE[chainId]. When the wallet isn't on Hemi, useChainId() returns

@@ -12,7 +12,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import { LoadingState } from "./loadingState";
+import { Skeleton } from "@clmm/components/ui/skeleton";
 import { Input } from "@clmm/components/ui/input";
 import { Search, User, X, Zap } from "lucide-react";
 import { enabledModules } from "@clmm/config/app-modules";
@@ -124,7 +124,7 @@ const PoolsTable = <TData, TValue>({
         return Boolean(activeFilters[filterId]);
     };
 
-    if (loading) return <LoadingState />;
+    const visibleColumns = table.getVisibleLeafColumns();
 
     return (
         <>
@@ -219,7 +219,17 @@ const PoolsTable = <TData, TValue>({
                     ))}
                 </TableHeader>
                 <TableBody className="hover:bg-transparent text-[16px]">
-                    {!table.getRowModel().rows.length ? (
+                    {loading ? (
+                        Array.from({ length: 6 }).map((_, i) => (
+                            <TableRow key={`skeleton-row-${i}`} className="border-card-border/40 hover:bg-transparent">
+                                {visibleColumns.map((col, j) => (
+                                    <TableCell key={col.id} className="text-left min-w-[120px] first:min-w-[220px]">
+                                        <Skeleton className={`h-6 ${j === 0 ? "w-40" : "w-20"} bg-text-100/5 rounded-md`} />
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))
+                    ) : !table.getRowModel().rows.length ? (
                         <TableRow className="hover:bg-card h-full">
                             <TableCell colSpan={columns.length} className="h-24 text-center">
                                 No results.
