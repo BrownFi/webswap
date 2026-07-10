@@ -37,19 +37,23 @@ const MyPositionsToolbar = ({ positionsData, currencyA, currencyB, poolStatus }:
                         </FilterPopover>
                     </div>
                 </div>
-                {myLiquidityUSD ? (
-                    <div className="flex items-center gap-4">
-                        <div className="font-semibold">{`${positionsData?.length} ${formatPlural(
-                            positionsData.length,
-                            "position",
-                            "positions"
-                        )}`}</div>
-                        <div className="w-1.5 h-1.5 bg-white/5 border border-white/25 rotate-45" />
-                        <div className="text-cyan-200 font-semibold">{`$${formatAmount(myLiquidityUSD || 0, 2)} TVL`}</div>
-                        <div className="w-1.5 h-1.5 bg-white/5 border border-white/25 rotate-45" />
-                        <div className="text-green-300 font-semibold">{`$${formatAmount(myFeesUSD || 0, 2)} Fees`}</div>
-                    </div>
-                ) : null}
+                {/* Reserve the stats-row height whether or not stats are present,
+                    so the positions area below doesn't shift when data loads. */}
+                <div className="flex items-center gap-4 h-6">
+                    {myLiquidityUSD ? (
+                        <>
+                            <div className="font-semibold">{`${positionsData?.length} ${formatPlural(
+                                positionsData.length,
+                                "position",
+                                "positions"
+                            )}`}</div>
+                            <div className="w-1.5 h-1.5 bg-white/5 border border-white/25 rotate-45" />
+                            <div className="text-cyan-200 font-semibold">{`$${formatAmount(myLiquidityUSD || 0, 2)} TVL`}</div>
+                            <div className="w-1.5 h-1.5 bg-white/5 border border-white/25 rotate-45" />
+                            <div className="text-green-300 font-semibold">{`$${formatAmount(myFeesUSD || 0, 2)} Fees`}</div>
+                        </>
+                    ) : null}
+                </div>
             </div>
         </div>
     );
