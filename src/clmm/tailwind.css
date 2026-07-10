@@ -1,0 +1,71 @@
+@theme {
+    --screen-xs: 380px;
+    --screen-sm: 640px;
+    --screen-md: 768px;
+    --screen-lg: 1024px;
+    --screen-xl: 1280px;
+    --screen-2xl: 1400px;
+
+    --background-image-dark-gradient: radial-gradient(circle, rgba(26, 21, 16, 1) 0%, rgba(18, 16, 11, 1) 100%);
+    --background-image-primary-gradient: linear-gradient(180deg, rgb(213, 153, 103) 0%, rgb(152, 92, 42) 100%);
+    --background-image-destructive-gradient: linear-gradient(180deg, rgb(253, 64, 64) 0%, rgb(214, 0, 0) 100%);
+    --color-app-background: #050505;
+
+    --color-primary-50: var(--primary-50);
+    --color-primary-100: var(--primary-100);
+    --color-primary-200: var(--primary-200);
+    --color-primary-300: var(--primary-300);
+    --color-primary-800: var(--primary-800);
+
+    --color-accent-100: var(--accent-100);
+    --color-accent-200: var(--accent-200);
+
+    --color-text-100: var(--text-100);
+    --color-text-200: var(--text-200);
+    --color-text-300: var(--text-300);
+    --color-text-400: var(--text-400);
+
+    --color-bg-100: var(--bg-100);
+    --color-bg-200: var(--bg-200);
+    --color-bg-300: var(--bg-300);
+
+    --color-text: var(--text-100);
+    --color-border: var(--bg-300);
+    --color-input: var(--bg-100);
+    --color-ring: var(--primary-200);
+    --color-background: var(--bg-100);
+    --color-foreground: var(--text-100);
+
+    --color-primary: var(--primary-100);
+    --color-primary-foreground: var(--text-100);
+    --color-primary-button: var(--primary-100);
+    --color-primary-text: var(--primary-300);
+
+    --color-secondary: var(--bg-200);
+    --color-secondary-foreground: var(--text-200);
+
+    --color-destructive: var(--accent-100);
+    --color-destructive-foreground: var(--text-100);
+
+    --color-muted: var(--bg-300);
+    --color-muted-foreground: var(--text-200);
+    --color-muted-primary: var(--primary-100);
+
+    --color-accent: var(--accent-100);
+    --color-accent-foreground: var(--accent-200);
+
+    --color-popover: var(--bg-200);
+    --color-popover-foreground: var(--text-100);
+
+    --color-card: var(--bg-100);
+    --color-card-foreground: var(--text-100);
+    --color-card-hover: var(--bg-500);
+    --color-card-dark: var(--bg-100);
+    --color-card-light: var(--bg-300);
+    --color-card-border: var(--gray-100);
+
+    --color-farm: #c4943a;
+    --color-alm: #d4a94f;
+
+    --shadow-popover: 0 0 15px rgba(0, 0, 0, 0.4);
+}

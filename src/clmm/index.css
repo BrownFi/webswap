@@ -1,0 +1,108 @@
+@import "tailwindcss";
+@import "../config/colors.css";
+@import "./tailwind.css";
+
+@config "../tailwind.config.js";
+
+/* Match BrownFi's typography: Inter for everything by default, Geist available
+ * for the rare places that opt in. Loaded via index.html. */
+html, body, input, textarea, button, select {
+    font-family: "Inter var", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 500;
+    font-feature-settings: "cv11", "ss01";
+}
+
+html {
+    display: grid;
+    min-height: 100%;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+    height: 100%;
+    background: var(--color-app-background);
+    color: var(--text-100);
+}
+
+body {
+    grid-template-columns: 1fr;
+    max-width: 100vw;
+    position: relative;
+}
+
+/* Subtle copper radial glow at top center — mirrors BrownFi's StaticScreen overlay */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 0%, rgba(152, 92, 42, 0.08) 0%, transparent 60%);
+    z-index: 0;
+}
+
+@layer base {
+    * {
+        border-color: var(--color-border);
+    }
+}
+
+#root {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 2rem;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    #root {
+        padding: 0 1rem;
+    }
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.2);
+}
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+button {
+    cursor: pointer;
+}
+
+.soft-div {
+    position: relative;
+    mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 15%,
+        black 50%,
+        transparent 100%
+    );
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    transition: mask-image 0.3s ease;
+    transition-duration: 100ms;
+}
+
+.soft-div:hover {
+    mask-image: linear-gradient(to right, black 0%, black 100%);
+}

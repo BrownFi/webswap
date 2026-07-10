@@ -105,6 +105,21 @@ const monad = overrideChain({
   ],
 })
 
+// Hemi mainnet — home of the CLMM (Algebra) product. Manual definition (mirrors
+// hyperEVM above) so we control RPC + explorer + icon.
+const hemi: Chain = {
+  id: 43111,
+  name: 'Hemi',
+  nativeCurrency: { decimals: 18, name: 'Ether', symbol: 'ETH' },
+  rpcUrls: {
+    default: { http: ['https://rpc.hemi.network/rpc'] },
+  },
+  blockExplorers: {
+    default: { name: 'Hemi Explorer', url: 'https://explorer.hemi.xyz' },
+  },
+  iconUrl: 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png',
+}
+
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
@@ -145,6 +160,7 @@ const mainChains: readonly [Chain, ...Chain[]] = [
   hyperEVM,
   linea,
   monad,
+  hemi,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
@@ -153,6 +169,7 @@ const betaChains: readonly [Chain, ...Chain[]] = [
   hyperEVM,
   linea,
   monad,
+  hemi,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 

@@ -148,6 +148,39 @@ function StyledNavLink({
   )
 }
 
+const HEMI_CHAIN_ID = 43111
+
+// CLMM lives on Hemi only. Always visible; greyed + tooltip when the wallet isn't
+// on Hemi, and clicking it offers to switch the network there.
+function ClmmNavItem() {
+  const { chainId } = useAccount()
+  const { switchChain } = useSwitchChain()
+  const onHemi = chainId === HEMI_CHAIN_ID
+
+  if (onHemi) {
+    return (
+      <StyledNavLink id="clmm-nav-link" to="/clmm">
+        CLMM
+      </StyledNavLink>
+    )
+  }
+
+  return (
+    <button
+      id="clmm-nav-link"
+      type="button"
+      title="Available on Hemi — switch network"
+      onClick={() => switchChain?.({ chainId: HEMI_CHAIN_ID })}
+      className="flex items-center justify-center cursor-pointer no-underline text-white/40
+        text-[16px] font-medium py-2 px-6 rounded-md hover:text-white/70 transition-colors
+        bg-transparent border-none"
+      style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
+    >
+      CLMM
+    </button>
+  )
+}
+
 export const StyledMenuButton = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
     className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-md
@@ -215,6 +248,7 @@ export default function Header() {
             <StyledNavLink id="portfolio-nav-link" to="/portfolio">
               Portfolio
             </StyledNavLink>
+            <ClmmNavItem />
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them
                 in the nav at all — avoids the duplicate on mobile. */}

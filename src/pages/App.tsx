@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import 'rc-slider/assets/index.css'
 import 'theme/fonts.css'
 import 'theme/index.css'
@@ -25,8 +25,10 @@ const AddLiquidity = lazy(() => import('./AddLiquidity'))
 const RemoveLiquidity = lazy(() => import('./RemoveLiquidity'))
 const PoolDetail = lazy(() => import('./Pool/Detail'))
 const Portfolio = lazy(() => import('./Portfolio'))
+// CLMM (Algebra fork) sub-app — isolated under src/clmm, mounted at /clmm/*.
+const ClmmApp = lazy(() => import('@clmm/ClmmApp'))
 
-const BodyWrapper = styled.div`
+const BodyWrapper = styled.div<{ $noPad?: boolean }>`
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -51,18 +53,30 @@ const BodyWrapper = styled.div`
     padding-top: 100px;
     padding-bottom: 100px;
   `};
+
+  /* CLMM renders its own header/footer chrome; drop webswap's body padding there. */
+  ${({ $noPad }) => $noPad && `padding: 0 !important;`}
 `
 
 
 export default function App() {
+  const isClmm = useLocation().pathname.startsWith('/clmm')
   return (
     <Suspense fallback={null}>
       <GoogleAnalyticsReporter />
       <DarkModeQueryParamReader />
       <StaticScreen>
-        <BodyWrapper>
+        <BodyWrapper $noPad={isClmm}>
           <Popups />
           <Routes>
+            <Route
+              path="/clmm/*"
+              element={
+                <RouteErrorBoundary>
+                  <ClmmApp />
+                </RouteErrorBoundary>
+              }
+            />
             <Route path="/" element={<Navigate to="/swap" replace />} />
             <Route path="/home" element={<Navigate to="/swap" replace />} />
             <Route

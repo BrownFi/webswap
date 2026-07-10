@@ -1,0 +1,274 @@
+import { Button } from "@clmm/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@clmm/components/ui/table";
+import {
+    ColumnDef,
+    OnChangeFn,
+    SortingState,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable,
+} from "@tanstack/react-table";
+import { useMemo, useState } from "react";
+import { LoadingState } from "./loadingState";
+import { Input } from "@clmm/components/ui/input";
+import { Search, User, X, Zap } from "lucide-react";
+import { enabledModules } from "@clmm/config/app-modules";
+import { useNavigate } from "react-router-dom";
+
+type ActiveFilters = {
+    hasActiveFarming?: boolean;
+    hasALM?: boolean;
+    isMyPool?: boolean;
+    isBoosted?: boolean;
+};
+interface PoolsTableProps<TData, TValue> {
+    columns: ColumnDef<TData, TValue>[];
+    data: TData[];
+    action?: (args?: any) => void;
+    defaultSortingID?: string;
+    link?: string;
+    showPagination?: boolean;
+    searchID?: string;
+    loading?: boolean;
+}
+
+const SHOWCASE_SORT_ID = "__showcasePriority";
+
+const PoolsTable = <TData, TValue>({
+    columns,
+    data,
+    action,
+    link,
+    defaultSortingID,
+    showPagination = true,
+    loading,
+}: PoolsTableProps<TData, TValue>) => {
+    const [sorting, setSorting] = useState<SortingState>(() => {
+        const defaultSort = defaultSortingID ? [{ id: defaultSortingID, desc: true }] : [];
+        return [{ id: SHOWCASE_SORT_ID, desc: true }, ...defaultSort];
+    });
+
+    const [columnFilters, setColumnFilters] = useState<any[]>([]);
+    const [activeFilters, setActiveFilters] = useState<ActiveFilters>({});
+    const columnsWithShowcaseSort = useMemo(
+        () => [
+            ...columns,
+            {
+                id: SHOWCASE_SORT_ID,
+                accessorFn: (row: any) => (row?.isShowcase ? 1 : 0),
+                header: () => null,
+                cell: () => null,
+            } as ColumnDef<TData, TValue>,
+        ],
+        [columns]
+    );
+
+    const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
+        setSorting((prev) => {
+            const next = typeof updater === "function" ? updater(prev) : updater;
+            const withoutShowcase = next.filter((s) => s.id !== SHOWCASE_SORT_ID);
+            return [{ id: SHOWCASE_SORT_ID, desc: true }, ...withoutShowcase];
+        });
+    };
+
+    const table = useReactTable({
+        data,
+        columns: columnsWithShowcaseSort,
+        initialState: {
+            columnVisibility: {
+                [SHOWCASE_SORT_ID]: false,
+            },
+        },
+        state: {
+            columnFilters,
+            sorting,
+            globalFilter: activeFilters,
+        },
+        onColumnFiltersChange: setColumnFilters,
+        onSortingChange: handleSortingChange,
+        onGlobalFilterChange: setActiveFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getPaginationRowModel: showPagination ? getPaginationRowModel() : undefined,
+
+        globalFilterFn: (row: any, _columnId, filterValue) => {
+            const f = filterValue as ActiveFilters;
+            if (f.hasActiveFarming && !row.original.hasActiveFarming) return false;
+            if (f.hasALM && !row.original.hasALM) return false;
+            if (f.isMyPool && !row.original.isMyPool) return false;
+            if (f.isBoosted && !row.original.isBoosted) return false;
+            return true;
+        },
+    });
+
+    const navigate = useNavigate();
+
+    const searchID = "pair";
+
+    const totalRows = table.getFilteredRowModel().rows.length;
+    const startsFromRow = table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1;
+    const endsAtRow = Math.min(startsFromRow + table.getState().pagination.pageSize - 1, totalRows);
+
+    const toggleFilter = (filterId: keyof ActiveFilters) => {
+        setActiveFilters((prev) => ({
+            ...prev,
+            [filterId]: !prev[filterId],
+        }));
+    };
+
+    const isFilterActive = (filterId: keyof ActiveFilters) => {
+        return Boolean(activeFilters[filterId]);
+    };
+
+    if (loading) return <LoadingState />;
+
+    return (
+        <>
+            {searchID && (
+                <div className="flex max-sm:flex-col gap-3 w-full items-center p-4 pb-0">
+                    <div className="flex items-center relative w-full sm:w-fit">
+                        <Input
+                            placeholder="Search token"
+                            value={(table.getColumn(searchID)?.getFilterValue() as string) ?? ""}
+                            onChange={(event) => table.getColumn(searchID)?.setFilterValue(event.target.value)}
+                            className="bg-bg-500 border border-card-border pl-12 h-12 max-w-80 md:w-64 lg:w-80 focus:border-primary-200 placeholder-text-300 rounded-lg text-base"
+                            style={{ fontFamily: "Inter", fontWeight: 500 }}
+                        />
+                        <Search className="absolute left-4 text-text-300" size={20} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 md:flex w-full sm:w-fit">
+                        {enabledModules.FarmingModule && (
+                            <Button
+                                onClick={() => toggleFilter("hasActiveFarming")}
+                                variant={isFilterActive("hasActiveFarming") ? "iconActive" : "outline"}
+                                size="md"
+                                className="flex h-12 min-w-[130px] items-center gap-2 whitespace-nowrap rounded-lg py-4"
+                            >
+                                <span className="w-2 h-2 bg-yellow-950 border border-yellow-500 rotate-45" />
+                                <span>Farm Pools</span>
+                            </Button>
+                        )}
+                        {enabledModules.ALMModule && (
+                            <Button
+                                onClick={() => toggleFilter("hasALM")}
+                                variant={isFilterActive("hasALM") ? "iconActive" : "outline"}
+                                size="md"
+                                className="flex h-12 min-w-[130px] items-center gap-2 whitespace-nowrap rounded-lg p-4"
+                            >
+                                <span className="w-2 h-2 bg-cyan-950 border border-cyan-500 rotate-45" />
+                                <span>ALM Pools</span>
+                            </Button>
+                        )}
+                        {enabledModules.BoostedPoolsModule && (
+                            <Button
+                                onClick={() => toggleFilter("isBoosted")}
+                                variant={isFilterActive("isBoosted") ? "iconActive" : "outline"}
+                                size="md"
+                                className="flex h-12 min-w-[130px] items-center gap-2 whitespace-nowrap rounded-lg p-4"
+                            >
+                                <Zap className="text-purple-400" size={16} />
+                                <span>Boosted</span>
+                            </Button>
+                        )}
+                        <Button
+                            onClick={() => toggleFilter("isMyPool")}
+                            variant={isFilterActive("isMyPool") ? "iconActive" : "outline"}
+                            size="md"
+                            className="flex h-12 min-w-[130px] items-center gap-2 whitespace-nowrap rounded-lg p-4"
+                        >
+                            <User className="text-primary-200" size={16} />
+                            <span>My Pools</span>
+                        </Button>
+                    </div>
+                    <Button
+                        hidden={
+                            !(
+                                isFilterActive("isMyPool") ||
+                                isFilterActive("hasActiveFarming") ||
+                                isFilterActive("hasALM") ||
+                                isFilterActive("isBoosted")
+                            )
+                        }
+                        size="md"
+                        onClick={() => {
+                            setColumnFilters([]);
+                            setActiveFilters({});
+                        }}
+                        className="flex h-12 w-fit ml-auto items-center gap-2 whitespace-nowrap rounded-lg p-4"
+                        variant="outline"
+                    >
+                        <X size={18} />
+                        <span>Reset</span>
+                    </Button>
+                </div>
+            )}
+            <Table>
+                <TableHeader className="[&_tr]:border-b [&_tr]:border-opacity-30 border-t border-opacity-60">
+                    {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                            {headerGroup.headers.map((header) => (
+                                <TableHead key={header.id} className="rounded-xl font-semibold [&_svg]:mt-auto">
+                                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    ))}
+                </TableHeader>
+                <TableBody className="hover:bg-transparent text-[16px]">
+                    {!table.getRowModel().rows.length ? (
+                        <TableRow className="hover:bg-card h-full">
+                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                                No results.
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        table.getRowModel().rows.map((row: any) => {
+                            return (
+                                <TableRow
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && "selected"}
+                                    className="border-card-border/40 bg-card-dark hover:bg-card-hover cursor-pointer"
+                                    onClick={() => {
+                                        if (action) {
+                                            action(row.original.id);
+                                        } else if (link) {
+                                            navigate(`/clmm/${link}/${row.original.id}`);
+                                        }
+                                    }}
+                                >
+                                    {row.getVisibleCells().map((cell: any) => (
+                                        <TableCell key={cell.id} className="text-left min-w-[120px] first:min-w-[220px]">
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            );
+                        })
+                    )}
+                </TableBody>
+            </Table>
+            {showPagination && (
+                <div className="flex items-center justify-end space-x-2 px-4 mt-auto">
+                    {totalRows > 0 && (
+                        <p className="mr-4">
+                            {startsFromRow === totalRows
+                                ? `${startsFromRow} of ${totalRows}`
+                                : `${startsFromRow} - ${endsAtRow} of ${totalRows}`}
+                        </p>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+                        Previous
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                        Next
+                    </Button>
+                </div>
+            )}
+        </>
+    );
+};
+export default PoolsTable;
