@@ -107,7 +107,8 @@ const monad = overrideChain({
 
 // Hemi mainnet — home of the CLMM (Algebra) product. Manual definition (mirrors
 // hyperEVM above) so we control RPC + explorer + icon.
-const hemi: Chain = {
+export const HEMI_CHAIN_ID = 43111
+export const hemi: Chain = {
   id: 43111,
   name: 'Hemi',
   nativeCurrency: { decimals: 18, name: 'Ether', symbol: 'ETH' },
@@ -173,6 +174,11 @@ const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
+
+// Chains offered in the network selector = webswap's product chains + Hemi (CLMM).
+// Hemi is NOT in `availableChains` (webswap's product logic would crash on it);
+// selecting it switches the wallet + routes into /clmm instead.
+export const selectableChains = [...availableChains, hemi] as [Chain, ...Chain[]]
 
 // RainbowKit's default wallet groups (Rainbow, MetaMask, Coinbase, WalletConnect,
 // plus EIP-6963 auto-detected injected wallets). We add Rabby into the "Popular"

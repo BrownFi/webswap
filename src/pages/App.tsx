@@ -1,5 +1,7 @@
-import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useAccount } from 'wagmi'
+import { HEMI_CHAIN_ID } from 'connectors'
 import 'rc-slider/assets/index.css'
 import 'theme/fonts.css'
 import 'theme/index.css'
@@ -59,9 +61,24 @@ const BodyWrapper = styled.div<{ $noPad?: boolean }>`
 `
 
 
+// Keep the route in sync with the wallet chain: Hemi is CLMM-only, so on Hemi we
+// route into /clmm; leaving Hemi (while connected) routes back to webswap. This
+// makes the single chain selector drive access — pick Hemi -> CLMM opens.
+function ChainRouteSync() {
+  const { chainId, isConnected } = useAccount()
+  const navigate = useNavigate()
+  const onClmm = useLocation().pathname.startsWith('/clmm')
+  useEffect(() => {
+    if (chainId === HEMI_CHAIN_ID && !onClmm) navigate('/clmm/swap')
+    else if (isConnected && chainId !== HEMI_CHAIN_ID && onClmm) navigate('/swap')
+  }, [chainId, isConnected, onClmm, navigate])
+  return null
+}
+
 export default function App() {
   return (
     <Suspense fallback={null}>
+      <ChainRouteSync />
       <GoogleAnalyticsReporter />
       <DarkModeQueryParamReader />
       <StaticScreen>
