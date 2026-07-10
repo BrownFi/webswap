@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import 'rc-slider/assets/index.css'
 import 'theme/fonts.css'
 import 'theme/index.css'
@@ -60,13 +60,12 @@ const BodyWrapper = styled.div<{ $noPad?: boolean }>`
 
 
 export default function App() {
-  const isClmm = useLocation().pathname.startsWith('/clmm')
   return (
     <Suspense fallback={null}>
       <GoogleAnalyticsReporter />
       <DarkModeQueryParamReader />
       <StaticScreen>
-        <BodyWrapper $noPad={isClmm}>
+        <BodyWrapper>
           <Popups />
           <Routes>
             <Route

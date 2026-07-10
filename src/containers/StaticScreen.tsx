@@ -1,5 +1,4 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import 'rc-slider/assets/index.css'
 import 'theme/index.css'
 import styled from 'styled-components'
@@ -47,9 +46,8 @@ function HeaderWrapper({ children }: PropsWithChildren) {
 }
 
 const StaticScreen = ({ children }: PropsWithChildren) => {
-  // CLMM (/clmm/*) renders its own header/footer; suppress webswap's chrome there
-  // so there's a single header and the wallet button isn't duplicated.
-  const isClmm = useLocation().pathname.startsWith('/clmm')
+  // webswap's header/footer render on every route, including /clmm, so the
+  // CLMM section shares the same navbar (CLMM's own Layout chrome is stripped).
   return (
     <AppWrapper className="relative">
       <div
@@ -58,18 +56,12 @@ const StaticScreen = ({ children }: PropsWithChildren) => {
           background: 'radial-gradient(ellipse at 50% 0%, rgba(152, 92, 42, 0.08) 0%, transparent 60%)',
         }}
       />
-      {!isClmm && (
-        <HeaderWrapper>
-          <Header />
-        </HeaderWrapper>
-      )}
+      <HeaderWrapper>
+        <Header />
+      </HeaderWrapper>
       {children}
-      {!isClmm && (
-        <>
-          <div className="flex-1" style={{ minHeight: '80px' }} />
-          <Footer />
-        </>
-      )}
+      <div className="flex-1" style={{ minHeight: '80px' }} />
+      <Footer />
     </AppWrapper>
   )
 }
