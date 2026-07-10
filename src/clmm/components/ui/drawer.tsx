@@ -13,7 +13,7 @@ const DrawerTrigger = DrawerPrimitive.Trigger;
 // Re-scope CLMM's Tailwind onto the body-portaled drawer content.
 const DrawerPortal = ({ children, ...props }: React.ComponentProps<typeof DrawerPrimitive.Portal>) => (
     <DrawerPrimitive.Portal {...props}>
-        <div className="clmm-root">{children}</div>
+        <div className="clmm-root" style={{ display: "contents" }}>{children}</div>
     </DrawerPrimitive.Portal>
 );
 DrawerPortal.displayName = "DrawerPortal";

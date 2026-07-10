@@ -13,7 +13,7 @@ const PopoverContent = React.forwardRef<
 >(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
     <PopoverPrimitive.Portal>
         {/* .clmm-root re-scopes CLMM's Tailwind onto portaled (body-rendered) content */}
-        <div className="clmm-root">
+        <div className="clmm-root" style={{ display: "contents" }}>
             <PopoverPrimitive.Content
                 ref={ref}
                 align={align}

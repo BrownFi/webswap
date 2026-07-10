@@ -63,7 +63,7 @@ export default function ClmmApp() {
   return (
     <ApolloProvider>
       <style dangerouslySetInnerHTML={{ __html: clmmCss }} />
-      <div className="clmm-root w-full">
+      <div className="clmm-root w-full" style={{ minWidth: 0, maxWidth: '100%', display: 'block' }}>
         <HemiGate>
           <Layout>
             <Routes>

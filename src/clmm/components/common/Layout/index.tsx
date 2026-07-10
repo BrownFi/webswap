@@ -8,9 +8,13 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
+    // min-width:0 lets these flex/grid items shrink to the viewport instead of
+    // expanding to wide content (tables), so the page doesn't overflow on mobile.
     return (
-        <div className="flex flex-col w-full">
-            <main className="flex-1">{children}</main>
+        <div className="flex flex-col w-full" style={{ minWidth: 0 }}>
+            <main className="flex-1" style={{ minWidth: 0 }}>
+                {children}
+            </main>
             <Toaster />
         </div>
     );

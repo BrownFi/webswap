@@ -35,6 +35,9 @@ const BodyWrapper = styled.div<{ $noPad?: boolean }>`
   flex-direction: column;
   width: 100%;
   max-width: 100%;
+  /* min-width:0 stops this flex item from growing to wide content (e.g. the CLMM
+     pool table) and overflowing the viewport on mobile. */
+  min-width: 0;
   padding-top: 120px;
   align-items: center;
   flex: 1;
