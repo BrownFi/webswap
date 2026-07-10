@@ -5,12 +5,18 @@
  * webswap can't compile TW4 in-tree (its PostCSS runs TW3), so we compile in the
  * standalone algebra repo and scope the output here.
  *
- * Usage (postcss + postcss-prefix-selector must resolve — run from the algebra
- * repo, which has both, OR install them):
- *   1. cd <algebra-Interface> && yarn build          # emits dist/assets/*.css
- *   2. node <webswap>/scripts/scope-clmm-css.mjs \
+ * IMPORTANT: Tailwind only emits utilities it finds in the SCANNED source. Any
+ * class added/edited under webswap/src/clmm must be scanned, or it won't exist in
+ * the compiled CSS (silent no-op). So point the algebra build at the INTEGRATED
+ * source before compiling:
+ *   1. Temporarily add to <algebra>/src/index.css (after `@import "tailwindcss";`):
+ *        @source "/ABS/PATH/webswap/src/clmm";
+ *   2. cd <algebra-Interface> && yarn build          # emits dist/assets/*.css
+ *   3. node <webswap>/scripts/scope-clmm-css.mjs \
  *        <algebra>/dist/assets/index-*.css \
  *        <webswap>/src/clmm/clmm.generated.css
+ *   4. Revert the @source line in <algebra>/src/index.css.
+ * (postcss + postcss-prefix-selector must resolve — run from the algebra repo.)
  * The output is imported raw + injected as a <style> by src/clmm/ClmmApp.tsx.
  */
 import fs from 'fs'
