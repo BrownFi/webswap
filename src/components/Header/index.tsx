@@ -150,34 +150,67 @@ function StyledNavLink({
 
 const HEMI_CHAIN_ID = 43111
 
-// CLMM lives on Hemi only. Always visible; greyed + tooltip when the wallet isn't
-// on Hemi, and clicking it offers to switch the network there.
+// CLMM lives on Hemi only. On Hemi it's a dropdown (CLMM Swap / CLMM Pool) in the
+// main navbar; off Hemi it's greyed and clicking switches the network there.
 function ClmmNavItem() {
   const { chainId } = useAccount()
   const { switchChain } = useSwitchChain()
+  const location = useLocation()
+  const [open, setOpen] = useState(false)
   const onHemi = chainId === HEMI_CHAIN_ID
+  const isActive = location.pathname.startsWith('/clmm')
 
-  if (onHemi) {
+  if (!onHemi) {
     return (
-      <StyledNavLink id="clmm-nav-link" to="/clmm">
+      <button
+        id="clmm-nav-link"
+        type="button"
+        title="Available on Hemi — switch network"
+        onClick={() => switchChain?.({ chainId: HEMI_CHAIN_ID })}
+        className="flex items-center justify-center cursor-pointer no-underline text-white/40
+          text-[16px] font-medium py-2 px-6 rounded-md hover:text-white/70 transition-colors
+          bg-transparent border-none"
+        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
+      >
         CLMM
-      </StyledNavLink>
+      </button>
     )
   }
 
+  const itemCls = ({ isActive: active }: { isActive: boolean }) =>
+    `block w-full text-left px-4 py-2.5 text-[15px] font-medium no-underline whitespace-nowrap
+     transition-colors ${active ? 'text-[#D59967]' : 'text-white hover:text-[#D59967]'}`
+
   return (
-    <button
-      id="clmm-nav-link"
-      type="button"
-      title="Available on Hemi — switch network"
-      onClick={() => switchChain?.({ chainId: HEMI_CHAIN_ID })}
-      className="flex items-center justify-center cursor-pointer no-underline text-white/40
-        text-[16px] font-medium py-2 px-6 rounded-md hover:text-white/70 transition-colors
-        bg-transparent border-none"
-      style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
-    >
-      CLMM
-    </button>
+    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        id="clmm-nav-link"
+        type="button"
+        className={`flex items-center gap-1 cursor-pointer bg-transparent border-none py-2 px-6 rounded-md
+          text-[16px] font-medium transition-colors ${isActive ? '!text-[#D59967]' : 'text-white hover:text-[#D59967]'}`}
+        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
+      >
+        CLMM
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-[120]"
+          style={{ minWidth: '160px' }}
+        >
+          <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', overflow: 'hidden', padding: '4px' }}>
+            <NavLink to="/clmm/swap" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
+              CLMM Swap
+            </NavLink>
+            <NavLink to="/clmm/pools" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
+              CLMM Pool
+            </NavLink>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

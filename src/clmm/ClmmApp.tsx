@@ -8,7 +8,6 @@ import { useConnectModal } from '@rainbow-me/rainbowkit'
 import ApolloProvider from './providers/ApolloProvider'
 import StoreCleaner from './providers/StoreCleaner'
 import Layout from './components/common/Layout'
-import { Navigation } from './components/common/Navigation'
 import { SwapPageView } from './pages/Swap/types'
 // Pre-compiled + .clmm-root-scoped Tailwind 4 CSS. Imported raw to bypass
 // webswap's Tailwind-3 PostCSS pipeline (which can't parse TW4 @layer output),
@@ -64,9 +63,6 @@ export default function ClmmApp() {
       <div className="clmm-root">
         <HemiGate>
           <Layout>
-            <div className="flex justify-center w-full pt-2 pb-4">
-              <Navigation />
-            </div>
             <Routes>
               <Route index element={<Navigate replace to="swap" />} />
               <Route path="swap" element={s(<SwapPage type={SwapPageView.SWAP} />)} />
