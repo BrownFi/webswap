@@ -120,12 +120,12 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
                 isLoading={independentField === SwapField.OUTPUT && isTradeLoading}
             />
             <button
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2.5 w-fit rounded-full hover:opacity-90 duration-200 z-10"
-                style={{ background: "#C47736", border: "4px solid #12100B" }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-full hover:opacity-90 duration-200 z-10"
+                style={{ background: "#C47736" }}
                 onClick={onSwitchTokens}
                 aria-label="Switch tokens"
             >
-                <ArrowUpDown size={16} className="text-white" />
+                <ArrowUpDown size={18} className="text-white" />
             </button>
             <TokenCard
                 label="Your Receive"

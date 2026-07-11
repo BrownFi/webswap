@@ -115,7 +115,7 @@ const TokenCard = ({
         }
 
         if (value === "" && value === refValue.current) {
-            setPrevElement(<p className="text-text-300">≈ $0.00</p>);
+            setPrevElement(null);
         }
     }, [percentDifference, usdValue, value]);
 
@@ -200,8 +200,8 @@ const TokenCard = ({
                 </TokenSelectorModal>
             </div>
 
-            {/* USD value */}
-            <div className={cn("h-5 text-sm", isLoading ? "animate-pulse" : "")}>{prevElement}</div>
+            {/* USD value — only when there's an amount (webswap shows nothing when empty) */}
+            {prevElement && <div className={cn("text-sm", isLoading ? "animate-pulse" : "")}>{prevElement}</div>}
         </div>
     );
 };

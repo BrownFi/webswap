@@ -12,9 +12,9 @@ const Settings = () => {
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant={"icon"} size={"md"} className="border border-card-border">
-                    <SettingsIcon />
-                </Button>
+                <button className="p-2 text-text-200 hover:text-text-100 transition-colors bg-transparent border-none">
+                    <SettingsIcon size={22} />
+                </button>
             </PopoverTrigger>
             <PopoverContent
                 align={"end"}

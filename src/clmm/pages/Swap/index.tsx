@@ -20,7 +20,7 @@ const SwapPage = ({ type }: SwapPageProps) => {
                 <SwapTypeSelector isLimitOrder={isLimitOrder} />
             </div>
             <div className="flex justify-center w-full mb-3">
-                <div className="flex flex-col gap-2 w-full max-w-[520px]">
+                <div className="flex flex-col gap-2 w-full max-w-[690px]">
                     {/* Card matches webswap's AppBody: #1E1915 bg, 1px #2F2823 border, 24px radius/padding */}
                     <div
                         className="flex flex-col gap-2 w-full p-4 sm:p-6 rounded-2xl"
