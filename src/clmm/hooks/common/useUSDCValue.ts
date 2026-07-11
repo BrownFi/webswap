@@ -2,7 +2,7 @@ import { DEFAULT_CHAIN_ID, INFO_GRAPH_URL, TOKENS } from "@clmm/config";
 import { useNativePriceQuery, useSingleTokenQuery } from "@clmm/graphql/generated/graphql";
 import { Currency, CurrencyAmount, Price, Token, tryParseAmount } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
-import { useChainId } from "wagmi";
+
 import { useClients } from "../graphql/useClients";
 
 export function useUSDCPrice(currency: Currency | undefined) {

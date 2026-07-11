@@ -1,6 +1,5 @@
 import { ADDRESS_ZERO } from "@cryptoalgebra/integral-sdk";
 import { DEFAULT_CHAIN_ID, SECURITY_REGISTRY } from "@clmm/config";
-import { useChainId } from "wagmi";
 
 /**
  * Returns true when a real (non-zero) SecurityRegistry contract is configured

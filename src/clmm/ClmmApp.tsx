@@ -27,10 +27,13 @@ const NewPositionPage = lazy(() => import('./pages/NewPosition'))
 // doesn't collapse then expand (avoids a jump between CLMM pages).
 const s = (n: React.ReactNode) => <Suspense fallback={<div className="min-h-[70vh] w-full" />}>{n}</Suspense>
 
-// CLMM's contracts/tokens are Hemi-only, and CLMM hooks read TOKENS[chainId] /
-// WNATIVE[chainId]. When the wallet isn't on Hemi, DEFAULT_CHAIN_ID returns
-// webswap's active chain and those lookups are undefined -> crash. Gate the
-// whole sub-app on Hemi and prompt to connect / switch otherwise.
+// CLMM's contracts/tokens are Hemi-only. CLMM hooks index chain-keyed maps
+// (TOKENS[DEFAULT_CHAIN_ID], WNATIVE[...], graphql clients, etc.) which only
+// have a Hemi entry — but they also read the wallet's live chain (balances,
+// tx sending) via wagmi. If we let CLMM render while the wallet is on a non-Hemi
+// chain, those wallet reads point at the wrong network and swaps/liquidity
+// target the wrong chain. Gate the whole sub-app on Hemi and prompt to
+// connect / switch otherwise, so children only ever mount on chain 43111.
 function HemiGate({ children }: { children: React.ReactNode }) {
   const { chainId, isConnected } = useAccount()
   const { switchChain } = useSwitchChain()

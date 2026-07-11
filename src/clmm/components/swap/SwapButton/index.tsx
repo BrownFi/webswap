@@ -8,7 +8,7 @@ import { useUserState } from "@clmm/state/userStore";
 import { SwapField } from "@clmm/types/swap-field";
 import { warningSeverity } from "@clmm/utils/swap/prices";
 import { useCallback, useMemo } from "react";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount } from "wagmi";
 import { SmartRouter } from "@cryptoalgebra/router-custom-pools-and-sliding-fee";
 import { tryParseAmount, BoostedRouteStepType } from "@cryptoalgebra/integral-sdk";
 import { useAppKit, useAppKitNetwork } from "@reown/appkit/react";

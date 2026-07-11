@@ -1,7 +1,6 @@
 import { useNativePriceQuery } from "@clmm/graphql/generated/graphql";
 import { useClients } from "../graphql/useClients";
 import { INFO_GRAPH_URL, DEFAULT_CHAIN_ID } from "@clmm/config";
-import { useChainId } from "wagmi";
 
 export function useNativePriceUSD() {
     const { infoClient } = useClients();

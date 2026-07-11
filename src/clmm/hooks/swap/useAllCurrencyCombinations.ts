@@ -2,7 +2,6 @@ import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { BASES_TO_CHECK_TRADES_AGAINST, BOOSTED_TOKENS } from "@clmm/config";
 import { Currency, Token, BoostedToken, AnyToken } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
-import { useChainId } from "wagmi";
 
 function getAllBoostedTokens(token: AnyToken, chainId: number): BoostedToken[] {
     const boostedTokens = BOOSTED_TOKENS[chainId] || {};

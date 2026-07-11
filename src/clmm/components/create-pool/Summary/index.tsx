@@ -7,7 +7,6 @@ import { Currency } from "@cryptoalgebra/integral-sdk";
 import { useEffect, useState } from "react";
 import { Address } from "viem";
 import { INFO_GRAPH_URL, DEFAULT_CHAIN_ID } from "@clmm/config";
-import { useChainId } from "wagmi";
 
 interface ISummary {
     currencyA: Currency | undefined;

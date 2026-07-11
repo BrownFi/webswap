@@ -8,7 +8,7 @@ import TokenCard from "../TokenCard";
 import { ArrowUpDown } from "lucide-react";
 import useWrapCallback, { WrapType } from "@clmm/hooks/swap/useWrapCallback";
 import { TOKENS } from "@clmm/config";
-import { useChainId } from "wagmi";
+
 import { TradeState } from "@clmm/types/trade-state";
 
 const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
@@ -132,7 +132,7 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
                 </button>
             </div>
             <TokenCard
-                label="Your Receive"
+                label="You Receive"
                 value={formattedAmounts[SwapField.OUTPUT]}
                 currency={quoteCurrency}
                 otherCurrency={baseCurrency}

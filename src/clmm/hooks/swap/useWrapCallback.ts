@@ -1,7 +1,7 @@
 import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { Currency, WNATIVE, tryParseAmount } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
-import { useAccount, useBalance, useChainId } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { useTransactionAwait } from "../common/useTransactionAwait";
 import { DEFAULT_NATIVE_SYMBOL, WNATIVE_EXTENDED } from "@clmm/config";
 import { TransactionType } from "@clmm/state/pendingTransactionsStore";

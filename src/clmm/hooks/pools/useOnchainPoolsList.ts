@@ -1,7 +1,7 @@
 import { ADDRESS_ZERO, WNATIVE, Token, computePoolAddress } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
 import { Address } from "viem";
-import { useAccount, useChainId, useReadContracts } from "wagmi";
+import { useAccount, useReadContracts } from "wagmi";
 import { algebraPoolABI } from "@clmm/config/abis";
 import { TOKENS, DEFAULT_CHAIN_ID } from "@clmm/config";
 import { FormattedPool } from "./useFormattedPools";
@@ -14,7 +14,7 @@ import { usePositions } from "../positions/usePositions";
  * ones with liquidity > 0.
  */
 export function useOnchainPoolsList(tokenAddress?: Address): { pools: FormattedPool[]; isLoading: boolean } {
-    const chainId = DEFAULT_CHAIN_ID ?? DEFAULT_CHAIN_ID;
+    const chainId = DEFAULT_CHAIN_ID;
     const { address: account } = useAccount();
     const { positions } = usePositions();
 

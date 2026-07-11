@@ -29,7 +29,6 @@ import useSWR from "swr";
 import { Deposit, useSinglePositionLazyQuery } from "@clmm/graphql/generated/graphql";
 import { useReadSecurityRegistryGlobalStatus } from "@clmm/generated";
 import { DEFAULT_CHAIN_ID, INFO_GRAPH_URL } from "@clmm/config";
-import { useChainId } from "wagmi";
 
 const { ALMPositionCard } = ALMModule.components;
 const { useUserALMVaultsByPool } = ALMModule.hooks;

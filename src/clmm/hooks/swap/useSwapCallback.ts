@@ -1,6 +1,6 @@
 import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { Currency, Percent, Trade, TradeType } from "@cryptoalgebra/integral-sdk";
-import { useAccount, useChainId, usePublicClient } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { useSwapCallArguments } from "./useSwapCallArguments";
 import { useEffect, useMemo, useState } from "react";
 import { SwapCallbackState } from "@clmm/types/swap-state";

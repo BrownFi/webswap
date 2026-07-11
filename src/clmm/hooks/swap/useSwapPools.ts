@@ -2,7 +2,7 @@ import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { ADDRESS_ZERO, Currency, Pool, computeCustomPoolAddress, computePoolAddress } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
 import { useAllCurrencyCombinations } from "./useAllCurrencyCombinations";
-import { useChainId } from "wagmi";
+
 import { useMultiplePoolsQuery } from "@clmm/graphql/generated/graphql";
 import { useClients } from "../graphql/useClients";
 import { CUSTOM_POOL_DEPLOYER_ADDRESSES } from "@clmm/config/custom-pool-deployer";

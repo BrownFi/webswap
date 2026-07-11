@@ -3,7 +3,7 @@ import { algebraFactoryABI } from "@clmm/config/abis/algebraFactory";
 import { ALGEBRA_FACTORY } from "@clmm/config";
 import { useEffect, useState } from "react";
 import { Address, decodeEventLog, parseAbiItem } from "viem";
-import { useChainId, usePublicClient } from "wagmi";
+import { usePublicClient } from "wagmi";
 
 interface IPools {
     readonly token0: Address;

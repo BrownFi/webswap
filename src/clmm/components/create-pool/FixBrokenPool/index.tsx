@@ -1,7 +1,7 @@
 import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { useCallback, useMemo } from "react";
 import { Address } from "viem";
-import { useAccount, useBalance, useChainId } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 
 import { CurrencyAmount, Currency, TickMath, Percent } from "@cryptoalgebra/integral-sdk";
 

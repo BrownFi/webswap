@@ -5,7 +5,7 @@ import { useTokensState } from "@clmm/state/tokensStore";
 import { ADDRESS_ZERO } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
 import { Address } from "viem";
-import { useChainId } from "wagmi";
+
 import { useClients } from "../graphql/useClients";
 
 export function useAllTokens(showNativeToken: boolean = true) {

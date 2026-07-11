@@ -7,7 +7,7 @@ import { CurrencyAmount, NonfungiblePositionManager, Percent, Position } from "@
 import { NONFUNGIBLE_POSITION_MANAGER } from "@clmm/config/contract-addresses";
 import { useMemo } from "react";
 import { Address } from "viem";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount } from "wagmi";
 
 interface UseBurnCallbackParams {
     positionId: number;

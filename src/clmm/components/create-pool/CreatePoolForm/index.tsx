@@ -10,7 +10,7 @@ import {
     INITIAL_POOL_FEE,
 } from "@cryptoalgebra/integral-sdk";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount } from "wagmi";
 import { useDerivedMintInfo, useMintState } from "@clmm/state/mintStore";
 import Loader from "@clmm/components/common/Loader";
 import { PoolState, usePool } from "@clmm/hooks/pools/usePool";

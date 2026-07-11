@@ -2,7 +2,7 @@ import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { quoterV2ABI, QUOTER_V2 } from "@clmm/config";
 import { Currency, CurrencyAmount, encodeRouteToPath } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
-import { useChainId, useReadContracts } from "wagmi";
+import { useReadContracts } from "wagmi";
 import { useAllRoutes } from "./useAllRoutes";
 
 type QuoteResult = [

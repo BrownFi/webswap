@@ -5,7 +5,7 @@ import { wagmiConfig } from "@clmm/providers/WagmiProvider";
 import { ADDRESS_ZERO, computePoolAddress, Currency, Trade, TradeType } from "@cryptoalgebra/integral-sdk";
 import { SmartRouterTrade } from "@cryptoalgebra/router-custom-pools-and-sliding-fee";
 import { useEffect, useState } from "react";
-import { useChainId } from "wagmi";
+
 import { Address, maxUint128 } from "viem";
 
 export function useOverrideFee(trade: SmartRouterTrade<TradeType> | Trade<Currency, Currency, TradeType> | null | undefined) {

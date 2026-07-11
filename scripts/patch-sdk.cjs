@@ -100,20 +100,68 @@ function patchDts() {
 function main() {
     const bundles = walk(NODE_MODULES);
     let patched = 0;
+    let alreadyPatched = 0;
+    const drifted = [];
+
     for (const file of bundles) {
         const isMin = file.endsWith(".cjs.production.min.js");
         const content = fs.readFileSync(file, "utf8");
+
+        // Only integral-sdk constants bundles carry the BaseSepolia ChainId marker.
+        const chainMarker = isMin ? "BaseSepolia:84532" : "BaseSepolia: 84532";
+        if (!content.includes(chainMarker)) continue;
+
+        const hemiMarker = isMin ? "Hemi:" + HEMI_ID : "Hemi: " + HEMI_ID;
+        if (content.includes(hemiMarker)) {
+            alreadyPatched++;
+            continue;
+        }
+
         // ESM and dev CJS share the same unminified shape — patchDev handles both.
         const next = isMin ? patchMin(content) : patchDev(content);
-        if (next) {
-            fs.writeFileSync(file, next);
-            console.log(`[patch-sdk] patched ${path.relative(NODE_MODULES, file)}`);
-            patched++;
+
+        // A bundle carrying the BaseSepolia marker MUST come out with a matching
+        // Hemi entry for every BaseSepolia entry it contained. If the pinned
+        // replace literals drifted (upstream version bump / reformat), the
+        // replaces become no-ops and we'd otherwise ship ChainId.Hemi === undefined
+        // (breaking CREATE2 pool-address math) with a green build. Fail loudly instead.
+        // Init-code-hash and WNATIVE addresses are identical on BaseSepolia and
+        // Hemi, so we can only assert on the two entries that actually differ.
+        const expectations = [
+            { base: chainMarker, hemi: hemiMarker, label: "ChainId.Hemi" },
+            { base: "0xA064Bcb79F27213b6e39dC4a2E3b977e97489BC9", hemi: HEMI_POOL_DEPLOYER, label: "POOL_DEPLOYER[Hemi]" },
+        ];
+        const missing = expectations.filter((e) => content.includes(e.base) && (!next || !next.includes(e.hemi)));
+        if (missing.length) {
+            drifted.push(`${path.relative(NODE_MODULES, file)} (missing: ${missing.map((m) => m.label).join(", ")})`);
+            continue;
         }
+
+        fs.writeFileSync(file, next);
+        console.log(`[patch-sdk] patched ${path.relative(NODE_MODULES, file)}`);
+        patched++;
     }
     patchDts();
-    if (patched === 0) console.log("[patch-sdk] no bundles needed patching (already patched)");
-    else console.log(`[patch-sdk] patched ${patched} bundle(s)`);
+
+    if (drifted.length) {
+        throw new Error(
+            `[patch-sdk] FAILED to inject Hemi into ${drifted.length} SDK bundle(s):\n` +
+                drifted.map((f) => "  - " + f).join("\n") +
+                "\n\nThe @cryptoalgebra bundle shape changed — the replace patterns in " +
+                "scripts/patch-sdk.cjs no longer match. Update them to the new shape. " +
+                "(The @cryptoalgebra/* deps are pinned exact in package.json to prevent this; " +
+                "if you bumped one, re-verify the patch.)"
+        );
+    }
+    if (patched === 0 && alreadyPatched === 0) {
+        throw new Error(
+            "[patch-sdk] No @cryptoalgebra integral-sdk constants bundle found to patch. " +
+                "CLMM would ship with ChainId.Hemi undefined. Verify @cryptoalgebra/* deps are installed " +
+                "and that postinstall ran (not skipped via --ignore-scripts)."
+        );
+    }
+    if (patched === 0) console.log(`[patch-sdk] all ${alreadyPatched} bundle(s) already patched`);
+    else console.log(`[patch-sdk] patched ${patched} bundle(s)${alreadyPatched ? `, ${alreadyPatched} already patched` : ""}`);
 }
 
 main();

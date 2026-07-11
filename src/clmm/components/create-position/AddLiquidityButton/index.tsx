@@ -13,7 +13,7 @@ import { useAppKit, useAppKitNetwork } from "@reown/appkit/react";
 import JSBI from "jsbi";
 import { useEffect, useMemo } from "react";
 import { Address } from "viem";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount } from "wagmi";
 import { Button } from "@clmm/components/ui/button";
 import Loader from "@clmm/components/common/Loader";
 

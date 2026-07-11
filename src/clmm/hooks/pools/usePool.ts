@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { useCustomPoolDeployerQuery } from "@clmm/graphql/generated/graphql";
 import { useClients } from "../graphql/useClients";
 import { INFO_GRAPH_URL } from "@clmm/config";
-import { useChainId } from "wagmi";
+
 import { useSecurityRegistryConfigured } from "./useSecurityRegistryConfigured";
 import {
     useReadAlgebraPoolGlobalState,

@@ -4,7 +4,7 @@ import { ADDRESS_ZERO } from "@cryptoalgebra/integral-sdk";
 import { providers } from "ethers";
 import { useMemo } from "react";
 import type { Account, Chain, Client, Transport } from "viem";
-import { useChainId, useConnectorClient, usePublicClient } from "wagmi";
+import { useConnectorClient, usePublicClient } from "wagmi";
 
 export function clientToJsonRpcProvider(client: Client<Transport, Chain>) {
     const { chain, transport } = client;
@@ -19,17 +19,6 @@ export function clientToJsonRpcProvider(client: Client<Transport, Chain>) {
         ) as unknown as providers.JsonRpcProvider;
     return new providers.JsonRpcProvider(transport.url, network);
 }
-
-// /** Action to convert a viem Client to an ethers.js Provider. */
-// export function useEthersProvider() {
-//     const chainId = DEFAULT_CHAIN_ID;
-//     const client = usePublicClient({ chainId });
-
-//     return useMemo(() => {
-//         if (!client) throw new Error("No client");
-//         return clientToJsonRpcProvider(client);
-//     }, [client?.key]);
-// }
 
 function clientToWeb3Provider(client: Client<Transport, Chain, Account>) {
     const { chain, transport } = client;

@@ -4,7 +4,6 @@ import { useReadNonfungiblePositionManagerTokenUri } from "@clmm/generated";
 import { ChainId } from "@cryptoalgebra/integral-sdk";
 import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { useChainId } from "wagmi";
 
 interface PositionNFTProps {
     positionId: number;

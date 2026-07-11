@@ -4,7 +4,6 @@ import { Address } from "viem";
 import { useClients } from "../graphql/useClients";
 import { useReadAlgebraPoolLiquidity } from "@clmm/generated";
 import { DEFAULT_CHAIN_ID, INFO_GRAPH_URL } from "@clmm/config";
-import { useChainId } from "wagmi";
 
 export function usePositionAPR(poolId: Address | undefined, position: Position | undefined, positionId?: string | undefined) {
     const { infoClient } = useClients();

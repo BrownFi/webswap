@@ -8,7 +8,7 @@ import { useAllTokens } from "@clmm/hooks/tokens/useAllTokens";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FixedSizeList } from "react-window";
 import { Address, isAddress } from "viem";
-import { useAccount, useBalance, useChainId } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import CurrencyLogo from "../CurrencyLogo";
 import { ADDRESS_ZERO, Currency, ExtendedNative, Token } from "@cryptoalgebra/integral-sdk";
 import { useTokensState } from "@clmm/state/tokensStore";

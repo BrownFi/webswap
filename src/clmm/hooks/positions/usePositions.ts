@@ -2,7 +2,7 @@ import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { nonfungiblePositionManagerABI, NONFUNGIBLE_POSITION_MANAGER } from "@clmm/config";
 import { ADDRESS_ZERO, Token, computeCustomPoolAddress, computePoolAddress } from "@cryptoalgebra/integral-sdk";
 import { useMemo } from "react";
-import { useAccount, useChainId, useReadContracts } from "wagmi";
+import { useAccount, useReadContracts } from "wagmi";
 import { Address } from "viem";
 import { useReadNonfungiblePositionManagerBalanceOf } from "@clmm/generated";
 
