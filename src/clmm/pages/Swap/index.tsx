@@ -19,8 +19,12 @@ const SwapPage = ({ type }: SwapPageProps) => {
                 <SwapTypeSelector isLimitOrder={isLimitOrder} />
             </div>
             <div className="flex justify-center w-full mb-3">
-                <div className="flex flex-col gap-2 w-full max-w-md">
-                    <div className="flex flex-col gap-1.5 w-full bg-dark-gradient border border-card-border p-2 rounded-xl">
+                <div className="flex flex-col gap-2 w-full max-w-[520px]">
+                    {/* Card matches webswap's AppBody: #1E1915 bg, 1px #2F2823 border, 24px radius/padding */}
+                    <div
+                        className="flex flex-col gap-2 w-full p-4 sm:p-6 rounded-2xl"
+                        style={{ background: "#1E1915", border: "1px solid #2F2823" }}
+                    >
                         <SwapPair derivedSwap={derivedSwap} />
                         {isLimitOrder ? <LimitOrder derivedSwap={derivedSwap} /> : <SwapParams derivedSwap={derivedSwap} />}
                         {!isLimitOrder && <SwapButton derivedSwap={derivedSwap} />}
