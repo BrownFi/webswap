@@ -3,7 +3,7 @@ import TokenSelectorModal from "@clmm/components/modals/TokenSelectorModal";
 import { Input } from "@clmm/components/ui/input";
 import { cn, formatAmount } from "@clmm/utils";
 import { Currency, Percent } from "@cryptoalgebra/integral-sdk";
-import { ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Address } from "viem";
 import { useAccount, useBalance } from "wagmi";
@@ -13,6 +13,7 @@ interface TokenSwapCardProps {
     handleValueChange?: (value: string) => void;
     handleMaxValue?: () => void;
     value: string;
+    label?: string;
     currency: Currency | null | undefined;
     otherCurrency: Currency | null | undefined;
     usdValue?: number | null;
@@ -25,11 +26,17 @@ interface TokenSwapCardProps {
     disabled?: boolean;
 }
 
+/* Colors mirror webswap's CurrencyInputPanel so the swap looks like one product.
+ * Applied inline to match exact hex without a Tailwind CSS regen. */
+const PANEL = { bg: "#2F2823", bgFocus: "#120F0D", border: "#493E35", borderFocus: "#C47736" };
+const COPPER = "#C47736";
+
 const TokenCard = ({
     handleTokenSelection,
     handleValueChange,
     handleMaxValue,
     value,
+    label,
     currency,
     otherCurrency,
     usdValue,
@@ -41,6 +48,7 @@ const TokenCard = ({
     disabled,
 }: TokenSwapCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [focused, setFocused] = useState(false);
 
     const { address: account } = useAccount();
 
@@ -51,15 +59,12 @@ const TokenCard = ({
 
     const balanceString = useMemo(() => {
         if (isBalanceLoading) return "Loading...";
-
         return formatAmount(balance?.formatted || "0", 6);
     }, [balance, isBalanceLoading]);
 
     const handleInput = (value: string) => {
         let _value = value;
-        if (value === ".") {
-            _value = "0.";
-        }
+        if (value === ".") _value = "0.";
         handleValueChange?.(_value);
     };
 
@@ -80,17 +85,13 @@ const TokenCard = ({
             const formattedUsdValue = usdValue ? `≈ $${formatAmount(usdValue, 4)}` : "N/A";
 
             let formattedPercentDiff: string | undefined = undefined;
-
             if (percentDifference !== undefined && Number.isFinite(percentDifference)) {
-                if (percentDifference > 0) {
-                    formattedPercentDiff = `(+${percentDifference.toFixed(2)}%)`;
-                } else if (percentDifference > -100 && percentDifference < 100) {
-                    formattedPercentDiff = `(${percentDifference.toFixed(2)}%)`;
-                }
+                if (percentDifference > 0) formattedPercentDiff = `(+${percentDifference.toFixed(2)}%)`;
+                else if (percentDifference > -100 && percentDifference < 100) formattedPercentDiff = `(${percentDifference.toFixed(2)}%)`;
             }
 
-            const newElement = (
-                <p className="text-text-200">
+            setPrevElement(
+                <p className="text-text-300">
                     {formattedUsdValue}
                     {percentDifference !== undefined && formattedPercentDiff && (
                         <span
@@ -111,13 +112,10 @@ const TokenCard = ({
                     )}
                 </p>
             );
-
-            setPrevElement(newElement);
         }
 
         if (value === "" && value === refValue.current) {
-            const emptyElement = <p className="text-text-200">≈ $0.00</p>;
-            setPrevElement(emptyElement);
+            setPrevElement(<p className="text-text-300">≈ $0.00</p>);
         }
     }, [percentDifference, usdValue, value]);
 
@@ -130,8 +128,53 @@ const TokenCard = ({
     );
 
     return (
-        <div className="flex w-full px-4 py-4 bg-card-dark border border-card-border rounded-lg">
-            <div className="flex flex-col gap-2 min-w-fit">
+        <div
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            className="flex flex-col gap-3 w-full p-5 max-sm:p-4 transition-colors"
+            style={{
+                background: focused ? PANEL.bgFocus : PANEL.bg,
+                border: `2px solid ${focused ? PANEL.borderFocus : PANEL.border}`,
+                borderRadius: "18px",
+            }}
+        >
+            {/* Label + balance row */}
+            <div className="flex items-center justify-between text-sm">
+                <span style={{ color: "#CFC7C1" }} className="font-medium">
+                    {label}
+                </span>
+                {currency && showBalance && (
+                    <div className="flex items-center gap-2 whitespace-nowrap text-text-300">
+                        <span>Balance: {balanceString}</span>
+                        {showMaxButton && (
+                            <button
+                                className="font-semibold hover:opacity-80"
+                                style={{ color: COPPER }}
+                                onClick={handleMaxValue}
+                            >
+                                MAX
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Amount + token pill row */}
+            <div className="flex items-center justify-between gap-3">
+                <Input
+                    disabled={disabled}
+                    type={"text"}
+                    value={value || refValue.current}
+                    id={`amount-${currency?.symbol}`}
+                    onUserInput={(v) => handleInput(v)}
+                    className={cn(
+                        "border-none text-3xl max-sm:text-2xl font-semibold w-full p-0 bg-transparent ring-0! disabled:cursor-default text-text-100 placeholder:text-text-400",
+                        isLoading ? "animate-pulse" : ""
+                    )}
+                    placeholder={"0.0"}
+                    maxDecimals={currency?.decimals}
+                />
+
                 <TokenSelectorModal
                     showNativeToken={showNativeToken}
                     onSelect={handleTokenSelect}
@@ -140,70 +183,25 @@ const TokenCard = ({
                     otherCurrency={otherCurrency}
                 >
                     <button
-                        className="group flex items-center gap-4 py-1 w-fit bg-card rounded-lg text-left"
+                        className="group flex items-center gap-2 shrink-0 px-3 py-2 hover:opacity-90 transition-opacity"
+                        style={{ background: "#3D342B", border: "1px solid #807266", borderRadius: "10px" }}
                         onClick={() => setIsOpen(true)}
                     >
-                        <div className="relative w-12 h-12">
-                            <CurrencyLogo currency={currency} size={48} />
-                            {currency && (
-                                <div className="absolute top-0 left-0 w-full h-full rounded-full bg-linear-to-b from-white/0 to-white/30 border border-card-dark shadow-primary/40 group-hover:border-primary group-hover:shadow-lg duration-100" />
-                            )}
-                        </div>
-
-                        <div>
-                            <div className="text-sm text-text-200">{currency ? currency.name : ""}</div>
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-lg">{currency ? currency.symbol : "Select a token"}</span>
-                                <ChevronRight size={16} className="duration-100 group-hover:rotate-90" />
-                            </div>
-                        </div>
+                        {currency ? (
+                            <>
+                                <CurrencyLogo currency={currency} size={24} />
+                                <span className="font-semibold text-base text-text-100">{currency.symbol}</span>
+                            </>
+                        ) : (
+                            <span className="font-semibold text-base text-text-100 pl-1">Select token</span>
+                        )}
+                        <ChevronDown size={18} className="text-text-200 group-hover:text-text-100" />
                     </button>
                 </TokenSelectorModal>
-                {currency && (
-                    <div className={"flex text-sm whitespace-nowrap"}>
-                        {showBalance && (
-                            <div className="text-text-200">
-                                <span className="font-semibold">Balance: </span>
-                                <span>{balanceString}</span>
-                            </div>
-                        )}
-                        {showMaxButton && (
-                            <button
-                                className="ml-2 text-primary-50 underline underline-offset-4 hover:text-primary-50/70"
-                                onClick={handleMaxValue}
-                            >
-                                Max
-                            </button>
-                        )}
-                    </div>
-                )}
             </div>
 
-            <div className="flex flex-col items-end w-full gap-2 relative">
-                <Input
-                    disabled={disabled}
-                    type={"text"}
-                    value={value || refValue.current}
-                    id={`amount-${currency?.symbol}`}
-                    onUserInput={(v) => handleInput(v)}
-                    className={cn(
-                        `text-right border-none text-xl font-bold w-9/12 p-0 mt-2 disabled:cursor-default disabled:text-text/80 ring-0!`,
-                        isLoading ? "animate-pulse" : ""
-                    )}
-                    placeholder={"0.0"}
-                    maxDecimals={currency?.decimals}
-                />
-                {/* {!isLoading ? <Skeleton className="absolute left-2 top-1 z-10 h-8 w-full" /> : null} */}
-                {/* {!isLoading ? <Skeleton className="absolute bottom-0 left-2 z-10 h-6 w-full" /> : null} */}
-                <div
-                    className={cn(
-                        "relative bottom-0 ml-auto mt-auto flex h-6 min-w-max items-center gap-1 text-sm text-text-200",
-                        isLoading ? "animate-pulse" : ""
-                    )}
-                >
-                    {prevElement}
-                </div>
-            </div>
+            {/* USD value */}
+            <div className={cn("h-5 text-sm", isLoading ? "animate-pulse" : "")}>{prevElement}</div>
         </div>
     );
 };

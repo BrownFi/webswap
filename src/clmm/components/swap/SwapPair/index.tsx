@@ -5,7 +5,7 @@ import { SwapField, SwapFieldType } from "@clmm/types/swap-field";
 import { Currency, CurrencyAmount, maxAmountSpend, ZERO } from "@cryptoalgebra/integral-sdk";
 import { useCallback, useEffect, useMemo } from "react";
 import TokenCard from "../TokenCard";
-import { ChevronsUpDownIcon } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import useWrapCallback, { WrapType } from "@clmm/hooks/swap/useWrapCallback";
 import { TOKENS } from "@clmm/config";
 import { useChainId } from "wagmi";
@@ -105,8 +105,9 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     }, [chainId, handleOutputSelect]);
 
     return (
-        <div className="flex flex-col gap-1 relative ">
+        <div className="flex flex-col gap-1.5 relative">
             <TokenCard
+                label="You Pay"
                 value={formattedAmounts[SwapField.INPUT]}
                 currency={baseCurrency}
                 otherCurrency={quoteCurrency}
@@ -119,12 +120,15 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
                 isLoading={independentField === SwapField.OUTPUT && isTradeLoading}
             />
             <button
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1.5 bg-card-dark w-fit rounded-full border-[5px] border-card-border hover:bg-card-hover duration-200"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2.5 w-fit rounded-full hover:opacity-90 duration-200 z-10"
+                style={{ background: "#C47736", border: "4px solid #12100B" }}
                 onClick={onSwitchTokens}
+                aria-label="Switch tokens"
             >
-                <ChevronsUpDownIcon size={16} />
+                <ArrowUpDown size={16} className="text-white" />
             </button>
             <TokenCard
+                label="Your Receive"
                 value={formattedAmounts[SwapField.OUTPUT]}
                 currency={quoteCurrency}
                 otherCurrency={baseCurrency}
