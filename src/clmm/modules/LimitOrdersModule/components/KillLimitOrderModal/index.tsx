@@ -64,7 +64,7 @@ export const KillLimitOrderModal = ({ pool, ticks, liquidity, zeroToOne, owner, 
                     Withdraw
                 </Button>
             </DialogTrigger>
-            <DialogContent className="min-w-[500px] rounded-xl! bg-card" style={{ borderRadius: "32px" }}>
+            <DialogContent className="min-w-[500px] !rounded-xl bg-card" style={{ borderRadius: "32px" }}>
                 <DialogHeader>
                     <DialogTitle className="font-bold select-none">Withdraw limit order liquidity</DialogTitle>
                 </DialogHeader>

@@ -77,7 +77,7 @@ export const ClaimVotingRewardsModal = ({ rewards, tokenId, refetch }: IClaimVot
                     View ${formatAmount(totalRewardsUSD, 2)}
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[500px] rounded-xl! bg-card">
+            <DialogContent className="max-w-[500px] !rounded-xl bg-card">
                 <DialogHeader>
                     <DialogTitle className="font-bold select-none mt-2 max-md:mx-auto">Available Voting Rewards</DialogTitle>
                 </DialogHeader>

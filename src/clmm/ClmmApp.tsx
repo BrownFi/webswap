@@ -10,10 +10,9 @@ import ApolloProvider from './providers/ApolloProvider'
 import StoreCleaner from './providers/StoreCleaner'
 import Layout from './components/common/Layout'
 import { SwapPageView } from './pages/Swap/types'
-// Pre-compiled + .clmm-root-scoped Tailwind 4 CSS. Imported raw to bypass
-// webswap's Tailwind-3 PostCSS pipeline (which can't parse TW4 @layer output),
-// then injected as a scoped <style> only while CLMM is mounted.
-import clmmCss from './clmm.generated.css?raw'
+// CLMM's Tailwind 3 stylesheet, compiled in-tree by webswap's PostCSS and scoped
+// under .clmm-root (see src/clmm/clmm.css + postcss.config.js).
+import './clmm.css'
 
 const HEMI_CHAIN_ID = 43111
 
@@ -65,7 +64,6 @@ function HemiGate({ children }: { children: React.ReactNode }) {
 export default function ClmmApp() {
   return (
     <ApolloProvider>
-      <style dangerouslySetInnerHTML={{ __html: clmmCss }} />
       <div className="clmm-root w-full" style={{ minWidth: 0, maxWidth: '100%', display: 'block' }}>
         <HemiGate>
           <Layout>

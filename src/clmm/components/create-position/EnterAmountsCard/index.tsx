@@ -90,7 +90,7 @@ const EnterAmountCard = ({ currency, value, handleChange, valueUsd, field }: Ent
                         value={value}
                         id={`amount-${displayCurrency?.symbol}`}
                         onUserInput={(v) => handleInput(v)}
-                        className={`text-right border-none text-xl font-bold w-9/12 p-0 ring-0!`}
+                        className={`text-right border-none text-xl font-bold w-9/12 p-0 !ring-0`}
                         placeholder={"0.0"}
                         maxDecimals={displayCurrency?.decimals}
                     />

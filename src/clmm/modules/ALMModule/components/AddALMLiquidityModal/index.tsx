@@ -25,7 +25,7 @@ export const AddALMLiquidityModal = ({ vault }: AddALMLiquidityModalProps) => {
                     Add liquidity
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[500px] rounded-xl! bg-card" style={{ borderRadius: "32px" }}>
+            <DialogContent className="max-w-[500px] !rounded-xl bg-card" style={{ borderRadius: "32px" }}>
                 <DialogHeader>
                     <DialogTitle className="font-bold select-none mt-2 max-md:mx-auto">Enter Amounts</DialogTitle>
                 </DialogHeader>

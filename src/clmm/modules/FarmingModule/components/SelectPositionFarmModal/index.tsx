@@ -82,7 +82,7 @@ export function SelectPositionFarmModal({ farming, positionsData, isHarvestLoadi
                     Deposit
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[500px] rounded-xl! bg-card">
+            <DialogContent className="max-w-[500px] !rounded-xl bg-card">
                 <DialogHeader>
                     <DialogTitle className="font-bold select-none my-2 max-md:mx-auto">Select Position</DialogTitle>
                 </DialogHeader>

@@ -79,7 +79,7 @@ export const CreateLockModal = ({ children }: { children: React.ReactNode }) => 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="max-w-[500px] rounded-xl! bg-card">
+            <DialogContent className="max-w-[500px] !rounded-xl bg-card">
                 <DialogHeader>
                     <DialogTitle className="font-bold select-none mt-2 max-md:mx-auto">Create New Lock</DialogTitle>
                 </DialogHeader>

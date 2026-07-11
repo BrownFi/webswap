@@ -126,7 +126,7 @@ const SlippageTolerance = () => {
                             setSlippageInput("");
                             setSlippageError(false);
                         }}
-                        className={`text-left border-none text-md font-semibold bg-card-hover rounded-l-lg rounded-r-none w-full min-w-[70px] ring-0!`}
+                        className={`text-left border-none text-md font-semibold bg-card-hover rounded-l-lg rounded-r-none w-full min-w-[70px] !ring-0`}
                         placeholder={"0.0"}
                     />
                     <div className="bg-card-hover text-sm p-2 pt-2.5 rounded-r-lg select-none">%</div>
@@ -193,7 +193,7 @@ const TransactionDeadline = () => {
                         setDeadlineError(false);
                     }}
                     color={deadlineError ? "red" : ""}
-                    className={`text-left border-none text-md font-semibold bg-card-hover rounded-l-lg rounded-r-none w-full ring-0!`}
+                    className={`text-left border-none text-md font-semibold bg-card-hover rounded-l-lg rounded-r-none w-full !ring-0`}
                 />
                 <div className="bg-card-hover text-sm p-2 pt-2.5 rounded-r-lg select-none">minutes</div>
             </div>

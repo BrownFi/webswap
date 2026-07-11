@@ -168,7 +168,7 @@ const TokenCard = ({
                     id={`amount-${currency?.symbol}`}
                     onUserInput={(v) => handleInput(v)}
                     className={cn(
-                        "border-none text-3xl max-sm:text-2xl font-semibold w-full p-0 bg-transparent ring-0! disabled:cursor-default text-text-100 placeholder:text-text-400",
+                        "border-none text-3xl max-sm:text-2xl font-semibold w-full p-0 bg-transparent !ring-0 disabled:cursor-default text-text-100 placeholder:text-text-400",
                         isLoading ? "animate-pulse" : ""
                     )}
                     placeholder={"0.0"}

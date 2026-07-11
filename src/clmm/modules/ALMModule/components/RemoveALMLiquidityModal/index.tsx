@@ -121,7 +121,7 @@ export const RemoveALMLiquidityModal = ({ userVault, poolAddress, enableActions 
                     Remove Liquidity
                 </Button>
             </DialogTrigger>
-            <DialogContent className="md:min-w-[500px] rounded-xl! bg-card" style={{ borderRadius: "32px" }}>
+            <DialogContent className="md:min-w-[500px] !rounded-xl bg-card" style={{ borderRadius: "32px" }}>
                 <DialogHeader>
                     <DialogTitle className="font-bold select-none">Remove Liquidity</DialogTitle>
                 </DialogHeader>

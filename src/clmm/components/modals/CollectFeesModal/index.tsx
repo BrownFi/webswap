@@ -76,7 +76,7 @@ const CollectFeesModal = ({ mintInfo, positionId, amount0, amount1, amount0Usd, 
                     {isLoading || isPending ? <Loader /> : "Collect fees"}
                 </Button>
             </DialogTrigger>
-            <DialogContent className="md:min-w-[500px] rounded-xl! bg-card" style={{ borderRadius: "32px" }}>
+            <DialogContent className="md:min-w-[500px] !rounded-xl bg-card" style={{ borderRadius: "32px" }}>
                 <DialogHeader>
                     <DialogTitle className="font-bold select-none">Collect Fees</DialogTitle>
                 </DialogHeader>
