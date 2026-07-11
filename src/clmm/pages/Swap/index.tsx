@@ -1,6 +1,7 @@
 import SwapPair from "@clmm/components/swap/SwapPair";
 import SwapButton from "@clmm/components/swap/SwapButton";
 import SwapParams from "@clmm/components/swap/SwapParams";
+import Settings from "@clmm/components/common/Settings";
 import PageContainer from "@clmm/components/common/PageContainer";
 import { useDerivedSwapInfo } from "@clmm/state/swapStore.ts";
 import { SwapPageProps, SwapPageView } from "./types";
@@ -15,7 +16,7 @@ const SwapPage = ({ type }: SwapPageProps) => {
 
     return (
         <PageContainer>
-            <div className="flex w-fit mx-auto mb-8">
+            <div className="flex w-fit mx-auto">
                 <SwapTypeSelector isLimitOrder={isLimitOrder} />
             </div>
             <div className="flex justify-center w-full mb-3">
@@ -25,6 +26,16 @@ const SwapPage = ({ type }: SwapPageProps) => {
                         className="flex flex-col gap-2 w-full p-4 sm:p-6 rounded-2xl"
                         style={{ background: "#1E1915", border: "1px solid #2F2823" }}
                     >
+                        {/* Swap header — "Swap" title + settings gear, like webswap's SwapHeader */}
+                        <div className="flex items-center justify-between mb-2">
+                            <h2
+                                className="text-3xl font-semibold leading-tight"
+                                style={{ color: "#FBFBFD", letterSpacing: "-0.02em" }}
+                            >
+                                Swap
+                            </h2>
+                            <Settings />
+                        </div>
                         <SwapPair derivedSwap={derivedSwap} />
                         {isLimitOrder ? <LimitOrder derivedSwap={derivedSwap} /> : <SwapParams derivedSwap={derivedSwap} />}
                         {!isLimitOrder && <SwapButton derivedSwap={derivedSwap} />}

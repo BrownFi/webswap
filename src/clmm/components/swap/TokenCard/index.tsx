@@ -184,7 +184,7 @@ const TokenCard = ({
                 >
                     <button
                         className="group flex items-center gap-2 shrink-0 px-3 py-2 hover:opacity-90 transition-opacity"
-                        style={{ background: "#3D342B", border: "1px solid #807266", borderRadius: "10px" }}
+                        style={{ background: "#2F2823", border: "1px solid #807266", borderRadius: "6px" }}
                         onClick={() => setIsOpen(true)}
                     >
                         {currency ? (
