@@ -30,14 +30,11 @@ const Portfolio = lazy(() => import('./Portfolio'))
 // CLMM (Algebra fork) sub-app — isolated under src/clmm, mounted at /clmm/*.
 const ClmmApp = lazy(() => import('@clmm/ClmmApp'))
 
-const BodyWrapper = styled.div<{ $noPad?: boolean }>`
+const BodyWrapper = styled.div<{ $noPad?: boolean; $clmm?: boolean }>`
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 100%;
-  /* min-width:0 stops this flex item from growing to wide content (e.g. the CLMM
-     pool table) and overflowing the viewport on mobile. */
-  min-width: 0;
   padding-top: 120px;
   align-items: center;
   flex: 1;
@@ -61,6 +58,11 @@ const BodyWrapper = styled.div<{ $noPad?: boolean }>`
 
   /* CLMM renders its own header/footer chrome; drop webswap's body padding there. */
   ${({ $noPad }) => $noPad && `padding: 0 !important;`}
+
+  /* Only CLMM's wide pool table needs min-width:0 to avoid overflowing on mobile.
+     Applying it to every webswap page (it wraps all of them) shifted their layout
+     — notably Pool Detail — so scope it to the /clmm route. */
+  ${({ $clmm }) => $clmm && `min-width: 0;`}
 `
 
 
@@ -79,13 +81,14 @@ function ChainRouteSync() {
 }
 
 export default function App() {
+  const onClmm = useLocation().pathname.startsWith('/clmm')
   return (
     <Suspense fallback={null}>
       <ChainRouteSync />
       <GoogleAnalyticsReporter />
       <DarkModeQueryParamReader />
       <StaticScreen>
-        <BodyWrapper>
+        <BodyWrapper $clmm={onClmm}>
           <Popups />
           <Routes>
             <Route
