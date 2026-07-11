@@ -3,10 +3,33 @@ import { Input } from "@clmm/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@clmm/components/ui/popover";
 import { Separator } from "@clmm/components/ui/separator";
 import { Switch } from "@clmm/components/ui/switch";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@clmm/components/ui/hover-card";
 import { useUserState } from "@clmm/state/userStore";
 import { Percent } from "@cryptoalgebra/integral-sdk";
-import { SettingsIcon } from "lucide-react";
+import { Info, SettingsIcon } from "lucide-react";
 import { useState } from "react";
+
+/* Info tooltip shown next to each setting label. */
+const InfoTip = ({ text }: { text: string }) => (
+    <HoverCard openDelay={80} closeDelay={40}>
+        <HoverCardTrigger asChild>
+            <span className="inline-flex text-text-300 hover:text-text-100 transition-colors cursor-help">
+                <Info size={14} />
+            </span>
+        </HoverCardTrigger>
+        <HoverCardContent className="max-w-[240px] p-3 text-sm font-normal leading-snug text-text-200">
+            {text}
+        </HoverCardContent>
+    </HoverCard>
+);
+
+/* Label + info tooltip row used by every setting. */
+const SettingLabel = ({ children, tip }: { children: React.ReactNode; tip: string }) => (
+    <div className="flex items-center gap-1.5 text-sm font-semibold text-text-100">
+        <span>{children}</span>
+        <InfoTip text={tip} />
+    </div>
+);
 
 const Settings = () => {
     return (
@@ -18,10 +41,12 @@ const Settings = () => {
             </PopoverTrigger>
             <PopoverContent
                 align={"end"}
-                className="flex flex-col gap-4 p-6 w-full max-w-[360px] bg-card-dark shadow-popover rounded-xl border border-card-border"
+                sideOffset={8}
+                className="flex flex-col gap-5 p-5 w-full max-w-[340px] rounded-2xl"
+                style={{ background: "#1E1915", border: "1px solid #2F2823", boxShadow: "0 12px 32px rgba(0,0,0,0.5)" }}
             >
-                <div className="text-md font-bold">Transaction Settings</div>
-                <Separator orientation={"horizontal"} className="bg-border" />
+                <div className="text-base font-bold text-text-100">Transaction Settings</div>
+                <Separator orientation={"horizontal"} style={{ background: "#2F2823" }} />
                 <SlippageTolerance />
                 <TransactionDeadline />
                 <Multihop />
@@ -69,8 +94,10 @@ const SlippageTolerance = () => {
 
     return (
         <div className="flex flex-col gap-2">
-            <div className="text-md font-semibold">Slippage Tolerance</div>
-            <div className="grid grid-cols-4 gap-4">
+            <SettingLabel tip="Your transaction reverts if the price moves against you by more than this percentage between signing and execution.">
+                Slippage Tolerance
+            </SettingLabel>
+            <div className="grid grid-cols-4 gap-3">
                 <Button variant={slippageString === "auto" ? "iconActive" : "outline"} size={"sm"} onClick={() => parseSlippageInput("")}>
                     Auto
                 </Button>
@@ -153,7 +180,9 @@ const TransactionDeadline = () => {
 
     return (
         <div className="flex flex-col gap-2">
-            <div className="text-md font-semibold">Transaction Deadline</div>
+            <SettingLabel tip="Your transaction reverts if it stays pending longer than this many minutes.">
+                Transaction Deadline
+            </SettingLabel>
             <div className="flex">
                 <Input
                     placeholder={"30"}
@@ -178,12 +207,11 @@ const ExpertMode = () => {
     } = useUserState();
 
     return (
-        <div className="flex flex-col gap-2 max-w-[332px]">
-            <div className="flex justify-between items-center gap-2 text-md font-semibold">
-                <label htmlFor="expert-mode">Expert mode</label>
-                <Switch id="expert-mode" checked={isExpertMode} onCheckedChange={setIsExpertMode} />
-            </div>
-            <p className="whitespace-break-spaces">Allows high slippage trades. Use at your own risk.</p>
+        <div className="flex justify-between items-center gap-2">
+            <SettingLabel tip="Bypasses the swap confirmation and allows high-slippage trades. Use at your own risk.">
+                Expert mode
+            </SettingLabel>
+            <Switch id="expert-mode" checked={isExpertMode} onCheckedChange={setIsExpertMode} />
         </div>
     );
 };
@@ -195,12 +223,11 @@ const Multihop = () => {
     } = useUserState();
 
     return (
-        <div className="flex flex-col gap-2 max-w-[332px]">
-            <div className="flex justify-between items-center gap-2 text-md font-semibold">
-                <label htmlFor="multihop">Multihop</label>
-                <Switch id="multihop" checked={isMultihop} onCheckedChange={setIsMultihop} />
-            </div>
-            <p className="whitespace-break-spaces">Optimized trades across multiple liquidity pools.</p>
+        <div className="flex justify-between items-center gap-2">
+            <SettingLabel tip="Route trades through multiple liquidity pools to find a better price.">
+                Multihop
+            </SettingLabel>
+            <Switch id="multihop" checked={isMultihop} onCheckedChange={setIsMultihop} />
         </div>
     );
 };
@@ -212,12 +239,11 @@ const SplitTrade = () => {
     } = useUserState();
 
     return (
-        <div className="flex flex-col gap-2 max-w-[332px]">
-            <div className="flex justify-between items-center gap-2 text-md font-semibold">
-                <label htmlFor="split">Split trade</label>
-                <Switch id="split" checked={isSplit} onCheckedChange={setIsSplit} />
-            </div>
-            <p className="whitespace-break-spaces">Split trades across identical pools with different plugins.</p>
+        <div className="flex justify-between items-center gap-2">
+            <SettingLabel tip="Split a single trade across identical pools that use different plugins.">
+                Split trade
+            </SettingLabel>
+            <Switch id="split" checked={isSplit} onCheckedChange={setIsSplit} />
         </div>
     );
 };

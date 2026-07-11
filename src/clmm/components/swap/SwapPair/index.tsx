@@ -105,7 +105,7 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     }, [chainId, handleOutputSelect]);
 
     return (
-        <div className="flex flex-col gap-1.5 relative">
+        <div className="flex flex-col gap-1.5">
             <TokenCard
                 label="You Pay"
                 value={formattedAmounts[SwapField.INPUT]}
@@ -119,14 +119,18 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
                 showBalance={true}
                 isLoading={independentField === SwapField.OUTPUT && isTradeLoading}
             />
-            <button
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-full hover:opacity-90 duration-200 z-10"
-                style={{ background: "#C47736" }}
-                onClick={onSwitchTokens}
-                aria-label="Switch tokens"
-            >
-                <ArrowUpDown size={18} className="text-white" />
-            </button>
+            {/* Zero-height centered row → the arrow sits dead-center in the gap
+                between the two panels regardless of their heights. */}
+            <div className="relative flex items-center justify-center z-10" style={{ height: 0 }}>
+                <button
+                    className="flex items-center justify-center w-11 h-11 rounded-full hover:opacity-90 duration-200"
+                    style={{ background: "#C47736" }}
+                    onClick={onSwitchTokens}
+                    aria-label="Switch tokens"
+                >
+                    <ArrowUpDown size={18} className="text-white" />
+                </button>
+            </div>
             <TokenCard
                 label="Your Receive"
                 value={formattedAmounts[SwapField.OUTPUT]}
