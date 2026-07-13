@@ -46,6 +46,8 @@ function HeaderWrapper({ children }: PropsWithChildren) {
 }
 
 const StaticScreen = ({ children }: PropsWithChildren) => {
+  // webswap's header/footer render on every route, including /clmm, so the
+  // CLMM section shares the same navbar (CLMM's own Layout chrome is stripped).
   return (
     <AppWrapper className="relative">
       <div

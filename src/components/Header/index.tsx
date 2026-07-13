@@ -4,6 +4,8 @@ import Logo from 'assets/svg/logo.svg'
 
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useState } from 'react'
+import { useSelector } from 'react-redux'
+import { chainSelector } from 'state/chainSlice'
 import { ChainModal } from './CustomChainSelect'
 import { AccountModal } from './CustomAccountDisplay'
 import { useSwitchChain } from 'wagmi'
@@ -148,6 +150,108 @@ function StyledNavLink({
   )
 }
 
+const HEMI_CHAIN_ID = 43111
+
+// webswap's product pages (Swap/Pool/Portfolio) don't run on Hemi — Hemi is
+// CLMM-only. Grey these out on Hemi (symmetric to CLMM being greyed off-Hemi);
+// clicking switches the wallet back to the last webswap chain.
+function WebswapNavItem({
+  id,
+  to,
+  end,
+  active,
+  children,
+}: {
+  id: string
+  to: string
+  end?: boolean
+  active?: boolean
+  children: React.ReactNode
+}) {
+  const { chainId } = useAccount()
+  const lastChain = useSelector(chainSelector)
+  const onHemi = chainId === HEMI_CHAIN_ID
+
+  if (onHemi) {
+    return (
+      <span
+        id={id}
+        aria-disabled="true"
+        title={lastChain?.name ? `Available on ${lastChain.name} — switch network to use this` : 'Switch network to use this'}
+        className="flex items-center justify-center select-none no-underline text-[16px] font-medium py-2 px-6 rounded-md"
+        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px', color: '#FFFFFF', opacity: 0.3, cursor: 'not-allowed' }}
+      >
+        {children}
+      </span>
+    )
+  }
+  return (
+    <StyledNavLink id={id} to={to} end={end} className={active ? 'active' : ''}>
+      {children}
+    </StyledNavLink>
+  )
+}
+
+// CLMM lives on Hemi only. On Hemi it's a dropdown (CLMM Swap / CLMM Pool) in the
+// main navbar; off Hemi it's greyed and clicking switches the network there.
+function ClmmNavItem() {
+  const { chainId } = useAccount()
+  const location = useLocation()
+  const [open, setOpen] = useState(false)
+  const onHemi = chainId === HEMI_CHAIN_ID
+  const isActive = location.pathname.startsWith('/clmm')
+
+  if (!onHemi) {
+    return (
+      <span
+        id="clmm-nav-link"
+        aria-disabled="true"
+        title="Available on Hemi — switch network to use CLMM"
+        className="flex items-center justify-center select-none no-underline text-[16px] font-medium py-2 px-6 rounded-md"
+        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px', color: '#FFFFFF', opacity: 0.3, cursor: 'not-allowed' }}
+      >
+        CLMM
+      </span>
+    )
+  }
+
+  const itemCls = ({ isActive: active }: { isActive: boolean }) =>
+    `block w-full text-left px-4 py-2.5 text-[15px] font-medium no-underline whitespace-nowrap
+     transition-colors ${active ? 'text-[#D59967]' : 'text-white hover:text-[#D59967]'}`
+
+  return (
+    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        id="clmm-nav-link"
+        type="button"
+        className={`flex items-center gap-1 cursor-pointer bg-transparent border-none py-2 px-6 rounded-md
+          text-[16px] font-medium transition-colors ${isActive ? '!text-[#D59967]' : 'text-white hover:text-[#D59967]'}`}
+        style={{ fontFamily: "'Inter', sans-serif", lineHeight: '24px' }}
+      >
+        CLMM
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-[120]"
+          style={{ minWidth: '160px' }}
+        >
+          <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', overflow: 'hidden', padding: '4px' }}>
+            <NavLink to="/clmm/swap" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
+              CLMM Swap
+            </NavLink>
+            <NavLink to="/clmm/pools" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
+              CLMM Pool
+            </NavLink>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export const StyledMenuButton = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
     className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-md
@@ -206,18 +310,19 @@ export default function Header() {
               borderRadius: '8px',
             }}
           >
-            <StyledNavLink id="swap-nav-link" to="/swap">
+            <WebswapNavItem id="swap-nav-link" to="/swap">
               Swap
-            </StyledNavLink>
-            <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
+            </WebswapNavItem>
+            <WebswapNavItem id="pool-nav-link" to="/pool" end active={isPoolActive}>
               Pool
-            </StyledNavLink>
+            </WebswapNavItem>
             {/* Portfolio temporarily hidden on beta — re-enable by uncommenting
                 this link AND the lazy import + /portfolio route in App.tsx.
-            <StyledNavLink id="portfolio-nav-link" to="/portfolio">
+            <WebswapNavItem id="portfolio-nav-link" to="/portfolio">
               Portfolio
-            </StyledNavLink>
+            </WebswapNavItem>
             */}
+            <ClmmNavItem />
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them
                 in the nav at all — avoids the duplicate on mobile. */}

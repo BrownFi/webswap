@@ -105,6 +105,22 @@ const monad = overrideChain({
   ],
 })
 
+// Hemi mainnet — home of the CLMM (Algebra) product. Manual definition (mirrors
+// hyperEVM above) so we control RPC + explorer + icon.
+export const HEMI_CHAIN_ID = 43111
+export const hemi: Chain = {
+  id: 43111,
+  name: 'Hemi',
+  nativeCurrency: { decimals: 18, name: 'Ether', symbol: 'ETH' },
+  rpcUrls: {
+    default: { http: ['https://rpc.hemi.network/rpc'] },
+  },
+  blockExplorers: {
+    default: { name: 'Hemi Explorer', url: 'https://explorer.hemi.xyz' },
+  },
+  iconUrl: 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png',
+}
+
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
@@ -162,6 +178,11 @@ const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
+// Chains offered in the network selector = webswap's product chains + Hemi (CLMM).
+// Hemi is NOT in `availableChains` (webswap's product logic would crash on it);
+// selecting it switches the wallet + routes into /clmm instead.
+export const selectableChains = [...availableChains, hemi] as [Chain, ...Chain[]]
+
 // RainbowKit's default wallet groups (Rainbow, MetaMask, Coinbase, WalletConnect,
 // plus EIP-6963 auto-detected injected wallets). We add Rabby into the "Popular"
 // group so it sits alongside the main wallets — by name, with icon + install
@@ -185,9 +206,16 @@ const wallets = inSafeApp
       i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet, safeWallet] } : group,
     )
 
+// The wallet/wagmi config also includes Hemi so the wallet can connect/switch
+// there and CLMM (Hemi-only) can read it — WITHOUT adding Hemi to webswap's
+// product `availableChains` (which would make webswap's own pages try to operate
+// on Hemi and crash on missing token maps; useActiveWeb3React treats non-
+// availableChains as "wrong network" and falls back to a supported chain).
+const walletChains = [...availableChains, hemi] as [Chain, ...Chain[]]
+
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
-  chains: availableChains,
+  chains: walletChains,
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? '',
   ssr: false,
   wallets,
