@@ -1,5 +1,6 @@
 import { Currency, currencyEquals, getPythPrice, getRouterAddress, Percent, removeLiquidity, WETH } from '@brownfi/sdk'
 import { isUserRejection, parseZapError } from 'utils/zapErrors'
+import { beraFeeOverrides } from 'utils/beraGas'
 import { decodeContractError } from 'utils/decodeContractError'
 import { isV3ZapSupported } from 'utils/v3Zap'
 import { useQuery } from '@tanstack/react-query'
@@ -266,6 +267,7 @@ export default function RemoveLiquidity() {
           data: built.data,
           ...(built.value ? { value: built.value } : {}),
           ...(gasLimit ? { gasLimit } : {}),
+          ...beraFeeOverrides(chainId),
         })
 
         setAttemptingTxn(false)

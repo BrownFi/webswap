@@ -3,9 +3,7 @@ import {
   berachain as berachainChain,
   arbitrum as arbitrumChain,
   base as baseChain,
-  bsc as bscChain,
   linea as lineaChain,
-  sei as seiChain,
   monad as monadChain,
 } from 'viem/chains'
 
@@ -17,9 +15,7 @@ import ethereumIcon from 'assets/images/ethereum-logo.png'
 import beraIcon from 'assets/images/w-bera.png'
 import arbIcon from 'assets/images/arb.png'
 import baseIcon from 'assets/images/base.png'
-import bscIcon from 'assets/images/bsc.png'
 import lineaIcon from 'assets/images/linea.webp'
-import seiIcon from 'assets/images/sei.png'
 import monadIcon from 'assets/images/monad.png'
 
 const overrideChain = ({
@@ -90,16 +86,6 @@ const base = overrideChain({
   ],
 })
 
-const bsc = overrideChain({
-  chain: bscChain,
-  iconUrl: bscIcon,
-  fallbackRpcs: [
-    //
-    'https://bsc-dataseed1.defibit.io',
-    'https://bsc-dataseed1.ninicoin.io',
-  ],
-})
-
 const linea = overrideChain({
   chain: lineaChain,
   iconUrl: lineaIcon,
@@ -107,16 +93,6 @@ const linea = overrideChain({
     //
     'https://1rpc.io/linea',
     'https://linea.drpc.org',
-  ],
-})
-
-const sei = overrideChain({
-  chain: seiChain,
-  iconUrl: seiIcon,
-  fallbackRpcs: [
-    //
-    'https://sei.drpc.org',
-    'https://sei-evm-rpc.publicnode.com',
   ],
 })
 
@@ -169,20 +145,16 @@ const mainChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,
   base,
-  bsc,
   hyperEVM,
   linea,
-  sei,
   monad,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,
   base,
-  bsc,
   hyperEVM,
   linea,
-  sei,
   monad,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]

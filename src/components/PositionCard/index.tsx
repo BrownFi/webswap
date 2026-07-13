@@ -1,5 +1,6 @@
 import { isV3Like, ChainId } from '@brownfi/sdk'
 import { Pair, TokenAmount } from '@brownfi/sdk'
+import beraIcon from 'assets/images/w-bera.png'
 import { versionToSlug } from 'lib/sdk/constants/addresses'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { darken } from 'polished'
@@ -120,8 +121,10 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
   // Gate the BGT APR % on the shared whitelist (case-insensitive, includes the
-  // new V3 vaults) — NOT on the local stake-links map, which is incomplete.
-  const enableBgt = !!getPairBgt(pair.liquidityToken.address)
+  // new V3 vaults) AND V3-only: V2 pools no longer surface BGT — the cutting
+  // board moved emissions to V3, and the fading V2 APR misled users into
+  // thinking V2 rewards were still high.
+  const enableBgt = !!getPairBgt(pair.liquidityToken.address) && isV3Like(pair.version)
   const bgtStakeLinks = getBgtStakeLinks(pair.liquidityToken.address)
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
@@ -265,9 +268,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               </div>
               {(enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80', marginTop: '2px' }}>
-                  {enableBgt ? 'BGT APR' : 'Incentive APR'}: <span style={{ color: '#83CF84' }}>+{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%</span>
+                  {enableBgt ? 'BERA APR' : 'Incentive APR'}: <span style={{ color: '#83CF84' }}>+{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%</span>
                   {enableBgt && (
-                    <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 14, height: 14, borderRadius: '50%' }} />
+                    <img src={beraIcon} alt="BERA" style={{ width: 14, height: 14, borderRadius: '50%' }} />
                   )}
                 </div>
               )}
@@ -289,22 +292,22 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
             </div>
           </div>
           {/* TVL */}
-          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
+          <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1 : 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
-          <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
+          <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1 : 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
           {/* Returns column — V3: annualized LP-vs-UniV2 return (green); V2: 24h
               fees / TVL (white, per Jason — green is reserved for the V3 return). */}
-          <span className="max-md:hidden text-left" style={{ flex: 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>
+          <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1.3 : 1.7, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>
             {columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
-          {/* BGT APR — Berachain only (BGT is Bera-specific). */}
-          {chainId === ChainId.BERA_MAINNET && (
+          {/* BGT APR — Berachain + V3-only (V2 BGT hidden; see enableBgt note). */}
+          {chainId === ChainId.BERA_MAINNET && isV3Like(pair.version) && (
             <span className="max-md:hidden text-left inline-flex items-center justify-start gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
               {enableBgt || enableMerklCampaignApr ? (
                 <>
                   +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
                   {enableBgt && (
-                    <img src="https://furthermore.app/icons/bgt.svg" alt="BGT" style={{ width: 16, height: 16, borderRadius: '50%' }} />
+                    <img src={beraIcon} alt="BERA" style={{ width: 16, height: 16, borderRadius: '50%' }} />
                   )}
                 </>
               ) : (
@@ -554,14 +557,14 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               <div className="md:col-span-2 hidden sm:flex gap-2 justify-center items-center text-sm text-[#b2ada9]">
                 Stake your LP tokens on{' '}
                 <a href={bgtStakeLinks.berahub} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">BeraHub</a>{' '}
-                (earn BGT){bgtStakeLinks.infrared ? ', or on ' : ' '}
+                (earn BERA){bgtStakeLinks.infrared ? ', or on ' : ' '}
                 {bgtStakeLinks.infrared && (
                   <>
                     <a href={bgtStakeLinks.infrared} target="_blank" className="cursor-pointer hover:underline text-[#e9ad6e]" rel="noreferrer">Infrared</a>{' '}
-                    (earn iBGT)
+                    (earn iBERA)
                   </>
                 )}
-                <img src="https://furthermore.app/icons/bgt.svg" className="h-5" alt="BGT" />
+                <img src={beraIcon} className="h-5" alt="BERA" />
               </div>
             )}
           </div>

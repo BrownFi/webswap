@@ -15,6 +15,7 @@ import { isBrownFiSource } from 'services/aggregators/types'
 import type { UnifiedRoute } from './useBestSwapRoute'
 import { useActiveWeb3React } from './index'
 import { estimateGasWithMargin } from 'utils/estimateGasWithMargin'
+import { beraFeeOverrides } from 'utils/beraGas'
 
 export interface AggregatorSwapCallback {
   state: SwapCallbackState
@@ -91,6 +92,7 @@ export function useAggregatorSwapCallback(
         data: built.data,
         value: built.value,
         gasLimit,
+        ...beraFeeOverrides(chainId),
       })
 
       addTransaction(response, {

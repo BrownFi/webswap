@@ -70,6 +70,7 @@ const LIST_ALL_PAIRS = `
         totalSupply
       }
     }
+    _meta { block { timestamp } hasIndexingErrors }
   }
 `
 
@@ -111,6 +112,7 @@ const LIST_ALL_PAIRS_V3 = `
       token0 { id decimals name price priceFeedId symbol totalSupply }
       token1 { id decimals name price priceFeedId symbol totalSupply }
     }
+    _meta { block { timestamp } hasIndexingErrors }
   }
 `
 
@@ -136,7 +138,10 @@ export default function Pool() {
   //   on-chain reads via useV3PoolsOnChain
   // Flip v3UseIndexer in lib/sdk/constants/addresses.ts when the indexer
   // is caught up — no other code changes required.
-  const { data, error, isLoading: isLoadingPairs } = useQuery<{ pairs: PairStats[] }>({
+  const { data, error, isLoading: isLoadingPairs } = useQuery<{
+    pairs: PairStats[]
+    _meta?: { block: { timestamp: number }; hasIndexingErrors: boolean }
+  }>({
     queryKey: ['pairList', chainId, version],
     queryFn: () =>
       graphqlFetcher({
@@ -184,9 +189,9 @@ export default function Pool() {
   )
   const bgtAprQueries = useQueries({
     queries: pairAddresses.map((addr) => ({
-      queryKey: ['getBgtApr', addr],
-      queryFn: () => apiV2Service.getPoolBgt({ address: addr }),
-      enabled: chainId === ChainId.BERA_MAINNET && !!addr && !!getPairBgt(addr),
+      queryKey: ['getBgtApr', addr.toLowerCase()],
+      queryFn: () => apiV2Service.getPoolBgt({ address: addr.toLowerCase() }),
+      enabled: chainId === ChainId.BERA_MAINNET && !!addr && !!getPairBgt(addr) && isV3Like(version),
       staleTime: 5 * 60_000,
     })),
   })
@@ -288,8 +293,16 @@ export default function Pool() {
   const shouldUseGraphQL = enableGraphQL && filteredPairs.length > 0
   const [showIndexerModal, setShowIndexerModal] = useState(false)
 
-  const hasIndexerIssue =
-    !!error || filteredPairs.some((pair) => pair.tvl > 1000 && pair.updatedAt < Date.now() / 1000 - 8 * 3600)
+  // Key the "indexer syncing" banner off the indexer's OWN reported sync head
+  // (`_meta`), not pool trade-staleness. The latter false-positives on quiet
+  // chains where every pool can sit idle for hours while the indexer is fully
+  // synced (e.g. ARB's only 2 big pools idle >12h tripped the old heuristic).
+  // Real lag = the head block falling meaningfully behind wall-clock (>15 min),
+  // or the indexer reporting indexing errors.
+  const indexerMeta = data?._meta
+  // eslint-disable-next-line react-hooks/purity -- head-lag vs wall clock; re-running each render is fine
+  const indexerLagSec = indexerMeta?.block ? Date.now() / 1000 - Number(indexerMeta.block.timestamp) : 0
+  const hasIndexerIssue = !!error || !!indexerMeta?.hasIndexingErrors || indexerLagSec > 15 * 60
 
   useEffect(() => {
     if (hasIndexerIssue) {
@@ -396,19 +409,23 @@ export default function Pool() {
                     gap: '8px',
                   }}
                 >
+                  {/* On V2 the BGT column is hidden. Keep Pool at flex 2 so the TVL
+                      column starts at the same x as on V3, and widen the data
+                      columns (TVL/Vol/Returns) to absorb BGT's freed width — V2
+                      total stays 7.3, identical to V3. */}
                   <span style={{ flex: 2 }}>Pool</span>
-                  <SortHeader label="TVL" active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
-                  <SortHeader label="24h Volume" active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'} flex={1.3} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
-                  {chainId === ChainId.BERA_MAINNET && (
-                    <SortHeader label="BGT APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
+                  <SortHeader label="TVL" flex={isV3Like(version) ? 1 : 1.3} active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
+                  <SortHeader label="24h Volume" flex={isV3Like(version) ? 1 : 1.3} active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
+                  <SortHeader label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'} flex={isV3Like(version) ? 1.3 : 1.7} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  {chainId === ChainId.BERA_MAINNET && isV3Like(version) && (
+                    <SortHeader label="BERA APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
                   <span style={{ flex: 1, textAlign: 'right' }} />
                 </div>
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET} showV3Return={isV3Like(version) && USE_V3_UNIV2_COMPARISON} />
+              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET && isV3Like(version)} showV3Return={isV3Like(version) && USE_V3_UNIV2_COMPARISON} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -588,7 +605,7 @@ function PairListSkeleton({ showBgt, showV3Return }: { showBgt: boolean; showV3R
         <span style={{ flex: 1, textAlign: 'left' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
         <span style={{ flex: 1.3, textAlign: 'left' }}>{showV3Return ? 'Annualized Return' : '24h Fees / TVL'}</span>
-        {showBgt && <span style={{ flex: 1, textAlign: 'left' }}>BGT APR</span>}
+        {showBgt && <span style={{ flex: 1, textAlign: 'left' }}>BERA APR</span>}
         <span style={{ flex: 1, textAlign: 'right' }} />
       </div>
       {[0, 1, 2, 3, 4].map((i) => (

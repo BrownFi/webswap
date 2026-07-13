@@ -200,12 +200,20 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
     }, [pairStats]) && !!pairStats
 
   // BGT APR
+  // Lowercase the key + fetch arg so this dedupes with the pool list's fan-out
+  // query (Pool/index keys on the lowercase indexer id). Without this, the row
+  // and the list-sort query had different-cased keys → React Query fired the
+  // SAME /igbt-vault-apr call twice per pool.
+  const bgtPoolAddress = pair.liquidityToken.address.toLowerCase()
   const { data: poolApr } = useQuery({
-    queryKey: ['getBgtApr', pair.liquidityToken.address],
+    queryKey: ['getBgtApr', bgtPoolAddress],
     queryFn: () => {
-      return apiV2Service.getPoolBgt({ address: pair.liquidityToken.address })
+      return apiV2Service.getPoolBgt({ address: bgtPoolAddress })
     },
-    enabled: pair.chainId === ChainId.BERA_MAINNET && !!getPairBgt(pair.liquidityToken.address),
+    // V3-only: V2 pools no longer surface BGT (cutting board moved emissions to
+    // V3; the fading V2 APR misled users into thinking V2 rewards were high).
+    enabled: pair.chainId === ChainId.BERA_MAINNET && !!getPairBgt(pair.liquidityToken.address) && isV3Like(pair.version),
+    staleTime: 5 * 60_000,
   })
 
   // Merkl Campaign APR

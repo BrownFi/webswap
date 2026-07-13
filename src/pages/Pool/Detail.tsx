@@ -1,5 +1,6 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
+import beraIcon from 'assets/images/w-bera.png'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Settings } from 'react-feather'
@@ -24,8 +25,8 @@ import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
 import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
+import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
 import { getRestakers } from 'constants/restakers'
-import { fetchOnchainPairTransactions, OnchainTxn } from 'services/onchainTxs'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -99,13 +100,6 @@ const GET_PAIR_V3 = `
     }
   }
 `
-
-function secondsToAgo(seconds: number) {
-  if (seconds < 60) return `${Math.floor(seconds)}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`
-  return `${Math.floor(seconds / 86400)}d`
-}
 
 // The detail-page pair row is exactly the shared PairStats shape (V2 + V3
 // fields, token0/token1). Alias rather than re-declaring it.
@@ -236,23 +230,6 @@ function PoolDetailInner({
     }
   }, [walletChainId, chainId, navigate])
 
-  const { data: userTxs, isLoading: userTxsLoading } = useQuery<OnchainTxn[]>({
-    queryKey: ['userPairTxs', chainId, pairAddress, account, pair.token0.decimals, pair.token1.decimals],
-    queryFn: () =>
-      fetchOnchainPairTransactions({
-        chainId,
-        pairAddress,
-        decimals0: pair.token0.decimals,
-        decimals1: pair.token1.decimals,
-        user: account!,
-        lookbackBlocks: 5000,
-        limit: 10,
-      }),
-    enabled: !!account && chainId === walletChainId,
-    retry: false,
-    staleTime: 2 * 60_000,
-  })
-
   const pairStats: PairStats | undefined = pairRaw as unknown as PairStats | undefined
 
   const { tradingFee, volume24h, bgtAPR, merklCampaignApr } = usePoolStats({
@@ -282,12 +259,12 @@ function PoolDetailInner({
   // "Annualized Return" label is shared by V2 + V3. The V3-only (?) hint lives
   // in <AnnualizedReturnInfo/> (interactive tooltip with a clickable Learn More).
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
-  const incentiveIcon = bgtAPR
-    ? 'https://furthermore.app/icons/bgt.svg'
-    : null
+  // Berachain hardfork moved rewards from BGT → native BERA, so the incentive shows
+  // BERA branding (the `bgtAPR` data field name is kept — it's the same reward APR).
+  const incentiveIcon = bgtAPR ? beraIcon : null
   const restakers = getRestakers(chainId, pair.liquidityToken.address)
   const isBgt = bgtAPR > 0
-  const incentiveLabel = isBgt ? 'BGT APR' : 'Incentive APR'
+  const incentiveLabel = isBgt ? 'BERA APR' : 'Incentive APR'
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -310,13 +287,15 @@ function PoolDetailInner({
   // stay consistent with the page title. V3 uses the indexer's authoritative
   // quoteTokenIndex; V2 / unknown fall back to the symbol whitelist. All four
   // bound values flip together to keep each row internally correct (reserve
-  // amount stays attached to its own symbol + color).
+  // amount stays attached to its own symbol). Color, however, follows BASE/QUOTE
+  // (not the raw token): the BASE (left) is ALWAYS gold, the QUOTE (right) ALWAYS
+  // blue — consistent across every pool, regardless of isReversed.
   const isReversed = shouldReverseDisplay(currency0, currency1, chainId, pairRaw.quoteTokenIndex)
   const balanceL = isReversed
-    ? { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
+    ? { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#D8A072' }
     : { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
   const balanceR = isReversed
-    ? { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#D8A072' }
+    ? { sym: symbol0, cur: currency0, reserve: pair.reserve0, pct: pct0, color: '#6FB3E6' }
     : { sym: symbol1, cur: currency1, reserve: pair.reserve1, pct: pct1, color: '#6FB3E6' }
 
   return (
@@ -547,94 +526,20 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* Your recent activity — only shown when wallet is connected on this pool's chain */}
-            {account && chainId === walletChainId && (
-              <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
-                <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD', marginBottom: '12px' }}>
-                  Your recent activity
-                </div>
-                <div className="overflow-x-auto">
-                  <table style={{ width: '100%', fontFamily: 'Inter', fontSize: '13px', color: '#CFC7C1' }}>
-                    <thead style={{ color: '#978A80' }}>
-                      <tr>
-                        <th style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Time</th>
-                        <th className="hidden md:table-cell" style={{ textAlign: 'left', padding: '10px 8px', fontWeight: 500 }}>Type</th>
-                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol0}</th>
-                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>{symbol1}</th>
-                        <th style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 500 }}>Tx</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(userTxs ?? []).map((tx) => {
-                        const desc =
-                          tx.kind === 'Mint'
-                            ? { type: 'Add', icon: '+', color: '#83CF84' }
-                            : tx.kind === 'Burn'
-                            ? { type: 'Remove', icon: '−', color: '#E57373' }
-                            : tx.amount0In > 0
-                            ? { type: `Swap ${symbol0} → ${symbol1}`, icon: '↔', color: '#D8A072' }
-                            : { type: `Swap ${symbol1} → ${symbol0}`, icon: '↔', color: '#D8A072' }
-                        const amt0 = tx.amount0In + tx.amount0Out
-                        const amt1 = tx.amount1In + tx.amount1Out
-                        return (
-                          <tr key={tx.id} style={{ borderTop: '1px solid #2F2823' }}>
-                            <td style={{ padding: '10px 8px' }}>
-                              <span className="inline-flex items-center gap-1.5">
-                                {/* Mobile-only type icon — desktop has its own column */}
-                                <span
-                                  className="md:hidden inline-flex items-center justify-center"
-                                  title={desc.type}
-                                  style={{
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: '50%',
-                                    background: `${desc.color}22`,
-                                    color: desc.color,
-                                    fontWeight: 700,
-                                    fontSize: 12,
-                                    lineHeight: 1,
-                                  }}
-                                >
-                                  {desc.icon}
-                                </span>
-                                {secondsToAgo(tx.secondsAgo)}
-                              </span>
-                            </td>
-                            <td className="hidden md:table-cell" style={{ padding: '10px 8px', color: desc.color, fontWeight: 500 }}>{desc.type}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt0, { maximumFractionDigits: 4 })}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatNumber(amt1, { maximumFractionDigits: 4 })}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right' }}>
-                              <a
-                                href={getEtherscanLink(chainId, tx.transactionHash, 'transaction')}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="hover:underline"
-                                style={{ color: '#978A80' }}
-                              >
-                                View
-                              </a>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                      {userTxsLoading && (
-                        <tr>
-                          <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#978A80' }}>
-                            Loading your activity…
-                          </td>
-                        </tr>
-                      )}
-                      {!userTxsLoading && userTxs && userTxs.length === 0 && (
-                        <tr>
-                          <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#978A80' }}>
-                            No recent activity from your wallet on this pool.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            {/* Pool balance over time — pool-wide composition %, base-token price,
+                and tx history. V3 ONLY: the V2 indexer has no `transactions` query
+                (404s), so the chart would be empty on V2. LP-vs-BH line hidden. */}
+            {isV3Like(version) && (
+              <PoolBalanceChart
+                pairAddress={pairAddress}
+                chainId={chainId}
+                version={version}
+                symbol0={symbol0}
+                symbol1={symbol1}
+                reversed={isReversed}
+                quoteTokenIndex={pairRaw.quoteTokenIndex}
+                showLpVsBh={false}
+              />
             )}
           </div>
 
@@ -769,8 +674,8 @@ function PoolDetailInner({
                   <div className="mb-3 lg:mb-4">
                     <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
                       {incentiveLabel}
-                      {incentiveIcon && <img src={incentiveIcon} alt="BGT" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
-                      {isBgt && <QuestionHelper text="Stake your LP token on a restaker vault to earn BGT." />}
+                      {incentiveIcon && <img src={incentiveIcon} alt="BERA" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />}
+                      {isBgt && <QuestionHelper text="Stake your LP token on a restaker vault to earn BERA." />}
                     </div>
                     <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
                       +{formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%

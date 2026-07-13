@@ -16,6 +16,7 @@ import { CloseIcon } from 'theme/components'
 import { factoryV3Gen } from 'lib/sdk/constants/addresses'
 import { decodeContractError } from 'utils/decodeContractError'
 import { isUserRejection } from 'utils/zapErrors'
+import { withBeraFees } from 'utils/beraGas'
 
 // V3 admin setters as exposed by the v3-final factory. The PairConfig
 // restructure REPLACED the old struct-based `setConfigOfPair(tokenA, tokenB,
@@ -183,6 +184,12 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   // V2 factory even when the header toggle is on V3 (e.g. a V2 pool opened from
   // Portfolio). Mirrors the factoryV3 (pool-version) resolution below.
   const factoryContract = useFactoryContract(true, { readonly: false }, version)
+  // V2 factory with the Bera fee floor on writes (see withBeraFees). connect() returns
+  // a new Contract bound to the wrapped signer; off-Bera it's the original unchanged.
+  const feeFactory = useMemo(
+    () => (factoryContract?.signer ? factoryContract.connect(withBeraFees(factoryContract.signer, chainId)) : factoryContract),
+    [factoryContract, chainId],
+  )
   const addTransaction = useTransactionAdder()
 
   // V3 setters aren't in IBrownFiV2Factory.json — build a tiny Contract from
@@ -196,7 +203,10 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
     // etc.) to the wrong factory.
     const addr = factoryV3Gen(version)[chainId]
     if (!addr) return null
-    const signer = typeof library.getSigner === 'function' ? library.getSigner(account) : library
+    const rawSigner = typeof library.getSigner === 'function' ? library.getSigner(account) : library
+    // Bera fee floor on all setter writes (see withBeraFees) — the chain's near-zero
+    // base fee + volatile tip makes wallet auto-gas stick these admin txs pending.
+    const signer = withBeraFees(rawSigner, chainId)
     return new Contract(addr, V3_FACTORY_SETTERS_ABI, signer)
   }, [isV3, version, library, account, chainId])
 
@@ -359,7 +369,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
   // 'PairConfig: GAMMA_TOO_LOW') survive to the toast instead of being dropped
   // by estimateGas as a bare UNPREDICTABLE_GAS_LIMIT.
   const submitK = () =>
-    runSubmit('k', 'Set K', () => factoryContract!.setKOfPair(tokenA, tokenB, toQ64(kInput)), 'v2')
+    runSubmit('k', 'Set K', () => feeFactory!.setKOfPair(tokenA, tokenB, toQ64(kInput)), 'v2')
 
   const submitKappa = () => {
     const kB = kBInput || (currentValues?.kB !== undefined ? round(currentValues.kB) : '')
@@ -386,7 +396,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
           'v3',
           () => factoryV3!.callStatic.setLambdaOfPair(tokenA, tokenB, q64Field(lambdaInput, currentValues?.lambda, rawConfig.lambda)),
         )
-      : runSubmit('lambda', 'Set Lambda', () => factoryContract!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v2')
+      : runSubmit('lambda', 'Set Lambda', () => feeFactory!.setLambdaOfPair(tokenA, tokenB, toQ64(lambdaInput)), 'v2')
 
   const submitFee = () =>
     isV3
@@ -396,7 +406,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
           'v3',
           () => factoryV3!.callStatic.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)),
         )
-      : runSubmit('fee', 'Set Fee', () => factoryContract!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v2')
+      : runSubmit('fee', 'Set Fee', () => feeFactory!.setFeeOfPair(tokenA, tokenB, toPREC(feeInput)), 'v2')
 
   const submitProtocolFee = () =>
     isV3
@@ -408,7 +418,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
         )
       : runSubmit(
           'protocolFee', 'Set Protocol Fee',
-          () => factoryContract!.setProtocolFeeOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
+          () => feeFactory!.setProtocolFeeOfPair(tokenA, tokenB, toPREC(protocolFeeInput)),
           'v2',
         )
 

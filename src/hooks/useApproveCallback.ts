@@ -17,6 +17,7 @@ import { useHasPendingApproval, useTransactionAdder } from 'state/transactions/h
 import { calculateGasMargin, getTokenSymbol } from 'utils'
 import { computeSlippageAdjustedAmounts } from 'utils/prices'
 import { useActiveWeb3React } from './index'
+import { beraFeeOverrides } from 'utils/beraGas'
 import { useTokenContract } from './useContract'
 import { Version } from './useToggledVersion'
 
@@ -75,6 +76,7 @@ export function useApproveCallback(
     return tokenContract
       .approve(spender, amountRaw, {
         gasLimit: calculateGasMargin(estimatedGas),
+        ...beraFeeOverrides(chainId),
       })
       .then((response: TransactionResponse) => {
         addTransaction(response, {
