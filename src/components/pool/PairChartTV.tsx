@@ -46,11 +46,20 @@ const CHAINS_WITH_UNIV2_PRICE = !isV3Enabled
       ChainId.MONAD,
     ])
 const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
-// `uniV2Price` only exists on the V3 indexer schema. Keep it only when the
-// chain exposes it AND the pair is V3 — V2 pairs route to the V2 schema, which
-// has no uniV2Price field (querying it is a GraphQL validation error).
-const buildQuery = (template: string, keepUniV2: boolean) =>
-  keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
+// `bh3Price` (a 3rd buy-and-hold benchmark) is a NEW aggregate field the indexer
+// exposes on only SOME chains (Bera today). Query it only where it exists — elsewhere
+// it's a GraphQL "no field `bh3Price`" validation error that 500s the whole LP chart.
+// Widen this set as the backend rolls the field out to more chains.
+const CHAINS_WITH_BH3_PRICE = !isV3Enabled ? new Set<number>() : new Set<number>([ChainId.BERA_MAINNET])
+const hasBh3Price = (chainId: number) => CHAINS_WITH_BH3_PRICE.has(chainId)
+// `uniV2Price`/`bh3Price` only exist on the V3 indexer schema, and only on some
+// chains. Strip each optional field unless the chain exposes it AND the pair is V3
+// (V2 pairs route to the V2 schema, which has neither — querying is a validation error).
+const buildQuery = (template: string, keepUniV2: boolean, keepBh3: boolean) => {
+  let q = keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
+  if (!keepBh3) q = q.replace(/\s*bh3Price\s*/g, '\n')
+  return q
+}
 
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {
@@ -68,6 +77,7 @@ const GET_PAIR_STATS = `
       lpPrice
       bnhPrice
       uniV2Price
+      bh3Price
     }
   }
 `
@@ -90,6 +100,7 @@ const GET_PAIR_STATS_HOUR = `
       lpPrice
       bnhPrice
       uniV2Price
+      bh3Price
     }
   }
 `
@@ -113,6 +124,7 @@ const GET_PAIR_STATS_HOUR_OLDER = `
       lpPrice
       bnhPrice
       uniV2Price
+      bh3Price
     }
   }
 `
@@ -169,11 +181,12 @@ type DayData = {
   lpPrice: number
   bnhPrice: number
   uniV2Price: number
+  bh3Price?: number // Bera-only for now; stripped from the query on other chains
 }
 
 type HourData = Omit<DayData, 'dayStartUnix'> & { hourStartUnix: number }
 
-type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpVsUniV2' | 'tvl' | 'netPnL' | 'volume'
+type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpVsUniV2' | 'tvl' | 'netPnL' | 'lpVsBh3' | 'volume'
 
 // GitBook explainer for the LP-vs-UniV2 benchmark (the per-token price-gap
 // line). Mirrors the develop branch's chart.
@@ -223,6 +236,10 @@ const SERIES_ALL: SeriesMeta[] = [
   // right next to it in the legend so the two % benchmarks read together.
   // Internal key stays `netPnL` to avoid a sweep across the indexer field name.
   { key: 'netPnL',        label: 'LP vs. BH',      color: '#83CF84',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden' },
+  // "LP vs. BH3" = LP's % outperformance over the 3rd buy-and-hold benchmark:
+  // (lp − bh3) / bh3 × 100. Same 'pct' overlay + math as "LP vs. BH", just against
+  // bh3Price. Bera-only for now (gated via availableSeries + the query field strip).
+  { key: 'lpVsBh3',       label: 'LP vs. BH3',     color: '#F472B6',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
   { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' }, // legend swatch = the candle's buy-green
 ]
@@ -258,16 +275,22 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
   // chain that exposes it (else the V2 schema rejects the query). Same predicate
   // graphql.ts uses to route /indexer/v3 vs /indexer.
   const keepUniV2 = supportsUniV2 && isV3
+  // bh3Price is a V3-indexer field exposed on only some chains (Bera today) — same
+  // gating shape as uniV2Price. When absent, strip it from the query AND hide the
+  // "LP vs. BH3" line (else it'd render (lp − 0)/0 garbage).
+  const keepBh3 = hasBh3Price(pair.chainId) && isV3
   const availableSeries = useMemo(() => {
     if (!showExtendedMetrics) return SERIES_ALL.filter((s) => s.key === 'lpPrice' || s.key === 'volume')
     // Hide the UniV2 reference AND the "LP vs. UniV2" % line on V2 pairs / chains
     // without uniV2Price indexer data — the field is stripped from the query, so
     // the comparison would be misleading (lpPrice − 0) otherwise. "LP vs. BH"
-    // stays (it uses bnhPrice, which is always available).
-    return keepUniV2
-      ? SERIES_ALL
-      : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpVsUniV2')
-  }, [showExtendedMetrics, supportsUniV2, keepUniV2])
+    // stays (it uses bnhPrice, which is always available). "LP vs. BH3" is hidden
+    // wherever bh3Price isn't exposed (keepBh3).
+    return SERIES_ALL.filter(
+      (s) =>
+        (keepUniV2 || (s.key !== 'uniV2Price' && s.key !== 'lpVsUniV2')) && (keepBh3 || s.key !== 'lpVsBh3'),
+    )
+  }, [showExtendedMetrics, supportsUniV2, keepUniV2, keepBh3])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
     lpPrice: true,
@@ -278,6 +301,9 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     lpVsUniV2: showExtendedMetrics,
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
+    // LP vs. BH3 (% outperformance) — gated on the chain exposing bh3Price via the
+    // availableSeries filter above; only actually renders on Bera for now.
+    lpVsBh3: showExtendedMetrics,
     volume: true,
   }))
 
@@ -297,7 +323,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2, keepBh3), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -311,7 +337,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStatsHour',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2, keepBh3), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -452,7 +478,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     // dayStartUnix/hourStartUnix in the future stretches the time axis and paints
     // a phantom future date on it (e.g. a "Jul 26" tick when today is Jul 1).
     const nowSec = Math.floor(Date.now() / 1000)
-    const toPoint = (lpRaw: number, bnhRaw: number, uniRaw: number, tvlRaw: number, volRaw: number, time: number) => {
+    const toPoint = (lpRaw: number, bnhRaw: number, uniRaw: number, bh3Raw: number, tvlRaw: number, volRaw: number, time: number) => {
       // Apply the iskHYPEUSDT scale BEFORE computing the diff so we don't
       // mix raw and scaled values. The divergence is in the same price
       // units as lpPrice/uniV2Price; rendering on the LEFT axis lets it
@@ -460,6 +486,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
       const lp = iskHYPEUSDT ? lpRaw / 1e9 : lpRaw
       const bnh = iskHYPEUSDT ? bnhRaw / 1e9 : bnhRaw
       const uni = iskHYPEUSDT ? uniRaw / 1e9 : uniRaw
+      const bh3 = iskHYPEUSDT ? bh3Raw / 1e9 : bh3Raw
       return {
         time,
         lpPrice: lp,
@@ -473,6 +500,10 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
         // "LP vs. BH" = LP's % outperformance over Buy & Hold (HODL):
         // (lp − bnh) / bnh × 100.
         netPnL: bnh ? ((lp - bnh) / bnh) * 100 : 0,
+        // "LP vs. BH3" = same math against the 3rd buy-and-hold benchmark:
+        // (lp − bh3) / bh3 × 100. 0 when bh3 is absent (non-Bera) — the series is
+        // hidden there via availableSeries, so the 0 never renders.
+        lpVsBh3: bh3 ? ((lp - bh3) / bh3) * 100 : 0,
         volume: volRaw,
       }
     }
@@ -483,14 +514,14 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
       return [...rows]
         .filter((d) => Number(d.hourStartUnix) <= nowSec)
         .sort((a, b) => Number(a.hourStartUnix) - Number(b.hourStartUnix))
-        .map((d) => toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.hourStartUnix)))
+        .map((d) => toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.bh3Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.hourStartUnix)))
     }
     const rows = (data as { pairDayDatas?: DayData[] } | undefined)?.pairDayDatas
     if (!rows) return []
     return rows
       .filter((d) => Number(d.dayStartUnix) <= nowSec)
       .map((d) =>
-        toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
+        toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.bh3Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
       )
   }, [data, isHourly, iskHYPEUSDT, combinedHours])
 
@@ -549,7 +580,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     try {
       const res = (await graphqlFetcher({
         operationName: 'PairStatsHourOlder',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2, keepBh3), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase(), before },
       })) as { pairHourDatas?: HourData[] } | null
       const batch = res?.pairHourDatas ?? []
@@ -970,7 +1001,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
                 .map((meta) => {
                   const v = hovered[meta.key] as number
                   const formatted =
-                    meta.key === 'lpVsUniV2' || meta.key === 'netPnL'
+                    meta.key === 'lpVsUniV2' || meta.key === 'netPnL' || meta.key === 'lpVsBh3'
                       ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
                       : meta.key === 'tvl' || meta.key === 'volume'
                         ? formatPrice(v, { maximumFractionDigits: 0 })
