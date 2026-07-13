@@ -164,6 +164,9 @@ export function PoolBalanceChart({
   // and restore it after setData (so the view doesn't jump as bars grow left).
   const pendingRestoreRef = useRef(false)
   const savedRangeRef = useRef<IRange<Time> | null>(null)
+  // Frame the timeframe preset only ONCE per (pool, timeframe). Reset below when
+  // either changes so the next data push re-frames to the new default window.
+  const framedForRangeRef = useRef(false)
 
   // Reset accumulation + paging guards when the pool identity changes.
   useEffect(() => {
@@ -173,6 +176,13 @@ export function PoolBalanceChart({
     pendingRestoreRef.current = false
     savedRangeRef.current = null
   }, [pairAddress, chainId, version])
+
+  // Re-arm the "frame once" flag when the pool OR timeframe changes, so the new
+  // view opens at the new preset — but a plain 60s data refresh (same pool+range)
+  // does NOT re-frame, so panning left to older bars sticks instead of snapping back.
+  useEffect(() => {
+    framedForRangeRef.current = false
+  }, [pairAddress, chainId, version, range])
 
   // Initial batch (newest-first) + accumulated older batches (also newest-first),
   // so the whole thing stays a single descending list. The oldest accumulated
@@ -646,10 +656,12 @@ export function PoolBalanceChart({
       if (saved) chartRef.current?.timeScale().setVisibleRange(saved)
       pendingRestoreRef.current = false
       savedRangeRef.current = null
-    } else {
-      // Initial load (or a range-change-triggered data refresh) — zoom to the
-      // current timeframe preset.
+    } else if (!framedForRangeRef.current) {
+      // Frame the timeframe preset ONCE per (pool, timeframe). A subsequent data
+      // refresh (60s refetch, same pool+range) must NOT re-apply it, or panning
+      // left to older bars gets yanked back to the default window.
       applyRangePresetRef.current()
+      framedForRangeRef.current = true
     }
   }, [seriesData])
 
@@ -659,11 +671,9 @@ export function PoolBalanceChart({
     marketRef.current?.setData(marketData)
   }, [marketData])
 
-  // Re-zoom when the timeframe button changes (data unchanged).
-  useEffect(() => {
-    if (pendingRestoreRef.current) return
-    applyRangePresetRef.current()
-  }, [range])
+  // Timeframe changes re-frame via the reset above (framedForRangeRef → false) +
+  // the data-push effect: switching range changes the bucket, so seriesData always
+  // updates and re-applies the new preset exactly once.
 
   // Toggle visibility from the bottom legend.
   useEffect(() => {

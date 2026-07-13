@@ -487,12 +487,13 @@ const PairChartTVInner = ({ pair }: Props) => {
       )
   }, [data, isHourly, iskHYPEUSDT, combinedHours])
 
-  const chartData = useMemo(() => {
-    if (isHourly) return fullChartData // full accumulated hourly set (24 + paged)
-    const days = RANGE_DAYS[range as Exclude<Range, '1D'>]
-    if (!days || fullChartData.length <= days) return fullChartData
-    return fullChartData.slice(-days)
-  }, [fullChartData, range, isHourly])
+  // Render the FULL history in every mode; the range is applied as a VISIBLE-WINDOW
+  // preset (setVisibleRange in the data-push effect), NOT a data slice — so 7D/1M open
+  // framed to the last N days but you can scroll LEFT to reveal older bars (matching the
+  // Pool Balance + Oracle Spread charts). The spread copy forces a new array ref on a
+  // range switch (the underlying data is identical across 7D/1M/ALL) so the data-push
+  // effect re-runs and re-frames to the newly selected window.
+  const chartData = useMemo(() => [...fullChartData], [fullChartData, range, isHourly])
 
   // PROTOTYPE: scope the stacked volume to the SAME window as the price data so the
   // range selector zooms the chart (the volume no longer stretches it to all
@@ -528,6 +529,9 @@ const PairChartTVInner = ({ pair }: Props) => {
   // one fetch runs at a time, and stops once a batch comes back < 168. Captures
   // the visible TIME range first so the post-setData effect can restore the view.
   const loadMore = useCallback(async () => {
+    // Hourly-only paging. Daily modes (7D/1M/ALL) load the full history up front, so a
+    // scroll-left there has nothing to page — skip the (useless) hourly fetch.
+    if (!isHourlyRef.current) return
     if (loadingRef.current || exhaustedRef.current) return
     // combinedHours is desc — the oldest accumulated bucket is the last element.
     const oldest = combinedHours[combinedHours.length - 1]
@@ -824,10 +828,18 @@ const PairChartTVInner = ({ pair }: Props) => {
       pendingRestoreRef.current = false
       savedRangeRef.current = null
     } else if (!didFitRef.current) {
-      // Frame the window once, on the first data arrival for this range/mode.
-      // Later 60s refetches update the series in place (setData preserves the
-      // visible range) so the user's scroll/zoom position is left alone.
-      chartRef.current?.timeScale().fitContent()
+      // Frame the window once per range/mode. Bounded daily ranges (7D/1M) open framed
+      // to the last N days but keep the FULL history loaded, so scroll-left reveals
+      // older bars. 1D (hourly) + ALL fit the whole set. Later 60s refetches update the
+      // series in place (setData preserves the visible range), leaving the scroll alone.
+      const ts = chartRef.current?.timeScale()
+      const days = isHourly ? null : RANGE_DAYS[range as Exclude<Range, '1D'>]
+      const last = chartData.length ? Number(chartData[chartData.length - 1].time) : null
+      if (ts && days != null && last != null) {
+        ts.setVisibleRange({ from: (last - days * 86400) as Time, to: last as Time })
+      } else {
+        ts?.fitContent()
+      }
       didFitRef.current = true
     }
   }, [chartData, availableSeries, chartVolTotal, chartVolSell, isV3])
