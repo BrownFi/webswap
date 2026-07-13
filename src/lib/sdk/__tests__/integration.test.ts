@@ -287,7 +287,7 @@ describe('SDK Integration: Percent & Fraction', () => {
 // exercise them; skipped by default so the suite stays green/deterministic.
 const RUN_LIVE_API = !!process.env.RUN_LIVE_API_TESTS
 
-describe.skipIf(!RUN_LIVE_API)('API Integration: apiV2Service', () => {
+;(RUN_LIVE_API ? describe : describe.skip)('API Integration: apiV2Service', () => {
   it('getPoolPrices returns prices for WBERA/HONEY on Berachain', async () => {
     const BASE_URL = 'https://api.brownfi.io'
     const url = new URL('/prices', BASE_URL)
@@ -303,7 +303,7 @@ describe.skipIf(!RUN_LIVE_API)('API Integration: apiV2Service', () => {
   }, 15000)
 })
 
-describe.skipIf(!RUN_LIVE_API)('API Integration: GraphQL Indexer', () => {
+;(RUN_LIVE_API ? describe : describe.skip)('API Integration: GraphQL Indexer', () => {
   it('returns pairs for Berachain', async () => {
     const response = await fetch('https://api.brownfi.io/indexer?chainId=80094', {
       method: 'POST',
