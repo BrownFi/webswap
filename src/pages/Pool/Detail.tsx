@@ -527,7 +527,7 @@ function PoolDetailInner({
 
             {/* Chart */}
             <Suspense fallback={<div style={{ height: 380, background: '#1E1915', borderRadius: '12px' }} />}>
-              <PairChartTV pair={pair} />
+              <PairChartTV pair={pair} reversed={isReversed} />
             </Suspense>
 
             {/* Your position — mobile only, above activity */}

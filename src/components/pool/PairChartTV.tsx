@@ -181,7 +181,7 @@ const LEARN_MORE_URL = 'https://brownfi.gitbook.io/brownfi-docs/brownfi-v3/bench
 const BENCHMARK_HINT =
   "The UniV2 constant-product curve serves as the benchmark for measuring BrownFi pool performance. The LP line should sit above the UniV2 line, with the gap widening over time, reflecting BrownFi V3's lower IL and higher fee yield compared to UniV2."
 const VOLUME_HINT =
-  'Trading volume per bar (in USD). Green is buy volume (token0 bought), red is sell volume (token0 sold), stacked so the full bar is the total volume for that period.'
+  'Trading volume per bar (in USD). Green is buy volume (base token bought), red is sell volume (base token sold), stacked so the full bar is the total volume for that period.'
 
 type SeriesMeta = {
   key: SeriesKey
@@ -244,9 +244,13 @@ const fmtVolUsd = (v: number): string => {
 
 type Props = {
   pair: Pair
+  // Base/quote display orientation (= shouldReverseDisplay). When true the base is
+  // token1, so buy/sell volume must be colored against token1, not raw token0 —
+  // otherwise a base-sell shows green here but red on the Pool Balance chart.
+  reversed?: boolean
 }
 
-const PairChartTVInner = ({ pair }: Props) => {
+const PairChartTVInner = ({ pair, reversed = false }: Props) => {
   const showExtendedMetrics = !isMainnet
   const supportsUniV2 = hasUniV2Price(pair.chainId)
   const isV3 = isV3Like(pair.version)
@@ -381,7 +385,10 @@ const PairChartTVInner = ({ pair }: Props) => {
       const out0 = Number(t.amount0Out)
       const vol = reserve0 > 0 ? (in0 + out0) * (Number(t.reserve0USD) / reserve0) : 0
       if (!Number.isFinite(vol) || vol <= 0) return
-      const isBuy = out0 > in0
+      // Color buy/sell against the BASE token (matches the Pool Balance chart + the
+      // price line), NOT raw token0. Base bought = green. When `reversed`, base is
+      // token1, so a base buy means token0 ENTERS the pool (in0 > out0) — flip.
+      const isBuy = reversed ? in0 > out0 : out0 > in0
       const bucketStart = Math.floor(ts / bucket) * bucket
       const acc = byBucket.get(bucketStart) ?? { buy: 0, sell: 0 }
       acc.buy += isBuy ? vol : 0
@@ -393,7 +400,7 @@ const PairChartTVInner = ({ pair }: Props) => {
       volTotal: buckets.map(([time, v]) => ({ time: time as any, value: v.buy + v.sell })),
       volSell: buckets.map(([time, v]) => ({ time: time as any, value: v.sell })),
     }
-  }, [swapResp, isHourly])
+  }, [swapResp, isHourly, reversed])
 
   const isPending = isHourly ? isPendingHour : isPendingDay
   const data = isHourly ? hourResp : dayResp
@@ -1061,6 +1068,7 @@ const PairChartTVInner = ({ pair }: Props) => {
 export const PairChartTV = memo(PairChartTVInner, (prev, next) => {
   return (
     prev.pair.liquidityToken.address === next.pair.liquidityToken.address &&
-    prev.pair.chainId === next.pair.chainId
+    prev.pair.chainId === next.pair.chainId &&
+    prev.reversed === next.reversed
   )
 })
