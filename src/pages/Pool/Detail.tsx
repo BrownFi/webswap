@@ -26,7 +26,7 @@ import { PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } fro
 import QuestionHelper from 'components/QuestionHelper'
 import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
 import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
-import { showsLpVsBh } from 'components/pool/lpVsBhChains'
+import { showsLpVsHodl } from 'components/pool/lpVsBhChains'
 import { getRestakers } from 'constants/restakers'
 
 const PairChartTV = lazy(() =>
@@ -539,7 +539,7 @@ function PoolDetailInner({
                 symbol1={symbol1}
                 reversed={isReversed}
                 quoteTokenIndex={pairRaw.quoteTokenIndex}
-                showLpVsBh={isV3Like(version) && showsLpVsBh(chainId)}
+                showLpVsBh={isV3Like(version) && showsLpVsHodl(chainId)}
               />
             )}
           </div>

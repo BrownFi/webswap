@@ -155,10 +155,10 @@ export function PoolBalanceChart({
   const token0Color = reversed ? COLOR1 : COLOR0
   const token1Color = reversed ? COLOR0 : COLOR1
 
-  // Inject per-swap lpPrice/bnhPrice into the tx selection ONLY when the LP-vs-BH line
+  // Inject per-swap lpPrice/bnhPrice into the tx selection ONLY when the LP-vs-HODL line
   // is on (Linea/Hyper/Arb via showLpVsBh). These fields are a partial indexer rollout —
   // requesting them on a chain that lacks them is a GraphQL validation error that breaks
-  // the whole balance chart. Chains in showsLpVsBh are verified to expose them.
+  // the whole balance chart. Chains in showsLpVsHodl are verified to expose them.
   const withLpBhFields = (q: string): string =>
     showLpVsBh ? q.replace(/(\n\s*reserve1USD)/, '$1\n      lpPrice\n      bnhPrice') : q
 

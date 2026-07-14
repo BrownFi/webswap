@@ -1,7 +1,7 @@
 import { ChainId, Pair, isV3Like } from '@brownfi/sdk'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
-import { showsLpVsBh } from 'components/pool/lpVsBhChains'
+import { showsLpVsUniV2, showsLpVsHodl } from 'components/pool/lpVsBhChains'
 import { isMainnet, isV3Enabled } from 'connectors'
 import {
   AreaSeries,
@@ -172,32 +172,34 @@ const PairChartTVInner = ({ pair }: Props) => {
   // Production V3 chart shows LP price, UniV2 price, LP − UniV2, and volume.
   // The default-visible flags below mirror this.
   const v3ProdChart = isV3 && !showExtendedMetrics && supportsUniV2
-  // Boss request (2026-07-14): surface BOTH ROI % lines — "LP vs. UniV2" and
-  // "LP vs. HODL" — on the prod chart for select chains (Linea/Hyper/Arb). V3-only;
-  // driven by uniV2Price/bnhPrice from the V3 stats.
-  const lpVsBhOnProd = isV3 && !showExtendedMetrics && showsLpVsBh(pair.chainId)
+  // Boss request (2026-07-14): surface the ROI % lines on the prod chart, gated PER LINE.
+  // "LP vs. UniV2" → Bera + Linea/Hyper/Arb; "LP vs. HODL" → Linea/Hyper/Arb only (NOT
+  // Bera). V3-only; driven by uniV2Price/bnhPrice from the V3 stats.
+  const lpVsUniV2OnProd = isV3 && !showExtendedMetrics && showsLpVsUniV2(pair.chainId)
+  const lpVsHodlOnProd = isV3 && !showExtendedMetrics && showsLpVsHodl(pair.chainId)
   const availableSeries = useMemo(() => {
     if (!showExtendedMetrics) {
-      // Production: V3 → LP/UniV2/HODL price (left) + the two ROI % lines (right, on the
-      // boss-requested chains) + volume; V2 → LP + volume.
+      // Production: V3 → LP/UniV2/HODL price (left) + the ROI % lines (right, per-line
+      // chain gate) + volume; V2 → LP + volume.
       if (v3ProdChart) {
         return SERIES_ALL.filter(
           (s) =>
             s.key === 'lpPrice' ||
             s.key === 'bnhPrice' ||
             s.key === 'uniV2Price' ||
-            (lpVsBhOnProd && (s.key === 'lpMinusUniV2' || s.key === 'lpVsBhPct')) ||
+            (lpVsUniV2OnProd && s.key === 'lpMinusUniV2') ||
+            (lpVsHodlOnProd && s.key === 'lpVsBhPct') ||
             s.key === 'volume',
         )
       }
       return SERIES_ALL.filter(
-        (s) => s.key === 'lpPrice' || (lpVsBhOnProd && s.key === 'lpVsBhPct') || s.key === 'volume',
+        (s) => s.key === 'lpPrice' || (lpVsHodlOnProd && s.key === 'lpVsBhPct') || s.key === 'volume',
       )
     }
     // beta/dev: full set, minus the UniV2 reference + "LP vs. UniV2" when uniV2Price
     // isn't in the data (V2 pairs, or chains without the indexer field).
     return keepUniV2 ? SERIES_ALL : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
-  }, [showExtendedMetrics, supportsUniV2, keepUniV2, v3ProdChart, lpVsBhOnProd])
+  }, [showExtendedMetrics, supportsUniV2, keepUniV2, v3ProdChart, lpVsUniV2OnProd, lpVsHodlOnProd])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
     lpPrice: true,
@@ -207,13 +209,12 @@ const PairChartTVInner = ({ pair }: Props) => {
     // lines we DO want on by default (alongside LP price); elsewhere they
     // follow the extended-metrics gate.
     uniV2Price: showExtendedMetrics || v3ProdChart,
-    // "LP vs. UniV2" (%) — one of the two ROI lines; default-on where the boss asked
-    // for it (Linea/Hyper/Arb) on prod, plus in extended-metrics (beta/dev).
-    lpMinusUniV2: showExtendedMetrics || lpVsBhOnProd,
+    // "LP vs. UniV2" (%) — default-on on its chains (Bera + Linea/Hyper/Arb) + dev.
+    lpMinusUniV2: showExtendedMetrics || lpVsUniV2OnProd,
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
-    // "LP vs. HODL" (%) — the other ROI line; same gate.
-    lpVsBhPct: showExtendedMetrics || lpVsBhOnProd,
+    // "LP vs. HODL" (%) — default-on on its chains (Linea/Hyper/Arb, NOT Bera) + dev.
+    lpVsBhPct: showExtendedMetrics || lpVsHodlOnProd,
     volume: true,
   }))
 
@@ -349,7 +350,7 @@ const PairChartTVInner = ({ pair }: Props) => {
         // RIGHT = the ROI % lines ("LP vs. UniV2" / "LP vs. HODL"). Only shown where the
         // ROI lines are (Linea/Hyper/Arb on prod, or extended metrics), so hide it
         // elsewhere rather than leave an empty axis.
-        visible: showExtendedMetrics || lpVsBhOnProd,
+        visible: showExtendedMetrics || lpVsUniV2OnProd,
         borderVisible: false,
         ticksVisible: false,
         scaleMargins: { top: 0.05, bottom: 0.25 },
