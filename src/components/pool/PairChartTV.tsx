@@ -1,6 +1,7 @@
 import { ChainId, Pair, isV3Like } from '@brownfi/sdk'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
+import { showsLpVsBh } from 'components/pool/lpVsBhChains'
 import { isMainnet, isV3Enabled } from 'connectors'
 import {
   AreaSeries,
@@ -49,16 +50,6 @@ const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
 // has no uniV2Price field (querying it is a GraphQL validation error).
 const buildQuery = (template: string, keepUniV2: boolean) =>
   keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
-
-// Boss request (2026-07-14): show the "LP − BH" (LP vs Buy & Hold P&L) line on the
-// PROD LP chart for these chains. It's driven by bnhPrice (available on all V3 chains),
-// so this is purely a display gate — add/remove chains here to control where it shows.
-const CHAINS_WITH_LP_VS_BH = new Set<number>([
-  ChainId.LINEA_MAINNET,
-  ChainId.HYPER_EVM,
-  ChainId.ARBITRUM_MAINNET,
-])
-const showsLpVsBh = (chainId: number) => CHAINS_WITH_LP_VS_BH.has(chainId)
 
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {

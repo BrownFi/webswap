@@ -182,7 +182,7 @@ export function PoolBalanceChart({
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PoolLpBh',
-        query: GET_POOL_LPBH,
+        query: withFirstActivityGte(GET_POOL_LPBH, 'dayStartUnix', chainId, pairAddress),
         variables: { chainId, version, pair: pairAddress.toLowerCase() },
       }),
     // Gated off when the LP-vs-BH line is hidden — no request fires.
