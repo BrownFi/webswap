@@ -234,12 +234,12 @@ const PairChartTVInner = ({ pair }: Props) => {
     volume: true,
   }))
 
-  // '1h' = today's intraday (24 hourly buckets, separate query). The rest are
+  // '1D' = today's intraday (24 hourly buckets, separate query). The rest are
   // daily-aggregated ranges that slice the same `pairDayDatas` series.
-  type Range = '1h' | '7d' | '1m' | '3m' | '1y' | 'all'
-  const RANGE_DAYS: Record<Exclude<Range, '1h'>, number | null> = { '7d': 7, '1m': 30, '3m': 90, '1y': 365, all: null }
+  type Range = '1D' | '7d' | '1m' | 'all'
+  const RANGE_DAYS: Record<Exclude<Range, '1D'>, number | null> = { '7d': 7, '1m': 30, all: null }
   const [range, setRange] = useState<Range>('1m')
-  const isHourly = range === '1h'
+  const isHourly = range === '1D'
 
   const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3'
 
@@ -321,7 +321,7 @@ const PairChartTVInner = ({ pair }: Props) => {
 
   const chartData = useMemo(() => {
     if (isHourly) return fullChartData // already capped to 24 by the query
-    const days = RANGE_DAYS[range as Exclude<Range, '1h'>]
+    const days = RANGE_DAYS[range as Exclude<Range, '1D'>]
     if (!days || fullChartData.length <= days) return fullChartData
     return fullChartData.slice(-days)
   }, [fullChartData, range, isHourly])
@@ -528,7 +528,7 @@ const PairChartTVInner = ({ pair }: Props) => {
           className="inline-flex items-center gap-0.5 sm:gap-1"
           style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 8, padding: 2 }}
         >
-          {(['1h', '7d', '1m', '3m', '1y', 'all'] as Range[]).map((r) => (
+          {(['1D', '7d', '1m', 'all'] as Range[]).map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
