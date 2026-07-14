@@ -9,7 +9,9 @@ const buttonVariants = cva(
     {
         variants: {
             variant: {
-                primary: "bg-primary-100 text-primary-300 hover:bg-primary-200 transition-colors",
+                // Matches webswap's ButtonPrimary: #985C2A copper, white text, medium
+                // weight, subtle lighten on hover (not the tan primary-200).
+                primary: "bg-primary-100 text-primary-300 font-medium hover:bg-[#a4632d] transition-colors",
                 primaryLink: "bg-primary-800 border border-primary-200 hover:opacity-65",
                 default: "bg-primary text-primary-foreground hover:bg-primary/90",
                 action: "bg-primary-button text-primary-foreground font-bold hover:bg-primary-button/80",
@@ -26,8 +28,9 @@ const buttonVariants = cva(
             size: {
                 default: "h-10 px-4 py-2",
                 sm: "h-9 rounded-lg px-3",
-                md: "h-6 rounded-lg p-4 py-6",
-                lg: "rounded-2xl text-md p-4",
+                md: "h-10 rounded-lg px-4",
+                // webswap ButtonPrimary dimensions: 48px tall, 8px radius, 24/12 padding, 16px text.
+                lg: "h-12 rounded-lg px-6 py-3 text-base",
                 icon: "h-10 w-10 rounded-xl",
             },
         },

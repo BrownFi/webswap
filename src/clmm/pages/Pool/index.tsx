@@ -23,7 +23,6 @@ import FarmingModule from "@clmm/modules/FarmingModule";
 import { createUncheckedPosition } from "@clmm/utils/positions/createUncheckedPosition";
 import MyPositionsToolbar from "@clmm/components/pool/MyPositionsToolbar";
 import { useAppKit } from "@reown/appkit/react";
-import { unwrappedToken } from "@clmm/utils/common/unwrappedToken";
 import { useUSDCPrice } from "@clmm/hooks/common/useUSDCValue";
 import useSWR from "swr";
 import { Deposit, useSinglePositionLazyQuery } from "@clmm/graphql/generated/graphql";
@@ -255,8 +254,6 @@ const PoolPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-y-3 md:gap-3 w-full">
                 <div className="col-span-2">
                     <MyPositionsToolbar
-                        currencyA={poolEntity && unwrappedToken(poolEntity.token0)}
-                        currencyB={poolEntity && unwrappedToken(poolEntity.token1)}
                         positionsData={positionsData}
                         poolStatus={effectiveStatus}
                     />
