@@ -15,6 +15,7 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
+import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
@@ -57,9 +58,6 @@ const GET_POOL_BALANCES_OLDER = `
   }
 `
 
-const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as const
-type Range = keyof typeof RANGES
-const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
 
 type Txn = {
   timestamp: number | string
@@ -138,7 +136,7 @@ export function PoolBalanceChart({
   reversed = false,
   showLpVsBh = true,
 }: Props) {
-  const [range, setRange] = useState<Range>('ALL')
+  const [range, setRange] = useState<RangeKey>('ALL')
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
   const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true })
 
@@ -245,21 +243,30 @@ export function PoolBalanceChart({
   // The chart always holds the FULL accumulated set — the timeframe selector is a
   // zoom preset (visible TIME range), not a data filter, so every range can
   // scroll left and trigger load-more.
+  // Resample the per-swap points onto a time GRID (bucketClose = last swap in each
+  // bucket, carried forward across empty buckets — correct since balance/price hold
+  // between trades) so the x-axis is LINEAR in clock time (even spacing, gap-free)
+  // instead of following raw trade density. Bucket size per timeframe from RANGE_BUCKETS
+  // (1D = 15-min on bera; beta uses 5-min).
+  const { bucket } = RANGE_BUCKETS[range]
+  const grid = useMemo(
+    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
+    [allPoints, bucket],
+  )
   const seriesData = useMemo(() => {
-    const byTime = new Map<number, Point>()
-    allPoints.forEach((p) => byTime.set(p.t, p))
-    const sorted = [...byTime.values()].sort((a, b) => a.t - b.t)
+    if (!grid) return { pct0: [], pct1: [], lpVsBh: [], price0: [] }
+    const bucketed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
     return {
-      pct0: sorted.map((p) => ({ time: p.t as any, value: p.pct0 })),
-      pct1: sorted.map((p) => ({ time: p.t as any, value: p.pct1 })),
-      lpVsBh: sorted
+      pct0: bucketed.map((p) => ({ time: p.t as any, value: p.pct0 })),
+      pct1: bucketed.map((p) => ({ time: p.t as any, value: p.pct1 })),
+      lpVsBh: bucketed
         .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
         .map((p) => ({ time: p.t as any, value: p.lpVsBh as number })),
-      price0: sorted
+      price0: bucketed
         .filter((p) => Number.isFinite(p.price0))
         .map((p) => ({ time: p.t as any, value: p.price0 })),
     }
-  }, [allPoints])
+  }, [allPoints, bucket, grid])
 
   // The "now" split is always the latest trade, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
@@ -312,7 +319,7 @@ export function PoolBalanceChart({
   const applyRangePreset = useCallback(() => {
     const ts = chartRef.current?.timeScale()
     if (!ts) return
-    const span = RANGES[range]
+    const span = RANGE_BUCKETS[range].span
     const last = seriesData.pct0.length ? (seriesData.pct0[seriesData.pct0.length - 1].time as number) : null
     if (span == null || last == null) {
       ts.fitContent()
