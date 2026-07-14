@@ -6,6 +6,7 @@ import { ChainId } from '@brownfi/sdk'
 // gate: add/remove chains here to control where LP-vs-BH appears. Kept in its own
 // tiny module so Detail can read it without eager-importing the lazy-loaded LP chart.
 export const CHAINS_WITH_LP_VS_BH = new Set<number>([
+  ChainId.BERA_MAINNET,
   ChainId.LINEA_MAINNET,
   ChainId.HYPER_EVM,
   ChainId.ARBITRUM_MAINNET,
