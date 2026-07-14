@@ -190,7 +190,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     const columnValue = !ratiosMeaningful
       ? 0
       : isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON
-        ? computeV3FeeApr(pairStats)
+        ? computeV3FeeApr(pairStats, pair.chainId)
         : feeOverTvl
     return { tvl, lpPrice, columnValue }
   }, [token0Price, token1Price, pair, totalPoolTokens, pairStats])

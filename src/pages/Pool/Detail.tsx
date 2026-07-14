@@ -254,7 +254,7 @@ function PoolDetailInner({
   const feeAprDisplay = !ratiosMeaningful
     ? 0
     : isV3Like(version) && USE_V3_UNIV2_COMPARISON
-      ? computeV3FeeApr(pairRaw)
+      ? computeV3FeeApr(pairRaw, chainId)
       : feeOverTvl
   // "Annualized Return" label is shared by V2 + V3. The V3-only (?) hint lives
   // in <AnnualizedReturnInfo/> (interactive tooltip with a clickable Learn More).

@@ -15,6 +15,7 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
 // Same data + computation as the recharts version: pool-balance % split from the
@@ -168,7 +169,7 @@ export function PoolBalanceChart({
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PoolBalances',
-        query: GET_POOL_BALANCES,
+        query: withFirstActivityGte(GET_POOL_BALANCES, 'timestamp', chainId, pairAddress),
         variables: { chainId, version, pair: pairAddress.toLowerCase() },
       }),
     enabled: !!pairAddress && !!chainId,
@@ -364,7 +365,7 @@ export function PoolBalanceChart({
     try {
       const res = (await graphqlFetcher({
         operationName: 'PoolBalancesOlder',
-        query: GET_POOL_BALANCES_OLDER,
+        query: withFirstActivityGte(GET_POOL_BALANCES_OLDER, 'timestamp', chainId, pairAddress),
         variables: { chainId, version, pair: pairAddress.toLowerCase(), before },
       })) as { transactions?: Txn[] } | null
       const batch = res?.transactions ?? []

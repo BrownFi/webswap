@@ -1,5 +1,6 @@
 import { ChainId, Pair, isV3Like } from '@brownfi/sdk'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { isMainnet, isV3Enabled } from 'connectors'
 import {
   AreaSeries,
@@ -256,7 +257,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: buildQuery(GET_PAIR_STATS, keepUniV2),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -270,7 +271,7 @@ const PairChartTVInner = ({ pair }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStatsHour',
-        query: buildQuery(GET_PAIR_STATS_HOUR, keepUniV2),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,

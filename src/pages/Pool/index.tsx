@@ -224,7 +224,7 @@ export default function Pool() {
       // return; V2 sorts by the 24h-fees/TVL daily ratio it now displays.
       if (sortKey === 'apr') {
         if (isV3Like(version) && USE_V3_UNIV2_COMPARISON) {
-          return computeV3FeeApr(p)
+          return computeV3FeeApr(p, chainId)
         }
         const feeDayTvl = Number(p.tvl) > 0 ? (Number(p.feeDay) || 0) / Number(p.tvl) : 0
         return feeDayTvl

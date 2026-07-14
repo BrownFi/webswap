@@ -1,5 +1,6 @@
 import { isV3Like } from '@brownfi/sdk'
 import { ChainId, JSBI, Pair, TokenAmount } from '@brownfi/sdk'
+import { getPoolFirstActivity } from 'lib/sdk/constants/poolFirstActivity'
 import { useQuery } from '@tanstack/react-query'
 import { useTotalSupply } from 'data/TotalSupply'
 import { useActiveWeb3React } from 'hooks'
@@ -88,17 +89,23 @@ export const USE_V3_UNIV2_COMPARISON: boolean = true
  * Single source of truth shared by the pool detail page, pool list rows, and
  * the list's APR sort.
  */
-export function computeV3FeeApr(p?: {
-  lpPrice?: number | string | null
-  uniV2Price?: number | string | null
-  createdAt?: number | string | null
-} | null): number {
+export function computeV3FeeApr(
+  p?: {
+    id?: string | null
+    lpPrice?: number | string | null
+    uniV2Price?: number | string | null
+    createdAt?: number | string | null
+  } | null,
+  chainId?: number | null,
+): number {
   if (!p) return 0
   const lp = Number(p.lpPrice)
   const uni = Number(p.uniV2Price)
-  const createdAt = Number(p.createdAt)
-  if (!lp || !uni || !createdAt) return 0
-  const daysAlive = (Date.now() / 1000 - createdAt) / 86400
+  // First-activity override wins over createdAt (trims pre-trade dead days for pools
+  // created well before their first trade — see poolFirstActivity). Falls back to createdAt.
+  const start = getPoolFirstActivity(chainId, p.id) ?? Number(p.createdAt)
+  if (!lp || !uni || !start) return 0
+  const daysAlive = (Date.now() / 1000 - start) / 86400
   if (daysAlive <= 0) return 0
   return ((lp - uni) / uni / daysAlive) * 360 * 100
 }

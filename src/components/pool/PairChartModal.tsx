@@ -23,6 +23,7 @@ import {
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { graphqlFetcher } from 'utils/graphql'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {
@@ -74,7 +75,7 @@ const PairChartModalInner = ({ pair, name, enableAdvancedZoom, inline }: Props) 
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: GET_PAIR_STATS,
+        query: withFirstActivityGte(GET_PAIR_STATS, 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     enabled: inline || isOpen,
