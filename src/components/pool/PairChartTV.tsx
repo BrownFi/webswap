@@ -18,7 +18,6 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatPrice } from 'utils/prices'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
-import { USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
 
 // `uniV2Price` is indexed per chain. Verified on bf-v2-api-beta.brownfi.io
 // on 2026-05-12: every chain currently on the indexer supports the field.
@@ -133,27 +132,24 @@ type SeriesMeta = {
 // (deep saturated green, histogram). The hue distance + render-type
 // difference keeps them visually separable on the same chart.
 const SERIES_ALL: SeriesMeta[] = [
-  { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice',      label: 'HODL Price',     color: '#9CA3AF99', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  { key: 'uniV2Price',    label: 'UniV2 Price',    color: '#E0484899', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  // LP − UniV2 divergence (= lp − uni). The delta is tiny (~0.006) next to the
-  // ~$1 price lines, so it lives on its OWN LEFT axis — same single pane as the
-  // prices, but a separate scale so its small magnitude is readable. The left
-  // axis is made visible on the prod V3 chart (see leftPriceScale below) so the
-  // values map to real numbers. Cyan 1px dotted keeps the original look.
-  { key: 'lpMinusUniV2',  label: 'LP vs. UniV2',   color: '#22D3EE99', type: 'line',      priceScaleId: 'left',  yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // PRICES → LEFT axis (boss: "left measures LP/UniV2/HODL price"). These are the
+  // indexer's ~1.0 normalized performance indices; they cluster tightly, so one axis.
+  { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
+  { key: 'bnhPrice',      label: 'HODL Price',     color: '#9CA3AF99', type: 'line',      priceScaleId: 'left',   yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  { key: 'uniV2Price',    label: 'UniV2 Price',    color: '#E0484899', type: 'line',      priceScaleId: 'left',   yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // ROI → RIGHT axis (boss: "right measures ROI in %"). "LP vs. UniV2" = LP's %
+  // outperformance over the UniV2 benchmark: (lp − uni)/uni × 100. NOTE: key stays
+  // `lpMinusUniV2` to avoid a downstream sweep, but it now holds a PERCENTAGE, not the
+  // old lp−uni delta.
+  { key: 'lpMinusUniV2',  label: 'LP vs. UniV2',   color: '#22D3EE99', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // TVL + "LP − BH" ($ P&L) are dev-only (extended metrics); not on the prod chart, so
+  // their left-axis $ scale never competes with the prod prices. netPnL is superseded on
+  // prod by "LP vs. HODL" (%) below.
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
-  // Display label is "LP − BH" (LP minus Buy & Hold) to read as a sibling
-  // of "LP − UniV2" — same comparator pattern, just against the HODL
-  // reference instead of UniV2. Internal key stays `netPnL` to avoid a
-  // sweep across the indexer field name and downstream consumers; this
-  // is a pure copy change.
   { key: 'netPnL',        label: 'LP − BH',        color: '#83CF84',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
-  // "LP vs. BH" = LP's % outperformance over Buy & Hold: (lp − bnh)/bnh × 100. This is
-  // the PERCENTAGE form the beta page uses — distinct from netPnL ("LP − BH", a $ P&L on
-  // the left axis). Hidden overlay 'pct' scale so it auto-fits independently of the price
-  // lines. Prod: shown only on the boss-requested chains (Linea/Hyper/Arb).
-  { key: 'lpVsBhPct',     label: 'LP vs. BH',      color: '#83CF84',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
+  // "LP vs. HODL" = LP's % outperformance over Buy & Hold: (lp − bnh)/bnh × 100. On the
+  // RIGHT % axis next to "LP vs. UniV2". (Renamed from "LP vs. BH" per boss.)
+  { key: 'lpVsBhPct',     label: 'LP vs. HODL',    color: '#83CF84',   type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
 ]
 
@@ -176,41 +172,31 @@ const PairChartTVInner = ({ pair }: Props) => {
   // Production V3 chart shows LP price, UniV2 price, LP − UniV2, and volume.
   // The default-visible flags below mirror this.
   const v3ProdChart = isV3 && !showExtendedMetrics && supportsUniV2
-  // Boss request: surface the "LP − BH" (netPnL) line on the prod chart for select
-  // chains (Linea/Hyper/Arb). V3-only — netPnL is driven by bnhPrice from the V3 stats.
+  // Boss request (2026-07-14): surface BOTH ROI % lines — "LP vs. UniV2" and
+  // "LP vs. HODL" — on the prod chart for select chains (Linea/Hyper/Arb). V3-only;
+  // driven by uniV2Price/bnhPrice from the V3 stats.
   const lpVsBhOnProd = isV3 && !showExtendedMetrics && showsLpVsBh(pair.chainId)
   const availableSeries = useMemo(() => {
-    const base = (() => {
-      if (!showExtendedMetrics) {
-        // Production: V3 → LP price + UniV2 price + LP−UniV2 + volume (when uniV2
-        // data is available, e.g. V3-Official Bera via Goldsky); V2 → LP + volume.
-        // Plus "LP − BH" on the boss-requested chains (lpVsBhOnProd).
-        if (v3ProdChart) {
-          return SERIES_ALL.filter(
-            (s) =>
-              s.key === 'lpPrice' ||
-              s.key === 'bnhPrice' ||
-              s.key === 'uniV2Price' ||
-              s.key === 'lpMinusUniV2' ||
-              (lpVsBhOnProd && s.key === 'lpVsBhPct') ||
-              s.key === 'volume',
-          )
-        }
+    if (!showExtendedMetrics) {
+      // Production: V3 → LP/UniV2/HODL price (left) + the two ROI % lines (right, on the
+      // boss-requested chains) + volume; V2 → LP + volume.
+      if (v3ProdChart) {
         return SERIES_ALL.filter(
-          (s) => s.key === 'lpPrice' || (lpVsBhOnProd && s.key === 'lpVsBhPct') || s.key === 'volume',
+          (s) =>
+            s.key === 'lpPrice' ||
+            s.key === 'bnhPrice' ||
+            s.key === 'uniV2Price' ||
+            (lpVsBhOnProd && (s.key === 'lpMinusUniV2' || s.key === 'lpVsBhPct')) ||
+            s.key === 'volume',
         )
       }
-      // beta/dev: full set, minus the UniV2 reference + LP−UniV2 divergence
-      // when uniV2Price isn't in the data (V2 pairs, or chains without the
-      // indexer field) — otherwise those lines would render empty/misleading.
-      return keepUniV2
-        ? SERIES_ALL
-        : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
-    })()
-    // Paven (2026-06-18): hide the "LP vs. UniV2" divergence line until the
-    // comparison is re-enabled. Dropping it from availableSeries removes the
-    // line, its legend item, AND the (?) tooltip in one go.
-    return USE_V3_UNIV2_COMPARISON ? base : base.filter((s) => s.key !== 'lpMinusUniV2')
+      return SERIES_ALL.filter(
+        (s) => s.key === 'lpPrice' || (lpVsBhOnProd && s.key === 'lpVsBhPct') || s.key === 'volume',
+      )
+    }
+    // beta/dev: full set, minus the UniV2 reference + "LP vs. UniV2" when uniV2Price
+    // isn't in the data (V2 pairs, or chains without the indexer field).
+    return keepUniV2 ? SERIES_ALL : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
   }, [showExtendedMetrics, supportsUniV2, keepUniV2, v3ProdChart, lpVsBhOnProd])
 
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
@@ -221,15 +207,12 @@ const PairChartTVInner = ({ pair }: Props) => {
     // lines we DO want on by default (alongside LP price); elsewhere they
     // follow the extended-metrics gate.
     uniV2Price: showExtendedMetrics || v3ProdChart,
-    // LP−UniV2 divergence default-on with the other extended metrics, but
-    // gated on the chain actually exposing uniV2Price downstream via the
-    // availableSeries filter below — otherwise the line would just show
-    // raw lpPrice values.
-    lpMinusUniV2: showExtendedMetrics || v3ProdChart,
+    // "LP vs. UniV2" (%) — one of the two ROI lines; default-on where the boss asked
+    // for it (Linea/Hyper/Arb) on prod, plus in extended-metrics (beta/dev).
+    lpMinusUniV2: showExtendedMetrics || lpVsBhOnProd,
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
-    // "LP vs. BH" (%) default-on where the boss asked for it (Linea/Hyper/Arb) on prod,
-    // plus in extended-metrics (beta/dev).
+    // "LP vs. HODL" (%) — the other ROI line; same gate.
     lpVsBhPct: showExtendedMetrics || lpVsBhOnProd,
     volume: true,
   }))
@@ -288,17 +271,13 @@ const PairChartTVInner = ({ pair }: Props) => {
         lpPrice: lp,
         bnhPrice: bnh,
         uniV2Price: uni,
-        // "LP vs. UniV2" = the pure price gap between BrownFi's LP price and
-        // the UniV2 constant-product price (Jason 2026-06-17). He only wants
-        // the correlation between the two tokens — NOT the whole-pool /
-        // NAV-scaled figure used on the Beta page (the old
-        // `tvlRaw − uniRaw·tvlRaw/lpRaw` ≡ `tvl·(1 − uniV2/lp)` form). Use the
-        // scaled lp/uni so the delta is in the same price units as the
-        // lpPrice/uniV2Price lines (both are /1e9 for the kHYPE/USDT pool).
-        lpMinusUniV2:  lp - uni,
+        // "LP vs. UniV2" (%) = LP's % outperformance over the UniV2 benchmark:
+        // (lp − uni)/uni × 100. Ratio, so the iskHYPEUSDT /1e9 scale cancels. (Boss
+        // 2026-07-14: ROI in %, not the old lp−uni price delta.)
+        lpMinusUniV2: uni ? ((lp - uni) / uni) * 100 : 0,
         tvl: tvlRaw,
         netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
-        // "LP vs. BH" (%) = (lp − bnh)/bnh × 100. Ratio, so the iskHYPEUSDT /1e9 scale
+        // "LP vs. HODL" (%) = (lp − bnh)/bnh × 100. Ratio, so the iskHYPEUSDT /1e9 scale
         // cancels — use the scaled lp/bnh.
         lpVsBhPct: bnh ? ((lp - bnh) / bnh) * 100 : 0,
         volume: volRaw,
@@ -351,9 +330,12 @@ const PairChartTVInner = ({ pair }: Props) => {
       if (abs === 0) return '0'
       return `${sign}${abs.toFixed(3)}`
     }
+    // ROI axis (right): signed percentage. The two ROI lines use this so the right axis
+    // reads "+1.2%" etc., while the left (price) axis keeps the numeric formatter above.
+    const pctFormatter = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`
+    const isRoiKey = (k: SeriesKey) => k === 'lpMinusUniV2' || k === 'lpVsBhPct'
 
     const chart = createChart(container, {
-      localization: { priceFormatter },
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#CFC7C1',
@@ -364,15 +346,17 @@ const PairChartTVInner = ({ pair }: Props) => {
         horzLines: { color: '#2F2823' },
       },
       rightPriceScale: {
-        visible: true,
+        // RIGHT = the ROI % lines ("LP vs. UniV2" / "LP vs. HODL"). Only shown where the
+        // ROI lines are (Linea/Hyper/Arb on prod, or extended metrics), so hide it
+        // elsewhere rather than leave an empty axis.
+        visible: showExtendedMetrics || lpVsBhOnProd,
         borderVisible: false,
         ticksVisible: false,
         scaleMargins: { top: 0.05, bottom: 0.25 },
       },
       leftPriceScale: {
-        // Visible on the prod V3 chart too — it carries the small
-        // "LP vs. UniV2" delta, which is unreadable without its own labels.
-        visible: showExtendedMetrics || v3ProdChart,
+        // LEFT = the price lines (LP / UniV2 / HODL), always present, so always visible.
+        visible: true,
         borderVisible: false,
         ticksVisible: false,
         scaleMargins: { top: 0.05, bottom: 0.25 },
@@ -421,6 +405,8 @@ const PairChartTVInner = ({ pair }: Props) => {
           color: meta.color,
           priceScaleId: meta.priceScaleId,
           lineWidth: meta.lineWidth ?? 2,
+          // ROI lines → "%" axis; price lines → numeric axis.
+          priceFormat: { type: 'custom', formatter: isRoiKey(meta.key) ? pctFormatter : priceFormatter, minMove: 0.01 },
           ...(meta.lineStyle !== undefined ? { lineStyle: meta.lineStyle } : {}),
         })
       }
@@ -431,13 +417,6 @@ const PairChartTVInner = ({ pair }: Props) => {
     if (seriesRefs.current.volume) {
       chart.priceScale('volume').applyOptions({
         scaleMargins: { top: 0.8, bottom: 0 },
-      })
-    }
-    // "LP vs. BH" (%) is a hidden overlay — keep it in a band so it auto-fits without
-    // stretching over the price lines / volume.
-    if (seriesRefs.current.lpVsBhPct) {
-      chart.priceScale('pct').applyOptions({
-        scaleMargins: { top: 0.1, bottom: 0.25 },
       })
     }
 
@@ -620,10 +599,9 @@ const PairChartTVInner = ({ pair }: Props) => {
                 .map((meta) => {
                   const v = hovered[meta.key] as number
                   const formatted =
-                    // "LP vs. BH" is a percentage; everything else is a price/$ value.
-                    // lpMinusUniV2 is a pure price delta (lp − uni), so it formats like
-                    // the price lines (3 dp), NOT the whole-dollar group (tvl/netPnL/vol).
-                    meta.key === 'lpVsBhPct'
+                    // The two ROI lines ("LP vs. UniV2", "LP vs. HODL") are percentages;
+                    // tvl/netPnL/volume are whole $; everything else is a price (3 dp).
+                    meta.key === 'lpVsBhPct' || meta.key === 'lpMinusUniV2'
                       ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
                       : meta.key === 'tvl' || meta.key === 'netPnL' || meta.key === 'volume'
                         ? formatPrice(v, { maximumFractionDigits: 0 })
