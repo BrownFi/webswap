@@ -286,7 +286,7 @@ export function PoolBalanceChart({
                 { key: 't0' as const, label: symbol0, color: token0Color },
                 { key: 't1' as const, label: symbol1, color: token1Color },
               ]),
-          ...(showLpVsBh && latest?.lpVsBh != null ? [{ key: 'lpbh' as const, label: 'LP vs BH', color: COLOR_LPBH }] : []),
+          ...(showLpVsBh && latest?.lpVsBh != null ? [{ key: 'lpbh' as const, label: 'LP vs. HODL', color: COLOR_LPBH }] : []),
           ...(latest && Number.isFinite(latest.price0)
             ? [{ key: 'price0' as const, label: `${baseSymbol}/${quoteSymbol}`, color: COLOR_PRICE0 }]
             : []),
@@ -738,7 +738,7 @@ export function PoolBalanceChart({
                       gap: 16,
                     }}
                   >
-                    <span style={{ color: COLOR_LPBH }}>LP vs BH</span>
+                    <span style={{ color: COLOR_LPBH }}>LP vs. HODL</span>
                     <span style={{ color: '#FBFBFD' }}>
                       {hovered.lpVsBh >= 0 ? '+' : ''}
                       {hovered.lpVsBh.toFixed(2)}%
