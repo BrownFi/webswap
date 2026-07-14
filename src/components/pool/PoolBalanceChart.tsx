@@ -57,17 +57,6 @@ const GET_POOL_BALANCES_OLDER = `
   }
 `
 
-// LP-vs-BH series (daily) — same source as the LP chart's lpPrice/bnhPrice lines.
-const GET_POOL_LPBH = `
-  query PoolLpBh($pair: String) {
-    pairDayDatas(first: 1000, where: { pair: $pair }, orderBy: dayStartUnix, orderDirection: asc) {
-      dayStartUnix
-      lpPrice
-      bnhPrice
-    }
-  }
-`
-
 const RANGES = { '1D': 86400, '7D': 7 * 86400, '1M': 30 * 86400, ALL: null } as const
 type Range = keyof typeof RANGES
 const RANGE_KEYS: Range[] = ['1D', '7D', '1M', 'ALL']
@@ -78,10 +67,14 @@ type Txn = {
   reserve1: number | string
   reserve0USD: number | string
   reserve1USD: number | string
+  // Per-swap LP + buy&hold price indices — only fetched when the LP-vs-BH line is on
+  // (see withLpBhFields). Give the % line per-swap granularity (like beta) instead of
+  // the coarse daily step it used to read from pairDayData.
+  lpPrice?: number | string
+  bnhPrice?: number | string
 }
-type DayRow = { dayStartUnix: number | string; lpPrice: number | string; bnhPrice: number | string }
 // pct0/pct1 = each token's % of pool value; lpVsBh = LP-vs-buy&hold % (right
-// axis), step-attached from daily data; basePrice = the BASE (non-quote) token's
+// axis), computed per-swap from the tx's own lpPrice/bnhPrice; basePrice = the BASE (non-quote) token's
 // USD price for this tx (its reserveUSD / its reserve), drawn on its own isolated
 // overlay scale. Base is chosen via quoteTokenIndex.
 type Point = {
@@ -164,12 +157,19 @@ export function PoolBalanceChart({
   const token0Color = reversed ? COLOR1 : COLOR0
   const token1Color = reversed ? COLOR0 : COLOR1
 
+  // Inject per-swap lpPrice/bnhPrice into the tx selection ONLY when the LP-vs-BH line
+  // is on (Linea/Hyper/Arb via showLpVsBh). These fields are a partial indexer rollout —
+  // requesting them on a chain that lacks them is a GraphQL validation error that breaks
+  // the whole balance chart. Chains in showsLpVsBh are verified to expose them.
+  const withLpBhFields = (q: string): string =>
+    showLpVsBh ? q.replace(/(\n\s*reserve1USD)/, '$1\n      lpPrice\n      bnhPrice') : q
+
   const { data, isLoading } = useQuery<{ transactions: Txn[] }>({
     queryKey: ['poolBalances', chainId, pairAddress, version],
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PoolBalances',
-        query: withFirstActivityGte(GET_POOL_BALANCES, 'timestamp', chainId, pairAddress),
+        query: withFirstActivityGte(withLpBhFields(GET_POOL_BALANCES), 'timestamp', chainId, pairAddress),
         variables: { chainId, version, pair: pairAddress.toLowerCase() },
       }),
     enabled: !!pairAddress && !!chainId,
@@ -177,23 +177,9 @@ export function PoolBalanceChart({
     placeholderData: keepPreviousData,
   })
 
-  const { data: dayData } = useQuery<{ pairDayDatas: DayRow[] }>({
-    queryKey: ['poolLpBh', chainId, pairAddress, version],
-    queryFn: () =>
-      graphqlFetcher({
-        operationName: 'PoolLpBh',
-        query: withFirstActivityGte(GET_POOL_LPBH, 'dayStartUnix', chainId, pairAddress),
-        variables: { chainId, version, pair: pairAddress.toLowerCase() },
-      }),
-    // Gated off when the LP-vs-BH line is hidden — no request fires.
-    enabled: showLpVsBh && !!pairAddress && !!chainId,
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
-  })
-
   // Older tx batches accumulated by scroll-to-load-more (newest-first, like the
   // initial fetch). Combined with the initial batch in `combinedTxs`, so the
-  // pct/LP-vs-BH step-attach math below is unchanged.
+  // per-swap pct / LP-vs-BH math below covers the whole loaded set.
   const [olderTxs, setOlderTxs] = useState<Txn[]>([])
   // No concurrent fetches; stop once a batch returns < 1000 (older end reached).
   const loadingRef = useRef(false)
@@ -212,19 +198,6 @@ export function PoolBalanceChart({
     savedRangeRef.current = null
   }, [pairAddress, chainId, version])
 
-  // Daily LP-vs-BH %, ascending — the step source for each trade point.
-  const dailyLpBh = useMemo(() => {
-    const rows = dayData?.pairDayDatas ?? []
-    return rows
-      .map((r) => {
-        const lp = Number(r.lpPrice)
-        const bnh = Number(r.bnhPrice)
-        return { t: Number(r.dayStartUnix), lpVsBh: lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : NaN }
-      })
-      .filter((d) => Number.isFinite(d.t) && Number.isFinite(d.lpVsBh))
-      .sort((a, b) => a.t - b.t)
-  }, [dayData])
-
   // Initial batch (newest-first) + accumulated older batches (also newest-first),
   // so the whole thing stays a single descending list. The oldest accumulated
   // timestamp (last element) is the cursor for the next `timestamp_lt` page.
@@ -234,7 +207,7 @@ export function PoolBalanceChart({
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point
   // also carries the LP-vs-BH value from the latest daily bucket ≤ its timestamp.
   const allPoints = useMemo<Point[]>(() => {
-    const base = [...combinedTxs]
+    return [...combinedTxs]
       .reverse()
       .map((t) => {
         const r0 = Number(t.reserve0USD)
@@ -253,17 +226,17 @@ export function PoolBalanceChart({
         const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
         const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
         const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
-        return { t: Number(t.timestamp), pct0, pct1, price0 }
+        // Per-swap LP-vs-BH % from the tx's OWN lpPrice/bnhPrice (like beta) — a smooth
+        // point-per-trade line, NOT the coarse daily step it used to read from
+        // pairDayData. null when the fields weren't fetched (line off) or are absent, so
+        // the series just hides.
+        const lp = Number(t.lpPrice)
+        const bnh = Number(t.bnhPrice)
+        const lpVsBh = lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null
+        return { t: Number(t.timestamp), pct0, pct1, price0, lpVsBh }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
-    // Step-attach LP-vs-BH: both arrays are ascending, so walk a pointer.
-    let di = 0
-    let last: number | null = null
-    return base.map((p) => {
-      while (di < dailyLpBh.length && dailyLpBh[di].t <= p.t) last = dailyLpBh[di++].lpVsBh
-      return { ...p, lpVsBh: last }
-    })
-  }, [combinedTxs, dailyLpBh, baseIdx, quoteIdx])
+  }, [combinedTxs, baseIdx, quoteIdx])
 
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
   // unique time values; two trades can share a second). Keep the latest reserve
@@ -365,7 +338,7 @@ export function PoolBalanceChart({
     try {
       const res = (await graphqlFetcher({
         operationName: 'PoolBalancesOlder',
-        query: withFirstActivityGte(GET_POOL_BALANCES_OLDER, 'timestamp', chainId, pairAddress),
+        query: withFirstActivityGte(withLpBhFields(GET_POOL_BALANCES_OLDER), 'timestamp', chainId, pairAddress),
         variables: { chainId, version, pair: pairAddress.toLowerCase(), before },
       })) as { transactions?: Txn[] } | null
       const batch = res?.transactions ?? []
