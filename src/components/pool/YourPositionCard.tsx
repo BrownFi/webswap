@@ -258,9 +258,10 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                 <>
                   <div style={{ borderTop: '1px solid #2F2823', margin: '4px 0' }} />
                   <PortfolioRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
-                  {!isMainnet && (
-                    <PortfolioRow label="HODL portfolio" value={pairAccount.bnhPortfolio} />
-                  )}
+                  {/* HODL portfolio = buy-&-hold simulation (indexer bnhPortfolio). Enabled
+                      on prod per boss (2026-07-15); "(simulation)" flags it as a modeled
+                      value. The HODL PnL / LPing-vs-HODL rows below stay dev-only. */}
+                  <PortfolioRow label="HODL portfolio (simulation)" value={pairAccount.bnhPortfolio} />
                   <PortfolioRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} base={pairAccount.basePortfolio} />
                   {!isMainnet && (
                     <>
