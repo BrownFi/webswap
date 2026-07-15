@@ -14,8 +14,10 @@ export const CHAINS_WITH_LP_VS_UNIV2 = new Set<number>([
   ChainId.ARBITRUM_MAINNET,
 ])
 
-// "LP vs. HODL" — Linea/Hyper/Arb only (NOT Bera, per boss 2026-07-14).
+// "LP vs. HODL" — Bera + Linea/Hyper/Arb (Bera re-enabled per boss 2026-07-15; it was
+// excluded on 2026-07-14, then reinstated).
 export const CHAINS_WITH_LP_VS_HODL = new Set<number>([
+  ChainId.BERA_MAINNET,
   ChainId.LINEA_MAINNET,
   ChainId.HYPER_EVM,
   ChainId.ARBITRUM_MAINNET,
