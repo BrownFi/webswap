@@ -147,7 +147,8 @@ export const pairBGT: Record<string, string[]> = {
   // the UI call /igbt-vault-apr (getPoolBgt) so the BGT APR shows once Manh's BE
   // serves these vaults. Value[0] = the BeraHub stake link for the new vault.
   '0xc123bc9259d1a99add5a2c512498ac146dd2bade': ['https://hub.berachain.com/earn/0xa57d4c595a000e20f8ea8f82663a9c7b15d60168'], // WETH/USDC.e V3 (1.45%)
-  '0xf2d50928f33ef0f9e8dc20881bc475de2c484e26': ['https://hub.berachain.com/earn/0xd54ec45cca5d428c3aef05993195c389c0b82b4e'], // BERA/USDC.e V3 (1.94%)
+  // BERA/USDC.e V3 (0xf2d50928…) removed 2026-07-15 — foundation moved its reward
+  // allocation to BERA/HONEY, so its reward APR is now 0. Re-add here if it returns.
   '0x3e0fd2ce4d5b7e5f6c34e26c48a2dbd9f8d7d88c': ['https://hub.berachain.com/earn/0x3f0cf0c62e5d7617c3f965bfefc656af650e459e'], // WBERA/HONEY V3 (3.00%)
 }
 
