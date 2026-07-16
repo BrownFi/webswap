@@ -1,8 +1,4 @@
-import { ChainId, Pair, isV3Like } from '@brownfi/sdk'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
-import { showsLpVsUniV2, showsLpVsHodl } from 'components/pool/lpVsBhChains'
-import { isMainnet, isV3Enabled } from 'connectors'
+import { Pair, isV3Like } from '@brownfi/sdk'
 import {
   AreaSeries,
   ColorType,
@@ -12,331 +8,220 @@ import {
   ISeriesApi,
   LineSeries,
   LineStyle,
+  TickMarkType,
+  Time,
   createChart,
 } from 'lightweight-charts'
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { graphqlFetcher } from 'utils/graphql'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { formatPrice } from 'utils/prices'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
+import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
+import { hasUniV2Price, usePairTransactions } from './usePairTransactions'
 
-// `uniV2Price` is indexed per chain. Verified on bf-v2-api-beta.brownfi.io
-// on 2026-05-12: every chain currently on the indexer supports the field.
-// Kept as an explicit allowlist so a future chain stays gated until verified
-// (querying the field on an unsupported chain returns a GraphQL validation
-// error and breaks the chart).
+// LP chart (Pool Detail). Four lines only, per boss (2026-07-16):
+//   • Relative Price  — BASE priced in QUOTE (e.g. WBERA/HONEY), RIGHT axis
+//   • LP vs. HODL     — LP's % outperformance over BH3 buy&hold, LEFT % axis
+//   • LP vs. UniV2    — LP's % outperformance over the UniV2 benchmark, LEFT % axis
+//   • Volume          — per-bucket USD volume histogram, bottom
 //
-// Empty when pointing at the production API (`api.brownfi.io`) since it
-// doesn't expose `uniV2Price` on PairDayData/PairHourData yet — only the
-// beta API does. Requesting the field against prod returns a GraphQL
-// validation error and breaks the chart. Capability follows the API URL,
-// not the env name: a beta-branded deployment that talks to prod API also
-// needs the field stripped.
-const CHAINS_WITH_UNIV2_PRICE = !isV3Enabled
-  ? new Set<number>()
-  : new Set<number>([
-      ChainId.BASE_MAINNET,
-      ChainId.BERA_MAINNET,
-      ChainId.BSC_MAINNET,
-      ChainId.ARBITRUM_MAINNET,
-      ChainId.LINEA_MAINNET,
-      ChainId.SEI_MAINNET,
-      ChainId.HYPER_EVM,
-      ChainId.MONAD,
-    ])
-const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
-// `uniV2Price` only exists on the V3 indexer schema. Keep it only when the
-// chain exposes it AND the pair is V3 — V2 pairs route to the V2 schema, which
-// has no uniV2Price field (querying it is a GraphQL validation error).
-const buildQuery = (template: string, keepUniV2: boolean) =>
-  keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
-
-const GET_PAIR_STATS = `
-  query PairStats($pair: String) {
-    pairDayDatas(
-      first: 1000
-      where: {pair: $pair}
-      orderBy: dayStartUnix
-      orderDirection: asc
-    ) {
-      dayStartUnix
-      tvl
-      totalVolume
-      totalFee
-      apr
-      lpPrice
-      bnhPrice
-      uniV2Price
-    }
-  }
-`
-
-// 1H mode: last 24 hourly buckets for "intraday today" view. Same metrics as
-// day data, just keyed by hourStartUnix.
-const GET_PAIR_STATS_HOUR = `
-  query PairStatsHour($pair: String) {
-    pairHourDatas(
-      first: 24
-      where: {pair: $pair}
-      orderBy: hourStartUnix
-      orderDirection: desc
-    ) {
-      hourStartUnix
-      tvl
-      totalVolume
-      totalFee
-      apr
-      lpPrice
-      bnhPrice
-      uniV2Price
-    }
-  }
-`
-
-type DayData = {
-  dayStartUnix: number
-  tvl: number
-  totalVolume: number
-  totalFee: number
-  apr: number
-  lpPrice: number
-  bnhPrice: number
-  uniV2Price: number
-}
-
-type HourData = Omit<DayData, 'dayStartUnix'> & { hourStartUnix: number }
-
-type SeriesKey = 'lpPrice' | 'bnhPrice' | 'uniV2Price' | 'lpMinusUniV2' | 'tvl' | 'netPnL' | 'lpVsBhPct' | 'volume'
-
-type SeriesMeta = {
-  key: SeriesKey
-  label: string
-  color: string
-  type: 'line' | 'area' | 'histogram'
-  priceScaleId: string
-  yAxis: 'left' | 'right' | 'hidden'
-  /** When set, overrides the default LineSeries stroke (2px). Reference
-   *  lines use 1px so the LP series visually dominates. */
-  lineWidth?: 1 | 2 | 3 | 4
-  /** When set, overrides the default solid line style. Reference lines
-   *  use Dashed to read as benchmarks. */
-  lineStyle?: LineStyle
-}
-
-// Original BrownFi palette. HODL + UniV2 reference benchmarks render
-// 1px + dotted (LineStyle.Dotted) AND at ~60% opacity (alpha `99` ≈ 0.6)
-// so they read as muted references vs LP Price's default 2px solid.
-// UniV2 uses red to distinguish it from HODL's blue.
+// ALL FOUR lines come from the SAME `transactions` source and run through the
+// identical machinery as the Pool Balance chart (bucketGrid + bucketClose +
+// setVisibleRange zoom + scroll-to-load-more), so this chart behaves exactly
+// like Pool Balance on every timeframe — no deep-aggregated-vs-shallow-tx span
+// mismatch. `lpPrice`/`bh3Price`/`uniV2Price` are carried per-swap on the tx
+// entity, so the % lines are per-trade (not coarse daily buckets).
 //
-// Net PnL and Volume are both green but in clearly different shades:
-// Net PnL = #83CF84 (light pastel green, line) and Volume = #16A34A
-// (deep saturated green, histogram). The hue distance + render-type
-// difference keeps them visually separable on the same chart.
-const SERIES_ALL: SeriesMeta[] = [
-  // PRICES → LEFT axis (boss: "left measures LP/UniV2/HODL price"). These are the
-  // indexer's ~1.0 normalized performance indices; they cluster tightly, so one axis.
-  { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
-  { key: 'bnhPrice',      label: 'HODL Price',     color: '#9CA3AF99', type: 'line',      priceScaleId: 'left',   yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  { key: 'uniV2Price',    label: 'UniV2 Price',    color: '#E0484899', type: 'line',      priceScaleId: 'left',   yAxis: 'left', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  // ROI → RIGHT axis (boss: "right measures ROI in %"). "LP vs. UniV2" = LP's %
-  // outperformance over the UniV2 benchmark: (lp − uni)/uni × 100. NOTE: key stays
-  // `lpMinusUniV2` to avoid a downstream sweep, but it now holds a PERCENTAGE, not the
-  // old lp−uni delta.
-  { key: 'lpMinusUniV2',  label: 'LP vs. UniV2',   color: '#22D3EE99', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  // TVL + "LP − BH" ($ P&L) are dev-only (extended metrics); not on the prod chart, so
-  // their left-axis $ scale never competes with the prod prices. netPnL is superseded on
-  // prod by "LP vs. HODL" (%) below.
-  { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
-  { key: 'netPnL',        label: 'LP − BH',        color: '#83CF84',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
-  // "LP vs. HODL" = LP's % outperformance over Buy & Hold: (lp − bnh)/bnh × 100. On the
-  // RIGHT % axis next to "LP vs. UniV2". (Renamed from "LP vs. BH" per boss.)
-  { key: 'lpVsBhPct',     label: 'LP vs. HODL',    color: '#83CF84',   type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' },
-]
+// INTERIM NOTE: the relative price is derived from tx reserves (base/quote).
+// When Manh's aggregated rel-price field ships we can move to the deep
+// pairDay/HourData source; until then the tx pipeline keeps all 4 lines
+// consistent + scroll-extendable.
 
-// GitBook explainer for the LP-vs-UniV2 benchmark shown under the V3 chart.
+// Per-swap point: relative price + the two ROI %s + USD volume.
+type Point = { t: number; price0: number; lpVsHodl: number | null; lpVsUniV2: number | null; vol: number }
+
+type ToggleKey = 'price0' | 'lpVsHodl' | 'lpVsUniV2' | 'volume'
+
+const COLOR_PRICE = '#EC4899' // relative price (pink) — matches Pool Balance's price line
+const COLOR_HODL = '#83CF84' // LP vs. HODL (green)
+const COLOR_UNIV2 = '#22D3EE' // LP vs. UniV2 (cyan)
+const COLOR_VOLUME = '#16A34A' // volume (deep green histogram)
+
+// Relative-price formatter (no $/%): base priced in the quote token, adaptive
+// decimals. Mirrors the Pool Balance chart's formatRel.
+const formatRel = (v: number): string => {
+  if (!Number.isFinite(v)) return '—'
+  const abs = Math.abs(v)
+  const sign = v < 0 ? '-' : ''
+  if (abs === 0) return '0'
+  const digits = abs >= 1000 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : abs >= 0.0001 ? 6 : 8
+  return `${sign}${abs.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits })}`
+}
+const formatPct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
+
 const LEARN_MORE_URL = 'https://brownfi.gitbook.io/brownfi-docs/brownfi-v3/benchmark'
 const BENCHMARK_HINT =
   "The UniV2 constant-product curve serves as the benchmark for measuring BrownFi pool performance. The LP line should sit above the UniV2 line, with the gap widening over time, reflecting BrownFi V3's lower IL and higher fee yield compared to UniV2."
 
 type Props = {
   pair: Pair
+  // Base/quote signal (= shouldReverseDisplay) — drives which token is priced in
+  // which for the relative-price line + its label. Matches the Pool Balance chart.
+  reversed?: boolean
+  symbol0?: string
+  symbol1?: string
 }
 
-const PairChartTVInner = ({ pair }: Props) => {
-  const showExtendedMetrics = !isMainnet
-  const supportsUniV2 = hasUniV2Price(pair.chainId)
-  const isV3 = isV3Like(pair.version)
-  // uniV2Price is a V3-indexer field — only request it for V3 pairs on a
-  // chain that exposes it (else the V2 schema rejects the query).
+const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) => {
+  const chainId = pair.chainId
+  const version = pair.version
+  const pairAddress = pair.liquidityToken.address
+  const isV3 = isV3Like(version)
+  const supportsUniV2 = hasUniV2Price(chainId)
   const keepUniV2 = supportsUniV2 && isV3
-  // Production V3 chart shows LP price, UniV2 price, LP − UniV2, and volume.
-  // The default-visible flags below mirror this.
-  const v3ProdChart = isV3 && !showExtendedMetrics && supportsUniV2
-  // Boss request (2026-07-14): surface the ROI % lines on the prod chart, gated PER LINE.
-  // "LP vs. UniV2" → Bera + Linea/Hyper/Arb; "LP vs. HODL" → Linea/Hyper/Arb only (NOT
-  // Bera). V3-only; driven by uniV2Price/bnhPrice from the V3 stats.
-  const lpVsUniV2OnProd = isV3 && !showExtendedMetrics && showsLpVsUniV2(pair.chainId)
-  const lpVsHodlOnProd = isV3 && !showExtendedMetrics && showsLpVsHodl(pair.chainId)
-  const availableSeries = useMemo(() => {
-    if (!showExtendedMetrics) {
-      // Production: V3 → LP/UniV2/HODL price (left) + the ROI % lines (right, per-line
-      // chain gate) + volume; V2 → LP + volume.
-      if (v3ProdChart) {
-        return SERIES_ALL.filter(
-          (s) =>
-            s.key === 'lpPrice' ||
-            s.key === 'bnhPrice' ||
-            s.key === 'uniV2Price' ||
-            (lpVsUniV2OnProd && s.key === 'lpMinusUniV2') ||
-            (lpVsHodlOnProd && s.key === 'lpVsBhPct') ||
-            s.key === 'volume',
-        )
-      }
-      return SERIES_ALL.filter(
-        (s) => s.key === 'lpPrice' || (lpVsHodlOnProd && s.key === 'lpVsBhPct') || s.key === 'volume',
-      )
-    }
-    // beta/dev: full set, minus the UniV2 reference + "LP vs. UniV2" when uniV2Price
-    // isn't in the data (V2 pairs, or chains without the indexer field).
-    return keepUniV2 ? SERIES_ALL : SERIES_ALL.filter((s) => s.key !== 'uniV2Price' && s.key !== 'lpMinusUniV2')
-  }, [showExtendedMetrics, supportsUniV2, keepUniV2, v3ProdChart, lpVsUniV2OnProd, lpVsHodlOnProd])
 
-  const [visible, setVisible] = useState<Record<SeriesKey, boolean>>(() => ({
-    lpPrice: true,
-    // HODL price is shown on the prod V3 chart too (default-on, matching beta).
-    bnhPrice: showExtendedMetrics || v3ProdChart,
-    // On the production V3 chart, UniV2 price + LP−UniV2 are the two extra
-    // lines we DO want on by default (alongside LP price); elsewhere they
-    // follow the extended-metrics gate.
-    uniV2Price: showExtendedMetrics || v3ProdChart,
-    // "LP vs. UniV2" (%) — default-on on its chains (Bera + Linea/Hyper/Arb) + dev.
-    lpMinusUniV2: showExtendedMetrics || lpVsUniV2OnProd,
-    tvl: showExtendedMetrics,
-    netPnL: showExtendedMetrics,
-    // "LP vs. HODL" (%) — default-on on its chains (Linea/Hyper/Arb, NOT Bera) + dev.
-    lpVsBhPct: showExtendedMetrics || lpVsHodlOnProd,
+  // BASE priced in QUOTE; base/quote from `reversed` (single source of truth).
+  const baseIdx = reversed ? 1 : 0
+  const quoteIdx = baseIdx === 0 ? 1 : 0
+  const sym0 = symbol0 ?? pair.token0.symbol ?? '?'
+  const sym1 = symbol1 ?? pair.token1.symbol ?? '?'
+  const baseSymbol = baseIdx === 0 ? sym0 : sym1
+  const quoteSymbol = baseIdx === 0 ? sym1 : sym0
+  const relPriceLabel = `${baseSymbol}/${quoteSymbol}`
+
+  const [range, setRange] = useState<RangeKey>('7D')
+  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({
+    price0: true,
+    lpVsHodl: true,
+    lpVsUniV2: true,
     volume: true,
-  }))
-
-  // '1D' = today's intraday (24 hourly buckets, separate query). The rest are
-  // daily-aggregated ranges that slice the same `pairDayDatas` series.
-  type Range = '1D' | '7d' | '1m' | 'all'
-  const RANGE_DAYS: Record<Exclude<Range, '1D'>, number | null> = { '7d': 7, '1m': 30, all: null }
-  const [range, setRange] = useState<Range>('1m')
-  const isHourly = range === '1D'
-
-  const iskHYPEUSDT = pair.liquidityToken.address === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3'
-
-  const { data: dayResp, isPending: isPendingDay } = useQuery<{ pairDayDatas: DayData[] }>({
-    queryKey: ['pairStats', pair.chainId, pair.liquidityToken.address, pair.version],
-    queryFn: () =>
-      graphqlFetcher({
-        operationName: 'PairStats',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
-        variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
-      }),
-    refetchInterval: 60_000,
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
-    enabled: !isHourly,
   })
 
-  const { data: hourResp, isPending: isPendingHour } = useQuery<{ pairHourDatas: HourData[] }>({
-    queryKey: ['pairStatsHour', pair.chainId, pair.liquidityToken.address, pair.version],
-    queryFn: () =>
-      graphqlFetcher({
-        operationName: 'PairStatsHour',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
-        variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
-      }),
-    refetchInterval: 60_000,
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
-    enabled: isHourly,
-  })
+  // ONE shared tx feed for this pool — the Pool Balance chart on the same page
+  // reads the identical cache (react-query dedupes by key), so the page makes a
+  // single tx request + shares load-more paging.
+  const { txns: combinedTxs, loadMore, isLoading } = usePairTransactions(chainId, pairAddress, version)
 
-  const isPending = isHourly ? isPendingHour : isPendingDay
-  const data = isHourly ? hourResp : dayResp
+  // Per-swap points, chronological (indexer returns newest-first → reverse).
+  const allPoints = useMemo<Point[]>(() => {
+    return [...combinedTxs]
+      .reverse()
+      .map((t) => {
+        const r0 = Number(t.reserve0USD)
+        const r1 = Number(t.reserve1USD)
+        // RELATIVE price = base priced in quote (base USD price ÷ quote USD price).
+        const baseAmt = Number(baseIdx === 0 ? t.reserve0 : t.reserve1)
+        const baseUsd = baseIdx === 0 ? r0 : r1
+        const quoteAmt = Number(quoteIdx === 0 ? t.reserve0 : t.reserve1)
+        const quoteUsd = quoteIdx === 0 ? r0 : r1
+        const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
+        const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
+        const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
+        // ROI % from this tx's OWN lpPrice / bh3Price / uniV2Price (per-trade).
+        const lp = Number(t.lpPrice)
+        const bh3 = Number(t.bh3Price)
+        const uni = Number(t.uniV2Price)
+        const lpVsHodl = lp > 0 && bh3 > 0 ? (lp / bh3 - 1) * 100 : null
+        const lpVsUniV2 = lp > 0 && uni > 0 ? (lp / uni - 1) * 100 : null
+        // USD volume of the swap = input amount × its (post-swap) USD unit price.
+        const a0In = Number(t.amount0In) || 0
+        const a1In = Number(t.amount1In) || 0
+        const p0USD = Number(t.reserve0) > 0 ? r0 / Number(t.reserve0) : 0
+        const p1USD = Number(t.reserve1) > 0 ? r1 / Number(t.reserve1) : 0
+        const vol = a0In > 0 ? a0In * p0USD : a1In > 0 ? a1In * p1USD : 0
+        return { t: Number(t.timestamp), price0, lpVsHodl, lpVsUniV2, vol }
+      })
+      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.price0))
+  }, [combinedTxs, baseIdx, quoteIdx])
 
-  const fullChartData = useMemo(() => {
-    const toPoint = (lpRaw: number, bnhRaw: number, uniRaw: number, tvlRaw: number, volRaw: number, time: number) => {
-      // Apply the iskHYPEUSDT scale BEFORE computing the diff so we don't
-      // mix raw and scaled values. The divergence is in the same price
-      // units as lpPrice/uniV2Price; rendering on the LEFT axis lets it
-      // auto-scale independently of the primary price range.
-      const lp = iskHYPEUSDT ? lpRaw / 1e9 : lpRaw
-      const bnh = iskHYPEUSDT ? bnhRaw / 1e9 : bnhRaw
-      const uni = iskHYPEUSDT ? uniRaw / 1e9 : uniRaw
-      return {
-        time,
-        lpPrice: lp,
-        bnhPrice: bnh,
-        uniV2Price: uni,
-        // "LP vs. UniV2" (%) = LP's % outperformance over the UniV2 benchmark:
-        // (lp − uni)/uni × 100. Ratio, so the iskHYPEUSDT /1e9 scale cancels. (Boss
-        // 2026-07-14: ROI in %, not the old lp−uni price delta.)
-        lpMinusUniV2: uni ? ((lp - uni) / uni) * 100 : 0,
-        tvl: tvlRaw,
-        netPnL: tvlRaw - (bnhRaw * tvlRaw) / (lpRaw || 1),
-        // "LP vs. HODL" (%) = (lp − bnh)/bnh × 100. Ratio, so the iskHYPEUSDT /1e9 scale
-        // cancels — use the scaled lp/bnh.
-        lpVsBhPct: bnh ? ((lp - bnh) / bnh) * 100 : 0,
-        volume: volRaw,
-      }
+  // Resample onto a linear time grid (bucketClose = carry-forward close, so lines
+  // stay continuous across quiet buckets). Volume is SUMMED per bucket.
+  const { bucket } = RANGE_BUCKETS[range]
+  const grid = useMemo(
+    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
+    [allPoints, bucket],
+  )
+  const seriesData = useMemo(() => {
+    if (!grid) return { price0: [], lpVsHodl: [], lpVsUniV2: [], volume: [] as { time: any; value: number; color: string }[] }
+    const closed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+    const volMap = new Map<number, number>()
+    for (const p of allPoints) {
+      if (!(p.vol > 0)) continue
+      const b = Math.floor(p.t / bucket) * bucket
+      if (b < grid.gridStart || b > grid.gridEnd) continue
+      volMap.set(b, (volMap.get(b) ?? 0) + p.vol)
     }
-    if (isHourly) {
-      const rows = (data as { pairHourDatas?: HourData[] } | undefined)?.pairHourDatas
-      if (!rows) return []
-      // Hourly query is desc — flip to asc so the chart renders left→right.
-      return [...rows]
-        .sort((a, b) => Number(a.hourStartUnix) - Number(b.hourStartUnix))
-        .map((d) => toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.hourStartUnix)))
+    return {
+      price0: closed.filter((p) => Number.isFinite(p.price0)).map((p) => ({ time: p.t as any, value: p.price0 })),
+      lpVsHodl: closed
+        .filter((p) => p.lpVsHodl != null && Number.isFinite(p.lpVsHodl))
+        .map((p) => ({ time: p.t as any, value: p.lpVsHodl as number })),
+      lpVsUniV2: closed
+        .filter((p) => p.lpVsUniV2 != null && Number.isFinite(p.lpVsUniV2))
+        .map((p) => ({ time: p.t as any, value: p.lpVsUniV2 as number })),
+      volume: [...volMap.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([t, v]) => ({ time: t as any, value: v, color: `${COLOR_VOLUME}88` })),
     }
-    const rows = (data as { pairDayDatas?: DayData[] } | undefined)?.pairDayDatas
-    if (!rows) return []
-    return rows.map((d) =>
-      toPoint(Number(d.lpPrice) || 0, Number(d.bnhPrice) || 0, Number(d.uniV2Price) || 0, Number(d.tvl) || 0, Number(d.totalVolume) || 0, Number(d.dayStartUnix)),
-    )
-  }, [data, isHourly, iskHYPEUSDT])
+  }, [allPoints, bucket, grid])
 
-  const chartData = useMemo(() => {
-    if (isHourly) return fullChartData // already capped to 24 by the query
-    const days = RANGE_DAYS[range as Exclude<Range, '1D'>]
-    if (!days || fullChartData.length <= days) return fullChartData
-    return fullChartData.slice(-days)
-  }, [fullChartData, range, isHourly])
+  const hasData = allPoints.length > 0
+  const latest = allPoints[allPoints.length - 1]
+  const legendItems: { key: ToggleKey; label: string; color: string }[] = !hasData
+    ? []
+    : [
+        ...(latest && Number.isFinite(latest.price0) ? [{ key: 'price0' as const, label: relPriceLabel, color: COLOR_PRICE }] : []),
+        { key: 'lpVsHodl' as const, label: 'LP vs. HODL', color: COLOR_HODL },
+        ...(keepUniV2 ? [{ key: 'lpVsUniV2' as const, label: 'LP vs. UniV2', color: COLOR_UNIV2 }] : []),
+        { key: 'volume' as const, label: 'Volume', color: COLOR_VOLUME },
+      ]
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
-  const seriesRefs = useRef<Partial<Record<SeriesKey, ISeriesApi<any>>>>({})
-  const [hovered, setHovered] = useState<Partial<Record<SeriesKey, number>> | null>(null)
-  // Floating tooltip state — anchor x/y in container-relative pixels.
-  // null when cursor is outside the plot area.
-  const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
+  const price0Ref = useRef<ISeriesApi<'Area'> | null>(null)
+  const lpVsHodlRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const lpVsUniV2Ref = useRef<ISeriesApi<'Line'> | null>(null)
+  const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
-  // Create chart once
+  const [hovered, setHovered] = useState<Partial<Record<ToggleKey, number>> | null>(null)
+  const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
+  const loadMoreRef = useRef<() => void>(() => {})
+
+  // Apply the timeframe as a VISIBLE-RANGE (zoom) preset — the chart always holds
+  // the full loaded data. 'ALL' = fit everything; bounded ranges = the last N
+  // seconds up to the newest point (lightweight-charts clamps to data start).
+  const applyRangePreset = useCallback(() => {
+    const ts = chartRef.current?.timeScale()
+    if (!ts) return
+    const span = RANGE_BUCKETS[range].span
+    const last = seriesData.price0.length ? (seriesData.price0[seriesData.price0.length - 1].time as number) : null
+    if (span == null || last == null) {
+      ts.fitContent()
+      return
+    }
+    ts.setVisibleRange({ from: (last - span) as Time, to: last as Time })
+  }, [range, seriesData])
+  const applyRangePresetRef = useRef(applyRangePreset)
+  applyRangePresetRef.current = applyRangePreset
+
+  // Scroll-to-load-more pages older txs via the shared hook.
+  loadMoreRef.current = loadMore
+
+  // Create chart + series once.
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    // Smart Y-axis formatter — abbreviate large magnitudes (K/M/B), keep
-    // small prices (e.g. 0.45) readable with 2-4 decimals.
-    const priceFormatter = (price: number) => {
-      const abs = Math.abs(price)
-      const sign = price < 0 ? '-' : ''
-      if (abs >= 1_000_000_000) return `${sign}${(abs / 1e9).toFixed(2)}B`
-      if (abs >= 1_000_000) return `${sign}${(abs / 1e6).toFixed(2)}M`
-      if (abs >= 1_000) return `${sign}${(abs / 1e3).toFixed(2)}K`
-      if (abs >= 1) return `${sign}${abs.toFixed(2)}`
-      if (abs === 0) return '0'
-      return `${sign}${abs.toFixed(3)}`
-    }
-    // ROI axis (right): signed percentage. The two ROI lines use this so the right axis
-    // reads "+1.2%" etc., while the left (price) axis keeps the numeric formatter above.
-    const pctFormatter = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`
-    const isRoiKey = (k: SeriesKey) => k === 'lpMinusUniV2' || k === 'lpVsBhPct'
-
     const chart = createChart(container, {
+      localization: {
+        timeFormatter: (time: any) =>
+          new Date(Number(time) * 1000).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }),
+      },
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#CFC7C1',
@@ -346,82 +231,92 @@ const PairChartTVInner = ({ pair }: Props) => {
         vertLines: { color: '#2F2823' },
         horzLines: { color: '#2F2823' },
       },
-      rightPriceScale: {
-        // RIGHT = the ROI % lines ("LP vs. UniV2" / "LP vs. HODL"). Only shown where the
-        // ROI lines are (Linea/Hyper/Arb on prod, or extended metrics), so hide it
-        // elsewhere rather than leave an empty axis.
-        visible: showExtendedMetrics || lpVsUniV2OnProd,
-        borderVisible: false,
-        ticksVisible: false,
-        scaleMargins: { top: 0.05, bottom: 0.25 },
-      },
       leftPriceScale: {
-        // LEFT = the price lines (LP / UniV2 / HODL), always present, so always visible.
+        // LEFT = the ROI % lines.
         visible: true,
         borderVisible: false,
         ticksVisible: false,
-        scaleMargins: { top: 0.05, bottom: 0.25 },
+        scaleMargins: { top: 0.08, bottom: 0.22 },
+      },
+      rightPriceScale: {
+        // RIGHT = relative price.
+        visible: true,
+        borderVisible: false,
+        ticksVisible: false,
+        scaleMargins: { top: 0.1, bottom: 0.22 },
       },
       timeScale: {
         borderColor: '#493E35',
-        timeVisible: false,
+        timeVisible: true,
         secondsVisible: false,
+        tickMarkFormatter: (time: any, tickMarkType: TickMarkType) => {
+          const d = new Date(Number(time) * 1000)
+          switch (tickMarkType) {
+            case TickMarkType.Year:
+              return d.toLocaleDateString(undefined, { year: 'numeric' })
+            case TickMarkType.Month:
+              return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+            case TickMarkType.Time:
+              return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+            case TickMarkType.TimeWithSeconds:
+              return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+            case TickMarkType.DayOfMonth:
+            default:
+              return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+          }
+        },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        // Keep the vertical line + date badge on the time axis. Hide the
-        // horizontal line entirely — the tooltip already shows per-series
-        // values, so a y-axis price badge is redundant.
         vertLine: { color: '#978A80', style: LineStyle.Dashed, labelBackgroundColor: '#985C2A', labelVisible: true },
         horzLine: { visible: false, labelVisible: false },
       },
       width: container.clientWidth,
-      height: container.clientHeight || 400,
+      height: container.clientHeight || 320,
       autoSize: true,
     })
 
-    // Create all series — hide the "last value" floating badge + horizontal price line
     const commonNoLabels = { lastValueVisible: false, priceLineVisible: false }
-    availableSeries.forEach((meta) => {
-      let series: ISeriesApi<any>
-      if (meta.type === 'histogram') {
-        series = chart.addSeries(HistogramSeries, {
-          ...commonNoLabels,
-          color: meta.color,
-          priceScaleId: meta.priceScaleId,
-          priceFormat: { type: 'custom', formatter: priceFormatter, minMove: 0.01 },
-        })
-      } else if (meta.type === 'area') {
-        series = chart.addSeries(AreaSeries, {
-          ...commonNoLabels,
-          lineColor: meta.color,
-          topColor: `${meta.color}55`,
-          bottomColor: `${meta.color}00`,
-          priceScaleId: meta.priceScaleId,
-          lineWidth: 2,
-        })
-      } else {
-        series = chart.addSeries(LineSeries, {
-          ...commonNoLabels,
-          color: meta.color,
-          priceScaleId: meta.priceScaleId,
-          lineWidth: meta.lineWidth ?? 2,
-          // ROI lines → "%" axis; price lines → numeric axis.
-          priceFormat: { type: 'custom', formatter: isRoiKey(meta.key) ? pctFormatter : priceFormatter, minMove: 0.01 },
-          ...(meta.lineStyle !== undefined ? { lineStyle: meta.lineStyle } : {}),
-        })
-      }
-      seriesRefs.current[meta.key] = series
+
+    // Relative price — RIGHT axis, drawn as a subtle pink AREA (matches the Pool
+    // Balance chart's price line). Created FIRST so it renders behind the % lines.
+    const price0 = chart.addSeries(AreaSeries, {
+      ...commonNoLabels,
+      priceScaleId: 'right',
+      lineColor: COLOR_PRICE,
+      lineWidth: 1,
+      topColor: 'rgba(236, 72, 153, 0.18)',
+      bottomColor: 'rgba(236, 72, 153, 0.00)',
+      priceFormat: { type: 'custom', formatter: (v: number) => formatRel(v), minMove: 0.00000001 },
     })
+    price0.priceScale().applyOptions({ scaleMargins: { top: 0.15, bottom: 0.15 } })
+    // LP vs. HODL — LEFT % axis.
+    const lpVsHodl = chart.addSeries(LineSeries, {
+      ...commonNoLabels,
+      priceScaleId: 'left',
+      color: COLOR_HODL,
+      lineWidth: 1,
+      priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
+    })
+    // LP vs. UniV2 — LEFT % axis (omitted when the chain lacks uniV2Price).
+    const lpVsUniV2 = keepUniV2
+      ? chart.addSeries(LineSeries, {
+          ...commonNoLabels,
+          priceScaleId: 'left',
+          color: COLOR_UNIV2,
+          lineWidth: 1,
+          priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
+        })
+      : null
+    // Volume — bottom 20%.
+    const volume = chart.addSeries(HistogramSeries, {
+      ...commonNoLabels,
+      priceScaleId: 'volume',
+      color: COLOR_VOLUME,
+      priceFormat: { type: 'volume' },
+    })
+    chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } })
 
-    // Volume sits at the bottom 20% of the chart
-    if (seriesRefs.current.volume) {
-      chart.priceScale('volume').applyOptions({
-        scaleMargins: { top: 0.8, bottom: 0 },
-      })
-    }
-
-    // Live-update legend + floating tooltip as the user hovers the chart
     const crosshairHandler = (param: {
       time?: number
       seriesData: Map<ISeriesApi<any>, { value?: number } | undefined>
@@ -432,85 +327,93 @@ const PairChartTVInner = ({ pair }: Props) => {
         setTip(null)
         return
       }
-      const next: Partial<Record<SeriesKey, number>> = {}
-      ;(Object.keys(seriesRefs.current) as SeriesKey[]).forEach((k) => {
-        const s = seriesRefs.current[k]
-        if (!s) return
-        const point = param.seriesData.get(s) as { value?: number } | undefined
-        if (point && typeof point.value === 'number') {
-          next[k] = point.value
-        }
+      const read = (s: ISeriesApi<any> | null) => {
+        if (!s) return undefined
+        const p = param.seriesData.get(s) as { value?: number } | undefined
+        return typeof p?.value === 'number' ? p.value : undefined
+      }
+      setHovered({
+        price0: read(price0),
+        lpVsHodl: read(lpVsHodl),
+        lpVsUniV2: read(lpVsUniV2),
+        volume: read(volume),
       })
-      setHovered(next)
       setTip({ x: param.point.x, y: param.point.y, time: Number(param.time) })
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
+    // Scroll-to-load-more: when the left edge nears the loaded start, page older.
+    const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
+      if (!logical) return
+      if (logical.from < 10) loadMoreRef.current()
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
+
+    price0Ref.current = price0
+    lpVsHodlRef.current = lpVsHodl
+    lpVsUniV2Ref.current = lpVsUniV2
+    volumeRef.current = volume
     chartRef.current = chart
     return () => {
       chart.remove()
       chartRef.current = null
-      seriesRefs.current = {}
+      price0Ref.current = null
+      lpVsHodlRef.current = null
+      lpVsUniV2Ref.current = null
+      volumeRef.current = null
     }
-  }, [availableSeries])
+  }, [keepUniV2])
 
-  // Toggle x-axis time labels when switching between hourly and daily modes.
+  // Push data into series + manage the visible range.
+  //  • first data / timeframe change → zoom to the preset;
+  //  • data GREW (load-more — possibly triggered by the shared Pool Balance
+  //    chart) → keep THIS chart's current window so older bars slide in off-screen
+  //    instead of yanking the view.
+  const prevLenRef = useRef(0)
+  const lastRangeRef = useRef<RangeKey>(range)
   useEffect(() => {
-    chartRef.current?.applyOptions({
-      timeScale: { timeVisible: isHourly, secondsVisible: false },
-    })
-    chartRef.current?.timeScale().fitContent()
-  }, [isHourly])
+    const ts = chartRef.current?.timeScale()
+    const rangeChanged = lastRangeRef.current !== range
+    const savedRange = ts?.getVisibleRange() ?? null
+    price0Ref.current?.setData(seriesData.price0)
+    lpVsHodlRef.current?.setData(seriesData.lpVsHodl)
+    lpVsUniV2Ref.current?.setData(seriesData.lpVsUniV2)
+    volumeRef.current?.setData(seriesData.volume)
+    const len = seriesData.price0.length
+    if (len) {
+      if (prevLenRef.current === 0 || rangeChanged) {
+        applyRangePresetRef.current()
+      } else if (len !== prevLenRef.current && savedRange) {
+        ts?.setVisibleRange(savedRange)
+      }
+    }
+    prevLenRef.current = len
+    lastRangeRef.current = range
+  }, [seriesData, range])
 
-  // Push data into series
+  // Toggle visibility from the bottom legend.
   useEffect(() => {
-    const refs = seriesRefs.current
-    if (!chartData.length) return
-    availableSeries.forEach((meta) => {
-      const s = refs[meta.key]
-      if (!s) return
-      const mapped = chartData
-        .map((p) => ({
-          time: p.time as any,
-          value: p[meta.key] as number,
-          // Volume bars get a per-point color so we can fade them via alpha
-          // independently of the series-level color. Derived from meta.color
-          // + 88 alpha so changing the palette entry propagates here.
-          ...(meta.key === 'volume' ? { color: `${meta.color}88` } : {}),
-        }))
-        .filter((p) => Number.isFinite(p.value))
-      s.setData(mapped)
-    })
-    chartRef.current?.timeScale().fitContent()
-  }, [chartData, availableSeries])
-
-  // Toggle visibility
-  useEffect(() => {
-    const refs = seriesRefs.current
-    availableSeries.forEach((meta) => {
-      refs[meta.key]?.applyOptions({ visible: !!visible[meta.key] })
-    })
-  }, [visible, availableSeries])
+    price0Ref.current?.applyOptions({ visible: visible.price0 })
+    lpVsHodlRef.current?.applyOptions({ visible: visible.lpVsHodl })
+    lpVsUniV2Ref.current?.applyOptions({ visible: visible.lpVsUniV2 })
+    volumeRef.current?.applyOptions({ visible: visible.volume })
+  }, [visible])
 
   return (
     <div
       className="p-[12px] sm:p-[16px]"
-      style={{
-        background: '#1E1915',
-        border: '1px solid #2F2823',
-        borderRadius: '12px',
-      }}
+      style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}
     >
-      
       {/* Range selector */}
       <div className="flex items-center justify-end mb-3">
         <div
           className="inline-flex items-center gap-0.5 sm:gap-1"
           style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: 8, padding: 2 }}
         >
-          {(['1D', '7d', '1m', 'all'] as Range[]).map((r) => (
+          {RANGE_KEYS.map((r) => (
             <button
               key={r}
+              type="button"
               onClick={() => setRange(r)}
               className="cursor-pointer text-[11px] sm:text-[12px] px-[8px] sm:px-[10px] py-[4px] sm:py-[5px]"
               style={{
@@ -523,59 +426,46 @@ const PairChartTVInner = ({ pair }: Props) => {
                 textTransform: 'uppercase',
               }}
             >
-              {r === 'all' ? 'All' : r}
+              {r === 'ALL' ? 'All' : r}
             </button>
           ))}
         </div>
       </div>
 
       {/* Chart container */}
-      <div
-        ref={containerRef}
-        className="h-[220px] sm:h-[260px] lg:h-[320px]"
-        style={{ width: '100%', position: 'relative' }}
-      >
-        {isPending && !data && (
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ color: '#978A80', fontFamily: 'Inter' }}
-          >
+      <div className="h-[220px] sm:h-[260px] lg:h-[320px]" style={{ width: '100%', position: 'relative' }}>
+        <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+        {isLoading && !hasData && (
+          <div className="absolute inset-0 flex items-center justify-center" style={{ color: '#978A80', fontFamily: 'Inter' }}>
             Loading chart…
           </div>
         )}
-        {!isPending && chartData.length === 0 && (
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ color: '#978A80', fontFamily: 'Inter' }}
-          >
-            No data
+        {!isLoading && !hasData && (
+          <div className="absolute inset-0 flex items-center justify-center" style={{ color: '#978A80', fontFamily: 'Inter' }}>
+            No activity on this pool yet.
           </div>
         )}
 
-        {/* Floating tooltip — TradingView style: anchored diagonally above-
-            and-right of the cursor (or tap point on mobile), flipping sides
-            when near edges. */}
+        {/* Floating tooltip — anchored diagonally near the cursor, flipping at edges. */}
         {tip && hovered && (() => {
           const containerW = containerRef.current?.clientWidth ?? 0
           const containerH = containerRef.current?.clientHeight ?? 0
-          const TIP_W = 196
-          const TIP_H_EST = 132
+          const TIP_W = 200
+          const TIP_H_EST = 124
           const HGAP = 14
           const VGAP = 14
-          // Default: upper-right of the cursor. Flip horizontally near the
-          // right edge, flip vertically (below cursor) when too close to top.
           const wantsRight = tip.x + HGAP + TIP_W <= containerW
-          const left = wantsRight
-            ? tip.x + HGAP
-            : Math.max(8, tip.x - HGAP - TIP_W)
+          const left = wantsRight ? tip.x + HGAP : Math.max(8, tip.x - HGAP - TIP_W)
           const wantsAbove = tip.y - VGAP - TIP_H_EST >= 8
-          const top = wantsAbove
-            ? tip.y - VGAP - TIP_H_EST
-            : Math.min(tip.y + VGAP, containerH - TIP_H_EST - 8)
+          const top = wantsAbove ? tip.y - VGAP - TIP_H_EST : Math.min(tip.y + VGAP, containerH - TIP_H_EST - 8)
           const date = new Date(tip.time * 1000)
-          const dateStr = isHourly
-            ? date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-            : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+          const dateStr = date.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+          const rows: { key: ToggleKey; label: string; color: string; text: string }[] = []
+          if (visible.price0 && hovered.price0 !== undefined) rows.push({ key: 'price0', label: relPriceLabel, color: COLOR_PRICE, text: formatRel(hovered.price0) })
+          if (visible.lpVsHodl && hovered.lpVsHodl !== undefined) rows.push({ key: 'lpVsHodl', label: 'LP vs. HODL', color: COLOR_HODL, text: formatPct(hovered.lpVsHodl) })
+          if (keepUniV2 && visible.lpVsUniV2 && hovered.lpVsUniV2 !== undefined) rows.push({ key: 'lpVsUniV2', label: 'LP vs. UniV2', color: COLOR_UNIV2, text: formatPct(hovered.lpVsUniV2) })
+          if (visible.volume && hovered.volume !== undefined) rows.push({ key: 'volume', label: 'Volume', color: COLOR_VOLUME, text: formatPrice(hovered.volume, { maximumFractionDigits: 0 }) })
+          if (!rows.length) return null
           return (
             <div
               className="pointer-events-none"
@@ -595,75 +485,43 @@ const PairChartTVInner = ({ pair }: Props) => {
               }}
             >
               <div style={{ fontSize: 10, color: '#978A80', marginBottom: 4, letterSpacing: '0.02em' }}>{dateStr}</div>
-              {availableSeries
-                .filter((meta) => visible[meta.key] && hovered[meta.key] !== undefined)
-                .map((meta) => {
-                  const v = hovered[meta.key] as number
-                  const formatted =
-                    // The two ROI lines ("LP vs. UniV2", "LP vs. HODL") are percentages;
-                    // tvl/netPnL/volume are whole $; everything else is a price (3 dp).
-                    meta.key === 'lpVsBhPct' || meta.key === 'lpMinusUniV2'
-                      ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
-                      : meta.key === 'tvl' || meta.key === 'netPnL' || meta.key === 'volume'
-                        ? formatPrice(v, { maximumFractionDigits: 0 })
-                        : formatPrice(v, { maximumFractionDigits: 3 })
-                  return (
-                    <div
-                      key={meta.key}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, fontSize: 11, lineHeight: '16px' }}
-                    >
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#CFC7C1' }}>
-                        <span style={{ width: 7, height: 7, background: meta.color, borderRadius: 2, display: 'inline-block' }} />
-                        {meta.label}
-                      </span>
-                      <span style={{ color: '#FBFBFD', fontWeight: 600 }}>{formatted}</span>
-                    </div>
-                  )
-                })}
+              {rows.map((row) => (
+                <div
+                  key={row.key}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, fontSize: 11, lineHeight: '16px' }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#CFC7C1' }}>
+                    <span style={{ width: 7, height: 7, background: row.color, borderRadius: 2, display: 'inline-block' }} />
+                    {row.label}
+                  </span>
+                  <span style={{ color: '#FBFBFD', fontWeight: 600 }}>{row.text}</span>
+                </div>
+              ))}
             </div>
           )
         })()}
       </div>
 
       {/* Legend + toggles (bottom) */}
-      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-3">
-        {availableSeries.map((meta) => (
-          <button
-            key={meta.key}
-            onClick={() => setVisible((prev) => ({ ...prev, [meta.key]: !prev[meta.key] }))}
-            className="inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              padding: 0,
-              opacity: visible[meta.key] ? 1 : 0.4,
-            }}
-          >
-            <span
-              style={{
-                width: 10,
-                height: 10,
-                background: meta.color,
-                borderRadius: 3,
-                display: 'inline-block',
-              }}
-            />
-            <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>
-              {meta.label}
-            </span>
-            {/* LP vs. UniV2 benchmark explainer — interactive tooltip with a
-                clickable Learn More (V3 chart only). */}
-            {meta.key === 'lpMinusUniV2' && isV3 && supportsUniV2 && (
-              <InfoTooltip text={BENCHMARK_HINT} learnMoreUrl={LEARN_MORE_URL} />
-            )}
-            {/* Values live in the floating tooltip on both desktop (hover) and
-                mobile (tap) — no need to duplicate them here. */}
-          </button>
-        ))}
-      </div>
-
-      {/* Benchmark explainer moved to the (?) tooltip on the LP vs. UniV2
-          legend item above — no longer shown inline. */}
+      {legendItems.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-3">
+          {legendItems.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setVisible((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
+              className="inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
+              style={{ background: 'transparent', border: 'none', padding: 0, opacity: visible[item.key] ? 1 : 0.4 }}
+            >
+              <span style={{ width: 10, height: 10, background: item.color, borderRadius: 3, display: 'inline-block' }} />
+              <span className="text-[12px] sm:text-[13px]" style={{ fontFamily: 'Inter', color: '#FBFBFD' }}>
+                {item.label}
+              </span>
+              {item.key === 'lpVsUniV2' && <InfoTooltip text={BENCHMARK_HINT} learnMoreUrl={LEARN_MORE_URL} />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -671,6 +529,7 @@ const PairChartTVInner = ({ pair }: Props) => {
 export const PairChartTV = memo(PairChartTVInner, (prev, next) => {
   return (
     prev.pair.liquidityToken.address === next.pair.liquidityToken.address &&
-    prev.pair.chainId === next.pair.chainId
+    prev.pair.chainId === next.pair.chainId &&
+    prev.reversed === next.reversed
   )
 })
