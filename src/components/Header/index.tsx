@@ -108,7 +108,6 @@ const StyledConnectButton = () => {
     </ConnectButton.Custom>
   )
 }
-import SwitchVersion from 'components/SwitchVersion'
 import { appEnvLabel, isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useAccount } from 'wagmi'
@@ -194,8 +193,6 @@ export default function Header() {
             {appEnvLabel}
           </span>
         )}
-
-        <SwitchVersion isMobile />
 
         <HamburgerMenu>
         <nav aria-label="Main navigation">

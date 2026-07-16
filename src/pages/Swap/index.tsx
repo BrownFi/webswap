@@ -44,7 +44,7 @@ import {
 } from 'state/user/hooks'
 import { LinkStyledButton } from 'theme'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
-import { computeTradePriceBreakdown, warningSeverity } from 'utils/prices'
+import { warningSeverity } from 'utils/prices'
 import { AppBody } from 'pages/AppBody'
 import { ClickableText, Dots } from 'pages/Pool/styleds'
 import { useIsTransactionUnsupported } from 'hooks/Trades'
@@ -167,16 +167,12 @@ export default function Swap() {
   // swap state
   const { independentField, typedValue, recipient } = useSwapState()
   const {
-    v2Trade,
-    v3PilotTrade,
     v3OfficialTrade,
     nativeStatuses,
-    v2MaxOutputHint,
     currencyBalances,
     parsedAmount,
     currencies,
     inputError: rawSwapInputError,
-    v2AmountOutExceedsReserve,
     nativePoolLiquidityInsufficient,
     nativePoolMaxExceeded,
     loadingExactIn,
@@ -297,12 +293,8 @@ export default function Swap() {
     lastFetchedAt: bestLastFetchedAt,
     refreshIntervalMs: bestRefreshIntervalMs,
   } = useBestSwapRoute({
-    v2Trade: showWrap ? undefined : v2Trade,
-    v3PilotTrade: showWrap ? undefined : v3PilotTrade,
     v3OfficialTrade: showWrap ? undefined : v3OfficialTrade,
-    v2Unavailable: v2AmountOutExceedsReserve,
     nativeStatuses: showWrap ? undefined : nativeStatuses,
-    v2MaxOutputHint,
     tokenIn: currencies[Field.INPUT],
     tokenOut: currencies[Field.OUTPUT],
     amountIn: amountInBig,
@@ -324,7 +316,7 @@ export default function Swap() {
   // pairs all match what's being signed. Falls back to v2Trade when no
   // active native trade exists (e.g., aggregator route wins — in that
   // case the V2/V3 detail panel isn't rendered anyway).
-  const displayTrade = activeNativeTrade ?? (showWrap ? undefined : v2Trade)
+  const displayTrade = activeNativeTrade ?? (showWrap ? undefined : v3OfficialTrade)
 
   // parsedAmounts maps INPUT/OUTPUT → CurrencyAmount. The dependent side
   // (the one the user didn't type) is sourced from the active trade —
@@ -368,9 +360,6 @@ export default function Swap() {
     const isBalanceError = !!rawSwapInputError && rawSwapInputError.endsWith('balance')
     if (rawSwapInputError && !isBalanceError) return rawSwapInputError
 
-    if (v2AmountOutExceedsReserve && best?.source === 'brownfi-v2') {
-      return 'Your amount-out exceeds the limit of 90% pool reserve. Please reduce your order size.'
-    }
     // No native route — but if an aggregator has one, the user can still
     // swap. Only block when no source has a route. A per-swap cap (pool has
     // liquidity, but this trade is too big for the oracle-AMM curve) gets a
@@ -386,7 +375,7 @@ export default function Swap() {
     // afford it — or the no-route reason wasn't a pool cap/liquidity case).
     if (rawSwapInputError) return rawSwapInputError
     return undefined
-  }, [rawSwapInputError, v2AmountOutExceedsReserve, best, nativePoolLiquidityInsufficient, nativePoolMaxExceeded])
+  }, [rawSwapInputError, best, nativePoolLiquidityInsufficient, nativePoolMaxExceeded])
   const isValid = !swapInputError
   // User manually picked a specific aggregator, but orchestration fell back
   // to native (the chosen aggregator returned no route for this pair on
@@ -584,16 +573,10 @@ export default function Swap() {
   const swapCallback = isAggregatorRoute ? aggregatorCallback : nativeSwapCallback
   const swapCallbackError = isAggregatorRoute ? aggregatorCallbackError : nativeSwapCallbackError
 
-  // Price impact derives from BrownFi's V2 trade. When the chosen route is
-  // an aggregator (Kyber), V2's impact is irrelevant to the actual swap —
-  // we'd be warning about a quote we're not executing. Treat impact as
-  // undefined for aggregator routes (no severity warning, no disable).
-  // V3 will need its own breakdown once concentrated-liquidity impact is
-  // computable; for now V3 also bypasses the V2 warning.
-  const { priceImpactWithoutFee } = useMemo(() => {
-    if (!best || best.source !== 'brownfi-v2') return { priceImpactWithoutFee: undefined }
-    return computeTradePriceBreakdown(displayTrade)
-  }, [displayTrade, best])
+  // Price impact is not computed for the V3 Official route yet — concentrated-
+  // liquidity impact breakdown is a TODO. No severity warning for now (the old
+  // V2 impact calc was removed with the V2 engine).
+  const priceImpactWithoutFee = undefined
 
   const [singleHopOnly] = useUserSingleHopOnly()
 

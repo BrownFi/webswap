@@ -26,7 +26,6 @@ import { PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } fro
 import QuestionHelper from 'components/QuestionHelper'
 import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
 import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
-import { showsLpVsHodl } from 'components/pool/lpVsBhChains'
 import { getRestakers } from 'constants/restakers'
 
 const PairChartTV = lazy(() =>
@@ -531,6 +530,9 @@ function PoolDetailInner({
                 and tx history. V3 ONLY: the V2 indexer has no `transactions` query
                 (404s), so the chart would be empty on V2. LP-vs-BH line hidden. */}
             {isV3Like(version) && (
+              // LP-vs-HODL line removed from the Pool Balance chart (boss request,
+              // 2026-07-16) — moved to the LP chart as "LP vs BH". Leaves pct0/pct1
+              // + relative price. showLpVsBh=false.
               <PoolBalanceChart
                 pairAddress={pairAddress}
                 chainId={chainId}
@@ -539,7 +541,7 @@ function PoolDetailInner({
                 symbol1={symbol1}
                 reversed={isReversed}
                 quoteTokenIndex={pairRaw.quoteTokenIndex}
-                showLpVsBh={isV3Like(version) && showsLpVsHodl(chainId)}
+                showLpVsBh={false}
               />
             )}
           </div>

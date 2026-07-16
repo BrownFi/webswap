@@ -133,7 +133,7 @@ export function RouteComparison({
   // determining the Best/Auto target).
   const winnerKey = candidates.find((c) => !c.unavailable)?.source ?? candidates[0]?.source
   const activeKey: AggregatorChoice =
-    selected === 'auto' ? ((winnerKey ?? 'brownfi-v2') as AggregatorChoice) : selected
+    selected === 'auto' ? ((winnerKey ?? 'brownfi-v3-official') as AggregatorChoice) : selected
 
   const rows = useMemo(() => {
     // The winner badge tracks the best USABLE candidate — an unavailable

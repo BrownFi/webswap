@@ -1,74 +1,28 @@
-import { useMemo, useState } from 'react'
-import { ChainId, Pair } from '@brownfi/sdk'
-import { useDispatch, useSelector } from 'react-redux'
-import { switchVersion, versionSelector } from 'state/versionSlice'
+import { useMemo } from 'react'
+import { Pair } from '@brownfi/sdk'
 import { useLocation } from 'react-router-dom'
-import { isMainnet, isV3Enabled } from 'connectors'
-import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen, hasV3Official, VERSION } from 'lib/sdk/constants/addresses'
+import { routerV3Gen, hasV3Official, VERSION } from 'lib/sdk/constants/addresses'
 
+// Single-version app: V3 Official (version 4) is the ONLY supported version.
+// The legacy V1 / V2 / V3-Pilot selection system was removed — `version` is now
+// always VERSION.V3_OFFICIAL. `switchVersion` is a no-op kept for call-site
+// compatibility while the version toggle is being torn out.
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
   const location = useLocation()
-  const dispatch = useDispatch()
-
-  const { version: appVersion } = useSelector(versionSelector)
-  const [stableVersion] = useState(() => appVersion)
 
   const isTest = useMemo(() => {
     const data: { test?: string } = Object.fromEntries(new URLSearchParams(location.search).entries())
     return !!data.test
   }, [location.search])
 
-  const [version, isDisabled] = useMemo(() => {
-    // V3 not available when API doesn't support /indexer/v3 (prod API today).
-    // Mainnet keeps its per-chain lock list because the V1 chains (Viction,
-    // U2U) live on mainnet only.
-    if (isMainnet) {
-      if ([ChainId.VICTION_MAINNET, ChainId.U2U_MAINNET].includes(chainId as number)) {
-        return [1, true]
-      }
-      // Chains with V3 Official deployed honor the V2 / V3-Official toggle on
-      // production. V3 Pilot is hidden on mainnet, so a stale Pilot (3) stored
-      // selection falls back to V2. (This is what makes the V3-Official release
-      // selectable — previously every mainnet chain was locked to V2.)
-      if (hasV3Official(chainId ?? undefined)) {
-        return [stableVersion === VERSION.V3_OFFICIAL ? VERSION.V3_OFFICIAL : 2, false]
-      }
-      // Remaining mainnet chains are V2-only (no V3 deployment).
-      if (
-        [
-          ChainId.BASE_MAINNET,
-          ChainId.BSC_MAINNET,
-          ChainId.SEI_MAINNET,
-          ChainId.MONAD,
-          ChainId.ARBITRUM_SEPOLIA,
-          ChainId.SEPOLIA,
-        ].includes(chainId as number)
-      ) {
-        return [2, true]
-      }
-      return [2, false]
-    }
-    // Non-mainnet env (beta/testnet). If the API doesn't have V3 (e.g. beta
-    // deployment pointing at prod API), force V2 to prevent /indexer/v3
-    // 404s. Otherwise honour the user's stored version selection.
-    if (!isV3Enabled) return [2, true]
-    const selectedVersion = stableVersion
-    if (selectedVersion === 1 && !ROUTER_ADDRESS_V1[chainId as number]) return [2, false]
-    if (isV3Like(selectedVersion) && !routerV3Gen(selectedVersion)[chainId as number]) return [2, false]
-    return [selectedVersion, false]
-  }, [chainId, stableVersion])
-
-  const dispatchSwitchVersion = (version: number) => {
-    dispatch(switchVersion(version))
-  }
+  // Always V3 Official; "disabled" now just means the chain has no V3 Official
+  // deployment (nothing to show).
+  const version = VERSION.V3_OFFICIAL
+  const isDisabled = !hasV3Official(chainId ?? undefined)
 
   const isBeta = useMemo(() => {
     // Pairs that have graduated out of "beta" — promoted production pools.
-    // Addresses are normalized to lowercase for case-insensitive comparison;
-    // pair addresses arrive in mixed casing depending on source (CREATE2,
-    // checksum, indexer, URL param), and the previous `Array.includes` check
-    // was silently case-sensitive — same pair was beta on the list but not on
-    // the detail page (or vice-versa) depending on which path built it.
+    // Addresses normalized to lowercase for case-insensitive comparison.
     const promoted = new Set([
       // Bera Mainnet
       '0xd932c344e21ef6c3a94971bf4d4cc71304e2a66c', // WBERA/HONEY
@@ -98,39 +52,18 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
       '0xca138f5755225d887655b30961e1e3d8c2010a0f', // WETH/USDT
     ])
     const pairAddr = pair?.liquidityToken.address?.toLowerCase()
-    const isPromoted = pairAddr ? promoted.has(pairAddr) : false
+    return pairAddr ? !promoted.has(pairAddr) : true
+  }, [pair?.liquidityToken.address])
 
-    return (version === 2 || isV3Like(version)) && !isPromoted
-  }, [pair?.liquidityToken.address, version])
-
-  const enableGraphQL = useMemo(() => {
-    // V2 indexer chains are listed explicitly because not every V2 deployment
-    // also has an indexer. V3 follows a simpler rule: any chain with a V3
-    // router has a V3 indexer (router + indexer ship together), so we derive
-    // from the address map directly. Adding a chain to ROUTER_ADDRESS_V3_PILOT
-    // unlocks both contract calls and indexer queries.
-    const v2Chains = [
-      ChainId.BERA_MAINNET,
-      ChainId.ARBITRUM_MAINNET,
-      ChainId.BASE_MAINNET,
-      ChainId.BSC_MAINNET,
-      ChainId.HYPER_EVM,
-      ChainId.LINEA_MAINNET,
-      ChainId.SEI_MAINNET,
-      ChainId.MONAD,
-    ]
-    if (version === 2) return v2Chains.includes(chainId as number)
-    if (isV3Like(version)) return !!routerV3Gen(version)[chainId as number]
-    return false
-  }, [chainId, version])
+  const enableGraphQL = useMemo(() => !!routerV3Gen(version)[chainId as number], [chainId, version])
 
   return {
     isTest,
     isBeta,
     enableGraphQL,
     version,
-    appVersion,
+    appVersion: version,
     isDisabled,
-    switchVersion: dispatchSwitchVersion,
+    switchVersion: (_v?: number) => {},
   }
 }

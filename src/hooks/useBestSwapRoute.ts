@@ -63,7 +63,7 @@ export interface UnifiedRoute {
 /** Per-source applicability + failure reason, so the picker can list every
  *  BrownFi version deployed on the chain even when it produced no quote. */
 export interface NativeRouteStatus {
-  source: 'brownfi-v2' | 'brownfi-v3-pilot' | 'brownfi-v3-official'
+  source: 'brownfi-v3-official'
   sourceName: string
   /** True when this version's router is deployed on the current chain. */
   supported: boolean
@@ -73,24 +73,11 @@ export interface NativeRouteStatus {
 }
 
 export interface UseBestSwapRouteParams {
-  /** BrownFi V2 trade from useDerivedSwapInfo. */
-  v2Trade: Trade | undefined
-  /** BrownFi V3 PILOT trade (version 3). Optional. */
-  v3PilotTrade: Trade | undefined
-  /** BrownFi V3 OFFICIAL trade (version 4). Optional. Surfaced as its own
-   *  candidate so the picker compares pilot vs official side-by-side. */
+  /** BrownFi V3 Official (version 4) trade from useDerivedSwapInfo. */
   v3OfficialTrade: Trade | undefined
-  /** V2 trade exists but amount-out exceeds 90% pool reserve. Surfaced
-   *  as a candidate (dimmed) but excluded from `best` selection so
-   *  swaps don't route through a pool that can't fulfill them. */
-  v2Unavailable?: boolean
-  /** Status for each applicable BrownFi version. When provided, the picker
-   *  lists every supported version (even with no route) and shows its reason.
-   *  When omitted, falls back to listing only versions that produced a trade. */
+  /** Status for the BrownFi V3 Official source. When provided, the picker
+   *  lists it (even with no route) and shows its reason. */
   nativeStatuses?: NativeRouteStatus[]
-  /** Max output the V2 pool can give when its 90%-reserve cap is hit — appended
-   *  to the V2 "unavailable" reason as an actionable hint. */
-  v2MaxOutputHint?: string
   tokenIn: Currency | undefined
   tokenOut: Currency | undefined
   amountIn: BigNumber | undefined
@@ -133,7 +120,7 @@ function deriveAmountOutMin(amountOut: BigNumber, slippageBps: number): BigNumbe
 
 function brownfiRouteFromTrade(
   trade: Trade,
-  source: 'brownfi-v2' | 'brownfi-v3-pilot' | 'brownfi-v3-official',
+  source: 'brownfi-v3-official',
   sourceName: string,
   slippageBps: number,
 ): UnifiedRoute | null {
@@ -154,12 +141,8 @@ function brownfiRouteFromTrade(
 
 export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRouteResult {
   const {
-    v2Trade,
-    v3PilotTrade,
     v3OfficialTrade,
-    v2Unavailable,
     nativeStatuses,
-    v2MaxOutputHint,
     tokenIn,
     tokenOut,
     amountIn,
@@ -227,16 +210,11 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
     // skips unavailable routes; the user's `selected` choice is honored at pick
     // time, not by hiding candidates.
     const tradeBySource: Record<NativeRouteStatus['source'], Trade | undefined> = {
-      'brownfi-v2': v2Trade,
       'brownfi-v3-official': v3OfficialTrade,
-      'brownfi-v3-pilot': v3PilotTrade,
     }
-    // Fallback (no nativeStatuses passed): old behavior — only versions with a
-    // trade, marked supported so they still render.
+    // Fallback (no nativeStatuses passed): only the version with a trade.
     const statuses: NativeRouteStatus[] = nativeStatuses ?? [
-      { source: 'brownfi-v2', sourceName: 'BrownFi V2', supported: !!v2Trade },
       { source: 'brownfi-v3-official', sourceName: 'BrownFi V3', supported: !!v3OfficialTrade },
-      { source: 'brownfi-v3-pilot', sourceName: 'BrownFi V3 Pilot', supported: !!v3PilotTrade },
     ]
     statuses.forEach((s) => {
       if (!s.supported) return // version not deployed on this chain → no row
@@ -244,13 +222,6 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
       if (trade) {
         const r = brownfiRouteFromTrade(trade, s.source, s.sourceName, slippageBps)
         if (r) {
-          // V2's 90%-reserve cap: a quote exists but can't be used. Append the
-          // max output hint when we have it ("Exceeds reserve — max ~X").
-          if (s.source === 'brownfi-v2' && v2Unavailable) {
-            r.unavailable = {
-              reason: v2MaxOutputHint ? `Exceeds reserve — ${v2MaxOutputHint}` : 'Amount exceeds 90% of pool reserve',
-            }
-          }
           candidates.push(r)
         }
         return
@@ -301,7 +272,7 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
 
     // Sort by amountOut desc so the UI gets a "best on top" comparison.
     // Tie-break: BrownFi-native first (no external router hop, lower gas).
-    const isBrownFi = (s: string) => s === 'brownfi-v2' || s === 'brownfi-v3-pilot' || s === 'brownfi-v3-official'
+    const isBrownFi = (s: string) => s === 'brownfi-v3-official'
     const sorted = [...candidates].sort((a, b) => {
       if (a.amountOut.eq(b.amountOut)) {
         if (isBrownFi(a.source) && !isBrownFi(b.source)) return -1
@@ -369,5 +340,5 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
       lastFetchedAt,
       refreshIntervalMs: REFRESH_INTERVAL_MS,
     }
-  }, [aggregators, v2Trade, v3PilotTrade, v3OfficialTrade, v2Unavailable, nativeStatuses, v2MaxOutputHint, baseKey, queries, selected, slippageBps])
+  }, [aggregators, v3OfficialTrade, nativeStatuses, baseKey, queries, selected, slippageBps])
 }
