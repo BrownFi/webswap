@@ -12,6 +12,18 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 const MAX_QUOTE_RETRIES = 2
 const QUOTE_RETRY_DELAY_MS = 1500
 
+// At maxHops:1 only a pool holding BOTH tokens can fill the swap directly. The SDK's
+// bestTrade recursion otherwise does an on-chain quote (+ price-impact probe) for
+// EVERY pair involving the input token — e.g. WBERA→HONEY/DOLO/WBTC/… — then keeps
+// only the direct-to-target one. Pre-filtering to the pool(s) with both tokens skips
+// that waste. Falls back to the full set if nothing matches, so a token-matching edge
+// never turns a real pool into a false "no route".
+function directPairsOf(pairs: Pair[], tokenIn?: Token, tokenOut?: Token): Pair[] {
+  if (!tokenIn || !tokenOut) return pairs
+  const direct = pairs.filter((p) => p.involvesToken(tokenIn) && p.involvesToken(tokenOut))
+  return direct.length > 0 ? direct : pairs
+}
+
 import { BASES_TO_CHECK_TRADES_AGAINST, CUSTOM_BASES, ADDITIONAL_BASES } from 'constants/common'
 import { PairState, usePairs } from 'data/Reserves'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
@@ -170,7 +182,7 @@ export function useTradeExactIn(
     currencyOut,
     versionOverride,
   )
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
@@ -250,9 +262,15 @@ export function useTradeExactIn(
         }
         const bestTradeIn = await Trade.bestTradeExactIn(
           account ?? '',
-          allowedPairs,
+          directPairsOf(allowedPairs, wrappedCurrency(currencyAmountIn.currency, chainId), wrappedCurrency(currencyOut, chainId)),
           currencyAmountIn,
           currencyOut,
+          // Direct-pool only (maxHops:1). BrownFi is oracle-priced, so every
+          // explored path costs a real on-chain quote + Pyth fetch (unlike UniV2's
+          // local math) — multi-hop fans out into a request storm and rarely beats
+          // the direct pool (A/B/C stacks two pools' fees + slippage). Trade-off:
+          // pairs with no direct pool show "no route" instead of routing around.
+          { maxHops: 1 },
         ).catch((error) => {
           if (!stale) {
             setInsufficient(
@@ -339,7 +357,7 @@ export function useTradeExactOut(
     currencyAmountOut?.currency,
     versionOverride,
   )
-  const { account } = useActiveWeb3React()
+  const { account, chainId } = useActiveWeb3React()
 
   const [singleHopOnly] = useUserSingleHopOnly()
 
@@ -419,9 +437,12 @@ export function useTradeExactOut(
 
         const bestTradeOut = await Trade.bestTradeExactOut(
           account ?? '',
-          allowedPairs,
+          directPairsOf(allowedPairs, wrappedCurrency(currencyIn, chainId), wrappedCurrency(currencyAmountOut.currency, chainId)),
           currencyIn,
           currencyAmountOut,
+          // See exactIn: direct-pool only — each path costs an on-chain quote +
+          // Pyth fetch, so multi-hop fans out into a request storm.
+          { maxHops: 1 },
         ).catch((error) => {
           if (!stale) {
             setInsufficient(
