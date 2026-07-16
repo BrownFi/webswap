@@ -135,11 +135,20 @@ export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
 export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.test(
   import.meta.env.VITE_API_URL ?? '',
 )
+// V2-only build (the password-gated LP-exit deployment). When VITE_V2_ONLY is
+// set, the app hard-locks to V2 everywhere: the version toggle is hidden, every
+// page renders V2, and the V3 indexer is never queried. Used for the wind-down
+// UI where LPers come to remove their V2 liquidity. Independent of API host —
+// it points at the prod API (api.brownfi.io) but must NOT surface V3.
+export const isV2Only = import.meta.env.VITE_V2_ONLY === 'true'
+
 // V3 is enabled when the API serves /indexer/v3 + uniV2Price — the beta/dev
 // APIs (isBetaApi) and, as of 2026-06-18, production api.brownfi.io too (Manh
 // promoted V3 for Bera + HyperEVM, verified 1:1 with beta-api). The `//api.`
 // anchor matches the prod host without also matching `beta-api`/`dev-api`.
-export const isV3Enabled = isBetaApi || /\/\/api\.brownfi\.io/.test(import.meta.env.VITE_API_URL ?? '')
+// Force-off on the V2-only build regardless of API host.
+export const isV3Enabled =
+  !isV2Only && (isBetaApi || /\/\/api\.brownfi\.io/.test(import.meta.env.VITE_API_URL ?? ''))
 
 const mainChains: readonly [Chain, ...Chain[]] = [
   berachain,

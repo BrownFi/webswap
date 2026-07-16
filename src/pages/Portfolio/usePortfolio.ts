@@ -29,6 +29,7 @@ import { useActiveWeb3React } from 'hooks'
 import { ChainId } from '@brownfi/sdk'
 import { ROUTER_ADDRESS_V3_PILOT } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
+import { isV2Only } from 'connectors'
 
 const PAIR_ACCOUNTS_QUERY = `
   query PairAccountsByUser($account: String!) {
@@ -181,7 +182,9 @@ export function usePortfolio(): PortfolioResult {
   const tasks: FetchTask[] = useMemo(
     () => [
       ...V2_INDEXER_CHAINS.map((chainId) => ({ chainId, version: 2 as const })),
-      ...V3_INDEXER_CHAINS.map((chainId) => ({ chainId, version: 3 as const })),
+      // V2-only build: never fan out to the V3 indexer so the Portfolio shows
+      // V2 positions exclusively (matches the V2-locked rest of the app).
+      ...(isV2Only ? [] : V3_INDEXER_CHAINS.map((chainId) => ({ chainId, version: 3 as const }))),
     ],
     [],
   )

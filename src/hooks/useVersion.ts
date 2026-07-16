@@ -3,7 +3,7 @@ import { ChainId, Pair } from '@brownfi/sdk'
 import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
-import { isMainnet, isV3Enabled } from 'connectors'
+import { isMainnet, isV3Enabled, isV2Only } from 'connectors'
 import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen, hasV3Official, VERSION } from 'lib/sdk/constants/addresses'
 
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
@@ -19,6 +19,11 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
   }, [location.search])
 
   const [version, isDisabled] = useMemo(() => {
+    // V2-only build (the password-gated LP-exit deployment): hard-lock every
+    // chain/page to V2, disabled, so no V3 surface can ever render regardless
+    // of a stale stored selection. Must come before the mainnet branch, which
+    // would otherwise honor a stored V3_OFFICIAL selection on Bera/HyperEVM.
+    if (isV2Only) return [2, true]
     // V3 not available when API doesn't support /indexer/v3 (prod API today).
     // Mainnet keeps its per-chain lock list because the V1 chains (Viction,
     // U2U) live on mainnet only.
