@@ -1,6 +1,7 @@
 {
   "outputDirectory": "build",
   "rewrites": [
+    { "source": "/kyber-agg/:path*", "destination": "https://aggregator-api.kyberswap.com/:path*" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }
