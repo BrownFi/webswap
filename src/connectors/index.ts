@@ -2,9 +2,7 @@ import {
   sepolia as sepoliaChain,
   berachain as berachainChain,
   arbitrum as arbitrumChain,
-  base as baseChain,
   linea as lineaChain,
-  monad as monadChain,
 } from 'viem/chains'
 
 import { Chain, getDefaultConfig, getDefaultWallets } from '@rainbow-me/rainbowkit'
@@ -14,9 +12,7 @@ import hyperevmIcon from 'assets/images/hyperevm.png'
 import ethereumIcon from 'assets/images/ethereum-logo.png'
 import beraIcon from 'assets/images/w-bera.png'
 import arbIcon from 'assets/images/arb.png'
-import baseIcon from 'assets/images/base.png'
 import lineaIcon from 'assets/images/linea.webp'
-import monadIcon from 'assets/images/monad.png'
 
 const overrideChain = ({
   chain,
@@ -76,16 +72,6 @@ const arbitrum = overrideChain({
   ],
 })
 
-const base = overrideChain({
-  chain: baseChain,
-  iconUrl: baseIcon,
-  fallbackRpcs: [
-    //
-    'https://1rpc.io/base',
-    'https://base.llamarpc.com',
-  ],
-})
-
 const linea = overrideChain({
   chain: lineaChain,
   iconUrl: lineaIcon,
@@ -93,15 +79,6 @@ const linea = overrideChain({
     //
     'https://1rpc.io/linea',
     'https://linea.drpc.org',
-  ],
-})
-
-const monad = overrideChain({
-  chain: monadChain,
-  iconUrl: monadIcon,
-  fallbackRpcs: [
-    //
-    'https://rpc3.monad.xyz',
   ],
 })
 
@@ -141,21 +118,20 @@ export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.t
 // anchor matches the prod host without also matching `beta-api`/`dev-api`.
 export const isV3Enabled = isBetaApi || /\/\/api\.brownfi\.io/.test(import.meta.env.VITE_API_URL ?? '')
 
+// Only chains with a V3 (Official) deployment — see ROUTER_ADDRESS_V3_OFFICIAL.
+// Base + Monad have no V3 integration, so they're excluded from the selector +
+// wagmi config (a wallet on those chains reads as "wrong network").
 const mainChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,
-  base,
   hyperEVM,
   linea,
-  monad,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,
-  base,
   hyperEVM,
   linea,
-  monad,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 
