@@ -21,7 +21,6 @@ import { toV2LiquidityToken, useTrackedTokenPairs } from 'state/user/hooks'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { graphqlFetcher } from 'utils/graphql'
 import { apiV2Service } from 'services'
-import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
 import { usePairs } from 'data/Reserves'
 import { useV3PoolsOnChain } from 'hooks/useV3PoolsOnChain'
 import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
@@ -124,13 +123,6 @@ export default function Pool() {
   // (Bera), false for chains awaiting the indexer (HyperEVM) — those use the
   // useV3PoolsOnChain factory-enumeration hook instead.
   const v3UseIndexer = useV3Indexer(chainId, version)
-
-  const { data: protocolStats, isLoading: isLoadingStats } = useQuery<ProtocolStats>({
-    queryKey: ['protocolStats'],
-    queryFn: fetchProtocolStats,
-    staleTime: 10 * 60_000,
-    gcTime: 30 * 60_000,
-  })
 
   // V2 always hits the indexer. V3 routing is gated on v3UseIndexer:
   // - true (default once /indexer/v3 tracks the current factory): indexer
@@ -367,9 +359,6 @@ export default function Pool() {
               </Flex>
             </TitleRow>
 
-            {/* Stats bar */}
-            <PoolStatsBar stats={protocolStats} isLoading={isLoadingStats} />
-
             {/* Search bar */}
             <div className="relative">
               <input
@@ -439,79 +428,6 @@ export default function Pool() {
         </AutoColumn>
       </PageWrapper>
     </>
-  )
-}
-
-function PoolStatsBar({
-  stats: protocolStats,
-  isLoading,
-}: {
-  stats?: ProtocolStats
-  isLoading?: boolean
-}) {
-  const formatValue = (val: number) => {
-    const n = Number(val) || 0
-    if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`
-    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
-    if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
-    return `$${n.toFixed(0)}`
-  }
-
-  const hasData = !!protocolStats
-
-  const stats = [
-    { label: 'Total Value Locked', value: formatValue(protocolStats?.currentTvl ?? 0), sub: 'Current TVL', subColor: '#978A80' },
-    { label: 'All - Time Volume', value: formatValue(protocolStats?.volumeAllTime ?? 0), sub: 'Since launch', subColor: '#978A80' },
-    { label: '24h Volume', value: formatValue(protocolStats?.volume24h ?? 0), sub: 'Across all pools', subColor: '#978A80' },
-    { label: 'Total Fees', value: formatValue(protocolStats?.feesAllTime ?? 0), sub: 'Since launch', subColor: '#978A80' },
-    { label: '24h Fees', value: formatValue(protocolStats?.fees24h ?? 0), sub: 'Auto-compound', subColor: '#978A80' },
-  ]
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-      {stats.map((stat, index) => (
-        <div
-          key={`${stat.label}-${index}`}
-          className={`relative overflow-hidden flex flex-col gap-[4px] sm:gap-[8px] p-[12px] sm:p-[20px] items-center md:items-start text-center md:text-left ${
-            index === 0 ? 'col-span-2 md:col-span-1' : ''
-          }`}
-          style={{
-            background: '#2F2823',
-            borderRadius: '12px',
-          }}
-        >
-          {isLoading && !hasData ? (
-            <>
-              <div className="animate-pulse rounded h-[16px] sm:h-[20px] w-[60%]" style={{ background: '#493E35' }} />
-              <div className="animate-pulse rounded h-[22px] sm:h-[28px] w-[80%]" style={{ background: '#493E35' }} />
-              <div className="animate-pulse rounded h-[14px] sm:h-[18px] w-[50%]" style={{ background: '#493E35' }} />
-            </>
-          ) : (
-            <>
-              <span className="text-[11px] sm:text-[14px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
-                {stat.label}
-              </span>
-              <span
-                className="text-[16px] sm:text-[22px] leading-[22px] sm:leading-[28px]"
-                style={{
-                  fontFamily: 'Inter',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  color: '#D8A072',
-                }}
-              >
-                {stat.value}
-              </span>
-              {stat.sub && (
-                <span className="text-[10px] sm:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: stat.subColor }}>
-                  {stat.sub}
-                </span>
-              )}
-            </>
-          )}
-        </div>
-      ))}
-    </div>
   )
 }
 

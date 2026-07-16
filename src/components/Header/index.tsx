@@ -109,7 +109,7 @@ const StyledConnectButton = () => {
   )
 }
 import SwitchVersion from 'components/SwitchVersion'
-import { appEnvLabel, isMainnet } from 'connectors'
+import { appEnvLabel, isMainnet, logoTag } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useAccount } from 'wagmi'
 import CustomAccountDisplay from './CustomAccountDisplay'
@@ -179,7 +179,7 @@ export default function Header() {
           </div>
         </Link>
 
-        {!isMainnet && (
+        {(logoTag || !isMainnet) && (
           <span style={{
             fontFamily: 'Inter',
             fontSize: '12px',
@@ -191,7 +191,7 @@ export default function Header() {
             textTransform: 'uppercase',
             flexShrink: 0,
           }}>
-            {appEnvLabel}
+            {logoTag || appEnvLabel}
           </span>
         )}
 

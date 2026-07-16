@@ -113,6 +113,11 @@ export const isMainnet = appEnv === 'mainnet'
 // itself per branch: develop → 'dev', beta → 'beta' (falls back to appEnv).
 export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
 
+// Optional tag pill next to the navbar logo (e.g. 'V2' on the V2-only build).
+// When set it shows on every env (incl. mainnet) and takes precedence over the
+// env-label badge; unset leaves the existing !isMainnet env-label behavior.
+export const logoTag = (import.meta.env.VITE_LOGO_TAG || '') as string
+
 // Feature capability derived from the API URL, NOT the env name. The two are
 // orthogonal:
 //   - VITE_ENVIRONMENT controls deployment identity (mainnet/beta/testnet).

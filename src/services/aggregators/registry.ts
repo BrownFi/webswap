@@ -6,6 +6,7 @@
  * the Swap page consumes only `getAggregatorsFor()` and the orchestration hook.
  */
 import { ChainId } from '@brownfi/sdk'
+import { isV2Only } from 'connectors'
 import { kyberAggregator } from './kyber/adapter'
 import type { AggregatorAdapter, AggregatorId, BrownFiVersion } from './types'
 
@@ -18,6 +19,9 @@ const aggregators: AggregatorAdapter[] = [
 ]
 
 export function getAggregatorsFor(chainId: ChainId, version: BrownFiVersion): AggregatorAdapter[] {
+  // V2-only wind-down build: route swaps through BrownFi V2 native ONLY — no
+  // aggregators are quoted, so no swap can ever execute through Kyber.
+  if (isV2Only) return []
   return aggregators.filter((a) => a.isSupported(chainId, version))
 }
 

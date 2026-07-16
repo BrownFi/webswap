@@ -8,6 +8,7 @@ import { ButtonError, ButtonPrimary, ButtonConfirmed } from 'components/Button'
 import Column, { AutoColumn } from 'components/Column'
 import ConfirmSwapModal from 'components/swap/ConfirmSwapModal'
 import { RouteComparison } from 'components/swap/RouteComparison'
+import { isV2Only } from 'connectors'
 import { CurrencyInputPanel } from 'components/CurrencyInputPanel'
 import { AutoRow, RowBetween } from 'components/Row'
 import AdvancedSwapDetailsDropdown from 'components/swap/AdvancedSwapDetailsDropdown'
@@ -797,7 +798,7 @@ export default function Swap() {
                 source returned a quote (BrownFi V2 native and/or any
                 aggregator). Click a row to pin that source. Persists to
                 selectedAggregator. */}
-            {routeCandidates.length >= 1 && !showWrap && (
+            {routeCandidates.length >= 1 && !showWrap && !isV2Only && (
               <RouteComparison
                 candidates={routeCandidates}
                 selected={selectedAggregator}

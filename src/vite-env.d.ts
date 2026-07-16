@@ -10,6 +10,10 @@ interface ImportMetaEnv {
   // VITE_ENVIRONMENT, which functionally selects chains/API. Falls back to
   // VITE_ENVIRONMENT when unset — see `appEnvLabel` in connectors/index.ts.
   readonly VITE_ENV_LABEL?: string
+  // Display-only tag pill shown next to the navbar logo (e.g. 'V2'). When set it
+  // renders on every environment (including mainnet), overriding the env-label
+  // badge — see `logoTag` in connectors/index.ts. Unset = existing behavior.
+  readonly VITE_LOGO_TAG?: string
   // Kyber affiliate fee (optional — all three required together to engage).
   readonly VITE_KYBER_FEE_RECEIVER?: string
   readonly VITE_KYBER_FEE_BPS?: string
