@@ -238,10 +238,16 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       pair.chainId === ChainId.LINEA_MAINNET && merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase()),
   })
 
-  const rpcTradingFee = useTradingFee({ pair })
+  // The fee is a config value (changes only on rare admin txs, never from
+  // trading), so trust the indexer's `pairStats.fee` whenever it exists —
+  // decoupled from `shouldUseIndexer` (a 2h *trade*-freshness gate meant for
+  // live fields). This stops quiet V3 pools (e.g. ARB traded >2h ago) from
+  // firing a per-pool on-chain readV3PairConfig. Fall back to the on-chain read
+  // only when there's no indexer data at all (e.g. Base V3, indexer off).
+  const rpcTradingFee = useTradingFee({ pair, enabled: !pairStats })
   const rpcTotalSupply = useTotalSupply(shouldUseIndexer ? undefined : pair.liquidityToken)
 
-  const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : rpcTradingFee
+  const tradingFee = pairStats ? pairStats.fee * 100 : rpcTradingFee
   const totalSupply = shouldUseIndexer
     ? new TokenAmount(
         pair.liquidityToken,
