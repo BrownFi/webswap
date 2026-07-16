@@ -105,10 +105,10 @@ export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
 // All three serve the V3 schema + uniV2Price. Only api.brownfi.io (true
 // production) lacks them, so it's the only one that doesn't match.
 //
-// V3 contracts are still per-chain (currently Berachain-only via
-// ROUTER_ADDRESS_V3_PILOT) so even with this flag true, useVersion + SwitchVersion
-// only expose V3 on chains where the router is deployed. The flag here is
-// only about API capability, not per-chain readiness.
+// V3 contracts are still per-chain (see ROUTER_ADDRESS_V3_OFFICIAL) so even
+// with this flag true, useVersion + SwitchVersion only expose V3 on chains
+// where the router is deployed. The flag here is only about API capability,
+// not per-chain readiness.
 export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.test(
   import.meta.env.VITE_API_URL ?? '',
 )

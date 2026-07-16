@@ -55,7 +55,7 @@ export const ROUTER_ADDRESS_WITH_PRICE: Record<number, string> = {
 //
 // 2026-06-04 (beta branch): swapped to the v3-final deployment. Architectural
 // change vs the prior V3 deployment — zap entrypoints have been split out of
-// the router into a separate BrownFiV3Zap contract (see ZAP_ADDRESS_V3_PILOT below).
+// the router into a separate BrownFiV3Zap contract (see ZAP_ADDRESS_V3_OFFICIAL below).
 // The router now only handles swap + add/remove liquidity. Library quotes are
 // inventory-safe; the INVALID_INVENTORY reverts we saw on lopsided pools
 // should be much rarer. develop/bera intentionally remain on the previous
