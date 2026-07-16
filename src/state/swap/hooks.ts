@@ -16,7 +16,7 @@ import { Field, replaceSwapState, selectCurrency, setRecipient, switchCurrencies
 import { SwapState } from './reducer'
 import { useUserSlippageTolerance } from 'state/user/hooks'
 import { computeSlippageAdjustedAmounts } from 'utils/prices'
-import { ROUTER_ADDRESS_V3_OFFICIAL } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V3_OFFICIAL, VERSION } from 'lib/sdk/constants/addresses'
 
 export function useSwapState(): AppState['swap'] {
   return useSelector<AppState, AppState['swap']>((state) => state.swap)
@@ -174,12 +174,12 @@ export function useDerivedSwapInfo(): {
   const tradeInV3Official = useTradeExactIn(
     isExactIn && chainSupportsV3Official ? parsedAmount : undefined,
     outputCurrency ?? undefined,
-    4,
+    VERSION.V3_OFFICIAL,
   )
   const tradeOutV3Official = useTradeExactOut(
     inputCurrency ?? undefined,
     !isExactIn && chainSupportsV3Official ? parsedAmount : undefined,
-    4,
+    VERSION.V3_OFFICIAL,
   )
 
   const v3OfficialTrade = isExactIn ? tradeInV3Official.trade : tradeOutV3Official.trade

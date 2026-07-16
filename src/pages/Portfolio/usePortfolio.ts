@@ -11,9 +11,8 @@
  * merge by descending USD value. Each row carries its chainId so the
  * UI badge can show the chain icon.
  *
- * V3 is currently Bera-only (only chain in ROUTER_ADDRESS_V3_PILOT) — that
- * map is the source of truth. V2 indexer chains are listed explicitly
- * since not every V2 deployment has an indexer.
+ * V3 (Official, version 3) indexer chains derive from ROUTER_ADDRESS_V3_OFFICIAL
+ * — that map is the source of truth. V2/V1/Pilot were removed.
  *
  * Sui is excluded — different account model, different indexer (when
  * it ships), and zero positions exist there today. Added separately
@@ -87,8 +86,8 @@ export interface PortfolioPair {
 
 export interface PortfolioPosition {
   id: string
-  /** Source indexer version. Always V3 Official (4). */
-  version: 4
+  /** Source indexer version. Always V3 (Official = version 3). */
+  version: 3
   /** EVM chainId this position lives on. UI shows chain icon from this. */
   chainId: ChainId
   lp: number
@@ -131,7 +130,7 @@ function asNumber(v: string | number | null | undefined): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function rowToPosition(raw: any, version: 4, chainId: ChainId): PortfolioPosition {
+function rowToPosition(raw: any, version: 3, chainId: ChainId): PortfolioPosition {
   return {
     id: `${chainId}-${raw.id}`,
     version,
@@ -152,7 +151,7 @@ function rowToPosition(raw: any, version: 4, chainId: ChainId): PortfolioPositio
 
 interface FetchTask {
   chainId: ChainId
-  version: 4
+  version: 3
 }
 
 export function usePortfolio(): PortfolioResult {

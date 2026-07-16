@@ -27,8 +27,8 @@ export function isBrownFiSource(source: RouteSource | undefined): boolean {
   return source === 'brownfi-v3-official'
 }
 
-/** BrownFi pool version. Only V3 Official (4) is supported. */
-export type BrownFiVersion = 4
+/** BrownFi pool version. Only V3 Official (3) is supported. */
+export type BrownFiVersion = 3
 
 export interface QuoteParams {
   chainId: ChainId

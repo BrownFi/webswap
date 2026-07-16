@@ -1,5 +1,5 @@
 import { ChainId } from '@brownfi/sdk'
-import { isV3Like, useV3Indexer } from 'lib/sdk/constants/addresses'
+import { isV3Like, useV3Indexer, VERSION } from 'lib/sdk/constants/addresses'
 
 export const graphqlFetcher = async ({
   operationName,
@@ -28,8 +28,8 @@ export const graphqlFetcher = async ({
   const V3_OVERRIDE_URL: Record<number, string | undefined> = {
     [ChainId.BERA_MAINNET]: import.meta.env.VITE_INDEXER_V3_URL,
   }
-  // Goldsky override only for the OFFICIAL deployment (version 4).
-  const override = version === 4 ? V3_OVERRIDE_URL[chainId] : undefined
+  // Goldsky override only for the V3 (Official) deployment.
+  const override = version === VERSION.V3_OFFICIAL ? V3_OVERRIDE_URL[chainId] : undefined
   const useOverride = !!override && useV3Indexer(chainId, version)
   const url = useOverride
     ? override
