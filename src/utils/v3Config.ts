@@ -72,6 +72,13 @@ export const fromPrec = (v: number | bigint): number => Number(v) / Number(PRECI
  * Resolves the factory for the pool's exact version (4 = Official, 3 = Pilot).
  * Returns null when the factory/RPC isn't available (caller falls back).
  */
+// factory.pairConfig() returns a fixed config-getter address that is constant
+// per factory (i.e. per chain+version) — an immutable `view`. Cache it so N pools
+// don't each re-read the same value on a chain switch: only `getConfig(pool)` is
+// truly per-pool. Keyed by factory address (unique per chain+version); written
+// only on a successful read, so a failed RPC just retries next call.
+const pairConfigAddrCache = new Map<string, `0x${string}`>()
+
 export async function readV3PairConfig(
   chainId: number,
   version: number,
@@ -80,11 +87,15 @@ export async function readV3PairConfig(
   const factoryAddr = factoryV3Gen(version)[chainId]
   if (!factoryAddr || !RPC_URLS[chainId]) return null
   const client = createReadClient(chainId)
-  const configAddr = await client.readContract({
-    address: factoryAddr as `0x${string}`,
-    abi: PAIR_CONFIG_GETTER_ABI,
-    functionName: 'pairConfig',
-  })
+  let configAddr = pairConfigAddrCache.get(factoryAddr)
+  if (!configAddr) {
+    configAddr = (await client.readContract({
+      address: factoryAddr as `0x${string}`,
+      abi: PAIR_CONFIG_GETTER_ABI,
+      functionName: 'pairConfig',
+    })) as `0x${string}`
+    pairConfigAddrCache.set(factoryAddr, configAddr)
+  }
   const config = await client.readContract({
     address: configAddr as `0x${string}`,
     abi: GET_CONFIG_ABI,
