@@ -1,5 +1,4 @@
-import { versionLabel, versionToSlug } from 'lib/sdk/constants/addresses'
-import { isV3Like } from '@brownfi/sdk'
+import { versionToSlug } from 'lib/sdk/constants/addresses'
 /**
  * My Portfolio page — single-chain view of the connected user's LP
  * positions, with aggregate stats up top and a sortable per-position
@@ -143,27 +142,6 @@ function PortfolioStatsBar({
 // Version pill rendered next to each position. Distinct from BrownFi's
 // V2/V3 toggle elsewhere — this is a read-only badge so the user knows
 // which contract surface holds the position.
-function VersionBadge({ version }: { version: 2 | 3 }) {
-  const v3 = isV3Like(version)
-  return (
-    <span
-      style={{
-        padding: '2px 6px',
-        borderRadius: '6px',
-        background: v3 ? 'rgba(196, 148, 58, 0.12)' : 'rgba(151, 138, 128, 0.12)',
-        border: `1px solid ${v3 ? 'rgba(196, 148, 58, 0.35)' : 'rgba(151, 138, 128, 0.35)'}`,
-        fontFamily: 'Inter',
-        fontSize: '10px',
-        fontWeight: 600,
-        color: v3 ? '#C4943A' : '#CFC7C1',
-        letterSpacing: '0.04em',
-      }}
-    >
-      {versionLabel(version)}
-    </span>
-  )
-}
-
 function PositionRow({ position }: { position: PortfolioPosition }) {
   const navigate = useNavigate()
   // chainId is per-position now — the position lives on whichever chain
@@ -246,7 +224,6 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
             <span style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#FBFBFD' }}>
               <DoubleCurrencySymbol currency0={c0} currency1={c1} chainId={positionChainId} />
             </span>
-            <VersionBadge version={position.version} />
             {chainMeta && (
               <span
                 title={chainMeta.name}

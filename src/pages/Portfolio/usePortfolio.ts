@@ -27,7 +27,7 @@ import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useActiveWeb3React } from 'hooks'
 import { ChainId } from '@brownfi/sdk'
-import { ROUTER_ADDRESS_V3_PILOT } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS_V3_OFFICIAL, VERSION } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 
 const PAIR_ACCOUNTS_QUERY = `
@@ -65,27 +65,12 @@ const PAIR_ACCOUNTS_QUERY = `
   }
 `
 
-// Chains with a V2 indexer endpoint. Mirrors the list in useVersion's
-// enableGraphQL — not every V2 deployment also has an indexer, so we
-// enumerate the supported set explicitly rather than guessing from chain
-// configuration. Adding a chain here unlocks portfolio queries for it.
-const V2_INDEXER_CHAINS: ChainId[] = [
-  ChainId.BERA_MAINNET,
-  ChainId.ARBITRUM_MAINNET,
-  ChainId.BASE_MAINNET,
-  ChainId.BSC_MAINNET,
-  ChainId.HYPER_EVM,
-  ChainId.LINEA_MAINNET,
-  ChainId.SEI_MAINNET,
-  ChainId.MONAD,
-]
-
-// V3 indexer chains are derived directly from ROUTER_ADDRESS_V3_PILOT — V3
-// router and V3 indexer ship together, so the address map is the source
-// of truth. Currently Bera-only.
-const V3_INDEXER_CHAINS: ChainId[] = (Object.keys(ROUTER_ADDRESS_V3_PILOT) as unknown as ChainId[])
+// V3 Official indexer chains, derived directly from ROUTER_ADDRESS_V3_OFFICIAL —
+// V3 router and V3 indexer ship together, so the address map is the source of
+// truth. This is the ONLY version the app supports (V2 / V3-Pilot removed).
+const V3_INDEXER_CHAINS: ChainId[] = (Object.keys(ROUTER_ADDRESS_V3_OFFICIAL) as unknown as ChainId[])
   .map((k) => Number(k) as ChainId)
-  .filter((id) => !!ROUTER_ADDRESS_V3_PILOT[id])
+  .filter((id) => !!ROUTER_ADDRESS_V3_OFFICIAL[id])
 
 export interface PortfolioPair {
   id: string
@@ -102,8 +87,8 @@ export interface PortfolioPair {
 
 export interface PortfolioPosition {
   id: string
-  /** Source indexer version. UI shows "V2" / "V3" badge from this. */
-  version: 2 | 3
+  /** Source indexer version. Always V3 Official (4). */
+  version: 4
   /** EVM chainId this position lives on. UI shows chain icon from this. */
   chainId: ChainId
   lp: number
@@ -146,7 +131,7 @@ function asNumber(v: string | number | null | undefined): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function rowToPosition(raw: any, version: 2 | 3, chainId: ChainId): PortfolioPosition {
+function rowToPosition(raw: any, version: 4, chainId: ChainId): PortfolioPosition {
   return {
     id: `${chainId}-${raw.id}`,
     version,
@@ -167,7 +152,7 @@ function rowToPosition(raw: any, version: 2 | 3, chainId: ChainId): PortfolioPos
 
 interface FetchTask {
   chainId: ChainId
-  version: 2 | 3
+  version: 4
 }
 
 export function usePortfolio(): PortfolioResult {
@@ -179,10 +164,7 @@ export function usePortfolio(): PortfolioResult {
   // query per (chain, version) combo unconditionally — staleTime keeps the
   // network cost reasonable.
   const tasks: FetchTask[] = useMemo(
-    () => [
-      ...V2_INDEXER_CHAINS.map((chainId) => ({ chainId, version: 2 as const })),
-      ...V3_INDEXER_CHAINS.map((chainId) => ({ chainId, version: 3 as const })),
-    ],
+    () => V3_INDEXER_CHAINS.map((chainId) => ({ chainId, version: VERSION.V3_OFFICIAL })),
     [],
   )
 
