@@ -186,8 +186,14 @@ export function useDerivedSwapInfo(): {
   // `undefined` amount to skip the multicall when inert).
   const chainSupportsV3Pilot = hasV3Pilot(chainId) // pilot — env-gated (hidden on beta/mainnet)
   const chainSupportsV3Official = !!chainId && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId] // official
-  const tradeInV2 = useTradeExactIn(isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 2)
-  const tradeOutV2 = useTradeExactOut(inputCurrency ?? undefined, !isExactIn ? parsedAmount : undefined, 2)
+  // V2 is deprecated (being wound down) — don't quote it on Swap. Each candidate
+  // pair is an on-chain RPC quote + Pyth fetch, and V2 added a whole second
+  // pipeline for a version we no longer route to. Feed `undefined` so the hooks
+  // stay called (stable order) but skip the multicall. Flip SWAP_QUOTE_V2 to
+  // re-enable. Pool detail/list still read V2 independently.
+  const SWAP_QUOTE_V2 = false
+  const tradeInV2 = useTradeExactIn(SWAP_QUOTE_V2 && isExactIn ? parsedAmount : undefined, outputCurrency ?? undefined, 2)
+  const tradeOutV2 = useTradeExactOut(inputCurrency ?? undefined, SWAP_QUOTE_V2 && !isExactIn ? parsedAmount : undefined, 2)
   const tradeInV3Pilot = useTradeExactIn(
     isExactIn && chainSupportsV3Pilot ? parsedAmount : undefined,
     outputCurrency ?? undefined,
@@ -399,12 +405,17 @@ export function useDerivedSwapInfo(): {
     return 'No route'
   }
   const nativeStatuses = [
-    {
-      source: 'brownfi-v2' as const,
-      sourceName: 'BrownFi V2',
-      supported: true,
-      reason: nativeReason(v2Trade, v2Flags),
-    },
+    // V2 row only when we actually quote V2 on Swap (see SWAP_QUOTE_V2).
+    ...(SWAP_QUOTE_V2
+      ? [
+          {
+            source: 'brownfi-v2' as const,
+            sourceName: 'BrownFi V2',
+            supported: true,
+            reason: nativeReason(v2Trade, v2Flags),
+          },
+        ]
+      : []),
     {
       source: 'brownfi-v3-official' as const,
       sourceName: 'BrownFi V3',
