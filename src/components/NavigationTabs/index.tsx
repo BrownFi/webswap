@@ -6,7 +6,6 @@ import { SettingsTab } from 'components/Settings'
 import { useDispatch } from 'react-redux'
 import { AppDispatch } from 'state'
 import { resetMintState } from 'state/mint/actions'
-import SwitchVersion from 'components/SwitchVersion'
 
 function StyledNavLink({
   id,
@@ -97,7 +96,6 @@ export function AddRemoveTabs({ adding, creating }: { adding: boolean; creating:
           >
             {creating ? 'Create a pair' : adding ? 'Add Liquidity' : 'Remove Liquidity'}
           </span>
-          <SwitchVersion />
         </div>
 
         <SettingsTab />

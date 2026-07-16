@@ -96,15 +96,7 @@ export default function AddLiquidity() {
     liquidityMinted,
     poolTokenPercentage,
     error,
-  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, version >= 2 ? pythPrices : undefined)
-
-  const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
-
-  const formattedPythAmounts = {
-    [independentField]: typedValue,
-    [dependentField]:
-      noLiquidity && !hasPythPrices ? otherTypedValue : dependentAmount === 0 ? '' : dependentAmount.toPrecision(6),
-  }
+  } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, pythPrices)
 
   const { onFieldAInput, onFieldBInput } = useMintActionHandlers(noLiquidity)
   const [exactFieldInput, setExactFieldInput] = useState<Field | undefined>(undefined)
@@ -131,11 +123,7 @@ export default function AddLiquidity() {
   const formattedAmounts = {
     [independentField]: typedValue,
     [dependentField]:
-      noLiquidity && !hasPythPrices
-        ? otherTypedValue
-        : version === 2
-        ? formattedPythAmounts[dependentField]
-        : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
+      noLiquidity && !hasPythPrices ? otherTypedValue : parsedAmounts[dependentField]?.toSignificant(6) ?? '',
   }
 
   // get the max amounts user can add
