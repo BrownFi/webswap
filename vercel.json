@@ -2,6 +2,7 @@
   "outputDirectory": "build",
   "rewrites": [
     { "source": "/prjx/:path*", "destination": "https://api.prjx.com/:path*" },
+    { "source": "/kyber-agg/:path*", "destination": "https://aggregator-api.kyberswap.com/:path*" },
     { "source": "/uniswap/:path*", "destination": "/api/uniswap" },
     { "source": "/(.*)", "destination": "/" }
   ]

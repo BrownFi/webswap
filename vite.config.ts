@@ -52,6 +52,16 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/prjx/, ''),
       },
+      // Dev mirror of functions/kyber-agg (CF) + vercel.json rewrite: proxy
+      // /kyber-agg/* to the Kyber Aggregator API server-side (with a real
+      // User-Agent) so the browser hits same-origin and dodges Kyber's
+      // Cloudflare 403/bot-wall. Prod uses the CF Pages Function instead.
+      '/kyber-agg': {
+        target: 'https://aggregator-api.kyberswap.com',
+        changeOrigin: true,
+        headers: { 'user-agent': 'BrownFi-Webswap (+https://brownfi.io)' },
+        rewrite: (path) => path.replace(/^\/kyber-agg/, ''),
+      },
       // Dev mirror of functions/uniswap (CF) + api/uniswap (Vercel): proxy
       // /uniswap/* to the Uniswap gateway with an allowlisted Origin header so
       // the browser hits same-origin and the gateway doesn't 409 ACCESS_DENIED.
