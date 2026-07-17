@@ -58,18 +58,31 @@ const hasBh3Price = (chainId: number) => CHAINS_WITH_BH3_PRICE.has(chainId)
 const buildQuery = (template: string, keepUniV2: boolean, keepBh3: boolean, keepBenchReserves: boolean) => {
   let q = keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
   if (!keepBh3) q = q.replace(/\s*bh3Price\s*/g, '\n')
-  // New "LP vs. BNH" math (boss 2026-07-17): bnh = bh3Price × bh3Supply (verified
-  // exact vs bh3Reserve0·p0 + bh3Reserve1·p1), so lpVsBh3 = (tvl − bnh)/bnh. Only
-  // `bh3Supply` is missing from the time-series (tvl + bh3Price already there). Strip
-  // it until the indexer exposes it on PairDay/HourData (else GraphQL 500s the chart)
-  // — toPoint then falls back to the old (lpPrice−bh3Price)/bh3Price ratio.
-  if (!keepBenchReserves) q = q.replace(/\s*bh3Supply\s*/g, '\n')
+  // New benchmark math (boss 2026-07-17): value each benchmark's RESERVES at the
+  // bucket's token prices vs the LP's tvl —
+  //   bnh   = bh3Reserve0·token0Price + bh3Reserve1·token1Price → lpVsBh3  = (tvl−bnh)/bnh
+  //   univ2 = uniV2Reserve0·token0Price + uniV2Reserve1·token1Price → lpVsUniV2 = (tvl−univ2)/univ2
+  // Manh added these fields to PairDay/HourData (dev first, 2026-07-17). Strip them
+  // until they're live on the FE's API (else GraphQL 500s the chart) — toPoint then
+  // falls back to the old price ratio.
+  if (!keepBenchReserves) {
+    q = q
+      .replace(/\s*bh3Reserve0\s*/g, '\n')
+      .replace(/\s*bh3Reserve1\s*/g, '\n')
+      .replace(/\s*uniV2Reserve0\s*/g, '\n')
+      .replace(/\s*uniV2Reserve1\s*/g, '\n')
+      .replace(/\s*token0Price\s*/g, '\n')
+      .replace(/\s*token1Price\s*/g, '\n')
+  }
   return q
 }
-// `bh3Supply` on the time-series enables the exact reserve-based LP-vs-BNH line.
-// Empty until the indexer exposes it (currently only on the live Pair entity).
-const CHAINS_WITH_BH3_SUPPLY = new Set<number>()
-const hasBenchReserves = (chainId: number) => CHAINS_WITH_BH3_SUPPLY.has(chainId)
+// Benchmark reserves + per-bucket token prices enable the exact reserve-based
+// LP-vs-BNH / LP-vs-UniV2 math. Empty until they're live on the FE's API (Manh
+// added them dev-first). Add ChainId.BERA_MAINNET once beta/prod-api expose them.
+// Bera verified 2026-07-17: PairDayData/HourData on beta-api + prod-api return the
+// reserve + token-price data. Add other chains once their data is confirmed.
+const CHAINS_WITH_BENCH_RESERVES = !isV3Enabled ? new Set<number>() : new Set<number>([ChainId.BERA_MAINNET])
+const hasBenchReserves = (chainId: number) => CHAINS_WITH_BENCH_RESERVES.has(chainId)
 
 const GET_PAIR_STATS = `
   query PairStats($pair: String) {
@@ -88,7 +101,12 @@ const GET_PAIR_STATS = `
       bnhPrice
       uniV2Price
       bh3Price
-      bh3Supply
+      bh3Reserve0
+      bh3Reserve1
+      uniV2Reserve0
+      uniV2Reserve1
+      token0Price
+      token1Price
     }
   }
 `
@@ -112,7 +130,12 @@ const GET_PAIR_STATS_HOUR = `
       bnhPrice
       uniV2Price
       bh3Price
-      bh3Supply
+      bh3Reserve0
+      bh3Reserve1
+      uniV2Reserve0
+      uniV2Reserve1
+      token0Price
+      token1Price
     }
   }
 `
@@ -137,7 +160,12 @@ const GET_PAIR_STATS_HOUR_OLDER = `
       bnhPrice
       uniV2Price
       bh3Price
-      bh3Supply
+      bh3Reserve0
+      bh3Reserve1
+      uniV2Reserve0
+      uniV2Reserve1
+      token0Price
+      token1Price
     }
   }
 `
@@ -195,9 +223,14 @@ type DayData = {
   bnhPrice: number
   uniV2Price: number
   bh3Price?: number // Bera-only for now; stripped from the query on other chains
-  // BH3 benchmark "supply" — bnh value = bh3Price × bh3Supply. Optional; stripped
-  // from the query until the indexer exposes it on the time-series.
-  bh3Supply?: number
+  // Benchmark reserves + per-bucket token prices for the reserve-based math.
+  // Optional — stripped from the query until the indexer exposes them.
+  bh3Reserve0?: number
+  bh3Reserve1?: number
+  uniV2Reserve0?: number
+  uniV2Reserve1?: number
+  token0Price?: number
+  token1Price?: number
 }
 
 type HourData = Omit<DayData, 'dayStartUnix'> & { hourStartUnix: number }
@@ -509,25 +542,36 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
       const uni = iskHYPEUSDT ? uniRaw / 1e9 : uniRaw
       const bh3 = iskHYPEUSDT ? bh3Raw / 1e9 : bh3Raw
 
-      // NEW "LP vs. BNH" math (boss 2026-07-17): compare the LP's tvl to the BH
-      // benchmark's PORTFOLIO VALUE, bnh = bh3Price × bh3Supply (verified exact vs
-      // bh3Reserve0·p0 + bh3Reserve1·p1) → lpVsBh3 = (tvl − bnh)/bnh. Falls back to
-      // the old per-share ratio (lp−bh3)/bh3 until the indexer exposes bh3Supply on
-      // the time-series (stripped by buildQuery today → comes back undefined).
-      // UniV2 needs NO new math: its benchmark shares the LP supply, so the old
-      // ratio (lp−uni)/uni already equals (tvl−univ2)/univ2 (verified Δ≈0).
-      const bh3Supply = Number(d.bh3Supply) || 0
-      const bnhVal = bh3Raw > 0 && bh3Supply > 0 ? bh3Raw * bh3Supply : NaN // raw (unscaled) — a $ value
+      // NEW benchmark math (boss 2026-07-17): value each benchmark's RESERVES at the
+      // bucket's token prices, then compare to the LP's tvl:
+      //   bnh   = bh3Reserve0·token0Price + bh3Reserve1·token1Price → lpVsBh3  = (tvl−bnh)/bnh
+      //   univ2 = uniV2Reserve0·token0Price + uniV2Reserve1·token1Price → lpVsUniV2 = (tvl−univ2)/univ2
+      // Reserves + per-bucket token prices come from Manh's PairDay/HourData fields
+      // (dev first). Falls back to the old price ratio until they're on the FE's API
+      // (stripped by buildQuery → these come back undefined). tvl + reserves×price are
+      // real $ values (no iskHYPEUSDT scale — it cancels in the ratio anyway).
+      const p0 = Number(d.token0Price) || 0
+      const p1 = Number(d.token1Price) || 0
+      const havePrices = p0 > 0 || p1 > 0
+      const bh3r0 = Number(d.bh3Reserve0) || 0
+      const bh3r1 = Number(d.bh3Reserve1) || 0
+      const unir0 = Number(d.uniV2Reserve0) || 0
+      const unir1 = Number(d.uniV2Reserve1) || 0
+      const bnhVal = havePrices && (bh3r0 > 0 || bh3r1 > 0) ? bh3r0 * p0 + bh3r1 * p1 : NaN
+      const uniVal = havePrices && (unir0 > 0 || unir1 > 0) ? unir0 * p0 + unir1 * p1 : NaN
       const lpVsBh3 =
         Number.isFinite(bnhVal) && bnhVal > 0 ? ((tvlRaw - bnhVal) / bnhVal) * 100 : bh3 ? ((lp - bh3) / bh3) * 100 : 0
+      const lpVsUniV2Val =
+        Number.isFinite(uniVal) && uniVal > 0 ? ((tvlRaw - uniVal) / uniVal) * 100 : uni ? ((lp - uni) / uni) * 100 : 0
 
       return {
         time,
         lpPrice: lp,
         bnhPrice: bnh,
         uniV2Price: uni,
-        // "LP vs. UniV2" = (lp − uni)/uni × 100 — already equals the reserve math.
-        lpVsUniV2: uni ? ((lp - uni) / uni) * 100 : 0,
+        // "LP vs. UniV2" = (tvl−univ2)/univ2 (reserve math), with the old ratio as
+        // fallback — they're equivalent for UniV2 (benchmark shares the LP supply).
+        lpVsUniV2: lpVsUniV2Val,
         tvl: tvlRaw,
         // "LP vs. BH" (bnhPrice benchmark) — kept on the old ratio.
         netPnL: bnh ? ((lp - bnh) / bnh) * 100 : 0,
