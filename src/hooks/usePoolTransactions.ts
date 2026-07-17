@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 
@@ -109,5 +110,10 @@ export function usePoolTransactions({
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
-  return { txns: data ?? [], isLoading, isError }
+  // Stabilize the empty fallback so a still-loading pool doesn't hand the charts a
+  // fresh [] every render (which would make their setData effects re-fire and, on
+  // hover, spin the crosshair into a "Maximum update depth exceeded" loop — same
+  // reason as usePoolMarketPrice).
+  const txns = useMemo(() => data ?? [], [data])
+  return { txns, isLoading, isError }
 }

@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { fetchMarketRelativePrice } from 'services/pythBenchmarksService'
 
 type Props = {
@@ -34,5 +35,12 @@ export function usePoolMarketPrice({ baseFeedId, quoteFeedId, bucket, from, to, 
     gcTime: 30 * 60_000,
     placeholderData: keepPreviousData,
   })
-  return data ?? []
+  // Stabilize the reference: when the query is disabled (non-market pair, the
+  // common case) `data` stays `undefined`, and a bare `data ?? []` would hand the
+  // caller a NEW empty array every render. The PoolBalanceChart pushes this into a
+  // lightweight-charts series via setData in an effect; an unstable ref makes that
+  // effect fire every render, and on hover setData re-emits the crosshair
+  // synchronously → setHovered → re-render → setData → "Maximum update depth
+  // exceeded". Memoizing keeps the empty (and loaded) reference stable.
+  return useMemo(() => data ?? [], [data])
 }
