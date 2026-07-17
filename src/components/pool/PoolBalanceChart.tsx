@@ -104,13 +104,17 @@ const COLOR_VOL_LEGEND = '#9CA3AF' // gray legend swatch (bars are per-point col
 // legend + tooltip always show the REAL value plus a "(×100)" note.
 type ConfigKey = 'kB' | 'kQ' | 'compress' | 'sSell' | 'sBuy' | 'pythWeight'
 type ConfigLane = 'cfg-small' | 'cfg-frac'
+// Colors picked to stay OFF the always-visible line hues so config lines never read
+// as a token/price/market line: base=orange(#D8A072), quote=blue(#4DA3FF),
+// price=pink(#EC4899), market=cyan(#22D3EE), LP/vol=green, vol=red. The config set
+// lives in the free yellow→lime→violet→purple arc.
 const CONFIG_PARAMS: { key: ConfigKey; label: string; color: string; scale: number; lane: ConfigLane }[] = [
-  { key: 'kB', label: 'kB', color: '#F59E0B', scale: 1, lane: 'cfg-small' },
-  { key: 'kQ', label: 'kQ', color: '#A78BFA', scale: 1, lane: 'cfg-small' },
-  { key: 'sSell', label: 'sSell', color: '#FB7185', scale: 100, lane: 'cfg-small' },
-  { key: 'sBuy', label: 'sBuy', color: '#34D399', scale: 100, lane: 'cfg-small' },
-  { key: 'compress', label: 'compress', color: '#F472B6', scale: 1, lane: 'cfg-frac' },
-  { key: 'pythWeight', label: 'pythWeight', color: '#38BDF8', scale: 1, lane: 'cfg-frac' },
+  { key: 'kB', label: 'kB', color: '#EAB308', scale: 1, lane: 'cfg-small' }, // gold
+  { key: 'kQ', label: 'kQ', color: '#A3E635', scale: 1, lane: 'cfg-small' }, // lime
+  { key: 'sSell', label: 'sSell', color: '#2DD4BF', scale: 100, lane: 'cfg-small' }, // teal
+  { key: 'sBuy', label: 'sBuy', color: '#6366F1', scale: 100, lane: 'cfg-small' }, // indigo
+  { key: 'compress', label: 'compress', color: '#A855F7', scale: 1, lane: 'cfg-frac' }, // purple
+  { key: 'pythWeight', label: 'pythWeight', color: '#CBD5E1', scale: 1, lane: 'cfg-frac' }, // slate
 ]
 // "kB" → "kB", "sSell" → "sSell (×100)" — the note tells the boss the line is scaled.
 const cfgLabel = (p: { label: string; scale: number }) => (p.scale === 1 ? p.label : `${p.label} (×${p.scale})`)
@@ -374,12 +378,12 @@ export function PoolBalanceChart({
             : []),
           ...(hasMarket ? [{ key: 'market' as const, label: 'Market', color: COLOR_MARKET }] : []),
           ...(seriesData.volume.length > 0 ? [{ key: 'vol' as const, label: 'Volume', color: COLOR_VOL_LEGEND }] : []),
-          // Oracle config toggles (only params with data). Label carries the REAL
-          // current value + the scale note (e.g. "sSell (×100) 0.0001") so the boss
-          // reads the true number even though the plotted line is scaled.
+          // Oracle config toggles (only params with data). Label shows just the name
+          // + the scale note when scaled (e.g. "sSell (×100)"); the REAL per-point
+          // value lives in the hover tooltip, so the legend stays uncluttered.
           ...CONFIG_PARAMS.filter((p) => seriesData.config[p.key].length > 0).map((p) => ({
             key: p.key,
-            label: latest && Number.isFinite(latest.cfg[p.key]) ? `${cfgLabel(p)} ${fmtCfg(latest.cfg[p.key])}` : cfgLabel(p),
+            label: cfgLabel(p),
             color: p.color,
           })),
         ]
