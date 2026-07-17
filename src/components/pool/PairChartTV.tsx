@@ -80,11 +80,17 @@ const buildQuery = (template: string, keepUniV2: boolean, keepBh3: boolean, keep
 // LP-vs-BNH / LP-vs-UniV2 math. Empty until they're live on the FE's API (Manh
 // added them dev-first). Add ChainId.BERA_MAINNET once beta/prod-api expose them.
 // Verified 2026-07-17: PairDay/HourData return the reserve + token-price data on
-// Bera, HyperEVM and Linea. Arbitrum's indexer has NO reserve fields (querying
-// them 500s), so it stays on the old-ratio fallback — do NOT add it.
+// Bera, HyperEVM and Linea. Arbitrum's indexer completed 2026-07-17 (Manh) and now
+// returns all six fields with real data on both PairDay/HourData — verified via
+// introspection + a live pairDayDatas query — so it joins the reserve-math set.
 const CHAINS_WITH_BENCH_RESERVES = !isV3Enabled
   ? new Set<number>()
-  : new Set<number>([ChainId.BERA_MAINNET, ChainId.HYPER_EVM, ChainId.LINEA_MAINNET])
+  : new Set<number>([
+      ChainId.BERA_MAINNET,
+      ChainId.HYPER_EVM,
+      ChainId.LINEA_MAINNET,
+      ChainId.ARBITRUM_MAINNET,
+    ])
 const hasBenchReserves = (chainId: number) => CHAINS_WITH_BENCH_RESERVES.has(chainId)
 
 const GET_PAIR_STATS = `
