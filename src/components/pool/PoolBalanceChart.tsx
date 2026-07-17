@@ -95,17 +95,25 @@ const COLOR_VOL_LEGEND = '#9CA3AF' // gray legend swatch (bars are per-point col
 
 // Oracle CONFIG params overlaid on the balance chart (boss request 2026-07-17).
 // From the Transaction entity (each swap is a config snapshot); config changes
-// only on an admin retune, so these are STEP lines. Each gets its OWN hidden
-// auto-scaled lane because magnitudes span ~1000× (sSell ~1e-4 vs compress ~0.1).
+// only on an admin retune, so these are STEP lines.
+//
+// Grouped into TWO shared hidden lanes by magnitude so lines are comparable:
+//   • 'small' — kB/kQ (~0.008) + sSell/sBuy SCALED ×100 (~1e-4 → ~0.01), all ~0-0.02
+//   • 'frac'  — compress + pythWeight (0-1)
+// The LINE plots value×scale (so the tiny sSell/sBuy aren't squished flat); the
+// legend + tooltip always show the REAL value plus a "(×100)" note.
 type ConfigKey = 'kB' | 'kQ' | 'compress' | 'sSell' | 'sBuy' | 'pythWeight'
-const CONFIG_PARAMS: { key: ConfigKey; label: string; color: string }[] = [
-  { key: 'kB', label: 'kB', color: '#F59E0B' },
-  { key: 'kQ', label: 'kQ', color: '#A78BFA' },
-  { key: 'compress', label: 'compress', color: '#F472B6' },
-  { key: 'sSell', label: 'sSell', color: '#FB7185' },
-  { key: 'sBuy', label: 'sBuy', color: '#34D399' },
-  { key: 'pythWeight', label: 'pythWeight', color: '#38BDF8' },
+type ConfigLane = 'cfg-small' | 'cfg-frac'
+const CONFIG_PARAMS: { key: ConfigKey; label: string; color: string; scale: number; lane: ConfigLane }[] = [
+  { key: 'kB', label: 'kB', color: '#F59E0B', scale: 1, lane: 'cfg-small' },
+  { key: 'kQ', label: 'kQ', color: '#A78BFA', scale: 1, lane: 'cfg-small' },
+  { key: 'sSell', label: 'sSell', color: '#FB7185', scale: 100, lane: 'cfg-small' },
+  { key: 'sBuy', label: 'sBuy', color: '#34D399', scale: 100, lane: 'cfg-small' },
+  { key: 'compress', label: 'compress', color: '#F472B6', scale: 1, lane: 'cfg-frac' },
+  { key: 'pythWeight', label: 'pythWeight', color: '#38BDF8', scale: 1, lane: 'cfg-frac' },
 ]
+// "kB" → "kB", "sSell" → "sSell (×100)" — the note tells the boss the line is scaled.
+const cfgLabel = (p: { label: string; scale: number }) => (p.scale === 1 ? p.label : `${p.label} (×${p.scale})`)
 // Compact formatter — config values are small (1e-4 … 0.6); significant digits
 // keep them readable without a fixed decimal count.
 const fmtCfg = (v: number): string =>
@@ -291,10 +299,12 @@ export function PoolBalanceChart({
     if (!grid) return { pct0: [], pct1: [], lpVsBh: [], price0: [], volume: [], config: emptyConfig() }
     const bucketed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
     // Config = per-bucket close of each param (carried forward = the step function).
-    const config = CONFIG_PARAMS.reduce((acc, { key }) => {
+    // The LINE value is scaled (×100 for sSell/sBuy) so tiny params aren't squished
+    // flat; the real value is recovered for the legend/tooltip by dividing by scale.
+    const config = CONFIG_PARAMS.reduce((acc, { key, scale }) => {
       acc[key] = bucketed
         .filter((p) => Number.isFinite(p.cfg[key]))
-        .map((p) => ({ time: p.t as any, value: p.cfg[key] }))
+        .map((p) => ({ time: p.t as any, value: p.cfg[key] * scale }))
       return acc
     }, {} as Record<ConfigKey, { time: any; value: number }[]>)
     return {
@@ -364,10 +374,12 @@ export function PoolBalanceChart({
             : []),
           ...(hasMarket ? [{ key: 'market' as const, label: 'Market', color: COLOR_MARKET }] : []),
           ...(seriesData.volume.length > 0 ? [{ key: 'vol' as const, label: 'Volume', color: COLOR_VOL_LEGEND }] : []),
-          // Oracle config toggles (only params that actually have data on this pool).
+          // Oracle config toggles (only params with data). Label carries the REAL
+          // current value + the scale note (e.g. "sSell (×100) 0.0001") so the boss
+          // reads the true number even though the plotted line is scaled.
           ...CONFIG_PARAMS.filter((p) => seriesData.config[p.key].length > 0).map((p) => ({
             key: p.key,
-            label: p.label,
+            label: latest && Number.isFinite(latest.cfg[p.key]) ? `${cfgLabel(p)} ${fmtCfg(latest.cfg[p.key])}` : cfgLabel(p),
             color: p.color,
           })),
         ]
@@ -638,18 +650,20 @@ export function PoolBalanceChart({
     // auto-scaled lane so the ~1000× magnitude spread stays readable. Default off
     // (the visibility effect syncs from `visible`), so they overlay only on toggle.
     configRefs.current = {}
-    CONFIG_PARAMS.forEach(({ key, color }) => {
+    CONFIG_PARAMS.forEach(({ key, color, lane, scale }) => {
       const s = chart.addSeries(LineSeries, {
-        priceScaleId: `cfg-${key}`,
+        priceScaleId: lane, // shared lane per magnitude band (cfg-small / cfg-frac)
         color,
         lineWidth: 1,
         lineType: LineType.WithSteps, // config is a step function (flat between retunes)
         lastValueVisible: false,
         priceLineVisible: false,
         visible: false,
-        priceFormat: { type: 'custom', formatter: (v: number) => fmtCfg(v), minMove: 0.00000001 },
+        // Axis is hidden; format un-scales so the (hidden) label would read the real value.
+        priceFormat: { type: 'custom', formatter: (v: number) => fmtCfg(v / scale), minMove: 0.00000001 },
       })
-      s.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.25 } })
+      // Both config lanes share the upper band; each auto-scales to its own group.
+      s.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.28 } })
       configRefs.current[key] = s
     })
 
@@ -949,8 +963,9 @@ export function PoolBalanceChart({
                     key={p.key}
                     style={{ borderTop: '1px solid #2F2823', marginTop: 6, paddingTop: 6, display: 'flex', justifyContent: 'space-between', gap: 16 }}
                   >
-                    <span style={{ color: p.color }}>{p.label}</span>
-                    <span style={{ color: '#FBFBFD' }}>{fmtCfg((hovered as Record<string, number>)[p.key])}</span>
+                    <span style={{ color: p.color }}>{cfgLabel(p)}</span>
+                    {/* hovered value is the SCALED line value — divide by scale for the real number */}
+                    <span style={{ color: '#FBFBFD' }}>{fmtCfg((hovered as Record<string, number>)[p.key] / p.scale)}</span>
                   </div>
                 ))}
               </div>
