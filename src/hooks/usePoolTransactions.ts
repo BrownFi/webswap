@@ -20,7 +20,7 @@ const CORE =
 const BENCHMARK = 'lpPrice\n      bnhPrice'
 // Oracle spread inputs (Oracle Spread) + config (Pool Config) — V3 oracle pools.
 const ORACLE = 'pythPrice0\n      pythPrice1\n      ammPriceRel\n      adjPriceRel'
-const CONFIG = 'lambda\n      kB\n      kQ\n      compress\n      sSell\n      sBuy'
+const CONFIG = 'lambda\n      kB\n      kQ\n      compress\n      sSell\n      sBuy\n      pythWeight'
 
 // Field tiers, richest first. First one the indexer accepts wins.
 const FIELD_TIERS = [
@@ -52,6 +52,7 @@ export type PoolTxn = {
   compress?: number | string
   sSell?: number | string
   sBuy?: number | string
+  pythWeight?: number | string
 }
 
 const buildQuery = (fields: string, operationName: string, cursorArg: boolean) => `

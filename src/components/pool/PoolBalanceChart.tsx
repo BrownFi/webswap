@@ -9,6 +9,7 @@ import {
   ISeriesApi,
   LineSeries,
   LineStyle,
+  LineType,
   TickMarkType,
   Time,
   createChart,
@@ -55,6 +56,9 @@ type Point = {
   // true = this swap BOUGHT the base token (base left the pool) → green/up bar;
   // false = SOLD the base (base entered) → red/down bar.
   volUp: boolean
+  // Oracle config snapshot at this swap (step lines). Each param drawn on its own
+  // hidden auto-scaled lane (magnitudes span ~1000×). NaN when the field is absent.
+  cfg: Record<ConfigKey, number>
 }
 
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
@@ -89,6 +93,24 @@ const COLOR_VOL_UP = '#16A34A' // green — price rose that swap (bar up)
 const COLOR_VOL_DOWN = '#EF5350' // red — price fell that swap (bar down)
 const COLOR_VOL_LEGEND = '#9CA3AF' // gray legend swatch (bars are per-point colored)
 
+// Oracle CONFIG params overlaid on the balance chart (boss request 2026-07-17).
+// From the Transaction entity (each swap is a config snapshot); config changes
+// only on an admin retune, so these are STEP lines. Each gets its OWN hidden
+// auto-scaled lane because magnitudes span ~1000× (sSell ~1e-4 vs compress ~0.1).
+type ConfigKey = 'kB' | 'kQ' | 'compress' | 'sSell' | 'sBuy' | 'pythWeight'
+const CONFIG_PARAMS: { key: ConfigKey; label: string; color: string }[] = [
+  { key: 'kB', label: 'kB', color: '#F59E0B' },
+  { key: 'kQ', label: 'kQ', color: '#A78BFA' },
+  { key: 'compress', label: 'compress', color: '#F472B6' },
+  { key: 'sSell', label: 'sSell', color: '#FB7185' },
+  { key: 'sBuy', label: 'sBuy', color: '#34D399' },
+  { key: 'pythWeight', label: 'pythWeight', color: '#38BDF8' },
+]
+// Compact formatter — config values are small (1e-4 … 0.6); significant digits
+// keep them readable without a fixed decimal count.
+const fmtCfg = (v: number): string =>
+  !Number.isFinite(v) ? '—' : v === 0 ? '0' : v.toLocaleString(undefined, { maximumSignificantDigits: 4 })
+
 // Low-opacity fills for the dominant-token Baseline shading. Two stops each so
 // the gradient fades toward the 50% midline (matches recharts' fillOpacity 0.18).
 const COLOR0_FILL_NEAR = 'rgba(216, 160, 114, 0.28)' // orange, away from base (top of chart)
@@ -115,7 +137,7 @@ type Props = {
   token1FeedId?: string | null
 }
 
-type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0' | 'vol' | 'market'
+type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0' | 'vol' | 'market' | ConfigKey
 
 export function PoolBalanceChart({
   pairAddress,
@@ -129,7 +151,12 @@ export function PoolBalanceChart({
 }: Props) {
   const [range, setRange] = useState<Range>('7D')
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
-  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true, vol: true, market: true })
+  // Config lines default OFF so the balance/price view stays clean; the boss's
+  // params are added to the legend as toggles. Flip these to true for default-on.
+  const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({
+    t0: true, t1: true, lpbh: true, price0: true, vol: true, market: true,
+    kB: false, kQ: false, compress: false, sSell: false, sBuy: false, pythWeight: false,
+  })
 
   // The price line plots the BASE token priced in the QUOTE token (the pool
   // exchange rate, e.g. USDC.e per WETH). Base/quote comes from the canonical
@@ -232,7 +259,11 @@ export function PoolBalanceChart({
         const lp = Number(t.lpPrice)
         const bnh = Number(t.bnhPrice)
         const lpVsBh = lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null
-        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0, volUp, lpVsBh }
+        // Oracle config snapshot (step lines). NaN when the field is absent on this
+        // chain/version (the shared fetch's field tiers drop config where unindexed).
+        const cfg = {} as Record<ConfigKey, number>
+        for (const { key } of CONFIG_PARAMS) cfg[key] = Number(t[key])
+        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0, volUp, lpVsBh, cfg }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0) && p.t <= futureCutoff)
     return base
@@ -254,9 +285,18 @@ export function PoolBalanceChart({
   // pool balance/price don't change without a trade, so a flat line during a gap is
   // correct. Bucket times are strictly ascending + unique (no separate dedup). The
   // volume histogram is SUMMED per bucket (so it still reconciles with the LP chart).
+  const emptyConfig = () =>
+    CONFIG_PARAMS.reduce((a, { key }) => ((a[key] = []), a), {} as Record<ConfigKey, { time: any; value: number }[]>)
   const seriesData = useMemo(() => {
-    if (!grid) return { pct0: [], pct1: [], lpVsBh: [], price0: [], volume: [] }
+    if (!grid) return { pct0: [], pct1: [], lpVsBh: [], price0: [], volume: [], config: emptyConfig() }
     const bucketed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+    // Config = per-bucket close of each param (carried forward = the step function).
+    const config = CONFIG_PARAMS.reduce((acc, { key }) => {
+      acc[key] = bucketed
+        .filter((p) => Number.isFinite(p.cfg[key]))
+        .map((p) => ({ time: p.t as any, value: p.cfg[key] }))
+      return acc
+    }, {} as Record<ConfigKey, { time: any; value: number }[]>)
     return {
       pct0: bucketed.map((p) => ({ time: p.t as any, value: p.pct0 })),
       pct1: bucketed.map((p) => ({ time: p.t as any, value: p.pct1 })),
@@ -267,6 +307,7 @@ export function PoolBalanceChart({
         .filter((p) => Number.isFinite(p.price0))
         .map((p) => ({ time: p.t as any, value: p.price0 })),
       volume: bucketVolume(allPoints, bucket, grid.gridStart, grid.gridEnd, COLOR_VOL_UP, COLOR_VOL_DOWN),
+      config,
     }
   }, [allPoints, bucket, grid])
 
@@ -323,6 +364,12 @@ export function PoolBalanceChart({
             : []),
           ...(hasMarket ? [{ key: 'market' as const, label: 'Market', color: COLOR_MARKET }] : []),
           ...(seriesData.volume.length > 0 ? [{ key: 'vol' as const, label: 'Volume', color: COLOR_VOL_LEGEND }] : []),
+          // Oracle config toggles (only params that actually have data on this pool).
+          ...CONFIG_PARAMS.filter((p) => seriesData.config[p.key].length > 0).map((p) => ({
+            key: p.key,
+            label: p.label,
+            color: p.color,
+          })),
         ]
 
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -339,9 +386,13 @@ export function PoolBalanceChart({
   const marketRef = useRef<ISeriesApi<'Line'> | null>(null)
   // The signed-volume HistogramSeries (bottom pane, own 'vol' scale).
   const volSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
+  // One step-line series per config param, each on its own hidden auto-scaled lane.
+  const configRefs = useRef<Partial<Record<ConfigKey, ISeriesApi<'Line'>>>>({})
 
   // Hovered values for the floating tooltip (set while the crosshair moves).
-  const [hovered, setHovered] = useState<{ pct0?: number; pct1?: number; lpVsBh?: number; price0?: number; market?: number; vol?: number } | null>(null)
+  const [hovered, setHovered] = useState<
+    { pct0?: number; pct1?: number; lpVsBh?: number; price0?: number; market?: number; vol?: number } & Partial<Record<ConfigKey, number>> | null
+  >(null)
   // Floating tooltip anchor — container-relative pixels + the hovered time.
   // null when the cursor is outside the plot area. Mirrors PairChartTV's `tip`.
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
@@ -583,6 +634,25 @@ export function PoolBalanceChart({
     // Park the histogram in the bottom ~20% so it never overlaps the % / price / LP lines.
     volSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } })
 
+    // CONFIG step-lines (boss request) — one per param, each on its OWN hidden
+    // auto-scaled lane so the ~1000× magnitude spread stays readable. Default off
+    // (the visibility effect syncs from `visible`), so they overlay only on toggle.
+    configRefs.current = {}
+    CONFIG_PARAMS.forEach(({ key, color }) => {
+      const s = chart.addSeries(LineSeries, {
+        priceScaleId: `cfg-${key}`,
+        color,
+        lineWidth: 1,
+        lineType: LineType.WithSteps, // config is a step function (flat between retunes)
+        lastValueVisible: false,
+        priceLineVisible: false,
+        visible: false,
+        priceFormat: { type: 'custom', formatter: (v: number) => fmtCfg(v), minMove: 0.00000001 },
+      })
+      s.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.25 } })
+      configRefs.current[key] = s
+    })
+
     const crosshairHandler = (param: {
       time?: number
       seriesData: Map<ISeriesApi<any>, { value?: number } | undefined>
@@ -599,14 +669,20 @@ export function PoolBalanceChart({
       const pp = param.seriesData.get(price0) as { value?: number } | undefined
       const pmk = param.seriesData.get(marketLine) as { value?: number } | undefined
       const pv = param.seriesData.get(volSeries) as { value?: number } | undefined
-      setHovered({
+      const next: { [k: string]: number | undefined } = {
         pct0: typeof p0?.value === 'number' ? p0.value : undefined,
         pct1: typeof p1?.value === 'number' ? p1.value : undefined,
         lpVsBh: typeof pl?.value === 'number' ? pl.value : undefined,
         price0: typeof pp?.value === 'number' ? pp.value : undefined,
         market: typeof pmk?.value === 'number' ? pmk.value : undefined,
         vol: typeof pv?.value === 'number' ? pv.value : undefined,
-      })
+      }
+      for (const { key } of CONFIG_PARAMS) {
+        const s = configRefs.current[key]
+        const pc = s ? (param.seriesData.get(s) as { value?: number } | undefined) : undefined
+        if (typeof pc?.value === 'number') next[key] = pc.value
+      }
+      setHovered(next)
       setTip({ x: param.point.x, y: param.point.y, time: Number(param.time) })
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
@@ -636,6 +712,7 @@ export function PoolBalanceChart({
       price0Ref.current = null
       marketRef.current = null
       volSeriesRef.current = null
+      configRefs.current = {}
     }
   }, [reversed, token0Color, token1Color])
 
@@ -647,6 +724,7 @@ export function PoolBalanceChart({
     lpbhRef.current?.setData(seriesData.lpVsBh)
     price0Ref.current?.setData(seriesData.price0)
     volSeriesRef.current?.setData(seriesData.volume)
+    for (const { key } of CONFIG_PARAMS) configRefs.current[key]?.setData(seriesData.config[key])
     if (!seriesData.pct0.length) return
     if (pendingRestoreRef.current) {
       // A load-more prepend just grew the series on the LEFT — keep the same TIME
@@ -683,6 +761,7 @@ export function PoolBalanceChart({
     price0Ref.current?.applyOptions({ visible: visible.price0 })
     marketRef.current?.applyOptions({ visible: visible.market })
     volSeriesRef.current?.applyOptions({ visible: visible.vol })
+    for (const { key } of CONFIG_PARAMS) configRefs.current[key]?.applyOptions({ visible: visible[key] })
   }, [visible])
 
   return (
@@ -865,6 +944,15 @@ export function PoolBalanceChart({
                     <span style={{ color: hovered.vol >= 0 ? COLOR_VOL_UP : COLOR_VOL_DOWN }}>{formatVolUsd(hovered.vol)}</span>
                   </div>
                 )}
+                {CONFIG_PARAMS.filter((p) => visible[p.key] && (hovered as Record<string, number | undefined>)[p.key] !== undefined).map((p) => (
+                  <div
+                    key={p.key}
+                    style={{ borderTop: '1px solid #2F2823', marginTop: 6, paddingTop: 6, display: 'flex', justifyContent: 'space-between', gap: 16 }}
+                  >
+                    <span style={{ color: p.color }}>{p.label}</span>
+                    <span style={{ color: '#FBFBFD' }}>{fmtCfg((hovered as Record<string, number>)[p.key])}</span>
+                  </div>
+                ))}
               </div>
             )
           })()}
