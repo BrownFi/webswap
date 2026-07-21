@@ -46,11 +46,20 @@ const CHAINS_WITH_UNIV2_PRICE = !isV3Enabled
       ChainId.MONAD,
     ])
 const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
-// `bh3Price` (a 3rd buy-and-hold benchmark) is a NEW aggregate field the indexer
-// exposes on only SOME chains (Bera today). Query it only where it exists — elsewhere
-// it's a GraphQL "no field `bh3Price`" validation error that 500s the whole LP chart.
-// Widen this set as the backend rolls the field out to more chains.
-const CHAINS_WITH_BH3_PRICE = !isV3Enabled ? new Set<number>() : new Set<number>([ChainId.BERA_MAINNET])
+// `bh3Price` (a 3rd buy-and-hold benchmark) is an aggregate field the indexer
+// exposes on only SOME chains. Query it only where it exists — elsewhere it's a
+// GraphQL "no field `bh3Price`" validation error that 500s the whole LP chart. This
+// set ALSO gates whether the "LP vs. BH3" line is shown (availableSeries filter).
+// Verified 2026-07-21: bh3Price returns real data on Bera, Arbitrum, HyperEVM and
+// Linea (introspection + live pairDayDatas). Widen further as the field rolls out.
+const CHAINS_WITH_BH3_PRICE = !isV3Enabled
+  ? new Set<number>()
+  : new Set<number>([
+      ChainId.BERA_MAINNET,
+      ChainId.ARBITRUM_MAINNET,
+      ChainId.HYPER_EVM,
+      ChainId.LINEA_MAINNET,
+    ])
 const hasBh3Price = (chainId: number) => CHAINS_WITH_BH3_PRICE.has(chainId)
 // `uniV2Price`/`bh3Price` only exist on the V3 indexer schema, and only on some
 // chains. Strip each optional field unless the chain exposes it AND the pair is V3
@@ -296,7 +305,8 @@ const SERIES_ALL: SeriesMeta[] = [
   { key: 'netPnL',        label: 'LP vs. BH',      color: '#83CF84',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden' },
   // "LP vs. BH3" = LP's % outperformance over the 3rd buy-and-hold benchmark:
   // (lp − bh3) / bh3 × 100. Same 'pct' overlay + math as "LP vs. BH", just against
-  // bh3Price. Bera-only for now (gated via availableSeries + the query field strip).
+  // bh3Price. Gated via availableSeries + the query field strip to the chains that
+  // expose bh3Price (Bera, Arbitrum, HyperEVM, Linea).
   { key: 'lpVsBh3',       label: 'LP vs. BH3',     color: '#F472B6',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
   { key: 'tvl',           label: 'TVL',            color: '#B47AAE',   type: 'line',      priceScaleId: 'left',   yAxis: 'left' },
   { key: 'volume',        label: 'Volume',         color: '#16A34A',   type: 'histogram', priceScaleId: 'volume', yAxis: 'hidden' }, // legend swatch = the candle's buy-green
@@ -333,9 +343,9 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
   // chain that exposes it (else the V2 schema rejects the query). Same predicate
   // graphql.ts uses to route /indexer/v3 vs /indexer.
   const keepUniV2 = supportsUniV2 && isV3
-  // bh3Price is a V3-indexer field exposed on only some chains (Bera today) — same
-  // gating shape as uniV2Price. When absent, strip it from the query AND hide the
-  // "LP vs. BH3" line (else it'd render (lp − 0)/0 garbage).
+  // bh3Price is a V3-indexer field exposed on only some chains (see
+  // CHAINS_WITH_BH3_PRICE) — same gating shape as uniV2Price. When absent, strip it
+  // from the query AND hide the "LP vs. BH3" line (else it'd render (lp − 0)/0 garbage).
   const keepBh3 = hasBh3Price(pair.chainId) && isV3
   const keepBenchReserves = hasBenchReserves(pair.chainId) && isV3
   const availableSeries = useMemo(() => {
@@ -361,7 +371,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     tvl: showExtendedMetrics,
     netPnL: showExtendedMetrics,
     // LP vs. BH3 (% outperformance) — gated on the chain exposing bh3Price via the
-    // availableSeries filter above; only actually renders on Bera for now.
+    // availableSeries filter above (Bera, Arbitrum, HyperEVM, Linea).
     lpVsBh3: showExtendedMetrics,
     volume: true,
   }))
