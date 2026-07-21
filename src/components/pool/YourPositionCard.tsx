@@ -82,31 +82,50 @@ export function YourPositionCard({ pair, pairStats }: Props) {
     currencyB: pair.token1,
     enableFetchDetail: !!account,
   })
-  const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
-  const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  // HODL portfolio must be valued with LIVE prices, not the indexer's. A pool
-  // with no swaps never refreshes the indexer token price, so the stored
-  // bnhPortfolio (= bnh0*token0Price + bnh1*token1Price) goes stale. Recompute
-  // it here from bnh0/bnh1 (already decimal-adjusted) × fresh Hermes prices
-  // (15s refetch, independent of indexer/oracle staleness), falling back to the
-  // indexer value only when Hermes has no feed for a side. Per Manh (2026-07-16),
-  // the formula is correct; the fix is always pricing it fresh. lpPortfolio gets
-  // the same treatment on the BE separately.
+  // Price EVERY value on this card from ONE live source so the whole card stays
+  // internally consistent. A pool with no swaps never refreshes the indexer /
+  // on-chain token price, so the indexer-stored portfolio values (lpPortfolio,
+  // bnhPortfolio) go stale — and pricing HODL fresh while leaving LPing on the
+  // stale indexer value made "LPing vs. HODL" compare two different price bases.
+  // Fix: one fresh per-token price — Hermes (off-chain Pyth, 15s poll) →
+  // usePythPrices (on-chain/indexer) → indexer snapshot — and value the pooled
+  // rows, the LPing/HODL portfolios and their PnL all from it. Same p0/p1
+  // everywhere, so the pooled USD rows sum to LPing portfolio and LPing-vs-HODL is
+  // like-for-like. Per-side fallback to the indexer values means nothing regresses
+  // where a token has no live feed. (Display-only — no tx reads these figures.)
   const hermesPrices = useHermesPrices({
     chainId,
     currencyA: pair.token0,
     currencyB: pair.token1,
     version: pair.version,
-    // Only poll (15s) while the HODL row is actually on screen — the portfolio
-    // block is behind `expanded` and needs an account. Collapsed cards fall back
-    // to the indexer value (row isn't rendered then anyway).
+    // Only poll (15s) while the portfolio block is on screen (behind `expanded`).
     enabled: expanded && !!account,
   })
+  const token0Price = hermesPrices.CURRENCY_A || pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
+  const token1Price = hermesPrices.CURRENCY_B || pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
+  const havePrices = token0Price > 0 && token1Price > 0
+
+  // Current pooled amounts (user's share of on-chain reserves), full precision.
+  const d0 = token0Deposited ? Number(token0Deposited.toExact()) : 0
+  const d1 = token1Deposited ? Number(token1Deposited.toExact()) : 0
+
+  // LPing = current pooled amounts × live price; HODL = buy&hold amounts (bnh0/bnh1,
+  // already decimal-adjusted) × the SAME live price, so LPing-vs-HODL isolates the
+  // LP-vs-hold quantity difference at one consistent price. basePortfolio is the
+  // fixed deposit cost basis. Indexer snapshot is the per-metric fallback.
+  const basePortfolio = pairAccount?.basePortfolio ?? 0
+  const lpPortfolio =
+    havePrices && token0Deposited && token1Deposited
+      ? d0 * token0Price + d1 * token1Price
+      : pairAccount?.lpPortfolio ?? 0
   const hodlPortfolio =
-    pairAccount && hermesPrices.CURRENCY_A > 0 && hermesPrices.CURRENCY_B > 0
-      ? pairAccount.bnh0 * hermesPrices.CURRENCY_A + pairAccount.bnh1 * hermesPrices.CURRENCY_B
+    havePrices && pairAccount
+      ? pairAccount.bnh0 * token0Price + pairAccount.bnh1 * token1Price
       : pairAccount?.bnhPortfolio ?? 0
+  const lpPnL = havePrices && pairAccount ? lpPortfolio - basePortfolio : pairAccount?.unrealizedPnL ?? 0
+  const hodlPnL = hodlPortfolio - basePortfolio
+  const lpVsHodl = lpPortfolio - hodlPortfolio
 
   const symbol0 = getTokenSymbol(currency0, chainId) ?? '?'
   const symbol1 = getTokenSymbol(currency1, chainId) ?? '?'
@@ -254,7 +273,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                     {formatNumber(token0Deposited.toSignificant(4))}
                     {token0Price > 0 && (
                       <span style={{ color: '#978A80', marginLeft: 6 }}>
-                        ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})
+                        ({formatPrice(token0Price * d0)})
                       </span>
                     )}
                   </span>
@@ -271,7 +290,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                     {formatNumber(token1Deposited.toSignificant(4))}
                     {token1Price > 0 && (
                       <span style={{ color: '#978A80', marginLeft: 6 }}>
-                        ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})
+                        ({formatPrice(token1Price * d1)})
                       </span>
                     )}
                   </span>
@@ -281,15 +300,15 @@ export function YourPositionCard({ pair, pairStats }: Props) {
               {pairAccount && (
                 <>
                   <div style={{ borderTop: '1px solid #2F2823', margin: '4px 0' }} />
-                  <PortfolioRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
+                  <PortfolioRow label="LPing portfolio" value={lpPortfolio} />
                   {!isMainnet && (
                     <PortfolioRow label="HODL portfolio" value={hodlPortfolio} />
                   )}
-                  <PortfolioRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} base={pairAccount.basePortfolio} />
+                  <PortfolioRow colored label="LPing PnL" value={lpPnL} base={basePortfolio} />
                   {!isMainnet && (
                     <>
-                      <PortfolioRow colored label="HODL PnL" value={hodlPortfolio - pairAccount.basePortfolio} base={pairAccount.basePortfolio} />
-                      <PortfolioRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - hodlPortfolio} />
+                      <PortfolioRow colored label="HODL PnL" value={hodlPnL} base={basePortfolio} />
+                      <PortfolioRow colored label="LPing vs. HODL" value={lpVsHodl} />
                     </>
                   )}
                 </>
