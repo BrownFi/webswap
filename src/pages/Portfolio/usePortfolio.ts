@@ -32,6 +32,7 @@ import { ChainId } from '@brownfi/sdk'
 import { V3_OFFICIAL_USE_INDEXER, VERSION } from 'lib/sdk/constants/addresses'
 import { availableChains } from 'connectors'
 import { graphqlFetcher } from 'utils/graphql'
+import { useHermesPricesByFeed } from 'hooks/useHermesPricesByFeed'
 
 const PAIR_ACCOUNTS_QUERY = `
   query PairAccountsByUser($account: String!) {
@@ -51,6 +52,8 @@ const PAIR_ACCOUNTS_QUERY = `
       unrealizedBnHPnL
       bnhROI
       lpROI
+      bnh0
+      bnh1
       updatedAt
       pair {
         id
@@ -61,8 +64,8 @@ const PAIR_ACCOUNTS_QUERY = `
         reserve0
         reserve1
         totalSupply
-        token0 { id symbol name decimals price }
-        token1 { id symbol name decimals price }
+        token0 { id symbol name decimals price priceFeedId }
+        token1 { id symbol name decimals price priceFeedId }
       }
     }
   }
@@ -90,8 +93,8 @@ export interface PortfolioPair {
   reserve0: string | number
   reserve1: string | number
   totalSupply: string | number
-  token0: { id: string; symbol: string; name: string; decimals: number; price: string | number }
-  token1: { id: string; symbol: string; name: string; decimals: number; price: string | number }
+  token0: { id: string; symbol: string; name: string; decimals: number; price: string | number; priceFeedId?: string | null }
+  token1: { id: string; symbol: string; name: string; decimals: number; price: string | number; priceFeedId?: string | null }
 }
 
 export interface PortfolioPosition {
@@ -109,6 +112,8 @@ export interface PortfolioPosition {
   unrealizedBnHPnL: number
   bnhROI: number
   lpROI: number
+  bnh0: number
+  bnh1: number
   updatedAt: number
   pair: PortfolioPair
 }
@@ -158,9 +163,51 @@ function rowToPosition(raw: any, version: 2 | 4, chainId: ChainId): PortfolioPos
     unrealizedBnHPnL: asNumber(raw.unrealizedBnHPnL),
     bnhROI: asNumber(raw.bnhROI),
     lpROI: asNumber(raw.lpROI),
+    bnh0: asNumber(raw.bnh0),
+    bnh1: asNumber(raw.bnh1),
     updatedAt: asNumber(raw.updatedAt),
     pair: raw.pair,
   }
+}
+
+// Re-price a position from fresh Hermes prices (by feed id), mirroring the position
+// cards: LPing = current pooled amounts × price, HODL = bnh0/bnh1 × the SAME price,
+// PnL = LP − basePortfolio. A pool with no recent swaps never refreshes the indexer
+// token price, so the stored lpPortfolio/bnhPortfolio go stale; this recomputes them
+// live.
+//
+// BOTH-OR-NEITHER: the page reads vsHodl = lpPortfolio − bnhPortfolio, so LP and HODL
+// must share ONE price basis. We only reprice when the LP side is trustworthy —
+// GUARD: the recompute AT THE INDEXER'S OWN PRICES must reconcile with the stored
+// lpPortfolio (within 2%), which proves our share convention (incl. staked LP)
+// matches the indexer's. On success we freshen LP *and* HODL with the same prices;
+// on any miss (no feed/price, no reserves, closed, or share mismatch) we return the
+// position UNTOUCHED so it stays on the indexer's self-consistent values — never a
+// stale-LP-vs-fresh-HODL mix. Display-only (no tx reads these).
+function repricePosition(p: PortfolioPosition, priceByFeed: Record<string, number>): PortfolioPosition {
+  const f0 = p.pair?.token0?.priceFeedId?.toLowerCase()
+  const f1 = p.pair?.token1?.priceFeedId?.toLowerCase()
+  const p0 = f0 ? priceByFeed[f0] : undefined
+  const p1 = f1 ? priceByFeed[f1] : undefined
+  if (!(typeof p0 === 'number' && p0 > 0 && typeof p1 === 'number' && p1 > 0)) return p
+
+  const ts = asNumber(p.pair?.totalSupply)
+  const totalLp = p.lp + p.stakeLP
+  if (!(ts > 0) || !(totalLp > 0)) return p
+
+  const share = totalLp / ts
+  const d0 = asNumber(p.pair?.reserve0) * share
+  const d1 = asNumber(p.pair?.reserve1) * share
+  const idx0 = asNumber(p.pair?.token0?.price)
+  const idx1 = asNumber(p.pair?.token1?.price)
+  const lpAtIdx = d0 * idx0 + d1 * idx1
+  const lpReconciles = idx0 > 0 && idx1 > 0 && p.lpPortfolio > 0 && Math.abs(lpAtIdx - p.lpPortfolio) <= 0.02 * p.lpPortfolio
+  if (!lpReconciles) return p
+
+  // Trustworthy: freshen LP and HODL together on the same price basis.
+  const lpPortfolio = d0 * p0 + d1 * p1
+  const bnhPortfolio = p.bnh0 * p0 + p.bnh1 * p1
+  return { ...p, lpPortfolio, bnhPortfolio, unrealizedPnL: lpPortfolio - p.basePortfolio }
 }
 
 interface FetchTask {
@@ -219,6 +266,34 @@ export function usePortfolio(): PortfolioResult {
     })),
   })
 
+  // First pass: merge the raw indexer rows from every (chain, version) query.
+  const mergedRaw = useMemo(() => {
+    const merged: PortfolioPosition[] = []
+    queries.forEach((q, i) => {
+      const { chainId, version } = tasks[i]
+      const rows: any[] = (q.data as any)?.pairAccounts ?? []
+      rows.forEach((row) => merged.push(rowToPosition(row, version, chainId)))
+    })
+    return merged
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queries, tasks])
+
+  // Unique Pyth feed ids across EVERY position's tokens. Feeds are chain-global, so
+  // dedup collapses the same token on different chains → the whole page prices from
+  // ONE batched Hermes request (on top of the existing GraphQL fan-out).
+  const feedIds = useMemo(() => {
+    const s = new Set<string>()
+    for (const p of mergedRaw) {
+      const f0 = p.pair?.token0?.priceFeedId
+      const f1 = p.pair?.token1?.priceFeedId
+      if (f0) s.add(f0.toLowerCase())
+      if (f1) s.add(f1.toLowerCase())
+    }
+    return Array.from(s)
+  }, [mergedRaw])
+
+  const priceByFeed = useHermesPricesByFeed(feedIds)
+
   return useMemo<PortfolioResult>(() => {
     // Loading: at least one query has never returned yet AND is currently in flight.
     const isLoading = queries.some((q) => q.isLoading && q.isFetching)
@@ -227,20 +302,16 @@ export function usePortfolio(): PortfolioResult {
     // did succeed.
     const isError = queries.every((q) => !!q.error)
 
-    const merged: PortfolioPosition[] = []
-    queries.forEach((q, i) => {
-      const { chainId, version } = tasks[i]
-      const rows: any[] = (q.data as any)?.pairAccounts ?? []
-      rows.forEach((row) => merged.push(rowToPosition(row, version, chainId)))
-    })
-
     // Filter out indexer aggregate rows (where account === pair). These
     // show up for pool-level BGT staking aggregations and aren't the
-    // user's own positions.
-    const filtered = merged.filter((p) => {
-      const [accPart, pairPart] = p.id.split('-').slice(1).join('-').split('-')
-      return accPart !== pairPart
-    })
+    // user's own positions. Then re-price each surviving position from fresh
+    // Hermes (per-position fallback to the indexer value when no live feed).
+    const filtered = mergedRaw
+      .filter((p) => {
+        const [accPart, pairPart] = p.id.split('-').slice(1).join('-').split('-')
+        return accPart !== pairPart
+      })
+      .map((p) => repricePosition(p, priceByFeed))
 
     // Open = LP balance OR staked LP > 0. Split by USD value so dust (< $1)
     // doesn't clutter the main list.
@@ -283,5 +354,5 @@ export function usePortfolio(): PortfolioResult {
       isLoading,
       isError,
     }
-  }, [queries, tasks])
+  }, [queries, mergedRaw, priceByFeed])
 }
