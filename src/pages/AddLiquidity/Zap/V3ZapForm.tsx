@@ -12,6 +12,9 @@ import useTransactionDeadline from 'hooks/useTransactionDeadline'
 import { useBestZapInRoute, ZapChoice } from 'hooks/useBestZapRoute'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useHermesPrices } from 'hooks/useHermesPrices'
+import { useTvlGate } from 'hooks/useTvlGate'
+import { TVL_GATE_MESSAGE } from 'config/tvlGate'
+import { useToast } from 'containers/ToastProvider'
 import { ZapRouteComparison } from 'components/swap/ZapRouteComparison'
 import { ZapRoutePreview } from './ZapRoutePreview'
 import { useCallback, useMemo, useState } from 'react'
@@ -41,6 +44,12 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   const deadline = useTransactionDeadline()
   const [slippage] = useUserSlippageTolerance()
   const addTransaction = useTransactionAdder()
+  const { createToast } = useToast()
+
+  // Per-pool TVL cap gate. When the pool's current TVL has reached its configured
+  // cap, block the add on click with a notice (no button disable — the button stays
+  // clickable and surfaces the reason via a toast). No-op for un-gated pools.
+  const tvlGate = useTvlGate(pair)
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | undefined>(
     currencies[Field.CURRENCY_A] ?? undefined,
@@ -136,6 +145,11 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   }, [txHash])
 
   const handleSubmit = useCallback(async () => {
+    // TVL cap reached → block the add and tell the user (notification on click).
+    if (tvlGate.gated) {
+      createToast(TVL_GATE_MESSAGE, 'error')
+      return
+    }
     if (!chainId || !account || !library || !best || !deadline) return
 
     setErrorMessage(undefined)
@@ -190,7 +204,7 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
       }
       setErrorMessage(parseZapError(err))
     }
-  }, [chainId, account, library, best, deadline, deadlineSeconds, slippage, addTransaction, submittedText])
+  }, [chainId, account, library, best, deadline, deadlineSeconds, slippage, addTransaction, submittedText, tvlGate.gated, createToast])
 
   const showRoutesCard = Boolean(parsedAmount?.greaterThan('0') && pair)
 
@@ -351,7 +365,16 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
       )}
 
       {needsApproval && isValid && (
-        <ButtonPrimary onClick={approveCallback} disabled={approval === ApprovalState.PENDING}>
+        <ButtonPrimary
+          onClick={() => {
+            if (tvlGate.gated) {
+              createToast(TVL_GATE_MESSAGE, 'error')
+              return
+            }
+            approveCallback()
+          }}
+          disabled={approval === ApprovalState.PENDING}
+        >
           {approval === ApprovalState.PENDING ? <Dots>Approving {symbol}</Dots> : `Approve ${symbol}`}
         </ButtonPrimary>
       )}
