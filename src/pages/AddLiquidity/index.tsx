@@ -46,6 +46,9 @@ import { getApprovalBuffer } from './utils'
 import { ZapForm } from './Zap/ZapForm'
 import { V3ZapForm } from './Zap/V3ZapForm'
 import { unwrappedToken } from 'utils/wrappedCurrency'
+import { useTvlGate } from 'hooks/useTvlGate'
+import { TVL_GATE_MESSAGE } from 'config/tvlGate'
+import { useToast } from 'containers/ToastProvider'
 
 export default function AddLiquidity() {
   const { currencyIdA, currencyIdB } = useParams<{ currencyIdA?: string; currencyIdB?: string }>()
@@ -97,6 +100,12 @@ export default function AddLiquidity() {
     poolTokenPercentage,
     error,
   } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, version >= 2 ? pythPrices : undefined)
+
+  // Per-pool TVL cap gate for the non-zap add path (the zap forms gate themselves).
+  // When the pool has reached its configured cap, block the add on click with a
+  // notice — no button disable. No-op for un-gated pools.
+  const { createToast } = useToast()
+  const tvlGate = useTvlGate(pair ?? undefined)
 
   const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
 
@@ -169,6 +178,12 @@ export default function AddLiquidity() {
   const [approvalB, approveBCallback] = useApproveCallback(approvalAmountB, getRouterAddress(chainId || 0, version))
 
   async function onAdd() {
+    // Defense-in-depth: also gate here (not just the button) so a TVL cross while
+    // the confirm modal is open can't slip an add through.
+    if (tvlGate.gated) {
+      createToast(TVL_GATE_MESSAGE, 'error')
+      return
+    }
     try {
       const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
       setAttemptingTxn(true)
@@ -485,7 +500,13 @@ export default function AddLiquidity() {
                       <RowBetween>
                         {approvalA !== ApprovalState.APPROVED && (
                           <ButtonPrimary
-                            onClick={approveACallback}
+                            onClick={() => {
+                              if (tvlGate.gated) {
+                                createToast(TVL_GATE_MESSAGE, 'error')
+                                return
+                              }
+                              approveACallback()
+                            }}
                             disabled={approvalA === ApprovalState.PENDING}
                             width={approvalB !== ApprovalState.APPROVED ? '48%' : '100%'}
                           >
@@ -498,7 +519,13 @@ export default function AddLiquidity() {
                         )}
                         {approvalB !== ApprovalState.APPROVED && (
                           <ButtonPrimary
-                            onClick={approveBCallback}
+                            onClick={() => {
+                              if (tvlGate.gated) {
+                                createToast(TVL_GATE_MESSAGE, 'error')
+                                return
+                              }
+                              approveBCallback()
+                            }}
                             disabled={approvalB === ApprovalState.PENDING}
                             width={approvalA !== ApprovalState.APPROVED ? '48%' : '100%'}
                           >
@@ -513,6 +540,10 @@ export default function AddLiquidity() {
                     )}
                   <ButtonError
                     onClick={() => {
+                      if (tvlGate.gated) {
+                        createToast(TVL_GATE_MESSAGE, 'error')
+                        return
+                      }
                       expertMode ? onAdd() : setShowConfirm(true)
                     }}
                     disabled={!isValid || approvalA !== ApprovalState.APPROVED || approvalB !== ApprovalState.APPROVED}
