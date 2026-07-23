@@ -14,7 +14,7 @@ const path = require("path");
 const NODE_MODULES = path.join(__dirname, "..", "node_modules");
 
 const HEMI_ID = 43111;
-const HEMI_POOL_DEPLOYER = "0xa80258Eea4BA0865610eb239045737D08929c40b";
+const HEMI_POOL_DEPLOYER = "0xd7cB0E0692f2D55A17bA81c1fE5501D66774fC4A";
 // Same fork bytecode as Berachain → identical init code hash (verified on-chain
 // via factory.POOL_INIT_CODE_HASH() on Hemi mainnet).
 const HEMI_POOL_INIT_CODE_HASH = "0x62441ebe4e4315cf3d49d5957f94d66b253dbabe7006f34ad7f70947e60bf15c";

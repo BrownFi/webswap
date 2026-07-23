@@ -569,7 +569,7 @@ export const algebraCustomPoolEntryPointAbi = [
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const algebraEternalFarmingAbi = [
   {
@@ -1386,14 +1386,14 @@ export const algebraEternalFarmingAbi = [
 ] as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const algebraEternalFarmingAddress = {
-  43111: '0xA4C1B2cc90D455437E096E6473890906dc1C8499',
+  43111: '0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1',
 } as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const algebraEternalFarmingConfig = {
   address: algebraEternalFarmingAddress,
@@ -1405,7 +1405,7 @@ export const algebraEternalFarmingConfig = {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const algebraFactoryAbi = [
   {
@@ -2029,14 +2029,14 @@ export const algebraFactoryAbi = [
 ] as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const algebraFactoryAddress = {
-  43111: '0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A',
+  43111: '0x10253594A832f967994b44f33411940533302ACb',
 } as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const algebraFactoryConfig = {
   address: algebraFactoryAddress,
@@ -3108,7 +3108,7 @@ export const algebraVirtualPoolAbi = [
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const farmingCenterAbi = [
   {
@@ -3362,14 +3362,14 @@ export const farmingCenterAbi = [
 ] as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const farmingCenterAddress = {
-  43111: '0x123AE7196548ED7370854F91f153cd4e5918A011',
+  43111: '0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA',
 } as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const farmingCenterConfig = {
   address: farmingCenterAddress,
@@ -3756,7 +3756,7 @@ export const limitOrderManagerConfig = {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const nonfungiblePositionManagerAbi = [
   {
@@ -4471,14 +4471,14 @@ export const nonfungiblePositionManagerAbi = [
 ] as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const nonfungiblePositionManagerAddress = {
-  43111: '0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7',
+  43111: '0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C',
 } as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const nonfungiblePositionManagerConfig = {
   address: nonfungiblePositionManagerAddress,
@@ -4490,7 +4490,7 @@ export const nonfungiblePositionManagerConfig = {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const quoterV2Abi = [
   {
@@ -4649,14 +4649,14 @@ export const quoterV2Abi = [
 ] as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const quoterV2Address = {
-  43111: '0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e',
+  43111: '0x13fcE0acbe6Fb11641ab753212550574CaD31415',
 } as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const quoterV2Config = {
   address: quoterV2Address,
@@ -5513,7 +5513,7 @@ export const securityRegistryConfig = {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const swapRouterAbi = [
   {
@@ -5798,14 +5798,14 @@ export const swapRouterAbi = [
 ] as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const swapRouterAddress = {
-  43111: '0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985',
+  43111: '0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A',
 } as const
 
 /**
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const swapRouterConfig = {
   address: swapRouterAddress,
@@ -8939,7 +8939,7 @@ export const useWatchAlgebraCustomPoolEntryPointFarmingAddressEvent =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarming = /*#__PURE__*/ createUseReadContract(
   { abi: algebraEternalFarmingAbi, address: algebraEternalFarmingAddress },
@@ -8948,7 +8948,7 @@ export const useReadAlgebraEternalFarming = /*#__PURE__*/ createUseReadContract(
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"FARMINGS_ADMINISTRATOR_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingFarmingsAdministratorRole =
   /*#__PURE__*/ createUseReadContract({
@@ -8960,7 +8960,7 @@ export const useReadAlgebraEternalFarmingFarmingsAdministratorRole =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"INCENTIVE_MAKER_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingIncentiveMakerRole =
   /*#__PURE__*/ createUseReadContract({
@@ -8972,7 +8972,7 @@ export const useReadAlgebraEternalFarmingIncentiveMakerRole =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"farmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingFarmingCenter =
   /*#__PURE__*/ createUseReadContract({
@@ -8984,7 +8984,7 @@ export const useReadAlgebraEternalFarmingFarmingCenter =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"farms"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingFarms =
   /*#__PURE__*/ createUseReadContract({
@@ -8996,7 +8996,7 @@ export const useReadAlgebraEternalFarmingFarms =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"getRewardInfo"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingGetRewardInfo =
   /*#__PURE__*/ createUseReadContract({
@@ -9008,7 +9008,7 @@ export const useReadAlgebraEternalFarmingGetRewardInfo =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"incentiveKeys"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingIncentiveKeys =
   /*#__PURE__*/ createUseReadContract({
@@ -9020,7 +9020,7 @@ export const useReadAlgebraEternalFarmingIncentiveKeys =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"incentives"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingIncentives =
   /*#__PURE__*/ createUseReadContract({
@@ -9032,7 +9032,7 @@ export const useReadAlgebraEternalFarmingIncentives =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"isEmergencyWithdrawActivated"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingIsEmergencyWithdrawActivated =
   /*#__PURE__*/ createUseReadContract({
@@ -9044,7 +9044,7 @@ export const useReadAlgebraEternalFarmingIsEmergencyWithdrawActivated =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"isIncentiveDeactivated"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingIsIncentiveDeactivated =
   /*#__PURE__*/ createUseReadContract({
@@ -9056,7 +9056,7 @@ export const useReadAlgebraEternalFarmingIsIncentiveDeactivated =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"nonfungiblePositionManager"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingNonfungiblePositionManager =
   /*#__PURE__*/ createUseReadContract({
@@ -9068,7 +9068,7 @@ export const useReadAlgebraEternalFarmingNonfungiblePositionManager =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"numOfIncentives"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingNumOfIncentives =
   /*#__PURE__*/ createUseReadContract({
@@ -9080,7 +9080,7 @@ export const useReadAlgebraEternalFarmingNumOfIncentives =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"rewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useReadAlgebraEternalFarmingRewards =
   /*#__PURE__*/ createUseReadContract({
@@ -9092,7 +9092,7 @@ export const useReadAlgebraEternalFarmingRewards =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarming =
   /*#__PURE__*/ createUseWriteContract({
@@ -9103,7 +9103,7 @@ export const useWriteAlgebraEternalFarming =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"addRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingAddRewards =
   /*#__PURE__*/ createUseWriteContract({
@@ -9115,7 +9115,7 @@ export const useWriteAlgebraEternalFarmingAddRewards =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"claimReward"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingClaimReward =
   /*#__PURE__*/ createUseWriteContract({
@@ -9127,7 +9127,7 @@ export const useWriteAlgebraEternalFarmingClaimReward =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"claimRewardFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingClaimRewardFrom =
   /*#__PURE__*/ createUseWriteContract({
@@ -9139,7 +9139,7 @@ export const useWriteAlgebraEternalFarmingClaimRewardFrom =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"collectRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingCollectRewards =
   /*#__PURE__*/ createUseWriteContract({
@@ -9151,7 +9151,7 @@ export const useWriteAlgebraEternalFarmingCollectRewards =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"createEternalFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingCreateEternalFarming =
   /*#__PURE__*/ createUseWriteContract({
@@ -9163,7 +9163,7 @@ export const useWriteAlgebraEternalFarmingCreateEternalFarming =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"deactivateIncentive"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingDeactivateIncentive =
   /*#__PURE__*/ createUseWriteContract({
@@ -9175,7 +9175,7 @@ export const useWriteAlgebraEternalFarmingDeactivateIncentive =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"decreaseRewardsAmount"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingDecreaseRewardsAmount =
   /*#__PURE__*/ createUseWriteContract({
@@ -9187,7 +9187,7 @@ export const useWriteAlgebraEternalFarmingDecreaseRewardsAmount =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"enterFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingEnterFarming =
   /*#__PURE__*/ createUseWriteContract({
@@ -9199,7 +9199,7 @@ export const useWriteAlgebraEternalFarmingEnterFarming =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"exitFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingExitFarming =
   /*#__PURE__*/ createUseWriteContract({
@@ -9211,7 +9211,7 @@ export const useWriteAlgebraEternalFarmingExitFarming =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setEmergencyWithdrawStatus"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingSetEmergencyWithdrawStatus =
   /*#__PURE__*/ createUseWriteContract({
@@ -9223,7 +9223,7 @@ export const useWriteAlgebraEternalFarmingSetEmergencyWithdrawStatus =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setFarmingCenterAddress"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingSetFarmingCenterAddress =
   /*#__PURE__*/ createUseWriteContract({
@@ -9235,7 +9235,7 @@ export const useWriteAlgebraEternalFarmingSetFarmingCenterAddress =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setRates"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWriteAlgebraEternalFarmingSetRates =
   /*#__PURE__*/ createUseWriteContract({
@@ -9247,7 +9247,7 @@ export const useWriteAlgebraEternalFarmingSetRates =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarming =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9258,7 +9258,7 @@ export const useSimulateAlgebraEternalFarming =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"addRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingAddRewards =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9270,7 +9270,7 @@ export const useSimulateAlgebraEternalFarmingAddRewards =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"claimReward"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingClaimReward =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9282,7 +9282,7 @@ export const useSimulateAlgebraEternalFarmingClaimReward =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"claimRewardFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingClaimRewardFrom =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9294,7 +9294,7 @@ export const useSimulateAlgebraEternalFarmingClaimRewardFrom =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"collectRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingCollectRewards =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9306,7 +9306,7 @@ export const useSimulateAlgebraEternalFarmingCollectRewards =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"createEternalFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingCreateEternalFarming =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9318,7 +9318,7 @@ export const useSimulateAlgebraEternalFarmingCreateEternalFarming =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"deactivateIncentive"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingDeactivateIncentive =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9330,7 +9330,7 @@ export const useSimulateAlgebraEternalFarmingDeactivateIncentive =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"decreaseRewardsAmount"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingDecreaseRewardsAmount =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9342,7 +9342,7 @@ export const useSimulateAlgebraEternalFarmingDecreaseRewardsAmount =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"enterFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingEnterFarming =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9354,7 +9354,7 @@ export const useSimulateAlgebraEternalFarmingEnterFarming =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"exitFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingExitFarming =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9366,7 +9366,7 @@ export const useSimulateAlgebraEternalFarmingExitFarming =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setEmergencyWithdrawStatus"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingSetEmergencyWithdrawStatus =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9378,7 +9378,7 @@ export const useSimulateAlgebraEternalFarmingSetEmergencyWithdrawStatus =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setFarmingCenterAddress"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingSetFarmingCenterAddress =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9390,7 +9390,7 @@ export const useSimulateAlgebraEternalFarmingSetFarmingCenterAddress =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setRates"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useSimulateAlgebraEternalFarmingSetRates =
   /*#__PURE__*/ createUseSimulateContract({
@@ -9402,7 +9402,7 @@ export const useSimulateAlgebraEternalFarmingSetRates =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9413,7 +9413,7 @@ export const useWatchAlgebraEternalFarmingEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"EmergencyWithdraw"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingEmergencyWithdrawEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9425,7 +9425,7 @@ export const useWatchAlgebraEternalFarmingEmergencyWithdrawEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"EternalFarmingCreated"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingEternalFarmingCreatedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9437,7 +9437,7 @@ export const useWatchAlgebraEternalFarmingEternalFarmingCreatedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"FarmEnded"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingFarmEndedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9449,7 +9449,7 @@ export const useWatchAlgebraEternalFarmingFarmEndedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"FarmEntered"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingFarmEnteredEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9461,7 +9461,7 @@ export const useWatchAlgebraEternalFarmingFarmEnteredEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"FarmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingFarmingCenterEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9473,7 +9473,7 @@ export const useWatchAlgebraEternalFarmingFarmingCenterEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"IncentiveDeactivated"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingIncentiveDeactivatedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9485,7 +9485,7 @@ export const useWatchAlgebraEternalFarmingIncentiveDeactivatedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardAmountsDecreased"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingRewardAmountsDecreasedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9497,7 +9497,7 @@ export const useWatchAlgebraEternalFarmingRewardAmountsDecreasedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardClaimed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingRewardClaimedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9509,7 +9509,7 @@ export const useWatchAlgebraEternalFarmingRewardClaimedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardsAdded"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingRewardsAddedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9521,7 +9521,7 @@ export const useWatchAlgebraEternalFarmingRewardsAddedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardsCollected"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingRewardsCollectedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9533,7 +9533,7 @@ export const useWatchAlgebraEternalFarmingRewardsCollectedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardsRatesChanged"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const useWatchAlgebraEternalFarmingRewardsRatesChangedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -9545,7 +9545,7 @@ export const useWatchAlgebraEternalFarmingRewardsRatesChangedEvent =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactory = /*#__PURE__*/ createUseReadContract({
   abi: algebraFactoryAbi,
@@ -9555,7 +9555,7 @@ export const useReadAlgebraFactory = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"CUSTOM_POOL_DEPLOYER"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryCustomPoolDeployer =
   /*#__PURE__*/ createUseReadContract({
@@ -9567,7 +9567,7 @@ export const useReadAlgebraFactoryCustomPoolDeployer =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"DEFAULT_ADMIN_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryDefaultAdminRole =
   /*#__PURE__*/ createUseReadContract({
@@ -9579,7 +9579,7 @@ export const useReadAlgebraFactoryDefaultAdminRole =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"POOLS_ADMINISTRATOR_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryPoolsAdministratorRole =
   /*#__PURE__*/ createUseReadContract({
@@ -9591,7 +9591,7 @@ export const useReadAlgebraFactoryPoolsAdministratorRole =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"POOL_INIT_CODE_HASH"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryPoolInitCodeHash =
   /*#__PURE__*/ createUseReadContract({
@@ -9603,7 +9603,7 @@ export const useReadAlgebraFactoryPoolInitCodeHash =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"computeCustomPoolAddress"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryComputeCustomPoolAddress =
   /*#__PURE__*/ createUseReadContract({
@@ -9615,7 +9615,7 @@ export const useReadAlgebraFactoryComputeCustomPoolAddress =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"computePoolAddress"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryComputePoolAddress =
   /*#__PURE__*/ createUseReadContract({
@@ -9627,7 +9627,7 @@ export const useReadAlgebraFactoryComputePoolAddress =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"customPoolByPair"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryCustomPoolByPair =
   /*#__PURE__*/ createUseReadContract({
@@ -9639,7 +9639,7 @@ export const useReadAlgebraFactoryCustomPoolByPair =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultCommunityFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryDefaultCommunityFee =
   /*#__PURE__*/ createUseReadContract({
@@ -9651,7 +9651,7 @@ export const useReadAlgebraFactoryDefaultCommunityFee =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultConfigurationForPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryDefaultConfigurationForPool =
   /*#__PURE__*/ createUseReadContract({
@@ -9663,7 +9663,7 @@ export const useReadAlgebraFactoryDefaultConfigurationForPool =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryDefaultFee =
   /*#__PURE__*/ createUseReadContract({
@@ -9675,7 +9675,7 @@ export const useReadAlgebraFactoryDefaultFee =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultPluginFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryDefaultPluginFactory =
   /*#__PURE__*/ createUseReadContract({
@@ -9687,7 +9687,7 @@ export const useReadAlgebraFactoryDefaultPluginFactory =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultTickspacing"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryDefaultTickspacing =
   /*#__PURE__*/ createUseReadContract({
@@ -9699,7 +9699,7 @@ export const useReadAlgebraFactoryDefaultTickspacing =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"getRoleAdmin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryGetRoleAdmin =
   /*#__PURE__*/ createUseReadContract({
@@ -9711,7 +9711,7 @@ export const useReadAlgebraFactoryGetRoleAdmin =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"getRoleMember"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryGetRoleMember =
   /*#__PURE__*/ createUseReadContract({
@@ -9723,7 +9723,7 @@ export const useReadAlgebraFactoryGetRoleMember =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"getRoleMemberCount"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryGetRoleMemberCount =
   /*#__PURE__*/ createUseReadContract({
@@ -9735,7 +9735,7 @@ export const useReadAlgebraFactoryGetRoleMemberCount =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"hasRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryHasRole = /*#__PURE__*/ createUseReadContract(
   {
@@ -9748,7 +9748,7 @@ export const useReadAlgebraFactoryHasRole = /*#__PURE__*/ createUseReadContract(
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"hasRoleOrOwner"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryHasRoleOrOwner =
   /*#__PURE__*/ createUseReadContract({
@@ -9760,7 +9760,7 @@ export const useReadAlgebraFactoryHasRoleOrOwner =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"owner"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryOwner = /*#__PURE__*/ createUseReadContract({
   abi: algebraFactoryAbi,
@@ -9771,7 +9771,7 @@ export const useReadAlgebraFactoryOwner = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"pendingOwner"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryPendingOwner =
   /*#__PURE__*/ createUseReadContract({
@@ -9783,7 +9783,7 @@ export const useReadAlgebraFactoryPendingOwner =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"poolByPair"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryPoolByPair =
   /*#__PURE__*/ createUseReadContract({
@@ -9795,7 +9795,7 @@ export const useReadAlgebraFactoryPoolByPair =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"poolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryPoolDeployer =
   /*#__PURE__*/ createUseReadContract({
@@ -9807,7 +9807,7 @@ export const useReadAlgebraFactoryPoolDeployer =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceOwnershipStartTimestamp"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryRenounceOwnershipStartTimestamp =
   /*#__PURE__*/ createUseReadContract({
@@ -9819,7 +9819,7 @@ export const useReadAlgebraFactoryRenounceOwnershipStartTimestamp =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"supportsInterface"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactorySupportsInterface =
   /*#__PURE__*/ createUseReadContract({
@@ -9831,7 +9831,7 @@ export const useReadAlgebraFactorySupportsInterface =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"vaultFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useReadAlgebraFactoryVaultFactory =
   /*#__PURE__*/ createUseReadContract({
@@ -9843,7 +9843,7 @@ export const useReadAlgebraFactoryVaultFactory =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactory = /*#__PURE__*/ createUseWriteContract({
   abi: algebraFactoryAbi,
@@ -9853,7 +9853,7 @@ export const useWriteAlgebraFactory = /*#__PURE__*/ createUseWriteContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"acceptOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryAcceptOwnership =
   /*#__PURE__*/ createUseWriteContract({
@@ -9865,7 +9865,7 @@ export const useWriteAlgebraFactoryAcceptOwnership =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"createCustomPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryCreateCustomPool =
   /*#__PURE__*/ createUseWriteContract({
@@ -9877,7 +9877,7 @@ export const useWriteAlgebraFactoryCreateCustomPool =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"createPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryCreatePool =
   /*#__PURE__*/ createUseWriteContract({
@@ -9889,7 +9889,7 @@ export const useWriteAlgebraFactoryCreatePool =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"grantRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryGrantRole =
   /*#__PURE__*/ createUseWriteContract({
@@ -9901,7 +9901,7 @@ export const useWriteAlgebraFactoryGrantRole =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryRenounceOwnership =
   /*#__PURE__*/ createUseWriteContract({
@@ -9913,7 +9913,7 @@ export const useWriteAlgebraFactoryRenounceOwnership =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryRenounceRole =
   /*#__PURE__*/ createUseWriteContract({
@@ -9925,7 +9925,7 @@ export const useWriteAlgebraFactoryRenounceRole =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"revokeRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryRevokeRole =
   /*#__PURE__*/ createUseWriteContract({
@@ -9937,7 +9937,7 @@ export const useWriteAlgebraFactoryRevokeRole =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultCommunityFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactorySetDefaultCommunityFee =
   /*#__PURE__*/ createUseWriteContract({
@@ -9949,7 +9949,7 @@ export const useWriteAlgebraFactorySetDefaultCommunityFee =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactorySetDefaultFee =
   /*#__PURE__*/ createUseWriteContract({
@@ -9961,7 +9961,7 @@ export const useWriteAlgebraFactorySetDefaultFee =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultPluginFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactorySetDefaultPluginFactory =
   /*#__PURE__*/ createUseWriteContract({
@@ -9973,7 +9973,7 @@ export const useWriteAlgebraFactorySetDefaultPluginFactory =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultTickspacing"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactorySetDefaultTickspacing =
   /*#__PURE__*/ createUseWriteContract({
@@ -9985,7 +9985,7 @@ export const useWriteAlgebraFactorySetDefaultTickspacing =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setVaultFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactorySetVaultFactory =
   /*#__PURE__*/ createUseWriteContract({
@@ -9997,7 +9997,7 @@ export const useWriteAlgebraFactorySetVaultFactory =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"startRenounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryStartRenounceOwnership =
   /*#__PURE__*/ createUseWriteContract({
@@ -10009,7 +10009,7 @@ export const useWriteAlgebraFactoryStartRenounceOwnership =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"stopRenounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryStopRenounceOwnership =
   /*#__PURE__*/ createUseWriteContract({
@@ -10021,7 +10021,7 @@ export const useWriteAlgebraFactoryStopRenounceOwnership =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"transferOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWriteAlgebraFactoryTransferOwnership =
   /*#__PURE__*/ createUseWriteContract({
@@ -10033,7 +10033,7 @@ export const useWriteAlgebraFactoryTransferOwnership =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactory =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10044,7 +10044,7 @@ export const useSimulateAlgebraFactory =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"acceptOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryAcceptOwnership =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10056,7 +10056,7 @@ export const useSimulateAlgebraFactoryAcceptOwnership =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"createCustomPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryCreateCustomPool =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10068,7 +10068,7 @@ export const useSimulateAlgebraFactoryCreateCustomPool =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"createPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryCreatePool =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10080,7 +10080,7 @@ export const useSimulateAlgebraFactoryCreatePool =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"grantRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryGrantRole =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10092,7 +10092,7 @@ export const useSimulateAlgebraFactoryGrantRole =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryRenounceOwnership =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10104,7 +10104,7 @@ export const useSimulateAlgebraFactoryRenounceOwnership =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryRenounceRole =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10116,7 +10116,7 @@ export const useSimulateAlgebraFactoryRenounceRole =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"revokeRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryRevokeRole =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10128,7 +10128,7 @@ export const useSimulateAlgebraFactoryRevokeRole =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultCommunityFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactorySetDefaultCommunityFee =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10140,7 +10140,7 @@ export const useSimulateAlgebraFactorySetDefaultCommunityFee =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactorySetDefaultFee =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10152,7 +10152,7 @@ export const useSimulateAlgebraFactorySetDefaultFee =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultPluginFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactorySetDefaultPluginFactory =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10164,7 +10164,7 @@ export const useSimulateAlgebraFactorySetDefaultPluginFactory =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultTickspacing"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactorySetDefaultTickspacing =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10176,7 +10176,7 @@ export const useSimulateAlgebraFactorySetDefaultTickspacing =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setVaultFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactorySetVaultFactory =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10188,7 +10188,7 @@ export const useSimulateAlgebraFactorySetVaultFactory =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"startRenounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryStartRenounceOwnership =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10200,7 +10200,7 @@ export const useSimulateAlgebraFactoryStartRenounceOwnership =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"stopRenounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryStopRenounceOwnership =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10212,7 +10212,7 @@ export const useSimulateAlgebraFactoryStopRenounceOwnership =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"transferOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useSimulateAlgebraFactoryTransferOwnership =
   /*#__PURE__*/ createUseSimulateContract({
@@ -10224,7 +10224,7 @@ export const useSimulateAlgebraFactoryTransferOwnership =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10235,7 +10235,7 @@ export const useWatchAlgebraFactoryEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"CustomPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryCustomPoolEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10247,7 +10247,7 @@ export const useWatchAlgebraFactoryCustomPoolEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"DefaultCommunityFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryDefaultCommunityFeeEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10259,7 +10259,7 @@ export const useWatchAlgebraFactoryDefaultCommunityFeeEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"DefaultFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryDefaultFeeEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10271,7 +10271,7 @@ export const useWatchAlgebraFactoryDefaultFeeEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"DefaultPluginFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryDefaultPluginFactoryEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10283,7 +10283,7 @@ export const useWatchAlgebraFactoryDefaultPluginFactoryEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"DefaultTickspacing"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryDefaultTickspacingEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10295,7 +10295,7 @@ export const useWatchAlgebraFactoryDefaultTickspacingEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"OwnershipTransferStarted"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryOwnershipTransferStartedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10307,7 +10307,7 @@ export const useWatchAlgebraFactoryOwnershipTransferStartedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"OwnershipTransferred"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryOwnershipTransferredEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10319,7 +10319,7 @@ export const useWatchAlgebraFactoryOwnershipTransferredEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"Pool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryPoolEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10331,7 +10331,7 @@ export const useWatchAlgebraFactoryPoolEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RenounceOwnershipFinish"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryRenounceOwnershipFinishEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10343,7 +10343,7 @@ export const useWatchAlgebraFactoryRenounceOwnershipFinishEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RenounceOwnershipStart"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryRenounceOwnershipStartEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10355,7 +10355,7 @@ export const useWatchAlgebraFactoryRenounceOwnershipStartEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RenounceOwnershipStop"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryRenounceOwnershipStopEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10367,7 +10367,7 @@ export const useWatchAlgebraFactoryRenounceOwnershipStopEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RoleAdminChanged"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryRoleAdminChangedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10379,7 +10379,7 @@ export const useWatchAlgebraFactoryRoleAdminChangedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RoleGranted"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryRoleGrantedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10391,7 +10391,7 @@ export const useWatchAlgebraFactoryRoleGrantedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RoleRevoked"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryRoleRevokedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -10403,7 +10403,7 @@ export const useWatchAlgebraFactoryRoleRevokedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"VaultFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const useWatchAlgebraFactoryVaultFactoryEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -11388,7 +11388,7 @@ export const useSimulateAlgebraVirtualPoolSwitchDynamicRate =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link farmingCenterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useReadFarmingCenter = /*#__PURE__*/ createUseReadContract({
   abi: farmingCenterAbi,
@@ -11398,7 +11398,7 @@ export const useReadFarmingCenter = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"algebraPoolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useReadFarmingCenterAlgebraPoolDeployer =
   /*#__PURE__*/ createUseReadContract({
@@ -11410,7 +11410,7 @@ export const useReadFarmingCenterAlgebraPoolDeployer =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"deposits"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useReadFarmingCenterDeposits = /*#__PURE__*/ createUseReadContract(
   {
@@ -11423,7 +11423,7 @@ export const useReadFarmingCenterDeposits = /*#__PURE__*/ createUseReadContract(
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"eternalFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useReadFarmingCenterEternalFarming =
   /*#__PURE__*/ createUseReadContract({
@@ -11435,7 +11435,7 @@ export const useReadFarmingCenterEternalFarming =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"incentiveKeys"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useReadFarmingCenterIncentiveKeys =
   /*#__PURE__*/ createUseReadContract({
@@ -11447,7 +11447,7 @@ export const useReadFarmingCenterIncentiveKeys =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"nonfungiblePositionManager"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useReadFarmingCenterNonfungiblePositionManager =
   /*#__PURE__*/ createUseReadContract({
@@ -11459,7 +11459,7 @@ export const useReadFarmingCenterNonfungiblePositionManager =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"virtualPoolAddresses"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useReadFarmingCenterVirtualPoolAddresses =
   /*#__PURE__*/ createUseReadContract({
@@ -11471,7 +11471,7 @@ export const useReadFarmingCenterVirtualPoolAddresses =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenter = /*#__PURE__*/ createUseWriteContract({
   abi: farmingCenterAbi,
@@ -11481,7 +11481,7 @@ export const useWriteFarmingCenter = /*#__PURE__*/ createUseWriteContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"applyLiquidityDelta"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenterApplyLiquidityDelta =
   /*#__PURE__*/ createUseWriteContract({
@@ -11493,7 +11493,7 @@ export const useWriteFarmingCenterApplyLiquidityDelta =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"claimReward"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenterClaimReward =
   /*#__PURE__*/ createUseWriteContract({
@@ -11505,7 +11505,7 @@ export const useWriteFarmingCenterClaimReward =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"collectRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenterCollectRewards =
   /*#__PURE__*/ createUseWriteContract({
@@ -11517,7 +11517,7 @@ export const useWriteFarmingCenterCollectRewards =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"connectVirtualPoolToPlugin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenterConnectVirtualPoolToPlugin =
   /*#__PURE__*/ createUseWriteContract({
@@ -11529,7 +11529,7 @@ export const useWriteFarmingCenterConnectVirtualPoolToPlugin =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"disconnectVirtualPoolFromPlugin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenterDisconnectVirtualPoolFromPlugin =
   /*#__PURE__*/ createUseWriteContract({
@@ -11541,7 +11541,7 @@ export const useWriteFarmingCenterDisconnectVirtualPoolFromPlugin =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"enterFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenterEnterFarming =
   /*#__PURE__*/ createUseWriteContract({
@@ -11553,7 +11553,7 @@ export const useWriteFarmingCenterEnterFarming =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"exitFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenterExitFarming =
   /*#__PURE__*/ createUseWriteContract({
@@ -11565,7 +11565,7 @@ export const useWriteFarmingCenterExitFarming =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useWriteFarmingCenterMulticall =
   /*#__PURE__*/ createUseWriteContract({
@@ -11577,7 +11577,7 @@ export const useWriteFarmingCenterMulticall =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenter = /*#__PURE__*/ createUseSimulateContract(
   { abi: farmingCenterAbi, address: farmingCenterAddress },
@@ -11586,7 +11586,7 @@ export const useSimulateFarmingCenter = /*#__PURE__*/ createUseSimulateContract(
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"applyLiquidityDelta"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenterApplyLiquidityDelta =
   /*#__PURE__*/ createUseSimulateContract({
@@ -11598,7 +11598,7 @@ export const useSimulateFarmingCenterApplyLiquidityDelta =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"claimReward"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenterClaimReward =
   /*#__PURE__*/ createUseSimulateContract({
@@ -11610,7 +11610,7 @@ export const useSimulateFarmingCenterClaimReward =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"collectRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenterCollectRewards =
   /*#__PURE__*/ createUseSimulateContract({
@@ -11622,7 +11622,7 @@ export const useSimulateFarmingCenterCollectRewards =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"connectVirtualPoolToPlugin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenterConnectVirtualPoolToPlugin =
   /*#__PURE__*/ createUseSimulateContract({
@@ -11634,7 +11634,7 @@ export const useSimulateFarmingCenterConnectVirtualPoolToPlugin =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"disconnectVirtualPoolFromPlugin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenterDisconnectVirtualPoolFromPlugin =
   /*#__PURE__*/ createUseSimulateContract({
@@ -11646,7 +11646,7 @@ export const useSimulateFarmingCenterDisconnectVirtualPoolFromPlugin =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"enterFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenterEnterFarming =
   /*#__PURE__*/ createUseSimulateContract({
@@ -11658,7 +11658,7 @@ export const useSimulateFarmingCenterEnterFarming =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"exitFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenterExitFarming =
   /*#__PURE__*/ createUseSimulateContract({
@@ -11670,7 +11670,7 @@ export const useSimulateFarmingCenterExitFarming =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const useSimulateFarmingCenterMulticall =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12084,7 +12084,7 @@ export const useWatchLimitOrderManagerWithdrawEvent =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManager =
   /*#__PURE__*/ createUseReadContract({
@@ -12095,7 +12095,7 @@ export const useReadNonfungiblePositionManager =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"DOMAIN_SEPARATOR"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerDomainSeparator =
   /*#__PURE__*/ createUseReadContract({
@@ -12107,7 +12107,7 @@ export const useReadNonfungiblePositionManagerDomainSeparator =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"NONFUNGIBLE_POSITION_MANAGER_ADMINISTRATOR_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerNonfungiblePositionManagerAdministratorRole =
   /*#__PURE__*/ createUseReadContract({
@@ -12119,7 +12119,7 @@ export const useReadNonfungiblePositionManagerNonfungiblePositionManagerAdminist
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"PERMIT_TYPEHASH"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerPermitTypehash =
   /*#__PURE__*/ createUseReadContract({
@@ -12131,7 +12131,7 @@ export const useReadNonfungiblePositionManagerPermitTypehash =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"WNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerWNativeToken =
   /*#__PURE__*/ createUseReadContract({
@@ -12143,7 +12143,7 @@ export const useReadNonfungiblePositionManagerWNativeToken =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"balanceOf"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerBalanceOf =
   /*#__PURE__*/ createUseReadContract({
@@ -12155,7 +12155,7 @@ export const useReadNonfungiblePositionManagerBalanceOf =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"factory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerFactory =
   /*#__PURE__*/ createUseReadContract({
@@ -12167,7 +12167,7 @@ export const useReadNonfungiblePositionManagerFactory =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"farmingApprovals"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerFarmingApprovals =
   /*#__PURE__*/ createUseReadContract({
@@ -12179,7 +12179,7 @@ export const useReadNonfungiblePositionManagerFarmingApprovals =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"farmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerFarmingCenter =
   /*#__PURE__*/ createUseReadContract({
@@ -12191,7 +12191,7 @@ export const useReadNonfungiblePositionManagerFarmingCenter =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"getApproved"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerGetApproved =
   /*#__PURE__*/ createUseReadContract({
@@ -12203,7 +12203,7 @@ export const useReadNonfungiblePositionManagerGetApproved =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"isApprovedForAll"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerIsApprovedForAll =
   /*#__PURE__*/ createUseReadContract({
@@ -12215,7 +12215,7 @@ export const useReadNonfungiblePositionManagerIsApprovedForAll =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"isApprovedOrOwner"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerIsApprovedOrOwner =
   /*#__PURE__*/ createUseReadContract({
@@ -12227,7 +12227,7 @@ export const useReadNonfungiblePositionManagerIsApprovedOrOwner =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"name"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerName =
   /*#__PURE__*/ createUseReadContract({
@@ -12239,7 +12239,7 @@ export const useReadNonfungiblePositionManagerName =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"ownerOf"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerOwnerOf =
   /*#__PURE__*/ createUseReadContract({
@@ -12251,7 +12251,7 @@ export const useReadNonfungiblePositionManagerOwnerOf =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"poolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerPoolDeployer =
   /*#__PURE__*/ createUseReadContract({
@@ -12263,7 +12263,7 @@ export const useReadNonfungiblePositionManagerPoolDeployer =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"positions"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerPositions =
   /*#__PURE__*/ createUseReadContract({
@@ -12275,7 +12275,7 @@ export const useReadNonfungiblePositionManagerPositions =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"supportsInterface"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerSupportsInterface =
   /*#__PURE__*/ createUseReadContract({
@@ -12287,7 +12287,7 @@ export const useReadNonfungiblePositionManagerSupportsInterface =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"symbol"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerSymbol =
   /*#__PURE__*/ createUseReadContract({
@@ -12299,7 +12299,7 @@ export const useReadNonfungiblePositionManagerSymbol =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"tokenByIndex"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerTokenByIndex =
   /*#__PURE__*/ createUseReadContract({
@@ -12311,7 +12311,7 @@ export const useReadNonfungiblePositionManagerTokenByIndex =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"tokenFarmedIn"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerTokenFarmedIn =
   /*#__PURE__*/ createUseReadContract({
@@ -12323,7 +12323,7 @@ export const useReadNonfungiblePositionManagerTokenFarmedIn =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"tokenOfOwnerByIndex"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerTokenOfOwnerByIndex =
   /*#__PURE__*/ createUseReadContract({
@@ -12335,7 +12335,7 @@ export const useReadNonfungiblePositionManagerTokenOfOwnerByIndex =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"tokenURI"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerTokenUri =
   /*#__PURE__*/ createUseReadContract({
@@ -12347,7 +12347,7 @@ export const useReadNonfungiblePositionManagerTokenUri =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"totalSupply"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useReadNonfungiblePositionManagerTotalSupply =
   /*#__PURE__*/ createUseReadContract({
@@ -12359,7 +12359,7 @@ export const useReadNonfungiblePositionManagerTotalSupply =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManager =
   /*#__PURE__*/ createUseWriteContract({
@@ -12370,7 +12370,7 @@ export const useWriteNonfungiblePositionManager =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"algebraMintCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerAlgebraMintCallback =
   /*#__PURE__*/ createUseWriteContract({
@@ -12382,7 +12382,7 @@ export const useWriteNonfungiblePositionManagerAlgebraMintCallback =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"approve"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerApprove =
   /*#__PURE__*/ createUseWriteContract({
@@ -12394,7 +12394,7 @@ export const useWriteNonfungiblePositionManagerApprove =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"approveForFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerApproveForFarming =
   /*#__PURE__*/ createUseWriteContract({
@@ -12406,7 +12406,7 @@ export const useWriteNonfungiblePositionManagerApproveForFarming =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"burn"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerBurn =
   /*#__PURE__*/ createUseWriteContract({
@@ -12418,7 +12418,7 @@ export const useWriteNonfungiblePositionManagerBurn =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"collect"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerCollect =
   /*#__PURE__*/ createUseWriteContract({
@@ -12430,7 +12430,7 @@ export const useWriteNonfungiblePositionManagerCollect =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"createAndInitializePoolIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerCreateAndInitializePoolIfNecessary =
   /*#__PURE__*/ createUseWriteContract({
@@ -12442,7 +12442,7 @@ export const useWriteNonfungiblePositionManagerCreateAndInitializePoolIfNecessar
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"decreaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerDecreaseLiquidity =
   /*#__PURE__*/ createUseWriteContract({
@@ -12454,7 +12454,7 @@ export const useWriteNonfungiblePositionManagerDecreaseLiquidity =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"increaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerIncreaseLiquidity =
   /*#__PURE__*/ createUseWriteContract({
@@ -12466,7 +12466,7 @@ export const useWriteNonfungiblePositionManagerIncreaseLiquidity =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"mint"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerMint =
   /*#__PURE__*/ createUseWriteContract({
@@ -12478,7 +12478,7 @@ export const useWriteNonfungiblePositionManagerMint =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerMulticall =
   /*#__PURE__*/ createUseWriteContract({
@@ -12490,7 +12490,7 @@ export const useWriteNonfungiblePositionManagerMulticall =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"permit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerPermit =
   /*#__PURE__*/ createUseWriteContract({
@@ -12502,7 +12502,7 @@ export const useWriteNonfungiblePositionManagerPermit =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"refundNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerRefundNativeToken =
   /*#__PURE__*/ createUseWriteContract({
@@ -12514,7 +12514,7 @@ export const useWriteNonfungiblePositionManagerRefundNativeToken =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"safeTransferFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSafeTransferFrom =
   /*#__PURE__*/ createUseWriteContract({
@@ -12526,7 +12526,7 @@ export const useWriteNonfungiblePositionManagerSafeTransferFrom =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSelfPermit =
   /*#__PURE__*/ createUseWriteContract({
@@ -12538,7 +12538,7 @@ export const useWriteNonfungiblePositionManagerSelfPermit =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitAllowed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSelfPermitAllowed =
   /*#__PURE__*/ createUseWriteContract({
@@ -12550,7 +12550,7 @@ export const useWriteNonfungiblePositionManagerSelfPermitAllowed =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitAllowedIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSelfPermitAllowedIfNecessary =
   /*#__PURE__*/ createUseWriteContract({
@@ -12562,7 +12562,7 @@ export const useWriteNonfungiblePositionManagerSelfPermitAllowedIfNecessary =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSelfPermitIfNecessary =
   /*#__PURE__*/ createUseWriteContract({
@@ -12574,7 +12574,7 @@ export const useWriteNonfungiblePositionManagerSelfPermitIfNecessary =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"setApprovalForAll"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSetApprovalForAll =
   /*#__PURE__*/ createUseWriteContract({
@@ -12586,7 +12586,7 @@ export const useWriteNonfungiblePositionManagerSetApprovalForAll =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"setFarmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSetFarmingCenter =
   /*#__PURE__*/ createUseWriteContract({
@@ -12598,7 +12598,7 @@ export const useWriteNonfungiblePositionManagerSetFarmingCenter =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"sweepToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSweepToken =
   /*#__PURE__*/ createUseWriteContract({
@@ -12610,7 +12610,7 @@ export const useWriteNonfungiblePositionManagerSweepToken =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"switchFarmingStatus"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerSwitchFarmingStatus =
   /*#__PURE__*/ createUseWriteContract({
@@ -12622,7 +12622,7 @@ export const useWriteNonfungiblePositionManagerSwitchFarmingStatus =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"transferFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerTransferFrom =
   /*#__PURE__*/ createUseWriteContract({
@@ -12634,7 +12634,7 @@ export const useWriteNonfungiblePositionManagerTransferFrom =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"unwrapWNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWriteNonfungiblePositionManagerUnwrapWNativeToken =
   /*#__PURE__*/ createUseWriteContract({
@@ -12646,7 +12646,7 @@ export const useWriteNonfungiblePositionManagerUnwrapWNativeToken =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManager =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12657,7 +12657,7 @@ export const useSimulateNonfungiblePositionManager =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"algebraMintCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerAlgebraMintCallback =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12669,7 +12669,7 @@ export const useSimulateNonfungiblePositionManagerAlgebraMintCallback =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"approve"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerApprove =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12681,7 +12681,7 @@ export const useSimulateNonfungiblePositionManagerApprove =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"approveForFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerApproveForFarming =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12693,7 +12693,7 @@ export const useSimulateNonfungiblePositionManagerApproveForFarming =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"burn"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerBurn =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12705,7 +12705,7 @@ export const useSimulateNonfungiblePositionManagerBurn =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"collect"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerCollect =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12717,7 +12717,7 @@ export const useSimulateNonfungiblePositionManagerCollect =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"createAndInitializePoolIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerCreateAndInitializePoolIfNecessary =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12729,7 +12729,7 @@ export const useSimulateNonfungiblePositionManagerCreateAndInitializePoolIfNeces
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"decreaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerDecreaseLiquidity =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12741,7 +12741,7 @@ export const useSimulateNonfungiblePositionManagerDecreaseLiquidity =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"increaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerIncreaseLiquidity =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12753,7 +12753,7 @@ export const useSimulateNonfungiblePositionManagerIncreaseLiquidity =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"mint"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerMint =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12765,7 +12765,7 @@ export const useSimulateNonfungiblePositionManagerMint =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerMulticall =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12777,7 +12777,7 @@ export const useSimulateNonfungiblePositionManagerMulticall =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"permit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerPermit =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12789,7 +12789,7 @@ export const useSimulateNonfungiblePositionManagerPermit =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"refundNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerRefundNativeToken =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12801,7 +12801,7 @@ export const useSimulateNonfungiblePositionManagerRefundNativeToken =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"safeTransferFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSafeTransferFrom =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12813,7 +12813,7 @@ export const useSimulateNonfungiblePositionManagerSafeTransferFrom =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSelfPermit =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12825,7 +12825,7 @@ export const useSimulateNonfungiblePositionManagerSelfPermit =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitAllowed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSelfPermitAllowed =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12837,7 +12837,7 @@ export const useSimulateNonfungiblePositionManagerSelfPermitAllowed =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitAllowedIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSelfPermitAllowedIfNecessary =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12849,7 +12849,7 @@ export const useSimulateNonfungiblePositionManagerSelfPermitAllowedIfNecessary =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSelfPermitIfNecessary =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12861,7 +12861,7 @@ export const useSimulateNonfungiblePositionManagerSelfPermitIfNecessary =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"setApprovalForAll"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSetApprovalForAll =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12873,7 +12873,7 @@ export const useSimulateNonfungiblePositionManagerSetApprovalForAll =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"setFarmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSetFarmingCenter =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12885,7 +12885,7 @@ export const useSimulateNonfungiblePositionManagerSetFarmingCenter =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"sweepToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSweepToken =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12897,7 +12897,7 @@ export const useSimulateNonfungiblePositionManagerSweepToken =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"switchFarmingStatus"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerSwitchFarmingStatus =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12909,7 +12909,7 @@ export const useSimulateNonfungiblePositionManagerSwitchFarmingStatus =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"transferFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerTransferFrom =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12921,7 +12921,7 @@ export const useSimulateNonfungiblePositionManagerTransferFrom =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"unwrapWNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useSimulateNonfungiblePositionManagerUnwrapWNativeToken =
   /*#__PURE__*/ createUseSimulateContract({
@@ -12933,7 +12933,7 @@ export const useSimulateNonfungiblePositionManagerUnwrapWNativeToken =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWatchNonfungiblePositionManagerEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -12944,7 +12944,7 @@ export const useWatchNonfungiblePositionManagerEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"Approval"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWatchNonfungiblePositionManagerApprovalEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -12956,7 +12956,7 @@ export const useWatchNonfungiblePositionManagerApprovalEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"ApprovalForAll"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWatchNonfungiblePositionManagerApprovalForAllEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -12968,7 +12968,7 @@ export const useWatchNonfungiblePositionManagerApprovalForAllEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"Collect"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWatchNonfungiblePositionManagerCollectEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -12980,7 +12980,7 @@ export const useWatchNonfungiblePositionManagerCollectEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"DecreaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWatchNonfungiblePositionManagerDecreaseLiquidityEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -12992,7 +12992,7 @@ export const useWatchNonfungiblePositionManagerDecreaseLiquidityEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"FarmingFailed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWatchNonfungiblePositionManagerFarmingFailedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -13004,7 +13004,7 @@ export const useWatchNonfungiblePositionManagerFarmingFailedEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"IncreaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWatchNonfungiblePositionManagerIncreaseLiquidityEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -13016,7 +13016,7 @@ export const useWatchNonfungiblePositionManagerIncreaseLiquidityEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"Transfer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const useWatchNonfungiblePositionManagerTransferEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
@@ -13028,7 +13028,7 @@ export const useWatchNonfungiblePositionManagerTransferEvent =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link quoterV2Abi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useReadQuoterV2 = /*#__PURE__*/ createUseReadContract({
   abi: quoterV2Abi,
@@ -13038,7 +13038,7 @@ export const useReadQuoterV2 = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"WNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useReadQuoterV2WNativeToken = /*#__PURE__*/ createUseReadContract({
   abi: quoterV2Abi,
@@ -13049,7 +13049,7 @@ export const useReadQuoterV2WNativeToken = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"algebraSwapCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useReadQuoterV2AlgebraSwapCallback =
   /*#__PURE__*/ createUseReadContract({
@@ -13061,7 +13061,7 @@ export const useReadQuoterV2AlgebraSwapCallback =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"factory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useReadQuoterV2Factory = /*#__PURE__*/ createUseReadContract({
   abi: quoterV2Abi,
@@ -13072,7 +13072,7 @@ export const useReadQuoterV2Factory = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"poolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useReadQuoterV2PoolDeployer = /*#__PURE__*/ createUseReadContract({
   abi: quoterV2Abi,
@@ -13083,7 +13083,7 @@ export const useReadQuoterV2PoolDeployer = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link quoterV2Abi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useWriteQuoterV2 = /*#__PURE__*/ createUseWriteContract({
   abi: quoterV2Abi,
@@ -13093,7 +13093,7 @@ export const useWriteQuoterV2 = /*#__PURE__*/ createUseWriteContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactInput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useWriteQuoterV2QuoteExactInput =
   /*#__PURE__*/ createUseWriteContract({
@@ -13105,7 +13105,7 @@ export const useWriteQuoterV2QuoteExactInput =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactInputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useWriteQuoterV2QuoteExactInputSingle =
   /*#__PURE__*/ createUseWriteContract({
@@ -13117,7 +13117,7 @@ export const useWriteQuoterV2QuoteExactInputSingle =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactOutput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useWriteQuoterV2QuoteExactOutput =
   /*#__PURE__*/ createUseWriteContract({
@@ -13129,7 +13129,7 @@ export const useWriteQuoterV2QuoteExactOutput =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactOutputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useWriteQuoterV2QuoteExactOutputSingle =
   /*#__PURE__*/ createUseWriteContract({
@@ -13141,7 +13141,7 @@ export const useWriteQuoterV2QuoteExactOutputSingle =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link quoterV2Abi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useSimulateQuoterV2 = /*#__PURE__*/ createUseSimulateContract({
   abi: quoterV2Abi,
@@ -13151,7 +13151,7 @@ export const useSimulateQuoterV2 = /*#__PURE__*/ createUseSimulateContract({
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactInput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useSimulateQuoterV2QuoteExactInput =
   /*#__PURE__*/ createUseSimulateContract({
@@ -13163,7 +13163,7 @@ export const useSimulateQuoterV2QuoteExactInput =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactInputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useSimulateQuoterV2QuoteExactInputSingle =
   /*#__PURE__*/ createUseSimulateContract({
@@ -13175,7 +13175,7 @@ export const useSimulateQuoterV2QuoteExactInputSingle =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactOutput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useSimulateQuoterV2QuoteExactOutput =
   /*#__PURE__*/ createUseSimulateContract({
@@ -13187,7 +13187,7 @@ export const useSimulateQuoterV2QuoteExactOutput =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactOutputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const useSimulateQuoterV2QuoteExactOutputSingle =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14263,7 +14263,7 @@ export const useWatchSecurityRegistryPoolStatusEvent =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link swapRouterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useReadSwapRouter = /*#__PURE__*/ createUseReadContract({
   abi: swapRouterAbi,
@@ -14273,7 +14273,7 @@ export const useReadSwapRouter = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"WNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useReadSwapRouterWNativeToken =
   /*#__PURE__*/ createUseReadContract({
@@ -14285,7 +14285,7 @@ export const useReadSwapRouterWNativeToken =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"factory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useReadSwapRouterFactory = /*#__PURE__*/ createUseReadContract({
   abi: swapRouterAbi,
@@ -14296,7 +14296,7 @@ export const useReadSwapRouterFactory = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"poolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useReadSwapRouterPoolDeployer =
   /*#__PURE__*/ createUseReadContract({
@@ -14308,7 +14308,7 @@ export const useReadSwapRouterPoolDeployer =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouter = /*#__PURE__*/ createUseWriteContract({
   abi: swapRouterAbi,
@@ -14318,7 +14318,7 @@ export const useWriteSwapRouter = /*#__PURE__*/ createUseWriteContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"algebraSwapCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterAlgebraSwapCallback =
   /*#__PURE__*/ createUseWriteContract({
@@ -14330,7 +14330,7 @@ export const useWriteSwapRouterAlgebraSwapCallback =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterExactInput =
   /*#__PURE__*/ createUseWriteContract({
@@ -14342,7 +14342,7 @@ export const useWriteSwapRouterExactInput =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterExactInputSingle =
   /*#__PURE__*/ createUseWriteContract({
@@ -14354,7 +14354,7 @@ export const useWriteSwapRouterExactInputSingle =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInputSingleSupportingFeeOnTransferTokens"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterExactInputSingleSupportingFeeOnTransferTokens =
   /*#__PURE__*/ createUseWriteContract({
@@ -14366,7 +14366,7 @@ export const useWriteSwapRouterExactInputSingleSupportingFeeOnTransferTokens =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactOutput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterExactOutput =
   /*#__PURE__*/ createUseWriteContract({
@@ -14378,7 +14378,7 @@ export const useWriteSwapRouterExactOutput =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactOutputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterExactOutputSingle =
   /*#__PURE__*/ createUseWriteContract({
@@ -14390,7 +14390,7 @@ export const useWriteSwapRouterExactOutputSingle =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterMulticall = /*#__PURE__*/ createUseWriteContract(
   { abi: swapRouterAbi, address: swapRouterAddress, functionName: 'multicall' },
@@ -14399,7 +14399,7 @@ export const useWriteSwapRouterMulticall = /*#__PURE__*/ createUseWriteContract(
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"refundNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterRefundNativeToken =
   /*#__PURE__*/ createUseWriteContract({
@@ -14411,7 +14411,7 @@ export const useWriteSwapRouterRefundNativeToken =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterSelfPermit =
   /*#__PURE__*/ createUseWriteContract({
@@ -14423,7 +14423,7 @@ export const useWriteSwapRouterSelfPermit =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitAllowed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterSelfPermitAllowed =
   /*#__PURE__*/ createUseWriteContract({
@@ -14435,7 +14435,7 @@ export const useWriteSwapRouterSelfPermitAllowed =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitAllowedIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterSelfPermitAllowedIfNecessary =
   /*#__PURE__*/ createUseWriteContract({
@@ -14447,7 +14447,7 @@ export const useWriteSwapRouterSelfPermitAllowedIfNecessary =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterSelfPermitIfNecessary =
   /*#__PURE__*/ createUseWriteContract({
@@ -14459,7 +14459,7 @@ export const useWriteSwapRouterSelfPermitIfNecessary =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"sweepToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterSweepToken =
   /*#__PURE__*/ createUseWriteContract({
@@ -14471,7 +14471,7 @@ export const useWriteSwapRouterSweepToken =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"sweepTokenWithFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterSweepTokenWithFee =
   /*#__PURE__*/ createUseWriteContract({
@@ -14483,7 +14483,7 @@ export const useWriteSwapRouterSweepTokenWithFee =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"unwrapWNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterUnwrapWNativeToken =
   /*#__PURE__*/ createUseWriteContract({
@@ -14495,7 +14495,7 @@ export const useWriteSwapRouterUnwrapWNativeToken =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"unwrapWNativeTokenWithFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useWriteSwapRouterUnwrapWNativeTokenWithFee =
   /*#__PURE__*/ createUseWriteContract({
@@ -14507,7 +14507,7 @@ export const useWriteSwapRouterUnwrapWNativeTokenWithFee =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouter = /*#__PURE__*/ createUseSimulateContract({
   abi: swapRouterAbi,
@@ -14517,7 +14517,7 @@ export const useSimulateSwapRouter = /*#__PURE__*/ createUseSimulateContract({
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"algebraSwapCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterAlgebraSwapCallback =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14529,7 +14529,7 @@ export const useSimulateSwapRouterAlgebraSwapCallback =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterExactInput =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14541,7 +14541,7 @@ export const useSimulateSwapRouterExactInput =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterExactInputSingle =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14553,7 +14553,7 @@ export const useSimulateSwapRouterExactInputSingle =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInputSingleSupportingFeeOnTransferTokens"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterExactInputSingleSupportingFeeOnTransferTokens =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14565,7 +14565,7 @@ export const useSimulateSwapRouterExactInputSingleSupportingFeeOnTransferTokens 
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactOutput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterExactOutput =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14577,7 +14577,7 @@ export const useSimulateSwapRouterExactOutput =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactOutputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterExactOutputSingle =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14589,7 +14589,7 @@ export const useSimulateSwapRouterExactOutputSingle =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterMulticall =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14601,7 +14601,7 @@ export const useSimulateSwapRouterMulticall =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"refundNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterRefundNativeToken =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14613,7 +14613,7 @@ export const useSimulateSwapRouterRefundNativeToken =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterSelfPermit =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14625,7 +14625,7 @@ export const useSimulateSwapRouterSelfPermit =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitAllowed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterSelfPermitAllowed =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14637,7 +14637,7 @@ export const useSimulateSwapRouterSelfPermitAllowed =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitAllowedIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterSelfPermitAllowedIfNecessary =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14649,7 +14649,7 @@ export const useSimulateSwapRouterSelfPermitAllowedIfNecessary =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterSelfPermitIfNecessary =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14661,7 +14661,7 @@ export const useSimulateSwapRouterSelfPermitIfNecessary =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"sweepToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterSweepToken =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14673,7 +14673,7 @@ export const useSimulateSwapRouterSweepToken =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"sweepTokenWithFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterSweepTokenWithFee =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14685,7 +14685,7 @@ export const useSimulateSwapRouterSweepTokenWithFee =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"unwrapWNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterUnwrapWNativeToken =
   /*#__PURE__*/ createUseSimulateContract({
@@ -14697,7 +14697,7 @@ export const useSimulateSwapRouterUnwrapWNativeToken =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"unwrapWNativeTokenWithFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const useSimulateSwapRouterUnwrapWNativeTokenWithFee =
   /*#__PURE__*/ createUseSimulateContract({
@@ -18336,7 +18336,7 @@ export const watchAlgebraCustomPoolEntryPointFarmingAddressEvent =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarming = /*#__PURE__*/ createReadContract({
   abi: algebraEternalFarmingAbi,
@@ -18346,7 +18346,7 @@ export const readAlgebraEternalFarming = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"FARMINGS_ADMINISTRATOR_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingFarmingsAdministratorRole =
   /*#__PURE__*/ createReadContract({
@@ -18358,7 +18358,7 @@ export const readAlgebraEternalFarmingFarmingsAdministratorRole =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"INCENTIVE_MAKER_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingIncentiveMakerRole =
   /*#__PURE__*/ createReadContract({
@@ -18370,7 +18370,7 @@ export const readAlgebraEternalFarmingIncentiveMakerRole =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"farmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingFarmingCenter =
   /*#__PURE__*/ createReadContract({
@@ -18382,7 +18382,7 @@ export const readAlgebraEternalFarmingFarmingCenter =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"farms"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingFarms = /*#__PURE__*/ createReadContract({
   abi: algebraEternalFarmingAbi,
@@ -18393,7 +18393,7 @@ export const readAlgebraEternalFarmingFarms = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"getRewardInfo"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingGetRewardInfo =
   /*#__PURE__*/ createReadContract({
@@ -18405,7 +18405,7 @@ export const readAlgebraEternalFarmingGetRewardInfo =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"incentiveKeys"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingIncentiveKeys =
   /*#__PURE__*/ createReadContract({
@@ -18417,7 +18417,7 @@ export const readAlgebraEternalFarmingIncentiveKeys =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"incentives"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingIncentives =
   /*#__PURE__*/ createReadContract({
@@ -18429,7 +18429,7 @@ export const readAlgebraEternalFarmingIncentives =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"isEmergencyWithdrawActivated"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingIsEmergencyWithdrawActivated =
   /*#__PURE__*/ createReadContract({
@@ -18441,7 +18441,7 @@ export const readAlgebraEternalFarmingIsEmergencyWithdrawActivated =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"isIncentiveDeactivated"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingIsIncentiveDeactivated =
   /*#__PURE__*/ createReadContract({
@@ -18453,7 +18453,7 @@ export const readAlgebraEternalFarmingIsIncentiveDeactivated =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"nonfungiblePositionManager"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingNonfungiblePositionManager =
   /*#__PURE__*/ createReadContract({
@@ -18465,7 +18465,7 @@ export const readAlgebraEternalFarmingNonfungiblePositionManager =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"numOfIncentives"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingNumOfIncentives =
   /*#__PURE__*/ createReadContract({
@@ -18477,7 +18477,7 @@ export const readAlgebraEternalFarmingNumOfIncentives =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"rewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const readAlgebraEternalFarmingRewards =
   /*#__PURE__*/ createReadContract({
@@ -18489,7 +18489,7 @@ export const readAlgebraEternalFarmingRewards =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarming = /*#__PURE__*/ createWriteContract({
   abi: algebraEternalFarmingAbi,
@@ -18499,7 +18499,7 @@ export const writeAlgebraEternalFarming = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"addRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingAddRewards =
   /*#__PURE__*/ createWriteContract({
@@ -18511,7 +18511,7 @@ export const writeAlgebraEternalFarmingAddRewards =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"claimReward"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingClaimReward =
   /*#__PURE__*/ createWriteContract({
@@ -18523,7 +18523,7 @@ export const writeAlgebraEternalFarmingClaimReward =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"claimRewardFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingClaimRewardFrom =
   /*#__PURE__*/ createWriteContract({
@@ -18535,7 +18535,7 @@ export const writeAlgebraEternalFarmingClaimRewardFrom =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"collectRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingCollectRewards =
   /*#__PURE__*/ createWriteContract({
@@ -18547,7 +18547,7 @@ export const writeAlgebraEternalFarmingCollectRewards =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"createEternalFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingCreateEternalFarming =
   /*#__PURE__*/ createWriteContract({
@@ -18559,7 +18559,7 @@ export const writeAlgebraEternalFarmingCreateEternalFarming =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"deactivateIncentive"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingDeactivateIncentive =
   /*#__PURE__*/ createWriteContract({
@@ -18571,7 +18571,7 @@ export const writeAlgebraEternalFarmingDeactivateIncentive =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"decreaseRewardsAmount"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingDecreaseRewardsAmount =
   /*#__PURE__*/ createWriteContract({
@@ -18583,7 +18583,7 @@ export const writeAlgebraEternalFarmingDecreaseRewardsAmount =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"enterFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingEnterFarming =
   /*#__PURE__*/ createWriteContract({
@@ -18595,7 +18595,7 @@ export const writeAlgebraEternalFarmingEnterFarming =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"exitFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingExitFarming =
   /*#__PURE__*/ createWriteContract({
@@ -18607,7 +18607,7 @@ export const writeAlgebraEternalFarmingExitFarming =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setEmergencyWithdrawStatus"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingSetEmergencyWithdrawStatus =
   /*#__PURE__*/ createWriteContract({
@@ -18619,7 +18619,7 @@ export const writeAlgebraEternalFarmingSetEmergencyWithdrawStatus =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setFarmingCenterAddress"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingSetFarmingCenterAddress =
   /*#__PURE__*/ createWriteContract({
@@ -18631,7 +18631,7 @@ export const writeAlgebraEternalFarmingSetFarmingCenterAddress =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setRates"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const writeAlgebraEternalFarmingSetRates =
   /*#__PURE__*/ createWriteContract({
@@ -18643,7 +18643,7 @@ export const writeAlgebraEternalFarmingSetRates =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarming =
   /*#__PURE__*/ createSimulateContract({
@@ -18654,7 +18654,7 @@ export const simulateAlgebraEternalFarming =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"addRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingAddRewards =
   /*#__PURE__*/ createSimulateContract({
@@ -18666,7 +18666,7 @@ export const simulateAlgebraEternalFarmingAddRewards =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"claimReward"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingClaimReward =
   /*#__PURE__*/ createSimulateContract({
@@ -18678,7 +18678,7 @@ export const simulateAlgebraEternalFarmingClaimReward =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"claimRewardFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingClaimRewardFrom =
   /*#__PURE__*/ createSimulateContract({
@@ -18690,7 +18690,7 @@ export const simulateAlgebraEternalFarmingClaimRewardFrom =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"collectRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingCollectRewards =
   /*#__PURE__*/ createSimulateContract({
@@ -18702,7 +18702,7 @@ export const simulateAlgebraEternalFarmingCollectRewards =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"createEternalFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingCreateEternalFarming =
   /*#__PURE__*/ createSimulateContract({
@@ -18714,7 +18714,7 @@ export const simulateAlgebraEternalFarmingCreateEternalFarming =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"deactivateIncentive"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingDeactivateIncentive =
   /*#__PURE__*/ createSimulateContract({
@@ -18726,7 +18726,7 @@ export const simulateAlgebraEternalFarmingDeactivateIncentive =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"decreaseRewardsAmount"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingDecreaseRewardsAmount =
   /*#__PURE__*/ createSimulateContract({
@@ -18738,7 +18738,7 @@ export const simulateAlgebraEternalFarmingDecreaseRewardsAmount =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"enterFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingEnterFarming =
   /*#__PURE__*/ createSimulateContract({
@@ -18750,7 +18750,7 @@ export const simulateAlgebraEternalFarmingEnterFarming =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"exitFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingExitFarming =
   /*#__PURE__*/ createSimulateContract({
@@ -18762,7 +18762,7 @@ export const simulateAlgebraEternalFarmingExitFarming =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setEmergencyWithdrawStatus"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingSetEmergencyWithdrawStatus =
   /*#__PURE__*/ createSimulateContract({
@@ -18774,7 +18774,7 @@ export const simulateAlgebraEternalFarmingSetEmergencyWithdrawStatus =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setFarmingCenterAddress"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingSetFarmingCenterAddress =
   /*#__PURE__*/ createSimulateContract({
@@ -18786,7 +18786,7 @@ export const simulateAlgebraEternalFarmingSetFarmingCenterAddress =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `functionName` set to `"setRates"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const simulateAlgebraEternalFarmingSetRates =
   /*#__PURE__*/ createSimulateContract({
@@ -18798,7 +18798,7 @@ export const simulateAlgebraEternalFarmingSetRates =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18809,7 +18809,7 @@ export const watchAlgebraEternalFarmingEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"EmergencyWithdraw"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingEmergencyWithdrawEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18821,7 +18821,7 @@ export const watchAlgebraEternalFarmingEmergencyWithdrawEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"EternalFarmingCreated"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingEternalFarmingCreatedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18833,7 +18833,7 @@ export const watchAlgebraEternalFarmingEternalFarmingCreatedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"FarmEnded"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingFarmEndedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18845,7 +18845,7 @@ export const watchAlgebraEternalFarmingFarmEndedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"FarmEntered"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingFarmEnteredEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18857,7 +18857,7 @@ export const watchAlgebraEternalFarmingFarmEnteredEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"FarmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingFarmingCenterEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18869,7 +18869,7 @@ export const watchAlgebraEternalFarmingFarmingCenterEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"IncentiveDeactivated"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingIncentiveDeactivatedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18881,7 +18881,7 @@ export const watchAlgebraEternalFarmingIncentiveDeactivatedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardAmountsDecreased"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingRewardAmountsDecreasedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18893,7 +18893,7 @@ export const watchAlgebraEternalFarmingRewardAmountsDecreasedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardClaimed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingRewardClaimedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18905,7 +18905,7 @@ export const watchAlgebraEternalFarmingRewardClaimedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardsAdded"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingRewardsAddedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18917,7 +18917,7 @@ export const watchAlgebraEternalFarmingRewardsAddedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardsCollected"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingRewardsCollectedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18929,7 +18929,7 @@ export const watchAlgebraEternalFarmingRewardsCollectedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraEternalFarmingAbi}__ and `eventName` set to `"RewardsRatesChanged"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xA4C1B2cc90D455437E096E6473890906dc1C8499)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xB4F9b6b019E75CBe51af4425b2Fc12797e2Ee2a1)
  */
 export const watchAlgebraEternalFarmingRewardsRatesChangedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -18941,7 +18941,7 @@ export const watchAlgebraEternalFarmingRewardsRatesChangedEvent =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactory = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -18951,7 +18951,7 @@ export const readAlgebraFactory = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"CUSTOM_POOL_DEPLOYER"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryCustomPoolDeployer =
   /*#__PURE__*/ createReadContract({
@@ -18963,7 +18963,7 @@ export const readAlgebraFactoryCustomPoolDeployer =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"DEFAULT_ADMIN_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryDefaultAdminRole =
   /*#__PURE__*/ createReadContract({
@@ -18975,7 +18975,7 @@ export const readAlgebraFactoryDefaultAdminRole =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"POOLS_ADMINISTRATOR_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryPoolsAdministratorRole =
   /*#__PURE__*/ createReadContract({
@@ -18987,7 +18987,7 @@ export const readAlgebraFactoryPoolsAdministratorRole =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"POOL_INIT_CODE_HASH"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryPoolInitCodeHash =
   /*#__PURE__*/ createReadContract({
@@ -18999,7 +18999,7 @@ export const readAlgebraFactoryPoolInitCodeHash =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"computeCustomPoolAddress"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryComputeCustomPoolAddress =
   /*#__PURE__*/ createReadContract({
@@ -19011,7 +19011,7 @@ export const readAlgebraFactoryComputeCustomPoolAddress =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"computePoolAddress"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryComputePoolAddress =
   /*#__PURE__*/ createReadContract({
@@ -19023,7 +19023,7 @@ export const readAlgebraFactoryComputePoolAddress =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"customPoolByPair"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryCustomPoolByPair =
   /*#__PURE__*/ createReadContract({
@@ -19035,7 +19035,7 @@ export const readAlgebraFactoryCustomPoolByPair =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultCommunityFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryDefaultCommunityFee =
   /*#__PURE__*/ createReadContract({
@@ -19047,7 +19047,7 @@ export const readAlgebraFactoryDefaultCommunityFee =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultConfigurationForPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryDefaultConfigurationForPool =
   /*#__PURE__*/ createReadContract({
@@ -19059,7 +19059,7 @@ export const readAlgebraFactoryDefaultConfigurationForPool =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryDefaultFee = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -19070,7 +19070,7 @@ export const readAlgebraFactoryDefaultFee = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultPluginFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryDefaultPluginFactory =
   /*#__PURE__*/ createReadContract({
@@ -19082,7 +19082,7 @@ export const readAlgebraFactoryDefaultPluginFactory =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"defaultTickspacing"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryDefaultTickspacing =
   /*#__PURE__*/ createReadContract({
@@ -19094,7 +19094,7 @@ export const readAlgebraFactoryDefaultTickspacing =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"getRoleAdmin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryGetRoleAdmin = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -19105,7 +19105,7 @@ export const readAlgebraFactoryGetRoleAdmin = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"getRoleMember"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryGetRoleMember = /*#__PURE__*/ createReadContract(
   {
@@ -19118,7 +19118,7 @@ export const readAlgebraFactoryGetRoleMember = /*#__PURE__*/ createReadContract(
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"getRoleMemberCount"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryGetRoleMemberCount =
   /*#__PURE__*/ createReadContract({
@@ -19130,7 +19130,7 @@ export const readAlgebraFactoryGetRoleMemberCount =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"hasRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryHasRole = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -19141,7 +19141,7 @@ export const readAlgebraFactoryHasRole = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"hasRoleOrOwner"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryHasRoleOrOwner =
   /*#__PURE__*/ createReadContract({
@@ -19153,7 +19153,7 @@ export const readAlgebraFactoryHasRoleOrOwner =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"owner"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryOwner = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -19164,7 +19164,7 @@ export const readAlgebraFactoryOwner = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"pendingOwner"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryPendingOwner = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -19175,7 +19175,7 @@ export const readAlgebraFactoryPendingOwner = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"poolByPair"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryPoolByPair = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -19186,7 +19186,7 @@ export const readAlgebraFactoryPoolByPair = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"poolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryPoolDeployer = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -19197,7 +19197,7 @@ export const readAlgebraFactoryPoolDeployer = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceOwnershipStartTimestamp"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryRenounceOwnershipStartTimestamp =
   /*#__PURE__*/ createReadContract({
@@ -19209,7 +19209,7 @@ export const readAlgebraFactoryRenounceOwnershipStartTimestamp =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"supportsInterface"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactorySupportsInterface =
   /*#__PURE__*/ createReadContract({
@@ -19221,7 +19221,7 @@ export const readAlgebraFactorySupportsInterface =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"vaultFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const readAlgebraFactoryVaultFactory = /*#__PURE__*/ createReadContract({
   abi: algebraFactoryAbi,
@@ -19232,7 +19232,7 @@ export const readAlgebraFactoryVaultFactory = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactory = /*#__PURE__*/ createWriteContract({
   abi: algebraFactoryAbi,
@@ -19242,7 +19242,7 @@ export const writeAlgebraFactory = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"acceptOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryAcceptOwnership =
   /*#__PURE__*/ createWriteContract({
@@ -19254,7 +19254,7 @@ export const writeAlgebraFactoryAcceptOwnership =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"createCustomPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryCreateCustomPool =
   /*#__PURE__*/ createWriteContract({
@@ -19266,7 +19266,7 @@ export const writeAlgebraFactoryCreateCustomPool =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"createPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryCreatePool = /*#__PURE__*/ createWriteContract({
   abi: algebraFactoryAbi,
@@ -19277,7 +19277,7 @@ export const writeAlgebraFactoryCreatePool = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"grantRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryGrantRole = /*#__PURE__*/ createWriteContract({
   abi: algebraFactoryAbi,
@@ -19288,7 +19288,7 @@ export const writeAlgebraFactoryGrantRole = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryRenounceOwnership =
   /*#__PURE__*/ createWriteContract({
@@ -19300,7 +19300,7 @@ export const writeAlgebraFactoryRenounceOwnership =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryRenounceRole =
   /*#__PURE__*/ createWriteContract({
@@ -19312,7 +19312,7 @@ export const writeAlgebraFactoryRenounceRole =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"revokeRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryRevokeRole = /*#__PURE__*/ createWriteContract({
   abi: algebraFactoryAbi,
@@ -19323,7 +19323,7 @@ export const writeAlgebraFactoryRevokeRole = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultCommunityFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactorySetDefaultCommunityFee =
   /*#__PURE__*/ createWriteContract({
@@ -19335,7 +19335,7 @@ export const writeAlgebraFactorySetDefaultCommunityFee =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactorySetDefaultFee =
   /*#__PURE__*/ createWriteContract({
@@ -19347,7 +19347,7 @@ export const writeAlgebraFactorySetDefaultFee =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultPluginFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactorySetDefaultPluginFactory =
   /*#__PURE__*/ createWriteContract({
@@ -19359,7 +19359,7 @@ export const writeAlgebraFactorySetDefaultPluginFactory =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultTickspacing"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactorySetDefaultTickspacing =
   /*#__PURE__*/ createWriteContract({
@@ -19371,7 +19371,7 @@ export const writeAlgebraFactorySetDefaultTickspacing =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setVaultFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactorySetVaultFactory =
   /*#__PURE__*/ createWriteContract({
@@ -19383,7 +19383,7 @@ export const writeAlgebraFactorySetVaultFactory =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"startRenounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryStartRenounceOwnership =
   /*#__PURE__*/ createWriteContract({
@@ -19395,7 +19395,7 @@ export const writeAlgebraFactoryStartRenounceOwnership =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"stopRenounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryStopRenounceOwnership =
   /*#__PURE__*/ createWriteContract({
@@ -19407,7 +19407,7 @@ export const writeAlgebraFactoryStopRenounceOwnership =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"transferOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const writeAlgebraFactoryTransferOwnership =
   /*#__PURE__*/ createWriteContract({
@@ -19419,7 +19419,7 @@ export const writeAlgebraFactoryTransferOwnership =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactory = /*#__PURE__*/ createSimulateContract({
   abi: algebraFactoryAbi,
@@ -19429,7 +19429,7 @@ export const simulateAlgebraFactory = /*#__PURE__*/ createSimulateContract({
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"acceptOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryAcceptOwnership =
   /*#__PURE__*/ createSimulateContract({
@@ -19441,7 +19441,7 @@ export const simulateAlgebraFactoryAcceptOwnership =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"createCustomPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryCreateCustomPool =
   /*#__PURE__*/ createSimulateContract({
@@ -19453,7 +19453,7 @@ export const simulateAlgebraFactoryCreateCustomPool =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"createPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryCreatePool =
   /*#__PURE__*/ createSimulateContract({
@@ -19465,7 +19465,7 @@ export const simulateAlgebraFactoryCreatePool =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"grantRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryGrantRole =
   /*#__PURE__*/ createSimulateContract({
@@ -19477,7 +19477,7 @@ export const simulateAlgebraFactoryGrantRole =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryRenounceOwnership =
   /*#__PURE__*/ createSimulateContract({
@@ -19489,7 +19489,7 @@ export const simulateAlgebraFactoryRenounceOwnership =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"renounceRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryRenounceRole =
   /*#__PURE__*/ createSimulateContract({
@@ -19501,7 +19501,7 @@ export const simulateAlgebraFactoryRenounceRole =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"revokeRole"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryRevokeRole =
   /*#__PURE__*/ createSimulateContract({
@@ -19513,7 +19513,7 @@ export const simulateAlgebraFactoryRevokeRole =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultCommunityFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactorySetDefaultCommunityFee =
   /*#__PURE__*/ createSimulateContract({
@@ -19525,7 +19525,7 @@ export const simulateAlgebraFactorySetDefaultCommunityFee =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactorySetDefaultFee =
   /*#__PURE__*/ createSimulateContract({
@@ -19537,7 +19537,7 @@ export const simulateAlgebraFactorySetDefaultFee =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultPluginFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactorySetDefaultPluginFactory =
   /*#__PURE__*/ createSimulateContract({
@@ -19549,7 +19549,7 @@ export const simulateAlgebraFactorySetDefaultPluginFactory =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setDefaultTickspacing"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactorySetDefaultTickspacing =
   /*#__PURE__*/ createSimulateContract({
@@ -19561,7 +19561,7 @@ export const simulateAlgebraFactorySetDefaultTickspacing =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"setVaultFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactorySetVaultFactory =
   /*#__PURE__*/ createSimulateContract({
@@ -19573,7 +19573,7 @@ export const simulateAlgebraFactorySetVaultFactory =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"startRenounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryStartRenounceOwnership =
   /*#__PURE__*/ createSimulateContract({
@@ -19585,7 +19585,7 @@ export const simulateAlgebraFactoryStartRenounceOwnership =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"stopRenounceOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryStopRenounceOwnership =
   /*#__PURE__*/ createSimulateContract({
@@ -19597,7 +19597,7 @@ export const simulateAlgebraFactoryStopRenounceOwnership =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link algebraFactoryAbi}__ and `functionName` set to `"transferOwnership"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const simulateAlgebraFactoryTransferOwnership =
   /*#__PURE__*/ createSimulateContract({
@@ -19609,7 +19609,7 @@ export const simulateAlgebraFactoryTransferOwnership =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryEvent = /*#__PURE__*/ createWatchContractEvent({
   abi: algebraFactoryAbi,
@@ -19619,7 +19619,7 @@ export const watchAlgebraFactoryEvent = /*#__PURE__*/ createWatchContractEvent({
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"CustomPool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryCustomPoolEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19631,7 +19631,7 @@ export const watchAlgebraFactoryCustomPoolEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"DefaultCommunityFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryDefaultCommunityFeeEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19643,7 +19643,7 @@ export const watchAlgebraFactoryDefaultCommunityFeeEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"DefaultFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryDefaultFeeEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19655,7 +19655,7 @@ export const watchAlgebraFactoryDefaultFeeEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"DefaultPluginFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryDefaultPluginFactoryEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19667,7 +19667,7 @@ export const watchAlgebraFactoryDefaultPluginFactoryEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"DefaultTickspacing"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryDefaultTickspacingEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19679,7 +19679,7 @@ export const watchAlgebraFactoryDefaultTickspacingEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"OwnershipTransferStarted"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryOwnershipTransferStartedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19691,7 +19691,7 @@ export const watchAlgebraFactoryOwnershipTransferStartedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"OwnershipTransferred"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryOwnershipTransferredEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19703,7 +19703,7 @@ export const watchAlgebraFactoryOwnershipTransferredEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"Pool"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryPoolEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19715,7 +19715,7 @@ export const watchAlgebraFactoryPoolEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RenounceOwnershipFinish"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryRenounceOwnershipFinishEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19727,7 +19727,7 @@ export const watchAlgebraFactoryRenounceOwnershipFinishEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RenounceOwnershipStart"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryRenounceOwnershipStartEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19739,7 +19739,7 @@ export const watchAlgebraFactoryRenounceOwnershipStartEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RenounceOwnershipStop"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryRenounceOwnershipStopEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19751,7 +19751,7 @@ export const watchAlgebraFactoryRenounceOwnershipStopEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RoleAdminChanged"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryRoleAdminChangedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19763,7 +19763,7 @@ export const watchAlgebraFactoryRoleAdminChangedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RoleGranted"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryRoleGrantedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19775,7 +19775,7 @@ export const watchAlgebraFactoryRoleGrantedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"RoleRevoked"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryRoleRevokedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -19787,7 +19787,7 @@ export const watchAlgebraFactoryRoleRevokedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link algebraFactoryAbi}__ and `eventName` set to `"VaultFactory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x797691C82093Fe9EfAD6ceAcB1FC3080C2a4F85A)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x10253594A832f967994b44f33411940533302ACb)
  */
 export const watchAlgebraFactoryVaultFactoryEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -20743,7 +20743,7 @@ export const simulateAlgebraVirtualPoolSwitchDynamicRate =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link farmingCenterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const readFarmingCenter = /*#__PURE__*/ createReadContract({
   abi: farmingCenterAbi,
@@ -20753,7 +20753,7 @@ export const readFarmingCenter = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"algebraPoolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const readFarmingCenterAlgebraPoolDeployer =
   /*#__PURE__*/ createReadContract({
@@ -20765,7 +20765,7 @@ export const readFarmingCenterAlgebraPoolDeployer =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"deposits"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const readFarmingCenterDeposits = /*#__PURE__*/ createReadContract({
   abi: farmingCenterAbi,
@@ -20776,7 +20776,7 @@ export const readFarmingCenterDeposits = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"eternalFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const readFarmingCenterEternalFarming = /*#__PURE__*/ createReadContract(
   {
@@ -20789,7 +20789,7 @@ export const readFarmingCenterEternalFarming = /*#__PURE__*/ createReadContract(
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"incentiveKeys"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const readFarmingCenterIncentiveKeys = /*#__PURE__*/ createReadContract({
   abi: farmingCenterAbi,
@@ -20800,7 +20800,7 @@ export const readFarmingCenterIncentiveKeys = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"nonfungiblePositionManager"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const readFarmingCenterNonfungiblePositionManager =
   /*#__PURE__*/ createReadContract({
@@ -20812,7 +20812,7 @@ export const readFarmingCenterNonfungiblePositionManager =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"virtualPoolAddresses"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const readFarmingCenterVirtualPoolAddresses =
   /*#__PURE__*/ createReadContract({
@@ -20824,7 +20824,7 @@ export const readFarmingCenterVirtualPoolAddresses =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenter = /*#__PURE__*/ createWriteContract({
   abi: farmingCenterAbi,
@@ -20834,7 +20834,7 @@ export const writeFarmingCenter = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"applyLiquidityDelta"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenterApplyLiquidityDelta =
   /*#__PURE__*/ createWriteContract({
@@ -20846,7 +20846,7 @@ export const writeFarmingCenterApplyLiquidityDelta =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"claimReward"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenterClaimReward = /*#__PURE__*/ createWriteContract({
   abi: farmingCenterAbi,
@@ -20857,7 +20857,7 @@ export const writeFarmingCenterClaimReward = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"collectRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenterCollectRewards =
   /*#__PURE__*/ createWriteContract({
@@ -20869,7 +20869,7 @@ export const writeFarmingCenterCollectRewards =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"connectVirtualPoolToPlugin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenterConnectVirtualPoolToPlugin =
   /*#__PURE__*/ createWriteContract({
@@ -20881,7 +20881,7 @@ export const writeFarmingCenterConnectVirtualPoolToPlugin =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"disconnectVirtualPoolFromPlugin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenterDisconnectVirtualPoolFromPlugin =
   /*#__PURE__*/ createWriteContract({
@@ -20893,7 +20893,7 @@ export const writeFarmingCenterDisconnectVirtualPoolFromPlugin =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"enterFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenterEnterFarming = /*#__PURE__*/ createWriteContract(
   {
@@ -20906,7 +20906,7 @@ export const writeFarmingCenterEnterFarming = /*#__PURE__*/ createWriteContract(
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"exitFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenterExitFarming = /*#__PURE__*/ createWriteContract({
   abi: farmingCenterAbi,
@@ -20917,7 +20917,7 @@ export const writeFarmingCenterExitFarming = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const writeFarmingCenterMulticall = /*#__PURE__*/ createWriteContract({
   abi: farmingCenterAbi,
@@ -20928,7 +20928,7 @@ export const writeFarmingCenterMulticall = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenter = /*#__PURE__*/ createSimulateContract({
   abi: farmingCenterAbi,
@@ -20938,7 +20938,7 @@ export const simulateFarmingCenter = /*#__PURE__*/ createSimulateContract({
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"applyLiquidityDelta"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenterApplyLiquidityDelta =
   /*#__PURE__*/ createSimulateContract({
@@ -20950,7 +20950,7 @@ export const simulateFarmingCenterApplyLiquidityDelta =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"claimReward"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenterClaimReward =
   /*#__PURE__*/ createSimulateContract({
@@ -20962,7 +20962,7 @@ export const simulateFarmingCenterClaimReward =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"collectRewards"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenterCollectRewards =
   /*#__PURE__*/ createSimulateContract({
@@ -20974,7 +20974,7 @@ export const simulateFarmingCenterCollectRewards =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"connectVirtualPoolToPlugin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenterConnectVirtualPoolToPlugin =
   /*#__PURE__*/ createSimulateContract({
@@ -20986,7 +20986,7 @@ export const simulateFarmingCenterConnectVirtualPoolToPlugin =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"disconnectVirtualPoolFromPlugin"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenterDisconnectVirtualPoolFromPlugin =
   /*#__PURE__*/ createSimulateContract({
@@ -20998,7 +20998,7 @@ export const simulateFarmingCenterDisconnectVirtualPoolFromPlugin =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"enterFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenterEnterFarming =
   /*#__PURE__*/ createSimulateContract({
@@ -21010,7 +21010,7 @@ export const simulateFarmingCenterEnterFarming =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"exitFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenterExitFarming =
   /*#__PURE__*/ createSimulateContract({
@@ -21022,7 +21022,7 @@ export const simulateFarmingCenterExitFarming =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link farmingCenterAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x123AE7196548ED7370854F91f153cd4e5918A011)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA)
  */
 export const simulateFarmingCenterMulticall =
   /*#__PURE__*/ createSimulateContract({
@@ -21431,7 +21431,7 @@ export const watchLimitOrderManagerWithdrawEvent =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManager = /*#__PURE__*/ createReadContract({
   abi: nonfungiblePositionManagerAbi,
@@ -21441,7 +21441,7 @@ export const readNonfungiblePositionManager = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"DOMAIN_SEPARATOR"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerDomainSeparator =
   /*#__PURE__*/ createReadContract({
@@ -21453,7 +21453,7 @@ export const readNonfungiblePositionManagerDomainSeparator =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"NONFUNGIBLE_POSITION_MANAGER_ADMINISTRATOR_ROLE"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerNonfungiblePositionManagerAdministratorRole =
   /*#__PURE__*/ createReadContract({
@@ -21465,7 +21465,7 @@ export const readNonfungiblePositionManagerNonfungiblePositionManagerAdministrat
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"PERMIT_TYPEHASH"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerPermitTypehash =
   /*#__PURE__*/ createReadContract({
@@ -21477,7 +21477,7 @@ export const readNonfungiblePositionManagerPermitTypehash =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"WNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerWNativeToken =
   /*#__PURE__*/ createReadContract({
@@ -21489,7 +21489,7 @@ export const readNonfungiblePositionManagerWNativeToken =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"balanceOf"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerBalanceOf =
   /*#__PURE__*/ createReadContract({
@@ -21501,7 +21501,7 @@ export const readNonfungiblePositionManagerBalanceOf =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"factory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerFactory =
   /*#__PURE__*/ createReadContract({
@@ -21513,7 +21513,7 @@ export const readNonfungiblePositionManagerFactory =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"farmingApprovals"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerFarmingApprovals =
   /*#__PURE__*/ createReadContract({
@@ -21525,7 +21525,7 @@ export const readNonfungiblePositionManagerFarmingApprovals =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"farmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerFarmingCenter =
   /*#__PURE__*/ createReadContract({
@@ -21537,7 +21537,7 @@ export const readNonfungiblePositionManagerFarmingCenter =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"getApproved"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerGetApproved =
   /*#__PURE__*/ createReadContract({
@@ -21549,7 +21549,7 @@ export const readNonfungiblePositionManagerGetApproved =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"isApprovedForAll"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerIsApprovedForAll =
   /*#__PURE__*/ createReadContract({
@@ -21561,7 +21561,7 @@ export const readNonfungiblePositionManagerIsApprovedForAll =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"isApprovedOrOwner"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerIsApprovedOrOwner =
   /*#__PURE__*/ createReadContract({
@@ -21573,7 +21573,7 @@ export const readNonfungiblePositionManagerIsApprovedOrOwner =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"name"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerName =
   /*#__PURE__*/ createReadContract({
@@ -21585,7 +21585,7 @@ export const readNonfungiblePositionManagerName =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"ownerOf"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerOwnerOf =
   /*#__PURE__*/ createReadContract({
@@ -21597,7 +21597,7 @@ export const readNonfungiblePositionManagerOwnerOf =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"poolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerPoolDeployer =
   /*#__PURE__*/ createReadContract({
@@ -21609,7 +21609,7 @@ export const readNonfungiblePositionManagerPoolDeployer =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"positions"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerPositions =
   /*#__PURE__*/ createReadContract({
@@ -21621,7 +21621,7 @@ export const readNonfungiblePositionManagerPositions =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"supportsInterface"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerSupportsInterface =
   /*#__PURE__*/ createReadContract({
@@ -21633,7 +21633,7 @@ export const readNonfungiblePositionManagerSupportsInterface =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"symbol"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerSymbol =
   /*#__PURE__*/ createReadContract({
@@ -21645,7 +21645,7 @@ export const readNonfungiblePositionManagerSymbol =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"tokenByIndex"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerTokenByIndex =
   /*#__PURE__*/ createReadContract({
@@ -21657,7 +21657,7 @@ export const readNonfungiblePositionManagerTokenByIndex =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"tokenFarmedIn"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerTokenFarmedIn =
   /*#__PURE__*/ createReadContract({
@@ -21669,7 +21669,7 @@ export const readNonfungiblePositionManagerTokenFarmedIn =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"tokenOfOwnerByIndex"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerTokenOfOwnerByIndex =
   /*#__PURE__*/ createReadContract({
@@ -21681,7 +21681,7 @@ export const readNonfungiblePositionManagerTokenOfOwnerByIndex =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"tokenURI"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerTokenUri =
   /*#__PURE__*/ createReadContract({
@@ -21693,7 +21693,7 @@ export const readNonfungiblePositionManagerTokenUri =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"totalSupply"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const readNonfungiblePositionManagerTotalSupply =
   /*#__PURE__*/ createReadContract({
@@ -21705,7 +21705,7 @@ export const readNonfungiblePositionManagerTotalSupply =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManager =
   /*#__PURE__*/ createWriteContract({
@@ -21716,7 +21716,7 @@ export const writeNonfungiblePositionManager =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"algebraMintCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerAlgebraMintCallback =
   /*#__PURE__*/ createWriteContract({
@@ -21728,7 +21728,7 @@ export const writeNonfungiblePositionManagerAlgebraMintCallback =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"approve"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerApprove =
   /*#__PURE__*/ createWriteContract({
@@ -21740,7 +21740,7 @@ export const writeNonfungiblePositionManagerApprove =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"approveForFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerApproveForFarming =
   /*#__PURE__*/ createWriteContract({
@@ -21752,7 +21752,7 @@ export const writeNonfungiblePositionManagerApproveForFarming =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"burn"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerBurn =
   /*#__PURE__*/ createWriteContract({
@@ -21764,7 +21764,7 @@ export const writeNonfungiblePositionManagerBurn =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"collect"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerCollect =
   /*#__PURE__*/ createWriteContract({
@@ -21776,7 +21776,7 @@ export const writeNonfungiblePositionManagerCollect =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"createAndInitializePoolIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerCreateAndInitializePoolIfNecessary =
   /*#__PURE__*/ createWriteContract({
@@ -21788,7 +21788,7 @@ export const writeNonfungiblePositionManagerCreateAndInitializePoolIfNecessary =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"decreaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerDecreaseLiquidity =
   /*#__PURE__*/ createWriteContract({
@@ -21800,7 +21800,7 @@ export const writeNonfungiblePositionManagerDecreaseLiquidity =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"increaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerIncreaseLiquidity =
   /*#__PURE__*/ createWriteContract({
@@ -21812,7 +21812,7 @@ export const writeNonfungiblePositionManagerIncreaseLiquidity =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"mint"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerMint =
   /*#__PURE__*/ createWriteContract({
@@ -21824,7 +21824,7 @@ export const writeNonfungiblePositionManagerMint =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerMulticall =
   /*#__PURE__*/ createWriteContract({
@@ -21836,7 +21836,7 @@ export const writeNonfungiblePositionManagerMulticall =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"permit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerPermit =
   /*#__PURE__*/ createWriteContract({
@@ -21848,7 +21848,7 @@ export const writeNonfungiblePositionManagerPermit =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"refundNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerRefundNativeToken =
   /*#__PURE__*/ createWriteContract({
@@ -21860,7 +21860,7 @@ export const writeNonfungiblePositionManagerRefundNativeToken =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"safeTransferFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSafeTransferFrom =
   /*#__PURE__*/ createWriteContract({
@@ -21872,7 +21872,7 @@ export const writeNonfungiblePositionManagerSafeTransferFrom =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSelfPermit =
   /*#__PURE__*/ createWriteContract({
@@ -21884,7 +21884,7 @@ export const writeNonfungiblePositionManagerSelfPermit =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitAllowed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSelfPermitAllowed =
   /*#__PURE__*/ createWriteContract({
@@ -21896,7 +21896,7 @@ export const writeNonfungiblePositionManagerSelfPermitAllowed =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitAllowedIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSelfPermitAllowedIfNecessary =
   /*#__PURE__*/ createWriteContract({
@@ -21908,7 +21908,7 @@ export const writeNonfungiblePositionManagerSelfPermitAllowedIfNecessary =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSelfPermitIfNecessary =
   /*#__PURE__*/ createWriteContract({
@@ -21920,7 +21920,7 @@ export const writeNonfungiblePositionManagerSelfPermitIfNecessary =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"setApprovalForAll"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSetApprovalForAll =
   /*#__PURE__*/ createWriteContract({
@@ -21932,7 +21932,7 @@ export const writeNonfungiblePositionManagerSetApprovalForAll =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"setFarmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSetFarmingCenter =
   /*#__PURE__*/ createWriteContract({
@@ -21944,7 +21944,7 @@ export const writeNonfungiblePositionManagerSetFarmingCenter =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"sweepToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSweepToken =
   /*#__PURE__*/ createWriteContract({
@@ -21956,7 +21956,7 @@ export const writeNonfungiblePositionManagerSweepToken =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"switchFarmingStatus"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerSwitchFarmingStatus =
   /*#__PURE__*/ createWriteContract({
@@ -21968,7 +21968,7 @@ export const writeNonfungiblePositionManagerSwitchFarmingStatus =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"transferFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerTransferFrom =
   /*#__PURE__*/ createWriteContract({
@@ -21980,7 +21980,7 @@ export const writeNonfungiblePositionManagerTransferFrom =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"unwrapWNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const writeNonfungiblePositionManagerUnwrapWNativeToken =
   /*#__PURE__*/ createWriteContract({
@@ -21992,7 +21992,7 @@ export const writeNonfungiblePositionManagerUnwrapWNativeToken =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManager =
   /*#__PURE__*/ createSimulateContract({
@@ -22003,7 +22003,7 @@ export const simulateNonfungiblePositionManager =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"algebraMintCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerAlgebraMintCallback =
   /*#__PURE__*/ createSimulateContract({
@@ -22015,7 +22015,7 @@ export const simulateNonfungiblePositionManagerAlgebraMintCallback =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"approve"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerApprove =
   /*#__PURE__*/ createSimulateContract({
@@ -22027,7 +22027,7 @@ export const simulateNonfungiblePositionManagerApprove =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"approveForFarming"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerApproveForFarming =
   /*#__PURE__*/ createSimulateContract({
@@ -22039,7 +22039,7 @@ export const simulateNonfungiblePositionManagerApproveForFarming =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"burn"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerBurn =
   /*#__PURE__*/ createSimulateContract({
@@ -22051,7 +22051,7 @@ export const simulateNonfungiblePositionManagerBurn =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"collect"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerCollect =
   /*#__PURE__*/ createSimulateContract({
@@ -22063,7 +22063,7 @@ export const simulateNonfungiblePositionManagerCollect =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"createAndInitializePoolIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerCreateAndInitializePoolIfNecessary =
   /*#__PURE__*/ createSimulateContract({
@@ -22075,7 +22075,7 @@ export const simulateNonfungiblePositionManagerCreateAndInitializePoolIfNecessar
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"decreaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerDecreaseLiquidity =
   /*#__PURE__*/ createSimulateContract({
@@ -22087,7 +22087,7 @@ export const simulateNonfungiblePositionManagerDecreaseLiquidity =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"increaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerIncreaseLiquidity =
   /*#__PURE__*/ createSimulateContract({
@@ -22099,7 +22099,7 @@ export const simulateNonfungiblePositionManagerIncreaseLiquidity =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"mint"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerMint =
   /*#__PURE__*/ createSimulateContract({
@@ -22111,7 +22111,7 @@ export const simulateNonfungiblePositionManagerMint =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerMulticall =
   /*#__PURE__*/ createSimulateContract({
@@ -22123,7 +22123,7 @@ export const simulateNonfungiblePositionManagerMulticall =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"permit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerPermit =
   /*#__PURE__*/ createSimulateContract({
@@ -22135,7 +22135,7 @@ export const simulateNonfungiblePositionManagerPermit =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"refundNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerRefundNativeToken =
   /*#__PURE__*/ createSimulateContract({
@@ -22147,7 +22147,7 @@ export const simulateNonfungiblePositionManagerRefundNativeToken =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"safeTransferFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSafeTransferFrom =
   /*#__PURE__*/ createSimulateContract({
@@ -22159,7 +22159,7 @@ export const simulateNonfungiblePositionManagerSafeTransferFrom =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSelfPermit =
   /*#__PURE__*/ createSimulateContract({
@@ -22171,7 +22171,7 @@ export const simulateNonfungiblePositionManagerSelfPermit =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitAllowed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSelfPermitAllowed =
   /*#__PURE__*/ createSimulateContract({
@@ -22183,7 +22183,7 @@ export const simulateNonfungiblePositionManagerSelfPermitAllowed =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitAllowedIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSelfPermitAllowedIfNecessary =
   /*#__PURE__*/ createSimulateContract({
@@ -22195,7 +22195,7 @@ export const simulateNonfungiblePositionManagerSelfPermitAllowedIfNecessary =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"selfPermitIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSelfPermitIfNecessary =
   /*#__PURE__*/ createSimulateContract({
@@ -22207,7 +22207,7 @@ export const simulateNonfungiblePositionManagerSelfPermitIfNecessary =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"setApprovalForAll"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSetApprovalForAll =
   /*#__PURE__*/ createSimulateContract({
@@ -22219,7 +22219,7 @@ export const simulateNonfungiblePositionManagerSetApprovalForAll =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"setFarmingCenter"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSetFarmingCenter =
   /*#__PURE__*/ createSimulateContract({
@@ -22231,7 +22231,7 @@ export const simulateNonfungiblePositionManagerSetFarmingCenter =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"sweepToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSweepToken =
   /*#__PURE__*/ createSimulateContract({
@@ -22243,7 +22243,7 @@ export const simulateNonfungiblePositionManagerSweepToken =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"switchFarmingStatus"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerSwitchFarmingStatus =
   /*#__PURE__*/ createSimulateContract({
@@ -22255,7 +22255,7 @@ export const simulateNonfungiblePositionManagerSwitchFarmingStatus =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"transferFrom"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerTransferFrom =
   /*#__PURE__*/ createSimulateContract({
@@ -22267,7 +22267,7 @@ export const simulateNonfungiblePositionManagerTransferFrom =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `functionName` set to `"unwrapWNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const simulateNonfungiblePositionManagerUnwrapWNativeToken =
   /*#__PURE__*/ createSimulateContract({
@@ -22279,7 +22279,7 @@ export const simulateNonfungiblePositionManagerUnwrapWNativeToken =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const watchNonfungiblePositionManagerEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -22290,7 +22290,7 @@ export const watchNonfungiblePositionManagerEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"Approval"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const watchNonfungiblePositionManagerApprovalEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -22302,7 +22302,7 @@ export const watchNonfungiblePositionManagerApprovalEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"ApprovalForAll"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const watchNonfungiblePositionManagerApprovalForAllEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -22314,7 +22314,7 @@ export const watchNonfungiblePositionManagerApprovalForAllEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"Collect"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const watchNonfungiblePositionManagerCollectEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -22326,7 +22326,7 @@ export const watchNonfungiblePositionManagerCollectEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"DecreaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const watchNonfungiblePositionManagerDecreaseLiquidityEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -22338,7 +22338,7 @@ export const watchNonfungiblePositionManagerDecreaseLiquidityEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"FarmingFailed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const watchNonfungiblePositionManagerFarmingFailedEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -22350,7 +22350,7 @@ export const watchNonfungiblePositionManagerFarmingFailedEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"IncreaseLiquidity"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const watchNonfungiblePositionManagerIncreaseLiquidityEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -22362,7 +22362,7 @@ export const watchNonfungiblePositionManagerIncreaseLiquidityEvent =
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link nonfungiblePositionManagerAbi}__ and `eventName` set to `"Transfer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x97B4FE94Bf06dB1DE2b05425303965f3F95186c7)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0xD637cbc214Bc3dD354aBb309f4fE717ffdD0B28C)
  */
 export const watchNonfungiblePositionManagerTransferEvent =
   /*#__PURE__*/ createWatchContractEvent({
@@ -22374,7 +22374,7 @@ export const watchNonfungiblePositionManagerTransferEvent =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link quoterV2Abi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const readQuoterV2 = /*#__PURE__*/ createReadContract({
   abi: quoterV2Abi,
@@ -22384,7 +22384,7 @@ export const readQuoterV2 = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"WNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const readQuoterV2WNativeToken = /*#__PURE__*/ createReadContract({
   abi: quoterV2Abi,
@@ -22395,7 +22395,7 @@ export const readQuoterV2WNativeToken = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"algebraSwapCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const readQuoterV2AlgebraSwapCallback = /*#__PURE__*/ createReadContract(
   {
@@ -22408,7 +22408,7 @@ export const readQuoterV2AlgebraSwapCallback = /*#__PURE__*/ createReadContract(
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"factory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const readQuoterV2Factory = /*#__PURE__*/ createReadContract({
   abi: quoterV2Abi,
@@ -22419,7 +22419,7 @@ export const readQuoterV2Factory = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"poolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const readQuoterV2PoolDeployer = /*#__PURE__*/ createReadContract({
   abi: quoterV2Abi,
@@ -22430,7 +22430,7 @@ export const readQuoterV2PoolDeployer = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link quoterV2Abi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const writeQuoterV2 = /*#__PURE__*/ createWriteContract({
   abi: quoterV2Abi,
@@ -22440,7 +22440,7 @@ export const writeQuoterV2 = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactInput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const writeQuoterV2QuoteExactInput = /*#__PURE__*/ createWriteContract({
   abi: quoterV2Abi,
@@ -22451,7 +22451,7 @@ export const writeQuoterV2QuoteExactInput = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactInputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const writeQuoterV2QuoteExactInputSingle =
   /*#__PURE__*/ createWriteContract({
@@ -22463,7 +22463,7 @@ export const writeQuoterV2QuoteExactInputSingle =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactOutput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const writeQuoterV2QuoteExactOutput = /*#__PURE__*/ createWriteContract({
   abi: quoterV2Abi,
@@ -22474,7 +22474,7 @@ export const writeQuoterV2QuoteExactOutput = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactOutputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const writeQuoterV2QuoteExactOutputSingle =
   /*#__PURE__*/ createWriteContract({
@@ -22486,7 +22486,7 @@ export const writeQuoterV2QuoteExactOutputSingle =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link quoterV2Abi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const simulateQuoterV2 = /*#__PURE__*/ createSimulateContract({
   abi: quoterV2Abi,
@@ -22496,7 +22496,7 @@ export const simulateQuoterV2 = /*#__PURE__*/ createSimulateContract({
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactInput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const simulateQuoterV2QuoteExactInput =
   /*#__PURE__*/ createSimulateContract({
@@ -22508,7 +22508,7 @@ export const simulateQuoterV2QuoteExactInput =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactInputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const simulateQuoterV2QuoteExactInputSingle =
   /*#__PURE__*/ createSimulateContract({
@@ -22520,7 +22520,7 @@ export const simulateQuoterV2QuoteExactInputSingle =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactOutput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const simulateQuoterV2QuoteExactOutput =
   /*#__PURE__*/ createSimulateContract({
@@ -22532,7 +22532,7 @@ export const simulateQuoterV2QuoteExactOutput =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link quoterV2Abi}__ and `functionName` set to `"quoteExactOutputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0Ee7e388564f3efEe06eF9A6f43C6E854AeC027e)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x13fcE0acbe6Fb11641ab753212550574CaD31415)
  */
 export const simulateQuoterV2QuoteExactOutputSingle =
   /*#__PURE__*/ createSimulateContract({
@@ -23590,7 +23590,7 @@ export const watchSecurityRegistryPoolStatusEvent =
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link swapRouterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const readSwapRouter = /*#__PURE__*/ createReadContract({
   abi: swapRouterAbi,
@@ -23600,7 +23600,7 @@ export const readSwapRouter = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"WNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const readSwapRouterWNativeToken = /*#__PURE__*/ createReadContract({
   abi: swapRouterAbi,
@@ -23611,7 +23611,7 @@ export const readSwapRouterWNativeToken = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"factory"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const readSwapRouterFactory = /*#__PURE__*/ createReadContract({
   abi: swapRouterAbi,
@@ -23622,7 +23622,7 @@ export const readSwapRouterFactory = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"poolDeployer"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const readSwapRouterPoolDeployer = /*#__PURE__*/ createReadContract({
   abi: swapRouterAbi,
@@ -23633,7 +23633,7 @@ export const readSwapRouterPoolDeployer = /*#__PURE__*/ createReadContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouter = /*#__PURE__*/ createWriteContract({
   abi: swapRouterAbi,
@@ -23643,7 +23643,7 @@ export const writeSwapRouter = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"algebraSwapCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterAlgebraSwapCallback =
   /*#__PURE__*/ createWriteContract({
@@ -23655,7 +23655,7 @@ export const writeSwapRouterAlgebraSwapCallback =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterExactInput = /*#__PURE__*/ createWriteContract({
   abi: swapRouterAbi,
@@ -23666,7 +23666,7 @@ export const writeSwapRouterExactInput = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterExactInputSingle =
   /*#__PURE__*/ createWriteContract({
@@ -23678,7 +23678,7 @@ export const writeSwapRouterExactInputSingle =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInputSingleSupportingFeeOnTransferTokens"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterExactInputSingleSupportingFeeOnTransferTokens =
   /*#__PURE__*/ createWriteContract({
@@ -23690,7 +23690,7 @@ export const writeSwapRouterExactInputSingleSupportingFeeOnTransferTokens =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactOutput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterExactOutput = /*#__PURE__*/ createWriteContract({
   abi: swapRouterAbi,
@@ -23701,7 +23701,7 @@ export const writeSwapRouterExactOutput = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactOutputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterExactOutputSingle =
   /*#__PURE__*/ createWriteContract({
@@ -23713,7 +23713,7 @@ export const writeSwapRouterExactOutputSingle =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterMulticall = /*#__PURE__*/ createWriteContract({
   abi: swapRouterAbi,
@@ -23724,7 +23724,7 @@ export const writeSwapRouterMulticall = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"refundNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterRefundNativeToken =
   /*#__PURE__*/ createWriteContract({
@@ -23736,7 +23736,7 @@ export const writeSwapRouterRefundNativeToken =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterSelfPermit = /*#__PURE__*/ createWriteContract({
   abi: swapRouterAbi,
@@ -23747,7 +23747,7 @@ export const writeSwapRouterSelfPermit = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitAllowed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterSelfPermitAllowed =
   /*#__PURE__*/ createWriteContract({
@@ -23759,7 +23759,7 @@ export const writeSwapRouterSelfPermitAllowed =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitAllowedIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterSelfPermitAllowedIfNecessary =
   /*#__PURE__*/ createWriteContract({
@@ -23771,7 +23771,7 @@ export const writeSwapRouterSelfPermitAllowedIfNecessary =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterSelfPermitIfNecessary =
   /*#__PURE__*/ createWriteContract({
@@ -23783,7 +23783,7 @@ export const writeSwapRouterSelfPermitIfNecessary =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"sweepToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterSweepToken = /*#__PURE__*/ createWriteContract({
   abi: swapRouterAbi,
@@ -23794,7 +23794,7 @@ export const writeSwapRouterSweepToken = /*#__PURE__*/ createWriteContract({
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"sweepTokenWithFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterSweepTokenWithFee =
   /*#__PURE__*/ createWriteContract({
@@ -23806,7 +23806,7 @@ export const writeSwapRouterSweepTokenWithFee =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"unwrapWNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterUnwrapWNativeToken =
   /*#__PURE__*/ createWriteContract({
@@ -23818,7 +23818,7 @@ export const writeSwapRouterUnwrapWNativeToken =
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"unwrapWNativeTokenWithFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const writeSwapRouterUnwrapWNativeTokenWithFee =
   /*#__PURE__*/ createWriteContract({
@@ -23830,7 +23830,7 @@ export const writeSwapRouterUnwrapWNativeTokenWithFee =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouter = /*#__PURE__*/ createSimulateContract({
   abi: swapRouterAbi,
@@ -23840,7 +23840,7 @@ export const simulateSwapRouter = /*#__PURE__*/ createSimulateContract({
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"algebraSwapCallback"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterAlgebraSwapCallback =
   /*#__PURE__*/ createSimulateContract({
@@ -23852,7 +23852,7 @@ export const simulateSwapRouterAlgebraSwapCallback =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterExactInput =
   /*#__PURE__*/ createSimulateContract({
@@ -23864,7 +23864,7 @@ export const simulateSwapRouterExactInput =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterExactInputSingle =
   /*#__PURE__*/ createSimulateContract({
@@ -23876,7 +23876,7 @@ export const simulateSwapRouterExactInputSingle =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactInputSingleSupportingFeeOnTransferTokens"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterExactInputSingleSupportingFeeOnTransferTokens =
   /*#__PURE__*/ createSimulateContract({
@@ -23888,7 +23888,7 @@ export const simulateSwapRouterExactInputSingleSupportingFeeOnTransferTokens =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactOutput"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterExactOutput =
   /*#__PURE__*/ createSimulateContract({
@@ -23900,7 +23900,7 @@ export const simulateSwapRouterExactOutput =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"exactOutputSingle"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterExactOutputSingle =
   /*#__PURE__*/ createSimulateContract({
@@ -23912,7 +23912,7 @@ export const simulateSwapRouterExactOutputSingle =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"multicall"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterMulticall = /*#__PURE__*/ createSimulateContract(
   { abi: swapRouterAbi, address: swapRouterAddress, functionName: 'multicall' },
@@ -23921,7 +23921,7 @@ export const simulateSwapRouterMulticall = /*#__PURE__*/ createSimulateContract(
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"refundNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterRefundNativeToken =
   /*#__PURE__*/ createSimulateContract({
@@ -23933,7 +23933,7 @@ export const simulateSwapRouterRefundNativeToken =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermit"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterSelfPermit =
   /*#__PURE__*/ createSimulateContract({
@@ -23945,7 +23945,7 @@ export const simulateSwapRouterSelfPermit =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitAllowed"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterSelfPermitAllowed =
   /*#__PURE__*/ createSimulateContract({
@@ -23957,7 +23957,7 @@ export const simulateSwapRouterSelfPermitAllowed =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitAllowedIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterSelfPermitAllowedIfNecessary =
   /*#__PURE__*/ createSimulateContract({
@@ -23969,7 +23969,7 @@ export const simulateSwapRouterSelfPermitAllowedIfNecessary =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"selfPermitIfNecessary"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterSelfPermitIfNecessary =
   /*#__PURE__*/ createSimulateContract({
@@ -23981,7 +23981,7 @@ export const simulateSwapRouterSelfPermitIfNecessary =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"sweepToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterSweepToken =
   /*#__PURE__*/ createSimulateContract({
@@ -23993,7 +23993,7 @@ export const simulateSwapRouterSweepToken =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"sweepTokenWithFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterSweepTokenWithFee =
   /*#__PURE__*/ createSimulateContract({
@@ -24005,7 +24005,7 @@ export const simulateSwapRouterSweepTokenWithFee =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"unwrapWNativeToken"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterUnwrapWNativeToken =
   /*#__PURE__*/ createSimulateContract({
@@ -24017,7 +24017,7 @@ export const simulateSwapRouterUnwrapWNativeToken =
 /**
  * Wraps __{@link simulateContract}__ with `abi` set to __{@link swapRouterAbi}__ and `functionName` set to `"unwrapWNativeTokenWithFee"`
  *
- * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0194CcfC49C3ebc7457E0b41B9c6b840C22f5985)
+ * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x03f8B4b140249Dc7B2503C928E7258CCe1d91F1A)
  */
 export const simulateSwapRouterUnwrapWNativeTokenWithFee =
   /*#__PURE__*/ createSimulateContract({
