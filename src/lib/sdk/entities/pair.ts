@@ -28,8 +28,12 @@ import { ROUTER_ADDRESS_WITH_PRICE, PYTH_ADDRESS } from '../constants/addresses'
 // ── Caches: reduce redundant RPC calls per quote ──────────────────────
 // priceFeedId cache is shared with utils/index.ts — imported via getCachedPriceFeedId
 
-// Hermes + encoded updateData: cache 5s (Pyth publishes ~1/s but we don't need sub-second freshness for quotes)
-let hermesCache: { key: string; data: string; ts: number } | null = null
+// Hermes + encoded updateData: cache 5s (Pyth publishes ~1/s but we don't need sub-second freshness for quotes).
+// Keyed by sorted feed-id set — trade discovery quotes SEVERAL pairs, each with a
+// DIFFERENT feed set, so a single-slot cache thrashed (every pair evicted the last
+// → same feeds refetched every pass, ~30 Hermes calls per quote). A Map caches each
+// feed set independently, so repeat passes within the TTL hit cache.
+const hermesCache = new Map<string, { data: string; ts: number }>()
 const HERMES_TTL = 5_000
 
 // Concurrent-call dedup. The 5s TTL above only helps SEQUENTIAL callers —
@@ -43,8 +47,10 @@ const hermesInflight = new Map<string, Promise<string>>()
 
 async function getCachedUpdateData(feedIds: string[]): Promise<string> {
   const sortedKey = [...feedIds].sort().join(',')
-  if (hermesCache && hermesCache.key === sortedKey && Date.now() - hermesCache.ts < HERMES_TTL) {
-    return hermesCache.data
+  const now = Date.now()
+  const cached = hermesCache.get(sortedKey)
+  if (cached && now - cached.ts < HERMES_TTL) {
+    return cached.data
   }
   const inflight = hermesInflight.get(sortedKey)
   if (inflight) return inflight
@@ -57,7 +63,10 @@ async function getCachedUpdateData(feedIds: string[]): Promise<string> {
     const json = await resp.json()
     const dataBytes = (json.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
     const encoded = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
-    hermesCache = { key: sortedKey, data: encoded, ts: Date.now() }
+    // Prune expired entries so the Map can't grow unbounded across a long session
+    // (each visited pool adds a feed-set key), then cache this one.
+    for (const [k, v] of hermesCache) if (Date.now() - v.ts >= HERMES_TTL) hermesCache.delete(k)
+    hermesCache.set(sortedKey, { data: encoded, ts: Date.now() })
     return encoded
   })()
 

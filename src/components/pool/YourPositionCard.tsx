@@ -13,6 +13,7 @@ import { orderedCurrencyIds } from 'utils/pair'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { formatNumber, formatPrice } from 'utils/prices'
 import { usePythPrices } from 'hooks/usePythPrices'
+import { useHermesPrices } from 'hooks/useHermesPrices'
 import { useRestakedPositions } from 'hooks/useRestakedPositions'
 import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
 import ConnectWallet from 'components/ConnectWallet'
@@ -83,6 +84,29 @@ export function YourPositionCard({ pair, pairStats }: Props) {
   })
   const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
+
+  // HODL portfolio must be valued with LIVE prices, not the indexer's. A pool
+  // with no swaps never refreshes the indexer token price, so the stored
+  // bnhPortfolio (= bnh0*token0Price + bnh1*token1Price) goes stale. Recompute
+  // it here from bnh0/bnh1 (already decimal-adjusted) × fresh Hermes prices
+  // (15s refetch, independent of indexer/oracle staleness), falling back to the
+  // indexer value only when Hermes has no feed for a side. Per Manh (2026-07-16),
+  // the formula is correct; the fix is always pricing it fresh. lpPortfolio gets
+  // the same treatment on the BE separately.
+  const hermesPrices = useHermesPrices({
+    chainId,
+    currencyA: pair.token0,
+    currencyB: pair.token1,
+    version: pair.version,
+    // Only poll (15s) while the HODL row is actually on screen — the portfolio
+    // block is behind `expanded` and needs an account. Collapsed cards fall back
+    // to the indexer value (row isn't rendered then anyway).
+    enabled: expanded && !!account,
+  })
+  const hodlPortfolio =
+    pairAccount && hermesPrices.CURRENCY_A > 0 && hermesPrices.CURRENCY_B > 0
+      ? pairAccount.bnh0 * hermesPrices.CURRENCY_A + pairAccount.bnh1 * hermesPrices.CURRENCY_B
+      : pairAccount?.bnhPortfolio ?? 0
 
   const symbol0 = getTokenSymbol(currency0, chainId) ?? '?'
   const symbol1 = getTokenSymbol(currency1, chainId) ?? '?'
@@ -258,14 +282,15 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                 <>
                   <div style={{ borderTop: '1px solid #2F2823', margin: '4px 0' }} />
                   <PortfolioRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
-                  {!isMainnet && (
-                    <PortfolioRow label="HODL portfolio" value={pairAccount.bnhPortfolio} />
-                  )}
+                  {/* HODL portfolio = buy-&-hold simulation (indexer bnhPortfolio). Enabled
+                      on prod per boss (2026-07-15); "(simulation)" flags it as a modeled
+                      value. The HODL PnL / LPing-vs-HODL rows below stay dev-only. */}
+                  <PortfolioRow label="HODL portfolio (simulation)" value={hodlPortfolio} />
                   <PortfolioRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} base={pairAccount.basePortfolio} />
                   {!isMainnet && (
                     <>
-                      <PortfolioRow colored label="HODL PnL" value={pairAccount.bnhPortfolio - pairAccount.basePortfolio} base={pairAccount.basePortfolio} />
-                      <PortfolioRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio} />
+                      <PortfolioRow colored label="HODL PnL" value={hodlPortfolio - pairAccount.basePortfolio} base={pairAccount.basePortfolio} />
+                      <PortfolioRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - hodlPortfolio} />
                     </>
                   )}
                 </>

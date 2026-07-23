@@ -254,7 +254,7 @@ function PoolDetailInner({
   const feeAprDisplay = !ratiosMeaningful
     ? 0
     : isV3Like(version) && USE_V3_UNIV2_COMPARISON
-      ? computeV3FeeApr(pairRaw)
+      ? computeV3FeeApr(pairRaw, chainId)
       : feeOverTvl
   // "Annualized Return" label is shared by V2 + V3. The V3-only (?) hint lives
   // in <AnnualizedReturnInfo/> (interactive tooltip with a clickable Learn More).
@@ -516,7 +516,7 @@ function PoolDetailInner({
 
             {/* Chart */}
             <Suspense fallback={<div style={{ height: 380, background: '#1E1915', borderRadius: '12px' }} />}>
-              <PairChartTV pair={pair} />
+              <PairChartTV pair={pair} reversed={isReversed} symbol0={symbol0} symbol1={symbol1} />
             </Suspense>
 
             {/* Your position — mobile only, above activity */}
@@ -530,6 +530,9 @@ function PoolDetailInner({
                 and tx history. V3 ONLY: the V2 indexer has no `transactions` query
                 (404s), so the chart would be empty on V2. LP-vs-BH line hidden. */}
             {isV3Like(version) && (
+              // LP-vs-HODL line removed from the Pool Balance chart (boss request,
+              // 2026-07-16) — moved to the LP chart as "LP vs BH". Leaves pct0/pct1
+              // + relative price. showLpVsBh=false.
               <PoolBalanceChart
                 pairAddress={pairAddress}
                 chainId={chainId}

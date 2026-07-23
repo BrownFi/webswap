@@ -2,7 +2,6 @@ import { ChainId, JSBI, Pair, Token, TokenAmount, WETH } from '@brownfi/sdk'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { ThemeContext } from 'styled-components'
 
-import SwitchVersion from 'components/SwitchVersion'
 import { useVersion } from 'hooks/useVersion'
 import { Address, checksumAddress } from 'viem'
 
@@ -224,7 +223,7 @@ export default function Pool() {
       // return; V2 sorts by the 24h-fees/TVL daily ratio it now displays.
       if (sortKey === 'apr') {
         if (isV3Like(version) && USE_V3_UNIV2_COMPARISON) {
-          return computeV3FeeApr(p)
+          return computeV3FeeApr(p, chainId)
         }
         const feeDayTvl = Number(p.tvl) > 0 ? (Number(p.feeDay) || 0) / Number(p.tvl) : 0
         return feeDayTvl
@@ -331,21 +330,6 @@ export default function Pool() {
         </IndexerModalContent>
       </Modal>
 
-      {chainId === ChainId.BERA_MAINNET && version === 1 && (
-        <TYPE.main mb={6} color="#bb9981" className="max-w-[1280px] px-2">
-          With the release of V2, our V1 platform will soon be deprecated. Please withdraw your liquidity from V1 and
-          redeposit to V2 now to keep earning fees.{' '}
-          <a
-            href="https://mirror.xyz/0x64f4Fbd29b0AE2C8e18E7940CF823df5CB639bBa/QhlhP7rD3eN8COu8wEk-Co4oyk0vXyAM3XGiLVQgI3E"
-            target="_blank"
-            className="cursor-pointer hover:underline"
-            rel="noreferrer"
-          >
-            Learn More
-          </a>
-        </TYPE.main>
-      )}
-
       <PageWrapper>
         <AutoColumn gap="md" justify="center" className="p-[12px] pt-[16px] sm:pt-[24px] lg:p-[24px]">
           <AutoColumn className="gap-4 sm:gap-6" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -363,7 +347,6 @@ export default function Pool() {
                 >
                   Liquidity Pools
                 </span>
-                <SwitchVersion />
               </Flex>
             </TitleRow>
 

@@ -2,9 +2,7 @@ import {
   sepolia as sepoliaChain,
   berachain as berachainChain,
   arbitrum as arbitrumChain,
-  base as baseChain,
   linea as lineaChain,
-  monad as monadChain,
 } from 'viem/chains'
 
 import { Chain, getDefaultConfig, getDefaultWallets } from '@rainbow-me/rainbowkit'
@@ -14,9 +12,7 @@ import hyperevmIcon from 'assets/images/hyperevm.png'
 import ethereumIcon from 'assets/images/ethereum-logo.png'
 import beraIcon from 'assets/images/w-bera.png'
 import arbIcon from 'assets/images/arb.png'
-import baseIcon from 'assets/images/base.png'
 import lineaIcon from 'assets/images/linea.webp'
-import monadIcon from 'assets/images/monad.png'
 
 const overrideChain = ({
   chain,
@@ -76,16 +72,6 @@ const arbitrum = overrideChain({
   ],
 })
 
-const base = overrideChain({
-  chain: baseChain,
-  iconUrl: baseIcon,
-  fallbackRpcs: [
-    //
-    'https://1rpc.io/base',
-    'https://base.llamarpc.com',
-  ],
-})
-
 const linea = overrideChain({
   chain: lineaChain,
   iconUrl: lineaIcon,
@@ -93,15 +79,6 @@ const linea = overrideChain({
     //
     'https://1rpc.io/linea',
     'https://linea.drpc.org',
-  ],
-})
-
-const monad = overrideChain({
-  chain: monadChain,
-  iconUrl: monadIcon,
-  fallbackRpcs: [
-    //
-    'https://rpc3.monad.xyz',
   ],
 })
 
@@ -120,7 +97,6 @@ export const hemi: Chain = {
   },
   iconUrl: 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png',
 }
-
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
@@ -144,10 +120,10 @@ export const appEnvLabel = (import.meta.env.VITE_ENV_LABEL || appEnv) as string
 // All three serve the V3 schema + uniV2Price. Only api.brownfi.io (true
 // production) lacks them, so it's the only one that doesn't match.
 //
-// V3 contracts are still per-chain (currently Berachain-only via
-// ROUTER_ADDRESS_V3_PILOT) so even with this flag true, useVersion + SwitchVersion
-// only expose V3 on chains where the router is deployed. The flag here is
-// only about API capability, not per-chain readiness.
+// V3 contracts are still per-chain (see ROUTER_ADDRESS_V3_OFFICIAL) so even
+// with this flag true, useVersion + SwitchVersion only expose V3 on chains
+// where the router is deployed. The flag here is only about API capability,
+// not per-chain readiness.
 export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.test(
   import.meta.env.VITE_API_URL ?? '',
 )
@@ -157,21 +133,20 @@ export const isBetaApi = /(bf-v2-api-beta|dev-api\.brownfi|beta-api\.brownfi)/.t
 // anchor matches the prod host without also matching `beta-api`/`dev-api`.
 export const isV3Enabled = isBetaApi || /\/\/api\.brownfi\.io/.test(import.meta.env.VITE_API_URL ?? '')
 
+// Only chains with a V3 (Official) deployment — see ROUTER_ADDRESS_V3_OFFICIAL.
+// Base + Monad have no V3 integration, so they're excluded from the selector +
+// wagmi config (a wallet on those chains reads as "wrong network").
 const mainChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,
-  base,
   hyperEVM,
   linea,
-  monad,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,
-  base,
   hyperEVM,
   linea,
-  monad,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 

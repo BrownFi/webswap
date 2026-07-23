@@ -74,6 +74,18 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    // Dev mirror of functions/kyber-agg (CF Pages) + the vercel.json rewrite:
+    // proxy /kyber-agg/* to the Kyber Aggregator API server-side (with a real
+    // User-Agent) so the browser hits same-origin and dodges Kyber's Cloudflare
+    // 403/bot-wall (which returns no CORS headers). Prod uses the CF Function.
+    proxy: {
+      '/kyber-agg': {
+        target: 'https://aggregator-api.kyberswap.com',
+        changeOrigin: true,
+        headers: { 'user-agent': 'BrownFi-Webswap (+https://brownfi.io)' },
+        rewrite: (path) => path.replace(/^\/kyber-agg/, ''),
+      },
+    },
   },
   test: {
     globals: true,

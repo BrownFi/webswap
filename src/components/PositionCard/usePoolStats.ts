@@ -1,5 +1,6 @@
 import { isV3Like } from '@brownfi/sdk'
 import { ChainId, JSBI, Pair, TokenAmount } from '@brownfi/sdk'
+import { getPoolFirstActivity } from 'lib/sdk/constants/poolFirstActivity'
 import { useQuery } from '@tanstack/react-query'
 import { useTotalSupply } from 'data/TotalSupply'
 import { useActiveWeb3React } from 'hooks'
@@ -88,17 +89,23 @@ export const USE_V3_UNIV2_COMPARISON: boolean = true
  * Single source of truth shared by the pool detail page, pool list rows, and
  * the list's APR sort.
  */
-export function computeV3FeeApr(p?: {
-  lpPrice?: number | string | null
-  uniV2Price?: number | string | null
-  createdAt?: number | string | null
-} | null): number {
+export function computeV3FeeApr(
+  p?: {
+    id?: string | null
+    lpPrice?: number | string | null
+    uniV2Price?: number | string | null
+    createdAt?: number | string | null
+  } | null,
+  chainId?: number | null,
+): number {
   if (!p) return 0
   const lp = Number(p.lpPrice)
   const uni = Number(p.uniV2Price)
-  const createdAt = Number(p.createdAt)
-  if (!lp || !uni || !createdAt) return 0
-  const daysAlive = (Date.now() / 1000 - createdAt) / 86400
+  // First-activity override wins over createdAt (trims pre-trade dead days for pools
+  // created well before their first trade — see poolFirstActivity). Falls back to createdAt.
+  const start = getPoolFirstActivity(chainId, p.id) ?? Number(p.createdAt)
+  if (!lp || !uni || !start) return 0
+  const daysAlive = (Date.now() / 1000 - start) / 86400
   if (daysAlive <= 0) return 0
   return ((lp - uni) / uni / daysAlive) * 360 * 100
 }
@@ -111,6 +118,8 @@ const GET_PAIR_ACCOUNT = `
       lpPortfolio
       basePortfolio
       bnhPortfolio
+      bnh0
+      bnh1
       stakeLP
       netPnL
       netBnHPnL
@@ -140,7 +149,8 @@ export const pairBGT: Record<string, string[]> = {
   // the UI call /igbt-vault-apr (getPoolBgt) so the BGT APR shows once Manh's BE
   // serves these vaults. Value[0] = the BeraHub stake link for the new vault.
   '0xc123bc9259d1a99add5a2c512498ac146dd2bade': ['https://hub.berachain.com/earn/0xa57d4c595a000e20f8ea8f82663a9c7b15d60168'], // WETH/USDC.e V3 (1.45%)
-  '0xf2d50928f33ef0f9e8dc20881bc475de2c484e26': ['https://hub.berachain.com/earn/0xd54ec45cca5d428c3aef05993195c389c0b82b4e'], // BERA/USDC.e V3 (1.94%)
+  // BERA/USDC.e V3 (0xf2d50928…) removed 2026-07-15 — foundation moved its reward
+  // allocation to BERA/HONEY, so its reward APR is now 0. Re-add here if it returns.
   '0x3e0fd2ce4d5b7e5f6c34e26c48a2dbd9f8d7d88c': ['https://hub.berachain.com/earn/0x3f0cf0c62e5d7617c3f965bfefc656af650e459e'], // WBERA/HONEY V3 (3.00%)
 }
 
@@ -167,6 +177,8 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       lpPortfolio: number
       basePortfolio: number
       bnhPortfolio: number
+      bnh0: number
+      bnh1: number
       stakeLP: number
       netPnL: number
       netBnHPnL: number
@@ -226,10 +238,16 @@ export const usePoolStats = ({ pair, pairStats, enableFetchDetail }: Props) => {
       pair.chainId === ChainId.LINEA_MAINNET && merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase()),
   })
 
-  const rpcTradingFee = useTradingFee({ pair })
+  // The fee is a config value (changes only on rare admin txs, never from
+  // trading), so trust the indexer's `pairStats.fee` whenever it exists —
+  // decoupled from `shouldUseIndexer` (a 2h *trade*-freshness gate meant for
+  // live fields). This stops quiet V3 pools (e.g. ARB traded >2h ago) from
+  // firing a per-pool on-chain readV3PairConfig. Fall back to the on-chain read
+  // only when there's no indexer data at all (e.g. Base V3, indexer off).
+  const rpcTradingFee = useTradingFee({ pair, enabled: !pairStats })
   const rpcTotalSupply = useTotalSupply(shouldUseIndexer ? undefined : pair.liquidityToken)
 
-  const tradingFee = shouldUseIndexer ? pairStats.fee * 100 : rpcTradingFee
+  const tradingFee = pairStats ? pairStats.fee * 100 : rpcTradingFee
   const totalSupply = shouldUseIndexer
     ? new TokenAmount(
         pair.liquidityToken,

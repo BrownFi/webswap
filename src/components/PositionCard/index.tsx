@@ -28,6 +28,7 @@ import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween } from 'components/Row'
 import { isMainnet } from 'connectors'
+import { useHermesPrices } from 'hooks/useHermesPrices'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
@@ -153,6 +154,25 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
   const userPoolTokens = useTokenBalance(account ?? undefined, showMore ? pair.liquidityToken : undefined)
 
+  // HODL portfolio priced with LIVE Hermes prices instead of the indexer's:
+  // a no-swap pool never refreshes the indexer token price, so the stored
+  // bnhPortfolio (= bnh0*p0 + bnh1*p1) goes stale. Recompute from bnh0/bnh1
+  // (decimal-adjusted) × fresh prices, falling back to the indexer value when
+  // Hermes has no feed. See YourPositionCard for the same fix (per Manh 2026-07-16).
+  const hermesPrices = useHermesPrices({
+    chainId,
+    currencyA: pair.token0,
+    currencyB: pair.token1,
+    version: pair.version,
+    // HODL row here is dev-only (!isMainnet) and details load on showMore —
+    // so never poll on prod, and only when the card is expanded in dev.
+    enabled: !isMainnet && showMore,
+  })
+  const hodlPortfolio =
+    pairAccount && hermesPrices.CURRENCY_A > 0 && hermesPrices.CURRENCY_B > 0
+      ? pairAccount.bnh0 * hermesPrices.CURRENCY_A + pairAccount.bnh1 * hermesPrices.CURRENCY_B
+      : pairAccount?.bnhPortfolio ?? 0
+
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
   // Base/quote order: V3 pools use the indexer's authoritative quoteTokenIndex;
@@ -190,7 +210,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     const columnValue = !ratiosMeaningful
       ? 0
       : isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON
-        ? computeV3FeeApr(pairStats)
+        ? computeV3FeeApr(pairStats, pair.chainId)
         : feeOverTvl
     return { tvl, lpPrice, columnValue }
   }, [token0Price, token1Price, pair, totalPoolTokens, pairStats])
@@ -474,13 +494,13 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                     <>
                       <UserPositionRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
                       {!isMainnet && (
-                        <UserPositionRow label="HODL portfolio" value={pairAccount.bnhPortfolio} description="Your position value if you had just held the two tokens in your wallet." />
+                        <UserPositionRow label="HODL portfolio" value={hodlPortfolio} description="Your position value if you had just held the two tokens in your wallet." />
                       )}
                       <UserPositionRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} mauso={pairAccount.basePortfolio} />
                       {!isMainnet && (
                         <>
-                          <UserPositionRow colored label="HODL PnL" value={pairAccount.bnhPortfolio - pairAccount.basePortfolio} mauso={pairAccount.basePortfolio} description="Your profit and loss if you had just held the two tokens in your wallet." />
-                          <UserPositionRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - pairAccount.bnhPortfolio} description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`} />
+                          <UserPositionRow colored label="HODL PnL" value={hodlPortfolio - pairAccount.basePortfolio} mauso={pairAccount.basePortfolio} description="Your profit and loss if you had just held the two tokens in your wallet." />
+                          <UserPositionRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - hodlPortfolio} description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`} />
                         </>
                       )}
                     </>
