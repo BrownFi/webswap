@@ -10,17 +10,15 @@ export type TvlGate = {
   cap?: number
   /** Current pool TVL (USD) from the indexer. undefined until fetched. */
   tvl?: number
-  /** true when a cap is configured AND current TVL >= cap. */
-  gated: boolean
   loading: boolean
 }
 
 /**
- * Per-pool TVL cap gate for adding liquidity. Only pools present in TVL_GATE_CAPS
- * fetch their TVL — every other pool short-circuits to `{ gated: false }` with no
- * network cost (the query is `enabled` only when a cap is configured). Polls every
- * 30s so the gate flips as soon as an add pushes TVL across the cap. Display-only:
- * callers use `gated` to show a notice / block the Add action, never to size a tx.
+ * Per-pool TVL cap data for gating add-liquidity. Only pools present in
+ * TVL_GATE_CAPS fetch their TVL — every other pool short-circuits to `{ cap:
+ * undefined }` with no network cost (the query is `enabled` only when a cap is
+ * configured). Polls every 30s. Callers combine `cap` + `tvl` with the add's USD
+ * value via `isAddOverCap(...)` to decide whether to block. Display/UX only.
  */
 export function useTvlGate(pair?: Pair): TvlGate {
   const chainId = pair?.chainId
@@ -45,6 +43,5 @@ export function useTvlGate(pair?: Pair): TvlGate {
   })
 
   const tvl = typeof data === 'number' && Number.isFinite(data) ? data : undefined
-  const gated = cap !== undefined && typeof tvl === 'number' && tvl >= cap
-  return { cap, tvl, gated, loading: isLoading }
+  return { cap, tvl, loading: isLoading }
 }
