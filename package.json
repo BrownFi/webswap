@@ -46,7 +46,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "ethers": "^5.0.32",
     "jazzicon": "^1.5.0",
-    "jsbi": "^4.3.2",
+    "jsbi": "^3.2.5",
     "jsdom": "^29.0.0",
     "luxon": "^1.25.0",
     "multicodec": "^2.0.4",

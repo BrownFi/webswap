@@ -98,7 +98,7 @@ const PositionCard = ({ pool, selectedPosition, farming, closedFarmings, poolSta
                     />
                 </div>
             )}
-            {position && Number(position.liquidity.toString()) > 0 && !isPoolDisabled && (
+            {position && Number(position.liquidity) > 0 && !isPoolDisabled && (
                 <div className="flex gap-4 w-full whitespace-nowrap">
                     <RemoveLiquidityModal positionId={Number(selectedPosition.id)} enableActions={enableActions} />
                 </div>
