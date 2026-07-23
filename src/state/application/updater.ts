@@ -4,10 +4,19 @@ import useDebounce from 'hooks/useDebounce'
 import useIsWindowVisible from 'hooks/useIsWindowVisible'
 import { updateBlockNumber } from './actions'
 import { useDispatch } from 'react-redux'
+import { useAccount } from 'wagmi'
+import { HEMI_CHAIN_ID } from 'connectors'
 
 export default function Updater(): null {
   const { library, chainId } = useActiveWeb3React()
   const dispatch = useDispatch()
+
+  // On Hemi (CLMM) the wallet is on a non-webswap chain, so useActiveWeb3React
+  // clamps chainId to the last webswap chain and its read-only provider — block
+  // polling here would hit that chain's RPC (e.g. Arbitrum) for nothing, since no
+  // webswap page is shown on Hemi. Pause until the wallet is back on a webswap chain.
+  const { chainId: walletChainId } = useAccount()
+  const onHemi = walletChainId === HEMI_CHAIN_ID
 
   const windowVisible = useIsWindowVisible()
 
@@ -18,7 +27,7 @@ export default function Updater(): null {
 
   // Attach / Detach listeners
   useEffect(() => {
-    if (!library || !chainId || !windowVisible) return undefined
+    if (!library || !chainId || !windowVisible || onHemi) return undefined
 
     setState({ chainId, blockNumber: null })
 
@@ -50,7 +59,7 @@ export default function Updater(): null {
     return () => {
       library.removeListener('block', updateBlockNumber)
     }
-  }, [dispatch, chainId, library, windowVisible])
+  }, [dispatch, chainId, library, windowVisible, onHemi])
 
   const debouncedState = useDebounce(state, 100)
 
