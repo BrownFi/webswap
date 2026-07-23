@@ -95,6 +95,11 @@ export const hemi: Chain = {
   blockExplorers: {
     default: { name: 'Hemi Explorer', url: 'https://explorer.hemi.xyz' },
   },
+  // AlgebraInterfaceMulticall3 (Integral 1.2.2) — wagmi/viem batch reads need this;
+  // Hemi has no canonical multicall3 at the usual address.
+  contracts: {
+    multicall3: { address: '0x69D57B9D705eaD73a5d2f2476C30c55bD755cc2F', blockCreated: 4904420 },
+  },
   iconUrl: 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png',
 }
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'

@@ -3,6 +3,11 @@ import { Address } from "viem";
 
 export type PoolDeployerType = "BASE_DYNAMIC" | "BASE_03" | "BASE_1" | "ALL_INCLUSIVE";
 
+/* Integral 1.2.2 uses the plugin-based dynamic-fee model: BASE_DYNAMIC pools are
+ * standard pools (ADDRESS_ZERO custom deployer) with a dynamic-fee plugin. The
+ * old ALL_INCLUSIVE custom-pool deployer is not part of this deployment (the new
+ * EntryPoint is 0xFe3BEcd7…, a different role), so it's null — CreatePoolForm
+ * still references the key, so we keep it defined rather than removed. */
 export const CUSTOM_POOL_DEPLOYER_ADDRESSES: Record<PoolDeployerType, Record<number, Address | null>> = {
     BASE_DYNAMIC: {
         [ChainId.Hemi]: ADDRESS_ZERO,
@@ -13,9 +18,8 @@ export const CUSTOM_POOL_DEPLOYER_ADDRESSES: Record<PoolDeployerType, Record<num
     BASE_1: {
         [ChainId.Hemi]: null,
     },
-    /* entryPoint address from BrownFi's Algebra hemi-deploys.json */
     ALL_INCLUSIVE: {
-        [ChainId.Hemi]: "0xd3817f2F9Ef19f838175E9879686Bb2E60893343",
+        [ChainId.Hemi]: null,
     },
 } as const;
 
