@@ -81,8 +81,8 @@ const TokenCard = ({
     const [prevElement, setPrevElement] = useState<React.ReactNode>(null);
 
     useEffect(() => {
-        if (usdValue !== undefined && usdValue !== 0) {
-            const formattedUsdValue = usdValue ? `≈ $${formatAmount(usdValue, 4)}` : "N/A";
+        if (usdValue !== undefined && usdValue !== 0 && Number.isFinite(usdValue)) {
+            const formattedUsdValue = `≈ $${formatAmount(usdValue, 4)}`;
 
             let formattedPercentDiff: string | undefined = undefined;
             if (percentDifference !== undefined && Number.isFinite(percentDifference)) {

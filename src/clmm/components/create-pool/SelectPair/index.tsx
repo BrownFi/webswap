@@ -45,7 +45,7 @@ const SelectPair = ({ mintInfo, currencyA, currencyB }: ISelectPair) => {
     );
 
     return (
-        <div className="relative flex flex-col gap-1  items-center">
+        <div className="flex flex-col gap-1">
             <TokenCard
                 disabled
                 value={"1"}
@@ -54,12 +54,16 @@ const SelectPair = ({ mintInfo, currencyA, currencyB }: ISelectPair) => {
                 handleTokenSelection={handleInputSelect}
                 usdValue={usdValueA}
             />
-            <button
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1.5 bg-card-dark w-fit rounded-full border-[5px] border-card-border hover:bg-card-hover duration-200"
-                onClick={onSwitchTokens}
-            >
-                <ChevronsUpDownIcon size={16} />
-            </button>
+            {/* Zero-height centered row → the switch button sits dead-center in the
+                gap between the two cards regardless of their heights. */}
+            <div className="relative flex items-center justify-center z-10" style={{ height: 0 }}>
+                <button
+                    className="p-1.5 bg-card-dark w-fit rounded-full border-[5px] border-card-border hover:bg-card-hover duration-200"
+                    onClick={onSwitchTokens}
+                >
+                    <ChevronsUpDownIcon size={16} />
+                </button>
+            </div>
             <TokenCard
                 value={startPriceTypedValue}
                 handleTokenSelection={handleOutputSelect}
