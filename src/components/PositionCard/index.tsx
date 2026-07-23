@@ -25,6 +25,8 @@ const PairChartModal = lazy(() => import('components/pool/PairChartModal').then(
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import { PoolBalanceBar } from 'components/pool/PoolBalanceBar'
 import { V3ExtraParams } from 'components/pool/V3ExtraParams'
+import { PoolCapTags } from 'components/pool/PoolCapTags'
+import { getTvlCap } from 'config/tvlGate'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween } from 'components/Row'
 import { isMainnet } from 'connectors'
@@ -293,6 +295,13 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
                   </span>
                 )}
               </div>
+              {/* TVL-cap tag on its own line so it doesn't collide with the TVL column.
+                  Gated so un-capped pools don't render an empty spacer row. */}
+              {getTvlCap(pair.chainId, pair.liquidityToken.address) !== undefined && (
+                <div style={{ marginTop: '2px' }}>
+                  <PoolCapTags chainId={pair.chainId} poolAddress={pair.liquidityToken.address} size="sm" />
+                </div>
+              )}
               {SHOW_BGT_APR && (enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84', marginTop: '2px' }}>
                   {enableBgt ? 'BERA APR' : 'Incentive APR'}: +{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%
