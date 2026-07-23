@@ -148,7 +148,7 @@ export function Chart({
         const primary200 = getComputedStyle(document.documentElement).getPropertyValue("--primary-200").trim();
 
         if (chartView === CHART_VIEW.AREA || chartView === CHART_VIEW.LINE) {
-            series = chart?.addAreaSeries({
+            series = chart?.addSeries(LightWeightCharts.AreaSeries, {
                 topColor: `${primary200}9A`,
                 bottomColor: `${primary200}00`,
                 lineColor: primary200,
@@ -168,7 +168,7 @@ export function Chart({
                 }),
             });
         } else {
-            series = chart?.addHistogramSeries({
+            series = chart?.addSeries(LightWeightCharts.HistogramSeries, {
                 color: `${primary200}CC`,
                 base: 0,
                 priceLineVisible: false,
