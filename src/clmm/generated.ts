@@ -5497,7 +5497,7 @@ export const securityRegistryAbi = [
  * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0000000000000000000000000000000000000000)
  */
 export const securityRegistryAddress = {
-  43111: '0x0000000000000000000000000000000000000000',
+  43111: '0xAbAc6f23fdf1313FC2E9C9244f666157CcD32990',
 } as const
 
 /**
