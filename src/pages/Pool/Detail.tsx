@@ -11,6 +11,7 @@ import { DoubleCurrencyLogo, DoubleCurrencySymbol } from 'components/DoubleLogo'
 import { shouldReverseDisplay } from 'utils/pair'
 import { useChainGuard } from 'hooks/useChainGuard'
 import { V3ExtraParams } from 'components/pool/V3ExtraParams'
+import { PoolCapTags } from 'components/pool/PoolCapTags'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
@@ -351,6 +352,7 @@ function PoolDetailInner({
                 Beta
               </span>
             )}
+            <PoolCapTags chainId={chainId} poolAddress={pair.liquidityToken.address} size="sm" />
             <a
               href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
               target="_blank"
@@ -462,6 +464,7 @@ function PoolDetailInner({
                   Beta
                 </span>
               )}
+              <PoolCapTags chainId={chainId} poolAddress={pair.liquidityToken.address} size="md" />
               <a
                 href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
                 target="_blank"
