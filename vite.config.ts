@@ -29,8 +29,26 @@ function ignoreDisabledClmmModules(dirs: string[]) {
   }
 }
 
+// Navbar (Header/*) edits glitch under partial HMR: React keeps stale modal
+// state so the chain-select modal won't open, and any Fast-Refresh miss
+// propagates up to StaticScreen, which re-imports theme/index.css and shuffles
+// the <style> cascade order so the navbar font breaks. Only a full page load
+// clears both. Force a clean full reload whenever a Header file changes — same
+// known-good state as a server restart, but automatic and much faster.
+function fullReloadOnHeaderEdit() {
+  return {
+    name: 'full-reload-on-header-edit',
+    handleHotUpdate({ file, server }: { file: string; server: { ws: { send: (payload: unknown) => void } } }) {
+      if (file.includes('/src/components/Header/')) {
+        server.ws.send({ type: 'full-reload' })
+        return []
+      }
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), svgr(), tsconfigPaths(), ignoreDisabledClmmModules(clmmDisabledModules)],
+  plugins: [react(), svgr(), tsconfigPaths(), ignoreDisabledClmmModules(clmmDisabledModules), fullReloadOnHeaderEdit()],
   define: {
     global: 'globalThis',
   },
