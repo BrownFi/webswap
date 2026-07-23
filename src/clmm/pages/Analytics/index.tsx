@@ -6,25 +6,25 @@ import { matchPath, NavLink, useLocation } from "react-router-dom";
 const { DexCharts } = AnalyticsModule.components;
 
 const PATHS = {
-    BASE: "/analytics",
-    JETTONS: "/analytics/tokens",
-    TRANSACTIONS: "/analytics/transactions",
+    BASE: "/clmm/analytics",
+    JETTONS: "/clmm/analytics/tokens",
+    TRANSACTIONS: "/clmm/analytics/transactions",
 };
 
 const tabs = [
     {
         title: "Pools",
-        link: "/analytics",
+        link: "/clmm/analytics",
         active: [PATHS.BASE],
     },
     {
         title: "Tokens",
-        link: "/analytics/tokens",
+        link: "/clmm/analytics/tokens",
         active: [PATHS.JETTONS],
     },
     {
         title: "Transactions",
-        link: "/analytics/transactions",
+        link: "/clmm/analytics/transactions",
         active: [PATHS.TRANSACTIONS],
     },
 ];

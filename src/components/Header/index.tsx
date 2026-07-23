@@ -244,6 +244,9 @@ function ClmmNavItem() {
             <NavLink to="/clmm/pools" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
               CLMM Pool
             </NavLink>
+            <NavLink to="/clmm/analytics" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
+              CLMM Analytics
+            </NavLink>
           </div>
         </div>
       )}

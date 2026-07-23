@@ -22,9 +22,9 @@ export const enabledModules: Record<AppFeatureModule, boolean> = {
     // entryPoint deployer is configured in deploys.json — leave on so users can pick the all-inclusive pool type
     [AppFeatureModule.CustomPools]: true,
 
-    // requires subgraph (info / blocks) — disabled until indexer is live
-    [AppFeatureModule.Analytics]: false,
-    [AppFeatureModule.Farming]: false,
+    // subgraph (hemi-analytics / hemi-farmings) is live — enabled
+    [AppFeatureModule.Analytics]: true,
+    [AppFeatureModule.Farming]: true,
 
     // contracts not deployed on Hemi yet
     [AppFeatureModule.LimitOrders]: false,

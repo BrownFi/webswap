@@ -22,6 +22,14 @@ const PoolPage = lazy(() => import('./pages/Pool'))
 const CreatePoolPage = lazy(() => import('./pages/CreatePool'))
 const NewPositionPage = lazy(() => import('./pages/NewPosition'))
 
+// Analytics module (enabled in app-modules). AnalyticsPage is a layout that wraps
+// the per-tab table as children, so eager-import rather than lazy — it's part of
+// the CLMM chunk that's already lazy-loaded.
+import AnalyticsPage from './pages/Analytics'
+import PoolsList from './components/pools/PoolsList'
+import AnalyticsModule from './modules/AnalyticsModule'
+const { TokensList, TransactionsList, AnalyticsPoolPage, AnalyticsTokenPage } = AnalyticsModule.components
+
 // Reserve vertical space while a lazy page chunk loads so the footer/layout
 // doesn't collapse then expand (avoids a jump between CLMM pages).
 const s = (n: React.ReactNode) => <Suspense fallback={<div className="min-h-[70vh] w-full" />}>{n}</Suspense>
@@ -74,6 +82,11 @@ export default function ClmmApp() {
               <Route path="pools/create" element={s(<CreatePoolPage />)} />
               <Route path="pool/:pool" element={s(<PoolPage />)} />
               <Route path="pool/:pool/new-position" element={s(<NewPositionPage />)} />
+              <Route path="analytics" element={s(<AnalyticsPage><PoolsList isExplore /></AnalyticsPage>)} />
+              <Route path="analytics/tokens" element={s(<AnalyticsPage><TokensList /></AnalyticsPage>)} />
+              <Route path="analytics/transactions" element={s(<AnalyticsPage><TransactionsList /></AnalyticsPage>)} />
+              <Route path="analytics/tokens/:tokenId" element={s(<AnalyticsTokenPage />)} />
+              <Route path="analytics/pools/:poolId" element={s(<AnalyticsPoolPage />)} />
               <Route path="*" element={<Navigate replace to="swap" />} />
             </Routes>
           </Layout>
