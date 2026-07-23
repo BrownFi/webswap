@@ -67,10 +67,14 @@ export function useFormattedPools(tokenAddress?: Address): { pools: FormattedPoo
     const { data: poolsAvgApr, isLoading: isPoolsAvgAprLoading } = useSWR(hasInfoSubgraph ? POOL_AVG_APR_API : null, fetcher);
     const { data: farmingsAPR, isLoading: isFarmingsAPRLoading } = useSWR(hasFarmingSubgraph ? ETERNAL_FARMINGS_API : null, fetcher);
 
+    // Show the pool list as soon as pool data is ready. The algebra.finance APR
+    // fetches are slow (1–2.5s), so they no longer gate the list — the memo below
+    // recomputes when poolsMaxApr/poolsAvgApr/farmingsAPR arrive, filling the APR
+    // column in after.
     const isLoading =
-        (hasInfoSubgraph && (isPoolsListLoading || isPoolsMaxAprLoading || isPoolsAvgAprLoading)) ||
+        (hasInfoSubgraph && isPoolsListLoading) ||
         isPositionsLoading ||
-        (hasFarmingSubgraph && (isFarmingsLoading || isFarmingsAPRLoading));
+        (hasFarmingSubgraph && isFarmingsLoading);
 
     const formattedPools = useMemo(() => {
         if (isLoading || !pools) return [];
