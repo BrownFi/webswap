@@ -140,12 +140,12 @@ export function useOverrideFee(trade: SmartRouterTrade<TradeType> | Trade<Curren
 
                         if (overrideFee) {
                             splitFees.push(overrideFee + pluginFee);
-                        } else if (pluginFee) {
-                            splitFees.push(pluginFee);
                         } else {
-                            /* No plugin / no override — fall back to the pool's lastFee
-                             * (Pool.fee was populated from globalState[2] in usePool). */
-                            splitFees.push(Number(pool.fee ?? 0));
+                            /* No override — base fee (pool.fee from globalState[2]) + the
+                             * plugin fee (0 for no-plugin / on-chain pools). Matches the
+                             * boosted branch (feeList + pluginFee) and the 1.2.2 ref;
+                             * dropping baseFee here understated the fee estimate. */
+                            splitFees.push(Number(pool.fee ?? 0) + pluginFee);
                         }
                     }
 

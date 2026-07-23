@@ -85,7 +85,7 @@ export function useFormattedPools(tokenAddress?: Address): { pools: FormattedPoo
                 }
                 return true;
             })
-            .map(({ id, token0, token1, overrideFee, totalValueLockedUSD, deployer, poolDayData }) => {
+            .map(({ id, token0, token1, fee: baseFee, overrideFee, totalValueLockedUSD, deployer, poolDayData }) => {
                 const currentPool = poolDayData[0];
                 const lastDate = currentPool ? currentPool.date * 1000 : 0;
                 const currentDate = new Date().getTime();
@@ -122,7 +122,9 @@ export function useFormattedPools(tokenAddress?: Address): { pools: FormattedPoo
                         token0,
                         token1,
                     },
-                    fee: Number(overrideFee) / 10_000,
+                    // Fall back to the pool's base fee when there's no override (an
+                    // overrideFee of "0" is valid) — else the list shows 0% (ref 1.2.2).
+                    fee: (Number(overrideFee) || Number(baseFee)) / 10_000,
                     tvlUSD: Number(totalValueLockedUSD),
                     volume24USD: timeDifference <= msIn24Hours ? Number(currentPool.volumeUSD) : 0,
                     fees24USD: timeDifference <= msIn24Hours ? Number(currentPool.feesUSD) : 0,
