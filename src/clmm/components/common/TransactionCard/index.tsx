@@ -4,7 +4,6 @@ import { Address } from "viem";
 import CurrencyLogo from "../CurrencyLogo";
 import EtherScanLogo from "@clmm/assets/etherscan-logo-circle.svg";
 import { Check, ExternalLinkIcon, X } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Transaction, TransactionType } from "@clmm/state/pendingTransactionsStore";
 import Loader from "../Loader";
 import { useAppKitNetwork } from "@reown/appkit/react";
@@ -21,7 +20,7 @@ export const TransactionCard = ({ hash, transaction }: { hash: Address; transact
     const { caipNetwork: chain } = useAppKitNetwork();
 
     return (
-        <Link to={`${chain?.blockExplorers?.default.url}/tx/${hash}`} target={"_blank"}>
+        <a href={`${chain?.blockExplorers?.default.url}/tx/${hash}`} target="_blank" rel="noreferrer">
             <li
                 className="flex group h-16 justify-between items-center gap-4 w-full bg-card-dark rounded-xl p-4 border border-border/60 hover:border-border hover:bg-card-dark/60 transition-all duration-200"
                 key={hash}
@@ -59,6 +58,6 @@ export const TransactionCard = ({ hash, transaction }: { hash: Address; transact
                 )}
                 <ExternalLinkIcon className="hidden group-hover:block" size={18} />
             </li>
-        </Link>
+        </a>
     );
 };
