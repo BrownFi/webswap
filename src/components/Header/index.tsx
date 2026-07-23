@@ -254,17 +254,6 @@ function ClmmNavItem() {
   )
 }
 
-export const StyledMenuButton = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button
-    className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-md
-      h-[35px] hover:cursor-pointer hover:bg-bg4 focus:cursor-pointer focus:outline-none focus:bg-bg4
-      [&>*]:stroke-text1 [&_svg]:mt-0.5 ${className ?? ''}`}
-    {...props}
-  >
-    {children}
-  </button>
-)
-
 export default function Header() {
   const { account } = useActiveWeb3React()
   const { isConnected } = useAccount()
