@@ -116,10 +116,21 @@ const TokenRow = ({
     };
 
     return (
-        <button
-            disabled={lock}
-            className="flex items-center justify-between w-full py-2 px-3 text-left bg-card rounded-2xl duration-75 hover:bg-card-hover disabled:hover:bg-card disabled:opacity-60"
-            onClick={() => currency && onSelect(currency)}
+        <div
+            role="button"
+            tabIndex={lock ? -1 : 0}
+            aria-disabled={lock}
+            className={cn(
+                "flex items-center justify-between w-full py-2 px-3 text-left bg-card rounded-2xl duration-75",
+                lock ? "opacity-60 cursor-default" : "hover:bg-card-hover cursor-pointer"
+            )}
+            onClick={() => !lock && currency && onSelect(currency)}
+            onKeyDown={(e) => {
+                if (!lock && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    currency && onSelect(currency);
+                }
+            }}
             style={{ ...style, height: 76 - 16 }}
         >
             <div className="flex items-center gap-4">
@@ -143,7 +154,7 @@ const TokenRow = ({
                 </div>
             </div>
             <div>{isLoading ? "Loading..." : balance ? balanceString : ""}</div>
-        </button>
+        </div>
     );
 };
 
