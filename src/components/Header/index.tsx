@@ -215,8 +215,8 @@ function ClmmNavItem() {
   }
 
   const itemCls = ({ isActive: active }: { isActive: boolean }) =>
-    `block w-full text-left px-4 py-2.5 text-[15px] font-medium no-underline whitespace-nowrap
-     transition-colors ${active ? 'text-[#D59967]' : 'text-white hover:text-[#D59967]'}`
+    `block w-full text-left px-4 py-2.5 text-[15px] font-medium no-underline whitespace-nowrap rounded-lg
+     transition-colors focus:outline-none ${active ? 'text-[#D59967]' : 'text-white hover:bg-white/[0.06]'}`
 
   return (
     <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
@@ -239,13 +239,13 @@ function ClmmNavItem() {
         >
           <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', overflow: 'hidden', padding: '4px' }}>
             <NavLink to="/clmm/swap" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
-              CLMM Swap
+              Swap
             </NavLink>
             <NavLink to="/clmm/pools" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
-              CLMM Pool
+              Pool
             </NavLink>
             <NavLink to="/clmm/analytics" onClick={() => setOpen(false)} className={itemCls} style={{ fontFamily: "'Inter', sans-serif" }}>
-              CLMM Analytics
+              Analytics
             </NavLink>
           </div>
         </div>
