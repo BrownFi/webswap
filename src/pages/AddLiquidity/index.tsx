@@ -45,9 +45,9 @@ import { SwitchZap } from './Zap/SwitchZap'
 import { getApprovalBuffer } from './utils'
 import { ZapForm } from './Zap/ZapForm'
 import { V3ZapForm } from './Zap/V3ZapForm'
-import { unwrappedToken } from 'utils/wrappedCurrency'
+import { unwrappedToken, wrappedCurrency } from 'utils/wrappedCurrency'
 import { useTvlGate } from 'hooks/useTvlGate'
-import { tvlGateMessage, isAddOverCap } from 'config/tvlGate'
+import { tvlGateMessage, isAddOverCap, poolTvlFromReserves } from 'config/tvlGate'
 import { useToast } from 'containers/ToastProvider'
 
 export default function AddLiquidity() {
@@ -111,7 +111,26 @@ export default function AddLiquidity() {
   const addValueUsd =
     Number(parsedAmounts[Field.CURRENCY_A]?.toExact() ?? 0) * (pythPrices.CURRENCY_A || 0) +
     Number(parsedAmounts[Field.CURRENCY_B]?.toExact() ?? 0) * (pythPrices.CURRENCY_B || 0)
-  const addBlocked = isAddOverCap(tvlGate.cap, tvlGate.tvl, addValueUsd)
+  // Fresh pool TVL from on-chain reserves (usePair multicall, refreshes within a block of
+  // an add) × live prices — preferred over the lagging indexer TVL so a rapid second add
+  // can't slip past the cap. pythPrices are keyed to the user's A/B order; map each pool
+  // token to its price by address. Falls back to the indexer TVL when unavailable.
+  const currentTvl = useMemo(() => {
+    if (!pair) return tvlGate.tvl
+    const wrappedA = wrappedCurrency(currencyA ?? undefined, chainId)
+    const priceOf = (token: typeof pair.token0) =>
+      wrappedA && token.address.toLowerCase() === wrappedA.address.toLowerCase()
+        ? pythPrices.CURRENCY_A || 0
+        : pythPrices.CURRENCY_B || 0
+    const fresh = poolTvlFromReserves(
+      pair.reserve0.toExact(),
+      priceOf(pair.token0),
+      pair.reserve1.toExact(),
+      priceOf(pair.token1),
+    )
+    return fresh ?? tvlGate.tvl
+  }, [pair, currencyA, chainId, pythPrices.CURRENCY_A, pythPrices.CURRENCY_B, tvlGate.tvl])
+  const addBlocked = isAddOverCap(tvlGate.cap, currentTvl, addValueUsd)
 
   const dependentAmount = (+typedValue * pythPrices[independentField]) / pythPrices[dependentField] || 0
 
@@ -187,7 +206,7 @@ export default function AddLiquidity() {
     // Defense-in-depth: also gate here (not just the button) so a TVL cross while
     // the confirm modal is open can't slip an add through.
     if (addBlocked) {
-      createToast(tvlGateMessage(tvlGate.cap, tvlGate.tvl), 'error')
+      createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
       return
     }
     try {
@@ -508,7 +527,7 @@ export default function AddLiquidity() {
                           <ButtonPrimary
                             onClick={() => {
                               if (addBlocked) {
-                                createToast(tvlGateMessage(tvlGate.cap, tvlGate.tvl), 'error')
+                                createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
                                 return
                               }
                               approveACallback()
@@ -527,7 +546,7 @@ export default function AddLiquidity() {
                           <ButtonPrimary
                             onClick={() => {
                               if (addBlocked) {
-                                createToast(tvlGateMessage(tvlGate.cap, tvlGate.tvl), 'error')
+                                createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
                                 return
                               }
                               approveBCallback()
@@ -547,7 +566,7 @@ export default function AddLiquidity() {
                   <ButtonError
                     onClick={() => {
                       if (addBlocked) {
-                        createToast(tvlGateMessage(tvlGate.cap, tvlGate.tvl), 'error')
+                        createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
                         return
                       }
                       expertMode ? onAdd() : setShowConfirm(true)

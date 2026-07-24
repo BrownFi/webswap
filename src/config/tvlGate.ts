@@ -45,3 +45,24 @@ export function isAddOverCap(cap: number | undefined, currentTvl: number | undef
   const add = Number.isFinite(addValueUsd) && addValueUsd > 0 ? addValueUsd : 0
   return tvl + add > cap * (1 + TVL_GATE_TOLERANCE)
 }
+
+// Fresh pool TVL (USD) from on-chain reserves × live token prices. PREFER this over the
+// indexer's `tvl` when gating: on-chain reserves reflect an add the instant it confirms,
+// while the indexer lags a block or two — a lag that let a rapid second add slip past the
+// cap. Inputs may be strings (indexer/SDK). Returns undefined when any input is unusable,
+// so callers can fall back to the indexer TVL.
+export function poolTvlFromReserves(
+  reserve0?: number | string,
+  price0?: number | string,
+  reserve1?: number | string,
+  price1?: number | string,
+): number | undefined {
+  const r0 = Number(reserve0)
+  const p0 = Number(price0)
+  const r1 = Number(reserve1)
+  const p1 = Number(price1)
+  if (![r0, p0, r1, p1].every((n) => Number.isFinite(n))) return undefined
+  // Prices must be positive to trust the valuation; reserves may legitimately be 0.
+  if (p0 <= 0 || p1 <= 0 || r0 < 0 || r1 < 0) return undefined
+  return r0 * p0 + r1 * p1
+}

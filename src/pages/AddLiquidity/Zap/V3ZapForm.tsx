@@ -13,7 +13,7 @@ import { useBestZapInRoute, ZapChoice } from 'hooks/useBestZapRoute'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useHermesPrices } from 'hooks/useHermesPrices'
 import { useTvlGate } from 'hooks/useTvlGate'
-import { tvlGateMessage, isAddOverCap } from 'config/tvlGate'
+import { tvlGateMessage, isAddOverCap, poolTvlFromReserves } from 'config/tvlGate'
 import { useToast } from 'containers/ToastProvider'
 import { ZapRouteComparison } from 'components/swap/ZapRouteComparison'
 import { ZapRoutePreview } from './ZapRoutePreview'
@@ -52,6 +52,8 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   // handleSubmit (defined before those) read the latest value without a re-bind.
   const tvlGate = useTvlGate(pair)
   const addBlockedRef = useRef(false)
+  // Fresh TVL used in the toast, kept in a ref so handleSubmit (defined above the memo) reads it.
+  const currentTvlRef = useRef<number | undefined>(undefined)
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | undefined>(
     currencies[Field.CURRENCY_A] ?? undefined,
@@ -149,7 +151,7 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
   const handleSubmit = useCallback(async () => {
     // Would exceed the TVL cap → block the add and tell the user (notice on click).
     if (addBlockedRef.current) {
-      createToast(tvlGateMessage(tvlGate.cap, tvlGate.tvl), 'error')
+      createToast(tvlGateMessage(tvlGate.cap, currentTvlRef.current), 'error')
       return
     }
     if (!chainId || !account || !library || !best || !deadline) return
@@ -253,8 +255,18 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
     }
     return Number(parsedAmount.toExact()) * (price || 0)
   }, [parsedAmount, selectedCurrency, chainId, pair, pythPrice0, pythPrice1])
-  const addBlocked = isAddOverCap(tvlGate.cap, tvlGate.tvl, addValueUsd)
+  // Fresh pool TVL from on-chain reserves (usePair multicall, updates within a block of
+  // an add) × live prices — used in preference to the lagging indexer TVL so a rapid
+  // second add can't slip past the cap. Falls back to the indexer value when unavailable.
+  const currentTvl = useMemo(() => {
+    const fresh = pair
+      ? poolTvlFromReserves(pair.reserve0.toExact(), pythPrice0, pair.reserve1.toExact(), pythPrice1)
+      : undefined
+    return fresh ?? tvlGate.tvl
+  }, [pair, pythPrice0, pythPrice1, tvlGate.tvl])
+  const addBlocked = isAddOverCap(tvlGate.cap, currentTvl, addValueUsd)
   addBlockedRef.current = addBlocked
+  currentTvlRef.current = currentTvl
 
   // Pair's LP totalSupply. Not on Pair instance — one-shot viem read,
   // cached 60s. Skipped until pair is determined.
@@ -388,7 +400,7 @@ export function V3ZapForm({ pair, currencies }: V3ZapFormProps) {
         <ButtonPrimary
           onClick={() => {
             if (addBlocked) {
-              createToast(tvlGateMessage(tvlGate.cap, tvlGate.tvl), 'error')
+              createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
               return
             }
             approveCallback()
