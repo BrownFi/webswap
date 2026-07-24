@@ -1,6 +1,6 @@
 import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { Currency, WNATIVE, tryParseAmount } from "@cryptoalgebra/integral-sdk";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { useTransactionAwait } from "../common/useTransactionAwait";
 import { DEFAULT_NATIVE_SYMBOL, WNATIVE_EXTENDED } from "@clmm/config";
@@ -27,6 +27,12 @@ export default function useWrapCallback(
 
     const inputAmount = useMemo(() => tryParseAmount(typedValue, inputCurrency), [inputCurrency, typedValue]);
 
+    // onTransactionSuccess clears the typed amount, so inputAmount is null by the
+    // time the confirm toast fires — snapshot the display amount while it exists to
+    // avoid "Wrap undefined" (same lifecycle issue as the swap title).
+    const wrapAmountRef = useRef<string>();
+    if (inputAmount) wrapAmountRef.current = inputAmount.toSignificant(3);
+
     const wrapConfig = inputAmount
         ? {
               address: WNATIVE[chainId]?.address as Address,
@@ -37,7 +43,7 @@ export default function useWrapCallback(
     const { data: wrapData, writeContract: wrap } = useWriteWrappedNativeDeposit();
 
     const { isLoading: isWrapLoading } = useTransactionAwait(wrapData, {
-        title: `Wrap ${inputAmount?.toSignificant(3)} ${DEFAULT_NATIVE_SYMBOL}`,
+        title: `Wrap ${wrapAmountRef.current} ${DEFAULT_NATIVE_SYMBOL}`,
         tokenA: WNATIVE[chainId].address as Address,
         type: TransactionType.SWAP,
         callback: onTransactionSuccess,
@@ -53,7 +59,7 @@ export default function useWrapCallback(
     const { data: unwrapData, writeContract: unwrap } = useWriteWrappedNativeWithdraw();
 
     const { isLoading: isUnwrapLoading } = useTransactionAwait(unwrapData, {
-        title: `Unwrap ${inputAmount?.toSignificant(3)} W${DEFAULT_NATIVE_SYMBOL}`,
+        title: `Unwrap ${wrapAmountRef.current} W${DEFAULT_NATIVE_SYMBOL}`,
         tokenA: WNATIVE[chainId].address as Address,
         type: TransactionType.SWAP,
         callback: onTransactionSuccess,
