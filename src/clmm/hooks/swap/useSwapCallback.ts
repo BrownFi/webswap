@@ -2,7 +2,7 @@ import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { Currency, Percent, Trade, TradeType } from "@cryptoalgebra/integral-sdk";
 import { useAccount, usePublicClient } from "wagmi";
 import { useSwapCallArguments } from "./useSwapCallArguments";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SwapCallbackState } from "@clmm/types/swap-state";
 import { useTransactionAwait } from "../common/useTransactionAwait";
 import { TransactionType } from "@clmm/state/pendingTransactionsStore";
@@ -104,10 +104,23 @@ export function useSwapCallback(
 
     const { data: swapData, writeContractAsync: swapCallback, isPending } = useWriteSwapRouterMulticall();
 
+    // The swap form clears `trade` right after the tx is submitted, but the toast
+    // (esp. the success one) fires later — reading trade then yields
+    // "Swap - undefined". Snapshot the display info while trade still exists and
+    // reuse it, so the toast keeps the real amount/symbol/tokens.
+    const swapInfoRef = useRef<{ title: string; tokenA?: Address; tokenB?: Address }>({ title: "Swap" });
+    if (trade?.inputAmount) {
+        swapInfoRef.current = {
+            title: `Swap ${formatAmount(trade.inputAmount.toSignificant() as string)} ${trade.inputAmount.currency.symbol}`,
+            tokenA: trade.inputAmount.currency.wrapped.address as Address,
+            tokenB: trade.outputAmount.currency.wrapped.address as Address,
+        };
+    }
+
     const { isLoading, isSuccess } = useTransactionAwait(swapData, {
-        title: `Swap ${formatAmount(trade?.inputAmount.toSignificant() as string)} ${trade?.inputAmount.currency.symbol}`,
-        tokenA: trade?.inputAmount.currency.wrapped.address as Address,
-        tokenB: trade?.outputAmount.currency.wrapped.address as Address,
+        title: swapInfoRef.current.title,
+        tokenA: swapInfoRef.current.tokenA as Address,
+        tokenB: swapInfoRef.current.tokenB as Address,
         type: TransactionType.SWAP,
         callback: onTransactionSuccess,
     });
