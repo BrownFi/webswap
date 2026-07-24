@@ -4,7 +4,11 @@ import * as React from "react";
 import type { ToastActionElement, ToastProps } from "@clmm/components/ui/toast";
 
 const TOAST_LIMIT = 3;
-const TOAST_REMOVE_DELAY = 1000000;
+// Radix closes a toast after ToastProvider's `duration` (4s) via onOpenChange →
+// dismiss(). This delay only governs how long the already-closed toast lingers in
+// state before GC — keep it short so dismissed toasts don't pile up against
+// TOAST_LIMIT (the shadcn default of 1000000ms ≈ 16min left them effectively forever).
+const TOAST_REMOVE_DELAY = 4000;
 
 type ToasterToast = ToastProps & {
     id: string;
