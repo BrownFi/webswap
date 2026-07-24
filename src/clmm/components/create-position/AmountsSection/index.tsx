@@ -3,9 +3,8 @@ import TokenRatio from "../TokenRatio";
 import { Currency } from "@cryptoalgebra/integral-sdk";
 import { IDerivedMintInfo } from "@clmm/state/mintStore";
 import { usePositionAPR } from "@clmm/hooks/positions/usePositionAPR";
-import { getPoolAPR } from "@clmm/utils/pool/getPoolAPR";
+import { usePoolAPR } from "@clmm/hooks/pools/usePoolAPR";
 import { Address } from "viem";
-import { useEffect, useState } from "react";
 import EnterAmounts from "../EnterAmounts";
 import { useParams } from "react-router-dom";
 import { formatAmount } from "@clmm/utils";
@@ -32,18 +31,13 @@ type NewPositionPageParams = Record<"pool", Address>;
 const AmountsSection = ({ tokenId, currencyA, currencyB, mintInfo, handleCloseModal }: AmountsSectionProps) => {
     const { pool: poolAddress } = useParams<NewPositionPageParams>();
 
-    const [poolAPR, setPoolAPR] = useState<number>();
+    const poolAPR = usePoolAPR(poolAddress);
     const apr = usePositionAPR(poolAddress, mintInfo.position);
 
     const shouldUseOmegaRouter = mintInfo.pool && isBoostedPool(mintInfo.pool) && enabledModules.BoostedPoolsModule;
 
     const { data: token0Apr } = useBoostedTokenAPR(currencyA?.wrapped.isBoosted ? (currencyA.wrapped.address as Address) : undefined);
     const { data: token1Apr } = useBoostedTokenAPR(currencyB?.wrapped.isBoosted ? (currencyB.wrapped.address as Address) : undefined);
-
-    useEffect(() => {
-        if (!poolAddress) return;
-        getPoolAPR(poolAddress).then(setPoolAPR);
-    }, [poolAddress]);
 
     return (
         <>
