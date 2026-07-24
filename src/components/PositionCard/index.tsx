@@ -26,7 +26,8 @@ import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import { PoolBalanceBar } from 'components/pool/PoolBalanceBar'
 import { V3ExtraParams } from 'components/pool/V3ExtraParams'
 import { PoolCapTags } from 'components/pool/PoolCapTags'
-import { getTvlCap, getConcentrationLevel } from 'config/tvlGate'
+import { getTvlCap } from 'config/tvlGate'
+import { concentrationLevel } from 'utils/concentration'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween } from 'components/Row'
 import { isMainnet } from 'connectors'
@@ -298,9 +299,15 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
               {/* TVL-cap tag on its own line so it doesn't collide with the TVL column.
                   Gated so un-capped pools don't render an empty spacer row. */}
               {(getTvlCap(pair.chainId, pair.liquidityToken.address) !== undefined ||
-                getConcentrationLevel(pair.chainId, pair.liquidityToken.address) !== undefined) && (
+                concentrationLevel(pairStats?.kB, pairStats?.kQ) !== undefined) && (
                 <div style={{ marginTop: '2px' }}>
-                  <PoolCapTags chainId={pair.chainId} poolAddress={pair.liquidityToken.address} size="xs" />
+                  <PoolCapTags
+                    chainId={pair.chainId}
+                    poolAddress={pair.liquidityToken.address}
+                    kB={pairStats?.kB}
+                    kQ={pairStats?.kQ}
+                    size="xs"
+                  />
                 </div>
               )}
               {SHOW_BGT_APR && (enableBgt || enableMerklCampaignApr) && (

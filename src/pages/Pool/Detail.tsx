@@ -352,7 +352,7 @@ function PoolDetailInner({
                 Beta
               </span>
             )}
-            <PoolCapTags chainId={chainId} poolAddress={pair.liquidityToken.address} size="sm" />
+            <PoolCapTags chainId={chainId} poolAddress={pair.liquidityToken.address} kB={pairStats?.kB} kQ={pairStats?.kQ} size="sm" />
             <a
               href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
               target="_blank"
@@ -464,7 +464,7 @@ function PoolDetailInner({
                   Beta
                 </span>
               )}
-              <PoolCapTags chainId={chainId} poolAddress={pair.liquidityToken.address} size="md" />
+              <PoolCapTags chainId={chainId} poolAddress={pair.liquidityToken.address} kB={pairStats?.kB} kQ={pairStats?.kQ} size="md" />
               <a
                 href={getEtherscanLink(chainId, pair.liquidityToken.address, 'address')}
                 target="_blank"

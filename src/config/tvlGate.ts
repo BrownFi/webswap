@@ -45,20 +45,3 @@ export function isAddOverCap(cap: number | undefined, currentTvl: number | undef
   const add = Number.isFinite(addValueUsd) && addValueUsd > 0 ? addValueUsd : 0
   return tvl + add > cap * (1 + TVL_GATE_TOLERANCE)
 }
-
-// Manual per-pool Concentration Level (CE vs V2 multiplier). Purely informational —
-// rendered as a "CL <n>" tag so users can see how concentrated a pool's liquidity is
-// relative to a Uniswap V2 constant-product pool at the same TVL (e.g. CL 2000 = ~2000×
-// the concentration efficiency of V2). Keyed by chainId → lowercased pool address.
-export const POOL_CONCENTRATION_LEVELS: Record<number, Record<string, number>> = {
-  [ChainId.BERA_MAINNET]: {
-    // HONEY / USDC.e V3
-    '0x7d4ae0d663567b8caa0f0f4bd2585da7394943d7': 2000,
-  },
-}
-
-// The configured Concentration Level for a pool, or undefined when it has none.
-export function getConcentrationLevel(chainId?: number, poolAddress?: string): number | undefined {
-  if (!chainId || !poolAddress) return undefined
-  return POOL_CONCENTRATION_LEVELS[chainId]?.[poolAddress.toLowerCase()]
-}
