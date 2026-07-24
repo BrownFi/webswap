@@ -61,7 +61,10 @@ export function useDexChartData(span: ChartSpanType, selector: "tvlUSD" | "volum
                 time: v.date as UTCTimestamp,
                 value: Number(v[selector]),
             }))
-            .slice(1);
+            // Drop the oldest boundary day (over-fetched for the 24h % change), but
+            // only when there are >2 points — otherwise a brand-new DEX with 2 day
+            // records collapses to 1 point and the chart can't draw a line/area.
+            .slice(poolDatas.length > 2 ? 1 : 0);
     }, [dexDayDatas, dexHourDatas, selector, span]);
 
     return {
