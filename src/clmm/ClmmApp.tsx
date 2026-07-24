@@ -46,7 +46,11 @@ function HemiGate({ children }: { children: React.ReactNode }) {
   const { switchChain } = useSwitchChain()
   const { openConnectModal } = useConnectModal()
 
-  if (chainId === HEMI_CHAIN_ID) return <>{children}</>
+  // Render CLMM when on Hemi OR when disconnected: with no wallet there's no live
+  // chain to mis-target (balances are empty, nothing can be sent), and the CLMM
+  // pages show their own Connect button. Only block a wallet that's CONNECTED to a
+  // non-Hemi chain, where balance/tx reads would hit the wrong network.
+  if (chainId === HEMI_CHAIN_ID || !isConnected) return <>{children}</>
 
   const onClick = () => {
     if (!isConnected) openConnectModal?.()
