@@ -28,7 +28,7 @@ export const BOOSTED_TOKENS = {
 
 /* Token logo map — keyed by lowercase address. */
 export const TOKEN_LOGOS: Record<string, string> = {
-    "0x4200000000000000000000000000000000000006": "https://assets.coingecko.com/coins/images/279/standard/ethereum.png", // WETH
+    "0x4200000000000000000000000000000000000006": "/eth-logo.svg", // WETH (local canonical logo — coingecko hotlink gets ad-block/CSP-blocked in-browser)
     "0xad11a8beb98bbf61dbb1aa0f6d6f2ecd87b35afa": "https://assets.coingecko.com/coins/images/6319/standard/usdc.png", // USDC.e
     "0xaa40c0c7644e0b2b224509571e10ad20d9c4ef28": "https://assets.coingecko.com/coins/images/1/standard/bitcoin.png", // hemiBTC
     "0x03c7054bcb39f7b2e5b2c7acb37583e32d70cfa3": "https://assets.coingecko.com/coins/images/7598/standard/wrapped_bitcoin_wbtc.png", // WBTC
@@ -37,5 +37,5 @@ export const TOKEN_LOGOS: Record<string, string> = {
 
 /* Native ETH logo (used when currency.isNative === true) */
 export const NATIVE_LOGO: Record<number, string> = {
-    [ChainId.Hemi]: "https://assets.coingecko.com/coins/images/279/standard/ethereum.png",
+    [ChainId.Hemi]: "/eth-logo.svg",
 };
