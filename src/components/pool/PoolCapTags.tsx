@@ -14,8 +14,9 @@ type Props = {
 
 // Solid informational tags for a pool: its configured TVL cap ("Max Cap $N") and its
 // Concentration Level ("CL <n>", auto-computed as 2 / min(kB, kQ)). Styled like the
-// Beta tag (solid, 100% opacity) with distinct palette colors — Max Cap blue, CL
-// violet (vs Beta orange + Fee green). Renders nothing when the pool has neither.
+// Beta tag (solid, 100% opacity) with on-brand palette colors — Max Cap a soft blue
+// (#4A90E2), CL a warm amber-brown (#A67C3C, near theme primary3, vs Beta orange +
+// Fee green). Renders nothing when the pool has neither.
 export function PoolCapTags({ chainId, poolAddress, kB, kQ, size = 'sm' }: Props) {
   const cap = getTvlCap(chainId, poolAddress)
   const cl = concentrationLevel(kB, kQ)
@@ -35,10 +36,10 @@ export function PoolCapTags({ chainId, poolAddress, kB, kQ, size = 'sm' }: Props
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: size === 'xs' ? '4px' : '6px' }}>
       {cap !== undefined && (
-        <span style={tagStyle('#2172E5')}>Max Cap ${formatNumber(cap)}</span>
+        <span style={tagStyle('#4A90E2')}>Max Cap ${formatNumber(cap)}</span>
       )}
       {cl !== undefined && (
-        <span style={tagStyle('#8B5CF6')}>CL {cl}</span>
+        <span style={tagStyle('#A67C3C')}>CL {cl}</span>
       )}
     </span>
   )
