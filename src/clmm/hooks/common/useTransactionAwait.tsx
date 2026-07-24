@@ -4,23 +4,27 @@ import { TransactionInfo, usePendingTransactionsStore } from "@clmm/state/pendin
 import { useAppKitNetwork } from "@reown/appkit/react";
 import { ExternalLinkIcon } from "lucide-react";
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Address } from "viem";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 
 export const ViewTxOnExplorer = ({ hash }: { hash: Address | undefined }) => {
     const { caipNetwork: chain } = useAppKitNetwork();
 
+    // Plain <a>, not react-router <Link>: this is an EXTERNAL explorer URL. <Link>
+    // treats it as an in-app route (/https://explorer…) so the click 404s / does
+    // nothing. href + target=_blank opens the tx in a new tab as intended.
     return hash ? (
         <ToastAction altText="View on explorer" asChild>
-            <Link
-                to={`${chain?.blockExplorers?.default.url}/tx/${hash}`}
-                target={"_blank"}
+            <a
+                href={`${chain?.blockExplorers?.default.url}/tx/${hash}`}
+                target="_blank"
+                rel="noreferrer"
                 className="border-none gap-2 hover:bg-transparent hover:text-blue-400"
             >
                 View on explorer
                 <ExternalLinkIcon size={16} />
-            </Link>
+            </a>
         </ToastAction>
     ) : (
         <></>
