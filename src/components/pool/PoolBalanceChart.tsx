@@ -97,13 +97,15 @@ const COLOR_VOL_LEGEND = '#9CA3AF' // gray legend swatch (bars are per-point col
 // From the Transaction entity (each swap is a config snapshot); config changes
 // only on an admin retune, so these are STEP lines.
 //
-// Grouped into TWO shared hidden lanes by magnitude so lines are comparable:
+// Grouped into hidden lanes by magnitude so lines are comparable:
 //   • 'small' — kB/kQ (~0.008) + sSell/sBuy SCALED ×100 (~1e-4 → ~0.01), all ~0-0.02
-//   • 'frac'  — compress + pythWeight (0-1)
+//   • 'frac'  — compress (0-1)
+//   • 'pyth'  — pythWeight (0-1), in its OWN lower band so a flat/near-flat weight
+//     isn't squished by compress's range (they used to share the 'frac' lane)
 // The LINE plots value×scale (so the tiny sSell/sBuy aren't squished flat); the
 // legend + tooltip always show the REAL value plus a "(×100)" note.
 type ConfigKey = 'kB' | 'kQ' | 'compress' | 'sSell' | 'sBuy' | 'pythWeight'
-type ConfigLane = 'cfg-small' | 'cfg-frac'
+type ConfigLane = 'cfg-small' | 'cfg-frac' | 'cfg-pyth'
 // Colors picked to stay OFF the always-visible line hues so config lines never read
 // as a token/price/market line: base=orange(#D8A072), quote=blue(#4DA3FF),
 // price=pink(#EC4899), market=cyan(#22D3EE), LP/vol=green, vol=red. The config set
@@ -114,8 +116,17 @@ const CONFIG_PARAMS: { key: ConfigKey; label: string; color: string; scale: numb
   { key: 'sSell', label: 'sSell', color: '#2DD4BF', scale: 100, lane: 'cfg-small' }, // teal
   { key: 'sBuy', label: 'sBuy', color: '#6366F1', scale: 100, lane: 'cfg-small' }, // indigo
   { key: 'compress', label: 'compress', color: '#A855F7', scale: 1, lane: 'cfg-frac' }, // purple
-  { key: 'pythWeight', label: 'pythWeight', color: '#CBD5E1', scale: 1, lane: 'cfg-frac' }, // slate
+  { key: 'pythWeight', label: 'pythWeight', color: '#CBD5E1', scale: 1, lane: 'cfg-pyth' }, // slate
 ]
+// Vertical band (scaleMargins) per config lane. cfg-small + cfg-frac share the UPPER
+// band (kB/kQ/sSell/sBuy/compress overlay there, each auto-scaled to its own group);
+// pythWeight gets its OWN LOWER band so its flat 0-1 line reads apart from compress,
+// while staying above the volume histogram (which sits at top:0.8).
+const LANE_MARGINS: Record<ConfigLane, { top: number; bottom: number }> = {
+  'cfg-small': { top: 0.08, bottom: 0.42 },
+  'cfg-frac': { top: 0.08, bottom: 0.42 },
+  'cfg-pyth': { top: 0.6, bottom: 0.2 },
+}
 // "kB" → "kB", "sSell" → "sSell (×100)" — the note tells the boss the line is scaled.
 const cfgLabel = (p: { label: string; scale: number }) => (p.scale === 1 ? p.label : `${p.label} (×${p.scale})`)
 // Compact formatter — config values are small (1e-4 … 0.6); significant digits
@@ -656,7 +667,7 @@ export function PoolBalanceChart({
     configRefs.current = {}
     CONFIG_PARAMS.forEach(({ key, color, lane, scale }) => {
       const s = chart.addSeries(LineSeries, {
-        priceScaleId: lane, // shared lane per magnitude band (cfg-small / cfg-frac)
+        priceScaleId: lane, // hidden lane per magnitude band (cfg-small / cfg-frac / cfg-pyth)
         color,
         lineWidth: 1,
         lineType: LineType.WithSteps, // config is a step function (flat between retunes)
@@ -666,8 +677,9 @@ export function PoolBalanceChart({
         // Axis is hidden; format un-scales so the (hidden) label would read the real value.
         priceFormat: { type: 'custom', formatter: (v: number) => fmtCfg(v / scale), minMove: 0.00000001 },
       })
-      // Both config lanes share the upper band; each auto-scales to its own group.
-      s.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.28 } })
+      // Per-lane vertical band: cfg-small/cfg-frac in the upper band, pythWeight in its
+      // own lower band (see LANE_MARGINS). Each lane auto-scales to its own group.
+      s.priceScale().applyOptions({ scaleMargins: LANE_MARGINS[lane] })
       configRefs.current[key] = s
     })
 
