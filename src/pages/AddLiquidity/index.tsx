@@ -43,7 +43,10 @@ import { PoolPriceBar } from './PoolPriceBar'
 import { SwitchZap } from './Zap/SwitchZap'
 import { getApprovalBuffer } from './utils'
 import { V3ZapForm } from './Zap/V3ZapForm'
-import { unwrappedToken } from 'utils/wrappedCurrency'
+import { unwrappedToken, wrappedCurrency } from 'utils/wrappedCurrency'
+import { useTvlGate } from 'hooks/useTvlGate'
+import { tvlGateMessage, isAddOverCap, poolTvlFromReserves } from 'config/tvlGate'
+import { useToast } from 'containers/ToastProvider'
 
 export default function AddLiquidity() {
   const { currencyIdA, currencyIdB } = useParams<{ currencyIdA?: string; currencyIdB?: string }>()
@@ -95,6 +98,37 @@ export default function AddLiquidity() {
     poolTokenPercentage,
     error,
   } = useDerivedMintInfo(currencyA ?? undefined, currencyB ?? undefined, pythPrices)
+
+  // Per-pool TVL cap gate for the non-zap add path (the zap forms gate themselves).
+  // Blocks the add on click (Approve + Supply) with a notice when it would push the
+  // pool past its cap (+ tolerance) — no button disable. No-op for un-gated pools.
+  const { createToast } = useToast()
+  const tvlGate = useTvlGate(pair ?? undefined)
+  // USD value of this two-sided add = each side's amount × its price. Compared with
+  // the current TVL against cap × (1 + tolerance).
+  const addValueUsd =
+    Number(parsedAmounts[Field.CURRENCY_A]?.toExact() ?? 0) * (pythPrices.CURRENCY_A || 0) +
+    Number(parsedAmounts[Field.CURRENCY_B]?.toExact() ?? 0) * (pythPrices.CURRENCY_B || 0)
+  // Fresh pool TVL from on-chain reserves (usePair multicall, refreshes within a block of
+  // an add) × live prices — preferred over the lagging indexer TVL so a rapid second add
+  // can't slip past the cap. pythPrices are keyed to the user's A/B order; map each pool
+  // token to its price by address. Falls back to the indexer TVL when unavailable.
+  const currentTvl = useMemo(() => {
+    if (!pair) return tvlGate.tvl
+    const wrappedA = wrappedCurrency(currencyA ?? undefined, chainId)
+    const priceOf = (token: typeof pair.token0) =>
+      wrappedA && token.address.toLowerCase() === wrappedA.address.toLowerCase()
+        ? pythPrices.CURRENCY_A || 0
+        : pythPrices.CURRENCY_B || 0
+    const fresh = poolTvlFromReserves(
+      pair.reserve0.toExact(),
+      priceOf(pair.token0),
+      pair.reserve1.toExact(),
+      priceOf(pair.token1),
+    )
+    return fresh ?? tvlGate.tvl
+  }, [pair, currencyA, chainId, pythPrices.CURRENCY_A, pythPrices.CURRENCY_B, tvlGate.tvl])
+  const addBlocked = isAddOverCap(tvlGate.cap, currentTvl, addValueUsd)
 
   const { onFieldAInput, onFieldBInput } = useMintActionHandlers(noLiquidity)
   const [exactFieldInput, setExactFieldInput] = useState<Field | undefined>(undefined)
@@ -155,6 +189,12 @@ export default function AddLiquidity() {
   const [approvalB, approveBCallback] = useApproveCallback(approvalAmountB, getRouterAddress(chainId || 0, version))
 
   async function onAdd() {
+    // Defense-in-depth: also gate here (not just the button) so a TVL cross while
+    // the confirm modal is open can't slip an add through.
+    if (addBlocked) {
+      createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
+      return
+    }
     try {
       const { [Field.CURRENCY_A]: parsedAmountA, [Field.CURRENCY_B]: parsedAmountB } = parsedAmounts
       setAttemptingTxn(true)
@@ -467,7 +507,13 @@ export default function AddLiquidity() {
                       <RowBetween>
                         {approvalA !== ApprovalState.APPROVED && (
                           <ButtonPrimary
-                            onClick={approveACallback}
+                            onClick={() => {
+                              if (addBlocked) {
+                                createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
+                                return
+                              }
+                              approveACallback()
+                            }}
                             disabled={approvalA === ApprovalState.PENDING}
                             width={approvalB !== ApprovalState.APPROVED ? '48%' : '100%'}
                           >
@@ -480,7 +526,13 @@ export default function AddLiquidity() {
                         )}
                         {approvalB !== ApprovalState.APPROVED && (
                           <ButtonPrimary
-                            onClick={approveBCallback}
+                            onClick={() => {
+                              if (addBlocked) {
+                                createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
+                                return
+                              }
+                              approveBCallback()
+                            }}
                             disabled={approvalB === ApprovalState.PENDING}
                             width={approvalA !== ApprovalState.APPROVED ? '48%' : '100%'}
                           >
@@ -495,6 +547,10 @@ export default function AddLiquidity() {
                     )}
                   <ButtonError
                     onClick={() => {
+                      if (addBlocked) {
+                        createToast(tvlGateMessage(tvlGate.cap, currentTvl), 'error')
+                        return
+                      }
                       expertMode ? onAdd() : setShowConfirm(true)
                     }}
                     disabled={!isValid || approvalA !== ApprovalState.APPROVED || approvalB !== ApprovalState.APPROVED}

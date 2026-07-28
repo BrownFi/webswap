@@ -1,0 +1,33 @@
+import { ChainId } from '@brownfi/sdk'
+
+// Chains where the CL tag is shown. CL auto-computes from on-chain kappa on EVERY
+// chain, but the tag is rolled out per-chain — Berachain only for now. Add chain ids
+// here to enable it elsewhere. `clEnabled(chainId)` is the single gate the UI checks.
+export const CL_ENABLED_CHAINS: ReadonlySet<number> = new Set([ChainId.BERA_MAINNET])
+
+export function clEnabled(chainId?: number): boolean {
+  return chainId !== undefined && CL_ENABLED_CHAINS.has(chainId)
+}
+
+// Concentration Level (CE vs V2) for a BrownFi pool.
+//
+// Per Paven's reference table, the concentration efficiency relative to a Uniswap V2
+// constant-product pool at the same TVL is exactly CE = 2 / K, where K is the pool's
+// kappa. Verified against every row of the sheet (K=0.001 → 2000, K=0.003 → 667,
+// K=0.013 → 154, K=0.047 → 43, K=0.1 → 20 ...).
+//
+// Rules from Paven / Jason:
+//   - use the SMALLER of kB / kQ (the binding, most-concentrated side)
+//   - round CL to the nearest INTEGER
+//
+// kB/kQ arrive from the indexer as numeric STRINGS ("0.001") — coerce before use.
+export function concentrationLevel(kB?: number | string, kQ?: number | string): number | undefined {
+  const ks = [kB, kQ]
+    .map((k) => Number(k))
+    .filter((k) => Number.isFinite(k) && k > 0)
+  if (ks.length === 0) return undefined
+  const k = Math.min(...ks)
+  const ce = 2 / k
+  if (!Number.isFinite(ce) || ce <= 0) return undefined
+  return Math.round(ce)
+}
