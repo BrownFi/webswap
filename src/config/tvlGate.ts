@@ -13,8 +13,8 @@ export const TVL_GATE_CAPS: Record<number, Record<string, number>> = {
     '0x16b3a5e95db753fe5195244fa208301e38beae2a': 8000, // DOLO / HONEY
     '0xe96e91374ac86a544ff0f9dc4eb9be6c1e37807d': 8000, // WETH / WBERA
     '0xf2d50928f33ef0f9e8dc20881bc475de2c484e26': 8000, // USDC.e / WBERA
-    // HONEY / USDC.e (0x7d4ae0d6…) is handled off-UI by the team (reduce liquidity /
-    // hide), so it is intentionally NOT capped here.
+    // HONEY / USDC.e (0x7d4ae0d6…) is hidden from the pool list (see the blocklist in
+    // pages/Pool/index.tsx) and handled off-UI by the team, so it is NOT capped here.
   },
 }
 

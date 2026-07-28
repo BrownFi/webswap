@@ -238,6 +238,7 @@ export default function Pool() {
       new Set(
         [
           '0xFC5b86437A50e9B4ae0f20Ef9B50f8D79B053121', // WBERA/LBGT
+          '0x7d4ae0d663567b8caa0f0f4bd2585da7394943d7', // HONEY/USDC.e Bera (hidden per team — handled off-UI)
           '0x5E9B2Cd773d8283B578Df77754DFcC2894e36b4D', // LBGT/HONEY
           '0x4EDE02365c2564422Ff3Fc297000fAb082453D7c', // USDC/USDT Linea
           '0x6b3987abbf550c4114918F78267F728d85A65dfd', // USDC/USDT Base
