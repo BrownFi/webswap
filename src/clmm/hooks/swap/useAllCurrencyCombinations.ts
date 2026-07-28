@@ -39,6 +39,12 @@ export function useAllCurrencyCombinations(currencyA?: Currency, currencyB?: Cur
                 [tokenB, base],
             ]),
 
+            // Base <-> base hops: connect every base to every other base so pools
+            // that sit BETWEEN two intermediate tokens (e.g. USDC.e/VUSD, VUSD/hemiBTC)
+            // get loaded, letting 3-4 hop chains form. Without these, only
+            // endpoint<->base pools loaded and any route needing two intermediates broke.
+            ...bases.flatMap((base, i): [AnyToken, AnyToken][] => bases.slice(i + 1).map((otherBase): [AnyToken, AnyToken] => [base, otherBase])),
+
             // Boosted hop pairs: all boosted tokens through base tokens
             ...boostedTokensA.flatMap((boostedA) => bases.map((base): [AnyToken, AnyToken] => [boostedA, base])),
             ...boostedTokensB.flatMap((boostedB) => bases.map((base): [AnyToken, AnyToken] => [boostedB, base])),
