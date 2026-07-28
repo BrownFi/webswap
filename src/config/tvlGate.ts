@@ -7,8 +7,14 @@ import { ChainId } from '@brownfi/sdk'
 // chainId → lowercased pool (liquidity-token) address → cap in USD.
 export const TVL_GATE_CAPS: Record<number, Record<string, number>> = {
   [ChainId.BERA_MAINNET]: {
-    // HONEY / USDC.e V3
-    '0x7d4ae0d663567b8caa0f0f4bd2585da7394943d7': 20,
+    '0x3e0fd2ce4d5b7e5f6c34e26c48a2dbd9f8d7d88c': 60000, // WBERA / HONEY
+    '0xc123bc9259d1a99add5a2c512498ac146dd2bade': 20000, // WETH / USDC.e
+    '0x77ccfa7fdb7510e9ea1417c0737f856d87b5215d': 20000, // WBTC / WETH
+    '0x16b3a5e95db753fe5195244fa208301e38beae2a': 8000, // DOLO / HONEY
+    '0xe96e91374ac86a544ff0f9dc4eb9be6c1e37807d': 8000, // WETH / WBERA
+    '0xf2d50928f33ef0f9e8dc20881bc475de2c484e26': 8000, // USDC.e / WBERA
+    // HONEY / USDC.e (0x7d4ae0d6…) is handled off-UI by the team (reduce liquidity /
+    // hide), so it is intentionally NOT capped here.
   },
 }
 

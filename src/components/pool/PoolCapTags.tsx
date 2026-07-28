@@ -1,6 +1,6 @@
 import { getTvlCap } from 'config/tvlGate'
-import { concentrationLevel } from 'utils/concentration'
-import { formatNumber } from 'utils/prices'
+import { clEnabled, concentrationLevel } from 'utils/concentration'
+import { formatCompactPrice } from 'utils/prices'
 
 type Props = {
   chainId?: number
@@ -19,7 +19,9 @@ type Props = {
 // Fee green). Renders nothing when the pool has neither.
 export function PoolCapTags({ chainId, poolAddress, kB, kQ, size = 'sm' }: Props) {
   const cap = getTvlCap(chainId, poolAddress)
-  const cl = concentrationLevel(kB, kQ)
+  // CL is rolled out per-chain (Berachain only for now) — off elsewhere even though
+  // kappa is available, so the tag doesn't appear on chains that aren't configured yet.
+  const cl = clEnabled(chainId) ? concentrationLevel(kB, kQ) : undefined
   if (cap === undefined && cl === undefined) return null
 
   const tagStyle = (bg: string) => ({
@@ -36,7 +38,7 @@ export function PoolCapTags({ chainId, poolAddress, kB, kQ, size = 'sm' }: Props
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: size === 'xs' ? '4px' : '6px' }}>
       {cap !== undefined && (
-        <span style={tagStyle('#4A90E2')}>Max Cap ${formatNumber(cap)}</span>
+        <span style={tagStyle('#4A90E2')}>Max Cap {formatCompactPrice(cap, { maximumFractionDigits: 1 }).toLowerCase()}</span>
       )}
       {cl !== undefined && (
         <span style={tagStyle('#A67C3C')}>CL {cl}</span>

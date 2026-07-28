@@ -1,3 +1,14 @@
+import { ChainId } from '@brownfi/sdk'
+
+// Chains where the CL tag is shown. CL auto-computes from on-chain kappa on EVERY
+// chain, but the tag is rolled out per-chain — Berachain only for now. Add chain ids
+// here to enable it elsewhere. `clEnabled(chainId)` is the single gate the UI checks.
+export const CL_ENABLED_CHAINS: ReadonlySet<number> = new Set([ChainId.BERA_MAINNET])
+
+export function clEnabled(chainId?: number): boolean {
+  return chainId !== undefined && CL_ENABLED_CHAINS.has(chainId)
+}
+
 // Concentration Level (CE vs V2) for a BrownFi pool.
 //
 // Per Paven's reference table, the concentration efficiency relative to a Uniswap V2
