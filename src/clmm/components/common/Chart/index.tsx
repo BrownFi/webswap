@@ -93,7 +93,10 @@ export function Chart({
 
         if (chartRef.current.hasChildNodes()) chartRef.current.innerHTML = "";
 
-        const textColor = getComputedStyle(document.documentElement).getPropertyValue("--text-400").trim();
+        // Read palette vars from chartRef (inside .clmm-root), NOT document.documentElement:
+        // the merge scopes CLMM's CSS vars under .clmm-root, so <html> has no --primary-200
+        // / --text-400 — reading there returned "" and the series drew with an invisible color.
+        const textColor = getComputedStyle(chartRef.current).getPropertyValue("--text-400").trim();
 
         const chart = LightWeightCharts.createChart(chartRef.current, {
             width: chartRef.current.parentElement?.clientWidth,
@@ -145,7 +148,7 @@ export function Chart({
         });
 
         let series;
-        const primary200 = getComputedStyle(document.documentElement).getPropertyValue("--primary-200").trim();
+        const primary200 = getComputedStyle(chartRef.current).getPropertyValue("--primary-200").trim();
 
         if (chartView === CHART_VIEW.AREA || chartView === CHART_VIEW.LINE) {
             series = chart?.addSeries(LightWeightCharts.AreaSeries, {
