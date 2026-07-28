@@ -13,12 +13,13 @@ const TelegramIcon = () => (
     </svg>
 );
 
+// Blog → Paragraph: the official Paragraph brand mark. Source:
+// https://paragraph.com/brand (ivory variant, recoloured to currentColor).
 const ParagraphIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13 4v16" />
-        <path d="M17 4v16" />
-        <path d="M13 4h4a4 4 0 010 8h-4" />
-        <path d="M9 4h4" />
+    <svg width="24" height="24" viewBox="0 0 81 82" fill="none">
+        <path d="M6 0V76.1345H81" stroke="currentColor" strokeWidth="10.6585" strokeMiterlimit="10" />
+        <path d="M34.4067 5.30176L6 76.1337L76.0722 46.9673" stroke="currentColor" strokeWidth="10.6585" strokeLinejoin="round" />
+        <path d="M6 76.129L59.0302 21.5845" stroke="currentColor" strokeWidth="10.6585" strokeMiterlimit="10" />
     </svg>
 );
 
@@ -31,7 +32,7 @@ const DocsIcon = () => (
 );
 
 // All links are icons (per webswap UX — text + icons read messy).
-// Blog = the Paragraph glyph; Docs = the GitBook glyph.
+// Blog = the Paragraph brand mark; Docs = the GitBook glyph.
 const socials = [
     { icon: <XIcon />, href: "https://x.com/BrownFiAMM", label: "X" },
     { icon: <TelegramIcon />, href: "https://t.me/brownfiammcommunity", label: "Telegram" },
