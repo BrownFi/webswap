@@ -109,7 +109,7 @@ const monad = overrideChain({
 // Robinhood Chain (Arbitrum L2, native ETH) — not in viem/chains, defined inline.
 const robinhood: Chain = {
   id: 4663,
-  name: 'Robinhood Chain',
+  name: 'Robinhood',
   nativeCurrency: { decimals: 18, name: 'Ether', symbol: 'ETH' },
   rpcUrls: {
     default: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
