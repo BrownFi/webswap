@@ -2,16 +2,7 @@ import { useMemo, useState } from "react";
 import { useAccount, useBalance, useReadContracts, useWriteContract } from "wagmi";
 import { Address, formatUnits } from "viem";
 import { DEFAULT_CHAIN_ID, TOKENS } from "@clmm/config";
-import { algebraFactoryAddress } from "@clmm/generated";
-import {
-    COMMUNITY_FEE_WITHDRAWER_ROLE,
-    COMMUNITY_VAULT_ADDRESS,
-    FEE_SPLITTER_ADDRESS,
-    communityVaultAbi,
-    erc20BalanceOfAbi,
-    factoryRoleAbi,
-    feeSplitterAbi,
-} from "@clmm/config/fee-split";
+import { COMMUNITY_VAULT_ADDRESS, FEE_SPLITTER_ADDRESS, erc20BalanceOfAbi, feeSplitterAbi } from "@clmm/config/fee-split";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
 import { TransactionType } from "@clmm/state/pendingTransactionsStore";
 import { Button } from "@clmm/components/ui/button";
@@ -23,41 +14,43 @@ import { formatAmount } from "@clmm/utils";
 import Loader from "@clmm/components/common/Loader";
 
 const chainId = DEFAULT_CHAIN_ID;
-const FACTORY = algebraFactoryAddress[chainId as keyof typeof algebraFactoryAddress] as Address;
+const GRID = "grid-cols-[1.4fr_1fr_1fr_auto]";
 
 const eq = (a?: string, b?: string) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
 
 function TokenRow({
     token,
     vaultBal,
-    splitterBal,
+    claimable,
     canClaim,
     onClaim,
     claiming,
 }: {
     token: { address: string; symbol: string; decimals: number };
     vaultBal: bigint;
-    splitterBal: bigint;
+    claimable: bigint;
     canClaim: boolean;
     onClaim: () => void;
     claiming: boolean;
 }) {
+    // useCurrency may not resolve an unknown token; CurrencyLogo renders a skeleton
+    // for undefined and initials for a known token with no logo — so no row ever crashes.
     const currency = useCurrency(token.address as Address, true);
-    const fmt = (v: bigint) => formatAmount(formatUnits(v, token.decimals), 6);
+    const fmt = (v: bigint) => formatAmount(formatUnits(v, token.decimals ?? 18), 6);
 
     return (
-        <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-center gap-2 px-4 py-3 border-t border-card-border text-sm">
+        <div className={`grid ${GRID} items-center gap-2 px-4 py-3 border-t border-card-border text-sm`}>
             <div className="flex items-center gap-2 font-medium">
-                {currency && <CurrencyLogo currency={currency} size={24} />}
-                <span>{token.symbol}</span>
+                <CurrencyLogo currency={currency} size={24} />
+                <span>{token.symbol || "?"}</span>
             </div>
             <div className="text-text-200">{fmt(vaultBal)}</div>
-            <div className="font-semibold">{fmt(splitterBal)}</div>
+            <div className="font-semibold">{fmt(claimable)}</div>
             <div className="text-right">
                 <Button
                     variant="primary"
                     className="px-4 py-1.5 rounded-lg text-xs"
-                    disabled={!canClaim || splitterBal === 0n || claiming}
+                    disabled={!canClaim || claimable === 0n || claiming}
                     onClick={onClaim}
                 >
                     {claiming ? <Loader size={14} /> : "Claim"}
@@ -79,25 +72,18 @@ const ClaimFeePage = () => {
         }));
     }, []);
 
-    // Splitter config + the connected wallet's on-chain role.
+    // Splitter config + whether the connected wallet is a whitelisted claimant.
     const { data: cfg, refetch: refetchCfg } = useReadContracts({
         contracts: [
             { address: FEE_SPLITTER_ADDRESS, abi: feeSplitterAbi, functionName: "receiver0" },
             { address: FEE_SPLITTER_ADDRESS, abi: feeSplitterAbi, functionName: "receiver1" },
             { address: FEE_SPLITTER_ADDRESS, abi: feeSplitterAbi, functionName: "receiver0Share" },
             { address: FEE_SPLITTER_ADDRESS, abi: feeSplitterAbi, functionName: "SHARE_DENOMINATOR" },
-            { address: FEE_SPLITTER_ADDRESS, abi: feeSplitterAbi, functionName: "owner" },
             {
                 address: FEE_SPLITTER_ADDRESS,
                 abi: feeSplitterAbi,
                 functionName: "isWhitelistedClaimant",
                 args: [address as Address],
-            },
-            {
-                address: FACTORY,
-                abi: factoryRoleAbi,
-                functionName: "hasRoleOrOwner",
-                args: [COMMUNITY_FEE_WITHDRAWER_ROLE, address as Address],
             },
         ],
         query: { enabled: Boolean(address) },
@@ -107,18 +93,17 @@ const ClaimFeePage = () => {
     const receiver1 = cfg?.[1]?.result as Address | undefined;
     const receiver0Share = Number(cfg?.[2]?.result ?? 0);
     const shareDenom = Number(cfg?.[3]?.result ?? 10000) || 10000;
-    const splitterOwner = cfg?.[4]?.result as Address | undefined;
-    const canClaim = Boolean(cfg?.[5]?.result);
-    const canWithdraw = Boolean(cfg?.[6]?.result);
+    const canClaim = Boolean(cfg?.[4]?.result);
 
     const brownfiPct = (receiver0Share / shareDenom) * 100;
     const hemiPct = 100 - brownfiPct;
 
-    // Per-token balances held by the vault (pending) and the splitter (claimable).
+    // Per-token balances: pending in the vault (Algebra's keeper moves these to the
+    // splitter off-UI) vs claimable in the splitter.
     const { data: bals, refetch: refetchBals } = useReadContracts({
         contracts: tokens.flatMap((tk) => [
-            { address: tk.address as Address, abi: erc20BalanceOfAbi, functionName: "balanceOf", args: [COMMUNITY_VAULT_ADDRESS] },
-            { address: tk.address as Address, abi: erc20BalanceOfAbi, functionName: "balanceOf", args: [FEE_SPLITTER_ADDRESS] },
+            { address: tk.address as Address, abi: erc20BalanceOfAbi, functionName: "balanceOf" as const, args: [COMMUNITY_VAULT_ADDRESS] as const },
+            { address: tk.address as Address, abi: erc20BalanceOfAbi, functionName: "balanceOf" as const, args: [FEE_SPLITTER_ADDRESS] as const },
         ]),
     });
 
@@ -128,11 +113,8 @@ const ClaimFeePage = () => {
     const rows = tokens.map((tk, i) => ({
         token: tk,
         vaultBal: (bals?.[i * 2]?.result as bigint) ?? 0n,
-        splitterBal: (bals?.[i * 2 + 1]?.result as bigint) ?? 0n,
+        claimable: (bals?.[i * 2 + 1]?.result as bigint) ?? 0n,
     }));
-
-    const vaultTokensToWithdraw = rows.filter((r) => r.vaultBal > 0n);
-    const hasVaultFunds = vaultTokensToWithdraw.length > 0;
 
     const refetchAll = () => {
         refetchCfg();
@@ -149,20 +131,6 @@ const ClaimFeePage = () => {
         { title: txTitle, tokenA: FEE_SPLITTER_ADDRESS, type: TransactionType.SWAP, callback: refetchAll },
         undefined
     );
-
-    const withdrawFromVault = () => {
-        setTxTitle("Withdraw fees from vault");
-        setPending("withdraw");
-        writeContract(
-            {
-                address: COMMUNITY_VAULT_ADDRESS,
-                abi: communityVaultAbi,
-                functionName: "withdrawTokens",
-                args: [vaultTokensToWithdraw.map((r) => ({ token: r.token.address as Address, amount: r.vaultBal }))],
-            },
-            { onSettled: () => setPending(null) }
-        );
-    };
 
     const claimToken = (tokenAddress: string, symbol: string) => {
         setTxTitle(`Claim ${symbol} fees`);
@@ -182,12 +150,8 @@ const ClaimFeePage = () => {
         );
     };
 
-    const role: { label: string; cls: string } | null = !isConnected
+    const role = !isConnected
         ? null
-        : eq(address, splitterOwner)
-        ? { label: "Owner / Admin", cls: "border-primary-200/40 text-primary-200 bg-primary-200/10" }
-        : canWithdraw
-        ? { label: "Withdrawer", cls: "border-blue-400/40 text-blue-300 bg-blue-400/10" }
         : canClaim
         ? { label: "Claimant", cls: "border-green-400/40 text-green-300 bg-green-400/10" }
         : { label: "Read-only", cls: "border-card-border text-text-300 bg-transparent" };
@@ -230,42 +194,19 @@ const ClaimFeePage = () => {
 
                 {!isConnected && (
                     <div className="rounded-xl border border-card-border bg-card p-4 text-sm text-text-200">
-                        Connect your wallet to see what you can withdraw or claim.
+                        Connect your wallet to claim.
                     </div>
                 )}
 
-                {/* Step 1 — withdraw from vault → splitter. Always shown so the flow is
-                    clear; the button is enabled only for the withdrawer/owner. */}
-                <div className="rounded-xl border border-card-border bg-card p-4 flex items-center justify-between gap-4">
-                    <div>
-                        <div className="font-semibold text-sm">Step 1 — Withdraw from vault</div>
-                        <div className="text-xs text-text-300">
-                            {!canWithdraw
-                                ? "Only the vault withdrawer (BrownFi / an address with the withdrawer role) can move fees into the splitter."
-                                : hasVaultFunds
-                                ? "Moves accumulated fees from the community vault into the splitter (Algebra takes its cut here)."
-                                : "No fees waiting in the vault right now."}
-                        </div>
-                    </div>
-                    <Button
-                        variant="primary"
-                        className="px-5 py-2 rounded-lg text-sm whitespace-nowrap"
-                        disabled={!canWithdraw || !hasVaultFunds || pending === "withdraw"}
-                        onClick={withdrawFromVault}
-                    >
-                        {pending === "withdraw" ? <Loader size={16} /> : "Withdraw"}
-                    </Button>
-                </div>
-
-                {/* Step 2 — claim from splitter (whitelisted) */}
+                {/* Claimable table */}
                 <div className="rounded-xl border border-card-border bg-card">
                     <div className="flex items-center justify-between px-4 pt-4 pb-2">
-                        <div className="font-semibold text-sm">Step 2 — Claim &amp; distribute</div>
+                        <div className="font-semibold text-sm">Fees</div>
                         {!canClaim && isConnected && (
                             <span className="text-xs text-text-300">Your wallet isn't whitelisted to claim.</span>
                         )}
                     </div>
-                    <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] gap-2 px-4 pb-1 text-[11px] font-bold text-text-300">
+                    <div className={`grid ${GRID} gap-2 px-4 pb-1 text-[11px] font-bold text-text-300`}>
                         <span>TOKEN</span>
                         <span>IN VAULT</span>
                         <span>CLAIMABLE</span>
@@ -276,14 +217,14 @@ const ClaimFeePage = () => {
                             key={r.token.address}
                             token={r.token}
                             vaultBal={r.vaultBal}
-                            splitterBal={r.splitterBal}
+                            claimable={r.claimable}
                             canClaim={canClaim}
                             claiming={pending === r.token.address}
                             onClaim={() => claimToken(r.token.address, r.token.symbol)}
                         />
                     ))}
                     {/* Native ETH */}
-                    <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-center gap-2 px-4 py-3 border-t border-card-border text-sm">
+                    <div className={`grid ${GRID} items-center gap-2 px-4 py-3 border-t border-card-border text-sm`}>
                         <div className="flex items-center gap-2 font-medium">
                             <img src="/eth-logo.svg" alt="ETH" className="w-6 h-6 rounded-full" />
                             <span>ETH</span>
@@ -304,8 +245,9 @@ const ClaimFeePage = () => {
                 </div>
 
                 <div className="text-xs text-text-300">
-                    Claiming distributes each token to both recipients at their fixed shares in one transaction — funds always go to the
-                    receiver addresses above, never to the caller.
+                    IN VAULT = fees collected but not yet moved to the splitter (handled automatically). CLAIMABLE = ready to distribute.
+                    Each claim sends that token to both recipients at their fixed shares in one transaction — funds always go to the receiver
+                    addresses above, never to the caller.
                 </div>
             </div>
         </PageContainer>
