@@ -6,6 +6,7 @@ import { keccak256, pack } from '@ethersproject/solidity'
 import { encodeAbiParameters, parseAbiParameters } from 'viem'
 import { createReadClient } from '../rpc'
 import { ChainId } from '../constants/chainId'
+import { buildPythUpdatesUrl } from '../constants/pyth'
 import {
   BigintIsh,
   ZERO,
@@ -45,8 +46,11 @@ const HERMES_TTL = 5_000
 // next post-TTL refresh isn't blocked by a stale slot.
 const hermesInflight = new Map<string, Promise<string>>()
 
-async function getCachedUpdateData(feedIds: string[]): Promise<string> {
-  const sortedKey = [...feedIds].sort().join(',')
+async function getCachedUpdateData(feedIds: string[], chainId?: number): Promise<string> {
+  // Cache key includes chainId — the price source is per-chain (Robinhood uses the
+  // BE proxy, others use Hermes), so the same feed set on different chains must not
+  // share a cached blob.
+  const sortedKey = `${chainId ?? ''}:${[...feedIds].sort().join(',')}`
   const now = Date.now()
   const cached = hermesCache.get(sortedKey)
   if (cached && now - cached.ts < HERMES_TTL) {
@@ -56,8 +60,7 @@ async function getCachedUpdateData(feedIds: string[]): Promise<string> {
   if (inflight) return inflight
 
   const promise = (async () => {
-    const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
-    feedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+    const pythUrl = buildPythUpdatesUrl(chainId, feedIds)
     const resp = await fetch(pythUrl.toString())
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
     const json = await resp.json()
@@ -145,7 +148,7 @@ async function solidityPackHelper(addresses: string[], chainId: number, version:
   const priceFeedIds = await Promise.all(
     addresses.map((addr) => getCachedPriceFeedId(client, factoryAddr, addr))
   )
-  return getCachedUpdateData(priceFeedIds)
+  return getCachedUpdateData(priceFeedIds, chainId)
 }
 import { Token } from './token'
 import { Price } from './fractions/price'

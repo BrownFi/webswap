@@ -28,6 +28,7 @@ export enum ChainId {
   MONAD = 143,
   OP_MAINNET = 10,
   BOBA_MAINNET = 288,
+  ROBINHOOD_MAINNET = 4663,
 }
 
 export const ChainIdHex: Record<number, string> = {
@@ -44,6 +45,7 @@ export const ChainIdHex: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x138de',
   [ChainId.HYPER_EVM]: '0x3e7',
   [ChainId.LINEA_MAINNET]: '0xe708',
+  [ChainId.ROBINHOOD_MAINNET]: '0x1237',
   [ChainId.SEI_MAINNET]: '0x531',
   [ChainId.MONAD]: '0x8f',
   [ChainId.U2U_MAINNET]: '0x27',

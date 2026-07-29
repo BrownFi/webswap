@@ -99,6 +99,9 @@ export function getEtherscanLink(
     case ChainId.LINEA_MAINNET:
       prefix = 'https://lineascan.build'
       break
+    case ChainId.ROBINHOOD_MAINNET:
+      prefix = 'https://robinhoodchain.blockscout.com'
+      break
     case ChainId.SEI_MAINNET:
       prefix = 'https://seiscan.io'
       break
@@ -312,6 +315,8 @@ export function getScanText(chainId: ChainId) {
       return 'Hyperscan'
     case ChainId.LINEA_MAINNET:
       return 'Lineascan'
+    case ChainId.ROBINHOOD_MAINNET:
+      return 'Blockscout'
     case ChainId.SEI_MAINNET:
       return 'Seiscan'
     case ChainId.MONAD:

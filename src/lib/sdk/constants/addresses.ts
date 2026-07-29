@@ -126,6 +126,7 @@ export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BASE_MAINNET]: '0x38c91c64169c7B5eBe02DcE39060B6180065C38d',
   [ChainId.LINEA_MAINNET]: '0xB3c31fDc0a22D5725C47B1fC430F5B87353D8C3e',
   [ChainId.ARBITRUM_MAINNET]: '0x96cE2973581C5bF362e0fc9f40e6B5f12AA59b61',
+  [ChainId.ROBINHOOD_MAINNET]: '0x2A08Da7B6590ce5D217161F234069CfC54DBe554',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
@@ -133,6 +134,7 @@ export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BASE_MAINNET]: '0x5c4B5b07AE5EaeC428C23DbC96564Bb5A3BE7aaa',
   [ChainId.LINEA_MAINNET]: '0xD9a702839510ee2859bCE697F51Aae49bF8949d7',
   [ChainId.ARBITRUM_MAINNET]: '0xe49805412EDFDF4C458B297e7C1534588Fa3F1F0',
+  [ChainId.ROBINHOOD_MAINNET]: '0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA',
 }
 export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
@@ -140,6 +142,7 @@ export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BASE_MAINNET]: '0xb77197484d77340040cC9969bd475E4a082D3f4C',
   [ChainId.LINEA_MAINNET]: '0x92b2639F1BDd8eD5c359200Fb6CAe045CC71ca3b',
   [ChainId.ARBITRUM_MAINNET]: '0x0df2D3B2219aacfD87Dd7051ea9CB6382CA38B30',
+  [ChainId.ROBINHOOD_MAINNET]: '0x92927Ff9420aF3347Ae25ad618Eb844E78EFe8E1',
 }
 export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
@@ -155,6 +158,9 @@ export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   // 2026-06-24 (live on both prod + beta APIs, validated 1:1 vs on-chain), so use
   // the indexer (gives volume/TVL/fee-APR/annualized-return the on-chain path can't).
   [ChainId.ARBITRUM_MAINNET]: true,
+  // Robinhood Chain V3 deployed 2026-07-29 — on-chain reads (useV3PoolsOnChain)
+  // until the BE /indexer/v3 indexes chainId 4663; flip to true once Manh adds it.
+  [ChainId.ROBINHOOD_MAINNET]: false,
 }
 
 /** Per-version address-map resolvers (used by the SDK getters + readers). */
@@ -261,6 +267,8 @@ export const PYTH_ADDRESS: Record<number, string> = {
   [ChainId.SEPOLIA]: '0xDd24F84d36BF92C65F92307595335bdFab5Bbd21',
   [ChainId.ARBITRUM_SEPOLIA]: '0x4374e5a8b9C22271E9EB878A2AA31DE97DF15DAF',
   [ChainId.ARBITRUM_MAINNET]: '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C',
+  // Robinhood: router.PYTH() custom oracle (getUpdateFee=0, keeper-fed like Bera/Linea).
+  [ChainId.ROBINHOOD_MAINNET]: '0xa80258Eea4BA0865610eb239045737D08929c40b',
   [ChainId.BSC_MAINNET]: '0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594',
   [ChainId.BASE_MAINNET]: '0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a',
   [ChainId.BERA_MAINNET]: '0x2880aB155794e7179c9eE2e38200202908C17B43',
@@ -305,6 +313,7 @@ export const RPC_URLS: Record<number, string> = {
   [ChainId.U2U_MAINNET]: 'https://rpc-mainnet.u2u.xyz',
   [ChainId.ARBITRUM_SEPOLIA]: 'https://sepolia-rollup.arbitrum.io/rpc',
   [ChainId.ARBITRUM_MAINNET]: 'https://arb1.arbitrum.io/rpc',
+  [ChainId.ROBINHOOD_MAINNET]: 'https://rpc.mainnet.chain.robinhood.com',
   [ChainId.BERA_MAINNET]: 'https://rpc.berachain.com',
   [ChainId.HYPER_EVM]: 'https://rpc.hyperliquid.xyz/evm',
   [ChainId.LINEA_MAINNET]: 'https://rpc.linea.build',
@@ -331,6 +340,7 @@ export const RPC_FALLBACKS: Record<number, string[]> = {
     'https://developer-access-mainnet.base.org',
   ],
   [ChainId.ARBITRUM_MAINNET]: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.drpc.org', 'https://arbitrum.therpc.io'],
+  [ChainId.ROBINHOOD_MAINNET]: ['https://rpc.mainnet.chain.robinhood.com'],
   [ChainId.BSC_MAINNET]: ['https://bsc-dataseed1.defibit.io', 'https://bsc-dataseed1.ninicoin.io', 'https://bsc.drpc.org'],
   [ChainId.LINEA_MAINNET]: ['https://rpc.linea.build', 'https://1rpc.io/linea', 'https://linea.drpc.org'],
   [ChainId.SEI_MAINNET]: ['https://evm-rpc.sei-apis.com', 'https://sei.drpc.org', 'https://sei-evm-rpc.publicnode.com'],

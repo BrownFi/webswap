@@ -105,6 +105,20 @@ const monad = overrideChain({
   ],
 })
 
+// Robinhood Chain (Arbitrum L2, native ETH) — not in viem/chains, defined inline.
+const robinhood: Chain = {
+  id: 4663,
+  name: 'Robinhood Chain',
+  nativeCurrency: { decimals: 18, name: 'Ether', symbol: 'ETH' },
+  rpcUrls: {
+    default: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
+  },
+  blockExplorers: {
+    default: { name: 'Robinhood Chain Explorer', url: 'https://robinhoodchain.blockscout.com' },
+  },
+  iconUrl: ethereumIcon, // native ETH; TODO swap in a Robinhood logo asset
+}
+
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
@@ -145,6 +159,7 @@ const mainChains: readonly [Chain, ...Chain[]] = [
   hyperEVM,
   linea,
   monad,
+  robinhood,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
@@ -153,6 +168,7 @@ const betaChains: readonly [Chain, ...Chain[]] = [
   hyperEVM,
   linea,
   monad,
+  robinhood,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 
