@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useAccount, useBalance, useReadContracts, useWriteContract } from "wagmi";
 import { Address, formatUnits } from "viem";
 import { DEFAULT_CHAIN_ID, TOKENS } from "@clmm/config";
-import { COMMUNITY_VAULT_ADDRESS, FEE_SPLITTER_ADDRESS, erc20BalanceOfAbi, feeSplitterAbi } from "@clmm/config/fee-split";
+import { FEE_SPLITTER_ADDRESS, erc20BalanceOfAbi, feeSplitterAbi } from "@clmm/config/fee-split";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
 import { TransactionType } from "@clmm/state/pendingTransactionsStore";
 import { Button } from "@clmm/components/ui/button";
@@ -14,29 +14,27 @@ import { formatAmount } from "@clmm/utils";
 import Loader from "@clmm/components/common/Loader";
 
 const chainId = DEFAULT_CHAIN_ID;
-const GRID = "grid-cols-[1.4fr_1fr_1fr_auto]";
+// Three equal columns, each centered, so header and rows line up cleanly.
+const GRID = "grid-cols-3";
 
 const eq = (a?: string, b?: string) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
 
 function TokenRow({
     token,
-    vaultBal,
     claimable,
     canClaim,
     onClaim,
     claiming,
 }: {
     token: { address: string; symbol: string; decimals: number };
-    vaultBal: bigint;
     claimable: bigint;
     canClaim: boolean;
     onClaim: () => void;
     claiming: boolean;
 }) {
     // useCurrency may not resolve an unknown token; CurrencyLogo renders a skeleton
-    // for undefined and initials for a known token with no logo — so no row ever crashes.
+    // for undefined and initials for a known token with no logo — so no row crashes.
     const currency = useCurrency(token.address as Address, true);
-    const fmt = (v: bigint) => formatAmount(formatUnits(v, token.decimals ?? 18), 6);
 
     return (
         <div className={`grid ${GRID} items-center gap-2 px-4 py-3 border-t border-card-border text-sm`}>
@@ -44,9 +42,8 @@ function TokenRow({
                 <CurrencyLogo currency={currency} size={24} />
                 <span>{token.symbol || "?"}</span>
             </div>
-            <div className="text-text-200">{fmt(vaultBal)}</div>
-            <div className="font-semibold">{fmt(claimable)}</div>
-            <div className="text-right">
+            <div className="font-semibold text-center">{formatAmount(formatUnits(claimable, token.decimals ?? 18), 6)}</div>
+            <div className="flex justify-end">
                 <Button
                     variant="primary"
                     className="px-4 py-1.5 rounded-lg text-xs"
@@ -98,23 +95,20 @@ const ClaimFeePage = () => {
     const brownfiPct = (receiver0Share / shareDenom) * 100;
     const hemiPct = 100 - brownfiPct;
 
-    // Per-token balances: pending in the vault (Algebra's keeper moves these to the
-    // splitter off-UI) vs claimable in the splitter.
+    // Claimable balances held by the splitter (fees are moved here off-UI; this page
+    // only distributes what's already in the splitter).
     const { data: bals, refetch: refetchBals } = useReadContracts({
-        contracts: tokens.flatMap((tk) => [
-            { address: tk.address as Address, abi: erc20BalanceOfAbi, functionName: "balanceOf" as const, args: [COMMUNITY_VAULT_ADDRESS] as const },
-            { address: tk.address as Address, abi: erc20BalanceOfAbi, functionName: "balanceOf" as const, args: [FEE_SPLITTER_ADDRESS] as const },
-        ]),
+        contracts: tokens.map((tk) => ({
+            address: tk.address as Address,
+            abi: erc20BalanceOfAbi,
+            functionName: "balanceOf" as const,
+            args: [FEE_SPLITTER_ADDRESS] as const,
+        })),
     });
 
-    const { data: vaultNative } = useBalance({ address: COMMUNITY_VAULT_ADDRESS });
     const { data: splitterNative, refetch: refetchNative } = useBalance({ address: FEE_SPLITTER_ADDRESS });
 
-    const rows = tokens.map((tk, i) => ({
-        token: tk,
-        vaultBal: (bals?.[i * 2]?.result as bigint) ?? 0n,
-        claimable: (bals?.[i * 2 + 1]?.result as bigint) ?? 0n,
-    }));
+    const rows = tokens.map((tk, i) => ({ token: tk, claimable: (bals?.[i]?.result as bigint) ?? 0n }));
 
     const refetchAll = () => {
         refetchCfg();
@@ -201,22 +195,20 @@ const ClaimFeePage = () => {
                 {/* Claimable table */}
                 <div className="rounded-xl border border-card-border bg-card">
                     <div className="flex items-center justify-between px-4 pt-4 pb-2">
-                        <div className="font-semibold text-sm">Fees</div>
+                        <div className="font-semibold text-sm">Claimable fees</div>
                         {!canClaim && isConnected && (
                             <span className="text-xs text-text-300">Your wallet isn't whitelisted to claim.</span>
                         )}
                     </div>
                     <div className={`grid ${GRID} gap-2 px-4 pb-1 text-[11px] font-bold text-text-300`}>
-                        <span>TOKEN</span>
-                        <span>IN VAULT</span>
-                        <span>CLAIMABLE</span>
-                        <span className="text-right">&nbsp;</span>
+                        <span className="text-left">TOKEN</span>
+                        <span className="text-center">CLAIMABLE</span>
+                        <span className="text-right">ACTION</span>
                     </div>
                     {rows.map((r) => (
                         <TokenRow
                             key={r.token.address}
                             token={r.token}
-                            vaultBal={r.vaultBal}
                             claimable={r.claimable}
                             canClaim={canClaim}
                             claiming={pending === r.token.address}
@@ -229,9 +221,8 @@ const ClaimFeePage = () => {
                             <img src="/eth-logo.svg" alt="ETH" className="w-6 h-6 rounded-full" />
                             <span>ETH</span>
                         </div>
-                        <div className="text-text-200">{vaultNative ? formatAmount(vaultNative.formatted, 6) : "0"}</div>
-                        <div className="font-semibold">{splitterNative ? formatAmount(splitterNative.formatted, 6) : "0"}</div>
-                        <div className="text-right">
+                        <div className="font-semibold text-center">{splitterNative ? formatAmount(splitterNative.formatted, 6) : "0"}</div>
+                        <div className="flex justify-end">
                             <Button
                                 variant="primary"
                                 className="px-4 py-1.5 rounded-lg text-xs"
@@ -245,9 +236,8 @@ const ClaimFeePage = () => {
                 </div>
 
                 <div className="text-xs text-text-300">
-                    IN VAULT = fees collected but not yet moved to the splitter (handled automatically). CLAIMABLE = ready to distribute.
-                    Each claim sends that token to both recipients at their fixed shares in one transaction — funds always go to the receiver
-                    addresses above, never to the caller.
+                    Each claim distributes that token to both recipients at their fixed shares in one transaction — funds always go to the
+                    receiver addresses above, never to the caller.
                 </div>
             </div>
         </PageContainer>
