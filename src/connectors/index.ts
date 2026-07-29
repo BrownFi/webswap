@@ -13,6 +13,7 @@ import ethereumIcon from 'assets/images/ethereum-logo.png'
 import beraIcon from 'assets/images/w-bera.png'
 import arbIcon from 'assets/images/arb.png'
 import lineaIcon from 'assets/images/linea.webp'
+import robinhoodIcon from 'assets/images/robinhood.webp'
 
 const overrideChain = ({
   chain,
@@ -113,7 +114,7 @@ const robinhood: Chain = {
   blockExplorers: {
     default: { name: 'Robinhood Chain Explorer', url: 'https://robinhoodchain.blockscout.com' },
   },
-  iconUrl: ethereumIcon,
+  iconUrl: robinhoodIcon,
 }
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
