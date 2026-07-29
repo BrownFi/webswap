@@ -21,6 +21,8 @@ const PoolsPage = lazy(() => import('./pages/Pools'))
 const PoolPage = lazy(() => import('./pages/Pool'))
 const CreatePoolPage = lazy(() => import('./pages/CreatePool'))
 const NewPositionPage = lazy(() => import('./pages/NewPosition'))
+// Unlisted (not in the navbar) — partner fee-split claim page, shared by URL.
+const ClaimFeePage = lazy(() => import('./pages/ClaimFee'))
 
 // Analytics module (enabled in app-modules). AnalyticsPage is a layout that wraps
 // the per-tab table as children, so eager-import rather than lazy — it's part of
@@ -86,6 +88,7 @@ export default function ClmmApp() {
               <Route path="pools/create" element={s(<CreatePoolPage />)} />
               <Route path="pool/:pool" element={s(<PoolPage />)} />
               <Route path="pool/:pool/new-position" element={s(<NewPositionPage />)} />
+              <Route path="claim-fee" element={s(<ClaimFeePage />)} />
               <Route path="analytics" element={s(<AnalyticsPage><PoolsList isExplore /></AnalyticsPage>)} />
               <Route path="analytics/tokens" element={s(<AnalyticsPage><TokensList /></AnalyticsPage>)} />
               <Route path="analytics/transactions" element={s(<AnalyticsPage><TransactionsList /></AnalyticsPage>)} />

@@ -114,6 +114,7 @@ import { useAccount } from 'wagmi'
 import CustomAccountDisplay from './CustomAccountDisplay'
 import CustomChainSelect from './CustomChainSelect'
 import HamburgerMenu from './HamburgerMenu'
+import { isFeeClaimWallet } from '@clmm/config/fee-split'
 
 function StyledNavLink({
   id,
@@ -156,7 +157,7 @@ const HEMI_CHAIN_ID = 43111
 // is also checked so the navbar matches the page even while disconnected (chainId
 // undefined) but sitting on a /clmm route.
 function MainNav() {
-  const { chainId } = useAccount()
+  const { chainId, address } = useAccount()
   const location = useLocation()
   const showClmmNav = chainId === HEMI_CHAIN_ID || location.pathname.startsWith('/clmm')
 
@@ -166,12 +167,25 @@ function MainNav() {
   const clmmPoolActive = location.pathname.startsWith('/clmm/pool')
   const webswapPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) => location.pathname.startsWith(p))
 
+  const clmmItems = [
+    { id: 'swap-nav-link', to: '/clmm/swap', label: 'Swap', end: false, active: false },
+    { id: 'pool-nav-link', to: '/clmm/pools', label: 'Pool', end: false, active: clmmPoolActive },
+    { id: 'analytics-nav-link', to: '/clmm/analytics', label: 'Analytics', end: false, active: false },
+  ]
+  // Partner fee-claim entry — only the BrownFi/Hemi wallets (hardcoded, no on-chain
+  // read) see it; the page itself still enforces every action on-chain.
+  if (isFeeClaimWallet(address)) {
+    clmmItems.push({
+      id: 'claim-fee-nav-link',
+      to: '/clmm/claim-fee',
+      label: 'Claim Fees',
+      end: false,
+      active: location.pathname.startsWith('/clmm/claim-fee'),
+    })
+  }
+
   const items = showClmmNav
-    ? [
-        { id: 'swap-nav-link', to: '/clmm/swap', label: 'Swap', end: false, active: false },
-        { id: 'pool-nav-link', to: '/clmm/pools', label: 'Pool', end: false, active: clmmPoolActive },
-        { id: 'analytics-nav-link', to: '/clmm/analytics', label: 'Analytics', end: false, active: false },
-      ]
+    ? clmmItems
     : [
         { id: 'swap-nav-link', to: '/swap', label: 'Swap', end: false, active: false },
         { id: 'pool-nav-link', to: '/pool', label: 'Pool', end: true, active: webswapPoolActive },
