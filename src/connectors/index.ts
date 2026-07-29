@@ -102,6 +102,19 @@ export const hemi: Chain = {
   },
   iconUrl: 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png',
 }
+// Robinhood Chain (Arbitrum L2, native ETH) — not in viem/chains, defined inline.
+const robinhood: Chain = {
+  id: 4663,
+  name: 'Robinhood',
+  nativeCurrency: { decimals: 18, name: 'Ether', symbol: 'ETH' },
+  rpcUrls: {
+    default: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
+  },
+  blockExplorers: {
+    default: { name: 'Robinhood Chain Explorer', url: 'https://robinhoodchain.blockscout.com' },
+  },
+  iconUrl: ethereumIcon,
+}
 export const appEnv = import.meta.env.VITE_ENVIRONMENT as 'mainnet' | 'beta' | 'testnet'
 export const isMainnet = appEnv === 'mainnet'
 
@@ -146,12 +159,14 @@ const mainChains: readonly [Chain, ...Chain[]] = [
   arbitrum,
   hyperEVM,
   linea,
+  robinhood,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
   arbitrum,
   hyperEVM,
   linea,
+  robinhood,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 

@@ -48,8 +48,8 @@ const hermesInflight = new Map<string, Promise<string>>()
 
 async function getCachedUpdateData(feedIds: string[], chainId?: number): Promise<string> {
   // Cache key includes chainId — the price source is per-chain (Arbitrum / Linea /
-  // HyperEVM use the BE proxy, others use Hermes), so the same feed set on different
-  // chains must not share a cached blob.
+  // HyperEVM and Robinhood use the BE proxy, others use Hermes), so the same feed
+  // set on different chains must not share a cached blob.
   const sortedKey = `${chainId ?? ''}:${[...feedIds].sort().join(',')}`
   const now = Date.now()
   const cached = hermesCache.get(sortedKey)

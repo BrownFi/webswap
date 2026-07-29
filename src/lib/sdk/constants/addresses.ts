@@ -102,18 +102,21 @@ export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.HYPER_EVM]: '0x98F6369ecf2A2f7A519773AC40C561701a89828b',
   [ChainId.ARBITRUM_MAINNET]: '0x6C0a11200c022AF316F591158B5686931ef93DCf',
   [ChainId.LINEA_MAINNET]: '0x0bf5Fa65dAE6Db32250E5DC74489cedadd38D338',
+  [ChainId.ROBINHOOD_MAINNET]: '0x2A08Da7B6590ce5D217161F234069CfC54DBe554',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
   [ChainId.HYPER_EVM]: '0x6A4Bd89709b67eC846F02cF9E95A0dd2Fb515720',
   [ChainId.ARBITRUM_MAINNET]: '0xe49805412EDFDF4C458B297e7C1534588Fa3F1F0',
   [ChainId.LINEA_MAINNET]: '0xD9a702839510ee2859bCE697F51Aae49bF8949d7',
+  [ChainId.ROBINHOOD_MAINNET]: '0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA',
 }
 export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
   [ChainId.HYPER_EVM]: '0xF211a742898FC57244769163ff6a47025048c4Dc',
   [ChainId.ARBITRUM_MAINNET]: '0x98ab6C5CBb15A49AA0451427e3bA69599bC022E7',
   [ChainId.LINEA_MAINNET]: '0xF956002B9B6Da21BB66A413aC694Ca564377cd9a',
+  [ChainId.ROBINHOOD_MAINNET]: '0x92927Ff9420aF3347Ae25ad618Eb844E78EFe8E1',
 }
 export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
@@ -123,6 +126,8 @@ export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.ARBITRUM_MAINNET]: true,
   // Linea V3 — prod indexer serves chainId 59144 (live + synced), so use it.
   [ChainId.LINEA_MAINNET]: true,
+  // Robinhood V3 is indexed by the BE /indexer/v3 endpoint.
+  [ChainId.ROBINHOOD_MAINNET]: false,
 }
 
 /** V3 address-map resolvers. Only V3 Official remains, so these ignore the
@@ -222,6 +227,8 @@ export const PYTH_ADDRESS: Record<number, string> = {
   // router/zap). Old config 0xff1a0f… was the official Pyth, which this deployment
   // does not use — sending its blobs reverted StalePrice.
   [ChainId.ARBITRUM_MAINNET]: '0xC8fB14C8F54A20a04ABDd24b2B33C2bd6B4E2ad9',
+  // Robinhood: router.PYTH() custom oracle (getUpdateFee=0, keeper-fed like Bera/Linea).
+  [ChainId.ROBINHOOD_MAINNET]: '0xa80258Eea4BA0865610eb239045737D08929c40b',
   [ChainId.BSC_MAINNET]: '0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594',
   [ChainId.BASE_MAINNET]: '0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a',
   [ChainId.BERA_MAINNET]: '0x2880aB155794e7179c9eE2e38200202908C17B43',
@@ -270,6 +277,7 @@ export const RPC_URLS: Record<number, string> = {
   [ChainId.U2U_MAINNET]: 'https://rpc-mainnet.u2u.xyz',
   [ChainId.ARBITRUM_SEPOLIA]: 'https://sepolia-rollup.arbitrum.io/rpc',
   [ChainId.ARBITRUM_MAINNET]: 'https://arb1.arbitrum.io/rpc',
+  [ChainId.ROBINHOOD_MAINNET]: 'https://rpc.mainnet.chain.robinhood.com',
   [ChainId.BERA_MAINNET]: 'https://rpc.berachain.com',
   [ChainId.HYPER_EVM]: 'https://rpc.hyperliquid.xyz/evm',
   [ChainId.LINEA_MAINNET]: 'https://rpc.linea.build',
@@ -296,6 +304,7 @@ export const RPC_FALLBACKS: Record<number, string[]> = {
     'https://developer-access-mainnet.base.org',
   ],
   [ChainId.ARBITRUM_MAINNET]: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.drpc.org', 'https://arbitrum.therpc.io'],
+  [ChainId.ROBINHOOD_MAINNET]: ['https://rpc.mainnet.chain.robinhood.com'],
   [ChainId.BSC_MAINNET]: ['https://bsc-dataseed1.defibit.io', 'https://bsc-dataseed1.ninicoin.io', 'https://bsc.drpc.org'],
   [ChainId.LINEA_MAINNET]: ['https://rpc.linea.build', 'https://1rpc.io/linea', 'https://linea.drpc.org'],
   [ChainId.SEI_MAINNET]: ['https://evm-rpc.sei-apis.com', 'https://sei.drpc.org', 'https://sei-evm-rpc.publicnode.com'],
