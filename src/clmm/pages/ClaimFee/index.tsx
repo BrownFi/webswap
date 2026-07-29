@@ -234,27 +234,28 @@ const ClaimFeePage = () => {
                     </div>
                 )}
 
-                {/* Step 1 — withdraw from vault (withdrawer/owner only) */}
-                {canWithdraw && (
-                    <div className="rounded-xl border border-card-border bg-card p-4 flex items-center justify-between gap-4">
-                        <div>
-                            <div className="font-semibold text-sm">Step 1 — Withdraw from vault</div>
-                            <div className="text-xs text-text-300">
-                                {hasVaultFunds
-                                    ? "Moves accumulated fees from the community vault into the splitter (Algebra takes its cut here)."
-                                    : "No fees waiting in the vault right now."}
-                            </div>
+                {/* Step 1 — withdraw from vault → splitter. Always shown so the flow is
+                    clear; the button is enabled only for the withdrawer/owner. */}
+                <div className="rounded-xl border border-card-border bg-card p-4 flex items-center justify-between gap-4">
+                    <div>
+                        <div className="font-semibold text-sm">Step 1 — Withdraw from vault</div>
+                        <div className="text-xs text-text-300">
+                            {!canWithdraw
+                                ? "Only the vault withdrawer (BrownFi / an address with the withdrawer role) can move fees into the splitter."
+                                : hasVaultFunds
+                                ? "Moves accumulated fees from the community vault into the splitter (Algebra takes its cut here)."
+                                : "No fees waiting in the vault right now."}
                         </div>
-                        <Button
-                            variant="primary"
-                            className="px-5 py-2 rounded-lg text-sm whitespace-nowrap"
-                            disabled={!hasVaultFunds || pending === "withdraw"}
-                            onClick={withdrawFromVault}
-                        >
-                            {pending === "withdraw" ? <Loader size={16} /> : "Withdraw"}
-                        </Button>
                     </div>
-                )}
+                    <Button
+                        variant="primary"
+                        className="px-5 py-2 rounded-lg text-sm whitespace-nowrap"
+                        disabled={!canWithdraw || !hasVaultFunds || pending === "withdraw"}
+                        onClick={withdrawFromVault}
+                    >
+                        {pending === "withdraw" ? <Loader size={16} /> : "Withdraw"}
+                    </Button>
+                </div>
 
                 {/* Step 2 — claim from splitter (whitelisted) */}
                 <div className="rounded-xl border border-card-border bg-card">
