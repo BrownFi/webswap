@@ -126,8 +126,10 @@ export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.ARBITRUM_MAINNET]: true,
   // Linea V3 — prod indexer serves chainId 59144 (live + synced), so use it.
   [ChainId.LINEA_MAINNET]: true,
-  // Robinhood V3 is indexed by the BE /indexer/v3 endpoint.
-  [ChainId.ROBINHOOD_MAINNET]: false,
+  // Robinhood Chain V3 deployed 2026-07-29 — BE /indexer/v3 indexes chainId 4663 as
+  // of 2026-07-29 (live on api + beta-api, returns the WETH/USDG pool), so use the
+  // indexer (pool list/detail + charts the on-chain path can't give).
+  [ChainId.ROBINHOOD_MAINNET]: true,
 }
 
 /** V3 address-map resolvers. Only V3 Official remains, so these ignore the
