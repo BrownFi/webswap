@@ -158,9 +158,10 @@ export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   // 2026-06-24 (live on both prod + beta APIs, validated 1:1 vs on-chain), so use
   // the indexer (gives volume/TVL/fee-APR/annualized-return the on-chain path can't).
   [ChainId.ARBITRUM_MAINNET]: true,
-  // Robinhood Chain V3 deployed 2026-07-29 — on-chain reads (useV3PoolsOnChain)
-  // until the BE /indexer/v3 indexes chainId 4663; flip to true once Manh adds it.
-  [ChainId.ROBINHOOD_MAINNET]: false,
+  // Robinhood Chain V3 deployed 2026-07-29 — BE /indexer/v3 indexes chainId 4663 as
+  // of 2026-07-29 (live on api + beta-api, returns the WETH/USDG pool), so use the
+  // indexer (pool list/detail + charts the on-chain path can't give).
+  [ChainId.ROBINHOOD_MAINNET]: true,
 }
 
 /** Per-version address-map resolvers (used by the SDK getters + readers). */
