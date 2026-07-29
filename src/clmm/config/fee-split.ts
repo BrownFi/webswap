@@ -14,7 +14,6 @@ import { Address } from "viem";
 export const FEE_CLAIM_WALLETS: readonly string[] = [
     "0xbe9536bef1137915dcb047bb7a915ee9b0961de4", // BrownFi (receiver0 / owner)
     "0x068ab81292e8eefc97ab626ff4d94409d4e98528", // Hemi (receiver1)
-    "0xdd5065fa07cc7d028a303aeb2f911310bd0ed812", // test wallet (nav check)
 ];
 
 export const isFeeClaimWallet = (addr?: string) => Boolean(addr) && FEE_CLAIM_WALLETS.includes(addr!.toLowerCase());
