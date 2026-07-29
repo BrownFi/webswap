@@ -2,13 +2,15 @@ import { ChainId } from './chainId'
 
 // Off-chain Pyth price source, resolved PER CHAIN. Most chains fetch the public Pyth
 // Hermes endpoint directly. Robinhood Chain uses BrownFi's BE proxy (Manh) which
-// re-exposes the SAME `v2/updates/price/latest` response shape (binary.data hex +
+// re-exposes the SAME `pyth/v2/updates/price/latest` response shape (binary.data hex +
 // parsed[].price), so every caller parses the result identically regardless of source.
 //
-// NOTE the Robinhood path has `/v2/` in it (dev-api.brownfi.io/pyth/**v2**/updates/…) —
-// the BE moved it under v2 (the old /pyth/updates/… path now 404s).
+// The BE proxy is served on the same host as the indexer (VITE_API_URL): api.brownfi.io
+// on prod, beta-api on beta, dev-api on dev — all expose /pyth/v2/updates/price/latest.
+// Deriving from VITE_API_URL keeps Robinhood on the right host per environment.
 const HERMES_UPDATES = 'https://hermes.pyth.network/v2/updates/price/latest'
-const ROBINHOOD_UPDATES = 'https://dev-api.brownfi.io/pyth/v2/updates/price/latest'
+const API_BASE = (import.meta.env.VITE_API_URL || 'https://api.brownfi.io').replace(/\/$/, '')
+const ROBINHOOD_UPDATES = `${API_BASE}/pyth/v2/updates/price/latest`
 
 /** Base URL for the price-update-blob + parsed-price fetch, for the given chain. */
 export function pythUpdatesBase(chainId?: number): string {
