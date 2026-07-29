@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { switchVersion, versionSelector } from 'state/versionSlice'
 import { useLocation } from 'react-router-dom'
 import { isMainnet, isV3Enabled } from 'connectors'
-import { ROUTER_ADDRESS_V1, isV3Like, routerV3Gen, hasV3Pilot, hasV3Official, VERSION, slugToVersion } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS, ROUTER_ADDRESS_V1, isV3Like, routerV3Gen, hasV3Pilot, hasV3Official, VERSION, slugToVersion } from 'lib/sdk/constants/addresses'
 
 export function useVersion({ chainId, pair }: { chainId: number | undefined | null; pair?: Pair | undefined | null }) {
   const location = useLocation()
@@ -26,6 +26,12 @@ export function useVersion({ chainId, pair }: { chainId: number | undefined | nu
   const [version, isDisabled] = useMemo(() => {
     // Effective selection: an explicit URL `?v=` slug wins over the stored toggle.
     const selected = urlVersion ?? stableVersion
+    // Robinhood (and any future V3-only chain) has NO V2 deployment — it lives only
+    // in the V3-Official maps, not ROUTER_ADDRESS. Force V3-Official and LOCK the
+    // toggle so a stale/default V2 selection can't resolve to a non-existent V2 here.
+    if (hasV3Official(chainId ?? undefined) && !ROUTER_ADDRESS[chainId as number]) {
+      return [VERSION.V3_OFFICIAL, true]
+    }
     // V3 not available when API doesn't support /indexer/v3 (prod API today).
     // Mainnet keeps its per-chain lock list because the V1 chains (Viction,
     // U2U) live on mainnet only.
