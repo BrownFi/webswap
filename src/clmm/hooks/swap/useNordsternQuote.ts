@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Address } from "viem";
-import { NORDSTERN_API, NORDSTERN_NATIVE_SENTINEL, NordsternQuote, isNordsternSupported } from "@clmm/config/nordstern";
+import {
+    NORDSTERN_API,
+    NORDSTERN_FEE_PERCENT,
+    NORDSTERN_FEE_RECIPIENT,
+    NORDSTERN_NATIVE_SENTINEL,
+    NordsternQuote,
+    isNordsternSupported,
+} from "@clmm/config/nordstern";
 
 interface UseNordsternQuoteParams {
     chainId: number;
@@ -33,14 +40,20 @@ export function useNordsternQuote({
     const src = tokenInIsNative ? NORDSTERN_NATIVE_SENTINEL : tokenIn;
     const dst = tokenOutIsNative ? NORDSTERN_NATIVE_SENTINEL : tokenOut;
 
+    // Frontend fee skimmed to the treasury (only when configured > 0).
+    const feeParams =
+        NORDSTERN_FEE_PERCENT > 0
+            ? `&convenienceFee=${NORDSTERN_FEE_PERCENT}&convenienceFeeRecipient=${NORDSTERN_FEE_RECIPIENT}`
+            : "";
+
     return useQuery<NordsternQuote | null>({
-        queryKey: ["nordstern-quote", chainId, src, dst, amountIn?.toString(), from, slippage],
+        queryKey: ["nordstern-quote", chainId, src, dst, amountIn?.toString(), from, slippage, NORDSTERN_FEE_PERCENT],
         enabled: Boolean(enabled && isNordsternSupported(chainId) && src && dst && from && amountIn && amountIn > 0n),
         refetchInterval: 15_000,
         staleTime: 10_000,
         retry: 1,
         queryFn: async (): Promise<NordsternQuote | null> => {
-            const url = `${NORDSTERN_API}/${chainId}?src=${src}&dst=${dst}&amount=${amountIn}&from=${from}&slippage=${slippage}`;
+            const url = `${NORDSTERN_API}/${chainId}?src=${src}&dst=${dst}&amount=${amountIn}&from=${from}&slippage=${slippage}${feeParams}`;
             const res = await fetch(url);
             if (!res.ok) return null;
             const j = await res.json();
