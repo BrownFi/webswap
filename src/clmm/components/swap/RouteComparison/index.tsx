@@ -1,11 +1,21 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { IDerivedSwapInfo } from "@clmm/state/swapStore";
 import { useNordsternSwap } from "@clmm/hooks/swap/useNordsternSwap";
 import { SwapRoutePreference, useSwapRoutePreference } from "@clmm/state/routePreferenceStore";
 import { TradeState } from "@clmm/types/trade-state";
+import { useUSDCValue } from "@clmm/hooks/common/useUSDCValue";
+import { CurrencyAmount } from "@cryptoalgebra/integral-sdk";
 import { formatUnits } from "viem";
 import { cn, formatAmount } from "@clmm/utils";
 import { ChevronDown } from "lucide-react";
+
+const fmtUsd = (n: number) => {
+    if (!isFinite(n) || n <= 0) return "";
+    if (n < 0.01) return "< $0.01";
+    if (n < 1000) return `$${n.toFixed(2)}`;
+    if (n < 1_000_000) return `$${(n / 1000).toFixed(2)}K`;
+    return `$${(n / 1_000_000).toFixed(2)}M`;
+};
 
 type RowKey = Exclude<SwapRoutePreference, "auto">;
 
@@ -30,6 +40,14 @@ const RouteComparison = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => 
     const { preferredRoute, setPreferredRoute } = useSwapRoutePreference();
     const [open, setOpen] = useState(false);
 
+    // USD value of 1 output token — multiplied per row for the "≈ $Y" hint. Called
+    // before the early return so hook order stays stable; handles undefined currency.
+    const oneOutputUnit = useMemo(
+        () => (outputCurrency ? CurrencyAmount.fromRawAmount(outputCurrency, (10n ** BigInt(outputCurrency.decimals)).toString()) : undefined),
+        [outputCurrency]
+    );
+    const { formatted: unitUsd } = useUSDCValue(oneOutputUnit);
+
     const nativeLoading =
         derivedSwap.tradeState.state === TradeState.LOADING || derivedSwap.tradeState.state === TradeState.SYNCING;
     const hasAmount = Boolean(derivedSwap.parsedAmount);
@@ -43,6 +61,7 @@ const RouteComparison = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => 
     const comparing = isLoading && hasAnyRoute; // one in, still waiting on the other
 
     const fmt = (v: bigint) => `${formatAmount(formatUnits(v, outputCurrency.decimals), 6)} ${outputCurrency.symbol}`;
+    const usdFor = (v: bigint) => (unitUsd ? fmtUsd(Number(formatUnits(v, outputCurrency.decimals)) * unitUsd) : "");
 
     const activeKey: RowKey = useNordstern ? "nordstern" : "brownfi";
     // Best = the higher available output (only meaningful once both settle).
@@ -96,6 +115,9 @@ const RouteComparison = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => 
                     ) : (
                         <span className={cn("font-semibold", active.available ? "text-text-100" : "text-red-400 text-xs")}>
                             {active.available ? fmt(active.out) : "No route"}
+                            {active.available && usdFor(active.out) && (
+                                <span className="text-text-300 font-medium ml-1.5">≈ {usdFor(active.out)}</span>
+                            )}
                         </span>
                     )}
                     <ChevronDown size={14} className={cn("text-text-300 transition-transform", open && !showSkeleton && "rotate-180")} />
@@ -139,6 +161,9 @@ const RouteComparison = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => 
                                     <div className="flex flex-col items-end gap-0.5">
                                         <span className={cn("font-semibold", r.available ? "text-text-100" : "text-red-400 text-xs")}>
                                             {r.available ? fmt(r.out) : "No route"}
+                                            {r.available && usdFor(r.out) && (
+                                                <span className="text-text-300 font-medium ml-1.5">≈ {usdFor(r.out)}</span>
+                                            )}
                                         </span>
                                         {!comparing && r.available && r.key !== bestKey && deltaPct(r.out) !== undefined && (
                                             <span
