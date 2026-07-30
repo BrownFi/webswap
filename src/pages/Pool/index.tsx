@@ -21,7 +21,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { graphqlFetcher } from 'utils/graphql'
 import { apiV2Service } from 'services'
 import { fetchProtocolStats, ProtocolStats } from 'services/defillamaService'
-import { getCompetitor, competitorPairKey, CompetitorPairData } from 'services/competitors'
+import { getCompetitor, competitorLookupKey, CompetitorPairData } from 'services/competitors'
 import { usePairs } from 'data/Reserves'
 import { useV3PoolsOnChain } from 'hooks/useV3PoolsOnChain'
 import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
@@ -727,7 +727,7 @@ function MemoizedPairList({
       {pairsWithObjects.map(({ pair, stats }) => {
         const competitor =
           competitorPairMap && stats.token0?.id && stats.token1?.id
-            ? competitorPairMap[competitorPairKey(stats.token0.id, stats.token1.id)]
+            ? competitorPairMap[competitorLookupKey(chainId, stats.token0.id, stats.token1.id)]
             : undefined
         return (
           <FullPositionCard

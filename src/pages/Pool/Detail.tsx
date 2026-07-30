@@ -28,7 +28,7 @@ import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
 import { getRestakers } from 'constants/restakers'
-import { getCompetitor, competitorPairKey, CompetitorPairData } from 'services/competitors'
+import { getCompetitor, competitorLookupKey, CompetitorPairData } from 'services/competitors'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -258,7 +258,7 @@ function PoolDetailInner({
   })
   const competitorData =
     showCompetitor && pairRaw?.token0?.id && pairRaw?.token1?.id
-      ? competitorPairMap?.[competitorPairKey(pairRaw.token0.id, pairRaw.token1.id)]
+      ? competitorPairMap?.[competitorLookupKey(chainId, pairRaw.token0.id, pairRaw.token1.id)]
       : undefined
 
   // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
