@@ -28,8 +28,8 @@ export const isNordsternSupported = (chainId?: number) => Boolean(chainId && NOR
  * until the team confirms the rate). Native BrownFi-pool swaps earn the pool fee
  * instead, so this only applies when the Nordstern route is used.
  */
-export const NORDSTERN_FEE_PERCENT = 0; // e.g. 0.1 = 0.1%
-export const NORDSTERN_FEE_RECIPIENT = "0x6369D6BE96B2B36FC30fB033703B3829a938b975" as Address;
+export const NORDSTERN_FEE_PERCENT = 0.02; // 0.02% = 2 bps (matches the fee on other chains)
+export const NORDSTERN_FEE_RECIPIENT = "0x6369D6BE96B2B36FC30fB033703B3829a938b975" as Address; // shared BrownFi treasury
 
 export interface NordsternQuote {
     toAmount: bigint; // expected output
