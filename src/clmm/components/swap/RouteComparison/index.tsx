@@ -54,6 +54,12 @@ const RouteComparison = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => 
     ];
     const active = rows.find((r) => r.key === activeKey)!;
 
+    // Per-row % difference vs the best route (bigint math, 2-decimal precision).
+    const bestRow = rows.find((r) => r.key === bestKey);
+    const bestOut = bestRow?.available ? bestRow.out : 0n;
+    const deltaPct = (out: bigint): number | undefined =>
+        bestOut === 0n ? undefined : Number(((out - bestOut) * 10000n) / bestOut) / 100;
+
     // Click the Best row → back to auto; any other → pin that source.
     const handleSelect = (key: RowKey) => setPreferredRoute(key === bestKey ? "auto" : key);
 
@@ -130,9 +136,22 @@ const RouteComparison = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => 
                                             </span>
                                         )}
                                     </span>
-                                    <span className={cn("font-semibold", r.available ? "text-text-100" : "text-red-400 text-xs")}>
-                                        {r.available ? fmt(r.out) : "No route"}
-                                    </span>
+                                    <div className="flex flex-col items-end gap-0.5">
+                                        <span className={cn("font-semibold", r.available ? "text-text-100" : "text-red-400 text-xs")}>
+                                            {r.available ? fmt(r.out) : "No route"}
+                                        </span>
+                                        {!comparing && r.available && r.key !== bestKey && deltaPct(r.out) !== undefined && (
+                                            <span
+                                                className={cn(
+                                                    "text-[11px] font-medium",
+                                                    deltaPct(r.out)! < 0 ? "text-primary-200" : "text-green-300"
+                                                )}
+                                            >
+                                                {deltaPct(r.out)! > 0 ? "+" : ""}
+                                                {deltaPct(r.out)!.toFixed(2)}%
+                                            </span>
+                                        )}
+                                    </div>
                                 </button>
                             );
                         })}
