@@ -8,6 +8,8 @@ import TokenCard from "../TokenCard";
 import { ArrowUpDown } from "lucide-react";
 import useWrapCallback, { WrapType } from "@clmm/hooks/swap/useWrapCallback";
 import { TOKENS } from "@clmm/config";
+import { useNordsternSwap } from "@clmm/hooks/swap/useNordsternSwap";
+import { formatUnits } from "viem";
 
 import { TradeState } from "@clmm/types/trade-state";
 
@@ -104,6 +106,17 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
         handleOutputSelect(TOKENS[chainId].USDC);
     }, [chainId, handleOutputSelect]);
 
+    // When Nordstern wins the best-of, the "You Receive" amount is Nordstern's
+    // output, not the native trade's — show that so the field matches what the
+    // Swap button will actually execute.
+    const nordstern = useNordsternSwap(derivedSwap);
+    const showNordsternOut = Boolean(
+        nordstern.isBetter && nordstern.quote && quoteCurrency && independentField === SwapField.INPUT && !showWrap,
+    );
+    const outputValue = showNordsternOut
+        ? formatUnits(nordstern.quote!.toAmount, quoteCurrency!.decimals)
+        : formattedAmounts[SwapField.OUTPUT];
+
     return (
         <div className="flex flex-col gap-1.5">
             <TokenCard
@@ -133,7 +146,7 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
             </div>
             <TokenCard
                 label="You Receive"
-                value={formattedAmounts[SwapField.OUTPUT]}
+                value={outputValue}
                 currency={quoteCurrency}
                 otherCurrency={baseCurrency}
                 handleTokenSelection={handleOutputSelect}

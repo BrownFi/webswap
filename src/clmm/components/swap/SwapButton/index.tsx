@@ -12,10 +12,13 @@ import { useAccount } from "wagmi";
 import { SmartRouter } from "@cryptoalgebra/router-custom-pools-and-sliding-fee";
 import { tryParseAmount, BoostedRouteStepType } from "@cryptoalgebra/integral-sdk";
 import { useAppKit, useAppKitNetwork } from "@reown/appkit/react";
-import { useApproveCallbackFromTrade } from "@clmm/hooks/common/useApprove";
+import { useApproveCallbackFromTrade, useApprove } from "@clmm/hooks/common/useApprove";
 import { ApprovalState } from "@clmm/types/approve-state";
 import { useSwapCallback } from "@clmm/hooks/swap/useSwapCallback";
 import { TradeState } from "@clmm/types/trade-state";
+import { useNordsternSwap } from "@clmm/hooks/swap/useNordsternSwap";
+import { useNordsternSwapCallback } from "@clmm/hooks/swap/useNordsternSwapCallback";
+import { NORDSTERN_ROUTER } from "@clmm/config/nordstern";
 
 import SmartRouterModule from "@clmm/modules/SmartRouterModule";
 const { useSmartRouterCallback } = SmartRouterModule.hooks;
@@ -173,6 +176,31 @@ const SwapButton = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
         }
     }, [refetchBalances, refetchPermit2Data, shouldUseOmegaRouter, typeInput, independentField]);
 
+    // Best-of aggregator: quote Nordstern for the same exact-input swap and prefer it
+    // when it beats the native route (or when there's no native route but Nordstern
+    // has one). Only for non-boosted/non-smart normal swaps.
+    const nordstern = useNordsternSwap(derivedSwap);
+    const preferNordstern =
+        !isSmartTrade && !shouldUseOmegaRouter && Boolean(nordstern.quote) && (nordstern.isBetter || routeNotFound);
+
+    // ERC20 input must be approved to the Nordstern router; native input skips approval.
+    const nordsternInputAmount = useMemo(() => {
+        const inCur = currencies[SwapField.INPUT];
+        if (!preferNordstern || !inCur || inCur.isNative || !parsedAmount) return undefined;
+        return parsedAmount;
+    }, [preferNordstern, currencies, parsedAmount]);
+
+    const { approvalState: nsApprovalState, approvalCallback: nsApprovalCallback } = useApprove(
+        nordsternInputAmount,
+        NORDSTERN_ROUTER[chainId],
+    );
+
+    const { execute: nordsternExecute, isLoading: nordsternLoading } = useNordsternSwapCallback(
+        preferNordstern ? nordstern.quote : null,
+        "Swap via Nordstern",
+        onTransactionSuccess,
+    );
+
     const { wrapType, execute: onWrap, loading: isWrapLoading, inputError: wrapInputError } = useWrapCallback(
         currencies[SwapField.INPUT],
         currencies[SwapField.OUTPUT],
@@ -258,6 +286,31 @@ const SwapButton = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
                 {isWrapLoading ? <Loader /> : wrapType === WrapType.WRAP ? "Wrap" : "Unwrap"}
             </Button>
         );
+
+    // Nordstern best-of path — takes over when its quote wins (or is the only route).
+    if (preferNordstern) {
+        const inCur = currencies[SwapField.INPUT];
+        const inBal = currencyBalances[SwapField.INPUT];
+        if (parsedAmount && inBal && inBal.lessThan(parsedAmount)) {
+            return (
+                <Button variant={"primary"} disabled>
+                    {`Insufficient ${inCur?.symbol} amount`}
+                </Button>
+            );
+        }
+        if (!inCur?.isNative && (nsApprovalState === ApprovalState.NOT_APPROVED || nsApprovalState === ApprovalState.PENDING)) {
+            return (
+                <Button variant={"primary"} onClick={nsApprovalCallback} disabled={nsApprovalState === ApprovalState.PENDING}>
+                    {nsApprovalState === ApprovalState.PENDING ? <Loader /> : `Approve ${inCur?.symbol}`}
+                </Button>
+            );
+        }
+        return (
+            <Button variant={"primary"} onClick={() => nordsternExecute()} disabled={nordsternLoading}>
+                {nordsternLoading ? <Loader /> : "Swap"}
+            </Button>
+        );
+    }
 
     if (routeNotFound && userHasSpecifiedInputOutput)
         return (
