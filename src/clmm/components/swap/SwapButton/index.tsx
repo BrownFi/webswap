@@ -228,8 +228,10 @@ const SwapButton = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
 
     // Use regular SwapRouter callback for normal routes without Permit2.
     // Only pass the trade to useSwapCallback once allowance is granted; otherwise
-    // we don't want to generate swap calldata.
-    const tradePassedToSwap = !isSmartTrade && !shouldUseOmegaRouter ? (approvalState === ApprovalState.APPROVED ? trade : null) : null;
+    // we don't want to generate swap calldata. Also skip it when the Nordstern route
+    // is preferred — no need to eagerly estimate gas on a route we won't execute.
+    const tradePassedToSwap =
+        !isSmartTrade && !shouldUseOmegaRouter && !preferNordstern ? (approvalState === ApprovalState.APPROVED ? trade : null) : null;
     const { callback: swapCallback, isLoading: swapLoading, error: swapError } = useSwapCallback(
         tradePassedToSwap,
         allowedSlippage,
