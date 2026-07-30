@@ -180,8 +180,7 @@ const SwapButton = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     // when it beats the native route (or when there's no native route but Nordstern
     // has one). Only for non-boosted/non-smart normal swaps.
     const nordstern = useNordsternSwap(derivedSwap);
-    const preferNordstern =
-        !isSmartTrade && !shouldUseOmegaRouter && Boolean(nordstern.quote) && (nordstern.isBetter || routeNotFound);
+    const preferNordstern = !isSmartTrade && !shouldUseOmegaRouter && nordstern.useNordstern;
 
     // ERC20 input must be approved to the Nordstern router; native input skips approval.
     const nordsternInputAmount = useMemo(() => {

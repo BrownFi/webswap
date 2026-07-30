@@ -1,6 +1,7 @@
 import SwapPair from "@clmm/components/swap/SwapPair";
 import SwapButton from "@clmm/components/swap/SwapButton";
 import SwapParams from "@clmm/components/swap/SwapParams";
+import RouteComparison from "@clmm/components/swap/RouteComparison";
 import Settings from "@clmm/components/common/Settings";
 import PageContainer from "@clmm/components/common/PageContainer";
 import { useDerivedSwapInfo } from "@clmm/state/swapStore.ts";
@@ -37,6 +38,7 @@ const SwapPage = ({ type }: SwapPageProps) => {
                             <Settings />
                         </div>
                         <SwapPair derivedSwap={derivedSwap} />
+                        {!isLimitOrder && <RouteComparison derivedSwap={derivedSwap} />}
                         {isLimitOrder ? <LimitOrder derivedSwap={derivedSwap} /> : <SwapParams derivedSwap={derivedSwap} />}
                         {!isLimitOrder && <SwapButton derivedSwap={derivedSwap} />}
                     </div>

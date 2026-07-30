@@ -4,6 +4,7 @@ import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { IDerivedSwapInfo, useSwapState } from "@clmm/state/swapStore";
 import { SwapField } from "@clmm/types/swap-field";
 import { useNordsternQuote } from "./useNordsternQuote";
+import { useSwapRoutePreference } from "@clmm/state/routePreferenceStore";
 
 /**
  * Best-of comparison between the native Algebra trade and a Nordstern aggregator
@@ -44,7 +45,32 @@ export function useNordsternSwap(derivedSwap: IDerivedSwapInfo) {
     const nativeTrade = derivedSwap.toggledTrade;
     const nativeOut = nativeTrade?.outputAmount ? BigInt(nativeTrade.outputAmount.quotient.toString()) : 0n;
 
+    const hasNordstern = Boolean(quote);
+    const hasNative = Boolean(nativeTrade);
     const isBetter = Boolean(quote && quote.toAmount > nativeOut);
 
-    return { quote, isBetter, isLoading, nativeOut, inputCurrency, outputCurrency, isExactIn };
+    // Effective route after the user's preference. "auto" = best-of (Nordstern when
+    // it wins or is the only route); otherwise honor the forced choice when possible.
+    const { preferredRoute } = useSwapRoutePreference();
+    const useNordstern =
+        preferredRoute === "nordstern"
+            ? hasNordstern
+            : preferredRoute === "brownfi"
+            ? false
+            : hasNordstern && (isBetter || !hasNative); // auto
+
+    return {
+        quote,
+        isBetter,
+        useNordstern,
+        hasNordstern,
+        hasNative,
+        isLoading,
+        nativeOut,
+        nordsternOut: quote?.toAmount ?? 0n,
+        inputCurrency,
+        outputCurrency,
+        isExactIn,
+        preferredRoute,
+    };
 }

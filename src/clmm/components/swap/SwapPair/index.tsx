@@ -111,7 +111,7 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     // Swap button will actually execute.
     const nordstern = useNordsternSwap(derivedSwap);
     const showNordsternOut = Boolean(
-        nordstern.isBetter && nordstern.quote && quoteCurrency && independentField === SwapField.INPUT && !showWrap,
+        nordstern.useNordstern && nordstern.quote && quoteCurrency && independentField === SwapField.INPUT && !showWrap,
     );
     const outputValue = showNordsternOut
         ? formatUnits(nordstern.quote!.toAmount, quoteCurrency!.decimals)
