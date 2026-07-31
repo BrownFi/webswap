@@ -11,8 +11,11 @@ import { SmartRouter } from "@cryptoalgebra/router-custom-pools-and-sliding-fee"
 import { Button } from "@clmm/components/ui/button.tsx";
 import { useOverrideFee } from "@clmm/hooks/swap/useOverrideFee";
 import { TradeState } from "@clmm/types/trade-state";
-import { cn } from "@clmm/utils";
+import { cn, formatAmount } from "@clmm/utils";
 import { SwapRouteModal } from "../SwapRouteModal";
+import { useNordsternSwap } from "@clmm/hooks/swap/useNordsternSwap";
+import { NORDSTERN_FEE_PERCENT } from "@clmm/config/nordstern";
+import { formatUnits } from "viem";
 
 const SwapParams = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -56,19 +59,41 @@ const SwapParams = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
 
     const isTradeLoading = tradeState.state === TradeState.LOADING;
 
+    // When the Nordstern aggregator route wins, its quote (not the losing native
+    // trade) must drive the detail rows. Nordstern doesn't expose a per-pool price
+    // impact, and the only fee we add on top is the frontend convenience fee.
+    const nordstern = useNordsternSwap(derivedSwap);
+    const outputCurrency = currencies[SwapField.OUTPUT];
+    const useNord = Boolean(nordstern.useNordstern && nordstern.quote);
+
+    const nordMinReceived =
+        useNord && outputCurrency && nordstern.quote
+            ? `${formatAmount(formatUnits(nordstern.quote.minToAmount, outputCurrency.decimals), 6)} ${outputCurrency.symbol}`
+            : undefined;
+
+    const feeString = useNord
+        ? `${NORDSTERN_FEE_PERCENT}% fee`
+        : fee !== undefined
+        ? `${fee.toFixed(4)}% fee`
+        : undefined;
+
+    const effectiveMinReceived = useNord ? nordMinReceived : minimumAmountOut;
+    const effectivePriceImpact = useNord ? undefined : priceImpact;
+    const minReceivedLabel = useNord || trade?.tradeType === TradeType.EXACT_INPUT ? "Minimum received" : "Maximum sent";
+
     if (wrapType !== WrapType.NOT_APPLICABLE) return;
 
-    return trade ? (
+    return trade || useNord ? (
         <div className="rounded">
             <div className="flex justify-between">
                 <button
                     className="flex items-center w-full text-md mb-1 text-center bg-card-dark border border-card-border py-1 px-3 rounded-lg"
                     onClick={() => toggleExpanded(!isExpanded)}
                 >
-                    {fee !== undefined ? (
+                    {feeString !== undefined ? (
                         <div className="rounded select-none pointer px-1.5 py-1 flex items-center relative">
-                            {dynamicFeePlugin && <ZapIcon className="mr-2 fill-text" strokeWidth={1} stroke="white" size={16} />}
-                            <span>{`${fee?.toFixed(4)}% fee`}</span>
+                            {!useNord && dynamicFeePlugin && <ZapIcon className="mr-2 fill-text" strokeWidth={1} stroke="white" size={16} />}
+                            <span>{feeString}</span>
                         </div>
                     ) : (
                         <div className="rounded select-none px-1.5 py-1 flex items-center relative">
@@ -83,7 +108,7 @@ const SwapParams = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
             <div
                 className={cn(
                     "h-0 duration-300 will-change-[height] overflow-hidden bg-card-dark rounded-lg",
-                    isExpanded && "h-[160px]",
+                    isExpanded && (useNord ? "h-[124px]" : "h-[160px]"),
                     isExpanded && "border border-card-border"
                 )}
             >
@@ -91,36 +116,41 @@ const SwapParams = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
                     <div className="flex items-center justify-between">
                         <span className="font-semibold">Route</span>
                         <span>
-                            <SwapRouteModal
-                                isOpen={isOpen}
-                                setIsOpen={setIsOpen}
-                                routes={isSmartTrade ? trade?.routes : trade.swaps.map((swap) => swap.route)}
-                                fees={fees}
-                                tradeType={trade?.tradeType}
-                            >
-                                <Button size={"sm"} variant={"outline"} onClick={() => setIsOpen(true)}>
-                                    Show
-                                </Button>
-                            </SwapRouteModal>
+                            {useNord || !trade ? (
+                                <span className="text-text-100 font-medium">Nordstern</span>
+                            ) : (
+                                <SwapRouteModal
+                                    isOpen={isOpen}
+                                    setIsOpen={setIsOpen}
+                                    routes={isSmartTrade ? trade?.routes : trade.swaps.map((swap) => swap.route)}
+                                    fees={fees}
+                                    tradeType={trade?.tradeType}
+                                >
+                                    <Button size={"sm"} variant={"outline"} onClick={() => setIsOpen(true)}>
+                                        Show
+                                    </Button>
+                                </SwapRouteModal>
+                            )}
                         </span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <span className="font-semibold">
-                            {trade.tradeType === TradeType.EXACT_INPUT ? "Minimum received" : "Maximum sent"}
-                        </span>
-                        <span>{minimumAmountOut}</span>
+                        <span className="font-semibold">{minReceivedLabel}</span>
+                        <span>{effectiveMinReceived}</span>
                     </div>
                     {/*<div className="flex items-center justify-between">*/}
                     {/*    <span className="font-semibold">LP Fee</span>*/}
                     {/*    <span>{LPFeeString}</span>*/}
                     {/*</div>*/}
-                    <div className="flex items-center justify-between">
-                        <span className="font-semibold">Price impact</span>
-                        <span>
-                            <PriceImpact priceImpact={priceImpact} />
-                        </span>
-                    </div>
+                    {/* Nordstern (aggregator) doesn't expose a per-pool price impact — hide the row rather than show a meaningless "-". */}
+                    {!useNord && (
+                        <div className="flex items-center justify-between">
+                            <span className="font-semibold">Price impact</span>
+                            <span>
+                                <PriceImpact priceImpact={effectivePriceImpact} />
+                            </span>
+                        </div>
+                    )}
                     <div className="flex items-center justify-between">
                         <span className="font-semibold">Slippage tolerance</span>
                         <span>{allowedSlippage.toFixed(2)}%</span>

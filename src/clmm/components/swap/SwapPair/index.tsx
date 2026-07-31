@@ -81,7 +81,27 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     }, [maxInputAmount, onUserInput]);
 
     const { formatted: usdValueA } = useUSDCValue(parsedAmounts[SwapField.INPUT]);
-    const { formatted: usdValueB } = useUSDCValue(parsedAmounts[SwapField.OUTPUT]);
+    const { formatted: nativeUsdValueB } = useUSDCValue(parsedAmounts[SwapField.OUTPUT]);
+
+    // When Nordstern wins the best-of, the "You Receive" amount is Nordstern's
+    // output, not the native trade's — show that (plus its USD / % delta) so every
+    // field matches what the Swap button will actually execute.
+    const nordstern = useNordsternSwap(derivedSwap);
+    const showNordsternOut = Boolean(
+        nordstern.useNordstern && nordstern.quote && quoteCurrency && independentField === SwapField.INPUT && !showWrap,
+    );
+
+    const nordsternOutAmount = useMemo(
+        () =>
+            showNordsternOut && quoteCurrency && nordstern.quote
+                ? CurrencyAmount.fromRawAmount(quoteCurrency.wrapped, nordstern.quote.toAmount.toString())
+                : undefined,
+        [showNordsternOut, quoteCurrency, nordstern.quote],
+    );
+    const { formatted: nordsternUsdValueB } = useUSDCValue(nordsternOutAmount);
+
+    // USD next to "You Receive" must track whichever route is actually displayed.
+    const usdValueB = showNordsternOut ? nordsternUsdValueB : nativeUsdValueB;
 
     const formattedAmounts = {
         [independentField]: typedValue,
@@ -92,6 +112,12 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     };
 
     const percentDifference = useMemo(() => {
+        // Nordstern route: compare its USD output to the input USD directly. The
+        // native `trade` here is the losing route, so its amounts don't apply.
+        if (showNordsternOut) {
+            if (!usdValueA || !nordsternUsdValueB) return 0;
+            return ((nordsternUsdValueB - usdValueA) / usdValueA) * 100;
+        }
         if (
             isTradeLoading ||
             !trade?.inputAmount.equalTo(parsedAmounts[SwapField.INPUT]?.quotient || ZERO) ||
@@ -100,19 +126,12 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
             return;
         if (!usdValueA || !usdValueB) return 0;
         return ((usdValueB - usdValueA) / usdValueA) * 100;
-    }, [isTradeLoading, trade?.inputAmount, trade?.outputAmount, parsedAmounts, usdValueA, usdValueB]);
+    }, [showNordsternOut, isTradeLoading, trade?.inputAmount, trade?.outputAmount, parsedAmounts, usdValueA, usdValueB, nordsternUsdValueB]);
 
     useEffect(() => {
         handleOutputSelect(TOKENS[chainId].USDC);
     }, [chainId, handleOutputSelect]);
 
-    // When Nordstern wins the best-of, the "You Receive" amount is Nordstern's
-    // output, not the native trade's — show that so the field matches what the
-    // Swap button will actually execute.
-    const nordstern = useNordsternSwap(derivedSwap);
-    const showNordsternOut = Boolean(
-        nordstern.useNordstern && nordstern.quote && quoteCurrency && independentField === SwapField.INPUT && !showWrap,
-    );
     const outputValue = showNordsternOut
         ? formatUnits(nordstern.quote!.toAmount, quoteCurrency!.decimals)
         : formattedAmounts[SwapField.OUTPUT];
