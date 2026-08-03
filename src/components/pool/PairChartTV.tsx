@@ -149,56 +149,77 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
   }, [combinedTxs, baseIdx, quoteIdx])
 
   // ── Benchmark % lines (LP vs. HODL / LP vs. UniV2) from reserve-based TVL math ──
-  // Sourced from pairHourData (1D/7D/1M) / pairDayData (ALL) — the tx entity lacks
-  // tvl + benchmark reserves. `first: 1000` covers ≥30d of hourly; ALL uses daily.
-  const isHourlyAgg = range !== 'ALL'
-  const { data: aggResp } = useQuery<{ rows: AggRow[] }>({
-    queryKey: ['pairBenchAgg', chainId, pairAddress, version, isHourlyAgg],
-    queryFn: () => {
-      const timeKey = isHourlyAgg ? 'hourStartUnix' : 'dayStartUnix'
-      const entity = isHourlyAgg ? 'pairHourDatas' : 'pairDayDatas'
-      const uniFields = keepUniV2 ? '\n          uniV2Reserve0\n          uniV2Reserve1' : ''
-      const query = withFirstActivityGte(
-        `query PairBenchAgg($pair: String!) {
-          rows: ${entity}(first: 1000, orderBy: ${timeKey}, orderDirection: desc, where: { pair: $pair }) {
-            t: ${timeKey}
-            tvl
-            bnhReserve0
-            bnhReserve1
-            token0Price
-            token1Price${uniFields}
-          }
-        }`,
-        timeKey,
-        chainId,
-        pairAddress,
-      )
-      return graphqlFetcher({ operationName: 'PairBenchAgg', query, variables: { chainId, version, pair: pairAddress.toLowerCase() } })
-    },
+  // Sourced from the aggregate (the tx entity lacks tvl + benchmark reserves). Fetch
+  // BOTH tiers, range-independent (stable query keys, no refetch on range switch):
+  //   • hourly (pairHourDatas) → fine resolution for the recent ~41d (≤1000 pts);
+  //   • daily  (pairDayDatas)  → full pool history (≤1000 days).
+  // They're merged (daily for the old part, hourly for the recent part) so the %
+  // lines cover the WHOLE range the tx feed can scroll-load back to — otherwise a
+  // single hourly query capped the lines at ~41d and they stopped extending on
+  // scroll while price/volume kept loading older.
+  const uniAggFields = keepUniV2 ? '\n            uniV2Reserve0\n            uniV2Reserve1' : ''
+  const makeAggQuery = (entity: string, timeKey: 'hourStartUnix' | 'dayStartUnix') =>
+    withFirstActivityGte(
+      `query PairBenchAgg($pair: String!) {
+        rows: ${entity}(first: 1000, orderBy: ${timeKey}, orderDirection: desc, where: { pair: $pair }) {
+          t: ${timeKey}
+          tvl
+          bnhReserve0
+          bnhReserve1
+          token0Price
+          token1Price${uniAggFields}
+        }
+      }`,
+      timeKey,
+      chainId,
+      pairAddress,
+    )
+  const aggQueryFn = (entity: string, timeKey: 'hourStartUnix' | 'dayStartUnix') => () =>
+    graphqlFetcher({
+      operationName: 'PairBenchAgg',
+      query: makeAggQuery(entity, timeKey),
+      variables: { chainId, version, pair: pairAddress.toLowerCase() },
+    })
+  const { data: hourResp } = useQuery<{ rows: AggRow[] }>({
+    queryKey: ['pairBenchAggHour', chainId, pairAddress, version, keepUniV2],
+    queryFn: aggQueryFn('pairHourDatas', 'hourStartUnix'),
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+  const { data: dayResp } = useQuery<{ rows: AggRow[] }>({
+    queryKey: ['pairBenchAggDay', chainId, pairAddress, version, keepUniV2],
+    queryFn: aggQueryFn('pairDayDatas', 'dayStartUnix'),
     refetchInterval: 60_000,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
 
   const aggPoints = useMemo<AggPoint[]>(() => {
-    const rows = aggResp?.rows ?? []
-    return rows
-      .map((d) => {
-        const t = Number(d.t)
-        // Real $ values — TVL and reserves×price cancel any per-token scaling in the
-        // ratio, so no special-case scaling is needed here (unlike the price lines).
-        const tvl = Number(d.tvl) || 0
-        const p0 = Number(d.token0Price) || 0
-        const p1 = Number(d.token1Price) || 0
-        const bnhVal = (Number(d.bnhReserve0) || 0) * p0 + (Number(d.bnhReserve1) || 0) * p1
-        const uniVal = (Number(d.uniV2Reserve0) || 0) * p0 + (Number(d.uniV2Reserve1) || 0) * p1
-        const lpVsHodl = bnhVal > 0 ? ((tvl - bnhVal) / bnhVal) * 100 : null
-        const lpVsUniV2 = keepUniV2 && uniVal > 0 ? ((tvl - uniVal) / uniVal) * 100 : null
-        return { t, lpVsHodl, lpVsUniV2 }
-      })
-      .filter((p) => Number.isFinite(p.t))
-      .sort((a, b) => a.t - b.t)
-  }, [aggResp, keepUniV2])
+    // Real $ values — TVL and reserves×price cancel any per-token scaling in the
+    // ratio, so no special-case scaling is needed here (unlike the price lines).
+    const toPoint = (d: AggRow): AggPoint => {
+      const t = Number(d.t)
+      const tvl = Number(d.tvl) || 0
+      const p0 = Number(d.token0Price) || 0
+      const p1 = Number(d.token1Price) || 0
+      const bnhVal = (Number(d.bnhReserve0) || 0) * p0 + (Number(d.bnhReserve1) || 0) * p1
+      const uniVal = (Number(d.uniV2Reserve0) || 0) * p0 + (Number(d.uniV2Reserve1) || 0) * p1
+      return {
+        t,
+        lpVsHodl: bnhVal > 0 ? ((tvl - bnhVal) / bnhVal) * 100 : null,
+        lpVsUniV2: keepUniV2 && uniVal > 0 ? ((tvl - uniVal) / uniVal) * 100 : null,
+      }
+    }
+    const asc = (rows: AggRow[] | undefined) =>
+      (rows ?? []).map(toPoint).filter((p) => Number.isFinite(p.t)).sort((a, b) => a.t - b.t)
+    const hourly = asc(hourResp?.rows)
+    const daily = asc(dayResp?.rows)
+    // Daily for the old part (before the hourly window begins) + hourly for the
+    // recent part → full-history coverage with fine recent resolution, no overlap.
+    const earliestHourly = hourly.length ? hourly[0].t : Infinity
+    return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
+  }, [hourResp, dayResp, keepUniV2])
 
   // Resample onto a linear time grid (bucketClose = carry-forward close, so lines
   // stay continuous across quiet buckets). Volume is SUMMED per bucket.
