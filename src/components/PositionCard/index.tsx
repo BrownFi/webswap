@@ -247,7 +247,14 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
         <div
           className="flex items-center cursor-pointer max-md:flex-wrap max-md:gap-2"
           style={{ gap: '8px', minHeight: '60px' }}
-          onClick={() => navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${versionToSlug(pair.version)}`)}
+          onClick={() =>
+            navigate(`/pool/${pair.chainId}/${pair.liquidityToken.address}?v=${versionToSlug(pair.version)}`, {
+              // Flag so the detail page auto-scrolls to the Pool Balance chart on
+              // mobile when arriving from the list (per Paven). Only set here on
+              // the list/portfolio row nav — direct loads/refreshes don't scroll.
+              state: { scrollToPoolBalance: true },
+            })
+          }
         >
           {/* Pool name */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>

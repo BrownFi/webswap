@@ -1,7 +1,7 @@
 import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import beraIcon from 'assets/images/w-bera.png'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Settings } from 'react-feather'
 import { Address, checksumAddress } from 'viem'
@@ -215,6 +215,26 @@ function PoolDetailInner({
   const { chainId: walletChainId, account } = useActiveWeb3React()
   const { version, isBeta } = useVersion({ chainId, pair })
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Auto-scroll to the "Pool balances" stat (reserve split) in the stats card on
+  // mobile when arriving from the pool list (per Paven — land under the navbar,
+  // straight on the pool balances). The list row nav sets
+  // `state.scrollToPoolBalance`; we scroll once the stats card has rendered, then
+  // clear the flag so a refresh doesn't re-scroll. Desktop is left untouched.
+  const poolBalanceRef = useRef<HTMLDivElement>(null)
+  const didScrollToBalanceRef = useRef(false)
+  useEffect(() => {
+    if (didScrollToBalanceRef.current) return
+    if (!(location.state as { scrollToPoolBalance?: boolean } | null)?.scrollToPoolBalance) return
+    if (typeof window === 'undefined' || window.innerWidth >= 1024) return // lg breakpoint → desktop, skip
+    const el = poolBalanceRef.current
+    if (!el) return // stats card not mounted yet (waits for data)
+    didScrollToBalanceRef.current = true
+    // Defer a frame so layout settles before scrolling.
+    requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    navigate(location.pathname + location.search, { replace: true, state: {} })
+  }, [location, pair, navigate])
 
   // Chain match check for the action buttons (Add Liquidity, Swap). When
   // wallet ≠ pool chain, the buttons morph to "Switch to {chain}" and call
@@ -759,6 +779,10 @@ function PoolDetailInner({
                 Stats
               </div>
 
+              {/* scrollMarginTop clears the fixed mobile navbar (~78px, HeaderWrapper
+                  in StaticScreen) plus a small gap so the auto-scroll from the pool
+                  list lands "Pool balances" just under the navbar, not behind it. */}
+              <div ref={poolBalanceRef} style={{ scrollMarginTop: 90 }}>
               <StatRow label="Pool balances">
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Inter', fontSize: '13px', color: '#FBFBFD', marginTop: '4px' }}>
                   <span className="inline-flex items-center gap-1.5">
@@ -791,6 +815,7 @@ function PoolDetailInner({
                   </div>
                 )}
               </StatRow>
+              </div>
 
               {showCompetitor && competitor ? (
                 // BrownFi vs competitor comparison: two value columns per metric.
