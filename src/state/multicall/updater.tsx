@@ -1,4 +1,5 @@
 import { Contract } from '@ethersproject/contracts'
+import { ChainId } from '@brownfi/sdk'
 import { useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useActiveWeb3React } from 'hooks'
@@ -19,6 +20,19 @@ import {
 // chunk calls so we do not exceed the gas limit
 const CALL_CHUNK_SIZE = 500
 
+// Arbitrum Nitro chains (Arbitrum One and its Orbit L2s such as Robinhood) return
+// the underlying L1 (Ethereum) block number from Solidity's `block.number`, NOT
+// the L2 block. Multicall3.aggregate reports that L1 number, while the app's block
+// watcher (eth_blockNumber) tracks the L2 block — the two diverge by hundreds of
+// thousands to hundreds of millions of blocks (e.g. Robinhood L2 26.4M vs L1
+// 25.6M; Arbitrum One L2 490M vs L1 25.6M). The usual "result block >= latest
+// block" freshness gate can therefore never pass on these chains, so every
+// multicall throws RetryableError and retries forever (breaking swap/on-chain
+// reads). For these chains we skip the gate and tag results with the L2 block we
+// fetched for, keeping the redux cache in L2 block space. OP-stack (Base) and
+// zkEVM (Linea) chains return the L2 block from `block.number`, so they're fine.
+const L1_BLOCKNUMBER_CHAINS = new Set<number>([ChainId.ARBITRUM_MAINNET, ChainId.ROBINHOOD_MAINNET])
+
 /**
  * Fetches a chunk of calls, enforcing a minimum block number constraint
  * @param multicallContract multicall contract to fetch against
@@ -34,6 +48,17 @@ async function fetchChunk(
   const [resultsBlockNumber, returnData] = await multicallContract.aggregate(
     chunk.map((obj) => [obj.address, obj.callData]),
   )
+  // Arbitrum-family chains report the L1 block number here, which is not
+  // comparable to the L2 `minBlockNumber` we gate against. Accept the result and
+  // tag it with the L2 block we fetched for so the redux cache stays in L2 space.
+  if (L1_BLOCKNUMBER_CHAINS.has(chainId)) {
+    return { results: returnData, blockNumber: minBlockNumber }
+  }
+  // Defensive: a malformed/empty aggregate response leaves resultsBlockNumber
+  // undefined — retry instead of crashing on `undefined.toNumber()`.
+  if (!resultsBlockNumber) {
+    throw new RetryableError('Multicall returned no block number')
+  }
   if (resultsBlockNumber.toNumber() < minBlockNumber) {
     if (resultsBlockNumber.toNumber() - minBlockNumber < -100) {
       console.error(`Multicall block mismatch: expected >= ${minBlockNumber}, got ${resultsBlockNumber.toNumber()}`)
