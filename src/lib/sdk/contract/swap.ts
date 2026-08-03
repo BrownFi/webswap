@@ -74,7 +74,12 @@ export function getSwapCallArguments(
         feeOnTransfer: false,
         allowedSlippage: new Percent(JSBI.BigInt(allowedSlippage), BIPS_BASE),
         recipient: recipient,
-        deadline: deadline.toNumber(),
+        // `deadline` derives from useTransactionDeadline → useCurrentBlockTimestamp,
+        // a multicall read that can be briefly undefined (or was permanently so on
+        // Arbitrum-family chains before the multicall block-gate fix). Guard so we
+        // never crash on `undefined.toNumber()` here — mirrors the fallback in
+        // Swap/index.tsx. 20-minute default when the on-chain timestamp isn't ready.
+        deadline: deadline ? deadline.toNumber() : Math.floor(Date.now() / 1000) + 20 * 60,
       },
       chainId
     )
