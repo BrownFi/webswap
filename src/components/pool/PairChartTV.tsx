@@ -13,7 +13,10 @@ import {
   createChart,
 } from 'lightweight-charts'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { formatPrice } from 'utils/prices'
+import { graphqlFetcher } from 'utils/graphql'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
 import { hasUniV2Price, usePairTransactions } from './usePairTransactions'
@@ -24,20 +27,38 @@ import { hasUniV2Price, usePairTransactions } from './usePairTransactions'
 //   • LP vs. UniV2    — LP's % outperformance over the UniV2 benchmark, LEFT % axis
 //   • Volume          — per-bucket USD volume histogram, bottom
 //
-// ALL FOUR lines come from the SAME `transactions` source and run through the
-// identical machinery as the Pool Balance chart (bucketGrid + bucketClose +
-// setVisibleRange zoom + scroll-to-load-more), so this chart behaves exactly
-// like Pool Balance on every timeframe — no deep-aggregated-vs-shallow-tx span
-// mismatch. `lpPrice`/`bh3Price`/`uniV2Price` are carried per-swap on the tx
-// entity, so the % lines are per-trade (not coarse daily buckets).
+// Relative price + Volume come from the per-swap `transactions` source (bucketGrid
+// + bucketClose + setVisibleRange zoom + scroll-to-load-more), same as Pool Balance.
 //
-// INTERIM NOTE: the relative price is derived from tx reserves (base/quote).
-// When Manh's aggregated rel-price field ships we can move to the deep
-// pairDay/HourData source; until then the tx pipeline keeps all 4 lines
-// consistent + scroll-extendable.
+// The two % benchmark lines (LP vs. HODL / LP vs. UniV2) are computed from the
+// reserve-based TVL math on pairDay/HourData — NOT the old per-swap price ratio.
+// The price ratio (lpPrice/benchmarkPrice − 1) is only valid when the LP and
+// benchmark token SUPPLIES match; for UniV2 they don't, so the ratio mis-states
+// outperformance. The correct measure compares $ VALUES:
+// (tvl − benchmarkValue)/benchmarkValue, where
+//   bnhVal = bnhReserve0·token0Price + bnhReserve1·token1Price   (LP vs. HODL — the
+//            SAME buy-and-hold benchmark the Pool Balance + Oracle Spread charts use)
+//   uniVal = uniV2Reserve0·token0Price + uniV2Reserve1·token1Price   (LP vs. UniV2)
+// Those reserve + price fields live ONLY on pairDay/HourData (the tx entity lacks
+// them), so the % lines source the aggregate. 1D/7D/1M read hourly buckets (retained
+// back to pool creation, ≤1000 pts within 30d); ALL reads daily — so only 1D's
+// granularity changes (15-min → hourly); 7D/1M/ALL keep their resolution.
 
-// Per-swap point: relative price + the two ROI %s + USD volume.
-type Point = { t: number; price0: number; lpVsHodl: number | null; lpVsUniV2: number | null; vol: number }
+// Per-swap point: relative price + USD volume (tx source).
+type Point = { t: number; price0: number; vol: number }
+
+// Aggregate row (pairDay/HourData) → the two benchmark % lines via TVL math.
+type AggPoint = { t: number; lpVsHodl: number | null; lpVsUniV2: number | null }
+type AggRow = {
+  t: string
+  tvl?: string
+  bnhReserve0?: string
+  bnhReserve1?: string
+  token0Price?: string
+  token1Price?: string
+  uniV2Reserve0?: string
+  uniV2Reserve1?: string
+}
 
 type ToggleKey = 'price0' | 'lpVsHodl' | 'lpVsUniV2' | 'volume'
 
@@ -116,33 +137,85 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
         const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
         const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
         const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
-        // ROI % from this tx's OWN lpPrice / bh3Price / uniV2Price (per-trade).
-        const lp = Number(t.lpPrice)
-        const bh3 = Number(t.bh3Price)
-        const uni = Number(t.uniV2Price)
-        const lpVsHodl = lp > 0 && bh3 > 0 ? (lp / bh3 - 1) * 100 : null
-        const lpVsUniV2 = lp > 0 && uni > 0 ? (lp / uni - 1) * 100 : null
         // USD volume of the swap = input amount × its (post-swap) USD unit price.
         const a0In = Number(t.amount0In) || 0
         const a1In = Number(t.amount1In) || 0
         const p0USD = Number(t.reserve0) > 0 ? r0 / Number(t.reserve0) : 0
         const p1USD = Number(t.reserve1) > 0 ? r1 / Number(t.reserve1) : 0
         const vol = a0In > 0 ? a0In * p0USD : a1In > 0 ? a1In * p1USD : 0
-        return { t: Number(t.timestamp), price0, lpVsHodl, lpVsUniV2, vol }
+        return { t: Number(t.timestamp), price0, vol }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.price0))
   }, [combinedTxs, baseIdx, quoteIdx])
 
+  // ── Benchmark % lines (LP vs. HODL / LP vs. UniV2) from reserve-based TVL math ──
+  // Sourced from pairHourData (1D/7D/1M) / pairDayData (ALL) — the tx entity lacks
+  // tvl + benchmark reserves. `first: 1000` covers ≥30d of hourly; ALL uses daily.
+  const isHourlyAgg = range !== 'ALL'
+  const { data: aggResp } = useQuery<{ rows: AggRow[] }>({
+    queryKey: ['pairBenchAgg', chainId, pairAddress, version, isHourlyAgg],
+    queryFn: () => {
+      const timeKey = isHourlyAgg ? 'hourStartUnix' : 'dayStartUnix'
+      const entity = isHourlyAgg ? 'pairHourDatas' : 'pairDayDatas'
+      const uniFields = keepUniV2 ? '\n          uniV2Reserve0\n          uniV2Reserve1' : ''
+      const query = withFirstActivityGte(
+        `query PairBenchAgg($pair: String!) {
+          rows: ${entity}(first: 1000, orderBy: ${timeKey}, orderDirection: desc, where: { pair: $pair }) {
+            t: ${timeKey}
+            tvl
+            bnhReserve0
+            bnhReserve1
+            token0Price
+            token1Price${uniFields}
+          }
+        }`,
+        timeKey,
+        chainId,
+        pairAddress,
+      )
+      return graphqlFetcher({ operationName: 'PairBenchAgg', query, variables: { chainId, version, pair: pairAddress.toLowerCase() } })
+    },
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+
+  const aggPoints = useMemo<AggPoint[]>(() => {
+    const rows = aggResp?.rows ?? []
+    return rows
+      .map((d) => {
+        const t = Number(d.t)
+        // Real $ values — TVL and reserves×price cancel any per-token scaling in the
+        // ratio, so no special-case scaling is needed here (unlike the price lines).
+        const tvl = Number(d.tvl) || 0
+        const p0 = Number(d.token0Price) || 0
+        const p1 = Number(d.token1Price) || 0
+        const bnhVal = (Number(d.bnhReserve0) || 0) * p0 + (Number(d.bnhReserve1) || 0) * p1
+        const uniVal = (Number(d.uniV2Reserve0) || 0) * p0 + (Number(d.uniV2Reserve1) || 0) * p1
+        const lpVsHodl = bnhVal > 0 ? ((tvl - bnhVal) / bnhVal) * 100 : null
+        const lpVsUniV2 = keepUniV2 && uniVal > 0 ? ((tvl - uniVal) / uniVal) * 100 : null
+        return { t, lpVsHodl, lpVsUniV2 }
+      })
+      .filter((p) => Number.isFinite(p.t))
+      .sort((a, b) => a.t - b.t)
+  }, [aggResp, keepUniV2])
+
   // Resample onto a linear time grid (bucketClose = carry-forward close, so lines
   // stay continuous across quiet buckets). Volume is SUMMED per bucket.
   const { bucket } = RANGE_BUCKETS[range]
+  // Seed the grid from the TX feed's first point (price/volume) — NOT the aggregate.
+  // The aggregate (pairHour/DayData) has buckets from pool CREATION, which can predate
+  // the first swap; seeding from it would extend the % lines left of where the price
+  // and volume lines begin. Clipping to the tx window keeps all lines aligned — earlier
+  // aggregate buckets still seed the carry-in level so the % line opens at the right value.
   const grid = useMemo(
     () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
     [allPoints, bucket],
   )
   const seriesData = useMemo(() => {
     if (!grid) return { price0: [], lpVsHodl: [], lpVsUniV2: [], volume: [] as { time: any; value: number; color: string }[] }
-    const closed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+    const txClosed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+    const aggClosed = bucketClose(aggPoints, bucket, grid.gridStart, grid.gridEnd)
     const volMap = new Map<number, number>()
     for (const p of allPoints) {
       if (!(p.vol > 0)) continue
@@ -151,18 +224,18 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       volMap.set(b, (volMap.get(b) ?? 0) + p.vol)
     }
     return {
-      price0: closed.filter((p) => Number.isFinite(p.price0)).map((p) => ({ time: p.t as any, value: p.price0 })),
-      lpVsHodl: closed
+      price0: txClosed.filter((p) => Number.isFinite(p.price0)).map((p) => ({ time: p.t as any, value: p.price0 })),
+      lpVsHodl: aggClosed
         .filter((p) => p.lpVsHodl != null && Number.isFinite(p.lpVsHodl))
         .map((p) => ({ time: p.t as any, value: p.lpVsHodl as number })),
-      lpVsUniV2: closed
+      lpVsUniV2: aggClosed
         .filter((p) => p.lpVsUniV2 != null && Number.isFinite(p.lpVsUniV2))
         .map((p) => ({ time: p.t as any, value: p.lpVsUniV2 as number })),
       volume: [...volMap.entries()]
         .sort((a, b) => a[0] - b[0])
         .map(([t, v]) => ({ time: t as any, value: v, color: `${COLOR_VOLUME}88` })),
     }
-  }, [allPoints, bucket, grid])
+  }, [allPoints, aggPoints, bucket, grid])
 
   const hasData = allPoints.length > 0
   const latest = allPoints[allPoints.length - 1]
