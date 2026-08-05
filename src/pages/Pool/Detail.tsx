@@ -881,10 +881,10 @@ function PoolDetailInner({
                     {/* Mobile: compact inline rows (token only, no ≈USD), tight spacing. */}
                     <div className="flex flex-col gap-1 lg:hidden">
                       {oracleThresholds.minTvlDirect != null && (
-                        <StatInline label="Min TVL (direct)" value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}`} />
+                        <StatInline label="Min TVL (direct)" value={`${formatCompactPrice(oracleThresholds.minTvlDirect, { style: 'decimal' })} ${oracleQuoteSymbol}`} />
                       )}
                       {oracleThresholds.minTvlPath != null && (
-                        <StatInline label="Min TVL (path)" value={`${formatNumberLambda(oracleThresholds.minTvlPath, { maximumFractionDigits: 0 })} ${oracleBaseSymbol}`} />
+                        <StatInline label="Min TVL (path)" value={`${formatCompactPrice(oracleThresholds.minTvlPath, { style: 'decimal' })} ${oracleBaseSymbol}`} />
                       )}
                       {oracleThresholds.twapWindows.length > 0 && (
                         <StatInline label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
@@ -895,13 +895,13 @@ function PoolDetailInner({
                       {oracleThresholds.minTvlDirect != null && (
                         <StatRow
                           label="Min TVL (direct pool)"
-                          value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}${oracleQuotePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlDirect * oracleQuotePrice)}` : ''}`}
+                          value={`${formatCompactPrice(oracleThresholds.minTvlDirect, { style: 'decimal' })} ${oracleQuoteSymbol}${oracleQuotePrice > 0 ? ` · ${formatCompactPrice(oracleThresholds.minTvlDirect * oracleQuotePrice)}` : ''}`}
                         />
                       )}
                       {oracleThresholds.minTvlPath != null && (
                         <StatRow
                           label="Min TVL (path)"
-                          value={`${formatNumberLambda(oracleThresholds.minTvlPath, { maximumFractionDigits: 0 })} ${oracleBaseSymbol}${oracleBasePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlPath * oracleBasePrice)}` : ''}`}
+                          value={`${formatCompactPrice(oracleThresholds.minTvlPath, { style: 'decimal' })} ${oracleBaseSymbol}${oracleBasePrice > 0 ? ` · ${formatCompactPrice(oracleThresholds.minTvlPath * oracleBasePrice)}` : ''}`}
                         />
                       )}
                       {oracleThresholds.twapWindows.length > 0 && (
