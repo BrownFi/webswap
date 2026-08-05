@@ -23,6 +23,9 @@ export const KYBER_AGGREGATOR_CHAIN_SLUG: Partial<Record<ChainId, string>> = {
   // Kyber added HyperEVM at our request — verified live 2026-06-12: /routes +
   // /route/build both 200, router 0x6131B5fae19EA4f9D964eAc0408E4408b66337b5.
   [ChainId.HYPER_EVM]: 'hyperevm',
+  // Robinhood Chain (4663) — Kyber has integrated it; slug `robinhood` per Kyber's
+  // aggregator docs (aggregator-api.kyberswap.com/robinhood/api/v1/routes).
+  [ChainId.ROBINHOOD_MAINNET]: 'robinhood',
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
