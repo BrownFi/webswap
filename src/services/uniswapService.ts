@@ -34,6 +34,61 @@ interface UniswapPoolRaw {
   token1?: { address: string } | null
 }
 
+// Robinhood competitor = TWO SPECIFIC Uniswap V3 pools (chosen by the team), fetched
+// BY ADDRESS — not the top-pools list. The gateway's topV3Pools doesn't index
+// Robinhood, but v3Pool(chain, address) resolves a single pool with feeTier + TVL +
+// 24h volume. Each maps to its token pair so the matching BrownFi pool picks it up.
+//   0xd4EB21…A3 → USDG/NVDA  (0.05%)
+//   0x52e65B…Ca → WETH/USDG  (0.01%)
+const ROBINHOOD_UNISWAP_POOLS = [
+  '0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3',
+  '0x52e65B17fB6E5BA00Ed806f37Afcd2DaA50271Ca',
+]
+const V3_POOL_BY_ADDRESS_QUERY = `query V3Pool($chain: Chain!, $address: String!) {
+  v3Pool(chain: $chain, address: $address) {
+    feeTier
+    totalLiquidity { value }
+    volume24h: cumulativeVolume(duration: DAY) { value }
+    token0 { address }
+    token1 { address }
+  }
+}`
+
+export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, CompetitorPairData>> {
+  const map: Record<string, CompetitorPairData> = {}
+  await Promise.all(
+    ROBINHOOD_UNISWAP_POOLS.map(async (address) => {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10_000)
+      try {
+        const res = await fetch(`${UNISWAP_PROXY_BASE}${UNISWAP_GRAPHQL_PATH}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: V3_POOL_BY_ADDRESS_QUERY, variables: { chain: 'ROBINHOOD', address } }),
+          signal: controller.signal,
+        })
+        if (!res.ok) return
+        const json = (await res.json()) as { data?: { v3Pool?: UniswapPoolRaw | null } }
+        const p = json.data?.v3Pool
+        if (!p?.token0?.address || !p?.token1?.address) return
+        const feeTier = Number(p.feeTier) || 0
+        const vol24hUSD = Number(p.volume24h?.value) || 0
+        map[competitorPairKey(p.token0.address, p.token1.address)] = {
+          feeTier,
+          tvlUSD: Number(p.totalLiquidity?.value) || 0,
+          vol24hUSD,
+          fees24hUSD: (vol24hUSD * feeTier) / 1_000_000,
+        }
+      } catch {
+        // network/timeout — skip this pool (refetched on the next 5-min cycle)
+      } finally {
+        clearTimeout(timeoutId)
+      }
+    }),
+  )
+  return map
+}
+
 // Returns a pair-keyed map. topV3Pools comes back sorted by TVL desc, so the
 // first pool seen for a pair (highest TVL) wins when several fee tiers share it.
 export async function fetchUniswapPairMap(): Promise<Record<string, CompetitorPairData>> {

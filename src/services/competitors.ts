@@ -5,7 +5,7 @@
 import { ChainId } from '@brownfi/sdk'
 import { fetchKodiakPairMap } from './kodiakService'
 import { fetchProjectXPairMap } from './projectXService'
-import { fetchUniswapPairMap } from './uniswapService'
+import { fetchUniswapPairMap, fetchUniswapRobinhoodPairMap } from './uniswapService'
 import { fetchEtherexPairMap } from './etherexService'
 
 export interface CompetitorPairData {
@@ -67,6 +67,9 @@ export function getCompetitor(chainId: number): CompetitorConfig | undefined {
       return { name: 'Uniswap', queryKey: 'uniswapPairMap', fetch: fetchUniswapPairMap }
     case ChainId.LINEA_MAINNET:
       return { name: 'Etherex', queryKey: 'etherexPairMap', fetch: fetchEtherexPairMap }
+    case ChainId.ROBINHOOD_MAINNET:
+      // Uniswap V4 on Robinhood (V3 is empty there) — see fetchUniswapRobinhoodPairMap.
+      return { name: 'Uniswap', queryKey: 'uniswapRobinhoodPairMap', fetch: fetchUniswapRobinhoodPairMap }
     default:
       return undefined
   }
