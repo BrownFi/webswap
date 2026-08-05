@@ -871,15 +871,18 @@ function PoolDetailInner({
                   oracleThresholds.minTvlPath != null ||
                   oracleThresholds.twapWindows.length > 0) && (
                   <>
+                    {/* Heading desktop-only — hidden on mobile to save space (rows'
+                        own labels are self-explanatory). */}
                     <div
-                      className="flex items-center gap-1.5 mt-3 mb-1.5 lg:mt-4 lg:mb-2.5"
+                      className="hidden lg:flex items-center gap-1.5 lg:mt-4 lg:mb-2.5"
                       style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD' }}
                     >
                       Oracle
                       <QuestionHelper text="Minimum UniV3 pool/path liquidity required to price this pair, and the TWAP window used by the oracle. Read live on-chain." />
                     </div>
-                    {/* Mobile: compact inline rows (token only, no ≈USD), tight spacing. */}
-                    <div className="flex flex-col gap-1 lg:hidden">
+                    {/* Mobile: compact inline rows (token only, no ≈USD), tight spacing.
+                        mt-2 keeps a gap from the stats rows above since the heading is hidden. */}
+                    <div className="flex flex-col gap-1 lg:hidden mt-2">
                       {oracleThresholds.minTvlDirect != null && (
                         <StatInline label="Min TVL (direct)" value={`${formatCompactPrice(oracleThresholds.minTvlDirect, { style: 'decimal' })} ${oracleQuoteSymbol}`} />
                       )}
