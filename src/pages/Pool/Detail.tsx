@@ -862,43 +862,40 @@ function PoolDetailInner({
                   </div>
                 </>
               )}
-            </div>
 
-            {/* Oracle liquidity thresholds (min TVL) + TWAP window — read live from
-                the OracleGateway. Below Stats per Paven. Only renders when the pair
-                has oracle config (V3 pairs on chains with an OracleGateway). */}
-            {oracleThresholds &&
-              (oracleThresholds.minTvlDirect != null ||
-                oracleThresholds.minTvlPath != null ||
-                oracleThresholds.twapWindows.length > 0) && (
-                <div
-                  className="px-4 py-3.5 lg:px-5 lg:py-4"
-                  style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}
-                >
-                  <div
-                    className="flex items-center gap-1.5"
-                    style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD', marginBottom: '10px' }}
-                  >
-                    Oracle
-                    <QuestionHelper text="Minimum UniV3 pool/path liquidity required to price this pair, and the TWAP window used by the oracle. Read live on-chain." />
-                  </div>
-                  {oracleThresholds.minTvlDirect != null && (
-                    <StatRow
-                      label="Min TVL (direct pool)"
-                      value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}${oracleQuotePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlDirect * oracleQuotePrice)}` : ''}`}
-                    />
-                  )}
-                  {oracleThresholds.minTvlPath != null && (
-                    <StatRow
-                      label="Min TVL (path)"
-                      value={`${formatNumberLambda(oracleThresholds.minTvlPath, { maximumFractionDigits: 0 })} ${oracleBaseSymbol}${oracleBasePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlPath * oracleBasePrice)}` : ''}`}
-                    />
-                  )}
-                  {oracleThresholds.twapWindows.length > 0 && (
-                    <StatRow label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
-                  )}
-                </div>
-              )}
+              {/* Oracle sub-section — SAME card, below Stats (per Paven). Min-TVL
+                  thresholds + TWAP window, read live from the OracleGateway. Only when
+                  the pair has oracle config. */}
+              {oracleThresholds &&
+                (oracleThresholds.minTvlDirect != null ||
+                  oracleThresholds.minTvlPath != null ||
+                  oracleThresholds.twapWindows.length > 0) && (
+                  <>
+                    <div
+                      className="flex items-center gap-1.5"
+                      style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD', marginTop: '16px', marginBottom: '10px' }}
+                    >
+                      Oracle
+                      <QuestionHelper text="Minimum UniV3 pool/path liquidity required to price this pair, and the TWAP window used by the oracle. Read live on-chain." />
+                    </div>
+                    {oracleThresholds.minTvlDirect != null && (
+                      <StatRow
+                        label="Min TVL (direct pool)"
+                        value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}${oracleQuotePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlDirect * oracleQuotePrice)}` : ''}`}
+                      />
+                    )}
+                    {oracleThresholds.minTvlPath != null && (
+                      <StatRow
+                        label="Min TVL (path)"
+                        value={`${formatNumberLambda(oracleThresholds.minTvlPath, { maximumFractionDigits: 0 })} ${oracleBaseSymbol}${oracleBasePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlPath * oracleBasePrice)}` : ''}`}
+                      />
+                    )}
+                    {oracleThresholds.twapWindows.length > 0 && (
+                      <StatRow label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
+                    )}
+                  </>
+                )}
+            </div>
 
             {/* Your position used to render here at the bottom of the rail —
                 now pinned to the top (above Stats / APR cards) so it's visible
