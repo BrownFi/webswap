@@ -872,14 +872,14 @@ function PoolDetailInner({
                   oracleThresholds.twapWindows.length > 0) && (
                   <>
                     <div
-                      className="flex items-center gap-1.5"
-                      style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD', marginTop: '16px', marginBottom: '10px' }}
+                      className="flex items-center gap-1.5 mt-3 mb-1.5 lg:mt-4 lg:mb-2.5"
+                      style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD' }}
                     >
                       Oracle
                       <QuestionHelper text="Minimum UniV3 pool/path liquidity required to price this pair, and the TWAP window used by the oracle. Read live on-chain." />
                     </div>
-                    {/* Mobile: compact inline rows (token only, no ≈USD). */}
-                    <div className="flex flex-col gap-2 lg:hidden">
+                    {/* Mobile: compact inline rows (token only, no ≈USD), tight spacing. */}
+                    <div className="flex flex-col gap-1 lg:hidden">
                       {oracleThresholds.minTvlDirect != null && (
                         <StatInline label="Min TVL (direct)" value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}`} />
                       )}
