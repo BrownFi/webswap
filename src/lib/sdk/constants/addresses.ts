@@ -264,6 +264,19 @@ export const INIT_CODE_HASH_V1: Record<number, string> = {
   [ChainId.U2U_MAINNET]: '0x330370b2bbf44605dd620805d2a2da4be4d6830689cdc295936cb2f1efb5e4af',
 }
 
+// OracleGateway (factory.priceOracle()) — holds the per-pair V3 oracle liquidity
+// thresholds (minLiquidityInQuote / minPathLiquidityInBase, both WAD-scaled) and
+// twapWindow(pair,pool). DISTINCT from PYTH_ADDRESS (the router's Pyth price source).
+// Addresses from v3-core PairInfo.json `oracle` field (rarely change).
+export const ORACLE_GATEWAY_ADDRESS: Record<number, string> = {
+  [ChainId.HYPER_EVM]: '0x765A7EDd929AF3cDf85f5BE9cC35B7d53C6b3ED0',
+  [ChainId.ROBINHOOD_MAINNET]: '0x3240853b71c89209ea8764CDDfA3b81766553E55',
+  [ChainId.BASE_MAINNET]: '0xcd6B2E1a01DB2a03f81055d53E58523d65Cc4258',
+  [ChainId.ARBITRUM_MAINNET]: '0xC2977cB679ddb708DBAFe600E4E6c951eBE180a6',
+  [ChainId.LINEA_MAINNET]: '0x53981b24075B72790dd3931AE469B47155215c4A',
+  [ChainId.BERA_MAINNET]: '0x315062EA5686289BCBe138424FD10591BeB37a75',
+}
+
 export const PYTH_ADDRESS: Record<number, string> = {
   [ChainId.SEPOLIA]: '0xDd24F84d36BF92C65F92307595335bdFab5Bbd21',
   [ChainId.ARBITRUM_SEPOLIA]: '0x4374e5a8b9C22271E9EB878A2AA31DE97DF15DAF',

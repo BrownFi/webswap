@@ -16,6 +16,7 @@ import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useDevStats } from 'hooks/useDevStats'
 import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
+import { useOracleThresholds } from 'hooks/useOracleThresholds'
 import { useVersion } from 'hooks/useVersion'
 import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
@@ -312,6 +313,15 @@ function PoolDetailInner({
   const price1 = Number(pairRaw.token1?.price) || 0
   const value0 = reserve0Num * price0
   const value1 = reserve1Num * price1
+
+  // Oracle liquidity thresholds (min TVL) + TWAP window, read live from the
+  // OracleGateway. V3-only; quote/base picked by quoteTokenIndex for the display units.
+  const { data: oracleThresholds } = useOracleThresholds(chainId, pairAddress, isV3Like(version))
+  const oracleQuoteIsToken0 = pairRaw.quoteTokenIndex === 0
+  const oracleQuoteSymbol = oracleQuoteIsToken0 ? symbol0 : symbol1
+  const oracleQuotePrice = oracleQuoteIsToken0 ? price0 : price1
+  const oracleBaseSymbol = oracleQuoteIsToken0 ? symbol1 : symbol0
+  const oracleBasePrice = oracleQuoteIsToken0 ? price1 : price0
   const totalValue = value0 + value1
   const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
   const pct1 = 100 - pct0
@@ -853,6 +863,42 @@ function PoolDetailInner({
                 </>
               )}
             </div>
+
+            {/* Oracle liquidity thresholds (min TVL) + TWAP window — read live from
+                the OracleGateway. Below Stats per Paven. Only renders when the pair
+                has oracle config (V3 pairs on chains with an OracleGateway). */}
+            {oracleThresholds &&
+              (oracleThresholds.minTvlDirect != null ||
+                oracleThresholds.minTvlPath != null ||
+                oracleThresholds.twapWindows.length > 0) && (
+                <div
+                  className="px-4 py-3.5 lg:px-5 lg:py-4"
+                  style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}
+                >
+                  <div
+                    className="flex items-center gap-1.5"
+                    style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD', marginBottom: '10px' }}
+                  >
+                    Oracle
+                    <QuestionHelper text="Minimum UniV3 pool/path liquidity required to price this pair, and the TWAP window used by the oracle. Read live on-chain." />
+                  </div>
+                  {oracleThresholds.minTvlDirect != null && (
+                    <StatRow
+                      label="Min TVL (direct pool)"
+                      value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}${oracleQuotePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlDirect * oracleQuotePrice)}` : ''}`}
+                    />
+                  )}
+                  {oracleThresholds.minTvlPath != null && (
+                    <StatRow
+                      label="Min TVL (path)"
+                      value={`${formatNumberLambda(oracleThresholds.minTvlPath, { maximumFractionDigits: 0 })} ${oracleBaseSymbol}${oracleBasePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlPath * oracleBasePrice)}` : ''}`}
+                    />
+                  )}
+                  {oracleThresholds.twapWindows.length > 0 && (
+                    <StatRow label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
+                  )}
+                </div>
+              )}
 
             {/* Your position used to render here at the bottom of the rail —
                 now pinned to the top (above Stats / APR cards) so it's visible
