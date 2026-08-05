@@ -20,6 +20,11 @@ const BERA_USDCE  = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c
 const BERA_WBTC   = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
 const BERA_WETH   = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
 
+// Robinhood base — USDG (6 dec, verified on-chain) is the quote token BOTH BrownFi
+// pools pair against (NVDA/USDG, WETH/USDG), so it's the multi-hop bridge that lets
+// e.g. ETH→USDG→NVDA route (no direct ETH/NVDA pool exists).
+const ROBINHOOD_USDG = new Token(ChainId.ROBINHOOD_MAINNET, '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168', 6, 'USDG', 'Global Dollar')
+
 // used to construct intermediary pairs for trading.
 // `BERA_*` constants are declared further down — referenced via a thunk so
 // the lookup happens after they're initialized. Multi-hop route discovery
@@ -45,6 +50,12 @@ export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
     BERA_USDCE,
     BERA_WBTC,
     BERA_WETH,
+  ],
+  // Robinhood: add USDG so multi-hop route discovery finds X→USDG→Y (both pools are
+  // X/USDG). Paired with maxHops:2 gated to Robinhood in useTradeExactIn/Out.
+  [ChainId.ROBINHOOD_MAINNET]: [
+    ...WETH_ONLY[ChainId.ROBINHOOD_MAINNET],
+    ROBINHOOD_USDG,
   ],
 }
 

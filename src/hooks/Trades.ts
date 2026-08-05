@@ -1,5 +1,12 @@
-import { Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
+import { ChainId, Currency, CurrencyAmount, Pair, Token, Trade } from '@brownfi/sdk'
 import { useEffect, useMemo, useRef, useState } from 'react'
+
+// Chains where native multi-hop route discovery is enabled (maxHops:2). Gated to
+// LOW-POOL chains where the fan-out (and its per-node on-chain quote + Pyth fetch)
+// stays tiny — on Robinhood every pool is X/USDG, so X→USDG→Y needs a 2-hop route
+// (USDG is in BASES_TO_CHECK_TRADES_AGAINST). Every other chain stays maxHops:1
+// (direct-pool only) to avoid the oracle-quote request storm.
+const MULTI_HOP_CHAINS = new Set<number>([ChainId.ROBINHOOD_MAINNET])
 
 // A quote can fail transiently — an RPC timeout, a Hermes (Pyth) fetch blip, a
 // JSON-RPC rate-limit under the heavy concurrent load of an initial page load
@@ -260,17 +267,21 @@ export function useTradeExactIn(
           }
           return
         }
+        const multiHop = MULTI_HOP_CHAINS.has(chainId as number)
         const bestTradeIn = await Trade.bestTradeExactIn(
           account ?? '',
-          directPairsOf(allowedPairs, wrappedCurrency(currencyAmountIn.currency, chainId), wrappedCurrency(currencyOut, chainId)),
+          // Direct-pool only on most chains (maxHops:1): BrownFi is oracle-priced, so
+          // every explored path costs a real on-chain quote + Pyth fetch (unlike
+          // UniV2's local math) — multi-hop fans out into a request storm and rarely
+          // beats the direct pool (A/B/C stacks two pools' fees + slippage). On
+          // low-pool chains (MULTI_HOP_CHAINS) we pass ALL common pairs + maxHops:2 so
+          // X→USDG→Y routes through; the fan-out stays tiny there.
+          multiHop
+            ? allowedPairs
+            : directPairsOf(allowedPairs, wrappedCurrency(currencyAmountIn.currency, chainId), wrappedCurrency(currencyOut, chainId)),
           currencyAmountIn,
           currencyOut,
-          // Direct-pool only (maxHops:1). BrownFi is oracle-priced, so every
-          // explored path costs a real on-chain quote + Pyth fetch (unlike UniV2's
-          // local math) — multi-hop fans out into a request storm and rarely beats
-          // the direct pool (A/B/C stacks two pools' fees + slippage). Trade-off:
-          // pairs with no direct pool show "no route" instead of routing around.
-          { maxHops: 1 },
+          { maxHops: multiHop ? 2 : 1 },
         ).catch((error) => {
           if (!stale) {
             setInsufficient(
@@ -435,14 +446,18 @@ export function useTradeExactOut(
           return
         }
 
+        const multiHop = MULTI_HOP_CHAINS.has(chainId as number)
         const bestTradeOut = await Trade.bestTradeExactOut(
           account ?? '',
-          directPairsOf(allowedPairs, wrappedCurrency(currencyIn, chainId), wrappedCurrency(currencyAmountOut.currency, chainId)),
+          // See exactIn: direct-pool only on most chains (each path costs an on-chain
+          // quote + Pyth fetch). Low-pool chains (MULTI_HOP_CHAINS) use all pairs +
+          // maxHops:2 so X→USDG→Y routes through.
+          multiHop
+            ? allowedPairs
+            : directPairsOf(allowedPairs, wrappedCurrency(currencyIn, chainId), wrappedCurrency(currencyAmountOut.currency, chainId)),
           currencyIn,
           currencyAmountOut,
-          // See exactIn: direct-pool only — each path costs an on-chain quote +
-          // Pyth fetch, so multi-hop fans out into a request storm.
-          { maxHops: 1 },
+          { maxHops: multiHop ? 2 : 1 },
         ).catch((error) => {
           if (!stale) {
             setInsufficient(
