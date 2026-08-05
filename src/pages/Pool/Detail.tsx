@@ -878,21 +878,36 @@ function PoolDetailInner({
                       Oracle
                       <QuestionHelper text="Minimum UniV3 pool/path liquidity required to price this pair, and the TWAP window used by the oracle. Read live on-chain." />
                     </div>
-                    {oracleThresholds.minTvlDirect != null && (
-                      <StatRow
-                        label="Min TVL (direct pool)"
-                        value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}${oracleQuotePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlDirect * oracleQuotePrice)}` : ''}`}
-                      />
-                    )}
-                    {oracleThresholds.minTvlPath != null && (
-                      <StatRow
-                        label="Min TVL (path)"
-                        value={`${formatNumberLambda(oracleThresholds.minTvlPath, { maximumFractionDigits: 0 })} ${oracleBaseSymbol}${oracleBasePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlPath * oracleBasePrice)}` : ''}`}
-                      />
-                    )}
-                    {oracleThresholds.twapWindows.length > 0 && (
-                      <StatRow label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
-                    )}
+                    {/* Mobile: compact inline rows (token only, no ≈USD). */}
+                    <div className="flex flex-col gap-2 lg:hidden">
+                      {oracleThresholds.minTvlDirect != null && (
+                        <StatInline label="Min TVL (direct)" value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}`} />
+                      )}
+                      {oracleThresholds.minTvlPath != null && (
+                        <StatInline label="Min TVL (path)" value={`${formatNumberLambda(oracleThresholds.minTvlPath, { maximumFractionDigits: 0 })} ${oracleBaseSymbol}`} />
+                      )}
+                      {oracleThresholds.twapWindows.length > 0 && (
+                        <StatInline label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
+                      )}
+                    </div>
+                    {/* Desktop: stacked rows with the ≈USD estimate. */}
+                    <div className="hidden lg:block">
+                      {oracleThresholds.minTvlDirect != null && (
+                        <StatRow
+                          label="Min TVL (direct pool)"
+                          value={`${formatNumberLambda(oracleThresholds.minTvlDirect, { maximumFractionDigits: 0 })} ${oracleQuoteSymbol}${oracleQuotePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlDirect * oracleQuotePrice)}` : ''}`}
+                        />
+                      )}
+                      {oracleThresholds.minTvlPath != null && (
+                        <StatRow
+                          label="Min TVL (path)"
+                          value={`${formatNumberLambda(oracleThresholds.minTvlPath, { maximumFractionDigits: 0 })} ${oracleBaseSymbol}${oracleBasePrice > 0 ? ` · ${formatPrice(oracleThresholds.minTvlPath * oracleBasePrice)}` : ''}`}
+                        />
+                      )}
+                      {oracleThresholds.twapWindows.length > 0 && (
+                        <StatRow label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
+                      )}
+                    </div>
                   </>
                 )}
             </div>
