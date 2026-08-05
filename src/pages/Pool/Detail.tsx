@@ -892,25 +892,25 @@ function PoolDetailInner({
                         mt-2 keeps a gap from the stats rows above since the heading is hidden. */}
                     <div className="flex flex-col gap-1 lg:hidden mt-2">
                       {oracleThresholds.minTvlDirect != null && (
-                        <StatInline label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlDirect, oracleThresholds.actualDirect, oracleQuoteSymbol, oracleQuotePrice, false)} />
+                        <StatInline small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlDirect, oracleThresholds.actualDirect, oracleQuoteSymbol, oracleQuotePrice, false)} />
                       )}
                       {oracleThresholds.minTvlPath != null && (
-                        <StatInline label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol, oracleBasePrice, false)} />
+                        <StatInline small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol, oracleBasePrice, false)} />
                       )}
                       {oracleThresholds.twapWindows.length > 0 && (
-                        <StatInline label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
+                        <StatInline small label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
                       )}
                     </div>
                     {/* Desktop: stacked rows with the ≈USD estimate on each side. */}
                     <div className="hidden lg:block">
                       {oracleThresholds.minTvlDirect != null && (
-                        <StatRow label="Min TVL / Actual (direct)" value={fmtMinActual(oracleThresholds.minTvlDirect, oracleThresholds.actualDirect, oracleQuoteSymbol, oracleQuotePrice, true)} />
+                        <StatRow small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlDirect, oracleThresholds.actualDirect, oracleQuoteSymbol, oracleQuotePrice, true)} />
                       )}
                       {oracleThresholds.minTvlPath != null && (
-                        <StatRow label="Min TVL / Actual (path)" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol, oracleBasePrice, true)} />
+                        <StatRow small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol, oracleBasePrice, true)} />
                       )}
                       {oracleThresholds.twapWindows.length > 0 && (
-                        <StatRow label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
+                        <StatRow small label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
                       )}
                     </div>
                   </>
@@ -930,16 +930,18 @@ function StatRow({
   label,
   value,
   children,
+  small,
 }: {
   label: string
   value?: string
   children?: React.ReactNode
+  small?: boolean
 }) {
   return (
     <div className="mb-2 lg:mb-2.5">
       <div className="text-[11px] lg:text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>{label}</div>
       {value !== undefined && (
-        <div className="text-[14px] lg:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
+        <div className={small ? 'text-[12px] lg:text-[13px]' : 'text-[14px] lg:text-[16px]'} style={{ fontFamily: 'Inter', fontWeight: 700, color: '#FBFBFD', marginTop: '2px' }}>
           {value}
         </div>
       )}
@@ -965,13 +967,13 @@ function StatCompareRow({ label, ours, kodiak }: { label: string; ours: string; 
   )
 }
 
-function StatInline({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+function StatInline({ label, value, valueColor, small }: { label: string; value: string; valueColor?: string; small?: boolean }) {
   return (
-    <div className="flex items-center justify-between">
-      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '12px', color: '#978A80' }}>
+    <div className="flex items-center justify-between gap-2">
+      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: small ? '11px' : '12px', color: '#978A80', flexShrink: 0 }}>
         {label}
       </span>
-      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: valueColor ?? '#FBFBFD' }}>
+      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: small ? '11px' : '14px', color: valueColor ?? '#FBFBFD', textAlign: 'right' }}>
         {value}
       </span>
     </div>
