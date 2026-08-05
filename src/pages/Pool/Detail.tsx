@@ -322,6 +322,14 @@ function PoolDetailInner({
   const oracleQuotePrice = oracleQuoteIsToken0 ? price0 : price1
   const oracleBaseSymbol = oracleQuoteIsToken0 ? symbol1 : symbol0
   const oracleBasePrice = oracleQuoteIsToken0 ? price1 : price0
+  // "min / actual" one-liner. `withUsd` adds the ≈$ per side (desktop); mobile keeps
+  // token-only for compactness. Actual omitted when it couldn't be read.
+  const fmtMinActual = (min: number, actual: number | null, sym: string, price: number, withUsd: boolean): string => {
+    const tok = (v: number) => `${formatCompactPrice(v, { style: 'decimal' })} ${sym}`
+    const usd = (v: number) => (withUsd && price > 0 ? ` · ${formatCompactPrice(v * price)}` : '')
+    const minStr = `${tok(min)}${usd(min)}`
+    return actual == null ? minStr : `${minStr} / ${tok(actual)}${usd(actual)}`
+  }
   const totalValue = value0 + value1
   const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
   const pct1 = 100 - pct0
@@ -884,28 +892,22 @@ function PoolDetailInner({
                         mt-2 keeps a gap from the stats rows above since the heading is hidden. */}
                     <div className="flex flex-col gap-1 lg:hidden mt-2">
                       {oracleThresholds.minTvlDirect != null && (
-                        <StatInline label="Min TVL (direct)" value={`${formatCompactPrice(oracleThresholds.minTvlDirect, { style: 'decimal' })} ${oracleQuoteSymbol}`} />
+                        <StatInline label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlDirect, oracleThresholds.actualDirect, oracleQuoteSymbol, oracleQuotePrice, false)} />
                       )}
                       {oracleThresholds.minTvlPath != null && (
-                        <StatInline label="Min TVL (path)" value={`${formatCompactPrice(oracleThresholds.minTvlPath, { style: 'decimal' })} ${oracleBaseSymbol}`} />
+                        <StatInline label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol, oracleBasePrice, false)} />
                       )}
                       {oracleThresholds.twapWindows.length > 0 && (
                         <StatInline label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
                       )}
                     </div>
-                    {/* Desktop: stacked rows with the ≈USD estimate. */}
+                    {/* Desktop: stacked rows with the ≈USD estimate on each side. */}
                     <div className="hidden lg:block">
                       {oracleThresholds.minTvlDirect != null && (
-                        <StatRow
-                          label="Min TVL (direct pool)"
-                          value={`${formatCompactPrice(oracleThresholds.minTvlDirect, { style: 'decimal' })} ${oracleQuoteSymbol}${oracleQuotePrice > 0 ? ` · ${formatCompactPrice(oracleThresholds.minTvlDirect * oracleQuotePrice)}` : ''}`}
-                        />
+                        <StatRow label="Min TVL / Actual (direct)" value={fmtMinActual(oracleThresholds.minTvlDirect, oracleThresholds.actualDirect, oracleQuoteSymbol, oracleQuotePrice, true)} />
                       )}
                       {oracleThresholds.minTvlPath != null && (
-                        <StatRow
-                          label="Min TVL (path)"
-                          value={`${formatCompactPrice(oracleThresholds.minTvlPath, { style: 'decimal' })} ${oracleBaseSymbol}${oracleBasePrice > 0 ? ` · ${formatCompactPrice(oracleThresholds.minTvlPath * oracleBasePrice)}` : ''}`}
-                        />
+                        <StatRow label="Min TVL / Actual (path)" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol, oracleBasePrice, true)} />
                       )}
                       {oracleThresholds.twapWindows.length > 0 && (
                         <StatRow label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
