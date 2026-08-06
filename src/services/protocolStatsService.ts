@@ -23,7 +23,14 @@
 import { ChainId } from '@brownfi/sdk'
 import { VERSION } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
-import { INFO_GRAPH_URL } from 'clmm/config/graphql-urls'
+
+// Hemi CLMM analytics subgraph. Kept inline (NOT imported from clmm/config,
+// which only exists on branches with the CLMM sub-app) so this service compiles
+// on every branch. Prod gateway needs VITE_GRAPH_API_KEY; without it we fall
+// back to the public studio endpoint. Same URLs as clmm/config/graphql-urls.
+const HEMI_SUBGRAPH_URL = import.meta.env.VITE_GRAPH_API_KEY
+  ? `https://gateway.thegraph.com/api/${import.meta.env.VITE_GRAPH_API_KEY}/subgraphs/id/D1UwhrB45geUZTNQ2QwrXwGEhk69iBESApJJzz378ZeS`
+  : 'https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest'
 
 export interface TvlPoint {
   date: number
@@ -56,8 +63,8 @@ const V3_INDEXER_CHAINS: number[] = [
   ROBINHOOD_CHAIN_ID,
 ]
 
-// Hemi (CLMM product) — subgraph key. No BrownFi V3 deployment on Hemi.
-const HEMI_CHAIN_ID = 43111
+// Hemi (CLMM product) — no BrownFi V3 deployment on Hemi; its stats come from
+// the hemi-analytics subgraph (HEMI_SUBGRAPH_URL above).
 
 // V2 is sunset. These all-time figures are FROZEN snapshots of the legacy V2
 // indexer (`factories.totalVolume` / `factories.totalFee`, summed over its 5
@@ -140,12 +147,10 @@ async function fetchChainStats(chainId: number): Promise<ChainStats> {
 }
 
 async function fetchHemiStats(): Promise<ChainStats | null> {
-  const url = (INFO_GRAPH_URL as Record<number, string | undefined>)[HEMI_CHAIN_ID]
-  if (!url) return null
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 12_000)
   try {
-    const res = await fetch(url, {
+    const res = await fetch(HEMI_SUBGRAPH_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ operationName: 'HemiStats', query: HEMI_STATS_QUERY, variables: {} }),
