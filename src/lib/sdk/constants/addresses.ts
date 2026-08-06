@@ -172,8 +172,9 @@ export const factoryV3Gen = (version: number): Record<number, string> =>
 export const zapV3Gen = (version: number): Record<number, string> =>
   version === VERSION.V3_OFFICIAL ? ZAP_ADDRESS_V3_OFFICIAL : ZAP_ADDRESS_V3_PILOT
 
-/** Indexer-source reader. Defaults false. Keyed on the exact V3-gen version. */
-export const useV3Indexer = (chainId: number | undefined, version?: number): boolean => {
+/** Indexer-source reader. Defaults false. Keyed on the exact V3-gen version.
+ *  Not a React hook (pure map lookup) despite historically being named use*. */
+export const v3UseIndexer = (chainId: number | undefined, version?: number): boolean => {
   if (chainId == null) return false
   const map = version === VERSION.V3_OFFICIAL ? V3_OFFICIAL_USE_INDEXER : V3_PILOT_USE_INDEXER
   return map[chainId] ?? false

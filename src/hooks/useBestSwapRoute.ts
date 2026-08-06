@@ -315,7 +315,7 @@ export function useBestSwapRoute(params: UseBestSwapRouteParams): UseBestSwapRou
     const selectable = sorted.filter((r) => !r.unavailable)
 
     // Pick the winning route based on user preference.
-    let best: UnifiedRoute | null = null
+    let best: UnifiedRoute | null
     if (selected === 'auto' || selected === 'native') {
       // 'native' is a legacy persisted value — the reducer migrates it on
       // boot but we belt-and-suspenders the runtime path too. Either way

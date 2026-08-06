@@ -1,5 +1,5 @@
 import { ChainId } from '@brownfi/sdk'
-import { isV3Like, useV3Indexer } from 'lib/sdk/constants/addresses'
+import { isV3Like, v3UseIndexer } from 'lib/sdk/constants/addresses'
 
 export const graphqlFetcher = async ({
   operationName,
@@ -38,7 +38,7 @@ export const graphqlFetcher = async ({
   }
   const override =
     version === 4 ? V3_OFFICIAL_OVERRIDE[chainId] : version === 3 ? V3_PILOT_OVERRIDE[chainId] : undefined
-  const useOverride = !!override && useV3Indexer(chainId, version)
+  const useOverride = !!override && v3UseIndexer(chainId, version)
   const url = useOverride
     ? override
     : `${import.meta.env.VITE_API_URL}${isV3Like(version) ? '/indexer/v3' : '/indexer'}?chainId=${chainId}`

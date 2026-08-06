@@ -18,7 +18,7 @@ import { useDevStats } from 'hooks/useDevStats'
 import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useOracleThresholds } from 'hooks/useOracleThresholds'
 import { useVersion } from 'hooks/useVersion'
-import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
+import { v3UseIndexer as v3UseIndexerFn, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
 import { PoolSpreadChart } from 'components/pool/PoolSpreadChart'
@@ -122,7 +122,7 @@ export default function PoolDetail() {
   const version = urlVersion ?? reduxVersion
   // Per-chain V3 indexer toggle. See constants/addresses.ts. Keyed on the
   // resolved version (pilot=3 vs official=4) so each picks its own indexer.
-  const v3UseIndexer = useV3Indexer(chainId, version)
+  const v3UseIndexer = v3UseIndexerFn(chainId, version)
 
   // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer
   // (constants/addresses.ts). Same single-flag pattern as the pool list.

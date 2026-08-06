@@ -224,7 +224,7 @@ export function useBestZapInRoute(params: UseBestZapInRouteParams): UseBestZapIn
       return b.lpOut.gt(a.lpOut) ? 1 : -1
     })
 
-    let best: UnifiedZapInRoute | null = null
+    let best: UnifiedZapInRoute | null
     if (selected === 'auto') {
       best = sorted[0] ?? null
     } else {
@@ -321,7 +321,7 @@ export function useBestZapOutRoute(params: UseBestZapOutRouteParams): UseBestZap
       return b.amountOut.gt(a.amountOut) ? 1 : -1
     })
 
-    let best: UnifiedZapOutRoute | null = null
+    let best: UnifiedZapOutRoute | null
     if (selected === 'auto') {
       best = sorted[0] ?? null
     } else {

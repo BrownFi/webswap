@@ -24,7 +24,7 @@ import { fetchProtocolStats, ProtocolStats } from 'services/protocolStatsService
 import { getCompetitor, competitorLookupKey, CompetitorPairData } from 'services/competitors'
 import { usePairs } from 'data/Reserves'
 import { useV3PoolsOnChain } from 'hooks/useV3PoolsOnChain'
-import { useV3Indexer, isV3Like } from 'lib/sdk/constants/addresses'
+import { v3UseIndexer as v3UseIndexerFn, isV3Like } from 'lib/sdk/constants/addresses'
 import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
@@ -126,7 +126,7 @@ export default function Pool() {
   // Per-chain V3 indexer toggle: true for chains where the subgraph is live
   // (Bera), false for chains awaiting the indexer (HyperEVM) — those use the
   // useV3PoolsOnChain factory-enumeration hook instead.
-  const v3UseIndexer = useV3Indexer(chainId, version)
+  const v3UseIndexer = v3UseIndexerFn(chainId, version)
 
   const { data: protocolStats, isLoading: isLoadingStats } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
