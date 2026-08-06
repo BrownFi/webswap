@@ -24,12 +24,12 @@ export function V3ExtraParams({ devStats }: { devStats: DevStatsLike }) {
     // kB + kQ are shown together in the main strip (next to Lambda) — not here.
     // Fee is already shown as a badge next to the pair title on both Pool
     // List and Pool Detail — listing it again here was redundant noise.
+    // fixS + sBound are intentionally hidden from the read-only strips (still
+    // editable in the pair-settings modal).
     { label: 'Compress', value: devStats.compress },
     { label: 'sSell', value: devStats.sSell },
     { label: 'sBuy', value: devStats.sBuy },
-    { label: 'fixS', value: devStats.fixS },
     { label: 'disThreshold', value: devStats.disThreshold },
-    { label: 'sBound', value: devStats.sBound },
     { label: 'pythWeight', value: devStats.pythWeight },
     { label: 'gamma', value: devStats.gamma },
   ]
