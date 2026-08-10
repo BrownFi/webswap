@@ -25,6 +25,9 @@ const PairChartModal = lazy(() => import('components/pool/PairChartModal').then(
 import { PairFavorite, usePairStorage } from 'components/pool/PairFavoriteIcon'
 import { PoolBalanceBar } from 'components/pool/PoolBalanceBar'
 import { V3ExtraParams } from 'components/pool/V3ExtraParams'
+import { PoolCapTags } from 'components/pool/PoolCapTags'
+import { getTvlCap } from 'config/tvlGate'
+import { clEnabled, concentrationLevel } from 'utils/concentration'
 import QuestionHelper from 'components/QuestionHelper'
 import { RowBetween } from 'components/Row'
 import { isMainnet } from 'connectors'
@@ -286,6 +289,21 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   {isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'}: <span style={{ color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>{columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}</span>
                 </span>
               </div>
+              {/* TVL-cap / Concentration-Level tags on their own line so they don't
+                  collide with the TVL column. Gated so un-tagged pools don't render an
+                  empty spacer row. */}
+              {(getTvlCap(pair.chainId, pair.liquidityToken.address) !== undefined ||
+                (clEnabled(pair.chainId) && concentrationLevel(pairStats?.kB, pairStats?.kQ) !== undefined)) && (
+                <div style={{ marginTop: '2px' }}>
+                  <PoolCapTags
+                    chainId={pair.chainId}
+                    poolAddress={pair.liquidityToken.address}
+                    kB={pairStats?.kB}
+                    kQ={pairStats?.kQ}
+                    size="xs"
+                  />
+                </div>
+              )}
               {(enableBgt || enableMerklCampaignApr) && (
                 <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80', marginTop: '2px' }}>
                   {enableBgt ? 'BERA APR' : 'Incentive APR'}: <span style={{ color: '#83CF84' }}>+{formatNumberLambda(enableBgt ? bgtAPR : merklCampaignApr, { maximumFractionDigits: 2 })}%</span>

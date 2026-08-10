@@ -387,13 +387,34 @@ export async function addLiquidity(
       amountMaxA = applySlippageCurrency(parsedAmountA, allowedSlippage)
     }
 
+    // Router quirk: addLiquidity() runs a wrap-from-msg.value path when the
+    // wrapped-native token (WETH[chainId]) is passed as tokenB — which reverts for
+    // a token/token add (msg.value = 0, so the router can't fund the wrap). It
+    // handles the wrapped token fine in the tokenA slot (plain transferFrom). So if
+    // the wrapped token is currencyB, swap the two sides (token + its desired amount
+    // + its min) so it lands in tokenA. The pair is identical either way — the router
+    // sorts to token0/token1 internally. Verified on-chain: WETH-as-tokenB reverts,
+    // WETH-as-tokenA succeeds. Fixes every chain (Bera/Linea/Arbitrum/Hyper).
+    let tokenA = wrappedCurrency(currencyA, chainId)?.address ?? ''
+    let tokenB = wrappedCurrency(currencyB, chainId)?.address ?? ''
+    let desiredA = amountMaxA.raw.toString()
+    let desiredB = amountMaxB.raw.toString()
+    let minA = amountsMin[Field.CURRENCY_A].toString()
+    let minB = amountsMin[Field.CURRENCY_B].toString()
+    const wrappedNative = chainId ? WETH[chainId]?.address : undefined
+    if (wrappedNative && tokenB.toLowerCase() === wrappedNative.toLowerCase()) {
+      ;[tokenA, tokenB] = [tokenB, tokenA]
+      ;[desiredA, desiredB] = [desiredB, desiredA]
+      ;[minA, minB] = [minB, minA]
+    }
+
     args = [
-      wrappedCurrency(currencyA, chainId)?.address ?? '',
-      wrappedCurrency(currencyB, chainId)?.address ?? '',
-      amountMaxA.raw.toString(),
-      amountMaxB.raw.toString(),
-      amountsMin[Field.CURRENCY_A].toString(),
-      amountsMin[Field.CURRENCY_B].toString(),
+      tokenA,
+      tokenB,
+      desiredA,
+      desiredB,
+      minA,
+      minB,
       // V3 router takes an extra minLiquidity before `to`; see note above.
       ...(isV3Like(version) ? ['0'] : []),
       account,
