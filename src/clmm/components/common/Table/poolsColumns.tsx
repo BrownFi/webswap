@@ -5,7 +5,6 @@ import CurrencyLogo from "../CurrencyLogo";
 import { Skeleton } from "@clmm/components/ui/skeleton";
 import { useCurrency } from "@clmm/hooks/common/useCurrency";
 import { formatAmount } from "@clmm/utils/common/formatAmount";
-import { Gift } from "lucide-react";
 import { FormattedPool } from "@clmm/hooks/pools/useFormattedPools";
 import { enabledModules } from "@clmm/config/app-modules";
 import { useMerklIncentive } from "@clmm/hooks/pools/useMerklIncentive";
@@ -82,14 +81,22 @@ const FeeAPR = ({ isBoostedToken0, isBoostedToken1, isBoostedPool, pair, feeApr 
 // Incentive APR — Merkl reward on top of fees, fetched per pool from BrownFi's BE
 // (/merkl-campaign/?pool=). Shows a dash for pools with no live campaign.
 const IncentiveAPR = ({ id }: FormattedPool) => {
-    const incentiveApr = useMerklIncentive(id);
-    if (!incentiveApr || incentiveApr <= 0) {
+    const { apr, rewardTokens } = useMerklIncentive(id);
+    if (!apr || apr <= 0) {
         return <span className="opacity-40">—</span>;
     }
     return (
         <div className="flex items-center gap-1.5 text-green-300">
-            <Gift size={14} />
-            <span>{`${formatAmount(incentiveApr, 2)}%`}</span>
+            <span>{`${formatAmount(apr, 2)}%`}</span>
+            {rewardTokens.map((t) =>
+                t.icon ? (
+                    <img key={t.symbol} src={t.icon} alt={t.symbol} title={t.symbol} className="w-4 h-4 rounded-full" />
+                ) : (
+                    <span key={t.symbol} className="text-xs">
+                        {t.symbol}
+                    </span>
+                ),
+            )}
         </div>
     );
 };
