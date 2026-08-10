@@ -22,7 +22,7 @@ import { v3UseIndexer as v3UseIndexerFn, isV3Like, versionLabel, slugToVersion }
 import { graphqlFetcher } from 'utils/graphql'
 import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
 import { PoolSpreadChart } from 'components/pool/PoolSpreadChart'
-import { formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
+import { aprToApy, formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { currencyId } from 'utils/currencyId'
@@ -283,15 +283,15 @@ function PoolDetailInner({
       : undefined
 
   // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
-  // values (6,606,088% / 2,378,191,932%). Below a $1 TVL floor they're
+  // values (6,606,088% / 2,378,191,932%). Below a $30 TVL floor they're
   // meaningless — zero them so the cards render their "--" default. (Matches
   // the pool-list behavior in PositionCard.)
-  const ratiosMeaningful = Number(pairRaw?.tvl) >= 1
+  const ratiosMeaningful = Number(pairRaw?.tvl) >= 30
   // Annual Return = V3-only LP-vs-UniV2 outperformance since creation (green/red);
   // V2 lacks the inputs → 0/'--' (the metric is hidden on V2). Mirrors the list.
   const annualReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairRaw, chainId)
-  // Fee APR = indexer-derived APR (V2 + V3), shown alongside.
-  const feeAprDisplay = ratiosMeaningful ? feeAPR ?? 0 : 0
+  // Fee APY = indexer APR converted to APY (n=360 compounding), V2 + V3.
+  const feeAprDisplay = ratiosMeaningful ? aprToApy(feeAPR ?? 0) : 0
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   // Berachain hardfork moved rewards from BGT → native BERA, so the incentive shows
   // BERA branding (the `bgtAPR` data field name is kept — it's the same reward APR).
@@ -682,19 +682,19 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* APR + Stats — combined into one card (beta only). APR section on
-                top (Annual Return / Fee APR / Incentive), a full-bleed divider,
+            {/* APR/APY + Stats — combined into one card (beta only). APR/APY section on
+                top (Annual Return / Fee APY / Incentive), a full-bleed divider,
                 then the Stats section (pool balances, TVL, volume, fees, and the
                 competitor comparison). bera keeps them as two separate cards. */}
             <div className="px-4 py-3.5 lg:px-5 lg:py-4" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
               <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD', marginBottom: '10px' }}>
-                APR
+                APR-APY
               </div>
 
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
                 {isV3Like(version) && <StatInline label="Annual Return" value={(annualReturn ? `${formatNumberLambda(annualReturn, { maximumFractionDigits: 2 })}%` : '--')} valueColor={annualReturn >= 0 ? '#83CF84' : '#E04848'} />}
-                {!isMainnet && <StatInline label="Fee APR" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />}
+                {!isMainnet && <StatInline label="Fee APY" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />}
                 {incentiveApr > 0 && (
                   <div>
                     <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
@@ -741,7 +741,7 @@ function PoolDetailInner({
                 {!isMainnet && (
                   <div className="mb-2 lg:mb-2.5 flex items-center justify-between">
                     <span className="text-[11px] lg:text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                      Fee APR
+                      Fee APY
                     </span>
                     <span className="text-[14px] lg:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84' }}>
                       {(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
@@ -855,13 +855,13 @@ function PoolDetailInner({
                     <StatInline label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
                     <StatInline label="24H volume" value={formatPrice(volume24h ?? 0)} />
                     <StatInline label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
-                    <StatInline label="24H fees / TVL" value={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)} />
+                    <StatInline label="24H fees / TVL" value={ratiosMeaningful ? feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number) : '--'} />
                   </div>
                   <div className="hidden lg:block">
                     <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
                     <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
                     <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
-                    <StatRow label="24H fees / TVL" value={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)} />
+                    <StatRow label="24H fees / TVL" value={ratiosMeaningful ? feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number) : '--'} />
                   </div>
                 </>
               )}

@@ -4,6 +4,7 @@ import {
   warningSeveritySlippage,
   formatPrice,
   formatNumber,
+  aprToApy,
 } from './prices'
 
 describe('prices', () => {
@@ -146,6 +147,34 @@ describe('prices', () => {
     it('accepts string values', () => {
       const result = formatNumber('1234')
       expect(result).toBe('1,234')
+    })
+  })
+
+  describe('#aprToApy', () => {
+    it('returns 0 for 0% APR', () => {
+      expect(aprToApy(0)).toBe(0)
+    })
+
+    it('passes through non-positive and non-finite input', () => {
+      expect(aprToApy(-5)).toBe(-5)
+      expect(aprToApy(Number.NaN)).toBe(Number.NaN)
+    })
+
+    it('compounds 20% APR to ~22.14% APY (n=360)', () => {
+      // (1 + 0.2/360)^360 − 1 ≈ 0.2214…
+      const apy = aprToApy(20)
+      expect(apy).toBeGreaterThan(22.1)
+      expect(apy).toBeLessThan(22.2)
+    })
+
+    it('compounds 5% APR to ~5.13% APY', () => {
+      const apy = aprToApy(5)
+      expect(apy).toBeGreaterThan(5.12)
+      expect(apy).toBeLessThan(5.14)
+    })
+
+    it('is monotonic: higher APR → higher APY', () => {
+      expect(aprToApy(30)).toBeGreaterThan(aprToApy(20))
     })
   })
 })

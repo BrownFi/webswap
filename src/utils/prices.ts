@@ -135,3 +135,12 @@ export function formatNumberLambda(value: string | number | undefined | null, op
   }).format(number)
   return formatNumberString(formattedNumber)
 }
+
+// APR → APY, periodic compounding with n = 360 periods/year (per Jason).
+// Input is a percentage (e.g. 20 for 20% APR); output is also a percentage.
+// APY = (1 + APR/n)^n − 1. Non-positive/NaN input passes through unchanged
+// (0 APR → 0 APY, and callers render "--" for non-positive values anyway).
+export function aprToApy(aprPercent: number): number {
+  if (!Number.isFinite(aprPercent) || aprPercent <= 0) return aprPercent
+  return (Math.pow(1 + aprPercent / 100 / 360, 360) - 1) * 100
+}

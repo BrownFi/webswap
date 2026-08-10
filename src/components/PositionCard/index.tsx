@@ -36,7 +36,7 @@ import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
-import { formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
+import { aprToApy, formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
 import { CompetitorPairData } from 'services/competitors'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
@@ -180,22 +180,23 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
   const token0Price = hermesPrices.CURRENCY_A || pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = hermesPrices.CURRENCY_B || pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  const { tvl, lpPrice, annualizedReturn, feeAPR } = useMemo(() => {
+  const { tvl, lpPrice, annualizedReturn, feeAPY } = useMemo(() => {
     const r0 = token0Price * Number(pair.reserve0.toSignificant(6))
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
     const lpPrice = tvl / (Number(totalPoolTokens?.toSignificant(6)) || 1)
     // APR/ratio columns divide by TVL, so a near-empty pool produces absurd
-    // values. Below a $1 TVL floor zero them so the column renders "--".
-    const MIN_TVL_FOR_RATIOS = 1
+    // values. Below a $30 TVL floor zero them so the column renders "--".
+    const MIN_TVL_FOR_RATIOS = 30
     const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS
-    // Fee APR (LP share) — indexer/volume-based; shown for V2 + V3 (unchanged).
+    // Fee APY (LP share) — indexer/volume-based APR converted to APY (n=360
+    // compounding). Shown for V2 + V3 (unchanged source; feeAPRIndexer is raw).
     const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
-    const feeAPR = ratiosMeaningful ? (shouldUseIndexer ? feeAPRIndexer : feeAPRFallback) : 0
+    const feeAPY = ratiosMeaningful ? aprToApy(shouldUseIndexer ? feeAPRIndexer : feeAPRFallback) : 0
     // Annualized Return = V3-only LP-vs-UniV2 metric. V2 pools lack the inputs,
     // so computeV3FeeApr returns 0 → the column renders '--' for them.
     const annualizedReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairStats, pair.chainId)
-    return { tvl, lpPrice, annualizedReturn, feeAPR }
+    return { tvl, lpPrice, annualizedReturn, feeAPY }
   }, [token0Price, token1Price, pair, totalPoolTokens, pairStats, tradingFee, volume24h, shouldUseIndexer, feeAPRIndexer])
 
   const stakedLiquidityTokenAmount = parseStakeLpAmount(pairAccount?.stakeLP, pair.liquidityToken)
@@ -299,7 +300,7 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
                 )}
                 {!isMainnet && (
                   <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84' }}>
-                    Fee APR: {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
+                    Fee APY: {feeAPY ? `${formatNumberLambda(feeAPY, { maximumFractionDigits: 2 })}%` : '--'}
                   </span>
                 )}
               </div>
@@ -357,10 +358,10 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
               {annualizedReturn ? `${formatNumberLambda(annualizedReturn, { maximumFractionDigits: 2 })}%` : '--'}
             </span>
           )}
-          {/* Fee APR — indexer apr (V2 + V3); beta/non-mainnet only */}
+          {/* Fee APY — indexer APR converted to APY (V2 + V3); beta/non-mainnet only */}
           {!isMainnet && (
             <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#83CF84' }}>
-              {feeAPR ? `${formatNumberLambda(feeAPR, { maximumFractionDigits: 2 })}%` : '--'}
+              {feeAPY ? `${formatNumberLambda(feeAPY, { maximumFractionDigits: 2 })}%` : '--'}
             </span>
           )}
           {/* Incentive APR (green with BERA icon when applicable) */}

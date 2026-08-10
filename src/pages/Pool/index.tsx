@@ -235,7 +235,7 @@ export default function Pool() {
     const valueOf = (p: PairStats): number => {
       if (sortKey === 'annualizedReturn') {
         // V3-only LP-vs-UniV2 formula; V2 has no inputs → 0. ('apr' sortKey
-        // below handles the Fee APR column for both versions.)
+        // below handles the Fee APY column for both versions.)
         return computeV3FeeApr(p, chainId)
       }
       if (sortKey === 'bgtAPR') {
@@ -429,7 +429,7 @@ export default function Pool() {
                     <SortHeader label="Annual Return" active={sortKey === 'annualizedReturn'} dir={sortDir} onClick={() => handleSort('annualizedReturn')} />
                   )}
                   {!isMainnet && (
-                    <SortHeader label="Fee APR" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                    <SortHeader label="Fee APY" active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   )}
                   {SHOW_BGT_APR && (
                     <SortHeader label="BERA APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
@@ -544,7 +544,7 @@ function PoolStatsBar({
 }
 
 // Clickable header column with sort indicator. Used in the pool list header
-// for TVL / 24h Volume / Fee APR. Highlights the active column and shows ▼/▲
+// for TVL / 24h Volume / Fee APY. Highlights the active column and shows ▼/▲
 // per the current direction.
 function SortHeader({
   label,
@@ -623,7 +623,7 @@ function PairListSkeleton({ showAnnualizedReturn, showCompetitor, competitorName
         <span style={{ flex: 1, textAlign: 'left' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
         {showAnnualizedReturn && <span style={{ flex: 1, textAlign: 'left' }}>Annual Return</span>}
-        {!isMainnet && <span style={{ flex: 1, textAlign: 'left' }}>Fee APR</span>}
+        {!isMainnet && <span style={{ flex: 1, textAlign: 'left' }}>Fee APY</span>}
         {SHOW_BGT_APR && <span style={{ flex: 1, textAlign: 'left' }}>BERA APR</span>}
         {showCompetitor && (
           <>
