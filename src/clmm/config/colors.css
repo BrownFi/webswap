@@ -1,0 +1,42 @@
+/* BrownFi palette — sourced from /Users/jackson/brownfi/webswap. The page background
+ * is near-black (#050505) per AppWrapper; warm browns are for cards/surfaces only.
+ * Primary CTAs use #985C2A (Connect Wallet button); nav active uses #D59967. */
+:root {
+    /* Brand */
+    --primary-50: #e7c478;    /* lightest accent */
+    --primary-100: #985c2a;   /* primary CTA bg (Connect Wallet) */
+    --primary-200: #d59967;   /* lighter accent — nav active, hovers */
+    --primary-300: #ffffff;   /* text on primary buttons */
+    --primary-800: #5c5040;
+
+    /* Destructive */
+    --accent-100: #fd4040;
+    --accent-200: rgba(253, 64, 64, 0.12);
+
+    /* Text — cream hierarchy */
+    --text-100: #f5f0e8;
+    --text-200: #c4b89a;
+    --text-300: #8a7d66;
+    --text-400: #5c5040;
+
+    /* Surfaces — warm dark brown for cards/popovers; outer app bg is set in tailwind.css */
+    --bg-100: #1a1510;
+    --bg-200: #2a2418;
+    --bg-300: #3d3425;
+    --bg-500: #12100b;
+
+    --gray-100: #3d3425;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --text-100: #f5f0e8;
+        --text-200: #c4b89a;
+        --text-300: #8a7d66;
+        --text-400: #5c5040;
+
+        --bg-100: #1a1510;
+        --bg-200: #2a2418;
+        --bg-300: #3d3425;
+    }
+}

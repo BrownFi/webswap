@@ -1,18 +1,28 @@
-import { availableChains } from 'connectors'
+import { selectableChains, HEMI_CHAIN_ID } from 'connectors'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { chainSelector, switchChain } from 'state/chainSlice'
 import { useAccount } from 'wagmi'
 
 const CustomChainSelect = () => {
-  const { isConnected, chainId } = useAccount()
+  const { isConnected } = useAccount()
   const chain = useSelector(chainSelector)
-  const isWrongNetwork = availableChains.every((chain) => chain.id !== chainId)
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const [isOpen, setOpen] = useState(false)
 
-  if (isConnected && !isWrongNetwork) return <div />
+  // Hemi is never written to redux (its product logic would crash on Hemi), so on a
+  // /clmm route the button would otherwise keep showing the last webswap chain.
+  // Reflect Hemi from the route instead so the selector matches where the user is.
+  const hemiChain = selectableChains.find((c) => c.id === HEMI_CHAIN_ID)
+  const displayChain = location.pathname.startsWith('/clamm') && hemiChain ? hemiChain : chain
+
+  // Only the pre-connect network picker. Once connected, the RainbowKit button
+  // (StyledConnectButton) is the single chain selector — including Hemi.
+  if (isConnected) return <div />
 
   return (
     <>
@@ -26,14 +36,21 @@ const CustomChainSelect = () => {
         }}
         onClick={() => setOpen(true)}
       >
-        <img style={{ width: '18px', height: '18px', borderRadius: '50%' }} src={chain.iconUrl as string} alt={chain.name} />
-        <span style={{ color: '#FBFBFD', fontSize: '13px', fontWeight: 500 }}>{chain.name}</span>
+        <img style={{ width: '18px', height: '18px', borderRadius: '50%' }} src={displayChain.iconUrl as string} alt={displayChain.name} />
+        <span style={{ color: '#FBFBFD', fontSize: '13px', fontWeight: 500 }}>{displayChain.name}</span>
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
           <path d="M5 7.5L10 12.5L15 7.5" stroke="#978A80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
-      <ChainModal isOpen={isOpen} onClose={() => setOpen(false)} />
+      {/* Not connected, so ChainRouteSync (which keys off the wallet chain) can't
+          route us. Drive it here: Hemi opens the CLMM section, any webswap chain
+          returns to /swap. ChainModal already writes non-Hemi chains to redux. */}
+      <ChainModal
+        isOpen={isOpen}
+        onClose={() => setOpen(false)}
+        onSwitchChain={(chainId) => navigate(chainId === HEMI_CHAIN_ID ? '/clamm/swap' : '/swap')}
+      />
     </>
   )
 }
@@ -49,11 +66,12 @@ export const ChainModal = ({
 }) => {
   const chain = useSelector(chainSelector)
   const dispatch = useDispatch()
+  const { chainId: walletChainId } = useAccount()
 
   if (!isOpen) return null
   return createPortal(
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/75 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -84,16 +102,25 @@ export const ChainModal = ({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {availableChains.map((c) => {
-            const isActive = chain?.id === c.id
+          {selectableChains.map((c) => {
+            const isHemi = c.id === HEMI_CHAIN_ID
+            const onHemi = walletChainId === HEMI_CHAIN_ID
+            // Only the wallet's actual chain highlights. On Hemi, the redux chain
+            // still holds the last webswap chain, so suppress its highlight.
+            const isActive = isHemi ? onHemi : !onHemi && chain?.id === c.id
 
             return (
               <button
                 key={c.id}
                 onClick={() => {
                   onClose()
-                  const parsed = JSON.parse(JSON.stringify(c, null, 2))
-                  dispatch(switchChain(parsed))
+                  // Never write Hemi into webswap's redux chain — its product
+                  // logic would then try to operate on Hemi and crash. Just
+                  // switch the wallet; ChainRouteSync routes into /clmm.
+                  if (!isHemi) {
+                    const parsed = JSON.parse(JSON.stringify(c, null, 2))
+                    dispatch(switchChain(parsed))
+                  }
                   if (onSwitchChain) onSwitchChain(c.id)
                 }}
                 style={{

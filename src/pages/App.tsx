@@ -1,5 +1,7 @@
-import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useAccount } from 'wagmi'
+import { HEMI_CHAIN_ID } from 'connectors'
 import 'rc-slider/assets/index.css'
 import 'theme/fonts.css'
 import 'theme/index.css'
@@ -26,8 +28,10 @@ const RemoveLiquidity = lazy(() => import('./RemoveLiquidity'))
 const PoolDetail = lazy(() => import('./Pool/Detail'))
 // Portfolio temporarily hidden on beta — re-enable with the /portfolio route below + the Header nav link.
 // const Portfolio = lazy(() => import('./Portfolio'))
+// CLMM (Algebra fork) sub-app — isolated under src/clmm, mounted at /clmm/*.
+const ClmmApp = lazy(() => import('@clmm/ClmmApp'))
 
-const BodyWrapper = styled.div`
+const BodyWrapper = styled.div<{ $noPad?: boolean; $clmm?: boolean }>`
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -52,18 +56,50 @@ const BodyWrapper = styled.div`
     padding-top: 100px;
     padding-bottom: 100px;
   `};
+
+  /* CLMM renders its own header/footer chrome; drop webswap's body padding there. */
+  ${({ $noPad }) => $noPad && `padding: 0 !important;`}
+
+  /* Only CLMM's wide pool table needs min-width:0 to avoid overflowing on mobile.
+     Applying it to every webswap page (it wraps all of them) shifted their layout
+     — notably Pool Detail — so scope it to the /clmm route. */
+  ${({ $clmm }) => $clmm && `min-width: 0;`}
 `
 
 
+// Keep the route in sync with the wallet chain: Hemi is CLMM-only, so on Hemi we
+// route into /clmm; leaving Hemi (while connected) routes back to webswap. This
+// makes the single chain selector drive access — pick Hemi -> CLMM opens.
+function ChainRouteSync() {
+  const { chainId, isConnected } = useAccount()
+  const navigate = useNavigate()
+  const onClmm = useLocation().pathname.startsWith('/clamm')
+  useEffect(() => {
+    if (chainId === HEMI_CHAIN_ID && !onClmm) navigate('/clamm/swap')
+    else if (isConnected && chainId !== HEMI_CHAIN_ID && onClmm) navigate('/swap')
+  }, [chainId, isConnected, onClmm, navigate])
+  return null
+}
+
 export default function App() {
+  const onClmm = useLocation().pathname.startsWith('/clamm')
   return (
     <Suspense fallback={null}>
+      <ChainRouteSync />
       <GoogleAnalyticsReporter />
       <DarkModeQueryParamReader />
       <StaticScreen>
-        <BodyWrapper>
+        <BodyWrapper $clmm={onClmm}>
           <Popups />
           <Routes>
+            <Route
+              path="/clamm/*"
+              element={
+                <RouteErrorBoundary>
+                  <ClmmApp />
+                </RouteErrorBoundary>
+              }
+            />
             <Route path="/" element={<Navigate to="/swap" replace />} />
             <Route path="/home" element={<Navigate to="/swap" replace />} />
             <Route

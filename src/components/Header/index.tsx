@@ -114,6 +114,7 @@ import { useAccount } from 'wagmi'
 import CustomAccountDisplay from './CustomAccountDisplay'
 import CustomChainSelect from './CustomChainSelect'
 import HamburgerMenu from './HamburgerMenu'
+import { isFeeClaimWallet } from '@clmm/config/fee-split'
 
 function StyledNavLink({
   id,
@@ -147,23 +148,65 @@ function StyledNavLink({
   )
 }
 
-export const StyledMenuButton = ({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button
-    className={`relative w-full border-none bg-bg3 ml-2 py-[0.15rem] px-2 rounded-md
-      h-[35px] hover:cursor-pointer hover:bg-bg4 focus:cursor-pointer focus:outline-none focus:bg-bg4
-      [&>*]:stroke-text1 [&_svg]:mt-0.5 ${className ?? ''}`}
-    {...props}
-  >
-    {children}
-  </button>
-)
+const HEMI_CHAIN_ID = 43111
+
+// One navbar, item set follows the chain. On Hemi (CLMM-only) it's
+// Swap / Pool / Analytics pointing at /clmm/*; on webswap chains it's Swap / Pool
+// pointing at webswap routes. Switching networks via the chain selector flips the
+// whole set — no greyed items, no CLMM dropdown, one consistent experience. Route
+// is also checked so the navbar matches the page even while disconnected (chainId
+// undefined) but sitting on a /clmm route.
+function MainNav() {
+  const { chainId, address } = useAccount()
+  const location = useLocation()
+  const showClmmNav = chainId === HEMI_CHAIN_ID || location.pathname.startsWith('/clamm')
+
+  // Both the pool list (/clamm/pool) and detail (/clamm/pool/:pool) share the
+  // /clamm/pool prefix, so key the highlight off that rather than NavLink's exact
+  // match. Webswap's Pool spans add/remove/create/find too.
+  const clmmPoolActive = location.pathname.startsWith('/clamm/pool')
+  const webswapPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) => location.pathname.startsWith(p))
+
+  const clmmItems = [
+    { id: 'swap-nav-link', to: '/clamm/swap', label: 'Swap', end: false, active: false },
+    // Labeled "CLAMM" (the product) per Jason; links to the pool list.
+    { id: 'pool-nav-link', to: '/clamm/pool', label: 'CLAMM', end: false, active: clmmPoolActive },
+    { id: 'analytics-nav-link', to: '/clamm/analytics', label: 'Analytics', end: false, active: false },
+  ]
+  // Partner fee-claim entry — only the BrownFi/Hemi wallets (hardcoded, no on-chain
+  // read) see it; the page itself still enforces every action on-chain.
+  if (isFeeClaimWallet(address)) {
+    clmmItems.push({
+      id: 'claim-fee-nav-link',
+      to: '/clamm/claim-fee',
+      label: 'Claim Fees',
+      end: false,
+      active: location.pathname.startsWith('/clamm/claim-fee'),
+    })
+  }
+
+  const items = showClmmNav
+    ? clmmItems
+    : [
+        { id: 'swap-nav-link', to: '/swap', label: 'Swap', end: false, active: false },
+        { id: 'pool-nav-link', to: '/pool', label: 'Pool', end: true, active: webswapPoolActive },
+      ]
+
+  return (
+    <>
+      {items.map((it) => (
+        <StyledNavLink key={it.id} id={it.id} to={it.to} end={it.end} className={it.active ? 'active' : ''}>
+          {it.label}
+        </StyledNavLink>
+      ))}
+    </>
+  )
+}
 
 export default function Header() {
   const { account } = useActiveWeb3React()
   const { isConnected } = useAccount()
   const showCustomAccountDisplay = !!account && !isConnected
-  const location = useLocation()
-  const isPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) => location.pathname.startsWith(p))
 
   return (
     <div
@@ -203,18 +246,7 @@ export default function Header() {
               borderRadius: '8px',
             }}
           >
-            <StyledNavLink id="swap-nav-link" to="/swap">
-              Swap
-            </StyledNavLink>
-            <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
-              Pool
-            </StyledNavLink>
-            {/* Portfolio temporarily hidden on beta — re-enable by uncommenting
-                this link AND the lazy import + /portfolio route in App.tsx.
-            <StyledNavLink id="portfolio-nav-link" to="/portfolio">
-              Portfolio
-            </StyledNavLink>
-            */}
+            <MainNav />
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them
                 in the nav at all — avoids the duplicate on mobile. */}

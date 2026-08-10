@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+  // src/clmm is compiled by its own Tailwind config (src/clmm/clmm.tailwind.config.cjs)
+  // via @config in src/clmm/clmm.css, so exclude it here to avoid emitting CLMM
+  // classes with webswap's theme/breakpoints.
+  content: ['./src/**/*.{js,jsx,ts,tsx}', '!./src/clmm/**'],
   darkMode: 'class',
   theme: {
     screens: {
