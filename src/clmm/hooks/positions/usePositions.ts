@@ -40,7 +40,12 @@ function usePositionsFromTokenIds(
             abi: nonfungiblePositionManagerABI,
             functionName: "positions",
             args: [[Number(x)]],
+            chainId,
         })),
+        // No token IDs (wallet disconnected, or a connected wallet with 0 positions)
+        // means an empty multicall — without this guard wagmi keeps the query pending
+        // (isLoading: true) forever, which freezes the pool list on its loading state.
+        query: { enabled: inputs.length > 0 },
     });
 
     const positions = useMemo(() => {
@@ -98,6 +103,7 @@ export function usePositions() {
     const chainId = DEFAULT_CHAIN_ID;
 
     const { data: balanceResult, isLoading: balanceLoading } = useReadNonfungiblePositionManagerBalanceOf({
+        chainId,
         args: account ? [account] : undefined,
         query: {
             enabled: !!account,
@@ -122,7 +128,11 @@ export function usePositions() {
             abi: nonfungiblePositionManagerABI,
             functionName: "tokenOfOwnerByIndex",
             args,
+            chainId,
         })),
+        // Same guard as above: no account / zero balance -> empty multicall, which
+        // would otherwise sit at isLoading: true forever and hang the pool list.
+        query: { enabled: tokenIdsArgs.length > 0 },
     });
 
     const tokenIds = useMemo(() => {
