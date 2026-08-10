@@ -8,14 +8,17 @@ import { NATIVE_NAME, NATIVE_SYMBOL } from "@clmm/config/default-chain";
 export function useAlgebraToken(address: Address | undefined, chainId: number): Token | ExtendedNative | BoostedToken | undefined {
     const isNative = address === ADDRESS_ZERO;
 
+    // CLMM is Hemi-only: pin every read to `chainId` (Hemi) so token metadata
+    // resolves via Hemi's public RPC even with no wallet / a different active chain.
+    // Without this, a disconnected pool list hangs on skeletons forever.
     const { data: tokenData, isLoading } = useReadContracts({
         allowFailure: true,
         contracts: address
             ? [
-                  { address, abi: erc20Abi, functionName: "symbol" },
-                  { address, abi: erc20Abi, functionName: "name" },
-                  { address, abi: erc20Abi, functionName: "decimals" },
-                  { address, abi: erc4626Abi, functionName: "asset" },
+                  { address, abi: erc20Abi, functionName: "symbol", chainId },
+                  { address, abi: erc20Abi, functionName: "name", chainId },
+                  { address, abi: erc20Abi, functionName: "decimals", chainId },
+                  { address, abi: erc4626Abi, functionName: "asset", chainId },
               ]
             : [],
         query: {
@@ -30,9 +33,9 @@ export function useAlgebraToken(address: Address | undefined, chainId: number): 
         contracts:
             underlyingAddress && typeof underlyingAddress === "string"
                 ? [
-                      { address: underlyingAddress as Address, abi: erc20Abi, functionName: "symbol" },
-                      { address: underlyingAddress as Address, abi: erc20Abi, functionName: "name" },
-                      { address: underlyingAddress as Address, abi: erc20Abi, functionName: "decimals" },
+                      { address: underlyingAddress as Address, abi: erc20Abi, functionName: "symbol", chainId },
+                      { address: underlyingAddress as Address, abi: erc20Abi, functionName: "name", chainId },
+                      { address: underlyingAddress as Address, abi: erc20Abi, functionName: "decimals", chainId },
                   ]
                 : [],
         query: {
