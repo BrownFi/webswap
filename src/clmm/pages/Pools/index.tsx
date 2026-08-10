@@ -1,6 +1,7 @@
 import PageContainer from "@clmm/components/common/PageContainer";
 import PageTitle from "@clmm/components/common/PageTitle";
 import PoolsList from "@clmm/components/pools/PoolsList";
+import PoolStatsBar from "@clmm/components/pools/PoolStatsBar";
 import SecurityStatusTag from "@clmm/components/pools/SecurityStatusTag";
 import { Button } from "@clmm/components/ui/button";
 import { useReadSecurityRegistryGlobalStatus } from "@clmm/generated";
@@ -34,6 +35,10 @@ const PoolsPage = () => {
                         </Link>
                     )}
                 </div>
+            </div>
+
+            <div className="w-full mb-6">
+                <PoolStatsBar />
             </div>
 
             <div className="w-full">
