@@ -4,8 +4,8 @@ import { Address } from "viem";
 import CurrencyLogo from "../CurrencyLogo";
 import { Skeleton } from "@clmm/components/ui/skeleton";
 import { useCurrency } from "@clmm/hooks/common/useCurrency";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@clmm/components/ui/hover-card";
 import { formatAmount } from "@clmm/utils/common/formatAmount";
+import { Gift } from "lucide-react";
 import { FormattedPool } from "@clmm/hooks/pools/useFormattedPools";
 import { enabledModules } from "@clmm/config/app-modules";
 
@@ -57,40 +57,39 @@ const PoolPair = ({ pair, id, hasALM, hasActiveFarming }: FormattedPool) => {
     );
 };
 
-const AvgAPR = ({
-    isBoostedToken0,
-    isBoostedToken1,
-    isBoostedPool,
-    poolMaxApr,
-    farmApr,
-    pair,
-    hasActiveFarming,
-    avgApr,
-}: FormattedPool) => {
+// Fee APR — trading fees only (subgraph-derived), always present.
+const FeeAPR = ({ isBoostedToken0, isBoostedToken1, isBoostedPool, pair, feeApr }: FormattedPool) => {
     const { data: token0Apr } = useBoostedTokenAPR(isBoostedToken0 ? (pair.token0.id as Address) : undefined);
     const { data: token1Apr } = useBoostedTokenAPR(isBoostedToken1 ? (pair.token1.id as Address) : undefined);
 
     return (
         <div className="flex items-center gap-2">
-            <HoverCard>
-                <HoverCardTrigger>
-                    <span>{`${formatAmount(avgApr, 2)}%`}</span>
-                </HoverCardTrigger>
-                <HoverCardContent>
-                    <p>Avg. APR - {avgApr}</p>
-                    {hasActiveFarming ? <p>{`Farm APR - ${formatAmount(farmApr, 2)}%`}</p> : undefined}
-                    <p>Max APR - {`${formatAmount(poolMaxApr, 2)}%`}</p>
-                </HoverCardContent>
-            </HoverCard>
+            <span>{`${formatAmount(feeApr, 2)}%`}</span>
             {isBoostedPool && (
                 <BoostedAPR
                     token0Apr={token0Apr}
                     token1Apr={token1Apr}
                     token0Name={pair.token0.name}
                     token1Name={pair.token1.name}
-                    baseAPR={avgApr}
+                    baseAPR={feeApr}
                 />
             )}
+        </div>
+    );
+};
+
+// Incentive APR — extra reward on top of fees. Shows a dash for pools with no
+// active incentive program (the common case until incentives are deployed on
+// Hemi + a data source is wired). Reward-token badge to be added once Manh's
+// endpoint returns the reward token metadata.
+const IncentiveAPR = ({ incentiveApr }: FormattedPool) => {
+    if (!incentiveApr || incentiveApr <= 0) {
+        return <span className="opacity-40">—</span>;
+    }
+    return (
+        <div className="flex items-center gap-1.5 text-green-300">
+            <Gift size={14} />
+            <span>{`${formatAmount(incentiveApr, 2)}%`}</span>
         </div>
     );
 };
@@ -143,13 +142,22 @@ export const poolsColumns: ColumnDef<FormattedPool>[] = ([
         cell: ({ getValue }) => usdCell(getValue()),
     },
     {
-        accessorKey: "avgApr",
+        accessorKey: "feeApr",
         header: ({ column }) => (
             <HeaderItem sort={() => column.toggleSorting(column.getIsSorted() === "asc")} isAsc={column.getIsSorted() === "asc"}>
-                Avg. APR
+                Fee APR
             </HeaderItem>
         ),
-        cell: ({ row }) => <AvgAPR {...row.original} />,
+        cell: ({ row }) => <FeeAPR {...row.original} />,
+    },
+    {
+        accessorKey: "incentiveApr",
+        header: ({ column }) => (
+            <HeaderItem sort={() => column.toggleSorting(column.getIsSorted() === "asc")} isAsc={column.getIsSorted() === "asc"}>
+                Incentive
+            </HeaderItem>
+        ),
+        cell: ({ row }) => <IncentiveAPR {...row.original} />,
         filterFn: (v, _, value: boolean) => v.original.hasActiveFarming === value,
     },
 ] as (ColumnDef<FormattedPool> | false)[]).filter((col): col is ColumnDef<FormattedPool> => Boolean(col));

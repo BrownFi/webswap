@@ -28,6 +28,13 @@ export interface FormattedPool {
     poolAvgApr: number;
     avgApr: number;
     farmApr: number;
+    fees24USD: number;
+    // Fee APR from the subgraph (24h fees annualized over current TVL) — real Hemi
+    // data, unlike poolAvgApr which comes from the dead algebra.finance API.
+    feeApr: number;
+    // Incentive/eternal-farming APR. 0 until an incentive program is deployed on
+    // Hemi and a data source (Manh's BE endpoint) is wired — see farmApr source.
+    incentiveApr: number;
     isMyPool: boolean;
     hasActiveFarming: boolean;
     hasALM: boolean;
@@ -112,6 +119,16 @@ export function useFormattedPools(tokenAddress?: Address): { pools: FormattedPoo
 
                 const avgApr = farmApr + poolAvgApr;
 
+                // Real fee APR from subgraph data already on hand: annualize the
+                // last 24h of fees over current TVL. Independent of algebra.finance.
+                const fees24 = timeDifference <= msIn24Hours ? Number(currentPool.feesUSD) : 0;
+                const tvl = Number(totalValueLockedUSD);
+                const feeApr = tvl > 0 ? ((fees24 * 365) / tvl) * 100 : 0;
+                // Incentive APR — placeholder (0 → "—") until BrownFi's own BE serves
+                // the Merkl-sourced incentive APR per pool (like webswap on Bera). Wire
+                // that endpoint in here; the Incentive column lights up automatically.
+                const incentiveApr = 0;
+
                 const isBoostedToken0 = Object.values(BOOSTED_TOKENS[chainId || DEFAULT_CHAIN_ID]).find(
                     (bt) => bt.address.toLowerCase() === token0.id.toLowerCase()
                 );
@@ -136,6 +153,8 @@ export function useFormattedPools(tokenAddress?: Address): { pools: FormattedPoo
                     poolAvgApr,
                     farmApr,
                     avgApr,
+                    feeApr,
+                    incentiveApr,
                     isMyPool: Boolean(openPositions?.length || openAlmPositions?.length),
                     hasALM: Boolean(openVaults?.length),
                     hasActiveFarming: Boolean(activeFarming),
