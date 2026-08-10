@@ -314,7 +314,7 @@ const NoPositions = ({ poolId }: { poolId: Address }) => (
         <h2 className="text-2xl font-bold text-left">You don't have positions for this pool</h2>
         <p className="text-md font-semibold">Let's create one!</p>
         <Button variant={"primary"} className="gap-2" asChild>
-            <Link to={`/clmm/pool/${poolId}/new-position`}>
+            <Link to={`/clamm/pool/${poolId}/new-position`}>
                 Create Position
                 <MoveRightIcon />
             </Link>

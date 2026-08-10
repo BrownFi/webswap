@@ -124,9 +124,9 @@ export function useFormattedPools(tokenAddress?: Address): { pools: FormattedPoo
                 const fees24 = timeDifference <= msIn24Hours ? Number(currentPool.feesUSD) : 0;
                 const tvl = Number(totalValueLockedUSD);
                 const feeApr = tvl > 0 ? ((fees24 * 365) / tvl) * 100 : 0;
-                // Incentive APR — placeholder (0 → "—") until BrownFi's own BE serves
-                // the Merkl-sourced incentive APR per pool (like webswap on Bera). Wire
-                // that endpoint in here; the Incentive column lights up automatically.
+                // Placeholder that anchors the Incentive column's accessorKey. The live
+                // value is fetched per pool in the cell (useMerklIncentive → BrownFi BE
+                // /merkl-campaign/), so this stays 0 here.
                 const incentiveApr = 0;
 
                 const isBoostedToken0 = Object.values(BOOSTED_TOKENS[chainId || DEFAULT_CHAIN_ID]).find(

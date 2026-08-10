@@ -8,6 +8,7 @@ import { formatAmount } from "@clmm/utils/common/formatAmount";
 import { Gift } from "lucide-react";
 import { FormattedPool } from "@clmm/hooks/pools/useFormattedPools";
 import { enabledModules } from "@clmm/config/app-modules";
+import { useMerklIncentive } from "@clmm/hooks/pools/useMerklIncentive";
 
 import ALMModule from "@clmm/modules/ALMModule";
 const { ALMTag } = ALMModule.components;
@@ -78,11 +79,10 @@ const FeeAPR = ({ isBoostedToken0, isBoostedToken1, isBoostedPool, pair, feeApr 
     );
 };
 
-// Incentive APR — extra reward on top of fees. Shows a dash for pools with no
-// active incentive program (the common case until incentives are deployed on
-// Hemi + a data source is wired). Reward-token badge to be added once Manh's
-// endpoint returns the reward token metadata.
-const IncentiveAPR = ({ incentiveApr }: FormattedPool) => {
+// Incentive APR — Merkl reward on top of fees, fetched per pool from BrownFi's BE
+// (/merkl-campaign/?pool=). Shows a dash for pools with no live campaign.
+const IncentiveAPR = ({ id }: FormattedPool) => {
+    const incentiveApr = useMerklIncentive(id);
     if (!incentiveApr || incentiveApr <= 0) {
         return <span className="opacity-40">—</span>;
     }
@@ -152,12 +152,9 @@ export const poolsColumns: ColumnDef<FormattedPool>[] = ([
     },
     {
         accessorKey: "incentiveApr",
-        header: ({ column }) => (
-            <HeaderItem sort={() => column.toggleSorting(column.getIsSorted() === "asc")} isAsc={column.getIsSorted() === "asc"}>
-                Incentive
-            </HeaderItem>
-        ),
+        // Value is fetched per pool in the cell (per-pool BE endpoint), so it isn't in
+        // the row data — no column sort.
+        header: () => <HeaderItem>Incentive</HeaderItem>,
         cell: ({ row }) => <IncentiveAPR {...row.original} />,
-        filterFn: (v, _, value: boolean) => v.original.hasActiveFarming === value,
     },
 ] as (ColumnDef<FormattedPool> | false)[]).filter((col): col is ColumnDef<FormattedPool> => Boolean(col));

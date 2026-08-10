@@ -141,7 +141,11 @@ const PoolsTable = <TData, TValue>({
                         <Search className="absolute left-4 text-text-300" size={20} />
                     </div>
                     <div className="grid grid-cols-2 gap-3 md:flex w-full sm:w-fit">
-                        {enabledModules.FarmingModule && (
+                        {/* "Farm Pools" filter temporarily hidden — it's Algebra's default
+                            eternal-farming filter, which doesn't apply on Hemi (incentives
+                            run via Merkl, not eternal farming), so it only confused users.
+                            Flip `false` back to enabledModules.FarmingModule to restore. */}
+                        {false && enabledModules.FarmingModule && (
                             <Button
                                 onClick={() => toggleFilter("hasActiveFarming")}
                                 variant={isFilterActive("hasActiveFarming") ? "iconActive" : "outline"}
@@ -246,7 +250,7 @@ const PoolsTable = <TData, TValue>({
                                         if (action) {
                                             action(row.original.id);
                                         } else if (link) {
-                                            navigate(`/clmm/${link}/${row.original.id}`);
+                                            navigate(`/clamm/${link}/${row.original.id}`);
                                         }
                                     }}
                                 >

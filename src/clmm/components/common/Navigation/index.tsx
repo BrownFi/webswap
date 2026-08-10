@@ -4,10 +4,10 @@ import { ArrowUpDown, ContrastIcon, Droplets, LucideLineChart, Vote } from "luci
 import { matchPath, NavLink, useLocation } from "react-router-dom";
 
 const PATHS = {
-    SWAP: "/clmm/swap",
+    SWAP: "/clamm/swap",
     LIMIT_ORDERS: "limit-order",
-    POOLS: "/clmm/pools",
-    POOL: "/clmm/pool/*",
+    POOLS: "/clamm/pool",
+    POOL: "/clamm/pool/*",
     ANALYTICS: "/analytics/*",
     VE_TOKEN: "/vetoken/*",
     VOTE: "/vote/*",
@@ -16,13 +16,13 @@ const PATHS = {
 const menuItems = [
     {
         title: "Trade",
-        link: "/clmm/swap",
+        link: "/clamm/swap",
         active: [PATHS.SWAP, PATHS.LIMIT_ORDERS],
         icon: <ArrowUpDown size={20} />,
     },
     {
-        title: "Pools",
-        link: "/clmm/pools",
+        title: "CLAMM",
+        link: "/clamm/pool",
         active: [PATHS.POOLS, PATHS.POOL],
         icon: <Droplets size={20} />,
     },

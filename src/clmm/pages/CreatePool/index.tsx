@@ -8,7 +8,7 @@ const CreatePoolPage = () => {
     return (
         <PageContainer>
             <div className="w-full max-w-md mx-auto flex items-center gap-2 mb-6">
-                <NavLink className="flex items-center gap-2 text-text-200 hover:text-text-100" to={"/clmm/pools"}>
+                <NavLink className="flex items-center gap-2 text-text-200 hover:text-text-100" to={"/clamm/pool"}>
                     <ChevronLeft size={24} />
                 </NavLink>
                 <PageTitle title={"Create Pool"} showSettings={false} />

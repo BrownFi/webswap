@@ -148,7 +148,7 @@ const MyPositionsTable = <TData, TValue>({
                                 if (action) {
                                     action(row.original);
                                 } else if (link) {
-                                    navigate(`/clmm/${link}/${row.original.id}`);
+                                    navigate(`/clamm/${link}/${row.original.id}`);
                                 }
                             }}
                         >

@@ -18,7 +18,7 @@ const CustomChainSelect = () => {
   // /clmm route the button would otherwise keep showing the last webswap chain.
   // Reflect Hemi from the route instead so the selector matches where the user is.
   const hemiChain = selectableChains.find((c) => c.id === HEMI_CHAIN_ID)
-  const displayChain = location.pathname.startsWith('/clmm') && hemiChain ? hemiChain : chain
+  const displayChain = location.pathname.startsWith('/clamm') && hemiChain ? hemiChain : chain
 
   // Only the pre-connect network picker. Once connected, the RainbowKit button
   // (StyledConnectButton) is the single chain selector — including Hemi.
@@ -49,7 +49,7 @@ const CustomChainSelect = () => {
       <ChainModal
         isOpen={isOpen}
         onClose={() => setOpen(false)}
-        onSwitchChain={(chainId) => navigate(chainId === HEMI_CHAIN_ID ? '/clmm/swap' : '/swap')}
+        onSwitchChain={(chainId) => navigate(chainId === HEMI_CHAIN_ID ? '/clamm/swap' : '/swap')}
       />
     </>
   )

@@ -51,7 +51,7 @@ const withSuspense = (node: React.ReactNode) => <Suspense fallback={null}>{node}
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <Navigate replace to="/clmm/swap" />,
+        element: <Navigate replace to="/clamm/swap" />,
         errorElement: <Page404 />,
     },
     {
@@ -66,11 +66,12 @@ const router = createBrowserRouter([
                 element: withSuspense(<SwapPage type={SwapPageView.LIMIT_ORDER} />),
             },
             {
-                path: "pools",
+                // Pool list is /clamm/pool (singular) to match the oracle-based side's /pool.
+                path: "pool",
                 element: withSuspense(<PoolsPage />),
             },
             {
-                path: "pools/create",
+                path: "pool/create",
                 element: withSuspense(<CreatePoolPage />),
             },
             {

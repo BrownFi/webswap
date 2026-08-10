@@ -33,7 +33,7 @@ const PoolHeader = ({ pool, showCreatePosition = true }: { pool: Pool | null | u
         <div className="flex flex-col gap-3 w-full mb-6">
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                    <NavLink to={"/clmm/pools"} className="flex items-center text-text-200 hover:text-text-100 shrink-0">
+                    <NavLink to={"/clamm/pool"} className="flex items-center text-text-200 hover:text-text-100 shrink-0">
                         <ChevronLeft size={28} />
                     </NavLink>
                     <div className="flex items-center -space-x-2 shrink-0">

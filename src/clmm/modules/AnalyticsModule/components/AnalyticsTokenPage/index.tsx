@@ -187,7 +187,7 @@ export function AnalyticsTokenPage() {
                                 Trade
                             </Button>
                         </Link>
-                        <Link className="col-span-1 w-full" to={"/pools"}>
+                        <Link className="col-span-1 w-full" to={"/clamm/pool"}>
                             <Button variant={"primaryLink"} size={"lg"} className="gap-2 rounded-xl">
                                 <Plus size={20} />
                                 Create Position

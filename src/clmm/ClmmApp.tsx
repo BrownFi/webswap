@@ -84,8 +84,9 @@ export default function ClmmApp() {
             <Routes>
               <Route index element={<Navigate replace to="swap" />} />
               <Route path="swap" element={s(<SwapPage type={SwapPageView.SWAP} />)} />
-              <Route path="pools" element={s(<PoolsPage />)} />
-              <Route path="pools/create" element={s(<CreatePoolPage />)} />
+              {/* Pool list is /clamm/pool (singular) to match the oracle-based side's /pool. */}
+              <Route path="pool" element={s(<PoolsPage />)} />
+              <Route path="pool/create" element={s(<CreatePoolPage />)} />
               <Route path="pool/:pool" element={s(<PoolPage />)} />
               <Route path="pool/:pool/new-position" element={s(<NewPositionPage />)} />
               <Route path="claim-fee" element={s(<ClaimFeePage />)} />

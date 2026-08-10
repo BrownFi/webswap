@@ -159,28 +159,29 @@ const HEMI_CHAIN_ID = 43111
 function MainNav() {
   const { chainId, address } = useAccount()
   const location = useLocation()
-  const showClmmNav = chainId === HEMI_CHAIN_ID || location.pathname.startsWith('/clmm')
+  const showClmmNav = chainId === HEMI_CHAIN_ID || location.pathname.startsWith('/clamm')
 
-  // Pool detail lives at /clmm/pool/:pool (singular) while the list is /clmm/pools,
-  // so key the highlight off the shared /clmm/pool prefix rather than NavLink's
-  // exact match. Webswap's Pool spans add/remove/create/find too.
-  const clmmPoolActive = location.pathname.startsWith('/clmm/pool')
+  // Both the pool list (/clamm/pool) and detail (/clamm/pool/:pool) share the
+  // /clamm/pool prefix, so key the highlight off that rather than NavLink's exact
+  // match. Webswap's Pool spans add/remove/create/find too.
+  const clmmPoolActive = location.pathname.startsWith('/clamm/pool')
   const webswapPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) => location.pathname.startsWith(p))
 
   const clmmItems = [
-    { id: 'swap-nav-link', to: '/clmm/swap', label: 'Swap', end: false, active: false },
-    { id: 'pool-nav-link', to: '/clmm/pools', label: 'Pool', end: false, active: clmmPoolActive },
-    { id: 'analytics-nav-link', to: '/clmm/analytics', label: 'Analytics', end: false, active: false },
+    { id: 'swap-nav-link', to: '/clamm/swap', label: 'Swap', end: false, active: false },
+    // Labeled "CLAMM" (the product) per Jason; links to the pool list.
+    { id: 'pool-nav-link', to: '/clamm/pool', label: 'CLAMM', end: false, active: clmmPoolActive },
+    { id: 'analytics-nav-link', to: '/clamm/analytics', label: 'Analytics', end: false, active: false },
   ]
   // Partner fee-claim entry — only the BrownFi/Hemi wallets (hardcoded, no on-chain
   // read) see it; the page itself still enforces every action on-chain.
   if (isFeeClaimWallet(address)) {
     clmmItems.push({
       id: 'claim-fee-nav-link',
-      to: '/clmm/claim-fee',
+      to: '/clamm/claim-fee',
       label: 'Claim Fees',
       end: false,
-      active: location.pathname.startsWith('/clmm/claim-fee'),
+      active: location.pathname.startsWith('/clamm/claim-fee'),
     })
   }
 

@@ -129,7 +129,7 @@ export const AddLiquidityButton = ({
             tokenB: quoteCurrency?.wrapped.address as Address,
             type: TransactionType.POOL,
         },
-        isIncreaseMode ? undefined : `/clmm/pool/${poolAddress}`
+        isIncreaseMode ? undefined : `/clamm/pool/${poolAddress}`
     );
 
     useEffect(() => {

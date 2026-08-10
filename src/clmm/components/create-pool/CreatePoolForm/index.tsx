@@ -139,7 +139,7 @@ const CreatePoolForm = () => {
             tokenB: currencyB?.wrapped.address as Address,
             type: TransactionType.POOL,
         },
-        "/clmm/pools"
+        "/clamm/pool"
     );
 
     const isCustomPoolDeployerReady = account && mintInfo.pool && poolDeployer !== CUSTOM_POOL_DEPLOYER_TITLES.BASE_DYNAMIC;

@@ -73,16 +73,16 @@ const BodyWrapper = styled.div<{ $noPad?: boolean; $clmm?: boolean }>`
 function ChainRouteSync() {
   const { chainId, isConnected } = useAccount()
   const navigate = useNavigate()
-  const onClmm = useLocation().pathname.startsWith('/clmm')
+  const onClmm = useLocation().pathname.startsWith('/clamm')
   useEffect(() => {
-    if (chainId === HEMI_CHAIN_ID && !onClmm) navigate('/clmm/swap')
+    if (chainId === HEMI_CHAIN_ID && !onClmm) navigate('/clamm/swap')
     else if (isConnected && chainId !== HEMI_CHAIN_ID && onClmm) navigate('/swap')
   }, [chainId, isConnected, onClmm, navigate])
   return null
 }
 
 export default function App() {
-  const onClmm = useLocation().pathname.startsWith('/clmm')
+  const onClmm = useLocation().pathname.startsWith('/clamm')
   return (
     <Suspense fallback={null}>
       <ChainRouteSync />
@@ -93,7 +93,7 @@ export default function App() {
           <Popups />
           <Routes>
             <Route
-              path="/clmm/*"
+              path="/clamm/*"
               element={
                 <RouteErrorBoundary>
                   <ClmmApp />
