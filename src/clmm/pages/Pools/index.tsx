@@ -4,6 +4,7 @@ import PoolsList from "@clmm/components/pools/PoolsList";
 import PoolStatsBar from "@clmm/components/pools/PoolStatsBar";
 import SecurityStatusTag from "@clmm/components/pools/SecurityStatusTag";
 import { Button } from "@clmm/components/ui/button";
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { useReadSecurityRegistryGlobalStatus } from "@clmm/generated";
 import { SecurityState } from "@clmm/hooks/pools/usePool";
 import { useSecurityRegistryConfigured } from "@clmm/hooks/pools/useSecurityRegistryConfigured";
@@ -13,6 +14,7 @@ import { Link } from "react-router-dom";
 const PoolsPage = () => {
     const hasSecurityRegistry = useSecurityRegistryConfigured();
     const { data: rawGlobalStatus } = useReadSecurityRegistryGlobalStatus({
+        chainId: DEFAULT_CHAIN_ID,
         query: { enabled: hasSecurityRegistry },
     });
 

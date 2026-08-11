@@ -1,4 +1,5 @@
 import { useReadAlgebraBasePluginV1Incentive, useReadAlgebraPoolGlobalState, useReadAlgebraPoolPlugin } from "@clmm/generated";
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { usePoolsStore } from "@clmm/state/poolsStore";
 import { ADDRESS_ZERO } from "@cryptoalgebra/integral-sdk";
 import { useEffect } from "react";
@@ -11,14 +12,17 @@ export function usePoolPlugins(poolId: Address | undefined) {
 
     const { data: globalState, isLoading: globalStateLoading } = useReadAlgebraPoolGlobalState({
         address: skipFetch ? undefined : poolId,
+        chainId: DEFAULT_CHAIN_ID,
     });
 
     const { data: plugin, isLoading: pluginLoading } = useReadAlgebraPoolPlugin({
         address: skipFetch ? undefined : poolId,
+        chainId: DEFAULT_CHAIN_ID,
     });
 
     const { data: hasFarmingPlugin, isLoading: farmingLoading } = useReadAlgebraBasePluginV1Incentive({
         address: skipFetch ? undefined : plugin,
+        chainId: DEFAULT_CHAIN_ID,
     });
 
     // const { data: hasLimitOrderPlugin, isLoading: limitLoading } =
