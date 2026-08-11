@@ -68,7 +68,7 @@ const PositionCard = ({ pool, selectedPosition, farming, closedFarmings, poolSta
                             </div>
                         </div>
                         <div>
-                            <div className="font-bold text-xs text-text-100/75 mb-2">APR</div>
+                            <div className="font-bold text-xs text-text-100/75 mb-2">Fees APR</div>
                             <div className="font-semibold text-xl">
                                 {positionAPR ? <span>{positionAPR}</span> : <Skeleton className="w-[100px] h-[30px]" />}
                             </div>

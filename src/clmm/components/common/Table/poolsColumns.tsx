@@ -133,7 +133,7 @@ export const poolsColumns: ColumnDef<FormattedPool>[] = ([
         accessorKey: "feeApr",
         header: ({ column }) => (
             <HeaderItem sort={() => column.toggleSorting(column.getIsSorted() === "asc")} isAsc={column.getIsSorted() === "asc"}>
-                Fee APR
+                Fees APR
             </HeaderItem>
         ),
         cell: ({ row }) => <FeeAPR {...row.original} />,
