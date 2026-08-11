@@ -15,6 +15,7 @@ import { useParams } from "react-router-dom";
 import { Address } from "viem";
 import { useCurrency } from "@clmm/hooks/common/useCurrency";
 import { SecurityState } from "@clmm/hooks/pools/usePool";
+import IncentiveBadge from "@clmm/components/pools/IncentiveBadge";
 const { HarvestAndExitFarmingCard } = FarmingModule.components;
 const { usePositionInFarming } = FarmingModule.hooks;
 
@@ -72,6 +73,8 @@ const PositionCard = ({ pool, selectedPosition, farming, closedFarmings, poolSta
                                 {positionAPR ? <span>{positionAPR}</span> : <Skeleton className="w-[100px] h-[30px]" />}
                             </div>
                         </div>
+                        {/* Merkl incentive APR (pool-level) — hidden when there's no live campaign. */}
+                        <IncentiveBadge poolId={poolId} variant="stat" />
                     </div>
                 </div>
             </div>
