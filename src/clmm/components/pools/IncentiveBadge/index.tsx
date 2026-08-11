@@ -49,7 +49,7 @@ export default function IncentiveBadge({
             className="hover:text-text-100 transition-colors"
             aria-label="View campaign on Merkl"
         >
-            <ExternalLink size={compact ? 11 : 12} className={compact ? "" : "opacity-70"} />
+            <ExternalLink size={12} className={compact ? "" : "opacity-70"} />
         </a>
     );
 
