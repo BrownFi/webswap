@@ -298,10 +298,12 @@ export function useDerivedSwapInfo(): IDerivedSwapInfo {
 
     const { data: globalState } = useReadAlgebraPoolGlobalState({
         address: poolAddress,
+        chainId: DEFAULT_CHAIN_ID,
     });
 
     const { data: tickSpacing } = useReadAlgebraPoolTickSpacing({
         address: poolAddress,
+        chainId: DEFAULT_CHAIN_ID,
     });
 
     const { wrapType } = useWrapCallback(currencies[SwapField.INPUT], currencies[SwapField.OUTPUT], typedValue);

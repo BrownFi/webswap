@@ -61,6 +61,7 @@ const PoolPage = () => {
 
     const hasSecurityRegistry = useSecurityRegistryConfigured();
     const { data: rawGlobalStatus } = useReadSecurityRegistryGlobalStatus({
+        chainId: DEFAULT_CHAIN_ID,
         query: { enabled: hasSecurityRegistry },
     });
 

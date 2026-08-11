@@ -36,24 +36,30 @@ export type SecurityStateType = typeof SecurityState[keyof typeof SecurityState]
 export function usePool(address: Address | undefined): [PoolStateType, Pool | null, number | null | undefined ] {
     const { data: tickSpacing, isLoading: isTickSpacingLoading, isError: isTickSpacingError } = useReadAlgebraPoolTickSpacing({
         address,
+        chainId: DEFAULT_CHAIN_ID,
     });
     const { data: globalState, isLoading: isGlobalStateLoading, isError: isGlobalStateError } = useReadAlgebraPoolGlobalState({
         address,
+        chainId: DEFAULT_CHAIN_ID,
     });
     const { data: liquidity, isLoading: isLiquidityLoading, isError: isLiquidityError } = useReadAlgebraPoolLiquidity({
         address,
+        chainId: DEFAULT_CHAIN_ID,
     });
 
     const { data: token0Address, isLoading: isLoadingToken0, isError: isToken0Error } = useReadAlgebraPoolToken0({
         address,
+        chainId: DEFAULT_CHAIN_ID,
     });
     const { data: token1Address, isLoading: isLoadingToken1, isError: isToken1Error } = useReadAlgebraPoolToken1({
         address,
+        chainId: DEFAULT_CHAIN_ID,
     });
 
     const hasSecurityRegistry = useSecurityRegistryConfigured();
 
     const { data: rawPoolSecurityStatus, isLoading: isRawPoolSecurityStatusLoading } = useReadSecurityRegistryGetPoolStatus({
+        chainId: DEFAULT_CHAIN_ID,
         args: address ? [address] : undefined,
         query: { enabled: hasSecurityRegistry && Boolean(address) },
     });
