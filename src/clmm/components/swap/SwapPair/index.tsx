@@ -155,12 +155,12 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
                 between the two panels regardless of their heights. */}
             <div className="relative flex items-center justify-center z-10" style={{ height: 0 }}>
                 <button
-                    className="flex items-center justify-center w-11 h-11 rounded-full hover:opacity-90 duration-200"
+                    className="flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full hover:opacity-90 duration-200"
                     style={{ background: "#C47736" }}
                     onClick={onSwitchTokens}
                     aria-label="Switch tokens"
                 >
-                    <ArrowUpDown size={18} className="text-white" />
+                    <ArrowUpDown size={14} className="text-white sm:w-[18px] sm:h-[18px]" />
                 </button>
             </div>
             <TokenCard

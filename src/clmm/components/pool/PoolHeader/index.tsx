@@ -33,7 +33,7 @@ const PoolHeader = ({ pool, showCreatePosition = true }: { pool: Pool | null | u
     return (
         <div className="flex flex-col gap-3 w-full mb-6">
             <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 min-w-0">
                     <NavLink to={"/clamm/pool"} className="flex items-center text-text-200 hover:text-text-100 shrink-0">
                         <ChevronLeft size={28} />
                     </NavLink>
@@ -42,7 +42,7 @@ const PoolHeader = ({ pool, showCreatePosition = true }: { pool: Pool | null | u
                         <CurrencyLogo currency={token1} size={32} className="ring-2 ring-bg-100" />
                     </div>
                     <h1
-                        className="text-2xl sm:text-[36px] leading-tight sm:leading-[44px] text-text-100 truncate"
+                        className="text-xl sm:text-[36px] leading-tight sm:leading-[44px] text-text-100 truncate"
                         style={{ fontFamily: "Inter", fontWeight: 600, letterSpacing: "-0.02em" }}
                     >
                         {token0 && token1 ? `${token0.symbol} / ${token1.symbol}` : "Pool"}
@@ -55,6 +55,8 @@ const PoolHeader = ({ pool, showCreatePosition = true }: { pool: Pool | null | u
                             {fee}
                         </span>
                     )}
+                    {/* Merkl incentive — inline with the pair title (hidden when no campaign). */}
+                    <IncentiveBadge poolId={poolAddress} variant="header" />
                 </div>
 
                 {showCreatePosition && (
@@ -69,7 +71,7 @@ const PoolHeader = ({ pool, showCreatePosition = true }: { pool: Pool | null | u
             </div>
 
             {poolAddress && (
-                <div className="flex items-center gap-2 text-xs text-text-300 ml-12">
+                <div className="flex items-center gap-2 text-sm text-text-300 ml-0 sm:ml-12">
                     <span style={{ fontFamily: "Inter" }}>{shortAddr}</span>
                     <button onClick={onCopy} className="hover:text-text-100 transition-colors" aria-label="Copy pool address">
                         <Copy size={12} />
@@ -84,8 +86,6 @@ const PoolHeader = ({ pool, showCreatePosition = true }: { pool: Pool | null | u
                     >
                         <ExternalLink size={12} />
                     </a>
-                    {/* Merkl incentive link, inline next to the contract link (no card). */}
-                    <IncentiveBadge poolId={poolAddress} variant="inline" />
                 </div>
             )}
         </div>

@@ -76,7 +76,7 @@ export const myPositionsColumns: ColumnDef<MyPosition>[] = [
         accessorKey: "apr",
         header: ({ column }) => (
             <HeaderItem sort={() => column.toggleSorting(column.getIsSorted() === "asc")} isAsc={column.getIsSorted() === "asc"}>
-                APR
+                Fees APR
             </HeaderItem>
         ),
         cell: ({ getValue }) => <span className="text-primary-200 font-semibold">{`${formatAmount(getValue() as number, 2)}%`}</span>,

@@ -9,14 +9,14 @@ import { ExternalLink } from "lucide-react";
  * doesn't also trigger the row's navigate-to-detail). Hidden / "—" when no campaign.
  * - "cell":   pool-list cell (green value), "—" when none.
  * - "stat":   labeled stat block matching the position card's LIQUIDITY / APR.
- * - "inline": compact row for the pool header — muted text, only the % highlighted.
+ * - "header": prominent line under the pool-detail title.
  */
 export default function IncentiveBadge({
     poolId,
     variant = "cell",
 }: {
     poolId?: string;
-    variant?: "cell" | "stat" | "inline";
+    variant?: "cell" | "stat" | "header";
 }) {
     const { apr, rewardTokens, opportunityId } = useMerklIncentive(poolId);
 
@@ -24,13 +24,16 @@ export default function IncentiveBadge({
         return variant === "cell" ? <span className="opacity-40">—</span> : null;
     }
 
-    const compact = variant === "inline";
-    const logoSize = compact ? "w-3.5 h-3.5" : "w-4 h-4";
+    const isHeader = variant === "header";
+    const logoCls = "w-4 h-4";
+    // Header link icon matches the address/contract link (12); the list cell matches
+    // the reward-token logo (16).
+    const iconSize = isHeader ? 12 : 16;
     const merklHref = opportunityId ? merklOpportunityUrl(opportunityId) : undefined;
 
     const logos = rewardTokens.map((t) =>
         t.icon ? (
-            <img key={t.symbol} src={t.icon} alt={t.symbol} title={t.symbol} className={`${logoSize} rounded-full`} />
+            <img key={t.symbol} src={t.icon} alt={t.symbol} title={t.symbol} className={`${logoCls} rounded-full`} />
         ) : (
             <span key={t.symbol} className="text-xs font-medium">
                 {t.symbol}
@@ -49,16 +52,16 @@ export default function IncentiveBadge({
             className="hover:text-text-100 transition-colors"
             aria-label="View campaign on Merkl"
         >
-            <ExternalLink size={compact ? 12 : 16} className={compact ? "" : "opacity-70"} />
+            <ExternalLink size={iconSize} className={isHeader ? "" : "opacity-70"} />
         </a>
     );
 
-    // Inline (pool header): inherit the address row's muted color, only % is green.
-    if (compact) {
+    // Header (pool detail): inline next to the pair title, slightly larger.
+    if (isHeader) {
         return (
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 shrink-0 text-base text-text-200">
                 <span>
-                    Incentive APR: <span className="text-green-300 font-medium">{`${formatAmount(apr, 2)}%`}</span>
+                    Incentive APR: <span className="text-green-300 font-semibold">{`${formatAmount(apr, 2)}%`}</span>
                 </span>
                 {logos}
                 {iconLink}
