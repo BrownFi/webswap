@@ -6,6 +6,7 @@ import { ChevronLeft, Copy, ExternalLink, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, useParams } from "react-router-dom";
 import { Address } from "viem";
+import IncentiveBadge from "@clmm/components/pools/IncentiveBadge";
 
 /* Pair-aware pool header. Mirrors BrownFi webswap's pool detail header by
  * leading with the pair identity (logos + symbols + fee badge) rather than
@@ -83,6 +84,8 @@ const PoolHeader = ({ pool, showCreatePosition = true }: { pool: Pool | null | u
                     >
                         <ExternalLink size={12} />
                     </a>
+                    {/* Merkl incentive link, inline next to the contract link (no card). */}
+                    <IncentiveBadge poolId={poolAddress} variant="inline" />
                 </div>
             )}
         </div>

@@ -103,6 +103,14 @@ export default defineConfig({
         headers: { 'user-agent': 'BrownFi-Webswap (+https://brownfi.io)' },
         rewrite: (path) => path.replace(/^\/kyber-agg/, ''),
       },
+      // Dev only: Merkl's CORS allows the prod origins (app.brownfi.io,
+      // dev-brownfi) but NOT localhost, so the direct fetch is blocked in dev.
+      // Proxy it server-side here; prod calls api.merkl.xyz directly (see merkl.ts).
+      '/merkl-api': {
+        target: 'https://api.merkl.xyz',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/merkl-api/, ''),
+      },
     },
   },
   test: {

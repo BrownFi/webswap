@@ -7,7 +7,7 @@ import { useCurrency } from "@clmm/hooks/common/useCurrency";
 import { formatAmount } from "@clmm/utils/common/formatAmount";
 import { FormattedPool } from "@clmm/hooks/pools/useFormattedPools";
 import { enabledModules } from "@clmm/config/app-modules";
-import { useMerklIncentive } from "@clmm/hooks/pools/useMerklIncentive";
+import IncentiveBadge from "@clmm/components/pools/IncentiveBadge";
 
 import ALMModule from "@clmm/modules/ALMModule";
 const { ALMTag } = ALMModule.components;
@@ -78,28 +78,9 @@ const FeeAPR = ({ isBoostedToken0, isBoostedToken1, isBoostedPool, pair, feeApr 
     );
 };
 
-// Incentive APR — Merkl reward on top of fees, fetched per pool from BrownFi's BE
-// (/merkl-campaign/?pool=). Shows a dash for pools with no live campaign.
-const IncentiveAPR = ({ id }: FormattedPool) => {
-    const { apr, rewardTokens } = useMerklIncentive(id);
-    if (!apr || apr <= 0) {
-        return <span className="opacity-40">—</span>;
-    }
-    return (
-        <div className="flex items-center gap-1.5 text-green-300">
-            <span>{`${formatAmount(apr, 2)}%`}</span>
-            {rewardTokens.map((t) =>
-                t.icon ? (
-                    <img key={t.symbol} src={t.icon} alt={t.symbol} title={t.symbol} className="w-4 h-4 rounded-full" />
-                ) : (
-                    <span key={t.symbol} className="text-xs">
-                        {t.symbol}
-                    </span>
-                ),
-            )}
-        </div>
-    );
-};
+// Incentive APR — Merkl reward on top of fees; the badge links to the pool's Merkl
+// opportunity page. Shows a dash for pools with no live campaign.
+const IncentiveAPR = ({ id }: FormattedPool) => <IncentiveBadge poolId={id} variant="cell" />;
 
 export const poolsColumns: ColumnDef<FormattedPool>[] = ([
     {
@@ -161,7 +142,7 @@ export const poolsColumns: ColumnDef<FormattedPool>[] = ([
         accessorKey: "incentiveApr",
         // Value is fetched per pool in the cell (per-pool BE endpoint), so it isn't in
         // the row data — no column sort.
-        header: () => <HeaderItem>Incentive</HeaderItem>,
+        header: () => <HeaderItem>Incentive APR</HeaderItem>,
         cell: ({ row }) => <IncentiveAPR {...row.original} />,
     },
 ] as (ColumnDef<FormattedPool> | false)[]).filter((col): col is ColumnDef<FormattedPool> => Boolean(col));

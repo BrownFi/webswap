@@ -15,9 +15,12 @@ export interface MerklIncentive {
     apr: number;
     // Reward tokens for the badge (symbol + logo url), populated once live.
     rewardTokens: MerklRewardToken[];
+    // Merkl opportunity id, for linking to its public page (undefined when none).
+    opportunityId?: string;
 }
 
 interface MerklOpportunity {
+    id?: string;
     identifier?: string;
     apr?: number;
     rewardsRecord?: { breakdowns?: { token?: { symbol?: string; icon?: string } }[] };
@@ -59,6 +62,6 @@ export function useMerklIncentive(pool?: string): MerklIncentive {
             rewardTokens.push({ symbol, icon: b?.token?.icon });
         }
 
-        return { apr: Number(opp.apr) || 0, rewardTokens };
+        return { apr: Number(opp.apr) || 0, rewardTokens, opportunityId: opp.id ? String(opp.id) : undefined };
     }, [pool, data]);
 }
