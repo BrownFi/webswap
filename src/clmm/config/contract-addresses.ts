@@ -28,9 +28,9 @@ export const FARMING_CENTER: Record<number, Address> = {
     [ChainId.Hemi]: "0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA",
 };
 
-/* Limit Orders — module disabled in this fork, address kept for parity */
+/* Limit Orders — enabled 2026-08-12 (LimitOrderManager per Chester) */
 export const LIMIT_ORDER_MANAGER: Record<number, Address> = {
-    [ChainId.Hemi]: "0xdA9c1AF6498583Ae548CAd31c47eFde061569789",
+    [ChainId.Hemi]: "0x2fe01f9c672d24D2d4315d2bA980B141B0159489",
 };
 
 /* Omega Router — module disabled in this fork, addresses kept for parity */

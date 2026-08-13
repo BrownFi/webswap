@@ -3,13 +3,12 @@ import Loader from "@clmm/components/common/Loader";
 import { Button } from "@clmm/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@clmm/components/ui/dialog";
 import { Slider } from "@clmm/components/ui/slider";
-import { CUSTOM_POOL_DEPLOYER_ADDRESSES } from "@clmm/config";
+import { CUSTOM_POOL_DEPLOYER_ADDRESSES, DEFAULT_CHAIN_ID } from "@clmm/config";
 import { useWriteLimitOrderManagerKill } from "@clmm/generated";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
 import { TransactionType } from "@clmm/state/pendingTransactionsStore";
 import { useMemo, useState } from "react";
 import { Address } from "viem";
-import { useChainId } from "wagmi";
 import { LimitOrderInfo } from "../Table";
 import { unwrappedToken } from "@clmm/utils/common/unwrappedToken";
 import { formatAmount } from "@clmm/utils";
@@ -17,7 +16,7 @@ import { formatAmount } from "@clmm/utils";
 export const KillLimitOrderModal = ({ pool, ticks, liquidity, zeroToOne, owner, positionLO }: LimitOrderInfo) => {
     const [value, setValue] = useState([50]);
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const liquidityToRemove = (BigInt(liquidity) * BigInt(value[0])) / 100n;
 

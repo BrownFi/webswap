@@ -129,7 +129,7 @@ const SwapPair = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) => {
     }, [showNordsternOut, isTradeLoading, trade?.inputAmount, trade?.outputAmount, parsedAmounts, usdValueA, usdValueB, nordsternUsdValueB]);
 
     useEffect(() => {
-        handleOutputSelect(TOKENS[chainId].USDC);
+        handleOutputSelect(TOKENS[chainId].VUSD);
     }, [chainId, handleOutputSelect]);
 
     const outputValue = showNordsternOut

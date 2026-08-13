@@ -30,9 +30,12 @@ export const FARMING_GRAPH_URL = {
     ),
 };
 
-// Disabled modules on Hemi — no subgraph. Clients are created but never queried.
+// Limit orders subgraph (hemi-limits) — deployed by Chester 2026-08-12.
 export const LIMIT_ORDERS_GRAPH_URL = {
-    [ChainId.Hemi]: "",
+    [ChainId.Hemi]: subgraph(
+        "EXny9haicxWBgH9MLtGjzwvw3kpxA5WWzCQVygZVaXam",
+        "https://api.studio.thegraph.com/query/50593/hemi-limits/v0.0.1"
+    ),
 };
 
 export const BLOCKS_GRAPH_URL = {

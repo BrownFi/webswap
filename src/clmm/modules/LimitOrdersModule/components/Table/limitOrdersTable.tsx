@@ -71,7 +71,8 @@ export const LimitOrdersTable = <TData, TValue>({
           className="max-w-sm"
         />
       </div>} */}
-            <Table>
+            <div className="overflow-x-auto">
+                <Table className="min-w-[720px]">
                 <TableHeader className="[&_tr]:border-b-0">
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id} className="hover:bg-transparent">
@@ -104,7 +105,7 @@ export const LimitOrdersTable = <TData, TValue>({
                                     }}
                                 >
                                     {row.getVisibleCells().map((cell: any) => (
-                                        <TableCell key={cell.id} className="rounded-l text-left">
+                                        <TableCell key={cell.id} className="rounded-l text-left p-2 sm:p-4">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
@@ -119,7 +120,8 @@ export const LimitOrdersTable = <TData, TValue>({
                         </TableRow>
                     )}
                 </TableBody>
-            </Table>
+                </Table>
+            </div>
             {showPagination && (
                 <div className="flex items-center justify-end space-x-2 pt-4 pb-2 px-4 mt-auto">
                     <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>

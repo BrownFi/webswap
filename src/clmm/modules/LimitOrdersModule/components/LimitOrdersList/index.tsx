@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount } from "wagmi";
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { Skeleton } from "@clmm/components/ui/skeleton";
 import { useLimitOrdersListQuery, useMultiplePoolsQuery } from "@clmm/graphql/generated/graphql";
 import { useClients } from "@clmm/hooks/graphql/useClients";
@@ -13,7 +14,7 @@ import { unwrappedToken } from "@clmm/utils/common/unwrappedToken";
 export const LimitOrdersList = () => {
     const { address: account } = useAccount();
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const [tab, setTab] = useState(0);
 
@@ -34,7 +35,7 @@ export const LimitOrdersList = () => {
         client: infoClient,
     });
 
-    const customPoolDeployer = CUSTOM_POOL_DEPLOYER_ADDRESSES.ALL_INCLUSIVE[chainId];
+    const customPoolDeployer = CUSTOM_POOL_DEPLOYER_ADDRESSES.BASE_DYNAMIC[chainId];
 
     const formattedLimitOrders = useMemo(() => {
         if (!limitOrders || !poolForLimitOrders?.pools || !customPoolDeployer) return [];
@@ -183,16 +184,16 @@ export const LimitOrdersList = () => {
     const limitOrdersForTable = useMemo(() => (tab ? openedOrders : closedOrders), [openedOrders, closedOrders, tab]);
 
     return (
-        <div className="flex flex-col gap-8 w-full">
+        <div className="flex flex-col gap-4 w-full">
             {isLimitOrdersLoading ? (
                 <LimitOrdersLoading />
             ) : (
                 <>
-                    <div className="bg-card border gap-4 border-card-border rounded-xl">
-                        <div className="flex gap-2 p-3">
+                    <div className="flex flex-col gap-3 w-full">
+                        <div className="flex gap-2 p-2">
                             <Button
                                 size="md"
-                                className="flex h-10 min-w-[130px] items-center gap-2 border whitespace-nowrap rounded-lg p-4"
+                                className="flex h-9 min-w-[120px] items-center gap-1.5 border whitespace-nowrap rounded-lg px-3"
                                 onClick={() => setTab(0)}
                                 variant={tab === 0 ? "iconActive" : "icon"}
                             >
@@ -201,7 +202,7 @@ export const LimitOrdersList = () => {
                             </Button>
                             <Button
                                 size="md"
-                                className="flex h-10 min-w-[130px] items-center gap-2 border whitespace-nowrap rounded-lg p-4"
+                                className="flex h-9 min-w-[120px] items-center gap-1.5 border whitespace-nowrap rounded-lg px-3"
                                 onClick={() => setTab(1)}
                                 variant={tab === 1 ? "iconActive" : "icon"}
                             >

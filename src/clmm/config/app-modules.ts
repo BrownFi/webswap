@@ -26,8 +26,8 @@ export const enabledModules: Record<AppFeatureModule, boolean> = {
     [AppFeatureModule.Analytics]: true,
     [AppFeatureModule.Farming]: true,
 
-    // contracts not deployed on Hemi yet
-    [AppFeatureModule.LimitOrders]: false,
+    // limit-order contracts + hemi-limits subgraph deployed 2026-08-12 — enabled
+    [AppFeatureModule.LimitOrders]: true,
     [AppFeatureModule.ALM]: false,
     [AppFeatureModule.VE_33]: false,
 

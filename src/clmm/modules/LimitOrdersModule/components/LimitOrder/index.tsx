@@ -1,10 +1,10 @@
 import { PoolState, usePool } from "@clmm/hooks/pools/usePool";
 import { IDerivedSwapInfo, useSwapState } from "@clmm/state/swapStore";
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
 import { SwapField } from "@clmm/types/swap-field";
 import { computeCustomPoolAddress, getTickToPrice, TickMath, tickToPrice, tryParseTick, WNATIVE } from "@cryptoalgebra/integral-sdk";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Address } from "viem";
-import { useChainId } from "wagmi";
 import { LimitPriceCard } from "../LimitPriceCard";
 import { LimitOrderButton } from "../LimitOrderButton";
 import { CUSTOM_POOL_DEPLOYER_ADDRESSES } from "@clmm/config/custom-pool-deployer";
@@ -20,7 +20,7 @@ export const LimitOrder = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) =
         actions: { typeLimitOrderPrice, limitOrderPriceLastFocused, limitOrderPriceWasInverted },
     } = useSwapState();
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const tokenA = currencies[SwapField.INPUT]?.wrapped;
     const tokenB = currencies[SwapField.OUTPUT]?.wrapped;
@@ -41,11 +41,11 @@ export const LimitOrder = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) =
     const [wasInverted, setWasInverted] = useState(false);
 
     const limitOrderPoolAddress =
-        token0 && token1 && !showWrap && CUSTOM_POOL_DEPLOYER_ADDRESSES.ALL_INCLUSIVE[chainId]
+        token0 && token1 && !showWrap && CUSTOM_POOL_DEPLOYER_ADDRESSES.BASE_DYNAMIC[chainId]
             ? (computeCustomPoolAddress({
                   tokenA: token0,
                   tokenB: token1,
-                  customPoolDeployer: CUSTOM_POOL_DEPLOYER_ADDRESSES.ALL_INCLUSIVE[chainId],
+                  customPoolDeployer: CUSTOM_POOL_DEPLOYER_ADDRESSES.BASE_DYNAMIC[chainId],
               }) as Address)
             : undefined;
 

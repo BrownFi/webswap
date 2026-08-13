@@ -6,8 +6,7 @@ import { useWriteLimitOrderManagerWithdraw } from "@clmm/generated";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
 import { TransactionType } from "@clmm/state/pendingTransactionsStore";
 import { Address } from "viem";
-import { useChainId } from "wagmi";
-import { LIMIT_ORDER_MANAGER } from "@clmm/config";
+import { LIMIT_ORDER_MANAGER, DEFAULT_CHAIN_ID } from "@clmm/config";
 import { KillLimitOrderModal } from "..";
 import Loader from "@clmm/components/common/Loader";
 import { HeaderItem } from "@clmm/components/common/Table/common";
@@ -146,7 +145,7 @@ const LimitOrderStatus = ({ ticks, amounts }: { ticks: Ticks; amounts: Amounts }
 };
 
 const Action = (props: LimitOrderInfo) => {
-    const appChainId = useChainId();
+    const appChainId = DEFAULT_CHAIN_ID;
 
     const { chainId: userChainId } = useAppKitNetwork();
 
@@ -162,7 +161,7 @@ const Action = (props: LimitOrderInfo) => {
 };
 
 const WithdrawLimitOrderButton = ({ epoch, owner }: LimitOrderInfo) => {
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const withdrawConfig = {
         address: LIMIT_ORDER_MANAGER[chainId],

@@ -2,6 +2,7 @@ export * from "./KillLimitOrderModal";
 export * from "./LimitOrder";
 export * from "./LimitOrderButton";
 export * from "./LimitOrdersList";
+export * from "./LimitOrdersModal";
 export * from "./LimitPriceCard";
 export * from "./Table";
 export * from "./SwapTypeSelector";

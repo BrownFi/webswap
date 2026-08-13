@@ -1,4 +1,3 @@
-import { DEFAULT_CHAIN_ID } from "@clmm/config";
 // CLMM sub-app entry, mounted at /clmm/* inside webswap's BrowserRouter so it
 // shares webswap's wagmi + RainbowKit wallet (one session, no reload). Uses
 // CLMM's own Layout (header/footer/nav) — webswap hides its chrome on /clmm.
@@ -84,6 +83,7 @@ export default function ClmmApp() {
             <Routes>
               <Route index element={<Navigate replace to="swap" />} />
               <Route path="swap" element={s(<SwapPage type={SwapPageView.SWAP} />)} />
+              <Route path="limit-order" element={s(<SwapPage type={SwapPageView.LIMIT_ORDER} />)} />
               {/* Pool list is /clamm/pool (singular) to match the oracle-based side's /pool. */}
               <Route path="pool" element={s(<PoolsPage />)} />
               <Route path="pool/create" element={s(<CreatePoolPage />)} />

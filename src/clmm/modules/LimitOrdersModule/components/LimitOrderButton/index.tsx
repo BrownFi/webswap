@@ -4,8 +4,8 @@ import { useApprove } from "@clmm/hooks/common/useApprove";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
 import { IDerivedSwapInfo } from "@clmm/state/swapStore";
 import { AnyToken, tryParseTick } from "@cryptoalgebra/integral-sdk";
-import { useAccount, useChainId } from "wagmi";
-import { LIMIT_ORDER_MANAGER, CUSTOM_POOL_DEPLOYER_ADDRESSES, DEFAULT_CHAIN_NAME } from "@clmm/config";
+import { useAccount } from "wagmi";
+import { LIMIT_ORDER_MANAGER, CUSTOM_POOL_DEPLOYER_ADDRESSES, DEFAULT_CHAIN_NAME, DEFAULT_CHAIN_ID } from "@clmm/config";
 import { ApprovalState } from "@clmm/types/approve-state";
 import Loader from "@clmm/components/common/Loader";
 import { SwapField } from "@clmm/types/swap-field";
@@ -45,7 +45,7 @@ export const LimitOrderButton = ({
 
     const { open } = useAppKit();
 
-    const appChainId = useChainId();
+    const appChainId = DEFAULT_CHAIN_ID;
 
     const { chainId: userChainId } = useAppKitNetwork();
 
@@ -62,7 +62,7 @@ export const LimitOrderButton = ({
 
     const limitOrder = useLimitOrderInfo(poolAddress, inputAmount, limitOrderTick);
 
-    const chainId = useChainId();
+    const chainId = DEFAULT_CHAIN_ID;
 
     const needAllowance = useNeedAllowance(
         inputCurrency?.isNative ? undefined : inputCurrency?.wrapped,
@@ -86,14 +86,14 @@ export const LimitOrderButton = ({
     const { approvalState, approvalCallback } = useApprove(inputAmount, LIMIT_ORDER_MANAGER[chainId]);
 
     const placeLimitOrderConfig =
-        isReady && CUSTOM_POOL_DEPLOYER_ADDRESSES.ALL_INCLUSIVE[chainId]
+        isReady && CUSTOM_POOL_DEPLOYER_ADDRESSES.BASE_DYNAMIC[chainId]
             ? {
                   address: LIMIT_ORDER_MANAGER[chainId],
                   args: [
                       {
                           token0: token0.address as Address,
                           token1: token1.address as Address,
-                          deployer: CUSTOM_POOL_DEPLOYER_ADDRESSES.ALL_INCLUSIVE[chainId],
+                          deployer: CUSTOM_POOL_DEPLOYER_ADDRESSES.BASE_DYNAMIC[chainId],
                       },
                       limitOrder.tickLower,
                       zeroToOne,

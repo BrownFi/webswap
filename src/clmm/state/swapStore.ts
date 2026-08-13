@@ -84,7 +84,7 @@ export const useSwapState = create<SwapState>((set, get) => ({
         currencyId: TOKENS[DEFAULT_CHAIN_ID].HEMIBTC.address as Address,
     },
     [SwapField.OUTPUT]: {
-        currencyId: TOKENS[DEFAULT_CHAIN_ID].USDC.address as Address,
+        currencyId: TOKENS[DEFAULT_CHAIN_ID].VUSD.address as Address,
     },
     [SwapField.LIMIT_ORDER_PRICE]: "",
     wasInverted: false,
