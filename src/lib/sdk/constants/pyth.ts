@@ -12,9 +12,10 @@ const HERMES_UPDATES = 'https://hermes.pyth.network/v2/updates/price/latest'
 const API_BASE = (import.meta.env.VITE_API_URL || 'https://api.brownfi.io').replace(/\/$/, '')
 const ROBINHOOD_UPDATES = `${API_BASE}/pyth/v2/updates/price/latest`
 
-/** Base URL for the price-update-blob + parsed-price fetch, for the given chain. */
+/** Base URL for the price-update-blob + parsed-price fetch, for the given chain.
+ *  Robinhood + Arbitrum use BrownFi's BE proxy (same response shape as Hermes). */
 export function pythUpdatesBase(chainId?: number): string {
-  return chainId === ChainId.ROBINHOOD_MAINNET ? ROBINHOOD_UPDATES : HERMES_UPDATES
+  return chainId === ChainId.ROBINHOOD_MAINNET || chainId === ChainId.ARBITRUM_MAINNET ? ROBINHOOD_UPDATES : HERMES_UPDATES
 }
 
 /**
