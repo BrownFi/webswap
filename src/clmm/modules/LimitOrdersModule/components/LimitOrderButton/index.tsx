@@ -1,11 +1,10 @@
 import { Button } from "@clmm/components/ui/button";
-import { useNeedAllowance } from "@clmm/hooks/common/useNeedAllowance";
 import { useApprove } from "@clmm/hooks/common/useApprove";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
 import { IDerivedSwapInfo } from "@clmm/state/swapStore";
-import { AnyToken, tryParseTick } from "@cryptoalgebra/integral-sdk";
+import { AnyToken, tryParseTick, POOL_DEPLOYER_ADDRESSES } from "@cryptoalgebra/integral-sdk";
 import { useAccount } from "wagmi";
-import { LIMIT_ORDER_MANAGER, CUSTOM_POOL_DEPLOYER_ADDRESSES, DEFAULT_CHAIN_NAME, DEFAULT_CHAIN_ID } from "@clmm/config";
+import { LIMIT_ORDER_MANAGER, DEFAULT_CHAIN_NAME, DEFAULT_CHAIN_ID } from "@clmm/config";
 import { ApprovalState } from "@clmm/types/approve-state";
 import Loader from "@clmm/components/common/Loader";
 import { SwapField } from "@clmm/types/swap-field";
@@ -64,13 +63,13 @@ export const LimitOrderButton = ({
 
     const chainId = DEFAULT_CHAIN_ID;
 
-    const needAllowance = useNeedAllowance(
-        inputCurrency?.isNative ? undefined : inputCurrency?.wrapped,
-        inputAmount,
-        LIMIT_ORDER_MANAGER[chainId],
-    );
-
     const insufficientBalance = inputAmount && currencyBalances[SwapField.INPUT]?.lessThan(inputAmount.quotient.toString());
+
+    // Approval gate uses useApprove's approvalState — its internal allowance query
+    // polls every second, so after the approve tx confirms the button flips to
+    // "Place an order" instead of looping on "Approve". Native input short-circuits
+    // to APPROVED (no approval needed for ETH).
+    const { approvalState, approvalCallback } = useApprove(inputAmount, LIMIT_ORDER_MANAGER[chainId]);
 
     const isReady =
         token0 &&
@@ -79,21 +78,19 @@ export const LimitOrderButton = ({
         limitOrder &&
         !disabled &&
         !inputError &&
-        !needAllowance &&
+        approvalState === ApprovalState.APPROVED &&
         !insufficientBalance &&
         BigInt(limitOrder.liquidity.toString()) > 0;
 
-    const { approvalState, approvalCallback } = useApprove(inputAmount, LIMIT_ORDER_MANAGER[chainId]);
-
     const placeLimitOrderConfig =
-        isReady && CUSTOM_POOL_DEPLOYER_ADDRESSES.BASE_DYNAMIC[chainId]
+        isReady && POOL_DEPLOYER_ADDRESSES[chainId]
             ? {
                   address: LIMIT_ORDER_MANAGER[chainId],
                   args: [
                       {
                           token0: token0.address as Address,
                           token1: token1.address as Address,
-                          deployer: CUSTOM_POOL_DEPLOYER_ADDRESSES.BASE_DYNAMIC[chainId],
+                          deployer: POOL_DEPLOYER_ADDRESSES[chainId],
                       },
                       limitOrder.tickLower,
                       zeroToOne,
@@ -148,7 +145,7 @@ export const LimitOrderButton = ({
         );
     }
 
-    if (!disabled && needAllowance)
+    if (!disabled && approvalState === ApprovalState.NOT_APPROVED)
         return (
             <Button
                 variant={"primary"}
@@ -173,7 +170,7 @@ export const LimitOrderButton = ({
                         limitOrder,
                         disabled,
                         inputError,
-                        needAllowance,
+                        approvalState,
                     },
                     isReady && [
                         {

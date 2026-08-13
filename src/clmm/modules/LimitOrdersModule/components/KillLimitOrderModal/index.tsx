@@ -3,7 +3,8 @@ import Loader from "@clmm/components/common/Loader";
 import { Button } from "@clmm/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@clmm/components/ui/dialog";
 import { Slider } from "@clmm/components/ui/slider";
-import { CUSTOM_POOL_DEPLOYER_ADDRESSES, DEFAULT_CHAIN_ID } from "@clmm/config";
+import { DEFAULT_CHAIN_ID } from "@clmm/config";
+import { POOL_DEPLOYER_ADDRESSES } from "@cryptoalgebra/integral-sdk";
 import { useWriteLimitOrderManagerKill } from "@clmm/generated";
 import { useTransactionAwait } from "@clmm/hooks/common/useTransactionAwait";
 import { TransactionType } from "@clmm/state/pendingTransactionsStore";
@@ -30,13 +31,13 @@ export const KillLimitOrderModal = ({ pool, ticks, liquidity, zeroToOne, owner, 
         };
     }, [positionLO.amount0, positionLO.amount1, value]);
 
-    const killConfig = CUSTOM_POOL_DEPLOYER_ADDRESSES.ALL_INCLUSIVE[chainId]
+    const killConfig = POOL_DEPLOYER_ADDRESSES[chainId]
         ? {
               args: [
                   {
                       token0: pool.token0.address as Address,
                       token1: pool.token1.address as Address,
-                      deployer: CUSTOM_POOL_DEPLOYER_ADDRESSES.ALL_INCLUSIVE[chainId],
+                      deployer: POOL_DEPLOYER_ADDRESSES[chainId],
                   },
                   ticks.tickLower,
                   ticks.tickUpper,

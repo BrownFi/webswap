@@ -81,10 +81,10 @@ export const useSwapState = create<SwapState>((set, get) => ({
     typedValue: "",
     routerType: enabledModules.BoostedPoolsModule ? RouterType.OMEGA : RouterType.NATIVE,
     [SwapField.INPUT]: {
-        currencyId: TOKENS[DEFAULT_CHAIN_ID].HEMIBTC.address as Address,
+        currencyId: ADDRESS_ZERO as Address,
     },
     [SwapField.OUTPUT]: {
-        currencyId: TOKENS[DEFAULT_CHAIN_ID].VUSD.address as Address,
+        currencyId: TOKENS[DEFAULT_CHAIN_ID].HEMIBTC.address as Address,
     },
     [SwapField.LIMIT_ORDER_PRICE]: "",
     wasInverted: false,
