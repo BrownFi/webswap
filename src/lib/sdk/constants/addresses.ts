@@ -122,7 +122,7 @@ export const V3_PILOT_USE_INDEXER: Record<number, boolean> = {
 // version 4 — OFFICIAL (v3-final; Bera + HyperEVM + Base; separate zap)
 export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
-  [ChainId.HYPER_EVM]: '0xc0E55d0085266E9A33456610E08172f9c173F908',
+  [ChainId.HYPER_EVM]: '0x98F6369ecf2A2f7A519773AC40C561701a89828b',
   [ChainId.BASE_MAINNET]: '0x38c91c64169c7B5eBe02DcE39060B6180065C38d',
   [ChainId.LINEA_MAINNET]: '0x0bf5Fa65dAE6Db32250E5DC74489cedadd38D338',
   [ChainId.ARBITRUM_MAINNET]: '0x6C0a11200c022AF316F591158B5686931ef93DCf',
@@ -138,7 +138,7 @@ export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
 }
 export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
-  [ChainId.HYPER_EVM]: '0xE5dEbF39457fa6e7FFcdDb5af40435AD2D52438b',
+  [ChainId.HYPER_EVM]: '0xF211a742898FC57244769163ff6a47025048c4Dc',
   [ChainId.BASE_MAINNET]: '0xb77197484d77340040cC9969bd475E4a082D3f4C',
   [ChainId.LINEA_MAINNET]: '0xF956002B9B6Da21BB66A413aC694Ca564377cd9a',
   [ChainId.ARBITRUM_MAINNET]: '0x98ab6C5CBb15A49AA0451427e3bA69599bC022E7',
@@ -287,7 +287,9 @@ export const PYTH_ADDRESS: Record<number, string> = {
   [ChainId.BSC_MAINNET]: '0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594',
   [ChainId.BASE_MAINNET]: '0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a',
   [ChainId.BERA_MAINNET]: '0x2880aB155794e7179c9eE2e38200202908C17B43',
-  [ChainId.HYPER_EVM]: '0xe9d69CdD6Fe41e7B621B4A688C5D1a68cB5c8ADc',
+  // HyperEVM: router.PYTH() custom oracle — aligned with the new V3 router/zap
+  // deployment (old config 0xe9d69C… matched neither the old nor new router).
+  [ChainId.HYPER_EVM]: '0x939105caDd47A995f683C40a0e3abB612Ce5fE81',
   // Linea: router.PYTH() custom oracle (ERC-1967 proxy) — aligns the FE price
   // reads with the new V3 router's on-chain oracle (old config 0xA2aa50… was the
   // official Pyth, which this project does not use).
