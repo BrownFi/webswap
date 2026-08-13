@@ -24,7 +24,7 @@ export const LimitOrdersModal = ({ isOpen, setIsOpen, children }: LimitOrdersMod
         <Credenza open={isOpen} onOpenChange={setIsOpen}>
             <CredenzaTrigger asChild>{children}</CredenzaTrigger>
             <CredenzaContent
-                className="bg-card-dark !rounded-xl sm:max-w-3xl lg:max-w-4xl"
+                className="bg-card-dark !rounded-xl sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl"
                 onInteractOutside={() => setIsOpen(false)}
                 onEscapeKeyDown={() => setIsOpen(false)}
             >

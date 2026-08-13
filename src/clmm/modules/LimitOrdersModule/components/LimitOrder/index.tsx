@@ -201,6 +201,24 @@ export const LimitOrder = ({ derivedSwap }: { derivedSwap: IDerivedSwapInfo }) =
         [initialSellPrice],
     );
 
+    // Reset the limit price when the pair changes. The sellPrice state is otherwise
+    // kept from the previous pair (the populate effect below only sets it when
+    // empty) — a stale price like "0.029516" (from ETH→hemiBTC) parses to a tick
+    // far below the WETH/USDC.e pool's current tick, tripping the "sell price must
+    // be above current price" guard and disabling the place button.
+    const inputWrappedAddress = currencies[SwapField.INPUT]?.wrapped?.address;
+    const outputWrappedAddress = currencies[SwapField.OUTPUT]?.wrapped?.address;
+
+    // MUST run before the populate effect below: when a pair change and the pool
+    // load resolve in the SAME commit (e.g. the pool reads are already cached from
+    // a previous selection), React runs effects in declaration order — if the clear
+    // ran second it would wipe the freshly-populated sellPrice and the rate would
+    // never show on a VUSD→USDC.e style transition.
+    useEffect(() => {
+        setSellPrice("");
+        typeLimitOrderPrice("");
+    }, [inputWrappedAddress, outputWrappedAddress]);
+
     useEffect(() => {
         if (initialSellPrice && !sellPrice) {
             setSellPrice(initialSellPrice);

@@ -33,6 +33,10 @@ export const LimitOrdersList = () => {
             poolIds: limitOrders && limitOrders.limitOrders.map(({ pool }: any) => pool),
         },
         client: infoClient,
+        // Poll alongside the orders query so the pool tick (→ fill %) and prices
+        // refresh live while the modal is open — a user who just placed an order
+        // watches it progress toward filling without having to close/reopen.
+        pollInterval: 10_000,
     });
 
     const customPoolDeployer = CUSTOM_POOL_DEPLOYER_ADDRESSES.BASE_DYNAMIC[chainId];

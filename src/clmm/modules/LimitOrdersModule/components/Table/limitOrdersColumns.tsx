@@ -67,8 +67,8 @@ export interface LimitOrderInfo {
 }
 
 const TokenAmount = ({ amount }: { amount: Amount }) => (
-    <div className="flex items-center gap-4">
-        <CurrencyLogo currency={amount.token} size={35} />
+    <div className="flex items-center gap-3 whitespace-nowrap">
+        <CurrencyLogo currency={amount.token} size={35} className="shrink-0" />
         <div className="text-left">
             <div className="font-bold">{amount.token.symbol}</div>
             <div>
@@ -79,36 +79,11 @@ const TokenAmount = ({ amount }: { amount: Amount }) => (
 );
 
 const TokenRates = ({ rates }: { rates: Rates }) => (
-    <div className="flex flex-col text-left">
-        <div>{`1 ${rates.buy.token.symbol} = ${rates.buy.rate.toSignificant()} ${rates.sell.token.symbol}`}</div>
-        <div>{`1 ${rates.sell.token.symbol} = ${rates.sell.rate.toSignificant()} ${rates.buy.token.symbol}`}</div>
-    </div>
+    <div className="whitespace-nowrap text-left">{`1 ${rates.buy.token.symbol} = ${rates.buy.rate.toSignificant()} ${rates.sell.token.symbol}`}</div>
 );
 
-const StatusBar = ({ progress, sellToken, buyToken }: { progress: number; sellToken: Token; buyToken: Token }) => (
-    <div className="relative flex h-[25px] bg-card-dark rounded-xl">
-        <div className="relative flex w-full h-full font-semibold text-sm">
-            <div
-                className={`flex items-center justify-end pl-1 pr-2 h-full bg-primary-100 border border-card-border duration-300 ${
-                    Number(progress) === 100 ? "rounded-2xl" : "rounded-l-2xl"
-                }`}
-                style={{ width: `${progress}%` }}
-            >
-                <CurrencyLogo currency={sellToken} size={22} className="absolute left-1" />
-            </div>
-            <div
-                className={`flex items-center pr-1 pl-2 h-full bg-accent-100 border border-card-border  duration-300 ${
-                    Number(progress) === 100 ? "rounded-2xl" : "rounded-r-2xl"
-                }`}
-                style={{ width: `${100 - progress}%` }}
-            >
-                <CurrencyLogo currency={buyToken} size={22} className="absolute right-1" />
-            </div>
-            <span className="absolute left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2">{`${Number(
-                progress
-            ).toFixed()}%`}</span>
-        </div>
-    </div>
+const StatusBar = ({ progress }: { progress: number }) => (
+    <div className="whitespace-nowrap text-left font-semibold">{`${Number(progress).toFixed()}%`}</div>
 );
 
 const LimitOrderStatus = ({ ticks, amounts }: { ticks: Ticks; amounts: Amounts }) => {
@@ -131,7 +106,7 @@ const LimitOrderStatus = ({ ticks, amounts }: { ticks: Ticks; amounts: Amounts }
     const progress = (100 * (ticks.tickCurrent - ticks.tickLower)) / (ticks.tickUpper - ticks.tickLower);
 
     if (ticks.zeroToOne ? progress < 0 : progress > 0)
-        return <StatusBar progress={0} sellToken={amounts.sell.token} buyToken={amounts.buy.token} />;
+        return <StatusBar progress={0} />;
 
     if (ticks.zeroToOne ? progress >= 100 : progress <= -100)
         return (
@@ -141,7 +116,7 @@ const LimitOrderStatus = ({ ticks, amounts }: { ticks: Ticks; amounts: Amounts }
             </div>
         );
 
-    return <StatusBar progress={progress} sellToken={amounts.sell.token} buyToken={amounts.buy.token} />;
+    return <StatusBar progress={progress} />;
 };
 
 const Action = (props: LimitOrderInfo) => {
@@ -186,7 +161,9 @@ export const limitOrderColumns: ColumnDef<LimitOrderInfo>[] = [
     {
         accessorKey: "time",
         header: () => <HeaderItem className="ml-4">Time</HeaderItem>,
-        cell: ({ getValue }) => <div className="ml-4">{(getValue() as Date).toLocaleString()}</div>,
+        cell: ({ getValue }) => (
+            <div className="ml-4 whitespace-nowrap">{(getValue() as Date).toLocaleString()}</div>
+        ),
         sortingFn: (rowA, rowB) => rowA.original.time.getTime() - rowB.original.time.getTime(),
     },
     {

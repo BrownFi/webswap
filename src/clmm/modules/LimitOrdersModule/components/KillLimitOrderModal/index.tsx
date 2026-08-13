@@ -37,7 +37,10 @@ export const KillLimitOrderModal = ({ pool, ticks, liquidity, zeroToOne, owner, 
                   {
                       token0: pool.token0.address as Address,
                       token1: pool.token1.address as Address,
-                      deployer: POOL_DEPLOYER_ADDRESSES[chainId],
+                      // Same as place: default pools were deployed with deployer ==
+                      // address(0) (2-address CREATE2 salt) — a non-zero deployer makes
+                      // integral-core PoolAddress use the 3-address salt → wrong pool.
+                      deployer: "0x0000000000000000000000000000000000000000" as Address,
                   },
                   ticks.tickLower,
                   ticks.tickUpper,
@@ -52,7 +55,7 @@ export const KillLimitOrderModal = ({ pool, ticks, liquidity, zeroToOne, owner, 
 
     const { isLoading: isKillLoading } = useTransactionAwait(killData, {
         type: TransactionType.LIMIT_ORDER,
-        title: `Withdraw ${formatAmount(amount0Parsed || amount1Parsed)} ${amount0Parsed ? pool.token0.symbol : pool.token1.symbol}`,
+        title: `Cancel ${formatAmount(amount0Parsed || amount1Parsed)} ${amount0Parsed ? pool.token0.symbol : pool.token1.symbol}`,
         tokenA: amount0Parsed ? (pool.token0.wrapped.address as Address) : undefined,
         tokenB: amount1Parsed ? (pool.token1.wrapped.address as Address) : undefined,
     });
@@ -61,12 +64,12 @@ export const KillLimitOrderModal = ({ pool, ticks, liquidity, zeroToOne, owner, 
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant={"outline"} size={"sm"}>
-                    Withdraw
+                    Cancel order
                 </Button>
             </DialogTrigger>
             <DialogContent className="min-w-[500px] !rounded-xl bg-card" style={{ borderRadius: "32px" }}>
                 <DialogHeader>
-                    <DialogTitle className="font-bold select-none">Withdraw limit order liquidity</DialogTitle>
+                    <DialogTitle className="font-bold select-none">Cancel limit order</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-6">
@@ -126,7 +129,7 @@ export const KillLimitOrderModal = ({ pool, ticks, liquidity, zeroToOne, owner, 
                     />
 
                     <Button disabled={value[0] === 0 || isKillLoading || isPending} onClick={() => killConfig && kill(killConfig)}>
-                        {isKillLoading || isPending ? <Loader /> : "Withdraw Liquidity"}
+                        {isKillLoading || isPending ? <Loader /> : "Cancel Order"}
                     </Button>
                 </div>
             </DialogContent>

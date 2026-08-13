@@ -31,11 +31,13 @@ export const FARMING_GRAPH_URL = {
 };
 
 // Limit orders subgraph (hemi-limits) — deployed by Chester 2026-08-12.
+// Always use the dev studio endpoint: the prod gateway deployment
+// (EXny9haicxWBgH9MLtGjzwvw3kpxA5WWzCQVygZVaXam) has NO allocations yet —
+// gateway queries return "subgraph not found: no allocations" → the My Orders
+// modal would silently stay empty. Bypass the `subgraph()` helper (which routes
+// to the gateway when VITE_GRAPH_API_KEY is set) until the allocation is live.
 export const LIMIT_ORDERS_GRAPH_URL = {
-    [ChainId.Hemi]: subgraph(
-        "EXny9haicxWBgH9MLtGjzwvw3kpxA5WWzCQVygZVaXam",
-        "https://api.studio.thegraph.com/query/50593/hemi-limits/v0.0.1"
-    ),
+    [ChainId.Hemi]: "https://api.studio.thegraph.com/query/50593/hemi-limits/v0.0.1",
 };
 
 export const BLOCKS_GRAPH_URL = {

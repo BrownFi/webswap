@@ -3740,7 +3740,7 @@ export const limitOrderManagerAbi = [
  * [__View Contract on Hemi Blockscout__](https://explorer.hemi.xyz/address/0x0000000000000000000000000000000000000000)
  */
 export const limitOrderManagerAddress = {
-  43111: '0x0000000000000000000000000000000000000000',
+  43111: '0x2fe01f9c672d24D2d4315d2bA980B141B0159489',
 } as const
 
 /**
