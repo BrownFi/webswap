@@ -2,6 +2,7 @@ import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId } from '../constants/chainId'
+import { buildPythUpdatesUrl } from '../constants/pyth'
 import { beraFeeOverrides } from 'utils/beraGas'
 import { BIPS_BASE } from '../constants/types'
 import { SwapCallbackState } from '../constants/enums'
@@ -36,8 +37,7 @@ async function buildSwapUpdateData(tokenAddresses: string[], chainId: number, ve
       })
     )
   )
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
-  priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+  const pythUrl = buildPythUpdatesUrl(chainId, priceFeedIds)
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()

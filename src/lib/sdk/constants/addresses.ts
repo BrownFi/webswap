@@ -99,9 +99,9 @@ export const slugToVersion = (slug: string | null | undefined): number | undefin
 // version 3 — V3 (the only V3; "Official" v3-final deployment; separate zap)
 export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x63D8C045ebEc54c4C4bb3e24cA3bf7FD4fFd209a',
-  [ChainId.HYPER_EVM]: '0xc0E55d0085266E9A33456610E08172f9c173F908',
-  [ChainId.ARBITRUM_MAINNET]: '0x96cE2973581C5bF362e0fc9f40e6B5f12AA59b61',
-  [ChainId.LINEA_MAINNET]: '0xB3c31fDc0a22D5725C47B1fC430F5B87353D8C3e',
+  [ChainId.HYPER_EVM]: '0x98F6369ecf2A2f7A519773AC40C561701a89828b',
+  [ChainId.ARBITRUM_MAINNET]: '0x6C0a11200c022AF316F591158B5686931ef93DCf',
+  [ChainId.LINEA_MAINNET]: '0x0bf5Fa65dAE6Db32250E5DC74489cedadd38D338',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
@@ -111,9 +111,9 @@ export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
 }
 export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x7a0f51fa7DDB5cF3ECE029004A2dA44CBCfc4438',
-  [ChainId.HYPER_EVM]: '0xE5dEbF39457fa6e7FFcdDb5af40435AD2D52438b',
-  [ChainId.ARBITRUM_MAINNET]: '0x0df2D3B2219aacfD87Dd7051ea9CB6382CA38B30',
-  [ChainId.LINEA_MAINNET]: '0x92b2639F1BDd8eD5c359200Fb6CAe045CC71ca3b',
+  [ChainId.HYPER_EVM]: '0xF211a742898FC57244769163ff6a47025048c4Dc',
+  [ChainId.ARBITRUM_MAINNET]: '0x98ab6C5CBb15A49AA0451427e3bA69599bC022E7',
+  [ChainId.LINEA_MAINNET]: '0xF956002B9B6Da21BB66A413aC694Ca564377cd9a',
 }
 export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
@@ -218,12 +218,19 @@ export const INIT_CODE_HASH_V1: Record<number, string> = {
 export const PYTH_ADDRESS: Record<number, string> = {
   [ChainId.SEPOLIA]: '0xDd24F84d36BF92C65F92307595335bdFab5Bbd21',
   [ChainId.ARBITRUM_SEPOLIA]: '0x4374e5a8b9C22271E9EB878A2AA31DE97DF15DAF',
-  [ChainId.ARBITRUM_MAINNET]: '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C',
+  // Arbitrum: router.PYTH() custom oracle (keeper-fed, aligned with the new V3
+  // router/zap). Old config 0xff1a0f… was the official Pyth, which this deployment
+  // does not use — sending its blobs reverted StalePrice.
+  [ChainId.ARBITRUM_MAINNET]: '0xC8fB14C8F54A20a04ABDd24b2B33C2bd6B4E2ad9',
   [ChainId.BSC_MAINNET]: '0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594',
   [ChainId.BASE_MAINNET]: '0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a',
   [ChainId.BERA_MAINNET]: '0x2880aB155794e7179c9eE2e38200202908C17B43',
-  [ChainId.HYPER_EVM]: '0xe9d69CdD6Fe41e7B621B4A688C5D1a68cB5c8ADc',
-  [ChainId.LINEA_MAINNET]: '0xA2aa501b19aff244D90cc15a4Cf739D2725B5729',
+  // HyperEVM: router.PYTH() custom oracle — aligned with the new V3 router/zap.
+  [ChainId.HYPER_EVM]: '0x939105caDd47A995f683C40a0e3abB612Ce5fE81',
+  // Linea: router.PYTH() custom oracle (ERC-1967 proxy) — aligned with the new V3
+  // router. Old config 0xA2aa50… was the official Pyth, which this deployment does
+  // not use.
+  [ChainId.LINEA_MAINNET]: '0xB2dC91c79E61e98394B240e75E57c67Da7f3E834',
   [ChainId.SEI_MAINNET]: '0x2880aB155794e7179c9eE2e38200202908C17B43',
   [ChainId.MONAD]: '0x2880aB155794e7179c9eE2e38200202908C17B43',
   [ChainId.VICTION_MAINNET]: '0xA2aa501b19aff244D90cc15a4Cf739D2725B5729',

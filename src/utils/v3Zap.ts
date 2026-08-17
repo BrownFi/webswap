@@ -12,6 +12,7 @@ import { encodeAbiParameters, parseAbiParameters } from 'viem'
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
 import { routerV3Gen, zapV3Gen } from 'lib/sdk/constants/addresses'
 import { createReadClient } from 'lib/sdk/rpc'
+import { buildPythUpdatesUrl } from 'lib/sdk/constants/pyth'
 
 // On v3-final deployments zap entrypoints live on a separate BrownFiV3Zap
 // contract. On older deployments the router still hosts them, so we fall
@@ -141,8 +142,7 @@ export async function buildV3UpdateData(
     throw err
   }
 
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
-  priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+  const pythUrl = buildPythUpdatesUrl(chainId, priceFeedIds)
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()

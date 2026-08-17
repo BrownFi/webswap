@@ -5,6 +5,7 @@ import { ChainId } from '../constants/chainId'
 import { beraFeeOverrides } from 'utils/beraGas'
 import { Field, ApprovalState } from '../constants/enums'
 import { WETH } from '../constants/tokens'
+import { buildPythUpdatesUrl } from '../constants/pyth'
 import { Token } from '../entities/token'
 import { Currency, ETHER } from '../entities/currency'
 import { CurrencyAmount } from '../entities/fractions/currencyAmount'
@@ -46,8 +47,7 @@ async function fetchPythData(
       return id
     })
   )
-  const pythUrl = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
-  priceFeedIds.forEach((id) => pythUrl.searchParams.append('ids[]', id))
+  const pythUrl = buildPythUpdatesUrl(chainId, priceFeedIds)
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()

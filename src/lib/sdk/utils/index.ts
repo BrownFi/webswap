@@ -3,6 +3,7 @@ import invariant from 'tiny-invariant'
 import warning from 'tiny-warning'
 import { getAddress } from '@ethersproject/address'
 import { createReadClient } from '../rpc'
+import { buildPythUpdatesUrl } from '../constants/pyth'
 import {
   ChainId,
   SolidityType,
@@ -274,8 +275,7 @@ export async function getHermesPrices(
   const feeds = Array.from(new Set(Object.values(feedByAddr)))
   if (!feeds.length) return result
 
-  const url = new URL('https://hermes.pyth.network/v2/updates/price/latest?encoding=hex')
-  feeds.forEach((f) => url.searchParams.append('ids[]', f))
+  const url = buildPythUpdatesUrl(chainId, feeds)
   const resp = await fetch(url.toString())
   if (!resp.ok) throw new Error(`Hermes HTTP ${resp.status}`)
   const data = await resp.json()
