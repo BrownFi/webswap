@@ -40,9 +40,11 @@ interface UniswapPoolRaw {
 // 24h volume. Each maps to its token pair so the matching BrownFi pool picks it up.
 //   0xd4EB21…A3 → USDG/NVDA  (0.05%)
 //   0x52e65B…Ca → WETH/USDG  (0.01%)
+//   0xEb07d9…01 → SPCX/USDG  (0.30%)
 const ROBINHOOD_UNISWAP_POOLS = [
   '0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3',
   '0x52e65B17fB6E5BA00Ed806f37Afcd2DaA50271Ca',
+  '0xEb07d9587eFD1778dFb9c385Ec43EF6d5F9fE401',
 ]
 const V3_POOL_BY_ADDRESS_QUERY = `query V3Pool($chain: Chain!, $address: String!) {
   v3Pool(chain: $chain, address: $address) {
