@@ -325,6 +325,11 @@ function PoolDetailInner({
     const tok = (v: number) => `${formatCompactPrice(v, { style: 'decimal' })} ${sym}`
     return actual == null ? tok(min) : `${tok(min)} / ${tok(actual)}`
   }
+  const oracleDirectPools = useMemo(() => {
+    if (oracleThresholds?.minTvlDirect == null) return []
+    if (oracleThresholds.directPools.length) return oracleThresholds.directPools
+    return [{ address: '', actual: oracleThresholds.actualDirect, twapWindow: 0 }]
+  }, [oracleThresholds])
   const totalValue = value0 + value1
   const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
   const pct1 = 100 - pct0
@@ -886,9 +891,15 @@ function PoolDetailInner({
                     {/* Mobile: compact inline rows (token only, no ≈USD), tight spacing.
                         mt-2 keeps a gap from the stats rows above since the heading is hidden. */}
                     <div className="flex flex-col gap-1 lg:hidden mt-2">
-                      {oracleThresholds.minTvlDirect != null && (
-                        <StatInline small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlDirect, oracleThresholds.actualDirect, oracleQuoteSymbol)} />
-                      )}
+                      {oracleThresholds.minTvlDirect != null &&
+                        oracleDirectPools.map((pool, index) => (
+                          <StatInline
+                            key={pool.address || 'direct'}
+                            small
+                            label={`Min TVL / Actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''}`}
+                            value={`${fmtMinActual(oracleThresholds.minTvlDirect!, pool.actual, oracleQuoteSymbol)}${pool.address ? ` · ${shortenAddress(pool.address)}` : ''}`}
+                          />
+                        ))}
                       {oracleThresholds.minTvlPath != null && (
                         <StatInline small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol)} />
                       )}
@@ -897,9 +908,15 @@ function PoolDetailInner({
                       )}
                     </div>
                     <div className="hidden lg:block">
-                      {oracleThresholds.minTvlDirect != null && (
-                        <StatRow small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlDirect, oracleThresholds.actualDirect, oracleQuoteSymbol)} />
-                      )}
+                      {oracleThresholds.minTvlDirect != null &&
+                        oracleDirectPools.map((pool, index) => (
+                          <StatRow
+                            key={pool.address || 'direct'}
+                            small
+                            label={`Min TVL / Actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''}`}
+                            value={`${fmtMinActual(oracleThresholds.minTvlDirect!, pool.actual, oracleQuoteSymbol)}${pool.address ? ` · ${shortenAddress(pool.address)}` : ''}`}
+                          />
+                        ))}
                       {oracleThresholds.minTvlPath != null && (
                         <StatRow small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol)} />
                       )}

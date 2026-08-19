@@ -44,11 +44,19 @@ const ERC20_ABI = [{ type: 'function', name: 'decimals', stateMutability: 'view'
 
 const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11' as const
 const ZERO = '0x0000000000000000000000000000000000000000'
+const MAX_DIRECT_POOLS = 4
+
+export interface OracleDirectPoolThreshold {
+  address: string
+  actual: number | null
+  twapWindow: number
+}
 
 export interface OracleThresholds {
   /** Direct-pool: min threshold + actual, both in QUOTE-token units (WAD applied). */
   minTvlDirect: number | null
   actualDirect: number | null
+  directPools: OracleDirectPoolThreshold[]
   /** Two-hop path: min threshold + actual, both in BASE-token units. */
   minTvlPath: number | null
   actualPath: number | null
@@ -82,6 +90,9 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
       { address: o, abi: ORACLE_ABI, functionName: 'minLiquidityInQuote', args: [pair] },
       { address: o, abi: ORACLE_ABI, functionName: 'minPathLiquidityInBase', args: [pair] },
       { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 0n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 1n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 2n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 3n] },
       { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 0n] },
       { address: o, abi: ORACLE_ABI, functionName: 'TWAL_WINDOW_MULTIPLIER' },
       { address: o, abi: ORACLE_ABI, functionName: 'TWAL_WINDOW_MAX' },
@@ -90,19 +101,21 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
   const ok = <T,>(i: number): T | undefined => (s1[i]?.status === 'success' ? (s1[i].result as T) : undefined)
   const minQ = ok<bigint>(0)
   const minPB = ok<bigint>(1)
-  const direct0 = ok<string>(2)
-  const path = ok<readonly [string, number, string, number]>(3)
-  const twalMult = Number(ok<number | bigint>(4) ?? 0)
-  const twalMax = Number(ok<number | bigint>(5) ?? 0)
+  const directPools = Array.from({ length: MAX_DIRECT_POOLS }, (_, index) => ok<string>(2 + index))
+    .filter((address): address is string => !!address && address.toLowerCase() !== ZERO)
+  const pathOffset = 2 + MAX_DIRECT_POOLS
+  const path = ok<readonly [string, number, string, number]>(pathOffset)
+  const twalMult = Number(ok<number | bigint>(pathOffset + 1) ?? 0)
+  const twalMax = Number(ok<number | bigint>(pathOffset + 2) ?? 0)
 
-  const isDirect = !!direct0 && direct0.toLowerCase() !== ZERO
+  const isDirect = directPools.length > 0
   const isPath = !!path && path[0].toLowerCase() !== ZERO
 
   // The pools whose price/liquidity we resolve: the primary direct pool, or the two
   // path legs. (quoteTokenIndex for a direct pool comes from the oracle; for a path
   // leg it's carried on the path tuple.)
   const legs: { pool: Addr; qti: number }[] = isDirect
-    ? [{ pool: direct0 as Addr, qti: -1 }] // qti filled from oracle in stage 2
+    ? directPools.map((pool) => ({ pool: pool as Addr, qti: -1 })) // qti filled from oracle in stage 2
     : isPath
     ? [
         { pool: path![0] as Addr, qti: Number(path![1]) },
@@ -112,7 +125,7 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
 
   const toNum = (v: bigint | undefined) => (v && v > 0n ? Number(formatUnits(v, 18)) : null)
   if (!legs.length) {
-    return { minTvlDirect: toNum(minQ), actualDirect: null, minTvlPath: toNum(minPB), actualPath: null, twapWindows: [] }
+    return { minTvlDirect: toNum(minQ), actualDirect: null, directPools: [], minTvlPath: toNum(minPB), actualPath: null, twapWindows: [] }
   }
 
   // ── Stage 2: per-pool twapWindow + quoteTokenIndex + token0/1 + slot0 + liquidity ──
@@ -202,12 +215,16 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
 
   let actualDirect: number | null = null
   let actualPath: number | null = null
+  const directPoolThresholds: OracleDirectPoolThreshold[] = []
   if (isDirect) {
-    const r = resolved[0]
-    if (r) {
-      const pl = plOf(r, 0)
-      if (pl) actualDirect = Number(formatUnits(directActualQuote(pl, r.qti), 18))
-    }
+    resolved.forEach((r, li) => {
+      if (!r) return
+      const pl = plOf(r, li)
+      const actual = pl ? Number(formatUnits(directActualQuote(pl, r.qti), 18)) : null
+      directPoolThresholds.push({ address: r.pool, actual, twapWindow: r.window })
+    })
+    const actualValues = directPoolThresholds.map((pool) => pool.actual).filter((value): value is number => value != null)
+    actualDirect = actualValues.length ? actualValues.reduce((sum, value) => sum + value, 0) : null
   } else if (isPath) {
     const r1 = resolved[0]
     const r2 = resolved[1]
@@ -218,5 +235,5 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
     }
   }
 
-  return { minTvlDirect: toNum(minQ), actualDirect, minTvlPath: toNum(minPB), actualPath, twapWindows }
+  return { minTvlDirect: toNum(minQ), actualDirect, directPools: directPoolThresholds, minTvlPath: toNum(minPB), actualPath, twapWindows }
 }
