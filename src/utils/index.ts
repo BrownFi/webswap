@@ -14,7 +14,7 @@ export function getTokenMetadataOverride(
   address: string | undefined,
 ): { symbol: string; name: string } | undefined {
   if (chainId === ChainId.BERA_MAINNET && address?.toLowerCase() === BERA_BUSD_ADDRESS) {
-    return { symbol: 'BUSD', name: 'BUSD' }
+    return { symbol: 'BUSD', name: 'Bera USD' }
   }
   return undefined
 }

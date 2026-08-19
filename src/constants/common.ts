@@ -15,7 +15,7 @@ export const WBTC = new Token(ChainId.MAINNET, '0x2260FAC5E5542a773Aa44fBCfeDf7C
 // Berachain base tokens — referenced both by BASES_TO_CHECK_TRADES_AGAINST
 // (multi-hop route discovery) and SUGGESTED_BASES (featured chips in the
 // token picker). Declared once at module top so both lists can reference.
-const BERA_HONEY  = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'BUSD', 'BUSD')
+const BERA_HONEY  = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'BUSD', 'Bera USD')
 const BERA_USDCE  = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6E4e9568C1D3241', 6,  'USDC.e', 'Bridged USDC (Stargate)')
 const BERA_WBTC   = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
 const BERA_WETH   = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
