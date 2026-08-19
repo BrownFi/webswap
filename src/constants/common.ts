@@ -12,15 +12,6 @@ export const USDC = new Token(ChainId.MAINNET, '0xA0b86991c6218b36c1d19D4a2e9Eb0
 export const USDT = new Token(ChainId.MAINNET, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6, 'USDT', 'Tether USD')
 export const WBTC = new Token(ChainId.MAINNET, '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', 8, 'WBTC', 'Wrapped BTC')
 
-// used to construct intermediary pairs for trading
-// Berachain base tokens — referenced both by BASES_TO_CHECK_TRADES_AGAINST
-// (multi-hop route discovery) and SUGGESTED_BASES (featured chips in the
-// token picker). Declared once at module top so both lists can reference.
-const BERA_HONEY  = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'BUSD', 'Bera USD')
-const BERA_USDCE  = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6E4e9568C1D3241', 6,  'USDC.e', 'Bridged USDC (Stargate)')
-const BERA_WBTC   = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
-const BERA_WETH   = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
-
 export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   ...WETH_ONLY,
   [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET]],
@@ -47,7 +38,7 @@ export const CUSTOM_BASES: { [chainId in ChainId]?: { [tokenAddress: string]: To
 // Per UX feedback (boss + reviewer): replace the BERA/WBERA-only chip row
 // with the top-6 by 30d volume on each chain. Currently only defined for
 // Bera; other chains fall back to WETH-only.
-const BERA_HONEY  = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'HONEY', 'Honey')
+const BERA_HONEY  = new Token(ChainId.BERA_MAINNET, '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce', 18, 'BUSD', 'Bera USD')
 const BERA_USDCE  = new Token(ChainId.BERA_MAINNET, '0x549943e04f40284185054145c6E4e9568C1D3241', 6,  'USDC.e', 'Bridged USDC (Stargate)')
 const BERA_WBTC   = new Token(ChainId.BERA_MAINNET, '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', 8,  'WBTC',  'Wrapped BTC')
 const BERA_WETH   = new Token(ChainId.BERA_MAINNET, '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590', 18, 'WETH',  'WETH')
