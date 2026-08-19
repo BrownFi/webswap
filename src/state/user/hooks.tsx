@@ -388,6 +388,26 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
         },
       },
     },
+    [ChainId.ROBINHOOD_MAINNET]: {
+      '0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea:0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168': {
+        token0: {
+          chainId: 4663,
+          address: '0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea',
+          name: 'Space Exploration Technologies Corp. Class A Common Stock • Robinhood Token',
+          symbol: 'SPCX',
+          decimals: 18,
+          logoURI: 'https://cdn.robinhood.com/ncw_assets/logos/0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea.png',
+        },
+        token1: {
+          chainId: 4663,
+          address: '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',
+          name: 'Global Dollar',
+          symbol: 'USDG',
+          decimals: 6,
+          logoURI: 'https://coin-images.coingecko.com/coins/images/51281/small/GDN_USDG_Token_200x200.png?1730484111',
+        },
+      },
+    },
     [ChainId.ARBITRUM_SEPOLIA]: {
       '0xD3F729D909a7E84669A35c3F25b37b4AC3487784:0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA': {
         token0: {
