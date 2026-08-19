@@ -1,4 +1,4 @@
-import { Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
+import { ChainId, Pair, Token, TokenAmount, JSBI } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import beraIcon from 'assets/images/w-bera.png'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -20,7 +20,7 @@ import { useVersion } from 'hooks/useVersion'
 import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
 import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
-import { getEtherscanLink, getTokenSymbol, shortenAddress } from 'utils'
+import { getEtherscanLink, getTokenMetadataOverride, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
@@ -158,13 +158,29 @@ export default function PoolDetail() {
     if (!pairRaw || !chainId) return null
     const t0 = pairRaw.token0
     const t1 = pairRaw.token1
+    const token0Address = checksumAddress(t0!.id as Address)
+    const token1Address = checksumAddress(t1!.id as Address)
+    const token0Metadata = getTokenMetadataOverride(chainId as ChainId, token0Address)
+    const token1Metadata = getTokenMetadataOverride(chainId as ChainId, token1Address)
     const built = new Pair(
       new TokenAmount(
-        new Token(chainId, checksumAddress(t0!.id as Address), t0!.decimals, t0?.symbol, t0?.name),
+        new Token(
+          chainId,
+          token0Address,
+          t0!.decimals,
+          token0Metadata?.symbol ?? t0?.symbol,
+          token0Metadata?.name ?? t0?.name,
+        ),
         JSBI.BigInt(Math.round(pairRaw.reserve0 * 10 ** t0!.decimals)),
       ),
       new TokenAmount(
-        new Token(chainId, checksumAddress(t1!.id as Address), t1!.decimals, t1?.symbol, t1?.name),
+        new Token(
+          chainId,
+          token1Address,
+          t1!.decimals,
+          token1Metadata?.symbol ?? t1?.symbol,
+          token1Metadata?.name ?? t1?.name,
+        ),
         JSBI.BigInt(Math.round(pairRaw.reserve1 * 10 ** t1!.decimals)),
       ),
       version,

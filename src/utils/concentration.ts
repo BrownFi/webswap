@@ -1,12 +1,13 @@
-import { ChainId } from '@brownfi/sdk'
+import { ROUTER_ADDRESS_V3_OFFICIAL } from 'lib/sdk/constants/addresses'
 
-// Chains where the CL tag is shown. CL auto-computes from on-chain kappa on EVERY
-// chain, but the tag is rolled out per-chain — Berachain only for now. Add chain ids
-// here to enable it elsewhere. `clEnabled(chainId)` is the single gate the UI checks.
-export const CL_ENABLED_CHAINS: ReadonlySet<number> = new Set([ChainId.BERA_MAINNET])
-
+// The CL tag is shown on every chain with a live V3 (Official) deployment — the
+// same chains the pool list serves (Bera, HyperEVM, Base, Linea, Arbitrum,
+// Robinhood on beta). Derived from ROUTER_ADDRESS_V3_OFFICIAL so a chain added
+// there automatically gets CL. CL auto-computes from on-chain kappa (kB/kQ) on
+// every chain, indexer or on-chain reads. `clEnabled(chainId)` is the single
+// gate the UI checks. (The MaxCap tag stays gated separately in config/tvlGate.)
 export function clEnabled(chainId?: number): boolean {
-  return chainId !== undefined && CL_ENABLED_CHAINS.has(chainId)
+  return chainId !== undefined && !!ROUTER_ADDRESS_V3_OFFICIAL[chainId]
 }
 
 // Concentration Level (CE vs V2) for a BrownFi pool.
