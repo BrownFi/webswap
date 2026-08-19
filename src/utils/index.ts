@@ -7,6 +7,18 @@ import { ChainId, JSBI, Percent, Token, CurrencyAmount, Currency, ETHER, WETH } 
 import { TokenAddressMap } from 'state/lists/hooks'
 import { monad } from 'viem/chains'
 
+const BERA_BUSD_ADDRESS = '0xfcbd14dc51f0a4d49d5e53c2e0950e0bc26d0dce'
+
+export function getTokenMetadataOverride(
+  chainId: ChainId | undefined,
+  address: string | undefined,
+): { symbol: string; name: string } | undefined {
+  if (chainId === ChainId.BERA_MAINNET && address?.toLowerCase() === BERA_BUSD_ADDRESS) {
+    return { symbol: 'BUSD', name: 'BUSD' }
+  }
+  return undefined
+}
+
 // returns the checksummed address if the address is valid, otherwise returns false
 export function isAddress(value: any): string | false {
   try {
@@ -223,6 +235,9 @@ export function getWrappedNativeToken(chainId: ChainId) {
 }
 
 export function getTokenSymbol(currency: Currency | null | undefined, chainId: ChainId | undefined) {
+  const metadataOverride = currency instanceof Token ? getTokenMetadataOverride(chainId, currency.address) : undefined
+  if (metadataOverride) return metadataOverride.symbol
+
   if (currency === ETHER) {
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'VIC'
@@ -267,6 +282,9 @@ export function getTokenSymbol(currency: Currency | null | undefined, chainId: C
 }
 
 export function getTokenName(currency: Currency | null | undefined, chainId: ChainId | undefined) {
+  const metadataOverride = currency instanceof Token ? getTokenMetadataOverride(chainId, currency.address) : undefined
+  if (metadataOverride) return metadataOverride.name
+
   if (currency === ETHER) {
     if (chainId === ChainId.VICTION_TESTNET || chainId === ChainId.VICTION_MAINNET) {
       return 'Viction'

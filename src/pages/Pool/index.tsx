@@ -29,6 +29,7 @@ import { useDefaultTokens } from 'state/lists/hooks'
 import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
+import { getTokenMetadataOverride } from 'utils'
 
 // Toggle the BGT/Incentive APR column on the pool list. Set true to re-enable.
 const SHOW_BGT_APR = false
@@ -694,13 +695,29 @@ function MemoizedPairList({
     () =>
       pairs.map((item) => {
         const { token0, token1 } = item
+        const token0Address = checksumAddress(token0!.id as Address)
+        const token1Address = checksumAddress(token1!.id as Address)
+        const token0Metadata = getTokenMetadataOverride(chainId as ChainId, token0Address)
+        const token1Metadata = getTokenMetadataOverride(chainId as ChainId, token1Address)
         const pair = new Pair(
           new TokenAmount(
-            new Token(chainId, checksumAddress(token0!.id as Address), token0!.decimals, token0?.symbol, token0?.name),
+            new Token(
+              chainId,
+              token0Address,
+              token0!.decimals,
+              token0Metadata?.symbol ?? token0?.symbol,
+              token0Metadata?.name ?? token0?.name,
+            ),
             JSBI.BigInt(Math.round(item.reserve0 * 10 ** token0!.decimals)),
           ),
           new TokenAmount(
-            new Token(chainId, checksumAddress(token1!.id as Address), token1!.decimals, token1?.symbol, token1?.name),
+            new Token(
+              chainId,
+              token1Address,
+              token1!.decimals,
+              token1Metadata?.symbol ?? token1?.symbol,
+              token1Metadata?.name ?? token1?.name,
+            ),
             JSBI.BigInt(Math.round(item.reserve1 * 10 ** token1!.decimals)),
           ),
           version,
