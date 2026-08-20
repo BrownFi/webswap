@@ -4,16 +4,30 @@ import SwapParams from "@clmm/components/swap/SwapParams";
 import RouteComparison from "@clmm/components/swap/RouteComparison";
 import Settings from "@clmm/components/common/Settings";
 import PageContainer from "@clmm/components/common/PageContainer";
-import { useDerivedSwapInfo } from "@clmm/state/swapStore.ts";
+import { useDerivedSwapInfo, useSwapState } from "@clmm/state/swapStore.ts";
+import { SwapField } from "@clmm/types/swap-field";
 import { SwapPageProps, SwapPageView } from "./types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 import LimitOrdersModule from "@clmm/modules/LimitOrdersModule";
 const { LimitOrder, SwapTypeSelector, LimitOrdersModal } = LimitOrdersModule.components;
 
 const SwapPage = ({ type }: SwapPageProps) => {
     const isLimitOrder = type === SwapPageView.LIMIT_ORDER;
+    const [searchParams] = useSearchParams();
+    const setCurrencies = useSwapState((state) => state.actions.setCurrencies);
+
+    useEffect(() => {
+        const inputCurrency = searchParams.get("inputCurrency");
+        const outputCurrency = searchParams.get("outputCurrency");
+
+        if (inputCurrency || outputCurrency) {
+            const currentState = useSwapState.getState();
+            setCurrencies(inputCurrency ?? currentState[SwapField.INPUT].currencyId, outputCurrency ?? currentState[SwapField.OUTPUT].currencyId);
+        }
+    }, [searchParams, setCurrencies]);
 
     const derivedSwap = useDerivedSwapInfo();
 

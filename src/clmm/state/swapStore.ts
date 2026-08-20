@@ -47,6 +47,7 @@ interface SwapState {
     readonly lastFocusedField: SwapFieldType;
     actions: {
         selectCurrency: (field: SwapFieldType, currencyId: string | undefined) => void;
+        setCurrencies: (inputCurrencyId: string | undefined, outputCurrencyId: string | undefined) => void;
         switchCurrencies: () => void;
         typeInput: (field: SwapFieldType, typedValue: string) => void;
         typeLimitOrderPrice: (limitOrderPrice: string) => void;
@@ -109,6 +110,11 @@ export const useSwapState = create<SwapState>((set, get) => ({
                 });
             }
         },
+        setCurrencies: (inputCurrencyId, outputCurrencyId) =>
+            set({
+                [SwapField.INPUT]: { currencyId: inputCurrencyId as Address | undefined },
+                [SwapField.OUTPUT]: { currencyId: outputCurrencyId as Address | undefined },
+            }),
         switchCurrencies: () =>
             set({
                 independentField: get().independentField === SwapField.INPUT ? SwapField.OUTPUT : SwapField.INPUT,
