@@ -34,20 +34,40 @@ interface UniswapPoolRaw {
   token1?: { address: string } | null
 }
 
-// Robinhood competitor = TWO SPECIFIC Uniswap V3 pools (chosen by the team), fetched
+// Robinhood competitor = SPECIFIC Uniswap V3 pools (chosen by the team), fetched
 // BY ADDRESS — not the top-pools list. The gateway's topV3Pools doesn't index
 // Robinhood, but v3Pool(chain, address) resolves a single pool with feeTier + TVL +
 // 24h volume. Each maps to its token pair so the matching BrownFi pool picks it up.
 //   0xd4EB21…A3 → USDG/NVDA  (0.05%)
 //   0x52e65B…Ca → WETH/USDG  (0.01%)
 //   0xEb07d9…01 → SPCX/USDG  (0.30%)
+//   0xDDCBBa…5e → WETH/SPY  (0.05%)
+//   0xA43b42…D9 → SPY/USDG (0.30%)
 const ROBINHOOD_UNISWAP_POOLS = [
   '0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3',
   '0x52e65B17fB6E5BA00Ed806f37Afcd2DaA50271Ca',
   '0xEb07d9587eFD1778dFb9c385Ec43EF6d5F9fE401',
+  '0xDDCBBa3666f578E3F09516f21Ff85BFee859AB5e',
+  '0xA43b424Bc609495AED4BCD88d654934b510B0aD9',
+]
+// SPY/USDG has deeper liquidity on Uniswap V4 than on V3. V4 uses a poolId
+// rather than a pool contract address and is merged after V3 so it wins for the
+// same token-pair key.
+const ROBINHOOD_UNISWAP_V4_POOLS = [
+  '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907',
 ]
 const V3_POOL_BY_ADDRESS_QUERY = `query V3Pool($chain: Chain!, $address: String!) {
   v3Pool(chain: $chain, address: $address) {
+    feeTier
+    totalLiquidity { value }
+    volume24h: cumulativeVolume(duration: DAY) { value }
+    token0 { address }
+    token1 { address }
+  }
+}`
+const V4_POOL_BY_ID_QUERY = `query V4Pool($chain: Chain!, $poolId: String!) {
+  v4Pool(chain: $chain, poolId: $poolId) {
+    poolId
     feeTier
     totalLiquidity { value }
     volume24h: cumulativeVolume(duration: DAY) { value }
@@ -72,6 +92,36 @@ export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, Com
         if (!res.ok) return
         const json = (await res.json()) as { data?: { v3Pool?: UniswapPoolRaw | null } }
         const p = json.data?.v3Pool
+        if (!p?.token0?.address || !p?.token1?.address) return
+        const feeTier = Number(p.feeTier) || 0
+        const vol24hUSD = Number(p.volume24h?.value) || 0
+        map[competitorPairKey(p.token0.address, p.token1.address)] = {
+          feeTier,
+          tvlUSD: Number(p.totalLiquidity?.value) || 0,
+          vol24hUSD,
+          fees24hUSD: (vol24hUSD * feeTier) / 1_000_000,
+        }
+      } catch {
+        // network/timeout — skip this pool (refetched on the next 5-min cycle)
+      } finally {
+        clearTimeout(timeoutId)
+      }
+    }),
+  )
+  await Promise.all(
+    ROBINHOOD_UNISWAP_V4_POOLS.map(async (poolId) => {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10_000)
+      try {
+        const res = await fetch(`${UNISWAP_PROXY_BASE}${UNISWAP_GRAPHQL_PATH}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: V4_POOL_BY_ID_QUERY, variables: { chain: 'ROBINHOOD', poolId } }),
+          signal: controller.signal,
+        })
+        if (!res.ok) return
+        const json = (await res.json()) as { data?: { v4Pool?: UniswapPoolRaw | null } }
+        const p = json.data?.v4Pool
         if (!p?.token0?.address || !p?.token1?.address) return
         const feeTier = Number(p.feeTier) || 0
         const vol24hUSD = Number(p.volume24h?.value) || 0
