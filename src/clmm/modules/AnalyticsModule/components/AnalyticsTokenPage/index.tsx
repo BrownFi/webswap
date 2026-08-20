@@ -181,7 +181,13 @@ export function AnalyticsTokenPage() {
                 </div>
                 <div className="flex flex-col gap-3">
                     <div className="grid grid-cols-2 gap-3">
-                        <Link className="col-span-1 w-full" to={"/swap"}>
+                        <Link
+                            className="col-span-1 w-full"
+                            to={{
+                                pathname: "/clamm/swap",
+                                search: currency ? `inputCurrency=${currency.wrapped.address}` : "",
+                            }}
+                        >
                             <Button variant={"primary"} size={"lg"} className="gap-2 rounded-xl w-full h-full max-md:text-sm">
                                 <ArrowDownUp size={20} />
                                 Trade

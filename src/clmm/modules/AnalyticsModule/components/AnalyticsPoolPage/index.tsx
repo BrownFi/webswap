@@ -215,13 +215,25 @@ export function AnalyticsPoolPage() {
                 </div>
                 <div className="flex flex-col gap-3">
                     { enableActions && <div className="grid grid-cols-2 gap-3">
-                        <Link className="col-span-1 w-full " to={"/swap"}>
+                         <Link
+                             className="col-span-1 w-full"
+                             to={{
+                                 pathname: "/clamm/swap",
+                                 search:
+                                     token0 && token1
+                                         ? new URLSearchParams({
+                                               inputCurrency: token0.wrapped.address,
+                                               outputCurrency: token1.wrapped.address,
+                                           }).toString()
+                                         : "",
+                             }}
+                         >
                             <Button variant={"primary"} size={"lg"} className="gap-2 rounded-xl w-full h-full max-md:text-sm">
                                 <ArrowDownUp size={20} />
                                 Trade
                             </Button>
                         </Link>
-                        <Link className="col-span-1 w-full" to={`/pool/${poolId}/new-position`}>
+                         <Link className="col-span-1 w-full" to={`/clamm/pool/${poolId}/new-position`}>
                             <Button variant={"primaryLink"} size={"lg"} className="gap-2 rounded-xl">
                                 <Plus size={20} />
                                 Create Position
