@@ -230,7 +230,7 @@ function PoolDetailInner({
   const { version, isBeta } = useVersion({ chainId, pair })
   const navigate = useNavigate()
   const isRobinhood = chainId === ChainId.ROBINHOOD_MAINNET
-  const gigaDexPoolUrl = `https://www.gigadex.app/pool/${pairAddress.toLowerCase()}/add-liquidity`
+  const gigaDexPoolUrl = `https://www.gigadex.fi/pool/${pairAddress.toLowerCase()}/add-liquidity`
 
   // Chain match check for the action buttons (Add Liquidity, Swap). When
   // wallet ≠ pool chain, the buttons morph to "Switch to {chain}" and call

@@ -123,7 +123,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const navigate = useNavigate()
   const { account, chainId } = useActiveWeb3React()
   const isRobinhood = chainId === ChainId.ROBINHOOD_MAINNET
-  const gigaDexPoolUrl = `https://www.gigadex.app/pool/${pair.liquidityToken.address.toLowerCase()}/add-liquidity`
+  const gigaDexPoolUrl = `https://www.gigadex.fi/pool/${pair.liquidityToken.address.toLowerCase()}/add-liquidity`
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
   // Gate the BGT APR % on the shared whitelist (case-insensitive, includes the

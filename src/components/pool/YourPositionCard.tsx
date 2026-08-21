@@ -27,7 +27,7 @@ type Props = {
 export function YourPositionCard({ pair, pairStats }: Props) {
   const { account, chainId } = useActiveWeb3React()
   const isRobinhood = chainId === ChainId.ROBINHOOD_MAINNET
-  const gigaDexPoolUrl = `https://www.gigadex.app/pool/${pair.liquidityToken.address.toLowerCase()}/add-liquidity`
+  const gigaDexPoolUrl = `https://www.gigadex.fi/pool/${pair.liquidityToken.address.toLowerCase()}/add-liquidity`
 
   // Collapsed by default so the stats row above stays above the fold; user
   // expands when they actually want the LP/portfolio breakdown. We only
