@@ -1,4 +1,4 @@
-import { JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
+import { ChainId, JSBI, Pair, Percent, TokenAmount } from '@brownfi/sdk'
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useActiveWeb3React } from 'hooks'
@@ -12,6 +12,7 @@ import { getTokenSymbol } from 'utils'
 import { orderedCurrencyIds } from 'utils/pair'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { formatNumber, formatPrice } from 'utils/prices'
+import QuestionHelper from 'components/QuestionHelper'
 import { usePythPrices } from 'hooks/usePythPrices'
 import { useHermesPrices } from 'hooks/useHermesPrices'
 import { useRestakedPositions } from 'hooks/useRestakedPositions'
@@ -25,6 +26,8 @@ type Props = {
 
 export function YourPositionCard({ pair, pairStats }: Props) {
   const { account, chainId } = useActiveWeb3React()
+  const isRobinhood = chainId === ChainId.ROBINHOOD_MAINNET
+  const gigaDexPoolUrl = `https://www.gigadex.app/pool/${pair.liquidityToken.address.toLowerCase()}/add-liquidity`
 
   // Collapsed by default so the stats row above stays above the fold; user
   // expands when they actually want the LP/portfolio breakdown. We only
@@ -152,7 +155,12 @@ export function YourPositionCard({ pair, pairStats }: Props) {
           textAlign: 'left',
         }}
       >
-        <span>Your position</span>
+        <span className="inline-flex items-center">
+          Your position
+          {isRobinhood && (
+            <QuestionHelper text="BrownFi is partnering with GIGA DEX on Robinhood. You can manage liquidity & claim $GIGA token rewards on their UI." />
+          )}
+        </span>
         {showToggle && (
           <svg
             width="16"
@@ -188,21 +196,41 @@ export function YourPositionCard({ pair, pairStats }: Props) {
           <div style={{ fontFamily: 'Inter', fontSize: '13px', color: '#978A80', lineHeight: '20px', marginBottom: '12px' }}>
             You don&apos;t have liquidity in this pool yet.
           </div>
-          <Link
-            to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
-            className="no-underline inline-flex items-center justify-center w-full"
-            style={{
-              background: '#985C2A',
-              borderRadius: '8px',
-              padding: '10px',
-              fontFamily: 'Inter',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#FFFFFF',
-            }}
-          >
-            + Add liquidity
-          </Link>
+          {isRobinhood ? (
+            <a
+              href={gigaDexPoolUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-underline inline-flex items-center justify-center w-full"
+              style={{
+                background: '#985C2A',
+                borderRadius: '8px',
+                padding: '10px',
+                fontFamily: 'Inter',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#FFFFFF',
+              }}
+            >
+              Enter Giga Dex
+            </a>
+          ) : (
+            <Link
+              to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
+              className="no-underline inline-flex items-center justify-center w-full"
+              style={{
+                background: '#985C2A',
+                borderRadius: '8px',
+                padding: '10px',
+                fontFamily: 'Inter',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#FFFFFF',
+              }}
+            >
+              + Add liquidity
+            </Link>
+          )}
         </>
       ) : (
         <div className="space-y-3">
@@ -302,91 +330,113 @@ export function YourPositionCard({ pair, pairStats }: Props) {
 
       {account && hasLiquidity && expanded && (
         <div className="pt-3 flex flex-col gap-2">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={async () => {
-                if (!guard.matches) {
-                  await guard.switchToTarget()
-                  return
-                }
-                navigate(`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`)
-              }}
-              disabled={guard.isSwitching}
-              className="inline-flex items-center justify-center flex-1"
+          {isRobinhood ? (
+            <a
+              href={gigaDexPoolUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-underline inline-flex items-center justify-center w-full"
               style={{
                 background: '#985C2A',
-                border: 'none',
                 borderRadius: '8px',
                 padding: '10px',
                 fontFamily: 'Inter',
                 fontSize: '14px',
                 fontWeight: 500,
                 color: '#FFFFFF',
-                cursor: guard.isSwitching ? 'wait' : 'pointer',
-                opacity: guard.isSwitching ? 0.7 : 1,
               }}
             >
-              {guard.matches ? 'Add' : `Switch to ${guard.targetChainName}`}
-            </button>
-            {hasWalletLp ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!guard.matches) {
-                    await guard.switchToTarget()
-                    return
-                  }
-                  navigate(`/remove/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`)
-                }}
-                disabled={guard.isSwitching}
-                className="inline-flex items-center justify-center flex-1"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #493E35',
-                  borderRadius: '8px',
-                  padding: '10px',
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#FBFBFD',
-                  cursor: guard.isSwitching ? 'wait' : 'pointer',
-                  opacity: guard.isSwitching ? 0.7 : 1,
-                }}
-              >
-                {guard.matches ? 'Remove' : `Switch to ${guard.targetChainName}`}
-              </button>
-            ) : (
-              <span
-                title="Your LP is staked. Unstake on the platform below first, then return here to remove liquidity."
-                className="inline-flex items-center justify-center flex-1 cursor-not-allowed"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #2F2823',
-                  borderRadius: '8px',
-                  padding: '10px',
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#6B6059',
-                }}
-              >
-                Remove
-              </span>
-            )}
-          </div>
-          {!hasWalletLp && hasStakedLp && (
-            <div
-              className="text-center"
-              style={{
-                fontFamily: 'Inter',
-                fontSize: '11px',
-                color: '#978A80',
-                lineHeight: '16px',
-              }}
-            >
-              Unstake your LP first to enable Remove.
-            </div>
+              Enter Giga Dex
+            </a>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!guard.matches) {
+                      await guard.switchToTarget()
+                      return
+                    }
+                    navigate(`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`)
+                  }}
+                  disabled={guard.isSwitching}
+                  className="inline-flex items-center justify-center flex-1"
+                  style={{
+                    background: '#985C2A',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontFamily: 'Inter',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#FFFFFF',
+                    cursor: guard.isSwitching ? 'wait' : 'pointer',
+                    opacity: guard.isSwitching ? 0.7 : 1,
+                  }}
+                >
+                  {guard.matches ? 'Add' : `Switch to ${guard.targetChainName}`}
+                </button>
+                {hasWalletLp ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!guard.matches) {
+                        await guard.switchToTarget()
+                        return
+                      }
+                      navigate(`/remove/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`)
+                    }}
+                    disabled={guard.isSwitching}
+                    className="inline-flex items-center justify-center flex-1"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #493E35',
+                      borderRadius: '8px',
+                      padding: '10px',
+                      fontFamily: 'Inter',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#FBFBFD',
+                      cursor: guard.isSwitching ? 'wait' : 'pointer',
+                      opacity: guard.isSwitching ? 0.7 : 1,
+                    }}
+                  >
+                    {guard.matches ? 'Remove' : `Switch to ${guard.targetChainName}`}
+                  </button>
+                ) : (
+                  <span
+                    title="Your LP is staked. Unstake on the platform below first, then return here to remove liquidity."
+                    className="inline-flex items-center justify-center flex-1 cursor-not-allowed"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #2F2823',
+                      borderRadius: '8px',
+                      padding: '10px',
+                      fontFamily: 'Inter',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#6B6059',
+                    }}
+                  >
+                    Remove
+                  </span>
+                )}
+              </div>
+              {!hasWalletLp && hasStakedLp && (
+                <div
+                  className="text-center"
+                  style={{
+                    fontFamily: 'Inter',
+                    fontSize: '11px',
+                    color: '#978A80',
+                    lineHeight: '16px',
+                  }}
+                >
+                  Unstake your LP first to enable Remove.
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

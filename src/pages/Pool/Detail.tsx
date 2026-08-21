@@ -229,6 +229,8 @@ function PoolDetailInner({
   const { chainId: walletChainId, account } = useActiveWeb3React()
   const { version, isBeta } = useVersion({ chainId, pair })
   const navigate = useNavigate()
+  const isRobinhood = chainId === ChainId.ROBINHOOD_MAINNET
+  const gigaDexPoolUrl = `https://www.gigadex.app/pool/${pairAddress.toLowerCase()}/add-liquidity`
 
   // Chain match check for the action buttons (Add Liquidity, Swap). When
   // wallet ≠ pool chain, the buttons morph to "Switch to {chain}" and call
@@ -604,32 +606,52 @@ function PoolDetailInner({
               >
                 {walletMatchesPool ? 'Swap' : `Switch to ${targetChainName}`}
               </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!walletMatchesPool) {
-                    await switchToTarget()
-                    return
-                  }
-                  navigate(`/add/${currencyId(currency0)}/${currencyId(currency1)}`)
-                }}
-                disabled={isSwitching}
-                className="inline-flex items-center justify-center"
-                style={{
-                  background: '#985C2A',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '10px',
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#FFFFFF',
-                  cursor: isSwitching ? 'wait' : 'pointer',
-                  opacity: isSwitching ? 0.7 : 1,
-                }}
-              >
-                {walletMatchesPool ? '+ Add liquidity' : `Switch to ${targetChainName}`}
-              </button>
+              {isRobinhood ? (
+                <a
+                  href={gigaDexPoolUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-underline inline-flex items-center justify-center"
+                  style={{
+                    background: '#985C2A',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontFamily: 'Inter',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#FFFFFF',
+                  }}
+                >
+                  Enter Giga Dex
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!walletMatchesPool) {
+                      await switchToTarget()
+                      return
+                    }
+                    navigate(`/add/${currencyId(currency0)}/${currencyId(currency1)}`)
+                  }}
+                  disabled={isSwitching}
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    background: '#985C2A',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontFamily: 'Inter',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#FFFFFF',
+                    cursor: isSwitching ? 'wait' : 'pointer',
+                    opacity: isSwitching ? 0.7 : 1,
+                  }}
+                >
+                  {walletMatchesPool ? '+ Add liquidity' : `Switch to ${targetChainName}`}
+                </button>
+              )}
             </div>
 
             {/* Your position — collapsible; sits above Stats so a return

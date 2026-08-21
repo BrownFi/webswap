@@ -122,6 +122,8 @@ interface PositionCardProps {
 export default function FullPositionCard({ pair, pairStats, border }: PositionCardProps) {
   const navigate = useNavigate()
   const { account, chainId } = useActiveWeb3React()
+  const isRobinhood = chainId === ChainId.ROBINHOOD_MAINNET
+  const gigaDexPoolUrl = `https://www.gigadex.app/pool/${pair.liquidityToken.address.toLowerCase()}/add-liquidity`
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
   // Gate the BGT APR % on the shared whitelist (case-insensitive, includes the
@@ -355,23 +357,45 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           )}
           {/* Actions */}
           <div className="hidden md:flex items-center justify-end" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
-            <Link
-              to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
-              className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
-              style={{
-                background: '#985C2A',
-                borderRadius: '8px',
-                padding: '6px 12px',
-                height: '40px',
-                fontFamily: 'Inter',
-                fontWeight: 500,
-                fontSize: '14px',
-                color: 'white',
-                border: 'none',
-              }}
-            >
-              + Add liquidity
-            </Link>
+            {isRobinhood ? (
+              <a
+                href={gigaDexPoolUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
+                style={{
+                  background: '#985C2A',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  height: '40px',
+                  fontFamily: 'Inter',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  color: 'white',
+                  border: 'none',
+                }}
+              >
+                Enter Giga Dex
+              </a>
+            ) : (
+              <Link
+                to={`/add/${orderedCurrencyIds(currency0, currency1, chainId, pairStats?.quoteTokenIndex).join("/")}`}
+                className="no-underline whitespace-nowrap inline-flex items-center justify-center gap-1"
+                style={{
+                  background: '#985C2A',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  height: '40px',
+                  fontFamily: 'Inter',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  color: 'white',
+                  border: 'none',
+                }}
+              >
+                + Add liquidity
+              </Link>
+            )}
           </div>
         </div>
 
