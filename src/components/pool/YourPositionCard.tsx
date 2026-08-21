@@ -88,14 +88,12 @@ export function YourPositionCard({ pair, pairStats }: Props) {
   const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  // HODL portfolio must be valued with LIVE prices, not the indexer's. A pool
+  // LP and HODL portfolios must be valued with LIVE prices, not the indexer's. A pool
   // with no swaps never refreshes the indexer token price, so the stored
   // bnhPortfolio (= bnh0*token0Price + bnh1*token1Price) goes stale. Recompute
-  // it here from bnh0/bnh1 (already decimal-adjusted) × fresh Hermes prices
+  // both values here from live token amounts × fresh Hermes prices
   // (15s refetch, independent of indexer/oracle staleness), falling back to the
-  // indexer value only when Hermes has no feed for a side. Per Manh (2026-07-16),
-  // the formula is correct; the fix is always pricing it fresh. lpPortfolio gets
-  // the same treatment on the BE separately.
+  // indexer values only when Hermes has no feed for a side.
   const hermesPrices = useHermesPrices({
     chainId,
     currencyA: pair.token0,
@@ -110,6 +108,12 @@ export function YourPositionCard({ pair, pairStats }: Props) {
     pairAccount && hermesPrices.CURRENCY_A > 0 && hermesPrices.CURRENCY_B > 0
       ? pairAccount.bnh0 * hermesPrices.CURRENCY_A + pairAccount.bnh1 * hermesPrices.CURRENCY_B
       : pairAccount?.bnhPortfolio ?? 0
+  const displayToken0Price = hermesPrices.CURRENCY_A || token0Price
+  const displayToken1Price = hermesPrices.CURRENCY_B || token1Price
+  const lpPortfolio =
+    pairAccount && token0Deposited && token1Deposited && displayToken0Price > 0 && displayToken1Price > 0
+      ? Number(token0Deposited.toExact()) * displayToken0Price + Number(token1Deposited.toExact()) * displayToken1Price
+      : pairAccount?.lpPortfolio ?? 0
 
   const symbol0 = getTokenSymbol(currency0, chainId) ?? '?'
   const symbol1 = getTokenSymbol(currency1, chainId) ?? '?'
@@ -280,9 +284,9 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                 {token0Deposited ? (
                   <span>
                     {formatNumber(token0Deposited.toSignificant(4))}
-                    {token0Price > 0 && (
+                    {displayToken0Price > 0 && (
                       <span style={{ color: '#978A80', marginLeft: 6 }}>
-                        ({formatPrice(token0Price * Number(token0Deposited.toSignificant(4)))})
+                        ({formatPrice(displayToken0Price * Number(token0Deposited.toSignificant(4)))})
                       </span>
                     )}
                   </span>
@@ -297,9 +301,9 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                 {token1Deposited ? (
                   <span>
                     {formatNumber(token1Deposited.toSignificant(4))}
-                    {token1Price > 0 && (
+                    {displayToken1Price > 0 && (
                       <span style={{ color: '#978A80', marginLeft: 6 }}>
-                        ({formatPrice(token1Price * Number(token1Deposited.toSignificant(4)))})
+                        ({formatPrice(displayToken1Price * Number(token1Deposited.toSignificant(4)))})
                       </span>
                     )}
                   </span>
@@ -309,7 +313,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
               {pairAccount && (
                 <>
                   <div style={{ borderTop: '1px solid #2F2823', margin: '4px 0' }} />
-                  <PortfolioRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
+                  <PortfolioRow label="LPing portfolio" value={lpPortfolio} />
                   {/* HODL portfolio = buy-&-hold simulation (indexer bnhPortfolio). Enabled
                       on prod per boss (2026-07-15); "(simulation)" flags it as a modeled
                       value. The HODL PnL / LPing-vs-HODL rows below stay dev-only. */}
@@ -318,7 +322,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                   {!isMainnet && (
                     <>
                       <PortfolioRow colored label="HODL PnL" value={hodlPortfolio - pairAccount.basePortfolio} base={pairAccount.basePortfolio} />
-                      <PortfolioRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - hodlPortfolio} />
+                      <PortfolioRow colored label="LPing vs. HODL" value={lpPortfolio - hodlPortfolio} />
                     </>
                   )}
                 </>
