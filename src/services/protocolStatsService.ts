@@ -77,7 +77,9 @@ const V2_ALL_TIME_FEES = 417_293.92
 // Persist across full page reloads (which wipe React Query's in-memory cache).
 // Key is versioned so old DefiLlama-sourced caches under the legacy key are
 // ignored.
-const CACHE_KEY = 'brownfi:protocolStats:indexer'
+// Bump when the aggregate sources or chain coverage changes so an older
+// snapshot cannot keep stale cross-chain totals visible for up to 10 minutes.
+const CACHE_KEY = 'brownfi:protocolStats:indexer:v2'
 const CACHE_TTL = 10 * 60_000 // 10 min — matches the useQuery staleTime
 
 // One query per V3 chain: chain-level aggregates (all-time TVL/volume/fees,
