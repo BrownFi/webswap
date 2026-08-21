@@ -188,9 +188,7 @@ function MainNav() {
 
   const items = showClmmNav
     ? clmmItems
-    : chainId === ChainId.ROBINHOOD_MAINNET
-      ? [{ id: 'pool-nav-link', to: '/pool', label: 'Pool', end: true, active: webswapPoolActive }]
-      : [
+    : [
         { id: 'swap-nav-link', to: '/swap', label: 'Swap', end: false, active: false },
         { id: 'pool-nav-link', to: '/pool', label: 'Pool', end: true, active: webswapPoolActive },
       ]
