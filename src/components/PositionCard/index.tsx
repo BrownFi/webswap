@@ -159,24 +159,17 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
 
   const userPoolTokens = useTokenBalance(account ?? undefined, showMore ? pair.liquidityToken : undefined)
 
-  // HODL portfolio priced with LIVE Hermes prices instead of the indexer's:
-  // a no-swap pool never refreshes the indexer token price, so the stored
-  // bnhPortfolio (= bnh0*p0 + bnh1*p1) goes stale. Recompute from bnh0/bnh1
-  // (decimal-adjusted) × fresh prices, falling back to the indexer value when
-  // Hermes has no feed. See YourPositionCard for the same fix (per Manh 2026-07-16).
+  // Price all position values from one live source so LPing and HODL remain
+  // comparable when the indexer's token snapshot is stale.
   const hermesPrices = useHermesPrices({
     chainId,
     currencyA: pair.token0,
     currencyB: pair.token1,
     version: pair.version,
-    // HODL row here is dev-only (!isMainnet) and details load on showMore —
-    // so never poll on prod, and only when the card is expanded in dev.
-    enabled: !isMainnet && showMore,
+    // The LPing value is shown on every environment, so poll whenever the
+    // position block is expanded and an account is connected.
+    enabled: showMore && !!account,
   })
-  const hodlPortfolio =
-    pairAccount && hermesPrices.CURRENCY_A > 0 && hermesPrices.CURRENCY_B > 0
-      ? pairAccount.bnh0 * hermesPrices.CURRENCY_A + pairAccount.bnh1 * hermesPrices.CURRENCY_B
-      : pairAccount?.bnhPortfolio ?? 0
 
   const currency0 = unwrappedToken(pair.token0)
   const currency1 = unwrappedToken(pair.token1)
@@ -194,8 +187,8 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     currencyB: pair.token1,
     enableFetchDetail: showMore,
   })
-  const token0Price = pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
-  const token1Price = pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
+  const token0Price = hermesPrices.CURRENCY_A || pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
+  const token1Price = hermesPrices.CURRENCY_B || pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
   const { tvl, lpPrice, columnValue } = useMemo(() => {
     const r0 = token0Price * Number(pair.reserve0.toSignificant(6))
@@ -228,6 +221,22 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     walletBalance: userPoolTokens,
     stakedBalance: stakedLiquidityTokenAmount,
   })
+
+  const d0 = token0Deposited ? Number(token0Deposited.toExact()) : 0
+  const d1 = token1Deposited ? Number(token1Deposited.toExact()) : 0
+  const havePrices = token0Price > 0 && token1Price > 0
+  const basePortfolio = pairAccount?.basePortfolio ?? 0
+  const lpPortfolio =
+    havePrices && token0Deposited && token1Deposited
+      ? d0 * token0Price + d1 * token1Price
+      : pairAccount?.lpPortfolio ?? 0
+  const hodlPortfolio =
+    havePrices && pairAccount
+      ? pairAccount.bnh0 * token0Price + pairAccount.bnh1 * token1Price
+      : pairAccount?.bnhPortfolio ?? 0
+  const lpPnL = havePrices && pairAccount ? lpPortfolio - basePortfolio : pairAccount?.unrealizedPnL ?? 0
+  const hodlPnL = hodlPortfolio - basePortfolio
+  const lpVsHodl = lpPortfolio - hodlPortfolio
 
   const {
     totalDisplay: totalLpDisplay,
@@ -517,9 +526,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                     )}
                   </div>
                   {[
-                    { cur: shouldReverse ? currency1 : currency0, deposited: shouldReverse ? token1Deposited : token0Deposited, price: shouldReverse ? token1Price : token0Price },
-                    { cur: shouldReverse ? currency0 : currency1, deposited: shouldReverse ? token0Deposited : token1Deposited, price: shouldReverse ? token0Price : token1Price },
-                  ].map(({ cur, deposited, price }) => (
+                    { cur: shouldReverse ? currency1 : currency0, deposited: shouldReverse ? token1Deposited : token0Deposited, price: shouldReverse ? token1Price : token0Price, amt: shouldReverse ? d1 : d0 },
+                    { cur: shouldReverse ? currency0 : currency1, deposited: shouldReverse ? token0Deposited : token1Deposited, price: shouldReverse ? token0Price : token1Price, amt: shouldReverse ? d0 : d1 },
+                  ].map(({ cur, deposited, price, amt }) => (
                     <div key={getTokenSymbol(cur, chainId)} className="flex flex-wrap justify-between items-center gap-1">
                       <div className="flex items-center gap-2">
                         <CurrencyLogo currency={cur} size="20px" />
@@ -527,22 +536,22 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                       </div>
                       <span className="text-[14px] sm:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: 'white' }}>
                         {deposited ? formatNumber(deposited?.toSignificant(4)) : '-'}
-                        {deposited && <span style={{ color: '#978A80' }}> ({formatPrice(price * Number(deposited.toSignificant(4)))})</span>}
+                        {deposited && <span style={{ color: '#978A80' }}> ({formatPrice(price * amt)})</span>}
                       </span>
                     </div>
                   ))}
 
                   {pairAccount && (
                     <>
-                      <UserPositionRow label="LPing portfolio" value={pairAccount.lpPortfolio} />
+                      <UserPositionRow label="LPing portfolio" value={lpPortfolio} />
                       {!isMainnet && (
                         <UserPositionRow label="HODL portfolio" value={hodlPortfolio} description="Your position value if you had just held the two tokens in your wallet." />
                       )}
-                      <UserPositionRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} mauso={pairAccount.basePortfolio} />
+                      <UserPositionRow colored label="LPing PnL" value={lpPnL} mauso={basePortfolio} />
                       {!isMainnet && (
                         <>
-                          <UserPositionRow colored label="HODL PnL" value={hodlPortfolio - pairAccount.basePortfolio} mauso={pairAccount.basePortfolio} description="Your profit and loss if you had just held the two tokens in your wallet." />
-                          <UserPositionRow colored label="LPing vs. HODL" value={pairAccount.lpPortfolio - hodlPortfolio} description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`} />
+                          <UserPositionRow colored label="HODL PnL" value={hodlPnL} mauso={basePortfolio} description="Your profit and loss if you had just held the two tokens in your wallet." />
+                          <UserPositionRow colored label="LPing vs. HODL" value={lpVsHodl} description={`The performance gap between LPing and HODL.\nMeasured as (LPing Portfolio - HODL portfolio)`} />
                         </>
                       )}
                     </>
