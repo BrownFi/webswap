@@ -6,21 +6,23 @@ import { ChainId } from '@brownfi/sdk'
 // Balance chart (via Detail). Kept in its own tiny module so Detail can read it without
 // eager-importing the lazy-loaded LP chart.
 
-// "LP vs. UniV2" — Bera + Linea/Hyper/Arb.
+// "LP vs. UniV2" — Bera + Linea/Hyper/Arb + Robinhood.
 export const CHAINS_WITH_LP_VS_UNIV2 = new Set<number>([
   ChainId.BERA_MAINNET,
   ChainId.LINEA_MAINNET,
   ChainId.HYPER_EVM,
   ChainId.ARBITRUM_MAINNET,
+  ChainId.ROBINHOOD_MAINNET,
 ])
 
-// "LP vs. HODL" — Bera + Linea/Hyper/Arb (Bera re-enabled per boss 2026-07-15; it was
+// "LP vs. HODL" — Bera + Linea/Hyper/Arb + Robinhood (Bera re-enabled per boss 2026-07-15; it was
 // excluded on 2026-07-14, then reinstated).
 export const CHAINS_WITH_LP_VS_HODL = new Set<number>([
   ChainId.BERA_MAINNET,
   ChainId.LINEA_MAINNET,
   ChainId.HYPER_EVM,
   ChainId.ARBITRUM_MAINNET,
+  ChainId.ROBINHOOD_MAINNET,
 ])
 
 export const showsLpVsUniV2 = (chainId?: number | null): boolean =>

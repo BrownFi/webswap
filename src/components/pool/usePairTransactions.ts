@@ -45,6 +45,7 @@ const CHAINS_WITH_UNIV2_PRICE = !isV3Enabled
       ChainId.SEI_MAINNET,
       ChainId.HYPER_EVM,
       ChainId.MONAD,
+      ChainId.ROBINHOOD_MAINNET,
     ])
 export const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
 

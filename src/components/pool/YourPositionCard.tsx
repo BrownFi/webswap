@@ -158,7 +158,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
         <span className="inline-flex items-center">
           Your position
           {isRobinhood && (
-            <QuestionHelper text="BrownFi is partnering with GIGA DEX on Robinhood. You can manage liquidity & claim $GIGA token rewards on their UI." />
+            <QuestionHelper text="BrownFi is partnering with GIGA DEX with extra bonus on Robinhood. You should manage liquidity & claim $GIGA token rewards on their UI" />
           )}
         </span>
         {showToggle && (
