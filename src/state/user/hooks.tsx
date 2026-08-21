@@ -407,6 +407,42 @@ export function useTrackedTokenPairs(options?: { disabled?: boolean }): [Token, 
           logoURI: 'https://coin-images.coingecko.com/coins/images/51281/small/GDN_USDG_Token_200x200.png?1730484111',
         },
       },
+      '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73:0x117cc2133c37B721F49dE2A7a74833232B3B4C0C': {
+        token0: {
+          chainId: 4663,
+          address: '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73',
+          name: 'Wrapped Ether',
+          symbol: 'WETH',
+          decimals: 18,
+          logoURI: 'https://assets.coingecko.com/coins/images/2518/small/weth.png',
+        },
+        token1: {
+          chainId: 4663,
+          address: '0x117cc2133c37B721F49dE2A7a74833232B3B4C0C',
+          name: 'SPDR S&P 500 ETF Trust • Robinhood Token',
+          symbol: 'SPY',
+          decimals: 18,
+          logoURI: 'https://cdn.robinhood.com/ncw_assets/logos/0x117cc2133c37b721f49de2a7a74833232b3b4c0c.png',
+        },
+      },
+      '0x117cc2133c37B721F49dE2A7a74833232B3B4C0C:0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168': {
+        token0: {
+          chainId: 4663,
+          address: '0x117cc2133c37B721F49dE2A7a74833232B3B4C0C',
+          name: 'SPDR S&P 500 ETF Trust • Robinhood Token',
+          symbol: 'SPY',
+          decimals: 18,
+          logoURI: 'https://cdn.robinhood.com/ncw_assets/logos/0x117cc2133c37b721f49de2a7a74833232b3b4c0c.png',
+        },
+        token1: {
+          chainId: 4663,
+          address: '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',
+          name: 'Global Dollar',
+          symbol: 'USDG',
+          decimals: 6,
+          logoURI: 'https://coin-images.coingecko.com/coins/images/51281/small/GDN_USDG_Token_200x200.png?1730484111',
+        },
+      },
     },
     [ChainId.ARBITRUM_SEPOLIA]: {
       '0xD3F729D909a7E84669A35c3F25b37b4AC3487784:0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA': {
