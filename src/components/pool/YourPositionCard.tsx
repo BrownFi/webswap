@@ -314,7 +314,7 @@ export function YourPositionCard({ pair, pairStats }: Props) {
                       on prod per boss (2026-07-15); "(simulation)" flags it as a modeled
                       value. The HODL PnL / LPing-vs-HODL rows below stay dev-only. */}
                   <PortfolioRow label="HODL portfolio (simulation)" value={hodlPortfolio} />
-                  <PortfolioRow colored label="LP vs. HODL" value={pairAccount.unrealizedPnL} base={pairAccount.basePortfolio} />
+                  <PortfolioRow colored label="LPing PnL" value={pairAccount.unrealizedPnL} base={pairAccount.basePortfolio} />
                   {!isMainnet && (
                     <>
                       <PortfolioRow colored label="HODL PnL" value={hodlPortfolio - pairAccount.basePortfolio} base={pairAccount.basePortfolio} />
