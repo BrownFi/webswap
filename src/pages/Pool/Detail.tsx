@@ -862,13 +862,15 @@ function SkeletonBar({ w, h, rounded = 'rounded' }: { w: number | string; h: num
   )
 }
 
-function PoolDetailSkeleton() {
-  const Card = ({ children }: { children?: React.ReactNode }) => (
+function SkeletonCard({ children }: { children?: React.ReactNode }) {
+  return (
     <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '20px' }}>
       {children}
     </div>
   )
+}
 
+function PoolDetailSkeleton() {
   return (
     <>
       {/* Mobile-only top block: header + dev stats + rate */}
@@ -926,11 +928,11 @@ function PoolDetailSkeleton() {
 
         {/* Right sidebar */}
         <div className="flex flex-col gap-4 order-1 lg:order-2">
-          <Card>
+          <SkeletonCard>
             <div className="mb-2"><SkeletonBar w={80} h={14} /></div>
             <SkeletonBar w={140} h={36} />
-          </Card>
-          <Card>
+          </SkeletonCard>
+          <SkeletonCard>
             <div className="mb-4"><SkeletonBar w={60} h={18} /></div>
             <div className="flex flex-col gap-3 mb-4">
               <div className="flex justify-between"><SkeletonBar w="45%" h={16} /><SkeletonBar w="45%" h={16} /></div>
@@ -942,10 +944,10 @@ function PoolDetailSkeleton() {
               <div><SkeletonBar w={80} h={14} /><div className="mt-1"><SkeletonBar w={100} h={22} /></div></div>
               <div><SkeletonBar w={70} h={14} /><div className="mt-1"><SkeletonBar w={100} h={22} /></div></div>
             </div>
-          </Card>
+          </SkeletonCard>
           {/* Your position (desktop sidebar) */}
           <div className="hidden lg:block">
-            <Card>
+            <SkeletonCard>
               <div className="mb-4"><SkeletonBar w={100} h={18} /></div>
               <div className="flex flex-col gap-3">
                 <SkeletonBar w="100%" h={16} />
@@ -953,13 +955,13 @@ function PoolDetailSkeleton() {
                 <SkeletonBar w="100%" h={16} />
                 <SkeletonBar w="100%" h={36} rounded="rounded-[8px]" />
               </div>
-            </Card>
+            </SkeletonCard>
           </div>
         </div>
 
         {/* Your position (mobile — matches loaded state position below the chart) */}
         <div className="lg:hidden order-3">
-          <Card>
+          <SkeletonCard>
             <div className="mb-4"><SkeletonBar w={100} h={18} /></div>
             <div className="flex flex-col gap-3">
               <SkeletonBar w="100%" h={16} />
@@ -967,7 +969,7 @@ function PoolDetailSkeleton() {
               <SkeletonBar w="100%" h={16} />
               <SkeletonBar w="100%" h={36} rounded="rounded-[8px]" />
             </div>
-          </Card>
+          </SkeletonCard>
         </div>
       </div>
     </>
