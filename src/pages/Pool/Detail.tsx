@@ -578,6 +578,7 @@ function PoolDetailInner({
                   onDismiss={() => setShowSettings(false)}
                   pair={pair}
                   currentValues={devStats}
+                  quoteTokenIndex={pairRaw.quoteTokenIndex}
                 />
               </Suspense>
             )}

@@ -16,6 +16,9 @@ import { CloseIcon } from 'theme/components'
 import { factoryV3Gen } from 'lib/sdk/constants/addresses'
 import { decodeContractError } from 'utils/decodeContractError'
 import { isUserRejection } from 'utils/zapErrors'
+import { getTokenSymbol } from 'utils'
+import { shouldReverseDisplay } from 'utils/pair'
+import { unwrappedToken } from 'utils/wrappedCurrency'
 
 // V3 admin setters as exposed by the v3-final factory. The PairConfig
 // restructure REPLACED the old struct-based `setConfigOfPair(tokenA, tokenB,
@@ -76,6 +79,7 @@ type Props = {
   onDismiss: () => void
   pair: Pair
   currentValues?: DevStatsLike
+  quoteTokenIndex?: number | null
 }
 
 const sanitize = (value: string) => value.trim()
@@ -169,8 +173,14 @@ function SettingsRow({
   )
 }
 
-export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Props) {
+export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues, quoteTokenIndex }: Props) {
   const { account, chainId, library } = useActiveWeb3React()
+  const currency0 = unwrappedToken(pair.token0)
+  const currency1 = unwrappedToken(pair.token1)
+  const reverseDisplay = shouldReverseDisplay(currency0, currency1, chainId, quoteTokenIndex)
+  const symbol0 = getTokenSymbol(currency0, chainId) ?? pair.token0.symbol ?? '?'
+  const symbol1 = getTokenSymbol(currency1, chainId) ?? pair.token1.symbol ?? '?'
+  const pairLabel = reverseDisplay ? `${symbol1}/${symbol0}` : `${symbol0}/${symbol1}`
   // Key off the POOL's version, NOT the global useVersion toggle. The toggle
   // is the user's default-version preference and can differ from the pool
   // being edited (e.g. once the list shows both V3 Official + Pilot pools).
@@ -494,7 +504,7 @@ export function PairSettingsModal({ isOpen, onDismiss, pair, currentValues }: Pr
         <style>{`.pair-settings-scroll::-webkit-scrollbar { display: none; }`}</style>
         <RowBetween>
           <Text fontSize={18} fontWeight={600}>
-            Pair settings — {pair.token0.symbol}/{pair.token1.symbol}
+            Pair settings — {pairLabel}
           </Text>
           <CloseIcon onClick={handleDismiss} />
         </RowBetween>

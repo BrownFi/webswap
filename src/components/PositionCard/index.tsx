@@ -646,7 +646,7 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
         )}
       </AutoColumn>
 
-      {showSettings && <PairSettingsModal isOpen={showSettings} onDismiss={() => setShowSettings(false)} pair={pair} currentValues={devStats} />}
+      {showSettings && <PairSettingsModal isOpen={showSettings} onDismiss={() => setShowSettings(false)} pair={pair} currentValues={devStats} quoteTokenIndex={pairStats?.quoteTokenIndex} />}
     </StyledPositionCard>
   )
 }

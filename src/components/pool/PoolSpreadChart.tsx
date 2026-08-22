@@ -308,11 +308,9 @@ export function PoolSpreadChart({
   // Fetch only the VISIBLE window, not the full loaded grid: at 5-min the whole loaded
   // history is ~1300 Pyth bars per feed (slow on the 7D→1D switch), while the view only
   // shows `span` seconds. Bounds the fetch to the timeframe window (ALL = full grid).
-  const marketFrom = grid
-    ? RANGE_BUCKETS[range].span != null
-      ? Math.max(grid.gridStart, grid.gridEnd - (RANGE_BUCKETS[range].span as number))
-      : grid.gridStart
-    : null
+  // Keep market history aligned with the full loaded pool window. Scroll-to-load
+  // moves gridStart backward, which should extend this reference line as well.
+  const marketFrom = grid?.gridStart ?? null
   const marketRaw = usePoolMarketPrice({
     baseFeedId,
     quoteFeedId,

@@ -4,6 +4,7 @@
 // Key = `${chainId}-${lowercasePairAddress}`.
 const MARKET_REF_PAIRS = new Set<string>([
   '80094-0xc123bc9259d1a99add5a2c512498ac146dd2bade', // WETH/USDC.e (Bera)
+  '4663-0x851c08d169966b1146c84c1fcb5f14f8ce900f34', // WETH/SPY (Robinhood)
 ])
 
 export const isMarketRefPair = (chainId: number, pairAddress: string): boolean =>
