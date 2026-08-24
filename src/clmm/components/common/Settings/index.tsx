@@ -31,7 +31,11 @@ const SettingLabel = ({ children, tip }: { children: React.ReactNode; tip: strin
     </div>
 );
 
-const Settings = () => {
+type SettingsProps = {
+    transactionOnly?: boolean;
+};
+
+const Settings = ({ transactionOnly = false }: SettingsProps) => {
     return (
         <Popover>
             <PopoverTrigger asChild>
@@ -49,9 +53,13 @@ const Settings = () => {
                 <Separator orientation={"horizontal"} style={{ background: "#2F2823" }} />
                 <SlippageTolerance />
                 <TransactionDeadline />
-                <Multihop />
-                <SplitTrade />
-                <ExpertMode />
+                {!transactionOnly && (
+                    <>
+                        <Multihop />
+                        <SplitTrade />
+                        <ExpertMode />
+                    </>
+                )}
             </PopoverContent>
         </Popover>
     );

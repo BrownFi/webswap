@@ -11,6 +11,7 @@ import { formatAmount } from "@clmm/utils";
 import { isBoostedPool } from "@clmm/utils/pool/isBoostedPool";
 import AddLiquidityButton from "../AddLiquidityButton";
 import { enabledModules } from "@clmm/config";
+import Settings from "@clmm/components/common/Settings";
 
 import BoostedPoolsModule from "@clmm/modules/BoostedPoolsModule";
 const { useBoostedTokenAPR } = BoostedPoolsModule.hooks;
@@ -41,6 +42,10 @@ const AmountsSection = ({ tokenId, currencyA, currencyB, mintInfo, handleCloseMo
 
     return (
         <>
+            <div className="flex items-center justify-between px-2">
+                <div className="text-lg font-semibold text-text-100">Enter Amounts</div>
+                <Settings transactionOnly />
+            </div>
             <EnterAmounts currencyA={currencyA} currencyB={currencyB} mintInfo={mintInfo} />
             <HoverCard>
                 <HoverCardTrigger className="px-2">
