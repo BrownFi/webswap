@@ -17,7 +17,8 @@ import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 // Always present.
 const CORE =
   'timestamp\n      type\n      reserve0\n      reserve1\n      reserve0USD\n      reserve1USD\n      amount0In\n      amount0Out\n      amount1In\n      amount1Out'
-// LP-vs-BH benchmark (Pool Balance + Oracle Spread).
+// LP-vs-BH / LP-vs-BH3 benchmarks (Pool Balance + Oracle Spread).
+const BENCHMARK_BH3 = 'lpPrice\n      bnhPrice\n      bh3Price'
 const BENCHMARK = 'lpPrice\n      bnhPrice'
 // Oracle spread inputs (Oracle Spread) + config (Pool Config) — V3 oracle pools.
 const ORACLE = 'pythPrice0\n      pythPrice1\n      ammPriceRel\n      adjPriceRel'
@@ -25,7 +26,9 @@ const CONFIG = 'lambda\n      kB\n      kQ\n      compress\n      sSell\n      s
 
 // Field tiers, richest first. First one the indexer accepts wins.
 const FIELD_TIERS = [
+  `${CORE}\n      ${BENCHMARK_BH3}\n      ${ORACLE}\n      ${CONFIG}`,
   `${CORE}\n      ${BENCHMARK}\n      ${ORACLE}\n      ${CONFIG}`,
+  `${CORE}\n      ${BENCHMARK_BH3}`,
   `${CORE}\n      ${BENCHMARK}`,
   CORE,
 ]
@@ -43,6 +46,7 @@ export type PoolTxn = {
   amount1Out?: number | string
   lpPrice?: number | string
   bnhPrice?: number | string
+  bh3Price?: number | string
   pythPrice0?: number | string
   pythPrice1?: number | string
   ammPriceRel?: number | string

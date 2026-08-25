@@ -14,14 +14,107 @@ import {
   Time,
   createChart,
 } from 'lightweight-charts'
+import { ChainId, isV3Like } from '@brownfi/sdk'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
+import { graphqlFetcher } from 'utils/graphql'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketClose, bucketGrid, bucketVolume } from './chartTimeBuckets'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
 import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 
 const COLOR_MARKET = '#22D3EE' // cyan — market reference line, distinct from the pink pool price
+
+const CHAINS_WITH_BH3_PRICE = new Set<number>([
+  ChainId.BERA_MAINNET,
+  ChainId.ARBITRUM_MAINNET,
+  ChainId.HYPER_EVM,
+  ChainId.LINEA_MAINNET,
+  ChainId.ROBINHOOD_MAINNET,
+])
+
+const CHAINS_WITH_BENCH_RESERVES = new Set<number>([
+  ChainId.BERA_MAINNET,
+  ChainId.HYPER_EVM,
+  ChainId.LINEA_MAINNET,
+  ChainId.ARBITRUM_MAINNET,
+  ChainId.ROBINHOOD_MAINNET,
+])
+
+const hasBh3Price = (chainId: number) => CHAINS_WITH_BH3_PRICE.has(chainId)
+const hasBenchReserves = (chainId: number) => CHAINS_WITH_BENCH_RESERVES.has(chainId)
+
+const buildBh3Query = (template: string, keepBh3: boolean, keepBenchReserves: boolean) => {
+  let query = keepBh3 ? template : template.replace(/\s*bh3Price\s*/g, '\n')
+  if (!keepBenchReserves) {
+    query = query
+      .replace(/\s*bh3Reserve0\s*/g, '\n')
+      .replace(/\s*bh3Reserve1\s*/g, '\n')
+      .replace(/\s*token0Price\s*/g, '\n')
+      .replace(/\s*token1Price\s*/g, '\n')
+  }
+  return query
+}
+
+const GET_PAIR_STATS_BH3_DAY = `
+  query PairStatsBh3Day($pair: String) {
+    pairDayDatas(first: 1000, where: {pair: $pair}, orderBy: dayStartUnix, orderDirection: asc) {
+      dayStartUnix
+      tvl
+      lpPrice
+      bh3Price
+      bh3Reserve0
+      bh3Reserve1
+      token0Price
+      token1Price
+    }
+  }
+`
+
+const GET_PAIR_STATS_BH3_HOUR = `
+  query PairStatsBh3Hour($pair: String) {
+    pairHourDatas(first: 24, where: {pair: $pair}, orderBy: hourStartUnix, orderDirection: desc) {
+      hourStartUnix
+      tvl
+      lpPrice
+      bh3Price
+      bh3Reserve0
+      bh3Reserve1
+      token0Price
+      token1Price
+    }
+  }
+`
+
+const GET_PAIR_STATS_BH3_HOUR_OLDER = `
+  query PairStatsBh3HourOlder($pair: String, $before: Int) {
+    pairHourDatas(first: 168, where: {pair: $pair, hourStartUnix_lt: $before}, orderBy: hourStartUnix, orderDirection: desc) {
+      hourStartUnix
+      tvl
+      lpPrice
+      bh3Price
+      bh3Reserve0
+      bh3Reserve1
+      token0Price
+      token1Price
+    }
+  }
+`
+
+type Bh3DayData = {
+  dayStartUnix: number
+  tvl: number
+  lpPrice: number
+  bh3Price?: number
+  bh3Reserve0?: number
+  bh3Reserve1?: number
+  token0Price?: number
+  token1Price?: number
+}
+
+type Bh3HourData = Omit<Bh3DayData, 'dayStartUnix'> & { hourStartUnix: number }
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
 // Same data + computation as the recharts version: pool-balance % split from the
@@ -51,6 +144,7 @@ type Point = {
   pct0: number
   pct1: number
   lpVsBh: number | null
+  lpVsBh3: number | null
   price0: number
   vol: number
   // true = this swap BOUGHT the base token (base left the pool) → green/up bar;
@@ -64,6 +158,7 @@ type Point = {
 const COLOR0 = '#D8A072' // token0 (app orange/tan)
 const COLOR1 = '#4DA3FF' // token1 (blue)
 const COLOR_LPBH = '#83CF84' // LP vs BH (green)
+const COLOR_LPBH3 = '#F472B6' // LP vs BH3 (pink)
 const COLOR_PRICE0 = '#EC4899' // token0 USD price (pink/magenta) — distinct from the three above
 
 // Relative-price formatter that adapts decimals to magnitude (no `$` — the value
@@ -160,7 +255,7 @@ type Props = {
   token1FeedId?: string | null
 }
 
-type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0' | 'vol' | 'market' | ConfigKey
+type ToggleKey = 't0' | 't1' | 'lpbh' | 'lpbh3' | 'price0' | 'vol' | 'market' | ConfigKey
 
 export function PoolBalanceChart({
   pairAddress,
@@ -173,11 +268,12 @@ export function PoolBalanceChart({
   token1FeedId,
 }: Props) {
   const [range, setRange] = useState<Range>('7D')
+  const isHourly = range === '1D'
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
   // Config lines default OFF so the balance/price view stays clean; the boss's
   // params are added to the legend as toggles. Flip these to true for default-on.
   const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({
-    t0: true, t1: true, lpbh: true, price0: true, vol: true, market: true,
+    t0: true, t1: true, lpbh: true, lpbh3: true, price0: true, vol: true, market: true,
     kB: false, kQ: false, compress: false, sSell: false, sBuy: false, pythWeight: false,
   })
 
@@ -193,6 +289,36 @@ export function PoolBalanceChart({
   const baseFeedId = baseIdx === 0 ? token0FeedId : token1FeedId
   const quoteFeedId = baseIdx === 0 ? token1FeedId : token0FeedId
   const isMarketRefPair = isMarketRef(chainId, pairAddress)
+  const keepBh3 = hasBh3Price(chainId) && isV3Like(version)
+  const keepBenchReserves = hasBenchReserves(chainId) && isV3Like(version)
+
+  const { data: dayBh3Resp } = useQuery<{ pairDayDatas: Bh3DayData[] }>({
+    queryKey: ['poolBalanceBh3Day', chainId, pairAddress, version],
+    queryFn: () =>
+      graphqlFetcher({
+        operationName: 'PairStatsBh3Day',
+        query: withFirstActivityGte(buildBh3Query(GET_PAIR_STATS_BH3_DAY, keepBh3, keepBenchReserves), 'dayStartUnix', chainId, pairAddress),
+        variables: { chainId, version, pair: pairAddress.toLowerCase() },
+      }),
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    enabled: !isHourly && keepBh3,
+  })
+
+  const { data: hourBh3Resp } = useQuery<{ pairHourDatas: Bh3HourData[] }>({
+    queryKey: ['poolBalanceBh3Hour', chainId, pairAddress, version],
+    queryFn: () =>
+      graphqlFetcher({
+        operationName: 'PairStatsBh3Hour',
+        query: withFirstActivityGte(buildBh3Query(GET_PAIR_STATS_BH3_HOUR, keepBh3, keepBenchReserves), 'hourStartUnix', chainId, pairAddress),
+        variables: { chainId, version, pair: pairAddress.toLowerCase() },
+      }),
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    enabled: isHourly && keepBh3,
+  })
 
   // Colors follow BASE/QUOTE, not raw token0/token1: the BASE token is always GOLD
   // (COLOR0) and the QUOTE always BLUE (COLOR1), consistent across every pool. Base
@@ -207,6 +333,7 @@ export function PoolBalanceChart({
   // initial fetch). Combined with the initial batch in `combinedTxs`, so the
   // pct/LP-vs-BH step-attach math below is unchanged.
   const [olderTxs, setOlderTxs] = useState<PoolTxn[]>([])
+  const [olderBh3Hours, setOlderBh3Hours] = useState<Bh3HourData[]>([])
   // No concurrent fetches; stop once a batch returns < 1000 (older end reached).
   const loadingRef = useRef(false)
   const exhaustedRef = useRef(false)
@@ -221,6 +348,7 @@ export function PoolBalanceChart({
   // Reset accumulation + paging guards when the pool identity changes.
   useEffect(() => {
     setOlderTxs([])
+    setOlderBh3Hours([])
     loadingRef.current = false
     exhaustedRef.current = false
     pendingRestoreRef.current = false
@@ -238,6 +366,13 @@ export function PoolBalanceChart({
   // so the whole thing stays a single descending list. The oldest accumulated
   // timestamp (last element) is the cursor for the next `timestamp_lt` page.
   const combinedTxs = useMemo<PoolTxn[]>(() => [...baseTxns, ...olderTxs], [baseTxns, olderTxs])
+  const combinedBh3Hours = useMemo<Bh3HourData[]>(() => {
+    if (!isHourly) return []
+    const live = hourBh3Resp?.pairHourDatas ?? []
+    const byTime = new Map<number, Bh3HourData>()
+    ;[...live, ...olderBh3Hours].forEach((h) => byTime.set(Number(h.hourStartUnix), h))
+    return [...byTime.values()].sort((a, b) => Number(b.hourStartUnix) - Number(a.hourStartUnix))
+  }, [isHourly, hourBh3Resp, olderBh3Hours])
 
   // Full fetched series as a % split, chronological (indexer returns newest-first).
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point
@@ -281,12 +416,14 @@ export function PoolBalanceChart({
         // lines up with the actual swap timestamp (no daily-bucket step-attach).
         const lp = Number(t.lpPrice)
         const bnh = Number(t.bnhPrice)
+        const bh3 = Number(t.bh3Price)
         const lpVsBh = lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null
+        const lpVsBh3 = lp > 0 && bh3 > 0 ? (lp / bh3 - 1) * 100 : null
         // Oracle config snapshot (step lines). NaN when the field is absent on this
         // chain/version (the shared fetch's field tiers drop config where unindexed).
         const cfg = {} as Record<ConfigKey, number>
         for (const { key } of CONFIG_PARAMS) cfg[key] = Number(t[key])
-        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0, volUp, lpVsBh, cfg }
+        return { t: Number(t.timestamp), pct0, pct1, price0, vol: Number.isFinite(vol) ? vol : 0, volUp, lpVsBh, lpVsBh3, cfg }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0) && p.t <= futureCutoff)
     return base
@@ -311,7 +448,7 @@ export function PoolBalanceChart({
   const emptyConfig = () =>
     CONFIG_PARAMS.reduce((a, { key }) => ((a[key] = []), a), {} as Record<ConfigKey, { time: any; value: number }[]>)
   const seriesData = useMemo(() => {
-    if (!grid) return { pct0: [], pct1: [], lpVsBh: [], price0: [], volume: [], config: emptyConfig() }
+    if (!grid) return { pct0: [], pct1: [], lpVsBh: [], lpVsBh3: [], price0: [], volume: [], config: emptyConfig() }
     const bucketed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
     // Config = per-bucket close of each param (carried forward = the step function).
     // The LINE value is scaled (×100 for sSell/sBuy) so tiny params aren't squished
@@ -328,6 +465,9 @@ export function PoolBalanceChart({
       lpVsBh: bucketed
         .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
         .map((p) => ({ time: p.t as any, value: p.lpVsBh as number })),
+      lpVsBh3: bucketed
+        .filter((p) => p.lpVsBh3 != null && Number.isFinite(p.lpVsBh3))
+        .map((p) => ({ time: p.t as any, value: p.lpVsBh3 as number })),
       price0: bucketed
         .filter((p) => Number.isFinite(p.price0))
         .map((p) => ({ time: p.t as any, value: p.price0 })),
@@ -362,6 +502,33 @@ export function PoolBalanceChart({
     [marketRaw, isMarketRefPair],
   )
 
+  const lpVsBh3Data = useMemo(() => {
+    if (!keepBh3 || !grid) return [] as { time: any; value: number }[]
+    const nowSec = Math.floor(Date.now() / 1000)
+    const toPoint = (row: Bh3DayData | Bh3HourData, time: number) => {
+      const lp = Number(row.lpPrice) || 0
+      const bh3 = Number(row.bh3Price) || 0
+      const tvl = Number(row.tvl) || 0
+      const p0 = Number(row.token0Price) || 0
+      const p1 = Number(row.token1Price) || 0
+      const bh3r0 = Number(row.bh3Reserve0) || 0
+      const bh3r1 = Number(row.bh3Reserve1) || 0
+      const bnhVal = (p0 > 0 || p1 > 0) && (bh3r0 > 0 || bh3r1 > 0) ? bh3r0 * p0 + bh3r1 * p1 : NaN
+      const value = Number.isFinite(bnhVal) && bnhVal > 0 ? ((tvl - bnhVal) / bnhVal) * 100 : bh3 > 0 ? ((lp - bh3) / bh3) * 100 : NaN
+      return Number.isFinite(value) ? { time: time as any, value } : null
+    }
+
+    const rows = isHourly ? combinedBh3Hours : dayBh3Resp?.pairDayDatas ?? []
+    const points = rows
+      .filter((row) => Number(isHourly ? (row as Bh3HourData).hourStartUnix : (row as Bh3DayData).dayStartUnix) <= nowSec)
+      .map((row) => toPoint(row, Number(isHourly ? (row as Bh3HourData).hourStartUnix : (row as Bh3DayData).dayStartUnix)))
+      .filter((row): row is { time: any; value: number } => row !== null)
+      .sort((a, b) => Number(a.time) - Number(b.time))
+      .map((row) => ({ t: Number(row.time), value: row.value }))
+
+    return bucketClose(points, bucket, grid.gridStart, grid.gridEnd).map((row) => ({ time: row.t as any, value: row.value }))
+  }, [keepBh3, grid, bucket, isHourly, combinedBh3Hours, dayBh3Resp])
+
   // The "now" split is always the latest trade, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
   const nowPct0 = latest ? latest.pct0 : null
@@ -381,6 +548,7 @@ export function PoolBalanceChart({
                 { key: 't1' as const, label: symbol1, color: token1Color },
               ]),
           ...(latest?.lpVsBh != null ? [{ key: 'lpbh' as const, label: 'LP vs BH', color: COLOR_LPBH }] : []),
+          ...(lpVsBh3Data.length ? [{ key: 'lpbh3' as const, label: 'LP vs BH3', color: COLOR_LPBH3 }] : []),
           ...(latest && Number.isFinite(latest.price0)
             ? [{ key: 'price0' as const, label: `${baseSymbol}/${quoteSymbol}`, color: COLOR_PRICE0 }]
             : []),
@@ -404,6 +572,7 @@ export function PoolBalanceChart({
   const line1Ref = useRef<ISeriesApi<'Line'> | null>(null)
   // The green LP-vs-BH LineSeries (right scale).
   const lpbhRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const lpbh3Ref = useRef<ISeriesApi<'Line'> | null>(null)
   // The base-token USD-price AreaSeries (backmost, own isolated 'price' overlay scale).
   const price0Ref = useRef<ISeriesApi<'Area'> | null>(null)
   // PILOT: the market-price reference LineSeries (same 'price' scale as price0).
@@ -415,7 +584,7 @@ export function PoolBalanceChart({
 
   // Hovered values for the floating tooltip (set while the crosshair moves).
   const [hovered, setHovered] = useState<
-    { pct0?: number; pct1?: number; lpVsBh?: number; price0?: number; market?: number; vol?: number } & Partial<Record<ConfigKey, number>> | null
+    { pct0?: number; pct1?: number; lpVsBh?: number; lpVsBh3?: number; price0?: number; market?: number; vol?: number } & Partial<Record<ConfigKey, number>> | null
   >(null)
   // Floating tooltip anchor — container-relative pixels + the hovered time.
   // null when the cursor is outside the plot area. Mirrors PairChartTV's `tip`.
@@ -458,6 +627,19 @@ export function PoolBalanceChart({
       const batch = await fetchPoolTxnsPage(chainId, version, pairAddress, before)
       if (batch.length < 1000) exhaustedRef.current = true
       if (batch.length > 0) {
+        if (isHourly && keepBh3 && combinedBh3Hours.length > 0) {
+          const oldestHour = combinedBh3Hours[combinedBh3Hours.length - 1]
+          const beforeHour = Number(oldestHour.hourStartUnix)
+          if (Number.isFinite(beforeHour)) {
+            const bh3Resp = (await graphqlFetcher({
+              operationName: 'PairStatsBh3HourOlder',
+              query: withFirstActivityGte(buildBh3Query(GET_PAIR_STATS_BH3_HOUR_OLDER, keepBh3, keepBenchReserves), 'hourStartUnix', chainId, pairAddress),
+              variables: { chainId, version, pair: pairAddress.toLowerCase(), before: beforeHour },
+            })) as { pairHourDatas?: Bh3HourData[] } | null
+            const bh3Batch = bh3Resp?.pairHourDatas ?? []
+            if (bh3Batch.length > 0) setOlderBh3Hours((prev) => [...prev, ...bh3Batch])
+          }
+        }
         // Times of existing bars don't change, so the saved TIME range stays valid.
         savedRangeRef.current = chartRef.current?.timeScale().getVisibleRange() ?? null
         pendingRestoreRef.current = true
@@ -466,7 +648,7 @@ export function PoolBalanceChart({
     } finally {
       loadingRef.current = false
     }
-  }, [combinedTxs, chainId, version, pairAddress])
+  }, [combinedTxs, chainId, version, pairAddress, isHourly, keepBh3, keepBenchReserves, combinedBh3Hours])
   loadMoreRef.current = loadMore
 
   // Create chart + series once.
@@ -644,6 +826,14 @@ export function PoolBalanceChart({
       lineWidth: 1,
       priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
     })
+    const lpbh3 = chart.addSeries(LineSeries, {
+      ...commonNoLabels,
+      priceScaleId: 'right',
+      color: COLOR_LPBH3,
+      lineWidth: 1,
+      lineStyle: LineStyle.Dotted,
+      priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
+    })
 
     // BOTTOM pane — signed volume histogram on its own 'vol' scale, based at 0 so
     // bars go up (green, price rose) or down (red, price fell). Per-point color
@@ -693,6 +883,7 @@ export function PoolBalanceChart({
       const p0 = param.seriesData.get(baseSeries) as { value?: number } | undefined
       const p1 = param.seriesData.get(line1) as { value?: number } | undefined
       const pl = param.seriesData.get(lpbh) as { value?: number } | undefined
+      const pl3 = param.seriesData.get(lpbh3) as { value?: number } | undefined
       const pp = param.seriesData.get(price0) as { value?: number } | undefined
       const pmk = param.seriesData.get(marketLine) as { value?: number } | undefined
       const pv = param.seriesData.get(volSeries) as { value?: number } | undefined
@@ -700,6 +891,7 @@ export function PoolBalanceChart({
         pct0: typeof p0?.value === 'number' ? p0.value : undefined,
         pct1: typeof p1?.value === 'number' ? p1.value : undefined,
         lpVsBh: typeof pl?.value === 'number' ? pl.value : undefined,
+        lpVsBh3: typeof pl3?.value === 'number' ? pl3.value : undefined,
         price0: typeof pp?.value === 'number' ? pp.value : undefined,
         market: typeof pmk?.value === 'number' ? pmk.value : undefined,
         vol: typeof pv?.value === 'number' ? pv.value : undefined,
@@ -726,6 +918,7 @@ export function PoolBalanceChart({
     baseSeriesRef.current = baseSeries
     line1Ref.current = line1
     lpbhRef.current = lpbh
+    lpbh3Ref.current = lpbh3
     price0Ref.current = price0
     marketRef.current = marketLine
     volSeriesRef.current = volSeries
@@ -736,6 +929,7 @@ export function PoolBalanceChart({
       baseSeriesRef.current = null
       line1Ref.current = null
       lpbhRef.current = null
+      lpbh3Ref.current = null
       price0Ref.current = null
       marketRef.current = null
       volSeriesRef.current = null
@@ -749,6 +943,7 @@ export function PoolBalanceChart({
     baseSeriesRef.current?.setData(seriesData.pct0)
     line1Ref.current?.setData(seriesData.pct1)
     lpbhRef.current?.setData(seriesData.lpVsBh)
+    lpbh3Ref.current?.setData(lpVsBh3Data)
     price0Ref.current?.setData(seriesData.price0)
     volSeriesRef.current?.setData(seriesData.volume)
     for (const { key } of CONFIG_PARAMS) configRefs.current[key]?.setData(seriesData.config[key])
@@ -768,7 +963,7 @@ export function PoolBalanceChart({
       applyRangePresetRef.current()
       framedForRangeRef.current = true
     }
-  }, [seriesData])
+  }, [seriesData, lpVsBh3Data])
 
   // Push the market reference line separately — it arrives async (Pyth fetch) after
   // the main series; setData preserves the visible range, so this never re-zooms.
@@ -785,6 +980,7 @@ export function PoolBalanceChart({
     baseSeriesRef.current?.applyOptions({ visible: visible.t0 })
     line1Ref.current?.applyOptions({ visible: visible.t1 })
     lpbhRef.current?.applyOptions({ visible: visible.lpbh })
+    lpbh3Ref.current?.applyOptions({ visible: visible.lpbh3 })
     price0Ref.current?.applyOptions({ visible: visible.price0 })
     marketRef.current?.applyOptions({ visible: visible.market })
     volSeriesRef.current?.applyOptions({ visible: visible.vol })
@@ -922,6 +1118,24 @@ export function PoolBalanceChart({
                     <span style={{ color: '#FBFBFD' }}>
                       {hovered.lpVsBh >= 0 ? '+' : ''}
                       {hovered.lpVsBh.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+                {hovered.lpVsBh3 !== undefined && (
+                  <div
+                    style={{
+                      borderTop: '1px solid #2F2823',
+                      marginTop: 6,
+                      paddingTop: 6,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 16,
+                    }}
+                  >
+                    <span style={{ color: COLOR_LPBH3 }}>LP vs BH3</span>
+                    <span style={{ color: '#FBFBFD' }}>
+                      {hovered.lpVsBh3 >= 0 ? '+' : ''}
+                      {hovered.lpVsBh3.toFixed(2)}%
                     </span>
                   </div>
                 )}
