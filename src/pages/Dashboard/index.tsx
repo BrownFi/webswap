@@ -23,43 +23,84 @@ function fmtUsd(n: number) {
   return n < 0 ? `-${formatted}` : formatted
 }
 
-function DashboardStatsBar({ stats, isLoading }: { stats: { label: string; value: string; sub?: string }[]; isLoading?: boolean }) {
+function DashboardStatsBar({ stats, isLoading }: { stats: { label: string; value: string; sub?: string; group: 'total' | '24h' }[]; isLoading?: boolean }) {
+  const totalStats = stats.filter((stat) => stat.group === 'total')
+  const dailyStats = stats.filter((stat) => stat.group === '24h')
+
+  const renderMetric = (stat: { label: string; value: string; sub?: string }) => (
+    <div key={stat.label} className="flex flex-col gap-1 min-w-0">
+      {isLoading ? (
+        <>
+          <div className="animate-pulse rounded h-[14px] w-[42%]" style={{ background: '#493E35' }} />
+          <div className="animate-pulse rounded h-[20px] w-[34%]" style={{ background: '#493E35' }} />
+        </>
+      ) : (
+        <>
+          <div style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#CFC7C1', lineHeight: '19px' }}>{stat.label}</div>
+          <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 700, color: '#D8A072', whiteSpace: 'nowrap', lineHeight: '22px' }}>{stat.value}</div>
+          {stat.sub && <div style={{ fontFamily: 'Inter', fontSize: '12px', fontWeight: 400, color: '#6B6059', lineHeight: '16px' }}>{stat.sub}</div>}
+        </>
+      )}
+    </div>
+  )
+
+  const totalColumns = [totalStats.slice(0, 2), totalStats.slice(2, 4)]
+  const dailyColumns = [dailyStats.slice(0, 2), dailyStats.slice(2)]
+
+  const renderDesktopMetric = (stat: { label: string; value: string; sub?: string }) => (
+    <div key={stat.label} className="flex flex-col gap-1 min-w-0">
+      {isLoading ? (
+        <>
+          <div className="animate-pulse rounded h-[14px] w-[42%]" style={{ background: '#493E35' }} />
+          <div className="animate-pulse rounded h-[20px] w-[34%]" style={{ background: '#493E35' }} />
+        </>
+      ) : (
+        <>
+          <div style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#CFC7C1', lineHeight: '19px' }}>{stat.label}</div>
+          <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 700, color: '#D8A072', whiteSpace: 'nowrap', lineHeight: '22px' }}>{stat.value}</div>
+          {stat.sub && <div style={{ fontFamily: 'Inter', fontSize: '12px', fontWeight: 400, color: '#6B6059', lineHeight: '16px' }}>{stat.sub}</div>}
+        </>
+      )}
+    </div>
+  )
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-      {stats.map((stat, index) => (
-        <div
-          key={`${stat.label}-${index}`}
-          className={`relative overflow-hidden flex flex-col gap-[4px] sm:gap-[8px] p-[12px] sm:p-[20px] items-center md:items-start text-center md:text-left ${
-            index === 0 ? 'col-span-2 md:col-span-1' : ''
-          }`}
-          style={{ background: '#2F2823', borderRadius: '12px' }}
-        >
-          {isLoading ? (
-            <>
-              <div className="animate-pulse rounded h-[16px] sm:h-[20px] w-[60%]" style={{ background: '#493E35' }} />
-              <div className="animate-pulse rounded h-[22px] sm:h-[28px] w-[80%]" style={{ background: '#493E35' }} />
-              <div className="animate-pulse rounded h-[14px] sm:h-[18px] w-[50%]" style={{ background: '#493E35' }} />
-            </>
-          ) : (
-            <>
-              <span className="text-[11px] sm:text-[14px]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.4', color: '#FBFBFD' }}>
-                {stat.label}
-              </span>
-              <span
-                className="text-[16px] sm:text-[22px] leading-[22px] sm:leading-[28px]"
-                style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '-0.02em', color: '#D8A072' }}
-              >
-                {stat.value}
-              </span>
-              {stat.sub && (
-                <span className="text-[10px] sm:text-[13px]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.4', letterSpacing: '-0.02em', color: '#978A80' }}>
-                  {stat.sub}
-                </span>
-              )}
-            </>
-          )}
+    <div style={{ background: '#2F2823', borderRadius: '16px', padding: '16px 20px' }}>
+      <div className="md:hidden grid grid-cols-1 gap-y-6">
+        <div className="flex flex-col gap-4">
+          <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>Total</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+            {totalColumns.map((column, index) => (
+              <div key={index} className="flex flex-col gap-3">
+                {column.map(renderMetric)}
+              </div>
+            ))}
+          </div>
         </div>
-      ))}
+        <div className="flex flex-col gap-4">
+          <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>24h</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+            {dailyColumns.map((column, index) => (
+              <div key={index} className="flex flex-col gap-3">
+                {column.map(renderMetric)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden md:grid grid-cols-4 gap-x-8 gap-y-4">
+        <div className="col-span-2" style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>Total</div>
+        <div className="col-span-2" style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>24h</div>
+        <div>{renderDesktopMetric(totalStats[0])}</div>
+        <div>{renderDesktopMetric(totalStats[1])}</div>
+        <div>{dailyStats[0] ? renderDesktopMetric(dailyStats[0]) : null}</div>
+        <div>{dailyStats[1] ? renderDesktopMetric(dailyStats[1]) : null}</div>
+        <div>{renderDesktopMetric(totalStats[2])}</div>
+        <div>{renderDesktopMetric(totalStats[3])}</div>
+        <div>{dailyStats[2] ? renderDesktopMetric(dailyStats[2]) : null}</div>
+        <div />
+      </div>
     </div>
   )
 }
@@ -96,6 +137,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
   const [expanded, setExpanded] = useState(false)
   const chainMeta = useMemo(() => availableChains.find((chain) => chain.id === row.chainId), [row.chainId])
   const isHemi = row.chainId === 43111
+  const totalVolume24h = row.versions.reduce((acc, versionRow) => acc + (versionRow.totalVolume24h || 0), 0)
 
   return (
     <div style={{ background: '#1E1915', borderRadius: '12px', border: '1px solid #2F2823' }}>
@@ -119,6 +161,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
         </div>
         <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD' }}>{fmtUsd(row.totalFeeAllTime)}</div>
         <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#D8A072' }}>{fmtUsd(row.totalRevenueAllTime)}</div>
+        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(totalVolume24h)}</div>
         <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(row.totalFee24h)}</div>
         <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#D8A072' }}>{fmtUsd(row.totalRevenue24h)}</div>
         <div className="hidden md:flex items-center justify-end" style={{ flex: 0.35 }}>
@@ -127,6 +170,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
         <div className="md:hidden w-full grid grid-cols-2 gap-2 mt-2">
           <MetricChip label="Fee All-time" value={fmtUsd(row.totalFeeAllTime)} />
           <MetricChip label="Revenue All-time" value={fmtUsd(row.totalRevenueAllTime)} accent />
+          <MetricChip label="Volume 24h" value={fmtUsd(totalVolume24h)} />
           <MetricChip label="Fee 24h" value={fmtUsd(row.totalFee24h)} />
           <MetricChip label="Revenue 24h" value={fmtUsd(row.totalRevenue24h)} accent />
         </div>
@@ -137,6 +181,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
             <span style={{ flex: 1.4 }}>Source</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Volume 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue 24h</span>
           </div>
@@ -148,11 +193,13 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
                 </div>
                 <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(versionRow.totalFeeAllTime)}</div>
                 <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}>{fmtUsd(versionRow.totalRevenueAllTime)}</div>
+                <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(versionRow.totalVolume24h)}</div>
                 <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(versionRow.totalFee24h)}</div>
                 <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}>{fmtUsd(versionRow.totalRevenue24h)}</div>
                 <div className="md:hidden w-full grid grid-cols-2 gap-2 mt-1">
                   <MetricChip label="Fee All-time" value={fmtUsd(versionRow.totalFeeAllTime)} />
                   <MetricChip label="Revenue All-time" value={fmtUsd(versionRow.totalRevenueAllTime)} accent />
+                  <MetricChip label="Volume 24h" value={fmtUsd(versionRow.totalVolume24h)} />
                   <MetricChip label="Fee 24h" value={fmtUsd(versionRow.totalFee24h)} />
                   <MetricChip label="Revenue 24h" value={fmtUsd(versionRow.totalRevenue24h)} accent />
                 </div>
@@ -175,7 +222,7 @@ function MetricChip({ label, value, accent = false }: { label: string; value: st
 }
 
 export default function Dashboard() {
-  const { chains, archivedV2, stats, isLoading, isError } = useRevenueDashboard()
+  const { chains, stats, isLoading, isError } = useRevenueDashboard()
   const { data: protocolStats, isLoading: isLoadingProtocolStats } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
     queryFn: fetchProtocolStats,
@@ -184,13 +231,13 @@ export default function Dashboard() {
   })
 
   const statCards = [
-    { label: 'Total Value Locked', value: fmtUsd(protocolStats?.currentTvl ?? 0), sub: 'Current TVL' },
-    { label: 'All-time Volume', value: fmtUsd(protocolStats?.volumeAllTime ?? 0), sub: 'Since launch' },
-    { label: '24h Volume', value: fmtUsd(protocolStats?.volume24h ?? 0), sub: 'Across all chains' },
-    { label: 'Total Fee All-time', value: fmtUsd(protocolStats?.feesAllTime ?? 0), sub: 'Since launch' },
-    { label: 'Total Revenue All-time', value: fmtUsd(stats.totalRevenueAllTime), sub: 'Since launch' },
-    { label: 'Total Fee 24h', value: fmtUsd(protocolStats?.fees24h ?? 0), sub: 'Across all chains' },
-    { label: 'Total Revenue 24h', value: fmtUsd(stats.totalRevenue24h), sub: 'Across all chains' },
+    { label: 'Total Value Locked', value: fmtUsd(protocolStats?.currentTvl ?? 0), sub: 'Current TVL', group: 'total' as const },
+    { label: 'Total Fee All-time', value: fmtUsd(protocolStats?.feesAllTime ?? 0), sub: 'Since launch', group: 'total' as const },
+    { label: 'Total Revenue All-time', value: fmtUsd(stats.totalRevenueAllTime), sub: 'Since launch', group: 'total' as const },
+    { label: 'All-time Volume', value: fmtUsd(protocolStats?.volumeAllTime ?? 0), sub: 'Since launch', group: 'total' as const },
+    { label: '24h Volume', value: fmtUsd(protocolStats?.volume24h ?? 0), sub: 'Across all chains', group: '24h' as const },
+    { label: 'Fee 24h', value: fmtUsd(protocolStats?.fees24h ?? 0), sub: 'Across all chains', group: '24h' as const },
+    { label: 'Revenue 24h', value: fmtUsd(stats.totalRevenue24h), sub: 'Across all chains', group: '24h' as const },
   ]
 
   return (
@@ -200,7 +247,7 @@ export default function Dashboard() {
           <TitleRow padding={'0'}>
             <Flex alignItems="center" className="gap-4 flex-wrap">
               <span className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]" style={{ fontFamily: 'Inter', fontWeight: 600, letterSpacing: '-0.02em', color: '#FBFBFD' }}>
-                Revenue Dashboard
+                Dashboard
               </span>
             </Flex>
           </TitleRow>
@@ -211,6 +258,7 @@ export default function Dashboard() {
             <span style={{ flex: 2 }}>Chain</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Volume 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue 24h</span>
             <span style={{ flex: 0.35 }} />
@@ -236,50 +284,6 @@ export default function Dashboard() {
             </EmptyProposals>
           )}
 
-          {archivedV2.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD' }}>V2 Archived</div>
-              <div style={{ background: '#1E1915', borderRadius: '12px', border: '1px solid #2F2823', padding: '16px' }}>
-                <div className="hidden md:flex items-center" style={{ gap: '8px', paddingBottom: '8px', fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>
-                  <span style={{ flex: 1.4 }}>Chain</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Fee 24h</span>
-                  <span style={{ flex: 1, textAlign: 'right' }}>Revenue 24h</span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {archivedV2.map((row) => {
-                    const chainMeta = availableChains.find((chain) => chain.id === row.chainId)
-                    return (
-                      <div key={`archived-${row.chainId}`} className="flex items-center max-md:flex-wrap max-md:gap-2" style={{ gap: '8px', background: '#15110E', borderRadius: '10px', padding: '12px' }}>
-                        <div className="flex items-center gap-3 min-w-0 max-md:w-full" style={{ flex: 1.4 }}>
-                          {chainMeta?.iconUrl ? (
-                            <img src={chainMeta.iconUrl as string} alt={row.chainName} style={{ width: 24, height: 24, borderRadius: '50%' }} />
-                          ) : (
-                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#2F2823' }} />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD' }}>{row.chainName}</div>
-                            <div style={{ marginTop: 4 }}><VersionBadge row={row} /></div>
-                          </div>
-                        </div>
-                        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(row.totalFeeAllTime)}</div>
-                        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}>{fmtUsd(row.totalRevenueAllTime)}</div>
-                        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#978A80' }}>{fmtUsd(row.totalFee24h)}</div>
-                        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#978A80' }}>{fmtUsd(row.totalRevenue24h)}</div>
-                        <div className="md:hidden w-full grid grid-cols-2 gap-2 mt-1">
-                          <MetricChip label="Fee All-time" value={fmtUsd(row.totalFeeAllTime)} />
-                          <MetricChip label="Revenue All-time" value={fmtUsd(row.totalRevenueAllTime)} accent />
-                          <MetricChip label="Fee 24h" value={fmtUsd(row.totalFee24h)} />
-                          <MetricChip label="Revenue 24h" value={fmtUsd(row.totalRevenue24h)} />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
         </AutoColumn>
       </AutoColumn>
     </PageWrapper>

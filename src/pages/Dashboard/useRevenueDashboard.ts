@@ -15,6 +15,9 @@ const CHAIN_REVENUE_QUERY = `
       dailyFees
       dailyRevenue
     }
+    pairs(first: 1000) {
+      volumeDay
+    }
   }
 `
 
@@ -31,6 +34,7 @@ const HEMI_REVENUE_QUERY = `
     }
     algebraDayDatas(orderBy: date, orderDirection: desc, first: 1) {
       date
+      volumeUSD
       feesUSD
     }
   }
@@ -84,6 +88,7 @@ export type RevenueVersionRow = {
   version: VersionValue
   totalFeeAllTime: number
   totalRevenueAllTime: number
+  totalVolume24h: number
   totalFee24h: number
   totalRevenue24h: number
   isArchived: boolean
@@ -94,6 +99,7 @@ export type RevenueChainRow = {
   chainName: string
   totalFeeAllTime: number
   totalRevenueAllTime: number
+  totalVolume24h: number
   totalFee24h: number
   totalRevenue24h: number
   versions: RevenueVersionRow[]
@@ -120,6 +126,12 @@ function num(v: string | number | null | undefined): number {
   return Number.isFinite(n) ? n : 0
 }
 
+function chainSortWeight(chainId: number) {
+  if (chainId === 8453) return -2 // Base
+  if (chainId === 42161) return -1 // Arbitrum
+  return 0
+}
+
 async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | typeof VERSION.V3_OFFICIAL) {
   const data = await graphqlFetcher({
     operationName: 'ChainRevenue',
@@ -128,9 +140,11 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
   })
   const factory = (data as any)?.factories?.[0]
   const latestDay = (data as any)?.factoryDayDatas?.[0]
+  const pairs: any[] = (data as any)?.pairs ?? []
   return {
     totalFeeAllTime: num(factory?.totalFee),
     totalRevenueAllTime: num(factory?.totalRevenue),
+    totalVolume24h: pairs.reduce((acc, pair) => acc + num(pair?.volumeDay), 0),
     totalFee24h: num(latestDay?.dailyFees),
     totalRevenue24h: num(latestDay?.dailyRevenue),
   }
@@ -153,6 +167,7 @@ async function fetchHemiRevenue() {
   return {
     totalFeeAllTime: totalFees,
     totalRevenueAllTime: totalCommunityFees,
+    totalVolume24h: num(latestDay?.volumeUSD),
     totalFee24h: dailyFees,
     totalRevenue24h: dailyFees * revenueRatio,
   }
@@ -177,7 +192,9 @@ export function useRevenueDashboard(): RevenueDashboardResult {
 
   const queries = useQueries({
     queries: tasks.map((task) => ({
-      queryKey: ['revenueDashboard', task.kind, task.version, task.chainId],
+      // Versioned key so newly-added fields (e.g. totalVolume24h) don't keep reading
+      // older cached payloads from a previous dashboard shape during the 5-minute stale window.
+      queryKey: ['revenueDashboard:v4', task.kind, task.version, task.chainId],
       queryFn: () =>
         task.kind === 'hemi'
           ? fetchHemiRevenue()
@@ -197,6 +214,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         | {
             totalFeeAllTime: number
             totalRevenueAllTime: number
+            totalVolume24h: number
             totalFee24h: number
             totalRevenue24h: number
           }
@@ -207,6 +225,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         version: task.version,
         totalFeeAllTime: data?.totalFeeAllTime ?? 0,
         totalRevenueAllTime: data?.totalRevenueAllTime ?? 0,
+        totalVolume24h: data?.totalVolume24h ?? 0,
         totalFee24h: data?.totalFee24h ?? 0,
         totalRevenue24h: data?.totalRevenue24h ?? 0,
         isArchived: task.version === VERSION.V2,
@@ -225,6 +244,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           version: VERSION.V2 as const,
           totalFeeAllTime: num(snapshot.totalFeeAllTime),
           totalRevenueAllTime: num(snapshot.totalRevenueAllTime),
+          totalVolume24h: 0,
           totalFee24h: 0,
           totalRevenue24h: 0,
           isArchived: true,
@@ -241,6 +261,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
       if (existing) {
         existing.totalFeeAllTime += row.totalFeeAllTime
         existing.totalRevenueAllTime += row.totalRevenueAllTime
+        existing.totalVolume24h += row.totalVolume24h
         existing.totalFee24h += row.totalFee24h
         existing.totalRevenue24h += row.totalRevenue24h
         existing.versions.push(row)
@@ -250,13 +271,18 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           chainName: row.chainName,
           totalFeeAllTime: row.totalFeeAllTime,
           totalRevenueAllTime: row.totalRevenueAllTime,
+          totalVolume24h: row.totalVolume24h,
           totalFee24h: row.totalFee24h,
           totalRevenue24h: row.totalRevenue24h,
           versions: [row],
         })
       }
     }
-    return [...grouped.values()].sort((a, b) => b.totalRevenueAllTime - a.totalRevenueAllTime)
+    return [...grouped.values()].sort((a, b) => {
+      const weightDiff = chainSortWeight(a.chainId) - chainSortWeight(b.chainId)
+      if (weightDiff !== 0) return -weightDiff
+      return b.totalRevenueAllTime - a.totalRevenueAllTime
+    })
   }, [versionRows])
 
   const stats = useMemo<RevenueDashboardStats>(() => {
