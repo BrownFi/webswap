@@ -7,7 +7,7 @@ import { EmptyProposals, PageWrapper, TitleRow } from 'pages/Pool/styleds'
 import { fetchProtocolStats, type ProtocolStats } from 'services/protocolStatsService'
 import { TYPE } from 'theme'
 import { VERSION, versionLabel } from 'lib/sdk/constants/addresses'
-import { useRevenueDashboard, type RevenueChainRow, type RevenueVersionRow } from './useRevenueDashboard'
+import { useRevenueDashboard, type RevenueChainRow, type RevenueStatsBreakdown, type RevenueVersionRow } from './useRevenueDashboard'
 
 const HEMI_ICON_URL = 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png'
 
@@ -23,9 +23,31 @@ function fmtUsd(n: number) {
   return n < 0 ? `-${formatted}` : formatted
 }
 
-function DashboardStatsBar({ stats, isLoading }: { stats: { label: string; value: string; sub?: string; group: 'total' | '24h' }[]; isLoading?: boolean }) {
+function DashboardStatsBar({ stats, breakdown, isLoading }: { stats: { label: string; value: string; sub?: string; group: 'total' | '24h' }[]; breakdown: RevenueStatsBreakdown[]; isLoading?: boolean }) {
   const totalStats = stats.filter((stat) => stat.group === 'total')
   const dailyStats = stats.filter((stat) => stat.group === '24h')
+  const [showBreakdown, setShowBreakdown] = useState(false)
+
+  const breakdownValueFor = (label: string, row: RevenueStatsBreakdown) => {
+    switch (label) {
+      case 'Total Fee All-time':
+        return row.totalFeeAllTime
+      case 'Total Revenue All-time':
+        return row.totalRevenueAllTime
+      case 'Total Value Locked':
+        return row.totalValueLocked
+      case 'All-time Volume':
+        return row.totalVolumeAllTime
+      case '24h Volume':
+        return row.totalVolume24h
+      case 'Fee 24h':
+        return row.totalFee24h
+      case 'Revenue 24h':
+        return row.totalRevenue24h
+      default:
+        return null
+    }
+  }
 
   const renderMetric = (stat: { label: string; value: string; sub?: string }) => (
     <div key={stat.label} className="flex flex-col gap-1 min-w-0">
@@ -39,6 +61,20 @@ function DashboardStatsBar({ stats, isLoading }: { stats: { label: string; value
           <div style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#CFC7C1', lineHeight: '19px' }}>{stat.label}</div>
           <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 700, color: '#D8A072', whiteSpace: 'nowrap', lineHeight: '22px' }}>{stat.value}</div>
           {stat.sub && <div style={{ fontFamily: 'Inter', fontSize: '12px', fontWeight: 400, color: '#6B6059', lineHeight: '16px' }}>{stat.sub}</div>}
+          {showBreakdown && (
+            <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {breakdown.map((row) => {
+                const value = breakdownValueFor(stat.label, row)
+                if (value === null) return null
+                return (
+                  <div key={`${stat.label}-${row.label}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontFamily: 'Inter', fontSize: '12px' }}>
+                    <span style={{ color: '#978A80' }}>{row.label}</span>
+                    <span style={{ color: '#FBFBFD' }}>{fmtUsd(value)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -59,6 +95,20 @@ function DashboardStatsBar({ stats, isLoading }: { stats: { label: string; value
           <div style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#CFC7C1', lineHeight: '19px' }}>{stat.label}</div>
           <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 700, color: '#D8A072', whiteSpace: 'nowrap', lineHeight: '22px' }}>{stat.value}</div>
           {stat.sub && <div style={{ fontFamily: 'Inter', fontSize: '12px', fontWeight: 400, color: '#6B6059', lineHeight: '16px' }}>{stat.sub}</div>}
+          {showBreakdown && (
+            <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {breakdown.map((row) => {
+                const value = breakdownValueFor(stat.label, row)
+                if (value === null) return null
+                return (
+                  <div key={`${stat.label}-${row.label}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontFamily: 'Inter', fontSize: '12px' }}>
+                    <span style={{ color: '#978A80' }}>{row.label}</span>
+                    <span style={{ color: '#FBFBFD' }}>{fmtUsd(value)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -66,6 +116,27 @@ function DashboardStatsBar({ stats, isLoading }: { stats: { label: string; value
 
   return (
     <div style={{ background: '#2F2823', borderRadius: '16px', padding: '16px 20px' }}>
+      <div className="flex items-center justify-between mb-4">
+        <div />
+        <button
+          type="button"
+          onClick={() => setShowBreakdown((value) => !value)}
+          style={{
+            background: '#1E1915',
+            border: '1px solid #493E35',
+            borderRadius: '8px',
+            padding: '8px 12px',
+            fontFamily: 'Inter',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#FBFBFD',
+            cursor: 'pointer',
+          }}
+        >
+          {showBreakdown ? 'Hide Detail' : 'Detail'}
+        </button>
+      </div>
+
       <div className="md:hidden grid grid-cols-1 gap-y-6">
         <div className="flex flex-col gap-4">
           <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>Total</div>
@@ -222,7 +293,7 @@ function MetricChip({ label, value, accent = false }: { label: string; value: st
 }
 
 export default function Dashboard() {
-  const { chains, stats, isLoading, isError } = useRevenueDashboard()
+  const { chains, stats, breakdown, isLoading, isError } = useRevenueDashboard()
   const { data: protocolStats, isLoading: isLoadingProtocolStats } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
     queryFn: fetchProtocolStats,
@@ -252,7 +323,7 @@ export default function Dashboard() {
             </Flex>
           </TitleRow>
 
-          <DashboardStatsBar stats={statCards} isLoading={isLoading || isLoadingProtocolStats} />
+          <DashboardStatsBar stats={statCards} breakdown={breakdown} isLoading={isLoading || isLoadingProtocolStats} />
 
           <div className="hidden md:flex items-center" style={{ padding: '8px 16px', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80', gap: '8px' }}>
             <span style={{ flex: 2 }}>Chain</span>

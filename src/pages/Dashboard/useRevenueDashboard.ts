@@ -7,6 +7,8 @@ import { graphqlFetcher } from 'utils/graphql'
 const CHAIN_REVENUE_QUERY = `
   query ChainRevenue {
     factories {
+      tvl
+      totalVolume
       totalFee
       totalRevenue
     }
@@ -28,6 +30,8 @@ const HEMI_SUBGRAPH_URL = import.meta.env.VITE_GRAPH_API_KEY
 const HEMI_REVENUE_QUERY = `
   query HemiRevenue {
     factories {
+      totalValueLockedUSD
+      totalVolumeUSD
       totalFeesUSD
       totalCommunityFeesUSD
       totalAlgebraFeesUSD
@@ -40,32 +44,42 @@ const HEMI_REVENUE_QUERY = `
   }
 `
 
-const V2_SNAPSHOTS: Record<number, { totalFeeAllTime: string; totalRevenueAllTime: string; totalFee24h: string; totalRevenue24h: string }> = {
+const V2_SNAPSHOTS: Record<number, { totalValueLocked: string; totalVolumeAllTime: string; totalFeeAllTime: string; totalRevenueAllTime: string; totalFee24h: string; totalRevenue24h: string }> = {
   80094: {
+    totalValueLocked: '3052.26493502076308719834447217',
+    totalVolumeAllTime: '86158931.84493510853172763268475948',
     totalFeeAllTime: '224068.0177701327156647139396319536',
     totalRevenueAllTime: '70782.5573590071149497634827008291',
     totalFee24h: '0',
     totalRevenue24h: '0',
   },
   42161: {
+    totalValueLocked: '40.31622737984759960491568803',
+    totalVolumeAllTime: '1913861.79891756186791376523363619',
     totalFeeAllTime: '774.3731216781383970406485177125009',
     totalRevenueAllTime: '84.50257959657555662300239865565038',
     totalFee24h: '0',
     totalRevenue24h: '0',
   },
   8453: {
+    totalValueLocked: '688.09454067968961570949931993',
+    totalVolumeAllTime: '30773664.15011198214916653716104459',
     totalFeeAllTime: '18220.06463531018496715621168822788',
     totalRevenueAllTime: '1950.282413353956368932453495045939',
     totalFee24h: '0',
     totalRevenue24h: '0',
   },
   999: {
+    totalValueLocked: '1415.5198704865209126702301027',
+    totalVolumeAllTime: '44039189.10827223438962816187492933',
     totalFeeAllTime: '63488.23156451719505730862641233882',
     totalRevenueAllTime: '10382.26754555973612655699510912325',
     totalFee24h: '0',
     totalRevenue24h: '0',
   },
   59144: {
+    totalValueLocked: '2095.90889170179964903621228544',
+    totalVolumeAllTime: '80683448.64578541996995210166070242',
     totalFeeAllTime: '110844.9389961166438778608694841931',
     totalRevenueAllTime: '18402.99951951931819449245458398714',
     totalFee24h: '0',
@@ -86,6 +100,8 @@ export type RevenueVersionRow = {
   chainId: number
   chainName: string
   version: VersionValue
+  totalValueLocked: number
+  totalVolumeAllTime: number
   totalFeeAllTime: number
   totalRevenueAllTime: number
   totalVolume24h: number
@@ -112,10 +128,22 @@ export type RevenueDashboardStats = {
   totalRevenue24h: number
 }
 
+export type RevenueStatsBreakdown = {
+  label: string
+  totalValueLocked: number
+  totalVolumeAllTime: number
+  totalFeeAllTime: number
+  totalRevenueAllTime: number
+  totalVolume24h: number
+  totalFee24h: number
+  totalRevenue24h: number
+}
+
 export type RevenueDashboardResult = {
   chains: RevenueChainRow[]
   archivedV2: RevenueVersionRow[]
   stats: RevenueDashboardStats
+  breakdown: RevenueStatsBreakdown[]
   isLoading: boolean
   isError: boolean
 }
@@ -142,6 +170,8 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
   const latestDay = (data as any)?.factoryDayDatas?.[0]
   const pairs: any[] = (data as any)?.pairs ?? []
   return {
+    totalValueLocked: num(factory?.tvl),
+    totalVolumeAllTime: num(factory?.totalVolume),
     totalFeeAllTime: num(factory?.totalFee),
     totalRevenueAllTime: num(factory?.totalRevenue),
     totalVolume24h: pairs.reduce((acc, pair) => acc + num(pair?.volumeDay), 0),
@@ -165,6 +195,8 @@ async function fetchHemiRevenue() {
   const revenueRatio = totalFees > 0 ? totalCommunityFees / totalFees : 0
   const dailyFees = num(latestDay?.feesUSD)
   return {
+    totalValueLocked: num(factory?.totalValueLockedUSD),
+    totalVolumeAllTime: num(factory?.totalVolumeUSD),
     totalFeeAllTime: totalFees,
     totalRevenueAllTime: totalCommunityFees,
     totalVolume24h: num(latestDay?.volumeUSD),
@@ -212,6 +244,8 @@ export function useRevenueDashboard(): RevenueDashboardResult {
       const query = queries[index]
       const data = query.data as
         | {
+            totalValueLocked: number
+            totalVolumeAllTime: number
             totalFeeAllTime: number
             totalRevenueAllTime: number
             totalVolume24h: number
@@ -223,6 +257,8 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         chainId: task.chainId,
         chainName: task.chainName,
         version: task.version,
+        totalValueLocked: data?.totalValueLocked ?? 0,
+        totalVolumeAllTime: data?.totalVolumeAllTime ?? 0,
         totalFeeAllTime: data?.totalFeeAllTime ?? 0,
         totalRevenueAllTime: data?.totalRevenueAllTime ?? 0,
         totalVolume24h: data?.totalVolume24h ?? 0,
@@ -242,6 +278,8 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           chainId: chain.id,
           chainName: chain.name,
           version: VERSION.V2 as const,
+          totalValueLocked: num(snapshot.totalValueLocked),
+          totalVolumeAllTime: num(snapshot.totalVolumeAllTime),
           totalFeeAllTime: num(snapshot.totalFeeAllTime),
           totalRevenueAllTime: num(snapshot.totalRevenueAllTime),
           totalVolume24h: 0,
@@ -297,10 +335,34 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     )
   }, [chains])
 
+  const breakdown = useMemo<RevenueStatsBreakdown[]>(() => {
+    const groups: Array<{ label: string; rows: RevenueVersionRow[] }> = [
+      { label: 'V3', rows: liveVersionRows.filter((row) => row.version === VERSION.V3_OFFICIAL) },
+      { label: 'V2', rows: archivedV2 },
+      { label: 'Hemi', rows: liveVersionRows.filter((row) => row.version === 'hemi') },
+    ]
+    return groups.map((group) =>
+      group.rows.reduce<RevenueStatsBreakdown>(
+        (acc, row) => ({
+          label: group.label,
+          totalValueLocked: acc.totalValueLocked + row.totalValueLocked,
+          totalVolumeAllTime: acc.totalVolumeAllTime + row.totalVolumeAllTime,
+          totalFeeAllTime: acc.totalFeeAllTime + row.totalFeeAllTime,
+          totalRevenueAllTime: acc.totalRevenueAllTime + row.totalRevenueAllTime,
+          totalVolume24h: acc.totalVolume24h + row.totalVolume24h,
+          totalFee24h: acc.totalFee24h + row.totalFee24h,
+          totalRevenue24h: acc.totalRevenue24h + row.totalRevenue24h,
+        }),
+        { label: group.label, totalValueLocked: 0, totalVolumeAllTime: 0, totalFeeAllTime: 0, totalRevenueAllTime: 0, totalVolume24h: 0, totalFee24h: 0, totalRevenue24h: 0 },
+      ),
+    )
+  }, [liveVersionRows, archivedV2])
+
   return {
     chains,
     archivedV2,
     stats,
+    breakdown,
     isLoading: queries.some((query) => query.isLoading),
     isError: queries.every((query) => query.isError),
   }
