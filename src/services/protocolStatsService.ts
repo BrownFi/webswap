@@ -71,7 +71,7 @@ const V3_INDEXER_CHAINS: number[] = [
 // chains — Bera, Arbitrum, Base, HyperEVM, Linea) captured 2026-08-06 when V2
 // stopped. They're constant by definition, so they're hardcoded instead of
 // re-querying a stopped indexer.
-const V2_ALL_TIME_VOLUME = 243_568_078.57
+export const V2_ALL_TIME_VOLUME = 243_568_078.57
 const V2_ALL_TIME_FEES = 417_293.92
 
 // Persist across full page reloads (which wipe React Query's in-memory cache).
