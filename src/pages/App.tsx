@@ -25,6 +25,7 @@ const AddLiquidity = lazy(() => import('./AddLiquidity'))
 const RemoveLiquidity = lazy(() => import('./RemoveLiquidity'))
 const PoolDetail = lazy(() => import('./Pool/Detail'))
 const Portfolio = lazy(() => import('./Portfolio'))
+const Dashboard = lazy(() => import('./Dashboard'))
 
 const BodyWrapper = styled.div`
   display: flex;
@@ -97,6 +98,14 @@ export default function App() {
               element={
                 <RouteErrorBoundary>
                   <Portfolio />
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <RouteErrorBoundary>
+                  <Dashboard />
                 </RouteErrorBoundary>
               }
             />

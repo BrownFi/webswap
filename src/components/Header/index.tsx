@@ -165,6 +165,7 @@ export default function Header() {
   const showCustomAccountDisplay = !!account && !isConnected
   const location = useLocation()
   const isPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) => location.pathname.startsWith(p))
+  const isDashboardActive = location.pathname.startsWith('/dashboard')
 
   return (
     <div
@@ -214,6 +215,9 @@ export default function Header() {
             </StyledNavLink>
             <StyledNavLink id="portfolio-nav-link" to="/portfolio">
               Portfolio
+            </StyledNavLink>
+            <StyledNavLink id="dashboard-nav-link" to="/dashboard" end className={isDashboardActive ? 'active' : ''}>
+              Dashboard
             </StyledNavLink>
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them
