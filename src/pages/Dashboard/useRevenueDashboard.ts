@@ -12,13 +12,10 @@ const CHAIN_REVENUE_QUERY = `
       totalFee
       totalRevenue
     }
-    factoryDayDatas(first: 1, orderBy: dayStartUnix, orderDirection: desc) {
-      dayStartUnix
-      dailyFees
-      dailyRevenue
-    }
     pairs(first: 1000) {
       volumeDay
+      feeDay
+      feeSplit
     }
   }
 `
@@ -167,7 +164,6 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
     variables: { chainId, version },
   })
   const factory = (data as any)?.factories?.[0]
-  const latestDay = (data as any)?.factoryDayDatas?.[0]
   const pairs: any[] = (data as any)?.pairs ?? []
   return {
     totalValueLocked: num(factory?.tvl),
@@ -175,8 +171,13 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
     totalFeeAllTime: num(factory?.totalFee),
     totalRevenueAllTime: num(factory?.totalRevenue),
     totalVolume24h: pairs.reduce((acc, pair) => acc + num(pair?.volumeDay), 0),
-    totalFee24h: num(latestDay?.dailyFees),
-    totalRevenue24h: num(latestDay?.dailyRevenue),
+    // Pair `feeDay` is the rolling 24h value used by Pool detail/list.
+    // `factoryDayDatas.dailyFees` is only the current UTC-day bucket, so it
+    // can be materially lower during the day.
+    totalFee24h: pairs.reduce((acc, pair) => acc + num(pair?.feeDay), 0),
+    // Revenue follows the same rolling-24h basis as pool detail: fees earned
+    // by each pool multiplied by its protocol fee split.
+    totalRevenue24h: pairs.reduce((acc, pair) => acc + num(pair?.feeDay) * num(pair?.feeSplit), 0),
   }
 }
 
@@ -226,7 +227,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     queries: tasks.map((task) => ({
       // Versioned key so newly-added fields (e.g. totalVolume24h) don't keep reading
       // older cached payloads from a previous dashboard shape during the 5-minute stale window.
-      queryKey: ['revenueDashboard:v4', task.kind, task.version, task.chainId],
+      queryKey: ['revenueDashboard:v5', task.kind, task.version, task.chainId],
       queryFn: () =>
         task.kind === 'hemi'
           ? fetchHemiRevenue()

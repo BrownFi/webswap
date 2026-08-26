@@ -308,6 +308,7 @@ function PoolDetailInner({
   const annualReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairRaw, chainId)
   // Fee APY = indexer APR converted to APY (n=360 compounding), V2 + V3.
   const feeAprDisplay = ratiosMeaningful ? aprToApy(feeAPR ?? 0) : 0
+  const revenue24h = Number(pairRaw?.feeDay ?? 0) * Number(pairRaw?.protocolFee ?? 0)
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   // Berachain hardfork moved rewards from BGT → native BERA, so the incentive shows
   // BERA branding (the `bgtAPR` data field name is kept — it's the same reward APR).
@@ -863,12 +864,13 @@ function PoolDetailInner({
                   <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`} kodiak={competitorData ? `${formatNumberLambda(competitorData.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'} />
                   <StatCompareRow label="TVL" ours={formatPrice(pairRaw?.tvl ?? 0)} kodiak={competitorData ? formatCompactPrice(competitorData.tvlUSD) : '--'} />
                   <StatCompareRow label="24H volume" ours={formatPrice(volume24h ?? 0)} kodiak={competitorData ? formatCompactPrice(competitorData.vol24hUSD) : '--'} />
-                  <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={competitorData ? formatCompactPrice(competitorData.fees24hUSD) : '--'} />
                   <StatCompareRow
                     label="24H fees / TVL"
                     ours={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)}
                     kodiak={competitorData ? feesTvlPct(competitorData.fees24hUSD, competitorData.tvlUSD) : '--'}
                   />
+                  <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={competitorData ? formatCompactPrice(competitorData.fees24hUSD) : '--'} />
+                  <StatCompareRow label="24H revenue" ours={formatPrice(revenue24h)} kodiak="--" />
                 </div>
               ) : (
                 <>
@@ -876,14 +878,16 @@ function PoolDetailInner({
                   <div className="flex flex-col gap-2 lg:hidden">
                     <StatInline label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
                     <StatInline label="24H volume" value={formatPrice(volume24h ?? 0)} />
-                    <StatInline label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
                     <StatInline label="24H fees / TVL" value={ratiosMeaningful ? feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number) : '--'} />
+                    <StatInline label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+                    <StatInline label="24H revenue" value={formatPrice(revenue24h)} />
                   </div>
                   <div className="hidden lg:block">
                     <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
                     <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
-                    <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
                     <StatRow label="24H fees / TVL" value={ratiosMeaningful ? feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number) : '--'} />
+                    <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
+                    <StatRow label="24H revenue" value={formatPrice(revenue24h)} />
                   </div>
                 </>
               )}
