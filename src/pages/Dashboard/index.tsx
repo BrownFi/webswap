@@ -179,7 +179,7 @@ function DashboardStatsBar({ stats, breakdown, isLoading }: { stats: { label: st
 function VersionBadge({ row }: { row: RevenueVersionRow }) {
   const isV2 = row.version === VERSION.V2
   const isHemi = row.version === 'hemi'
-  const label = isHemi ? 'Hemi' : versionLabel(row.version)
+  const label = isHemi ? 'Hemi' : versionLabel(row.version as typeof VERSION.V2 | typeof VERSION.V3_OFFICIAL)
   return (
     <div className="inline-flex items-center gap-2">
       <span

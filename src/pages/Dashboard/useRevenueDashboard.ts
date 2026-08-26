@@ -213,7 +213,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         kind: 'indexer' as const,
         chainId: chain.id,
         chainName: chain.name,
-        version: VERSION.V3_OFFICIAL as const,
+        version: VERSION.V3_OFFICIAL,
       }))
 
     return [
@@ -277,7 +277,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         return {
           chainId: chain.id,
           chainName: chain.name,
-          version: VERSION.V2 as const,
+          version: VERSION.V2,
           totalValueLocked: num(snapshot.totalValueLocked),
           totalVolumeAllTime: num(snapshot.totalVolumeAllTime),
           totalFeeAllTime: num(snapshot.totalFeeAllTime),
