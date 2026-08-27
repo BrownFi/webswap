@@ -8,12 +8,32 @@ import { fetchProjectXPairMap } from './projectXService'
 import { fetchUniswapPairMap, fetchUniswapRobinhoodPairMap } from './uniswapService'
 import { fetchEtherexPairMap } from './etherexService'
 
+export type CompetitorReference = {
+  version: 'V3' | 'V4'
+  feeTier: number
+  tvlUSD: number
+  vol24hUSD: number
+  fees24hUSD: number
+}
+
 export interface CompetitorPairData {
   // feeTier in hundredths of a bip (500 = 0.05%, 3000 = 0.3%).
   feeTier: number
   tvlUSD: number
   vol24hUSD: number
   fees24hUSD: number
+  /** Multiple reference pools, ordered V3 then V4 when both exist. */
+  references?: CompetitorReference[]
+}
+
+export function competitorReferences(data: CompetitorPairData): CompetitorReference[] {
+  return data.references?.length
+    ? data.references
+    : [{ version: 'V3', feeTier: data.feeTier, tvlUSD: data.tvlUSD, vol24hUSD: data.vol24hUSD, fees24hUSD: data.fees24hUSD }]
+}
+
+export function competitorBestReference(data: CompetitorPairData): CompetitorReference {
+  return competitorReferences(data).reduce((best, reference) => (reference.tvlUSD > best.tvlUSD ? reference : best))
 }
 
 // Map key for a token pair: both addresses lowercased and sorted so token order

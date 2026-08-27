@@ -5,7 +5,7 @@
 // `Origin: https://app.uniswap.org` server-side: `/uniswap/*` → the gateway via
 // functions/uniswap (CF Pages, beta/bera), api/uniswap (Vercel, dev), and
 // vite.config server.proxy (local dev).
-import { CompetitorPairData, competitorPairKey } from './competitors'
+import { CompetitorPairData, CompetitorReference, competitorPairKey } from './competitors'
 
 // Same-origin proxy prefix (see functions/uniswap, vercel.json, vite.config).
 const UNISWAP_PROXY_BASE = import.meta.env.VITE_UNISWAP_PROXY_BASE || '/uniswap'
@@ -34,6 +34,13 @@ interface UniswapPoolRaw {
   token1?: { address: string } | null
 }
 
+// The gateway resolves V4 pools by poolId, not by the BrownFi adapter address.
+const ROBINHOOD_UNISWAP_V4_POOL_IDS = [
+  '0x3bb34a44f1b2b5f32c034c38a53065a521a47b199700fa9bd19d60985ff24bf1',
+  '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907',
+  '0x2bca43d9d8c75399e3c6ba14e9dc88f44ca8968bb4694a8be4f80bd5a550df2e',
+]
+
 // Robinhood competitor = SPECIFIC Uniswap V3 pools (chosen by the team), fetched
 // BY ADDRESS — not the top-pools list. The gateway's topV3Pools doesn't index
 // Robinhood, but v3Pool(chain, address) resolves a single pool with feeTier + TVL +
@@ -60,38 +67,64 @@ const V3_POOL_BY_ADDRESS_QUERY = `query V3Pool($chain: Chain!, $address: String!
   }
 }`
 
+const V4_POOL_BY_ID_QUERY = `query V4Pool($chain: Chain!, $poolId: String!) {
+  v4Pool(chain: $chain, poolId: $poolId) {
+    feeTier
+    totalLiquidity { value }
+    volume24h: cumulativeVolume(duration: DAY) { value }
+    token0 { address }
+    token1 { address }
+  }
+}`
+
+async function fetchUniswapPool<T>(query: string, variables: Record<string, string>): Promise<T | null> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10_000)
+  try {
+    const res = await fetch(`${UNISWAP_PROXY_BASE}${UNISWAP_GRAPHQL_PATH}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
+    })
+    if (!res.ok) return null
+    return ((await res.json()) as { data?: T }).data ?? null
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, CompetitorPairData>> {
   const map: Record<string, CompetitorPairData> = {}
   await Promise.all(
     ROBINHOOD_UNISWAP_POOLS.map(async (address) => {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10_000)
-      try {
-        const res = await fetch(`${UNISWAP_PROXY_BASE}${UNISWAP_GRAPHQL_PATH}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: V3_POOL_BY_ADDRESS_QUERY, variables: { chain: 'ROBINHOOD', address } }),
-          signal: controller.signal,
-        })
-        if (!res.ok) return
-        const json = (await res.json()) as { data?: { v3Pool?: UniswapPoolRaw | null } }
-        const p = json.data?.v3Pool
-        if (!p?.token0?.address || !p?.token1?.address) return
-        const feeTier = Number(p.feeTier) || 0
-        const vol24hUSD = Number(p.volume24h?.value) || 0
-        map[competitorPairKey(p.token0.address, p.token1.address)] = {
-          feeTier,
-          tvlUSD: Number(p.totalLiquidity?.value) || 0,
-          vol24hUSD,
-          fees24hUSD: (vol24hUSD * feeTier) / 1_000_000,
-        }
-      } catch {
-        // network/timeout — skip this pool (refetched on the next 5-min cycle)
-      } finally {
-        clearTimeout(timeoutId)
-      }
+      const data = await fetchUniswapPool<{ v3Pool?: UniswapPoolRaw | null }>(V3_POOL_BY_ADDRESS_QUERY, { chain: 'ROBINHOOD', address })
+      const p = data?.v3Pool
+      if (!p?.token0?.address || !p?.token1?.address) return
+      const feeTier = Number(p.feeTier) || 0
+      const vol24hUSD = Number(p.volume24h?.value) || 0
+      const reference: CompetitorReference = { version: 'V3', feeTier, tvlUSD: Number(p.totalLiquidity?.value) || 0, vol24hUSD, fees24hUSD: (vol24hUSD * feeTier) / 1_000_000 }
+      const key = competitorPairKey(p.token0.address, p.token1.address)
+      const existing = map[key]
+      map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
     }),
   )
+  await Promise.all(
+    ROBINHOOD_UNISWAP_V4_POOL_IDS.map(async (poolId) => {
+      const data = await fetchUniswapPool<{ v4Pool?: UniswapPoolRaw | null }>(V4_POOL_BY_ID_QUERY, { chain: 'ROBINHOOD', poolId })
+      const p = data?.v4Pool
+      if (!p?.token0?.address || !p?.token1?.address) return
+      const feeTier = Number(p.feeTier) || 0
+      const vol24hUSD = Number(p.volume24h?.value) || 0
+      const reference: CompetitorReference = { version: 'V4', feeTier, tvlUSD: Number(p.totalLiquidity?.value) || 0, vol24hUSD, fees24hUSD: (vol24hUSD * feeTier) / 1_000_000 }
+      const key = competitorPairKey(p.token0.address, p.token1.address)
+      const existing = map[key]
+      map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
+    }),
+  )
+  Object.values(map).forEach((data) => data.references?.sort((a, b) => a.version.localeCompare(b.version)))
   return map
 }
 

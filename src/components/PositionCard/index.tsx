@@ -37,7 +37,7 @@ import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
 import { aprToApy, formatNumber, formatNumberLambda, formatPrice, formatCompactPrice } from 'utils/prices'
-import { CompetitorPairData } from 'services/competitors'
+import { competitorBestReference, CompetitorPairData } from 'services/competitors'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
 import { merklCampaignPool, PairStats, usePoolStats, computeV3FeeApr } from './usePoolStats'
@@ -114,6 +114,11 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
   const enableBgt = !!pairBGT[pair.liquidityToken.address]
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
+  const competitorReference = competitor ? competitorBestReference(competitor) : undefined
+  const competitorFees = competitorReference ? `${formatNumberLambda(competitorReference.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'
+  const competitorTvls = competitorReference ? formatCompactPrice(competitorReference.tvlUSD) : '--'
+  const competitorIsV4 = competitorReference?.version === 'V4'
+  const competitorVolumes = competitorReference ? formatCompactPrice(competitorReference.vol24hUSD) : '--'
 
   const [showMore] = useState(isFavorite)
   const [showTokenPrice, setShowTokenPrice] = useState(false)
@@ -328,7 +333,7 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
               )}
               {showCompetitorColumns && competitor && (
                 <div className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#FBFBFD', marginTop: '2px' }}>
-                  {competitorName}: {formatNumberLambda(competitor.feeTier / 10000, { maximumFractionDigits: 2 })}% fee · TVL {formatCompactPrice(competitor.tvlUSD)} · 24h {formatCompactPrice(competitor.vol24hUSD)}
+                  {competitorName}: {competitorFees} fee · TVL {competitorTvls}{competitorIsV4 && <span style={{ fontSize: '10px', color: '#978A80', marginLeft: '2px' }}>(V4)</span>} · 24h {competitorVolumes}
                 </div>
               )}
               {!isMainnet && (
@@ -384,13 +389,13 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
           {showCompetitorColumns && (
             <>
               <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
-                {competitor ? `${formatNumberLambda(competitor.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'}
+                {competitorFees}
               </span>
               <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
-                {competitor ? formatCompactPrice(competitor.tvlUSD) : '--'}
+                {competitorTvls}{competitorIsV4 && <span style={{ fontSize: '11px', color: '#978A80', marginLeft: '3px' }}>(V4)</span>}
               </span>
               <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#FBFBFD' }}>
-                {competitor ? formatCompactPrice(competitor.vol24hUSD) : '--'}
+                {competitorVolumes}
               </span>
             </>
           )}
