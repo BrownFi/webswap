@@ -40,6 +40,12 @@ const POOL_ABI = [
   { type: 'function', name: 'observe', stateMutability: 'view', inputs: [{ type: 'uint32[]' }], outputs: [{ type: 'int56[]' }, { type: 'uint160[]' }] },
 ] as const
 
+const V4_ADAPTER_ABI = [
+  { type: 'function', name: 'poolManager', stateMutability: 'view', inputs: [], outputs: [{ type: 'address' }] },
+  { type: 'function', name: 'poolId', stateMutability: 'view', inputs: [], outputs: [{ type: 'bytes32' }] },
+  { type: 'function', name: 'hooks', stateMutability: 'view', inputs: [], outputs: [{ type: 'address' }] },
+] as const
+
 const ERC20_ABI = [{ type: 'function', name: 'decimals', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint8' }] }] as const
 
 const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11' as const
@@ -50,6 +56,7 @@ export interface OracleDirectPoolThreshold {
   address: string
   actual: number | null
   twapWindow: number
+  kind: 'v3' | 'v4-adapter' | 'unknown'
 }
 
 export interface OracleThresholds {
@@ -128,8 +135,8 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
     return { minTvlDirect: toNum(minQ), actualDirect: null, directPools: [], minTvlPath: toNum(minPB), actualPath: null, twapWindows: [] }
   }
 
-  // ── Stage 2: per-pool twapWindow + quoteTokenIndex + token0/1 + slot0 + liquidity ──
-  const perPool = 6
+  // ── Stage 2: per-pool metadata + V3 state + V4 adapter probe ──
+  const perPool = 9
   const s2 = await client.multicall({
     multicallAddress: MULTICALL3,
     allowFailure: true,
@@ -140,6 +147,11 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
       { address: l.pool, abi: POOL_ABI, functionName: 'token1' as const },
       { address: l.pool, abi: POOL_ABI, functionName: 'slot0' as const },
       { address: l.pool, abi: POOL_ABI, functionName: 'liquidity' as const },
+      // Original V3 pools do not expose these getters. The three successful
+      // calls identify BrownFi's UniswapV4ToV3Adapter.
+      { address: l.pool, abi: V4_ADAPTER_ABI, functionName: 'poolManager' as const },
+      { address: l.pool, abi: V4_ADAPTER_ABI, functionName: 'poolId' as const },
+      { address: l.pool, abi: V4_ADAPTER_ABI, functionName: 'hooks' as const },
     ]),
   })
   const g2 = <T,>(li: number, off: number): T | undefined => {
@@ -155,6 +167,7 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
     token1: Addr
     slot0Sqrt: bigint
     liquidity: bigint
+    kind: 'v3' | 'v4-adapter'
   }
   const resolved: (Leg | null)[] = legs.map((l, li) => {
     const window = Number(g2<number | bigint>(li, 0) ?? 0)
@@ -163,8 +176,21 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
     const token1 = g2<string>(li, 3)
     const slot0 = g2<readonly unknown[]>(li, 4)
     const liquidity = g2<bigint>(li, 5)
+    const hasV4AdapterGetters =
+      g2<string>(li, 6) !== undefined &&
+      g2<string>(li, 7) !== undefined &&
+      g2<string>(li, 8) !== undefined
     if (!token0 || !token1 || !slot0 || liquidity === undefined) return null
-    return { pool: l.pool, qti: poolQti, window, token0: token0 as Addr, token1: token1 as Addr, slot0Sqrt: BigInt(slot0[0] as bigint), liquidity }
+    return {
+      pool: l.pool,
+      qti: poolQti,
+      window,
+      token0: token0 as Addr,
+      token1: token1 as Addr,
+      slot0Sqrt: BigInt(slot0[0] as bigint),
+      liquidity,
+      kind: hasV4AdapterGetters ? 'v4-adapter' : 'v3',
+    }
   })
 
   const twapWindows = Array.from(new Set(resolved.filter((r): r is Leg => !!r).map((r) => r.window).filter((n) => n > 0)))
@@ -221,7 +247,7 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
       if (!r) return
       const pl = plOf(r, li)
       const actual = pl ? Number(formatUnits(directActualQuote(pl, r.qti), 18)) : null
-      directPoolThresholds.push({ address: r.pool, actual, twapWindow: r.window })
+      directPoolThresholds.push({ address: r.pool, actual, twapWindow: r.window, kind: r.kind })
     })
     const actualValues = directPoolThresholds.map((pool) => pool.actual).filter((value): value is number => value != null)
     actualDirect = actualValues.length ? actualValues.reduce((sum, value) => sum + value, 0) : null

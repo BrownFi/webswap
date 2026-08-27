@@ -345,7 +345,7 @@ function PoolDetailInner({
   const oracleDirectPools = useMemo(() => {
     if (oracleThresholds?.minTvlDirect == null) return []
     if (oracleThresholds.directPools.length) return oracleThresholds.directPools
-    return [{ address: '', actual: oracleThresholds.actualDirect, twapWindow: 0 }]
+    return [{ address: '', actual: oracleThresholds.actualDirect, twapWindow: 0, kind: 'unknown' }]
   }, [oracleThresholds])
   const totalValue = value0 + value1
   const pct0 = totalValue > 0 ? (value0 / totalValue) * 100 : 50
@@ -917,8 +917,8 @@ function PoolDetailInner({
                           <StatInline
                             key={pool.address || 'direct'}
                             small
-                            label={`Min TVL / Actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''}`}
-                            value={`${fmtMinActual(oracleThresholds.minTvlDirect!, pool.actual, oracleQuoteSymbol)}${pool.address ? ` · ${shortenAddress(pool.address)}` : ''}`}
+                            label={`Min TVL / Actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''} (${pool.kind === 'v4-adapter' ? 'V4' : pool.kind === 'v3' ? 'V3' : 'Unknown'})`}
+                            value={fmtMinActual(oracleThresholds.minTvlDirect!, pool.actual, oracleQuoteSymbol)}
                           />
                         ))}
                       {oracleThresholds.minTvlPath != null && (
@@ -934,8 +934,8 @@ function PoolDetailInner({
                           <StatRow
                             key={pool.address || 'direct'}
                             small
-                            label={`Min TVL / Actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''}`}
-                            value={`${fmtMinActual(oracleThresholds.minTvlDirect!, pool.actual, oracleQuoteSymbol)}${pool.address ? ` · ${shortenAddress(pool.address)}` : ''}`}
+                            label={`Min TVL / Actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''} (${pool.kind === 'v4-adapter' ? 'V4' : pool.kind === 'v3' ? 'V3' : 'Unknown'})`}
+                            value={fmtMinActual(oracleThresholds.minTvlDirect!, pool.actual, oracleQuoteSymbol)}
                           />
                         ))}
                       {oracleThresholds.minTvlPath != null && (
