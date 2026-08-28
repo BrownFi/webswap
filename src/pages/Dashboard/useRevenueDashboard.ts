@@ -41,7 +41,55 @@ const HEMI_REVENUE_QUERY = `
   }
 `
 
-const V2_SNAPSHOTS: Record<number, { totalValueLocked: string; totalVolumeAllTime: string; totalFeeAllTime: string; totalRevenueAllTime: string; totalFee24h: string; totalRevenue24h: string }> = {
+const ZERO_X_RECIPIENTS = [
+  '0x8f10b468b06c6fd214b65f87778827f7d113f996',
+  '0xc0d2948c60fa70e8c52ddcf2cda920a2983d363e',
+  '0x39b38686a19836ac10162c490e4558e120cbbe5f',
+]
+
+const ZERO_X_VOLUME_QUERY = `
+  query ZeroXVolume($timestampGte: BigInt, $recipients: [String!]) {
+    transactions(first: 1000, where: { type: "SWAP", to_in: $recipients, timestamp_gte: $timestampGte }, orderBy: timestamp, orderDirection: desc) {
+      timestamp
+      amount0In
+      amount0Out
+      amount1In
+      amount1Out
+      reserve0
+      reserve0USD
+      pythPrice0
+      pythPrice1
+    }
+  }
+`
+
+const ZERO_X_VOLUME_OLDER_QUERY = `
+  query ZeroXVolumeOlder($timestampGte: BigInt, $timestampLt: BigInt, $recipients: [String!]) {
+    transactions(first: 1000, where: { type: "SWAP", to_in: $recipients, timestamp_gte: $timestampGte, timestamp_lt: $timestampLt }, orderBy: timestamp, orderDirection: desc) {
+      timestamp
+      amount0In
+      amount0Out
+      amount1In
+      amount1Out
+      reserve0
+      reserve0USD
+      pythPrice0
+      pythPrice1
+    }
+  }
+`
+
+const V2_SNAPSHOTS: Record<
+  number,
+  {
+    totalValueLocked: string
+    totalVolumeAllTime: string
+    totalFeeAllTime: string
+    totalRevenueAllTime: string
+    totalFee24h: string
+    totalRevenue24h: string
+  }
+> = {
   80094: {
     totalValueLocked: '3052.26493502076308719834447217',
     totalVolumeAllTime: '86158931.84493510853172763268475948',
@@ -84,6 +132,9 @@ const V2_SNAPSHOTS: Record<number, { totalValueLocked: string; totalVolumeAllTim
   },
 }
 
+const ZERO_X_PAGE_SIZE = 1000
+const ZERO_X_MAX_PAGES = 100
+
 type VersionValue = typeof VERSION.V2 | typeof VERSION.V3_OFFICIAL | 'hemi'
 
 type FetchTask = {
@@ -104,6 +155,7 @@ export type RevenueVersionRow = {
   totalVolume24h: number
   totalFee24h: number
   totalRevenue24h: number
+  zeroXVolume24h: number
   isArchived: boolean
 }
 
@@ -115,6 +167,7 @@ export type RevenueChainRow = {
   totalVolume24h: number
   totalFee24h: number
   totalRevenue24h: number
+  zeroXVolume24h: number
   versions: RevenueVersionRow[]
 }
 
@@ -206,6 +259,55 @@ async function fetchHemiRevenue() {
   }
 }
 
+type ZeroXTransaction = {
+  timestamp?: number | string
+  amount0In?: number | string
+  amount0Out?: number | string
+  amount1In?: number | string
+  amount1Out?: number | string
+  reserve0?: number | string
+  reserve0USD?: number | string
+  pythPrice0?: number | string
+  pythPrice1?: number | string
+}
+
+function zeroXTransactionVolume(transaction: ZeroXTransaction) {
+  const amount0 = num(transaction.amount0In) + num(transaction.amount0Out)
+  const reserve0 = num(transaction.reserve0)
+  const reserve0Usd = num(transaction.reserve0USD)
+  return amount0 * (reserve0 > 0 && reserve0Usd > 0 ? reserve0Usd / reserve0 : num(transaction.pythPrice0))
+}
+
+async function fetchZeroXVolume(chainId: number): Promise<number> {
+  const timestampGte = Math.floor(Date.now() / 1000) - 24 * 60 * 60
+  let timestampLt: number | undefined
+  let total = 0
+
+  for (let page = 0; page < ZERO_X_MAX_PAGES; page += 1) {
+    const isFirstPage = timestampLt === undefined
+    const data = await graphqlFetcher({
+      operationName: isFirstPage ? 'ZeroXVolume' : 'ZeroXVolumeOlder',
+      query: isFirstPage ? ZERO_X_VOLUME_QUERY : ZERO_X_VOLUME_OLDER_QUERY,
+      variables: {
+        chainId,
+        version: VERSION.V3_OFFICIAL,
+        timestampGte: String(timestampGte),
+        ...(timestampLt === undefined ? {} : { timestampLt: String(timestampLt) }),
+        recipients: ZERO_X_RECIPIENTS,
+      },
+    })
+    const transactions = ((data as any)?.transactions ?? []) as ZeroXTransaction[]
+    total += transactions.reduce((pageTotal, transaction) => pageTotal + zeroXTransactionVolume(transaction), 0)
+
+    if (transactions.length < ZERO_X_PAGE_SIZE) break
+    const oldestTimestamp = num(transactions[transactions.length - 1]?.timestamp)
+    if (!oldestTimestamp || oldestTimestamp <= timestampGte) break
+    timestampLt = oldestTimestamp
+  }
+
+  return total
+}
+
 export function useRevenueDashboard(): RevenueDashboardResult {
   const tasks = useMemo<FetchTask[]>(() => {
     const v3Tasks = availableChains
@@ -217,10 +319,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         version: VERSION.V3_OFFICIAL,
       }))
 
-    return [
-      ...v3Tasks,
-      { kind: 'hemi' as const, chainId: 43111, chainName: 'Hemi', version: 'hemi' as const },
-    ]
+    return [...v3Tasks, { kind: 'hemi' as const, chainId: 43111, chainName: 'Hemi', version: 'hemi' as const }]
   }, [])
 
   const queries = useQueries({
@@ -239,6 +338,23 @@ export function useRevenueDashboard(): RevenueDashboardResult {
       retry: 1,
     })),
   })
+
+  const zeroXChains = [4663, 999]
+  const zeroXQueries = useQueries({
+    queries: zeroXChains.map((chainId) => ({
+      queryKey: ['revenueDashboard:0x:v1', chainId],
+      queryFn: () => fetchZeroXVolume(chainId),
+      staleTime: 5 * 60_000,
+      gcTime: 30 * 60_000,
+      refetchInterval: false as const,
+      refetchOnWindowFocus: true,
+      retry: 1,
+    })),
+  })
+  const zeroXVolumeByChain = useMemo(
+    () => new Map(zeroXChains.map((chainId, index) => [chainId, zeroXQueries[index]?.data ?? 0])),
+    [zeroXQueries],
+  )
 
   const liveVersionRows = useMemo<RevenueVersionRow[]>(() => {
     return tasks.map((task, index) => {
@@ -265,10 +381,14 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         totalVolume24h: data?.totalVolume24h ?? 0,
         totalFee24h: data?.totalFee24h ?? 0,
         totalRevenue24h: data?.totalRevenue24h ?? 0,
+        zeroXVolume24h:
+          task.version === VERSION.V3_OFFICIAL
+            ? Math.min(zeroXVolumeByChain.get(task.chainId) ?? 0, (data?.totalVolume24h ?? 0) * 0.999)
+            : 0,
         isArchived: task.version === VERSION.V2,
       }
     })
-  }, [queries, tasks])
+  }, [queries, tasks, zeroXVolumeByChain])
 
   const archivedV2 = useMemo<RevenueVersionRow[]>(() => {
     return availableChains
@@ -286,6 +406,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalVolume24h: 0,
           totalFee24h: 0,
           totalRevenue24h: 0,
+          zeroXVolume24h: 0,
           isArchived: true,
         }
       })
@@ -303,6 +424,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         existing.totalVolume24h += row.totalVolume24h
         existing.totalFee24h += row.totalFee24h
         existing.totalRevenue24h += row.totalRevenue24h
+        existing.zeroXVolume24h += row.zeroXVolume24h
         existing.versions.push(row)
       } else {
         grouped.set(row.chainId, {
@@ -313,6 +435,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalVolume24h: row.totalVolume24h,
           totalFee24h: row.totalFee24h,
           totalRevenue24h: row.totalRevenue24h,
+          zeroXVolume24h: row.zeroXVolume24h,
           versions: [row],
         })
       }
@@ -354,7 +477,16 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalFee24h: acc.totalFee24h + row.totalFee24h,
           totalRevenue24h: acc.totalRevenue24h + row.totalRevenue24h,
         }),
-        { label: group.label, totalValueLocked: 0, totalVolumeAllTime: 0, totalFeeAllTime: 0, totalRevenueAllTime: 0, totalVolume24h: 0, totalFee24h: 0, totalRevenue24h: 0 },
+        {
+          label: group.label,
+          totalValueLocked: 0,
+          totalVolumeAllTime: 0,
+          totalFeeAllTime: 0,
+          totalRevenueAllTime: 0,
+          totalVolume24h: 0,
+          totalFee24h: 0,
+          totalRevenue24h: 0,
+        },
       ),
     )
   }, [liveVersionRows, archivedV2])
@@ -364,7 +496,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     archivedV2,
     stats,
     breakdown,
-    isLoading: queries.some((query) => query.isLoading),
+    isLoading: queries.some((query) => query.isLoading) || zeroXQueries.some((query) => query.isLoading),
     isError: queries.every((query) => query.isError),
   }
 }

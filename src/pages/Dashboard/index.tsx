@@ -7,7 +7,12 @@ import { EmptyProposals, PageWrapper, TitleRow } from 'pages/Pool/styleds'
 import { fetchProtocolStats, type ProtocolStats } from 'services/protocolStatsService'
 import { TYPE } from 'theme'
 import { VERSION, versionLabel } from 'lib/sdk/constants/addresses'
-import { useRevenueDashboard, type RevenueChainRow, type RevenueStatsBreakdown, type RevenueVersionRow } from './useRevenueDashboard'
+import {
+  useRevenueDashboard,
+  type RevenueChainRow,
+  type RevenueStatsBreakdown,
+  type RevenueVersionRow,
+} from './useRevenueDashboard'
 
 const HEMI_ICON_URL = 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png'
 
@@ -23,7 +28,19 @@ function fmtUsd(n: number) {
   return n < 0 ? `-${formatted}` : formatted
 }
 
-function DashboardStatsBar({ stats, breakdown, isLoading }: { stats: { label: string; value: string; sub?: string; group: 'total' | '24h' }[]; breakdown: RevenueStatsBreakdown[]; isLoading?: boolean }) {
+function fmtZeroXVolume(n: number, chainId: number) {
+  return chainId === 4663 || chainId === 999 ? fmtUsd(n) : '-'
+}
+
+function DashboardStatsBar({
+  stats,
+  breakdown,
+  isLoading,
+}: {
+  stats: { label: string; value: string; sub?: string; group: 'total' | '24h' }[]
+  breakdown: RevenueStatsBreakdown[]
+  isLoading?: boolean
+}) {
   const totalStats = stats.filter((stat) => stat.group === 'total')
   const dailyStats = stats.filter((stat) => stat.group === '24h')
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -58,16 +75,44 @@ function DashboardStatsBar({ stats, breakdown, isLoading }: { stats: { label: st
         </>
       ) : (
         <>
-          <div style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#CFC7C1', lineHeight: '19px' }}>{stat.label}</div>
-          <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 700, color: '#D8A072', whiteSpace: 'nowrap', lineHeight: '22px' }}>{stat.value}</div>
-          {stat.sub && <div style={{ fontFamily: 'Inter', fontSize: '12px', fontWeight: 400, color: '#6B6059', lineHeight: '16px' }}>{stat.sub}</div>}
+          <div style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#CFC7C1', lineHeight: '19px' }}>
+            {stat.label}
+          </div>
+          <div
+            style={{
+              fontFamily: 'Inter',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: '#D8A072',
+              whiteSpace: 'nowrap',
+              lineHeight: '22px',
+            }}
+          >
+            {stat.value}
+          </div>
+          {stat.sub && (
+            <div
+              style={{ fontFamily: 'Inter', fontSize: '12px', fontWeight: 400, color: '#6B6059', lineHeight: '16px' }}
+            >
+              {stat.sub}
+            </div>
+          )}
           {showBreakdown && (
             <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
               {breakdown.map((row) => {
                 const value = breakdownValueFor(stat.label, row)
                 if (value === null) return null
                 return (
-                  <div key={`${stat.label}-${row.label}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontFamily: 'Inter', fontSize: '12px' }}>
+                  <div
+                    key={`${stat.label}-${row.label}`}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      fontFamily: 'Inter',
+                      fontSize: '12px',
+                    }}
+                  >
                     <span style={{ color: '#978A80' }}>{row.label}</span>
                     <span style={{ color: '#FBFBFD' }}>{fmtUsd(value)}</span>
                   </div>
@@ -92,16 +137,44 @@ function DashboardStatsBar({ stats, breakdown, isLoading }: { stats: { label: st
         </>
       ) : (
         <>
-          <div style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#CFC7C1', lineHeight: '19px' }}>{stat.label}</div>
-          <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 700, color: '#D8A072', whiteSpace: 'nowrap', lineHeight: '22px' }}>{stat.value}</div>
-          {stat.sub && <div style={{ fontFamily: 'Inter', fontSize: '12px', fontWeight: 400, color: '#6B6059', lineHeight: '16px' }}>{stat.sub}</div>}
+          <div style={{ fontFamily: 'Inter', fontSize: '15px', fontWeight: 600, color: '#CFC7C1', lineHeight: '19px' }}>
+            {stat.label}
+          </div>
+          <div
+            style={{
+              fontFamily: 'Inter',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: '#D8A072',
+              whiteSpace: 'nowrap',
+              lineHeight: '22px',
+            }}
+          >
+            {stat.value}
+          </div>
+          {stat.sub && (
+            <div
+              style={{ fontFamily: 'Inter', fontSize: '12px', fontWeight: 400, color: '#6B6059', lineHeight: '16px' }}
+            >
+              {stat.sub}
+            </div>
+          )}
           {showBreakdown && (
             <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
               {breakdown.map((row) => {
                 const value = breakdownValueFor(stat.label, row)
                 if (value === null) return null
                 return (
-                  <div key={`${stat.label}-${row.label}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontFamily: 'Inter', fontSize: '12px' }}>
+                  <div
+                    key={`${stat.label}-${row.label}`}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      fontFamily: 'Inter',
+                      fontSize: '12px',
+                    }}
+                  >
                     <span style={{ color: '#978A80' }}>{row.label}</span>
                     <span style={{ color: '#FBFBFD' }}>{fmtUsd(value)}</span>
                   </div>
@@ -139,7 +212,17 @@ function DashboardStatsBar({ stats, breakdown, isLoading }: { stats: { label: st
 
       <div className="md:hidden grid grid-cols-1 gap-y-6">
         <div className="flex flex-col gap-4">
-          <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>Total</div>
+          <div
+            style={{
+              fontFamily: 'Inter',
+              fontSize: '20px',
+              fontWeight: 600,
+              color: '#FBFBFD',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Total
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
             {totalColumns.map((column, index) => (
               <div key={index} className="flex flex-col gap-3">
@@ -149,7 +232,17 @@ function DashboardStatsBar({ stats, breakdown, isLoading }: { stats: { label: st
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          <div style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>24h</div>
+          <div
+            style={{
+              fontFamily: 'Inter',
+              fontSize: '20px',
+              fontWeight: 600,
+              color: '#FBFBFD',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            24h
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
             {dailyColumns.map((column, index) => (
               <div key={index} className="flex flex-col gap-3">
@@ -161,8 +254,18 @@ function DashboardStatsBar({ stats, breakdown, isLoading }: { stats: { label: st
       </div>
 
       <div className="hidden md:grid grid-cols-4 gap-x-8 gap-y-4">
-        <div className="col-span-2" style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>Total</div>
-        <div className="col-span-2" style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>24h</div>
+        <div
+          className="col-span-2"
+          style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}
+        >
+          Total
+        </div>
+        <div
+          className="col-span-2"
+          style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}
+        >
+          24h
+        </div>
         <div>{renderDesktopMetric(totalStats[0])}</div>
         <div>{renderDesktopMetric(totalStats[1])}</div>
         <div>{dailyStats[0] ? renderDesktopMetric(dailyStats[0]) : null}</div>
@@ -186,7 +289,11 @@ function VersionBadge({ row }: { row: RevenueVersionRow }) {
         style={{
           padding: '2px 6px',
           borderRadius: '6px',
-          background: isHemi ? 'rgba(111, 179, 230, 0.12)' : isV2 ? 'rgba(151, 138, 128, 0.12)' : 'rgba(196, 148, 58, 0.12)',
+          background: isHemi
+            ? 'rgba(111, 179, 230, 0.12)'
+            : isV2
+              ? 'rgba(151, 138, 128, 0.12)'
+              : 'rgba(196, 148, 58, 0.12)',
           border: `1px solid ${isHemi ? 'rgba(111, 179, 230, 0.35)' : isV2 ? 'rgba(151, 138, 128, 0.35)' : 'rgba(196, 148, 58, 0.35)'}`,
           fontFamily: 'Inter',
           fontSize: '10px',
@@ -220,57 +327,192 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
       >
         <div className="flex items-center gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
           {chainMeta?.iconUrl ? (
-            <img src={chainMeta.iconUrl as string} alt={row.chainName} style={{ width: 28, height: 28, borderRadius: '50%' }} />
+            <img
+              src={chainMeta.iconUrl as string}
+              alt={row.chainName}
+              style={{ width: 28, height: 28, borderRadius: '50%' }}
+            />
           ) : isHemi ? (
             <img src={HEMI_ICON_URL} alt="Hemi" style={{ width: 28, height: 28, borderRadius: '50%' }} />
           ) : (
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#2F2823' }} />
           )}
           <div className="min-w-0 flex-1">
-            <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD' }}>{row.chainName}</div>
+            <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD' }}>
+              {row.chainName}
+            </div>
           </div>
         </div>
-        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#FBFBFD' }}>{fmtUsd(row.totalFeeAllTime)}</div>
-        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', color: '#D8A072' }}>{fmtUsd(row.totalRevenueAllTime)}</div>
-        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(totalVolume24h)}</div>
-        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(row.totalFee24h)}</div>
-        <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#D8A072' }}>{fmtUsd(row.totalRevenue24h)}</div>
+        <div
+          className="max-md:hidden"
+          style={{
+            flex: 1,
+            textAlign: 'right',
+            fontFamily: 'Inter',
+            fontWeight: 600,
+            fontSize: '16px',
+            color: '#FBFBFD',
+          }}
+        >
+          {fmtUsd(row.totalFeeAllTime)}
+        </div>
+        <div
+          className="max-md:hidden"
+          style={{
+            flex: 1,
+            textAlign: 'right',
+            fontFamily: 'Inter',
+            fontWeight: 600,
+            fontSize: '16px',
+            color: '#D8A072',
+          }}
+        >
+          {fmtUsd(row.totalRevenueAllTime)}
+        </div>
+        <div
+          className="max-md:hidden"
+          style={{
+            flex: 1,
+            textAlign: 'right',
+            fontFamily: 'Inter',
+            fontWeight: 500,
+            fontSize: '14px',
+            color: '#FBFBFD',
+          }}
+        >
+          {fmtUsd(totalVolume24h)}
+        </div>
+        <div
+          className="max-md:hidden"
+          style={{
+            flex: 1,
+            textAlign: 'right',
+            fontFamily: 'Inter',
+            fontWeight: 500,
+            fontSize: '14px',
+            color: '#FBFBFD',
+          }}
+        >
+          {fmtZeroXVolume(row.zeroXVolume24h, row.chainId)}
+        </div>
+        <div
+          className="max-md:hidden"
+          style={{
+            flex: 1,
+            textAlign: 'right',
+            fontFamily: 'Inter',
+            fontWeight: 500,
+            fontSize: '14px',
+            color: '#FBFBFD',
+          }}
+        >
+          {fmtUsd(row.totalFee24h)}
+        </div>
+        <div
+          className="max-md:hidden"
+          style={{
+            flex: 1,
+            textAlign: 'right',
+            fontFamily: 'Inter',
+            fontWeight: 500,
+            fontSize: '14px',
+            color: '#D8A072',
+          }}
+        >
+          {fmtUsd(row.totalRevenue24h)}
+        </div>
         <div className="hidden md:flex items-center justify-end" style={{ flex: 0.35 }}>
-          <span style={{ color: '#978A80', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 150ms' }}>⌄</span>
+          <span
+            style={{
+              color: '#978A80',
+              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 150ms',
+            }}
+          >
+            ⌄
+          </span>
         </div>
         <div className="md:hidden w-full grid grid-cols-2 gap-2 mt-2">
           <MetricChip label="Fee All-time" value={fmtUsd(row.totalFeeAllTime)} />
           <MetricChip label="Revenue All-time" value={fmtUsd(row.totalRevenueAllTime)} accent />
           <MetricChip label="Volume 24h" value={fmtUsd(totalVolume24h)} />
+          <MetricChip label="0x Volume" value={fmtZeroXVolume(row.zeroXVolume24h, row.chainId)} />
           <MetricChip label="Fee 24h" value={fmtUsd(row.totalFee24h)} />
           <MetricChip label="Revenue 24h" value={fmtUsd(row.totalRevenue24h)} accent />
         </div>
       </button>
       {expanded && (
         <div style={{ borderTop: '1px solid #2F2823', padding: '12px 16px 16px' }}>
-          <div className="hidden md:flex items-center" style={{ gap: '8px', paddingBottom: '8px', fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>
+          <div
+            className="hidden md:flex items-center"
+            style={{
+              gap: '8px',
+              paddingBottom: '8px',
+              fontFamily: 'Inter',
+              fontWeight: 500,
+              fontSize: '13px',
+              color: '#978A80',
+            }}
+          >
             <span style={{ flex: 1.4 }}>Source</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Volume 24h</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>0x Volume</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue 24h</span>
           </div>
           <div className="flex flex-col gap-2">
             {row.versions.map((versionRow) => (
-              <div key={`${row.chainId}-${versionRow.version}`} className="flex items-center max-md:flex-wrap max-md:gap-2" style={{ gap: '8px', background: '#15110E', borderRadius: '10px', padding: '12px' }}>
+              <div
+                key={`${row.chainId}-${versionRow.version}`}
+                className="flex items-center max-md:flex-wrap max-md:gap-2"
+                style={{ gap: '8px', background: '#15110E', borderRadius: '10px', padding: '12px' }}
+              >
                 <div className="max-md:w-full" style={{ flex: 1.4 }}>
                   <VersionBadge row={versionRow} />
                 </div>
-                <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(versionRow.totalFeeAllTime)}</div>
-                <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}>{fmtUsd(versionRow.totalRevenueAllTime)}</div>
-                <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(versionRow.totalVolume24h)}</div>
-                <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}>{fmtUsd(versionRow.totalFee24h)}</div>
-                <div className="max-md:hidden" style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}>{fmtUsd(versionRow.totalRevenue24h)}</div>
+                <div
+                  className="max-md:hidden"
+                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
+                >
+                  {fmtUsd(versionRow.totalFeeAllTime)}
+                </div>
+                <div
+                  className="max-md:hidden"
+                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}
+                >
+                  {fmtUsd(versionRow.totalRevenueAllTime)}
+                </div>
+                <div
+                  className="max-md:hidden"
+                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
+                >
+                  {fmtUsd(versionRow.totalVolume24h)}
+                </div>
+                <div
+                  className="max-md:hidden"
+                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
+                >
+                  {fmtZeroXVolume(versionRow.zeroXVolume24h, versionRow.chainId)}
+                </div>
+                <div
+                  className="max-md:hidden"
+                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
+                >
+                  {fmtUsd(versionRow.totalFee24h)}
+                </div>
+                <div
+                  className="max-md:hidden"
+                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}
+                >
+                  {fmtUsd(versionRow.totalRevenue24h)}
+                </div>
                 <div className="md:hidden w-full grid grid-cols-2 gap-2 mt-1">
                   <MetricChip label="Fee All-time" value={fmtUsd(versionRow.totalFeeAllTime)} />
                   <MetricChip label="Revenue All-time" value={fmtUsd(versionRow.totalRevenueAllTime)} accent />
                   <MetricChip label="Volume 24h" value={fmtUsd(versionRow.totalVolume24h)} />
+                  <MetricChip label="0x Volume" value={fmtZeroXVolume(versionRow.zeroXVolume24h, versionRow.chainId)} />
                   <MetricChip label="Fee 24h" value={fmtUsd(versionRow.totalFee24h)} />
                   <MetricChip label="Revenue 24h" value={fmtUsd(versionRow.totalRevenue24h)} accent />
                 </div>
@@ -286,8 +528,12 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
 function MetricChip({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div style={{ background: '#1E1915', borderRadius: '8px', padding: '10px 12px', border: '1px solid #2F2823' }}>
-      <div style={{ fontFamily: 'Inter', fontSize: '11px', fontWeight: 500, color: '#978A80', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 600, color: accent ? '#D8A072' : '#FBFBFD' }}>{value}</div>
+      <div style={{ fontFamily: 'Inter', fontSize: '11px', fontWeight: 500, color: '#978A80', marginBottom: 4 }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: 'Inter', fontSize: '14px', fontWeight: 600, color: accent ? '#D8A072' : '#FBFBFD' }}>
+        {value}
+      </div>
     </div>
   )
 }
@@ -302,11 +548,36 @@ export default function Dashboard() {
   })
 
   const statCards = [
-    { label: 'Total Value Locked', value: fmtUsd(protocolStats?.currentTvl ?? 0), sub: 'Current TVL', group: 'total' as const },
-    { label: 'Total Fee All-time', value: fmtUsd(protocolStats?.feesAllTime ?? 0), sub: 'Since launch', group: 'total' as const },
-    { label: 'Total Revenue All-time', value: fmtUsd(stats.totalRevenueAllTime), sub: 'Since launch', group: 'total' as const },
-    { label: 'All-time Volume', value: fmtUsd(protocolStats?.volumeAllTime ?? 0), sub: 'Since launch', group: 'total' as const },
-    { label: '24h Volume', value: fmtUsd(protocolStats?.volume24h ?? 0), sub: 'Across all chains', group: '24h' as const },
+    {
+      label: 'Total Value Locked',
+      value: fmtUsd(protocolStats?.currentTvl ?? 0),
+      sub: 'Current TVL',
+      group: 'total' as const,
+    },
+    {
+      label: 'Total Fee All-time',
+      value: fmtUsd(protocolStats?.feesAllTime ?? 0),
+      sub: 'Since launch',
+      group: 'total' as const,
+    },
+    {
+      label: 'Total Revenue All-time',
+      value: fmtUsd(stats.totalRevenueAllTime),
+      sub: 'Since launch',
+      group: 'total' as const,
+    },
+    {
+      label: 'All-time Volume',
+      value: fmtUsd(protocolStats?.volumeAllTime ?? 0),
+      sub: 'Since launch',
+      group: 'total' as const,
+    },
+    {
+      label: '24h Volume',
+      value: fmtUsd(protocolStats?.volume24h ?? 0),
+      sub: 'Across all chains',
+      group: '24h' as const,
+    },
     { label: 'Fee 24h', value: fmtUsd(protocolStats?.fees24h ?? 0), sub: 'Across all chains', group: '24h' as const },
     { label: 'Revenue 24h', value: fmtUsd(stats.totalRevenue24h), sub: 'Across all chains', group: '24h' as const },
   ]
@@ -317,7 +588,10 @@ export default function Dashboard() {
         <AutoColumn className="gap-4 sm:gap-6" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
           <TitleRow padding={'0'}>
             <Flex alignItems="center" className="gap-4 flex-wrap">
-              <span className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]" style={{ fontFamily: 'Inter', fontWeight: 600, letterSpacing: '-0.02em', color: '#FBFBFD' }}>
+              <span
+                className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]"
+                style={{ fontFamily: 'Inter', fontWeight: 600, letterSpacing: '-0.02em', color: '#FBFBFD' }}
+              >
                 Dashboard
               </span>
             </Flex>
@@ -325,11 +599,22 @@ export default function Dashboard() {
 
           <DashboardStatsBar stats={statCards} breakdown={breakdown} isLoading={isLoading || isLoadingProtocolStats} />
 
-          <div className="hidden md:flex items-center" style={{ padding: '8px 16px', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', color: '#978A80', gap: '8px' }}>
+          <div
+            className="hidden md:flex items-center"
+            style={{
+              padding: '8px 16px',
+              fontFamily: 'Inter',
+              fontWeight: 500,
+              fontSize: '14px',
+              color: '#978A80',
+              gap: '8px',
+            }}
+          >
             <span style={{ flex: 2 }}>Chain</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Volume 24h</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>0x Volume</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue 24h</span>
             <span style={{ flex: 0.35 }} />
@@ -354,7 +639,6 @@ export default function Dashboard() {
               </TYPE.body>
             </EmptyProposals>
           )}
-
         </AutoColumn>
       </AutoColumn>
     </PageWrapper>
