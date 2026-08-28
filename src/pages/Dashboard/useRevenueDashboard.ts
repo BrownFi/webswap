@@ -41,22 +41,14 @@ const HEMI_REVENUE_QUERY = `
   }
 `
 
-const ZERO_X_RECIPIENTS = [
-  '0x8f10b468b06c6fd214b65f87778827f7d113f996',
-  '0xc0d2948c60fa70e8c52ddcf2cda920a2983d363e',
-  '0x39b38686a19836ac10162c490e4558e120cbbe5f',
-]
+const ZERO_X_RECIPIENTS = ['0xc0d2948c60fa70e8c52ddcf2cda920a2983d363e', '0x39b38686a19836ac10162c490e4558e120cbbe5f']
 
 const ZERO_X_VOLUME_QUERY = `
   query ZeroXVolume($timestampGte: BigInt, $recipients: [String!]) {
     transactions(first: 1000, where: { type: "SWAP", to_in: $recipients, timestamp_gte: $timestampGte }, orderBy: timestamp, orderDirection: desc) {
       timestamp
-      amount0In
       amount0Out
-      amount1In
       amount1Out
-      reserve0
-      reserve0USD
       pythPrice0
       pythPrice1
     }
@@ -67,12 +59,8 @@ const ZERO_X_VOLUME_OLDER_QUERY = `
   query ZeroXVolumeOlder($timestampGte: BigInt, $timestampLt: BigInt, $recipients: [String!]) {
     transactions(first: 1000, where: { type: "SWAP", to_in: $recipients, timestamp_gte: $timestampGte, timestamp_lt: $timestampLt }, orderBy: timestamp, orderDirection: desc) {
       timestamp
-      amount0In
       amount0Out
-      amount1In
       amount1Out
-      reserve0
-      reserve0USD
       pythPrice0
       pythPrice1
     }
@@ -261,21 +249,17 @@ async function fetchHemiRevenue() {
 
 type ZeroXTransaction = {
   timestamp?: number | string
-  amount0In?: number | string
   amount0Out?: number | string
-  amount1In?: number | string
   amount1Out?: number | string
-  reserve0?: number | string
-  reserve0USD?: number | string
   pythPrice0?: number | string
   pythPrice1?: number | string
 }
 
 function zeroXTransactionVolume(transaction: ZeroXTransaction) {
-  const amount0 = num(transaction.amount0In) + num(transaction.amount0Out)
-  const reserve0 = num(transaction.reserve0)
-  const reserve0Usd = num(transaction.reserve0USD)
-  return amount0 * (reserve0 > 0 && reserve0Usd > 0 ? reserve0Usd / reserve0 : num(transaction.pythPrice0))
+  return (
+    num(transaction.amount0Out) * num(transaction.pythPrice0) +
+    num(transaction.amount1Out) * num(transaction.pythPrice1)
+  )
 }
 
 async function fetchZeroXVolume(chainId: number): Promise<number> {
