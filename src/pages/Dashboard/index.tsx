@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { availableChains } from 'connectors'
 import { AutoColumn } from 'components/Column'
@@ -28,8 +28,25 @@ function fmtUsd(n: number) {
   return n < 0 ? `-${formatted}` : formatted
 }
 
-function fmtZeroXVolume(n: number, chainId: number) {
-  return chainId === 4663 || chainId === 999 ? fmtUsd(n) : '-'
+function VolumeMetric({
+  volume,
+  total,
+  chainId,
+  version,
+}: {
+  volume: number
+  total: number
+  chainId: number
+  version?: RevenueVersionRow['version']
+}) {
+  if ((chainId !== 4663 && chainId !== 999) || (version !== undefined && version !== VERSION.V3_OFFICIAL))
+    return <span>-</span>
+  const share = total > 0 ? `${((volume / total) * 100).toFixed(1)}%` : '0.0%'
+  return (
+    <span>
+      {fmtUsd(volume)} <span style={{ color: '#978A80', fontSize: '11px', fontWeight: 500 }}>({share})</span>
+    </span>
+  )
 }
 
 function DashboardStatsBar({
@@ -393,7 +410,20 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
             color: '#FBFBFD',
           }}
         >
-          {fmtZeroXVolume(row.zeroXVolume24h, row.chainId)}
+          <VolumeMetric volume={row.zeroXVolume24h} total={totalVolume24h} chainId={row.chainId} />
+        </div>
+        <div
+          className="max-md:hidden"
+          style={{
+            flex: 1,
+            textAlign: 'right',
+            fontFamily: 'Inter',
+            fontWeight: 500,
+            fontSize: '14px',
+            color: '#FBFBFD',
+          }}
+        >
+          <VolumeMetric volume={row.kyberVolume24h} total={totalVolume24h} chainId={row.chainId} />
         </div>
         <div
           className="max-md:hidden"
@@ -436,15 +466,22 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
           <MetricChip label="Fee All-time" value={fmtUsd(row.totalFeeAllTime)} />
           <MetricChip label="Revenue All-time" value={fmtUsd(row.totalRevenueAllTime)} accent />
           <MetricChip label="Volume 24h" value={fmtUsd(totalVolume24h)} />
-          <MetricChip label="0x Volume" value={fmtZeroXVolume(row.zeroXVolume24h, row.chainId)} />
+          <MetricChip
+            label="0x Volume"
+            value={<VolumeMetric volume={row.zeroXVolume24h} total={totalVolume24h} chainId={row.chainId} />}
+          />
+          <MetricChip
+            label="Kyber Volume"
+            value={<VolumeMetric volume={row.kyberVolume24h} total={totalVolume24h} chainId={row.chainId} />}
+          />
           <MetricChip label="Fee 24h" value={fmtUsd(row.totalFee24h)} />
           <MetricChip label="Revenue 24h" value={fmtUsd(row.totalRevenue24h)} accent />
         </div>
       </button>
       {expanded && (
-        <div style={{ borderTop: '1px solid #2F2823', padding: '12px 16px 16px' }}>
+        <div style={{ borderTop: '1px solid #2F2823', padding: '12px 16px 16px', overflowX: 'auto' }}>
           <div
-            className="hidden md:flex items-center"
+            className="hidden md:grid items-center"
             style={{
               gap: '8px',
               paddingBottom: '8px',
@@ -452,6 +489,8 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
               fontWeight: 500,
               fontSize: '13px',
               color: '#978A80',
+              minWidth: '900px',
+              gridTemplateColumns: '1.4fr repeat(7, minmax(0, 1fr))',
             }}
           >
             <span style={{ flex: 1.4 }}>Source</span>
@@ -459,6 +498,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Volume 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>0x Volume</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Kyber Volume</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue 24h</span>
           </div>
@@ -466,8 +506,15 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
             {row.versions.map((versionRow) => (
               <div
                 key={`${row.chainId}-${versionRow.version}`}
-                className="flex items-center max-md:flex-wrap max-md:gap-2"
-                style={{ gap: '8px', background: '#15110E', borderRadius: '10px', padding: '12px' }}
+                className="flex md:grid items-center max-md:flex-wrap max-md:gap-2"
+                style={{
+                  gap: '8px',
+                  background: '#15110E',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  minWidth: '900px',
+                  gridTemplateColumns: '1.4fr repeat(7, minmax(0, 1fr))',
+                }}
               >
                 <div className="max-md:w-full" style={{ flex: 1.4 }}>
                   <VersionBadge row={versionRow} />
@@ -494,7 +541,23 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
                   className="max-md:hidden"
                   style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
                 >
-                  {fmtZeroXVolume(versionRow.zeroXVolume24h, versionRow.chainId)}
+                  <VolumeMetric
+                    volume={versionRow.zeroXVolume24h}
+                    total={versionRow.totalVolume24h}
+                    chainId={versionRow.chainId}
+                    version={versionRow.version}
+                  />
+                </div>
+                <div
+                  className="max-md:hidden"
+                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
+                >
+                  <VolumeMetric
+                    volume={versionRow.kyberVolume24h}
+                    total={versionRow.totalVolume24h}
+                    chainId={versionRow.chainId}
+                    version={versionRow.version}
+                  />
                 </div>
                 <div
                   className="max-md:hidden"
@@ -512,7 +575,28 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
                   <MetricChip label="Fee All-time" value={fmtUsd(versionRow.totalFeeAllTime)} />
                   <MetricChip label="Revenue All-time" value={fmtUsd(versionRow.totalRevenueAllTime)} accent />
                   <MetricChip label="Volume 24h" value={fmtUsd(versionRow.totalVolume24h)} />
-                  <MetricChip label="0x Volume" value={fmtZeroXVolume(versionRow.zeroXVolume24h, versionRow.chainId)} />
+                  <MetricChip
+                    label="0x Volume"
+                    value={
+                      <VolumeMetric
+                        volume={versionRow.zeroXVolume24h}
+                        total={versionRow.totalVolume24h}
+                        chainId={versionRow.chainId}
+                        version={versionRow.version}
+                      />
+                    }
+                  />
+                  <MetricChip
+                    label="Kyber Volume"
+                    value={
+                      <VolumeMetric
+                        volume={versionRow.kyberVolume24h}
+                        total={versionRow.totalVolume24h}
+                        chainId={versionRow.chainId}
+                        version={versionRow.version}
+                      />
+                    }
+                  />
                   <MetricChip label="Fee 24h" value={fmtUsd(versionRow.totalFee24h)} />
                   <MetricChip label="Revenue 24h" value={fmtUsd(versionRow.totalRevenue24h)} accent />
                 </div>
@@ -525,7 +609,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
   )
 }
 
-function MetricChip({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+function MetricChip({ label, value, accent = false }: { label: string; value: ReactNode; accent?: boolean }) {
   return (
     <div style={{ background: '#1E1915', borderRadius: '8px', padding: '10px 12px', border: '1px solid #2F2823' }}>
       <div style={{ fontFamily: 'Inter', fontSize: '11px', fontWeight: 500, color: '#978A80', marginBottom: 4 }}>
@@ -615,6 +699,7 @@ export default function Dashboard() {
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Volume 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>0x Volume</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Kyber Volume</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee 24h</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Revenue 24h</span>
             <span style={{ flex: 0.35 }} />

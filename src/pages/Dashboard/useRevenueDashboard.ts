@@ -42,6 +42,7 @@ const HEMI_REVENUE_QUERY = `
 `
 
 const ZERO_X_RECIPIENTS = ['0xc0d2948c60fa70e8c52ddcf2cda920a2983d363e', '0x39b38686a19836ac10162c490e4558e120cbbe5f']
+const KYBER_RECIPIENTS = ['0x8f10b468b06c6fd214b65f87778827f7d113f996']
 
 const ZERO_X_VOLUME_QUERY = `
   query ZeroXVolume($timestampGte: BigInt, $recipients: [String!]) {
@@ -144,6 +145,7 @@ export type RevenueVersionRow = {
   totalFee24h: number
   totalRevenue24h: number
   zeroXVolume24h: number
+  kyberVolume24h: number
   isArchived: boolean
 }
 
@@ -156,6 +158,7 @@ export type RevenueChainRow = {
   totalFee24h: number
   totalRevenue24h: number
   zeroXVolume24h: number
+  kyberVolume24h: number
   versions: RevenueVersionRow[]
 }
 
@@ -262,7 +265,7 @@ function zeroXTransactionVolume(transaction: ZeroXTransaction) {
   )
 }
 
-async function fetchZeroXVolume(chainId: number): Promise<number> {
+async function fetchAggregatorVolume(chainId: number, recipients: string[]): Promise<number> {
   const timestampGte = Math.floor(Date.now() / 1000) - 24 * 60 * 60
   let timestampLt: number | undefined
   let total = 0
@@ -277,7 +280,7 @@ async function fetchZeroXVolume(chainId: number): Promise<number> {
         version: VERSION.V3_OFFICIAL,
         timestampGte: String(timestampGte),
         ...(timestampLt === undefined ? {} : { timestampLt: String(timestampLt) }),
-        recipients: ZERO_X_RECIPIENTS,
+        recipients,
       },
     })
     const transactions = ((data as any)?.transactions ?? []) as ZeroXTransaction[]
@@ -326,8 +329,19 @@ export function useRevenueDashboard(): RevenueDashboardResult {
   const zeroXChains = [4663, 999]
   const zeroXQueries = useQueries({
     queries: zeroXChains.map((chainId) => ({
-      queryKey: ['revenueDashboard:0x:v1', chainId],
-      queryFn: () => fetchZeroXVolume(chainId),
+      queryKey: ['revenueDashboard:0x:v2', chainId],
+      queryFn: () => fetchAggregatorVolume(chainId, ZERO_X_RECIPIENTS),
+      staleTime: 5 * 60_000,
+      gcTime: 30 * 60_000,
+      refetchInterval: false as const,
+      refetchOnWindowFocus: true,
+      retry: 1,
+    })),
+  })
+  const kyberQueries = useQueries({
+    queries: zeroXChains.map((chainId) => ({
+      queryKey: ['revenueDashboard:kyber:v1', chainId],
+      queryFn: () => fetchAggregatorVolume(chainId, KYBER_RECIPIENTS),
       staleTime: 5 * 60_000,
       gcTime: 30 * 60_000,
       refetchInterval: false as const,
@@ -338,6 +352,10 @@ export function useRevenueDashboard(): RevenueDashboardResult {
   const zeroXVolumeByChain = useMemo(
     () => new Map(zeroXChains.map((chainId, index) => [chainId, zeroXQueries[index]?.data ?? 0])),
     [zeroXQueries],
+  )
+  const kyberVolumeByChain = useMemo(
+    () => new Map(zeroXChains.map((chainId, index) => [chainId, kyberQueries[index]?.data ?? 0])),
+    [kyberQueries],
   )
 
   const liveVersionRows = useMemo<RevenueVersionRow[]>(() => {
@@ -369,10 +387,11 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           task.version === VERSION.V3_OFFICIAL
             ? Math.min(zeroXVolumeByChain.get(task.chainId) ?? 0, (data?.totalVolume24h ?? 0) * 0.999)
             : 0,
+        kyberVolume24h: task.version === VERSION.V3_OFFICIAL ? (kyberVolumeByChain.get(task.chainId) ?? 0) : 0,
         isArchived: task.version === VERSION.V2,
       }
     })
-  }, [queries, tasks, zeroXVolumeByChain])
+  }, [queries, tasks, zeroXVolumeByChain, kyberVolumeByChain])
 
   const archivedV2 = useMemo<RevenueVersionRow[]>(() => {
     return availableChains
@@ -391,6 +410,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalFee24h: 0,
           totalRevenue24h: 0,
           zeroXVolume24h: 0,
+          kyberVolume24h: 0,
           isArchived: true,
         }
       })
@@ -409,6 +429,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         existing.totalFee24h += row.totalFee24h
         existing.totalRevenue24h += row.totalRevenue24h
         existing.zeroXVolume24h += row.zeroXVolume24h
+        existing.kyberVolume24h += row.kyberVolume24h
         existing.versions.push(row)
       } else {
         grouped.set(row.chainId, {
@@ -420,6 +441,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalFee24h: row.totalFee24h,
           totalRevenue24h: row.totalRevenue24h,
           zeroXVolume24h: row.zeroXVolume24h,
+          kyberVolume24h: row.kyberVolume24h,
           versions: [row],
         })
       }
@@ -480,7 +502,10 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     archivedV2,
     stats,
     breakdown,
-    isLoading: queries.some((query) => query.isLoading) || zeroXQueries.some((query) => query.isLoading),
+    isLoading:
+      queries.some((query) => query.isLoading) ||
+      zeroXQueries.some((query) => query.isLoading) ||
+      kyberQueries.some((query) => query.isLoading),
     isError: queries.every((query) => query.isError),
   }
 }
