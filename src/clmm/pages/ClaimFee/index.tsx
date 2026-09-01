@@ -62,7 +62,7 @@ const ClaimFeePage = () => {
 
     const tokens = useMemo(() => {
         const t = TOKENS[chainId];
-        return [t.WETH, t.USDC, t.HEMIBTC, t.WBTC, t.VUSD].map((tk) => ({
+        return [t.WETH, t.USDC, t.USDT, t.HEMIBTC, t.WBTC, t.VUSD].map((tk) => ({
             address: tk.address,
             symbol: tk.symbol as string,
             decimals: tk.decimals,

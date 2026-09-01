@@ -19,6 +19,7 @@ export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
     [ChainId.Hemi]: [
         ...WNATIVE_ONLY[ChainId.Hemi],
         TOKENS[ChainId.Hemi].USDC,
+        TOKENS[ChainId.Hemi].USDT,
         TOKENS[ChainId.Hemi].WBTC,
         TOKENS[ChainId.Hemi].HEMIBTC,
         TOKENS[ChainId.Hemi].VUSD,
