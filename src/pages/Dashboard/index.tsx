@@ -59,18 +59,19 @@ function RevenueValue({ value }: { value: number }) {
   return <span>{fmtUsd(value)}</span>
 }
 
-const PERIOD_LABELS: Record<DashboardPeriod, string> = { '24h': '24h', '7d': '7D', '30d': '30D' }
+const PERIOD_LABELS: Record<DashboardPeriod, string> = { '24h': '24h', '7d': '7D', '30d': '30D', all: 'All' }
 
 function periodValues(row: RevenueChainRow | RevenueVersionRow, period: DashboardPeriod) {
   if (period === '7d') return { volume: row.totalVolume7d, fee: row.totalFee7d, revenue: row.totalRevenue7d }
   if (period === '30d') return { volume: row.totalVolume30d, fee: row.totalFee30d, revenue: row.totalRevenue30d }
+  if (period === 'all') return { volume: row.totalVolumeAllTime, fee: row.totalFeeAllTime, revenue: row.totalRevenueAllTime }
   return { volume: row.totalVolume24h, fee: row.totalFee24h, revenue: row.totalRevenue24h }
 }
 
 function PeriodToggle({ period, onChange }: { period: DashboardPeriod; onChange: (period: DashboardPeriod) => void }) {
   return (
     <div className="flex items-center gap-1" role="group" aria-label="Dashboard period">
-      {(['24h', '7d', '30d'] as DashboardPeriod[]).map((option) => (
+      {(['24h', '7d', '30d', 'all'] as DashboardPeriod[]).map((option) => (
         <button
           key={option}
           type="button"
@@ -128,9 +129,10 @@ function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof R
   )
 }
 
-function DashboardHistoryChart({ history }: { history: RevenueHistoryPoint[] }) {
+function DashboardHistoryChart({ history, period }: { history: RevenueHistoryPoint[]; period: DashboardPeriod }) {
   // Exclude the incomplete current UTC-day bucket from the all-time series.
-  const points = history.slice(0, -1)
+  const completed = history.slice(0, -1)
+  const points = period === 'all' ? completed : completed.slice(-(period === '30d' ? 30 : 7))
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -142,8 +144,8 @@ function DashboardHistoryChart({ history }: { history: RevenueHistoryPoint[] }) 
   )
 }
 
-function ChainHistoryCharts({ row }: { row: RevenueChainRow }) {
-  return <DashboardHistoryChart history={row.history} />
+function ChainHistoryCharts({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
+  return <DashboardHistoryChart history={row.history} period={period} />
 }
 
 function DashboardStatsBar({
@@ -569,7 +571,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
       </button>
       {expanded && (
         <div style={{ borderTop: '1px solid #2F2823', padding: '12px 16px 16px', overflowX: 'auto' }}>
-          <ChainHistoryCharts row={row} />
+          <ChainHistoryCharts row={row} period={period} />
         </div>
       )}
     </div>
@@ -592,9 +594,9 @@ function MetricChip({ label, value, accent = false }: { label: ReactNode; value:
 export default function Dashboard() {
   const { chains, stats, breakdown, isLoading, isError } = useRevenueDashboard()
   const [period, setPeriod] = useState<DashboardPeriod>('24h')
-  const periodVolume = period === '24h' ? stats.totalVolume24h : period === '7d' ? stats.totalVolume7d : stats.totalVolume30d
-  const periodFee = period === '24h' ? stats.totalFee24h : period === '7d' ? stats.totalFee7d : stats.totalFee30d
-  const periodRevenue = period === '24h' ? stats.totalRevenue24h : period === '7d' ? stats.totalRevenue7d : stats.totalRevenue30d
+  const periodVolume = period === '24h' ? stats.totalVolume24h : period === '7d' ? stats.totalVolume7d : period === '30d' ? stats.totalVolume30d : stats.totalVolumeAllTime
+  const periodFee = period === '24h' ? stats.totalFee24h : period === '7d' ? stats.totalFee7d : period === '30d' ? stats.totalFee30d : stats.totalFeeAllTime
+  const periodRevenue = period === '24h' ? stats.totalRevenue24h : period === '7d' ? stats.totalRevenue7d : period === '30d' ? stats.totalRevenue30d : stats.totalRevenueAllTime
   const { data: protocolStats, isLoading: isLoadingProtocolStats } = useQuery<ProtocolStats>({
     queryKey: ['protocolStats'],
     queryFn: fetchProtocolStats,
@@ -658,7 +660,7 @@ export default function Dashboard() {
             onPeriodChange={setPeriod}
             isLoading={isLoading || isLoadingProtocolStats}
           />
-          <DashboardHistoryChart history={stats.history} />
+          <DashboardHistoryChart history={stats.history} period={period} />
 
           <div
             className="hidden md:flex items-center"

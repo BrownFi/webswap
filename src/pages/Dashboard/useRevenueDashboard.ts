@@ -196,6 +196,7 @@ export type RevenueChainRow = {
 
 export type RevenueDashboardStats = {
   totalVolume24h: number
+  totalVolumeAllTime: number
   totalFeeAllTime: number
   totalRevenueAllTime: number
   totalFee24h: number
@@ -235,7 +236,7 @@ export type RevenueDashboardResult = {
   isError: boolean
 }
 
-export type DashboardPeriod = '24h' | '7d' | '30d'
+export type DashboardPeriod = '24h' | '7d' | '30d' | 'all'
 
 export type RevenueHistoryPoint = {
   timestamp: number
@@ -601,6 +602,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
   const stats = useMemo<RevenueDashboardStats>(() => {
     return chains.reduce<RevenueDashboardStats>(
       (acc, row) => ({
+        totalVolumeAllTime: acc.totalVolumeAllTime + row.totalVolumeAllTime,
         totalFeeAllTime: acc.totalFeeAllTime + row.totalFeeAllTime,
         totalRevenueAllTime: acc.totalRevenueAllTime + row.totalRevenueAllTime,
         totalVolume24h: acc.totalVolume24h + row.totalVolume24h,
@@ -614,7 +616,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         totalRevenue30d: acc.totalRevenue30d + row.totalRevenue30d,
         history: acc.history,
       }),
-      { totalVolume24h: 0, totalFeeAllTime: 0, totalRevenueAllTime: 0, totalFee24h: 0, totalRevenue24h: 0, totalVolume7d: 0, totalFee7d: 0, totalRevenue7d: 0, totalVolume30d: 0, totalFee30d: 0, totalRevenue30d: 0, history: [] },
+      { totalVolume24h: 0, totalVolumeAllTime: 0, totalFeeAllTime: 0, totalRevenueAllTime: 0, totalFee24h: 0, totalRevenue24h: 0, totalVolume7d: 0, totalFee7d: 0, totalRevenue7d: 0, totalVolume30d: 0, totalFee30d: 0, totalRevenue30d: 0, history: [] },
     )
   }, [chains])
 
