@@ -44,6 +44,8 @@ const HEMI_REVENUE_QUERY = `
 const ZERO_X_RECIPIENTS = ['0xc0d2948c60fa70e8c52ddcf2cda920a2983d363e', '0x39b38686a19836ac10162c490e4558e120cbbe5f']
 const KYBER_RECIPIENTS = ['0x8f10b468b06c6fd214b65f87778827f7d113f996']
 
+const ROBINHOOD_CHAIN_ID = 4663
+
 const ZERO_X_VOLUME_QUERY = `
   query ZeroXVolume($timestampGte: BigInt, $recipients: [String!]) {
     transactions(first: 1000, where: { type: "SWAP", to_in: $recipients, timestamp_gte: $timestampGte }, orderBy: timestamp, orderDirection: desc) {
@@ -219,9 +221,11 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
     // `factoryDayDatas.dailyFees` is only the current UTC-day bucket, so it
     // can be materially lower during the day.
     totalFee24h: pairs.reduce((acc, pair) => acc + num(pair?.feeDay), 0),
-    // Revenue follows the same rolling-24h basis as pool detail: fees earned
-    // by each pool multiplied by its protocol fee split.
-    totalRevenue24h: pairs.reduce((acc, pair) => acc + num(pair?.feeDay) * num(pair?.feeSplit), 0),
+    // Revenue is a simulation for Robinhood: 7% of rolling 24h pool fees.
+    totalRevenue24h:
+      chainId === ROBINHOOD_CHAIN_ID
+        ? pairs.reduce((acc, pair) => acc + num(pair?.feeDay), 0) * 0.07
+        : pairs.reduce((acc, pair) => acc + num(pair?.feeDay) * num(pair?.feeSplit), 0),
   }
 }
 
@@ -237,7 +241,6 @@ async function fetchHemiRevenue() {
   const latestDay = body?.data?.algebraDayDatas?.[0]
   const totalFees = num(factory?.totalFeesUSD)
   const totalCommunityFees = num(factory?.totalCommunityFeesUSD)
-  const revenueRatio = totalFees > 0 ? totalCommunityFees / totalFees : 0
   const dailyFees = num(latestDay?.feesUSD)
   return {
     totalValueLocked: num(factory?.totalValueLockedUSD),
@@ -246,7 +249,8 @@ async function fetchHemiRevenue() {
     totalRevenueAllTime: totalCommunityFees,
     totalVolume24h: num(latestDay?.volumeUSD),
     totalFee24h: dailyFees,
-    totalRevenue24h: dailyFees * revenueRatio,
+    // Hemi revenue is a simulation: 10% of the latest UTC-day fee bucket.
+    totalRevenue24h: dailyFees * 0.1,
   }
 }
 

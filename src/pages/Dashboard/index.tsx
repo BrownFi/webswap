@@ -49,6 +49,10 @@ function VolumeMetric({
   )
 }
 
+function RevenueValue({ value }: { value: number }) {
+  return <span>{fmtUsd(value)}</span>
+}
+
 function DashboardStatsBar({
   stats,
   breakdown,
@@ -331,6 +335,7 @@ function VersionBadge({ row }: { row: RevenueVersionRow }) {
 function ChainRow({ row }: { row: RevenueChainRow }) {
   const [expanded, setExpanded] = useState(false)
   const chainMeta = useMemo(() => availableChains.find((chain) => chain.id === row.chainId), [row.chainId])
+  const isRobinhood = row.chainId === 4663
   const isHemi = row.chainId === 43111
   const totalVolume24h = row.versions.reduce((acc, versionRow) => acc + (versionRow.totalVolume24h || 0), 0)
 
@@ -357,6 +362,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
           <div className="min-w-0 flex-1">
             <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD' }}>
               {row.chainName}
+              {isRobinhood && <span style={{ marginLeft: 6, color: '#D8A072' }}>(Simulation)</span>}
             </div>
           </div>
         </div>
@@ -449,7 +455,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
             color: '#D8A072',
           }}
         >
-          {fmtUsd(row.totalRevenue24h)}
+          <RevenueValue value={row.totalRevenue24h} />
         </div>
         <div className="hidden md:flex items-center justify-end" style={{ flex: 0.35 }}>
           <span
@@ -475,7 +481,11 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
             value={<VolumeMetric volume={row.kyberVolume24h} total={totalVolume24h} chainId={row.chainId} />}
           />
           <MetricChip label="Fee 24h" value={fmtUsd(row.totalFee24h)} />
-          <MetricChip label="Revenue 24h" value={fmtUsd(row.totalRevenue24h)} accent />
+          <MetricChip
+            label="Revenue 24h"
+            value={<RevenueValue value={row.totalRevenue24h} />}
+            accent
+          />
         </div>
       </button>
       {expanded && (
@@ -598,7 +608,11 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
                     }
                   />
                   <MetricChip label="Fee 24h" value={fmtUsd(versionRow.totalFee24h)} />
-                  <MetricChip label="Revenue 24h" value={fmtUsd(versionRow.totalRevenue24h)} accent />
+                  <MetricChip
+                    label="Revenue 24h"
+                    value={<RevenueValue value={versionRow.totalRevenue24h} />}
+                    accent
+                  />
                 </div>
               </div>
             ))}
@@ -609,7 +623,7 @@ function ChainRow({ row }: { row: RevenueChainRow }) {
   )
 }
 
-function MetricChip({ label, value, accent = false }: { label: string; value: ReactNode; accent?: boolean }) {
+function MetricChip({ label, value, accent = false }: { label: ReactNode; value: ReactNode; accent?: boolean }) {
   return (
     <div style={{ background: '#1E1915', borderRadius: '8px', padding: '10px 12px', border: '1px solid #2F2823' }}>
       <div style={{ fontFamily: 'Inter', fontSize: '11px', fontWeight: 500, color: '#978A80', marginBottom: 4 }}>
