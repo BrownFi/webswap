@@ -61,6 +61,22 @@
       "logoURI": "https://cdn.robinhood.com/ncw_assets/logos/0x2e0847e8910a9732eb3fb1bb4b70a580adad4fe3.png"
     },
     {
+      "chainId": 4663,
+      "address": "0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD",
+      "name": "Micron Technology • Robinhood Token",
+      "symbol": "MU",
+      "decimals": 18,
+      "logoURI": "https://cdn.robinhood.com/ncw_assets/logos/0xff080c8ce2e5feadaca0da81314ae59d232d4afd.png"
+    },
+    {
+      "chainId": 4663,
+      "address": "0xec262a75e413fAfD0dF80480274532C79D42da09",
+      "name": "Strategy Inc. • Robinhood Token",
+      "symbol": "MSTR",
+      "decimals": 18,
+      "logoURI": "https://cdn.robinhood.com/ncw_assets/logos/0xec262a75e413fafd0df80480274532c79d42da09.png"
+    },
+    {
       "chainId": 1,
       "address": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
       "name": "Aave",
