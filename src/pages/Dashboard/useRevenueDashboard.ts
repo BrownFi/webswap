@@ -175,6 +175,7 @@ export type RevenueVersionRow = {
 export type RevenueChainRow = {
   chainId: number
   chainName: string
+  totalValueLocked: number
   totalFeeAllTime: number
   totalRevenueAllTime: number
   totalVolume24h: number
@@ -548,6 +549,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     for (const row of versionRows) {
       const existing = grouped.get(row.chainId)
       if (existing) {
+        existing.totalValueLocked += row.totalValueLocked
         existing.totalFeeAllTime += row.totalFeeAllTime
         existing.totalRevenueAllTime += row.totalRevenueAllTime
         existing.totalVolume24h += row.totalVolume24h
@@ -567,6 +569,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         grouped.set(row.chainId, {
           chainId: row.chainId,
           chainName: row.chainName,
+          totalValueLocked: row.totalValueLocked,
           totalFeeAllTime: row.totalFeeAllTime,
           totalRevenueAllTime: row.totalRevenueAllTime,
           totalVolume24h: row.totalVolume24h,

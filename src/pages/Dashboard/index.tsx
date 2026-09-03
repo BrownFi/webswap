@@ -7,7 +7,7 @@ import { Flex } from 'components/Rebass'
 import { EmptyProposals, PageWrapper, TitleRow } from 'pages/Pool/styleds'
 import { fetchProtocolStats, type ProtocolStats } from 'services/protocolStatsService'
 import { TYPE } from 'theme'
-import { VERSION, versionLabel } from 'lib/sdk/constants/addresses'
+import { VERSION } from 'lib/sdk/constants/addresses'
 import {
   useRevenueDashboard,
   type RevenueChainRow,
@@ -142,6 +142,18 @@ function DashboardHistoryChart({ history, values }: { history: RevenueHistoryPoi
       <MiniHistoryChart dataKey="revenue" label="Revenue (30D)" color="#D8A072" history={points} value={values.revenue} />
     </div>
   )
+}
+
+function ChainHistoryCharts({ row }: { row: RevenueChainRow }) {
+  const values: RevenueHistoryPoint = {
+    timestamp: 0,
+    tvl: row.totalValueLocked,
+    volume: row.totalVolume30d,
+    fee: row.totalFee30d,
+    revenue: row.totalRevenue30d,
+  }
+
+  return <DashboardHistoryChart history={row.history} values={values} />
 }
 
 function DashboardStatsBar({
@@ -395,38 +407,6 @@ function DashboardStatsBar({
   )
 }
 
-function VersionBadge({ row }: { row: RevenueVersionRow }) {
-  const isV2 = row.version === VERSION.V2
-  const isHemi = row.version === 'hemi'
-  const label = isHemi ? 'Hemi' : versionLabel(row.version as typeof VERSION.V2 | typeof VERSION.V3_OFFICIAL)
-  return (
-    <div className="inline-flex items-center gap-2">
-      <span
-        style={{
-          padding: '2px 6px',
-          borderRadius: '6px',
-          background: isHemi
-            ? 'rgba(111, 179, 230, 0.12)'
-            : isV2
-              ? 'rgba(151, 138, 128, 0.12)'
-              : 'rgba(196, 148, 58, 0.12)',
-          border: `1px solid ${isHemi ? 'rgba(111, 179, 230, 0.35)' : isV2 ? 'rgba(151, 138, 128, 0.35)' : 'rgba(196, 148, 58, 0.35)'}`,
-          fontFamily: 'Inter',
-          fontSize: '10px',
-          fontWeight: 600,
-          color: isHemi ? '#6FB3E6' : isV2 ? '#CFC7C1' : '#C4943A',
-          letterSpacing: '0.04em',
-        }}
-      >
-        {label}
-      </span>
-      {row.isArchived && (
-        <span style={{ fontFamily: 'Inter', fontSize: '10px', fontWeight: 500, color: '#978A80' }}>Archived</span>
-      )}
-    </div>
-  )
-}
-
 function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
   const [expanded, setExpanded] = useState(false)
   const chainMeta = useMemo(() => availableChains.find((chain) => chain.id === row.chainId), [row.chainId])
@@ -460,6 +440,19 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
               {isRobinhood && <span style={{ marginLeft: 6, color: '#D8A072' }}>(Simulation)</span>}
             </div>
           </div>
+        </div>
+        <div
+          className="max-md:hidden"
+          style={{
+            flex: 1,
+            textAlign: 'right',
+            fontFamily: 'Inter',
+            fontWeight: 500,
+            fontSize: '14px',
+            color: '#FBFBFD',
+          }}
+        >
+          {fmtUsd(row.totalValueLocked)}
         </div>
         <div
           className="max-md:hidden"
@@ -564,15 +557,16 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
           </span>
         </div>
         <div className="md:hidden w-full grid grid-cols-2 gap-2 mt-2">
+          <MetricChip label="TVL" value={fmtUsd(row.totalValueLocked)} />
           <MetricChip label="Fee All-time" value={fmtUsd(row.totalFeeAllTime)} />
-          <MetricChip label="Revenue All-time" value={fmtUsd(row.totalRevenueAllTime)} accent />
+          <MetricChip label="Rev. All-time" value={fmtUsd(row.totalRevenueAllTime)} accent />
           <MetricChip label={`Volume ${PERIOD_LABELS[period]}`} value={fmtUsd(values.volume)} />
           <MetricChip
-            label="0x Volume"
+            label="0x Vol."
             value={<VolumeMetric volume={row.zeroXVolume24h} total={values.volume} chainId={row.chainId} period={period} />}
           />
           <MetricChip
-            label="Kyber Volume"
+            label="Kyber Vol."
             value={<VolumeMetric volume={row.kyberVolume24h} total={values.volume} chainId={row.chainId} period={period} />}
           />
           <MetricChip label={`Fee ${PERIOD_LABELS[period]}`} value={fmtUsd(values.fee)} />
@@ -585,137 +579,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
       </button>
       {expanded && (
         <div style={{ borderTop: '1px solid #2F2823', padding: '12px 16px 16px', overflowX: 'auto' }}>
-          <div
-            className="hidden md:grid items-center"
-            style={{
-              gap: '8px',
-              paddingBottom: '8px',
-              fontFamily: 'Inter',
-              fontWeight: 500,
-              fontSize: '13px',
-              color: '#978A80',
-              minWidth: '900px',
-              gridTemplateColumns: '1.4fr repeat(7, minmax(0, 1fr))',
-            }}
-          >
-            <span style={{ flex: 1.4 }}>Source</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
-             <span style={{ flex: 1, textAlign: 'right' }}>Volume {PERIOD_LABELS[period]}</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>0x Volume</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Kyber Volume</span>
-             <span style={{ flex: 1, textAlign: 'right' }}>Fee {PERIOD_LABELS[period]}</span>
-             <span style={{ flex: 1, textAlign: 'right' }}>Revenue {PERIOD_LABELS[period]}</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            {row.versions.map((versionRow) => (
-              <div
-                key={`${row.chainId}-${versionRow.version}`}
-                className="flex md:grid items-center max-md:flex-wrap max-md:gap-2"
-                style={{
-                  gap: '8px',
-                  background: '#15110E',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  minWidth: '900px',
-                  gridTemplateColumns: '1.4fr repeat(7, minmax(0, 1fr))',
-                }}
-              >
-                <div className="max-md:w-full" style={{ flex: 1.4 }}>
-                  <VersionBadge row={versionRow} />
-                </div>
-                <div
-                  className="max-md:hidden"
-                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
-                >
-                  {fmtUsd(versionRow.totalFeeAllTime)}
-                </div>
-                <div
-                  className="max-md:hidden"
-                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}
-                >
-                  {fmtUsd(versionRow.totalRevenueAllTime)}
-                </div>
-                <div
-                  className="max-md:hidden"
-                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
-                >
-                   {fmtUsd(periodValues(versionRow, period).volume)}
-                </div>
-                <div
-                  className="max-md:hidden"
-                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
-                >
-                  <VolumeMetric
-                     volume={period === '24h' ? versionRow.zeroXVolume24h : 0}
-                     total={periodValues(versionRow, period).volume}
-                   chainId={versionRow.chainId}
-                   version={versionRow.version}
-                   period={period}
-                  />
-                </div>
-                <div
-                  className="max-md:hidden"
-                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
-                >
-                  <VolumeMetric
-                     volume={period === '24h' ? versionRow.kyberVolume24h : 0}
-                     total={periodValues(versionRow, period).volume}
-                   chainId={versionRow.chainId}
-                   version={versionRow.version}
-                   period={period}
-                  />
-                </div>
-                <div
-                  className="max-md:hidden"
-                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#FBFBFD' }}
-                >
-                   {fmtUsd(periodValues(versionRow, period).fee)}
-                </div>
-                <div
-                  className="max-md:hidden"
-                  style={{ flex: 1, textAlign: 'right', fontFamily: 'Inter', fontSize: '14px', color: '#D8A072' }}
-                >
-                   {fmtUsd(periodValues(versionRow, period).revenue)}
-                </div>
-                <div className="md:hidden w-full grid grid-cols-2 gap-2 mt-1">
-                  <MetricChip label="Fee All-time" value={fmtUsd(versionRow.totalFeeAllTime)} />
-                  <MetricChip label="Revenue All-time" value={fmtUsd(versionRow.totalRevenueAllTime)} accent />
-                   <MetricChip label={`Volume ${PERIOD_LABELS[period]}`} value={fmtUsd(periodValues(versionRow, period).volume)} />
-                  <MetricChip
-                    label="0x Volume"
-                    value={
-                      <VolumeMetric
-                         volume={period === '24h' ? versionRow.zeroXVolume24h : 0}
-                         total={periodValues(versionRow, period).volume}
-                        chainId={versionRow.chainId}
-                        version={versionRow.version}
-                        period={period}
-                      />
-                    }
-                  />
-                  <MetricChip
-                    label="Kyber Volume"
-                    value={
-                      <VolumeMetric
-                         volume={period === '24h' ? versionRow.kyberVolume24h : 0}
-                         total={periodValues(versionRow, period).volume}
-                        chainId={versionRow.chainId}
-                        version={versionRow.version}
-                        period={period}
-                      />
-                    }
-                  />
-                   <MetricChip label={`Fee ${PERIOD_LABELS[period]}`} value={fmtUsd(periodValues(versionRow, period).fee)} />
-                  <MetricChip
-                     label={`Revenue ${PERIOD_LABELS[period]}`}
-                     value={<RevenueValue value={periodValues(versionRow, period).revenue} />}
-                    accent
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          <ChainHistoryCharts row={row} />
         </div>
       )}
     </div>
@@ -826,11 +690,12 @@ export default function Dashboard() {
             }}
           >
             <span style={{ flex: 2 }}>Chain</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Revenue All-time</span>
-             <span style={{ flex: 1, textAlign: 'right' }}>Volume {PERIOD_LABELS[period]}</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>0x Volume</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Kyber Volume</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Rev. All-time</span>
+             <span style={{ flex: 1, textAlign: 'right' }}>Vol. {PERIOD_LABELS[period]}</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>0x Vol.</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Kyber Vol.</span>
              <span style={{ flex: 1, textAlign: 'right' }}>Fee {PERIOD_LABELS[period]}</span>
              <span style={{ flex: 1, textAlign: 'right' }}>Revenue {PERIOD_LABELS[period]}</span>
             <span style={{ flex: 0.35 }} />
