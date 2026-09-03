@@ -163,6 +163,7 @@ export type RevenueVersionRow = {
   totalVolume30d: number
   totalFee30d: number
   totalRevenue30d: number
+  history: RevenueHistoryPoint[]
   zeroXVolume24h: number
   kyberVolume24h: number
   isArchived: boolean
@@ -182,6 +183,7 @@ export type RevenueChainRow = {
   totalVolume30d: number
   totalFee30d: number
   totalRevenue30d: number
+  history: RevenueHistoryPoint[]
   zeroXVolume24h: number
   kyberVolume24h: number
   versions: RevenueVersionRow[]
@@ -199,6 +201,7 @@ export type RevenueDashboardStats = {
   totalVolume30d: number
   totalFee30d: number
   totalRevenue30d: number
+  history: RevenueHistoryPoint[]
 }
 
 export type RevenueStatsBreakdown = {
@@ -229,6 +232,13 @@ export type RevenueDashboardResult = {
 
 export type DashboardPeriod = '24h' | '7d' | '30d'
 
+export type RevenueHistoryPoint = {
+  timestamp: number
+  volume: number
+  fee: number
+  revenue: number
+}
+
 function num(v: string | number | null | undefined): number {
   if (v === null || v === undefined) return 0
   const n = typeof v === 'number' ? v : Number(v)
@@ -237,6 +247,29 @@ function num(v: string | number | null | undefined): number {
 
 function sumDays(days: any[], field: string, count: number): number {
   return days.slice(0, count).reduce((acc, day) => acc + num(day?.[field]), 0)
+}
+
+function historyFromDays(days: any[], revenueRate: number | null): RevenueHistoryPoint[] {
+  return days
+    .slice()
+    .reverse()
+    .map((day) => ({
+      timestamp: num(day?.dayStartUnix ?? day?.date),
+      volume: num(day?.dailyVolume ?? day?.volumeUSD),
+      fee: num(day?.dailyFees ?? day?.feesUSD),
+      revenue: revenueRate === null ? num(day?.dailyRevenue) : num(day?.dailyFees ?? day?.feesUSD) * revenueRate,
+    }))
+}
+
+function mergeHistory(a: RevenueHistoryPoint[], b: RevenueHistoryPoint[]): RevenueHistoryPoint[] {
+  const merged = new Map<number, RevenueHistoryPoint>()
+  for (const point of [...a, ...b]) {
+    const existing = merged.get(point.timestamp)
+    merged.set(point.timestamp, existing
+      ? { timestamp: point.timestamp, volume: existing.volume + point.volume, fee: existing.fee + point.fee, revenue: existing.revenue + point.revenue }
+      : point)
+  }
+  return [...merged.values()].sort((left, right) => left.timestamp - right.timestamp)
 }
 
 function chainSortWeight(chainId: number) {
@@ -277,6 +310,7 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
     totalFee30d: sumDays(factoryDays, 'dailyFees', 30),
     totalRevenue30d:
       chainId === ROBINHOOD_CHAIN_ID ? sumDays(factoryDays, 'dailyFees', 30) * 0.07 : sumDays(factoryDays, 'dailyRevenue', 30),
+    history: historyFromDays(factoryDays, chainId === ROBINHOOD_CHAIN_ID ? 0.07 : null),
   }
 }
 
@@ -309,6 +343,7 @@ async function fetchHemiRevenue() {
     totalVolume30d: sumDays(days, 'volumeUSD', 30),
     totalFee30d: sumDays(days, 'feesUSD', 30),
     totalRevenue30d: sumDays(days, 'feesUSD', 30) * 0.1,
+    history: historyFromDays(days, 0.1),
   }
 }
 
@@ -438,6 +473,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
             totalVolume30d: number
             totalFee30d: number
             totalRevenue30d: number
+            history: RevenueHistoryPoint[]
           }
         | undefined
       return {
@@ -457,6 +493,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         totalVolume30d: data?.totalVolume30d ?? 0,
         totalFee30d: data?.totalFee30d ?? 0,
         totalRevenue30d: data?.totalRevenue30d ?? 0,
+        history: data?.history ?? [],
         zeroXVolume24h:
           task.version === VERSION.V3_OFFICIAL
             ? Math.min(zeroXVolumeByChain.get(task.chainId) ?? 0, (data?.totalVolume24h ?? 0) * 0.999)
@@ -489,6 +526,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalVolume30d: 0,
           totalFee30d: 0,
           totalRevenue30d: 0,
+          history: [],
           zeroXVolume24h: 0,
           kyberVolume24h: 0,
           isArchived: true,
@@ -514,6 +552,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         existing.totalVolume30d += row.totalVolume30d
         existing.totalFee30d += row.totalFee30d
         existing.totalRevenue30d += row.totalRevenue30d
+        existing.history = mergeHistory(existing.history, row.history)
         existing.zeroXVolume24h += row.zeroXVolume24h
         existing.kyberVolume24h += row.kyberVolume24h
         existing.versions.push(row)
@@ -532,6 +571,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalVolume30d: row.totalVolume30d,
           totalFee30d: row.totalFee30d,
           totalRevenue30d: row.totalRevenue30d,
+          history: row.history,
           zeroXVolume24h: row.zeroXVolume24h,
           kyberVolume24h: row.kyberVolume24h,
           versions: [row],
@@ -546,7 +586,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
   }, [versionRows])
 
   const stats = useMemo<RevenueDashboardStats>(() => {
-    return chains.reduce(
+    return chains.reduce<RevenueDashboardStats>(
       (acc, row) => ({
         totalFeeAllTime: acc.totalFeeAllTime + row.totalFeeAllTime,
         totalRevenueAllTime: acc.totalRevenueAllTime + row.totalRevenueAllTime,
@@ -559,8 +599,9 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         totalVolume30d: acc.totalVolume30d + row.totalVolume30d,
         totalFee30d: acc.totalFee30d + row.totalFee30d,
         totalRevenue30d: acc.totalRevenue30d + row.totalRevenue30d,
+        history: mergeHistory(acc.history, row.history),
       }),
-      { totalVolume24h: 0, totalFeeAllTime: 0, totalRevenueAllTime: 0, totalFee24h: 0, totalRevenue24h: 0, totalVolume7d: 0, totalFee7d: 0, totalRevenue7d: 0, totalVolume30d: 0, totalFee30d: 0, totalRevenue30d: 0 },
+      { totalVolume24h: 0, totalFeeAllTime: 0, totalRevenueAllTime: 0, totalFee24h: 0, totalRevenue24h: 0, totalVolume7d: 0, totalFee7d: 0, totalRevenue7d: 0, totalVolume30d: 0, totalFee30d: 0, totalRevenue30d: 0, history: [] },
     )
   }, [chains])
 

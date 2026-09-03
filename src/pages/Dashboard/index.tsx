@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { availableChains } from 'connectors'
 import { AutoColumn } from 'components/Column'
 import { Flex } from 'components/Rebass'
@@ -13,6 +14,7 @@ import {
   type RevenueStatsBreakdown,
   type RevenueVersionRow,
   type DashboardPeriod,
+  type RevenueHistoryPoint,
 } from './useRevenueDashboard'
 
 const HEMI_ICON_URL = 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png'
@@ -88,6 +90,57 @@ function PeriodToggle({ period, onChange }: { period: DashboardPeriod; onChange:
           {PERIOD_LABELS[option]}
         </button>
       ))}
+    </div>
+  )
+}
+
+function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof RevenueHistoryPoint; label: string; color: string; history: RevenueHistoryPoint[] }) {
+  const chartData = history.slice(-30).map((point) => ({
+    ...point,
+    label: new Date(point.timestamp * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+  }))
+  const latest = chartData[chartData.length - 1]
+
+  return (
+    <div style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: '10px', padding: '12px 14px' }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <span style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>{label}</span>
+        <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 600, color: '#FBFBFD' }}>{latest ? fmtUsd(Number(latest[dataKey])) : '$0.00'}</span>
+      </div>
+      <div style={{ width: '100%', height: 150 }}>
+        <ResponsiveContainer>
+          <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id={`dashboard-${String(dataKey)}-fill`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+                <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="#2F2823" vertical={false} />
+            <XAxis dataKey="label" hide />
+            <YAxis hide domain={['auto', 'auto']} />
+            <Tooltip
+              contentStyle={{ background: '#1E1915', border: '1px solid #493E35', borderRadius: 8, fontFamily: 'Inter', fontSize: 11 }}
+              formatter={(value) => [fmtUsd(Number(value)), label === 'Volume' ? 'Vol.' : label === 'Revenue' ? 'Rev.' : 'Fee']}
+            />
+            <Area type="monotone" dataKey={dataKey} name={label} stroke={color} fill={`url(#dashboard-${String(dataKey)}-fill)`} strokeWidth={2} dot={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
+
+function DashboardHistoryChart({ period, history }: { period: DashboardPeriod; history: RevenueHistoryPoint[] }) {
+  // The indexer exposes a 24h aggregate, not an hourly history. Use the 7-day
+  // daily series for the 24h view until hourly data is available.
+  const points = history.slice(-(period === '30d' ? 30 : 7))
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <MiniHistoryChart dataKey="volume" label="Volume" color="#6FB3E6" history={points} />
+      <MiniHistoryChart dataKey="fee" label="Fee" color="#CFC7C1" history={points} />
+      <MiniHistoryChart dataKey="revenue" label="Revenue" color="#D8A072" history={points} />
     </div>
   )
 }
@@ -685,7 +738,7 @@ function MetricChip({ label, value, accent = false }: { label: ReactNode; value:
 
 export default function Dashboard() {
   const { chains, stats, breakdown, isLoading, isError } = useRevenueDashboard()
-  const [period, setPeriod] = useState<DashboardPeriod>('7d')
+  const [period, setPeriod] = useState<DashboardPeriod>('24h')
   const periodVolume = period === '24h' ? stats.totalVolume24h : period === '7d' ? stats.totalVolume7d : stats.totalVolume30d
   const periodFee = period === '24h' ? stats.totalFee24h : period === '7d' ? stats.totalFee7d : stats.totalFee30d
   const periodRevenue = period === '24h' ? stats.totalRevenue24h : period === '7d' ? stats.totalRevenue7d : stats.totalRevenue30d
@@ -753,6 +806,7 @@ export default function Dashboard() {
             onPeriodChange={setPeriod}
             isLoading={isLoading || isLoadingProtocolStats}
           />
+          <DashboardHistoryChart period={period} history={stats.history} />
 
           <div
             className="hidden md:flex items-center"
