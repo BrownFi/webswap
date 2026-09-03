@@ -12,6 +12,12 @@ const CHAIN_REVENUE_QUERY = `
       totalFee
       totalRevenue
     }
+    factoryDayDatas(first: 30, orderBy: dayStartUnix, orderDirection: desc) {
+      dayStartUnix
+      dailyVolume
+      dailyFees
+      dailyRevenue
+    }
     pairs(first: 1000) {
       volumeDay
       feeDay
@@ -34,6 +40,11 @@ const HEMI_REVENUE_QUERY = `
       totalAlgebraFeesUSD
     }
     algebraDayDatas(orderBy: date, orderDirection: desc, first: 1) {
+      date
+      volumeUSD
+      feesUSD
+    }
+    algebraDayDatas30: algebraDayDatas(orderBy: date, orderDirection: desc, first: 30) {
       date
       volumeUSD
       feesUSD
@@ -146,6 +157,12 @@ export type RevenueVersionRow = {
   totalVolume24h: number
   totalFee24h: number
   totalRevenue24h: number
+  totalVolume7d: number
+  totalFee7d: number
+  totalRevenue7d: number
+  totalVolume30d: number
+  totalFee30d: number
+  totalRevenue30d: number
   zeroXVolume24h: number
   kyberVolume24h: number
   isArchived: boolean
@@ -159,16 +176,29 @@ export type RevenueChainRow = {
   totalVolume24h: number
   totalFee24h: number
   totalRevenue24h: number
+  totalVolume7d: number
+  totalFee7d: number
+  totalRevenue7d: number
+  totalVolume30d: number
+  totalFee30d: number
+  totalRevenue30d: number
   zeroXVolume24h: number
   kyberVolume24h: number
   versions: RevenueVersionRow[]
 }
 
 export type RevenueDashboardStats = {
+  totalVolume24h: number
   totalFeeAllTime: number
   totalRevenueAllTime: number
   totalFee24h: number
   totalRevenue24h: number
+  totalVolume7d: number
+  totalFee7d: number
+  totalRevenue7d: number
+  totalVolume30d: number
+  totalFee30d: number
+  totalRevenue30d: number
 }
 
 export type RevenueStatsBreakdown = {
@@ -180,6 +210,12 @@ export type RevenueStatsBreakdown = {
   totalVolume24h: number
   totalFee24h: number
   totalRevenue24h: number
+  totalVolume7d: number
+  totalFee7d: number
+  totalRevenue7d: number
+  totalVolume30d: number
+  totalFee30d: number
+  totalRevenue30d: number
 }
 
 export type RevenueDashboardResult = {
@@ -191,10 +227,16 @@ export type RevenueDashboardResult = {
   isError: boolean
 }
 
+export type DashboardPeriod = '24h' | '7d' | '30d'
+
 function num(v: string | number | null | undefined): number {
   if (v === null || v === undefined) return 0
   const n = typeof v === 'number' ? v : Number(v)
   return Number.isFinite(n) ? n : 0
+}
+
+function sumDays(days: any[], field: string, count: number): number {
+  return days.slice(0, count).reduce((acc, day) => acc + num(day?.[field]), 0)
 }
 
 function chainSortWeight(chainId: number) {
@@ -210,6 +252,7 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
     variables: { chainId, version },
   })
   const factory = (data as any)?.factories?.[0]
+  const factoryDays: any[] = (data as any)?.factoryDayDatas ?? []
   const pairs: any[] = (data as any)?.pairs ?? []
   return {
     totalValueLocked: num(factory?.tvl),
@@ -226,6 +269,14 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
       chainId === ROBINHOOD_CHAIN_ID
         ? pairs.reduce((acc, pair) => acc + num(pair?.feeDay), 0) * 0.07
         : pairs.reduce((acc, pair) => acc + num(pair?.feeDay) * num(pair?.feeSplit), 0),
+    totalVolume7d: sumDays(factoryDays, 'dailyVolume', 7),
+    totalFee7d: sumDays(factoryDays, 'dailyFees', 7),
+    totalRevenue7d:
+      chainId === ROBINHOOD_CHAIN_ID ? sumDays(factoryDays, 'dailyFees', 7) * 0.07 : sumDays(factoryDays, 'dailyRevenue', 7),
+    totalVolume30d: sumDays(factoryDays, 'dailyVolume', 30),
+    totalFee30d: sumDays(factoryDays, 'dailyFees', 30),
+    totalRevenue30d:
+      chainId === ROBINHOOD_CHAIN_ID ? sumDays(factoryDays, 'dailyFees', 30) * 0.07 : sumDays(factoryDays, 'dailyRevenue', 30),
   }
 }
 
@@ -239,6 +290,7 @@ async function fetchHemiRevenue() {
   const body = (await response.json()) as any
   const factory = body?.data?.factories?.[0]
   const latestDay = body?.data?.algebraDayDatas?.[0]
+  const days: any[] = body?.data?.algebraDayDatas30 ?? []
   const totalFees = num(factory?.totalFeesUSD)
   const totalCommunityFees = num(factory?.totalCommunityFeesUSD)
   const dailyFees = num(latestDay?.feesUSD)
@@ -251,6 +303,12 @@ async function fetchHemiRevenue() {
     totalFee24h: dailyFees,
     // Hemi revenue is a simulation: 10% of the latest UTC-day fee bucket.
     totalRevenue24h: dailyFees * 0.1,
+    totalVolume7d: sumDays(days, 'volumeUSD', 7),
+    totalFee7d: sumDays(days, 'feesUSD', 7),
+    totalRevenue7d: sumDays(days, 'feesUSD', 7) * 0.1,
+    totalVolume30d: sumDays(days, 'volumeUSD', 30),
+    totalFee30d: sumDays(days, 'feesUSD', 30),
+    totalRevenue30d: sumDays(days, 'feesUSD', 30) * 0.1,
   }
 }
 
@@ -317,7 +375,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     queries: tasks.map((task) => ({
       // Versioned key so newly-added fields (e.g. totalVolume24h) don't keep reading
       // older cached payloads from a previous dashboard shape during the 5-minute stale window.
-      queryKey: ['revenueDashboard:v5', task.kind, task.version, task.chainId],
+      queryKey: ['revenueDashboard:v6', task.kind, task.version, task.chainId],
       queryFn: () =>
         task.kind === 'hemi'
           ? fetchHemiRevenue()
@@ -374,6 +432,12 @@ export function useRevenueDashboard(): RevenueDashboardResult {
             totalVolume24h: number
             totalFee24h: number
             totalRevenue24h: number
+            totalVolume7d: number
+            totalFee7d: number
+            totalRevenue7d: number
+            totalVolume30d: number
+            totalFee30d: number
+            totalRevenue30d: number
           }
         | undefined
       return {
@@ -387,6 +451,12 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         totalVolume24h: data?.totalVolume24h ?? 0,
         totalFee24h: data?.totalFee24h ?? 0,
         totalRevenue24h: data?.totalRevenue24h ?? 0,
+        totalVolume7d: data?.totalVolume7d ?? 0,
+        totalFee7d: data?.totalFee7d ?? 0,
+        totalRevenue7d: data?.totalRevenue7d ?? 0,
+        totalVolume30d: data?.totalVolume30d ?? 0,
+        totalFee30d: data?.totalFee30d ?? 0,
+        totalRevenue30d: data?.totalRevenue30d ?? 0,
         zeroXVolume24h:
           task.version === VERSION.V3_OFFICIAL
             ? Math.min(zeroXVolumeByChain.get(task.chainId) ?? 0, (data?.totalVolume24h ?? 0) * 0.999)
@@ -413,6 +483,12 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalVolume24h: 0,
           totalFee24h: 0,
           totalRevenue24h: 0,
+          totalVolume7d: 0,
+          totalFee7d: 0,
+          totalRevenue7d: 0,
+          totalVolume30d: 0,
+          totalFee30d: 0,
+          totalRevenue30d: 0,
           zeroXVolume24h: 0,
           kyberVolume24h: 0,
           isArchived: true,
@@ -432,6 +508,12 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         existing.totalVolume24h += row.totalVolume24h
         existing.totalFee24h += row.totalFee24h
         existing.totalRevenue24h += row.totalRevenue24h
+        existing.totalVolume7d += row.totalVolume7d
+        existing.totalFee7d += row.totalFee7d
+        existing.totalRevenue7d += row.totalRevenue7d
+        existing.totalVolume30d += row.totalVolume30d
+        existing.totalFee30d += row.totalFee30d
+        existing.totalRevenue30d += row.totalRevenue30d
         existing.zeroXVolume24h += row.zeroXVolume24h
         existing.kyberVolume24h += row.kyberVolume24h
         existing.versions.push(row)
@@ -444,6 +526,12 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalVolume24h: row.totalVolume24h,
           totalFee24h: row.totalFee24h,
           totalRevenue24h: row.totalRevenue24h,
+          totalVolume7d: row.totalVolume7d,
+          totalFee7d: row.totalFee7d,
+          totalRevenue7d: row.totalRevenue7d,
+          totalVolume30d: row.totalVolume30d,
+          totalFee30d: row.totalFee30d,
+          totalRevenue30d: row.totalRevenue30d,
           zeroXVolume24h: row.zeroXVolume24h,
           kyberVolume24h: row.kyberVolume24h,
           versions: [row],
@@ -462,10 +550,17 @@ export function useRevenueDashboard(): RevenueDashboardResult {
       (acc, row) => ({
         totalFeeAllTime: acc.totalFeeAllTime + row.totalFeeAllTime,
         totalRevenueAllTime: acc.totalRevenueAllTime + row.totalRevenueAllTime,
+        totalVolume24h: acc.totalVolume24h + row.totalVolume24h,
         totalFee24h: acc.totalFee24h + row.totalFee24h,
         totalRevenue24h: acc.totalRevenue24h + row.totalRevenue24h,
+        totalVolume7d: acc.totalVolume7d + row.totalVolume7d,
+        totalFee7d: acc.totalFee7d + row.totalFee7d,
+        totalRevenue7d: acc.totalRevenue7d + row.totalRevenue7d,
+        totalVolume30d: acc.totalVolume30d + row.totalVolume30d,
+        totalFee30d: acc.totalFee30d + row.totalFee30d,
+        totalRevenue30d: acc.totalRevenue30d + row.totalRevenue30d,
       }),
-      { totalFeeAllTime: 0, totalRevenueAllTime: 0, totalFee24h: 0, totalRevenue24h: 0 },
+      { totalVolume24h: 0, totalFeeAllTime: 0, totalRevenueAllTime: 0, totalFee24h: 0, totalRevenue24h: 0, totalVolume7d: 0, totalFee7d: 0, totalRevenue7d: 0, totalVolume30d: 0, totalFee30d: 0, totalRevenue30d: 0 },
     )
   }, [chains])
 
@@ -486,6 +581,12 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalVolume24h: acc.totalVolume24h + row.totalVolume24h,
           totalFee24h: acc.totalFee24h + row.totalFee24h,
           totalRevenue24h: acc.totalRevenue24h + row.totalRevenue24h,
+          totalVolume7d: acc.totalVolume7d + row.totalVolume7d,
+          totalFee7d: acc.totalFee7d + row.totalFee7d,
+          totalRevenue7d: acc.totalRevenue7d + row.totalRevenue7d,
+          totalVolume30d: acc.totalVolume30d + row.totalVolume30d,
+          totalFee30d: acc.totalFee30d + row.totalFee30d,
+          totalRevenue30d: acc.totalRevenue30d + row.totalRevenue30d,
         }),
         {
           label: group.label,
@@ -496,6 +597,12 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           totalVolume24h: 0,
           totalFee24h: 0,
           totalRevenue24h: 0,
+          totalVolume7d: 0,
+          totalFee7d: 0,
+          totalRevenue7d: 0,
+          totalVolume30d: 0,
+          totalFee30d: 0,
+          totalRevenue30d: 0,
         },
       ),
     )
