@@ -94,8 +94,8 @@ function PeriodToggle({ period, onChange }: { period: DashboardPeriod; onChange:
   )
 }
 
-function MiniHistoryChart({ dataKey, label, color, history, value }: { dataKey: keyof RevenueHistoryPoint; label: string; color: string; history: RevenueHistoryPoint[]; value: number }) {
-  const chartData = history.slice(-30).map((point) => ({
+function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof RevenueHistoryPoint; label: string; color: string; history: RevenueHistoryPoint[] }) {
+  const chartData = history.map((point) => ({
     ...point,
     label: new Date(point.timestamp * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
   }))
@@ -103,7 +103,6 @@ function MiniHistoryChart({ dataKey, label, color, history, value }: { dataKey: 
     <div style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: '10px', padding: '12px 14px' }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
         <span style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>{label}</span>
-        <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 600, color: '#FBFBFD' }}>{fmtUsd(value)}</span>
       </div>
       <div style={{ width: '100%', height: 150 }}>
         <ResponsiveContainer>
@@ -129,31 +128,22 @@ function MiniHistoryChart({ dataKey, label, color, history, value }: { dataKey: 
   )
 }
 
-function DashboardHistoryChart({ history, values }: { history: RevenueHistoryPoint[]; values: RevenueHistoryPoint }) {
-  // Exclude the incomplete current UTC-day bucket. The remaining points are
-  // completed daily buckets with no overlap between adjacent windows.
-  const points = history.slice(0, -1).slice(-30)
+function DashboardHistoryChart({ history }: { history: RevenueHistoryPoint[] }) {
+  // Exclude the incomplete current UTC-day bucket from the all-time series.
+  const points = history.slice(0, -1)
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-      <MiniHistoryChart dataKey="tvl" label="TVL" color="#D8A072" history={points} value={values.tvl} />
-      <MiniHistoryChart dataKey="volume" label="Volume (30D)" color="#D8A072" history={points} value={values.volume} />
-      <MiniHistoryChart dataKey="fee" label="Fee (30D)" color="#D8A072" history={points} value={values.fee} />
-      <MiniHistoryChart dataKey="revenue" label="Revenue (30D)" color="#D8A072" history={points} value={values.revenue} />
+      <MiniHistoryChart dataKey="tvl" label="TVL" color="#D8A072" history={points} />
+      <MiniHistoryChart dataKey="volume" label="Volume" color="#D8A072" history={points} />
+      <MiniHistoryChart dataKey="fee" label="Fee" color="#D8A072" history={points} />
+      <MiniHistoryChart dataKey="revenue" label="Revenue" color="#D8A072" history={points} />
     </div>
   )
 }
 
 function ChainHistoryCharts({ row }: { row: RevenueChainRow }) {
-  const values: RevenueHistoryPoint = {
-    timestamp: 0,
-    tvl: row.totalValueLocked,
-    volume: row.totalVolume30d,
-    fee: row.totalFee30d,
-    revenue: row.totalRevenue30d,
-  }
-
-  return <DashboardHistoryChart history={row.history} values={values} />
+  return <DashboardHistoryChart history={row.history} />
 }
 
 function DashboardStatsBar({
@@ -611,14 +601,6 @@ export default function Dashboard() {
     staleTime: 10 * 60_000,
     gcTime: 30 * 60_000,
   })
-  const chartValues: RevenueHistoryPoint = {
-    timestamp: 0,
-    tvl: protocolStats?.currentTvl ?? 0,
-    volume: stats.totalVolume30d,
-    fee: stats.totalFee30d,
-    revenue: stats.totalRevenue30d,
-  }
-
   const statCards = [
     {
       label: 'Total Value Locked',
@@ -676,7 +658,7 @@ export default function Dashboard() {
             onPeriodChange={setPeriod}
             isLoading={isLoading || isLoadingProtocolStats}
           />
-          <DashboardHistoryChart history={stats.history} values={chartValues} />
+          <DashboardHistoryChart history={stats.history} />
 
           <div
             className="hidden md:flex items-center"

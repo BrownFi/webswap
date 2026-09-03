@@ -12,7 +12,7 @@ const CHAIN_REVENUE_QUERY = `
       totalFee
       totalRevenue
     }
-    factoryDayDatas(first: 31, orderBy: dayStartUnix, orderDirection: desc) {
+    factoryDayDatas(first: 1000, orderBy: dayStartUnix, orderDirection: desc) {
       dayStartUnix
       dailyTvl
       dailyVolume
@@ -46,7 +46,7 @@ const HEMI_REVENUE_QUERY = `
       volumeUSD
       feesUSD
     }
-    algebraDayDatas30: algebraDayDatas(orderBy: date, orderDirection: desc, first: 31) {
+    algebraDayDatasAll: algebraDayDatas(orderBy: date, orderDirection: desc, first: 1000) {
       date
       tvlUSD
       volumeUSD
@@ -176,6 +176,7 @@ export type RevenueChainRow = {
   chainId: number
   chainName: string
   totalValueLocked: number
+  totalVolumeAllTime: number
   totalFeeAllTime: number
   totalRevenueAllTime: number
   totalVolume24h: number
@@ -332,7 +333,7 @@ async function fetchHemiRevenue() {
   const body = (await response.json()) as any
   const factory = body?.data?.factories?.[0]
   const latestDay = body?.data?.algebraDayDatas?.[0]
-  const days: any[] = body?.data?.algebraDayDatas30 ?? []
+  const days: any[] = body?.data?.algebraDayDatasAll ?? []
   const totalFees = num(factory?.totalFeesUSD)
   const totalCommunityFees = num(factory?.totalCommunityFeesUSD)
   const dailyFees = num(latestDay?.feesUSD)
@@ -550,6 +551,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
       const existing = grouped.get(row.chainId)
       if (existing) {
         existing.totalValueLocked += row.totalValueLocked
+        existing.totalVolumeAllTime += row.totalVolumeAllTime
         existing.totalFeeAllTime += row.totalFeeAllTime
         existing.totalRevenueAllTime += row.totalRevenueAllTime
         existing.totalVolume24h += row.totalVolume24h
@@ -570,6 +572,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
           chainId: row.chainId,
           chainName: row.chainName,
           totalValueLocked: row.totalValueLocked,
+          totalVolumeAllTime: row.totalVolumeAllTime,
           totalFeeAllTime: row.totalFeeAllTime,
           totalRevenueAllTime: row.totalRevenueAllTime,
           totalVolume24h: row.totalVolume24h,

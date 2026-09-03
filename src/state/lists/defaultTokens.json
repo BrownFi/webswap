@@ -93,6 +93,14 @@
       "logoURI": "https://cdn.robinhood.com/ncw_assets/logos/0xe93237c50d904957cf27e7b1133b510c669c2e74.png"
     },
     {
+      "chainId": 4663,
+      "address": "0x020bfc650a365f8bb26819deaabf3e21291018b4",
+      "name": "Cash Cat",
+      "symbol": "CASHCAT",
+      "decimals": 18,
+      "logoURI": "https://cdn.robinhood.com/ncw_assets/logos/0x020bfc650a365f8bb26819deaabf3e21291018b4.png"
+    },
+    {
       "chainId": 1,
       "address": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
       "name": "Aave",
