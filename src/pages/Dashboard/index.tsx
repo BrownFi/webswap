@@ -305,7 +305,7 @@ function DashboardStatsBar({
               letterSpacing: '-0.02em',
             }}
           >
-            24h
+            {PERIOD_LABELS[period]}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
             {dailyColumns.map((column, index) => (
@@ -328,7 +328,7 @@ function DashboardStatsBar({
           className="col-span-2"
           style={{ fontFamily: 'Inter', fontSize: '20px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}
         >
-          24h
+          {PERIOD_LABELS[period]}
         </div>
         <div>{renderDesktopMetric(totalStats[0])}</div>
         <div>{renderDesktopMetric(totalStats[1])}</div>
