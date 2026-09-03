@@ -94,18 +94,16 @@ function PeriodToggle({ period, onChange }: { period: DashboardPeriod; onChange:
   )
 }
 
-function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof RevenueHistoryPoint; label: string; color: string; history: RevenueHistoryPoint[] }) {
+function MiniHistoryChart({ dataKey, label, color, history, value }: { dataKey: keyof RevenueHistoryPoint; label: string; color: string; history: RevenueHistoryPoint[]; value: number }) {
   const chartData = history.slice(-30).map((point) => ({
     ...point,
     label: new Date(point.timestamp * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
   }))
-  const latest = chartData[chartData.length - 1]
-
   return (
     <div style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: '10px', padding: '12px 14px' }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
         <span style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>{label}</span>
-        <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 600, color: '#FBFBFD' }}>{latest ? fmtUsd(Number(latest[dataKey])) : '$0.00'}</span>
+        <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 600, color: '#FBFBFD' }}>{fmtUsd(value)}</span>
       </div>
       <div style={{ width: '100%', height: 150 }}>
         <ResponsiveContainer>
@@ -121,7 +119,7 @@ function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof R
             <YAxis hide domain={['auto', 'auto']} />
             <Tooltip
               contentStyle={{ background: '#1E1915', border: '1px solid #493E35', borderRadius: 8, fontFamily: 'Inter', fontSize: 11 }}
-              formatter={(value) => [fmtUsd(Number(value)), label === 'Volume' ? 'Vol.' : label === 'Revenue' ? 'Rev.' : 'Fee']}
+              formatter={(value) => [fmtUsd(Number(value)), label.startsWith('TVL') ? 'TVL' : label.startsWith('Volume') ? 'Vol.' : label.startsWith('Revenue') ? 'Rev.' : 'Fee']}
             />
             <Area type="monotone" dataKey={dataKey} name={label} stroke={color} fill={`url(#dashboard-${String(dataKey)}-fill)`} strokeWidth={2} dot={false} />
           </AreaChart>
@@ -131,16 +129,17 @@ function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof R
   )
 }
 
-function DashboardHistoryChart({ period, history }: { period: DashboardPeriod; history: RevenueHistoryPoint[] }) {
-  // The indexer exposes a 24h aggregate, not an hourly history. Use the 7-day
-  // daily series for the 24h view until hourly data is available.
-  const points = history.slice(-(period === '30d' ? 30 : 7))
+function DashboardHistoryChart({ history, values }: { history: RevenueHistoryPoint[]; values: RevenueHistoryPoint }) {
+  // Exclude the incomplete current UTC-day bucket. The remaining points are
+  // completed daily buckets with no overlap between adjacent windows.
+  const points = history.slice(0, -1).slice(-30)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <MiniHistoryChart dataKey="volume" label="Volume" color="#6FB3E6" history={points} />
-      <MiniHistoryChart dataKey="fee" label="Fee" color="#CFC7C1" history={points} />
-      <MiniHistoryChart dataKey="revenue" label="Revenue" color="#D8A072" history={points} />
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <MiniHistoryChart dataKey="tvl" label="TVL" color="#D8A072" history={points} value={values.tvl} />
+      <MiniHistoryChart dataKey="volume" label="Volume (30D)" color="#D8A072" history={points} value={values.volume} />
+      <MiniHistoryChart dataKey="fee" label="Fee (30D)" color="#D8A072" history={points} value={values.fee} />
+      <MiniHistoryChart dataKey="revenue" label="Revenue (30D)" color="#D8A072" history={points} value={values.revenue} />
     </div>
   )
 }
@@ -748,6 +747,13 @@ export default function Dashboard() {
     staleTime: 10 * 60_000,
     gcTime: 30 * 60_000,
   })
+  const chartValues: RevenueHistoryPoint = {
+    timestamp: 0,
+    tvl: protocolStats?.currentTvl ?? 0,
+    volume: stats.totalVolume30d,
+    fee: stats.totalFee30d,
+    revenue: stats.totalRevenue30d,
+  }
 
   const statCards = [
     {
@@ -806,7 +812,7 @@ export default function Dashboard() {
             onPeriodChange={setPeriod}
             isLoading={isLoading || isLoadingProtocolStats}
           />
-          <DashboardHistoryChart period={period} history={stats.history} />
+          <DashboardHistoryChart history={stats.history} values={chartValues} />
 
           <div
             className="hidden md:flex items-center"

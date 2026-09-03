@@ -12,8 +12,9 @@ const CHAIN_REVENUE_QUERY = `
       totalFee
       totalRevenue
     }
-    factoryDayDatas(first: 30, orderBy: dayStartUnix, orderDirection: desc) {
+    factoryDayDatas(first: 31, orderBy: dayStartUnix, orderDirection: desc) {
       dayStartUnix
+      dailyTvl
       dailyVolume
       dailyFees
       dailyRevenue
@@ -41,11 +42,13 @@ const HEMI_REVENUE_QUERY = `
     }
     algebraDayDatas(orderBy: date, orderDirection: desc, first: 1) {
       date
+      tvlUSD
       volumeUSD
       feesUSD
     }
-    algebraDayDatas30: algebraDayDatas(orderBy: date, orderDirection: desc, first: 30) {
+    algebraDayDatas30: algebraDayDatas(orderBy: date, orderDirection: desc, first: 31) {
       date
+      tvlUSD
       volumeUSD
       feesUSD
     }
@@ -234,6 +237,7 @@ export type DashboardPeriod = '24h' | '7d' | '30d'
 
 export type RevenueHistoryPoint = {
   timestamp: number
+  tvl: number
   volume: number
   fee: number
   revenue: number
@@ -254,7 +258,10 @@ function historyFromDays(days: any[], revenueRate: number | null): RevenueHistor
     .slice()
     .reverse()
     .map((day) => ({
-      timestamp: num(day?.dayStartUnix ?? day?.date),
+      // V3 and Hemi expose different timestamp field names. Normalize both to
+      // the UTC calendar day before merging the chain histories.
+      timestamp: Math.floor(num(day?.dayStartUnix ?? day?.date) / 86_400) * 86_400,
+      tvl: num(day?.dailyTvl ?? day?.tvlUSD),
       volume: num(day?.dailyVolume ?? day?.volumeUSD),
       fee: num(day?.dailyFees ?? day?.feesUSD),
       revenue: revenueRate === null ? num(day?.dailyRevenue) : num(day?.dailyFees ?? day?.feesUSD) * revenueRate,
@@ -266,7 +273,7 @@ function mergeHistory(a: RevenueHistoryPoint[], b: RevenueHistoryPoint[]): Reven
   for (const point of [...a, ...b]) {
     const existing = merged.get(point.timestamp)
     merged.set(point.timestamp, existing
-      ? { timestamp: point.timestamp, volume: existing.volume + point.volume, fee: existing.fee + point.fee, revenue: existing.revenue + point.revenue }
+      ? { timestamp: point.timestamp, tvl: existing.tvl + point.tvl, volume: existing.volume + point.volume, fee: existing.fee + point.fee, revenue: existing.revenue + point.revenue }
       : point)
   }
   return [...merged.values()].sort((left, right) => left.timestamp - right.timestamp)
@@ -410,7 +417,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     queries: tasks.map((task) => ({
       // Versioned key so newly-added fields (e.g. totalVolume24h) don't keep reading
       // older cached payloads from a previous dashboard shape during the 5-minute stale window.
-      queryKey: ['revenueDashboard:v6', task.kind, task.version, task.chainId],
+      queryKey: ['revenueDashboard:v10', task.kind, task.version, task.chainId],
       queryFn: () =>
         task.kind === 'hemi'
           ? fetchHemiRevenue()
@@ -599,11 +606,16 @@ export function useRevenueDashboard(): RevenueDashboardResult {
         totalVolume30d: acc.totalVolume30d + row.totalVolume30d,
         totalFee30d: acc.totalFee30d + row.totalFee30d,
         totalRevenue30d: acc.totalRevenue30d + row.totalRevenue30d,
-        history: mergeHistory(acc.history, row.history),
+        history: acc.history,
       }),
       { totalVolume24h: 0, totalFeeAllTime: 0, totalRevenueAllTime: 0, totalFee24h: 0, totalRevenue24h: 0, totalVolume7d: 0, totalFee7d: 0, totalRevenue7d: 0, totalVolume30d: 0, totalFee30d: 0, totalRevenue30d: 0, history: [] },
     )
   }, [chains])
+
+  const chartHistory = useMemo(
+    () => liveVersionRows.reduce<RevenueHistoryPoint[]>((history, row) => mergeHistory(history, row.history), []),
+    [liveVersionRows],
+  )
 
   const breakdown = useMemo<RevenueStatsBreakdown[]>(() => {
     const groups: Array<{ label: string; rows: RevenueVersionRow[] }> = [
@@ -652,7 +664,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
   return {
     chains,
     archivedV2,
-    stats,
+    stats: { ...stats, history: chartHistory },
     breakdown,
     isLoading:
       queries.some((query) => query.isLoading) ||
