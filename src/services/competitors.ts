@@ -89,7 +89,7 @@ export function getCompetitor(chainId: number): CompetitorConfig | undefined {
       return { name: 'Etherex', queryKey: 'etherexPairMap', fetch: fetchEtherexPairMap }
     case ChainId.ROBINHOOD_MAINNET:
       // Uniswap V4 on Robinhood (V3 is empty there) — see fetchUniswapRobinhoodPairMap.
-      return { name: 'Uniswap', queryKey: 'uniswapRobinhoodPairMap', fetch: fetchUniswapRobinhoodPairMap }
+      return { name: 'Uniswap', queryKey: 'uniswapRobinhoodPairMap:v2', fetch: fetchUniswapRobinhoodPairMap }
     default:
       return undefined
   }

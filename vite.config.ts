@@ -5,8 +5,44 @@ import svgr from 'vite-plugin-svgr'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import path from 'path'
 
+const UNISWAP_LIQUIDITY_UPSTREAM = 'https://liquidity.backend-prod.api.uniswap.org/uniswap.liquidity.v2.LiquidityService/GetPool'
+
+function uniswapLiquidityProxy() {
+  return {
+    name: 'uniswap-liquidity-proxy',
+    configureServer(server: { middlewares: { use: (path: string, handler: (req: any, res: any, next: () => void) => void) => void } }) {
+      server.middlewares.use('/uniswap-liquidity', async (req, res, next) => {
+        if (req.method !== 'POST') return next()
+        const chunks: Buffer[] = []
+        for await (const chunk of req) chunks.push(Buffer.from(chunk))
+        const { poolIdentifiers, chainId } = JSON.parse(Buffer.concat(chunks).toString())
+        if (chainId !== 4663 || !Array.isArray(poolIdentifiers) || poolIdentifiers.length > 18) {
+          res.statusCode = 400
+          res.end(JSON.stringify({ pools: [] }))
+          return
+        }
+        const pools = []
+        for (let i = 0; i < poolIdentifiers.length; i += 4) {
+          const batch = await Promise.all(poolIdentifiers.slice(i, i + 4).map(async (addressOrId: string) => {
+            try {
+              const controller = new AbortController()
+              const timeout = setTimeout(() => controller.abort(), 8_000)
+              const response = await fetch(UNISWAP_LIQUIDITY_UPSTREAM, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pool: { addressOrId, chainId } }), signal: controller.signal })
+              clearTimeout(timeout)
+              return response.ok ? (await response.json()).pool ?? null : null
+            } catch { return null }
+          }))
+          pools.push(...batch.filter(Boolean))
+        }
+        res.setHeader('content-type', 'application/json')
+        res.end(JSON.stringify({ pools }))
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), svgr(), tsconfigPaths()],
+  plugins: [react(), svgr(), tsconfigPaths(), uniswapLiquidityProxy()],
   define: {
     global: 'globalThis',
   },
@@ -61,6 +97,12 @@ export default defineConfig({
         changeOrigin: true,
         headers: { 'user-agent': 'BrownFi-Webswap (+https://brownfi.io)' },
         rewrite: (path) => path.replace(/^\/kyber-agg/, ''),
+      },
+      '/uniswap-data': {
+        target: 'https://entry-gateway.backend-prod.api.uniswap.org',
+        changeOrigin: true,
+        headers: { origin: 'https://app.uniswap.org', referer: 'https://app.uniswap.org/' },
+        rewrite: (path) => path.replace(/^\/uniswap-data/, ''),
       },
       // Dev mirror of functions/uniswap (CF) + api/uniswap (Vercel): proxy
       // /uniswap/* to the Uniswap gateway with an allowlisted Origin header so

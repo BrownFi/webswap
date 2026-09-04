@@ -1,4 +1,4 @@
-// Competitor (Uniswap V3) data for the pool list — Arbitrum only.
+// Competitor Uniswap data for the pool list — Arbitrum and Robinhood.
 // Uniswap's interface gateway (interface.gateway.uniswap.org) origin-allowlists:
 // it 409s ACCESS_DENIED for brownfi.io origins (and no-origin), only allowing
 // app.uniswap.org + localhost. So we go through a same-origin proxy that sets
@@ -9,7 +9,9 @@ import { CompetitorPairData, CompetitorReference, competitorPairKey } from './co
 
 // Same-origin proxy prefix (see functions/uniswap, vercel.json, vite.config).
 const UNISWAP_PROXY_BASE = import.meta.env.VITE_UNISWAP_PROXY_BASE || '/uniswap'
+const UNISWAP_LIQUIDITY_PROXY_BASE = import.meta.env.VITE_UNISWAP_LIQUIDITY_PROXY_BASE || '/uniswap-liquidity'
 const UNISWAP_GRAPHQL_PATH = '/v1/graphql'
+const UNISWAP_LIQUIDITY_PATH = '/uniswap.liquidity.v2.LiquidityService/GetPool'
 
 // The explore-pools query app.uniswap.org uses. `feeTier` comes back in
 // hundredths of a bip (500 = 0.05%) — already the unit CompetitorPairData wants.
@@ -34,63 +36,55 @@ interface UniswapPoolRaw {
   token1?: { address: string } | null
 }
 
-// The gateway resolves V4 pools by poolId, not by the BrownFi adapter address.
-const ROBINHOOD_UNISWAP_V4_POOL_IDS = [
-  '0x3bb34a44f1b2b5f32c034c38a53065a521a47b199700fa9bd19d60985ff24bf1',
-  '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907',
-  '0x2bca43d9d8c75399e3c6ba14e9dc88f44ca8968bb4694a8be4f80bd5a550df2e',
+interface UniswapLiquidityPoolRaw {
+  poolIdentifier?: string
+  protocolVersion?: 'V3' | 'V4'
+  feeTier?: number
+  tvlUsd?: number
+  volumeUsd1d?: number
+  token0Address?: string
+  token1Address?: string
+}
+
+const ROBINHOOD_UNISWAP_POOL_IDS = [
+  ...[
+    '0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3',
+    '0x52e65B17fB6E5BA00Ed806f37Afcd2DaA50271Ca',
+    '0xc61284332117c3FB23A2A56cceFFD07F7aF60029',
+    '0xEb07d9587eFD1778dFb9c385Ec43EF6d5F9fE401',
+    '0xDDCBBa3666f578E3F09516f21Ff85BFee859AB5e',
+    '0xA43b424Bc609495AED4BCD88d654934b510B0aD9',
+    '0xd057B1Bc54917855BBee58eAd58647f47caB35E5',
+    '0xeb60bCD1D920ad6E102690CCFC6fB488899E1510',
+    '0xf4ACdAEEB7022862A763C9B1B885e11191c889E3',
+  ],
+  ...[
+    '0x3bb34a44f1b2b5f32c034c38a53065a521a47b199700fa9bd19d60985ff24bf1',
+    '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907',
+    '0x2bca43d9d8c75399e3c6ba14e9dc88f44ca8968bb4694a8be4f80bd5a550df2e',
+    '0xfe2a80bb5618fd14984b92ca6d45bf5ba67443ddb1435e28b2e48df2fc1526cd',
+    '0x319bac87e616a89e241c10aeb8afd4892a852cdd8b373cd9765ecddc40b87cfe',
+    '0x6fa3ee0048e78bf0a513eb0ab56f482944a767c21db990fcf555605e69f05659',
+    '0x9194a557b6a6bb2236b49ea7e2bbccec5d3eeb705aef00903be4b3de1d949579',
+    '0x8517f8071ae5b831b738052f12125e8e3d6c158b78728aa44ce3b25e5104d32e',
+    '0xa92a3df27a00a276183ff7265fd8affa11df1fe8bb23ddfaf13f6c879a3f818b',
+  ],
 ]
 
-// Robinhood competitor = SPECIFIC Uniswap V3 pools (chosen by the team), fetched
-// BY ADDRESS — not the top-pools list. The gateway's topV3Pools doesn't index
-// Robinhood, but v3Pool(chain, address) resolves a single pool with feeTier + TVL +
-// 24h volume. Each maps to its token pair so the matching BrownFi pool picks it up.
-//   0xd4EB21…A3 → USDG/NVDA  (0.05%)
-//   0x52e65B…Ca → WETH/USDG  (0.01%)
-//   0xc61284…29 → SPCX/USDG  (0.05%)
-//   0xDDCBBa…5e → WETH/SPY  (0.05%)
-//   0xA43b42…D9 → SPY/USDG (0.30%)
-const ROBINHOOD_UNISWAP_POOLS = [
-  '0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3',
-  '0x52e65B17fB6E5BA00Ed806f37Afcd2DaA50271Ca',
-  '0xc61284332117c3FB23A2A56cceFFD07F7aF60029',
-  '0xDDCBBa3666f578E3F09516f21Ff85BFee859AB5e',
-  '0xA43b424Bc609495AED4BCD88d654934b510B0aD9',
-]
-const V3_POOL_BY_ADDRESS_QUERY = `query V3Pool($chain: Chain!, $address: String!) {
-  v3Pool(chain: $chain, address: $address) {
-    feeTier
-    totalLiquidity { value }
-    volume24h: cumulativeVolume(duration: DAY) { value }
-    token0 { address }
-    token1 { address }
-  }
-}`
-
-const V4_POOL_BY_ID_QUERY = `query V4Pool($chain: Chain!, $poolId: String!) {
-  v4Pool(chain: $chain, poolId: $poolId) {
-    feeTier
-    totalLiquidity { value }
-    volume24h: cumulativeVolume(duration: DAY) { value }
-    token0 { address }
-    token1 { address }
-  }
-}`
-
-async function fetchUniswapPool<T>(query: string, variables: Record<string, string>): Promise<T | null> {
+async function fetchUniswapLiquidityPools(): Promise<UniswapLiquidityPoolRaw[]> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10_000)
   try {
-    const res = await fetch(`${UNISWAP_PROXY_BASE}${UNISWAP_GRAPHQL_PATH}`, {
+    const res = await fetch(`${UNISWAP_LIQUIDITY_PROXY_BASE}${UNISWAP_LIQUIDITY_PATH}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables }),
+      body: JSON.stringify({ poolIdentifiers: ROBINHOOD_UNISWAP_POOL_IDS, chainId: 4663 }),
       signal: controller.signal,
     })
-    if (!res.ok) return null
-    return ((await res.json()) as { data?: T }).data ?? null
+    if (!res.ok) return []
+    return ((await res.json()) as { pools?: UniswapLiquidityPoolRaw[] }).pools ?? []
   } catch {
-    return null
+    return []
   } finally {
     clearTimeout(timeoutId)
   }
@@ -98,32 +92,22 @@ async function fetchUniswapPool<T>(query: string, variables: Record<string, stri
 
 export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, CompetitorPairData>> {
   const map: Record<string, CompetitorPairData> = {}
-  await Promise.all(
-    ROBINHOOD_UNISWAP_POOLS.map(async (address) => {
-      const data = await fetchUniswapPool<{ v3Pool?: UniswapPoolRaw | null }>(V3_POOL_BY_ADDRESS_QUERY, { chain: 'ROBINHOOD', address })
-      const p = data?.v3Pool
-      if (!p?.token0?.address || !p?.token1?.address) return
-      const feeTier = Number(p.feeTier) || 0
-      const vol24hUSD = Number(p.volume24h?.value) || 0
-      const reference: CompetitorReference = { version: 'V3', feeTier, tvlUSD: Number(p.totalLiquidity?.value) || 0, vol24hUSD, fees24hUSD: (vol24hUSD * feeTier) / 1_000_000 }
-      const key = competitorPairKey(p.token0.address, p.token1.address)
-      const existing = map[key]
-      map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
-    }),
-  )
-  await Promise.all(
-    ROBINHOOD_UNISWAP_V4_POOL_IDS.map(async (poolId) => {
-      const data = await fetchUniswapPool<{ v4Pool?: UniswapPoolRaw | null }>(V4_POOL_BY_ID_QUERY, { chain: 'ROBINHOOD', poolId })
-      const p = data?.v4Pool
-      if (!p?.token0?.address || !p?.token1?.address) return
-      const feeTier = Number(p.feeTier) || 0
-      const vol24hUSD = Number(p.volume24h?.value) || 0
-      const reference: CompetitorReference = { version: 'V4', feeTier, tvlUSD: Number(p.totalLiquidity?.value) || 0, vol24hUSD, fees24hUSD: (vol24hUSD * feeTier) / 1_000_000 }
-      const key = competitorPairKey(p.token0.address, p.token1.address)
-      const existing = map[key]
-      map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
-    }),
-  )
+
+  const dataPools = await fetchUniswapLiquidityPools()
+  dataPools.forEach((pool) => {
+    if (!pool.token0Address || !pool.token1Address) return
+    const version = pool.protocolVersion ?? 'V3'
+    const reference: CompetitorReference = {
+      version,
+      feeTier: Number(pool.feeTier) || 0,
+      tvlUSD: Number(pool.tvlUsd) || 0,
+      vol24hUSD: Number(pool.volumeUsd1d) || 0,
+      fees24hUSD: (Number(pool.volumeUsd1d) * Number(pool.feeTier)) / 1_000_000 || 0,
+    }
+    const key = competitorPairKey(pool.token0Address, pool.token1Address)
+    const existing = map[key]
+    map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
+  })
   Object.values(map).forEach((data) => data.references?.sort((a, b) => a.version.localeCompare(b.version)))
   return map
 }
