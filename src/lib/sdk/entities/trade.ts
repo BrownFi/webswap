@@ -370,7 +370,8 @@ export class Trade {
         // per-swap cap (not an empty pool) so the UI can say "reduce amount".
         if ((error as any)?.isMaxAmountOutExceededError) {
           bestTrades.maxExceeded = true
-          if ((error as any).maxIn) bestTrades.maxInputRaw = (error as any).maxIn
+          const maxIn = (error as any).maxIn as string | undefined
+          if (maxIn && (!bestTrades.maxInputRaw || BigInt(maxIn) > BigInt(bestTrades.maxInputRaw))) bestTrades.maxInputRaw = maxIn
         } else if (!bestTrades.failRevert && (error as any)?.revertSelector !== undefined) {
           bestTrades.failRevert = {
             selector: (error as any).revertSelector,
@@ -480,7 +481,8 @@ export class Trade {
         }
         if ((error as any)?.isMaxAmountOutExceededError) {
           bestTrades.maxExceeded = true
-          if ((error as any).maxIn) bestTrades.maxInputRaw = (error as any).maxIn
+          const maxIn = (error as any).maxIn as string | undefined
+          if (maxIn && (!bestTrades.maxInputRaw || BigInt(maxIn) > BigInt(bestTrades.maxInputRaw))) bestTrades.maxInputRaw = maxIn
         } else if (!bestTrades.failRevert && (error as any)?.revertSelector !== undefined) {
           bestTrades.failRevert = {
             selector: (error as any).revertSelector,

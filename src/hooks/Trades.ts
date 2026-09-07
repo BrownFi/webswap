@@ -274,7 +274,7 @@ export function useTradeExactIn(
           // every explored path costs a real on-chain quote + Pyth fetch (unlike
           // UniV2's local math) — multi-hop fans out into a request storm and rarely
           // beats the direct pool (A/B/C stacks two pools' fees + slippage). On
-          // low-pool chains (MULTI_HOP_CHAINS) we pass ALL common pairs + maxHops:2 so
+          // low-pool chains (MULTI_HOP_CHAINS) use ALL common pairs + maxHops:2 so
           // X→USDG→Y routes through; the fan-out stays tiny there.
           multiHop
             ? allowedPairs
