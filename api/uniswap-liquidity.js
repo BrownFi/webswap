@@ -17,12 +17,13 @@ const ALLOWED_POOL_IDS = new Set([
   '0x9194a557b6a6bb2236b49ea7e2bbccec5d3eeb705aef00903be4b3de1d949579',
   '0x8517f8071ae5b831b738052f12125e8e3d6c158b78728aa44ce3b25e5104d32e',
   '0xa92a3df27a00a276183ff7265fd8affa11df1fe8bb23ddfaf13f6c879a3f818b',
+  '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e',
 ])
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' })
   const { poolIdentifiers, chainId } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
-  if (chainId !== CHAIN_ID || !Array.isArray(poolIdentifiers) || poolIdentifiers.length > 18 || poolIdentifiers.some((id) => typeof id !== 'string' || !ALLOWED_POOL_IDS.has(id))) return res.status(400).json({ pools: [] })
+  if (chainId !== CHAIN_ID || !Array.isArray(poolIdentifiers) || poolIdentifiers.length > 19 || poolIdentifiers.some((id) => typeof id !== 'string' || !ALLOWED_POOL_IDS.has(id))) return res.status(400).json({ pools: [] })
   const cacheKey = poolIdentifiers.join(',')
   const cached = cache.get(cacheKey)
   if (cached && cached.expiresAt > Date.now()) return res.status(200).setHeader('cache-control', 'public, max-age=60').json(cached.body)

@@ -16,7 +16,7 @@ function uniswapLiquidityProxy() {
         const chunks: Buffer[] = []
         for await (const chunk of req) chunks.push(Buffer.from(chunk))
         const { poolIdentifiers, chainId } = JSON.parse(Buffer.concat(chunks).toString())
-        if (chainId !== 4663 || !Array.isArray(poolIdentifiers) || poolIdentifiers.length > 18) {
+        if (chainId !== 4663 || !Array.isArray(poolIdentifiers) || poolIdentifiers.length > 19) {
           res.statusCode = 400
           res.end(JSON.stringify({ pools: [] }))
           return

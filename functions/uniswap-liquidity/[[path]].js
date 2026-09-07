@@ -9,12 +9,13 @@ const ALLOWED_POOL_IDS = new Set([
   '0xfe2a80bb5618fd14984b92ca6d45bf5ba67443ddb1435e28b2e48df2fc1526cd', '0x319bac87e616a89e241c10aeb8afd4892a852cdd8b373cd9765ecddc40b87cfe',
   '0x6fa3ee0048e78bf0a513eb0ab56f482944a767c21db990fcf555605e69f05659', '0x9194a557b6a6bb2236b49ea7e2bbccec5d3eeb705aef00903be4b3de1d949579',
   '0x8517f8071ae5b831b738052f12125e8e3d6c158b78728aa44ce3b25e5104d32e', '0xa92a3df27a00a276183ff7265fd8affa11df1fe8bb23ddfaf13f6c879a3f818b',
+  '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e',
 ])
 
 export async function onRequest(context) {
   if (context.request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
   const { poolIdentifiers, chainId } = await context.request.json()
-  if (chainId !== 4663 || !Array.isArray(poolIdentifiers) || poolIdentifiers.length > 18 || poolIdentifiers.some((id) => typeof id !== 'string' || !ALLOWED_POOL_IDS.has(id))) return Response.json({ pools: [] }, { status: 400 })
+  if (chainId !== 4663 || !Array.isArray(poolIdentifiers) || poolIdentifiers.length > 19 || poolIdentifiers.some((id) => typeof id !== 'string' || !ALLOWED_POOL_IDS.has(id))) return Response.json({ pools: [] }, { status: 400 })
   const pools = []
   for (let i = 0; i < poolIdentifiers.length; i += 4) {
     const batch = await Promise.all(poolIdentifiers.slice(i, i + 4).map(async (addressOrId) => {

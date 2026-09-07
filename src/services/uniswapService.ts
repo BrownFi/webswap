@@ -12,6 +12,8 @@ const UNISWAP_PROXY_BASE = import.meta.env.VITE_UNISWAP_PROXY_BASE || '/uniswap'
 const UNISWAP_LIQUIDITY_PROXY_BASE = import.meta.env.VITE_UNISWAP_LIQUIDITY_PROXY_BASE || '/uniswap-liquidity'
 const UNISWAP_GRAPHQL_PATH = '/v1/graphql'
 const UNISWAP_LIQUIDITY_PATH = '/uniswap.liquidity.v2.LiquidityService/GetPool'
+const ROBINHOOD_WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73'
+const NATIVE_ETH = '0x0000000000000000000000000000000000000000'
 
 // The explore-pools query app.uniswap.org uses. `feeTier` comes back in
 // hundredths of a bip (500 = 0.05%) — already the unit CompetitorPairData wants.
@@ -68,6 +70,7 @@ const ROBINHOOD_UNISWAP_POOL_IDS = [
     '0x9194a557b6a6bb2236b49ea7e2bbccec5d3eeb705aef00903be4b3de1d949579',
     '0x8517f8071ae5b831b738052f12125e8e3d6c158b78728aa44ce3b25e5104d32e',
     '0xa92a3df27a00a276183ff7265fd8affa11df1fe8bb23ddfaf13f6c879a3f818b',
+    '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e', // WETH/SPCX
   ],
 ]
 
@@ -104,7 +107,9 @@ export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, Com
       vol24hUSD: Number(pool.volumeUsd1d) || 0,
       fees24hUSD: (Number(pool.volumeUsd1d) * Number(pool.feeTier)) / 1_000_000 || 0,
     }
-    const key = competitorPairKey(pool.token0Address, pool.token1Address)
+    const token0Address = pool.token0Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token0Address
+    const token1Address = pool.token1Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token1Address
+    const key = competitorPairKey(token0Address, token1Address)
     const existing = map[key]
     map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
   })
