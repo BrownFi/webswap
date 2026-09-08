@@ -21,6 +21,9 @@ export const INFO_GRAPH_URL = {
         "https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest"
     ),
 };
+export const INFO_GRAPH_FALLBACK_URL = {
+    [ChainId.Hemi]: "https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest",
+};
 
 // Farmings.
 export const FARMING_GRAPH_URL = {
@@ -28,6 +31,9 @@ export const FARMING_GRAPH_URL = {
         "8nwkiXDhLjGXPAaVgN6C92RsXHhuWWL45ad14aSRqYEQ",
         "https://api.studio.thegraph.com/query/50593/hemi-farmings/version/latest"
     ),
+};
+export const FARMING_GRAPH_FALLBACK_URL = {
+    [ChainId.Hemi]: "https://api.studio.thegraph.com/query/50593/hemi-farmings/version/latest",
 };
 
 // Disabled modules on Hemi — no subgraph. Clients are created but never queried.

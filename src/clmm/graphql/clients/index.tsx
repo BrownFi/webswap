@@ -1,9 +1,9 @@
 import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import { createApolloClient } from "../utils/createApolloClient";
-import { INFO_GRAPH_URL, LIMIT_ORDERS_GRAPH_URL, FARMING_GRAPH_URL, UNISWAP_GRAPH_URL, BLOCKS_GRAPH_URL } from "@clmm/config/graphql-urls";
+import { INFO_GRAPH_URL, INFO_GRAPH_FALLBACK_URL, LIMIT_ORDERS_GRAPH_URL, FARMING_GRAPH_URL, FARMING_GRAPH_FALLBACK_URL, UNISWAP_GRAPH_URL, BLOCKS_GRAPH_URL } from "@clmm/config/graphql-urls";
 
 export const infoClient: Record<number, ApolloClient<NormalizedCacheObject>> = Object.fromEntries(
-    Object.entries(INFO_GRAPH_URL).map(([chainId, url]) => [Number(chainId), createApolloClient(url)])
+    Object.entries(INFO_GRAPH_URL).map(([chainId, url]) => [Number(chainId), createApolloClient(url, undefined, INFO_GRAPH_FALLBACK_URL[Number(chainId)])])
 );
 
 export const limitOrderClient: Record<number, ApolloClient<NormalizedCacheObject>> = Object.fromEntries(
@@ -11,7 +11,7 @@ export const limitOrderClient: Record<number, ApolloClient<NormalizedCacheObject
 );
 
 export const farmingClient: Record<number, ApolloClient<NormalizedCacheObject>> = Object.fromEntries(
-    Object.entries(FARMING_GRAPH_URL).map(([chainId, url]) => [Number(chainId), createApolloClient(url)])
+    Object.entries(FARMING_GRAPH_URL).map(([chainId, url]) => [Number(chainId), createApolloClient(url, undefined, FARMING_GRAPH_FALLBACK_URL[Number(chainId)])])
 );
 
 export const blocksClient: Record<number, ApolloClient<NormalizedCacheObject>> = Object.fromEntries(
