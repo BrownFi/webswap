@@ -13,7 +13,11 @@ const UNISWAP_LIQUIDITY_PROXY_BASE = import.meta.env.VITE_UNISWAP_LIQUIDITY_PROX
 const UNISWAP_GRAPHQL_PATH = '/v1/graphql'
 const UNISWAP_LIQUIDITY_PATH = '/uniswap.liquidity.v2.LiquidityService/GetPool'
 const ROBINHOOD_WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73'
+const ROBINHOOD_SPY = '0x117cc2133c37B721F49dE2A7a74833232B3B4C0C'
+const ROBINHOOD_USDG = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'
 const NATIVE_ETH = '0x0000000000000000000000000000000000000000'
+const ROBINHOOD_SPY_USDG_KEY = competitorPairKey(ROBINHOOD_SPY, ROBINHOOD_USDG)
+const ROBINHOOD_SPY_USDG_REFERENCE = '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907'
 
 // The explore-pools query app.uniswap.org uses. `feeTier` comes back in
 // hundredths of a bip (500 = 0.05%) — already the unit CompetitorPairData wants.
@@ -110,6 +114,9 @@ export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, Com
     const token0Address = pool.token0Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token0Address
     const token1Address = pool.token1Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token1Address
     const key = competitorPairKey(token0Address, token1Address)
+    // The SPY/USDG comparison is managed against this specific 0.05% V4 pool,
+    // not whichever SPY/USDG reference currently has the highest TVL.
+    if (key === ROBINHOOD_SPY_USDG_KEY && pool.poolIdentifier?.toLowerCase() !== ROBINHOOD_SPY_USDG_REFERENCE) return
     const existing = map[key]
     map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
   })
