@@ -30,6 +30,8 @@ const CHAIN_REVENUE_QUERY = `
 const HEMI_SUBGRAPH_URL = import.meta.env.VITE_GRAPH_API_KEY
   ? `https://gateway.thegraph.com/api/${import.meta.env.VITE_GRAPH_API_KEY}/subgraphs/id/D1UwhrB45geUZTNQ2QwrXwGEhk69iBESApJJzz378ZeS`
   : 'https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest'
+const HEMI_SUBGRAPH_FALLBACK_URL = 'https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest'
+const HEMI_REVENUE_RATE = 0.1
 
 const HEMI_REVENUE_QUERY = `
   query HemiRevenue {
@@ -37,8 +39,6 @@ const HEMI_REVENUE_QUERY = `
       totalValueLockedUSD
       totalVolumeUSD
       totalFeesUSD
-      totalCommunityFeesUSD
-      totalAlgebraFeesUSD
     }
     algebraDayDatas(orderBy: date, orderDirection: desc, first: 1) {
       date
@@ -325,35 +325,47 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
 }
 
 async function fetchHemiRevenue() {
-  const response = await fetch(HEMI_SUBGRAPH_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ operationName: 'HemiRevenue', query: HEMI_REVENUE_QUERY, variables: {} }),
-  })
-  if (!response.ok) throw new Error(`Hemi revenue HTTP ${response.status}`)
-  const body = (await response.json()) as any
+  let body: any
+  for (const url of HEMI_SUBGRAPH_URL === HEMI_SUBGRAPH_FALLBACK_URL
+    ? [HEMI_SUBGRAPH_URL]
+    : [HEMI_SUBGRAPH_URL, HEMI_SUBGRAPH_FALLBACK_URL]) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operationName: 'HemiRevenue', query: HEMI_REVENUE_QUERY, variables: {} }),
+      })
+      if (!response.ok) continue
+      const candidate = (await response.json()) as any
+      if (!candidate?.data?.factories?.[0]) continue
+      body = candidate
+      break
+    } catch {
+      // Try Hosted Studio when the gateway/indexer is unavailable.
+    }
+  }
+  if (!body) throw new Error('Hemi revenue unavailable')
   const factory = body?.data?.factories?.[0]
   const latestDay = body?.data?.algebraDayDatas?.[0]
   const days: any[] = body?.data?.algebraDayDatasAll ?? []
   const totalFees = num(factory?.totalFeesUSD)
-  const totalCommunityFees = num(factory?.totalCommunityFeesUSD)
   const dailyFees = num(latestDay?.feesUSD)
   return {
     totalValueLocked: num(factory?.totalValueLockedUSD),
     totalVolumeAllTime: num(factory?.totalVolumeUSD),
     totalFeeAllTime: totalFees,
-    totalRevenueAllTime: totalCommunityFees,
+    // Hemi revenue is simulated consistently as 10% of total fees.
+    totalRevenueAllTime: totalFees * HEMI_REVENUE_RATE,
     totalVolume24h: num(latestDay?.volumeUSD),
     totalFee24h: dailyFees,
-    // Hemi revenue is a simulation: 10% of the latest UTC-day fee bucket.
-    totalRevenue24h: dailyFees * 0.1,
+    totalRevenue24h: dailyFees * HEMI_REVENUE_RATE,
     totalVolume7d: sumDays(days, 'volumeUSD', 7),
     totalFee7d: sumDays(days, 'feesUSD', 7),
-    totalRevenue7d: sumDays(days, 'feesUSD', 7) * 0.1,
+    totalRevenue7d: sumDays(days, 'feesUSD', 7) * HEMI_REVENUE_RATE,
     totalVolume30d: sumDays(days, 'volumeUSD', 30),
     totalFee30d: sumDays(days, 'feesUSD', 30),
-    totalRevenue30d: sumDays(days, 'feesUSD', 30) * 0.1,
-    history: historyFromDays(days, 0.1),
+    totalRevenue30d: sumDays(days, 'feesUSD', 30) * HEMI_REVENUE_RATE,
+    history: historyFromDays(days, HEMI_REVENUE_RATE),
   }
 }
 
@@ -420,7 +432,7 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     queries: tasks.map((task) => ({
       // Versioned key so newly-added fields (e.g. totalVolume24h) don't keep reading
       // older cached payloads from a previous dashboard shape during the 5-minute stale window.
-      queryKey: ['revenueDashboard:v10', task.kind, task.version, task.chainId],
+      queryKey: ['revenueDashboard:v11', task.kind, task.version, task.chainId],
       queryFn: () =>
         task.kind === 'hemi'
           ? fetchHemiRevenue()
