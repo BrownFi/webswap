@@ -31,6 +31,7 @@ import { graphqlFetcher } from 'utils/graphql'
 const HEMI_SUBGRAPH_URL = import.meta.env.VITE_GRAPH_API_KEY
   ? `https://gateway.thegraph.com/api/${import.meta.env.VITE_GRAPH_API_KEY}/subgraphs/id/D1UwhrB45geUZTNQ2QwrXwGEhk69iBESApJJzz378ZeS`
   : 'https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest'
+const HEMI_SUBGRAPH_FALLBACK_URL = 'https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest'
 
 export interface TvlPoint {
   date: number
@@ -149,30 +150,39 @@ async function fetchChainStats(chainId: number): Promise<ChainStats> {
 }
 
 async function fetchHemiStats(): Promise<ChainStats | null> {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 12_000)
   try {
-    const res = await fetch(HEMI_SUBGRAPH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ operationName: 'HemiStats', query: HEMI_STATS_QUERY, variables: {} }),
-      signal: controller.signal,
-    })
-    if (!res.ok) return null
-    const body = (await res.json()) as any
-    const factory = body?.data?.factories?.[0]
-    const latestDay = body?.data?.algebraDayDatas?.[0]
-    return {
-      tvl: num(factory?.totalValueLockedUSD),
-      volumeAllTime: num(factory?.totalVolumeUSD),
-      feesAllTime: num(factory?.totalFeesUSD),
-      volume24h: num(latestDay?.volumeUSD),
-      fees24h: num(latestDay?.feesUSD),
+    const urls = [...new Set([HEMI_SUBGRAPH_URL, HEMI_SUBGRAPH_FALLBACK_URL])]
+    for (const url of urls) {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 12_000)
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ operationName: 'HemiStats', query: HEMI_STATS_QUERY, variables: {} }),
+          signal: controller.signal,
+        })
+        if (!res.ok) continue
+        const body = (await res.json()) as any
+        const factory = body?.data?.factories?.[0]
+        if (!factory) continue
+        const latestDay = body?.data?.algebraDayDatas?.[0]
+        return {
+          tvl: num(factory.totalValueLockedUSD),
+          volumeAllTime: num(factory.totalVolumeUSD),
+          feesAllTime: num(factory.totalFeesUSD),
+          volume24h: num(latestDay?.volumeUSD),
+          fees24h: num(latestDay?.feesUSD),
+        }
+      } catch {
+        // Try the public Studio deployment when the gateway/indexer is unavailable.
+      } finally {
+        clearTimeout(timeoutId)
+      }
     }
+    return null
   } catch {
     return null
-  } finally {
-    clearTimeout(timeoutId)
   }
 }
 
