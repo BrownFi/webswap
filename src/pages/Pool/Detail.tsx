@@ -298,7 +298,7 @@ function PoolDetailInner({
       ? competitorPairMap?.[competitorLookupKey(chainId, pairRaw.token0.id, pairRaw.token1.id)]
       : undefined
   const competitorReference = competitorData ? competitorBestReference(competitorData) : undefined
-  const competitorFees = competitorReference ? `${formatNumberLambda(competitorReference.feeTier / 10000, { maximumFractionDigits: 2 })}%` : '--'
+  const competitorFees = competitorReference ? `${formatNumberLambda(competitorReference.feeTier / 10000, { maximumFractionDigits: 3 })}%` : '--'
   const competitorTvls = competitorReference ? formatCompactPrice(competitorReference.tvlUSD) : '--'
   const competitorIsV4 = competitorReference?.version === 'V4'
   const competitorVolumes = competitorReference ? formatCompactPrice(competitorReference.vol24hUSD) : '--'
@@ -406,7 +406,7 @@ function PoolDetailInner({
                 color: '#83CF84',
               }}
             >
-              Fee {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+              Fee {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 3 })}%
             </span>
             {isBeta && (
               <span style={{ background: '#f97316', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', color: '#fff' }}>
@@ -506,7 +506,7 @@ function PoolDetailInner({
                   color: '#83CF84',
                 }}
               >
-                Fee {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%
+                Fee {formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 3 })}%
               </span>
               {isBeta && (
                 <span
@@ -867,7 +867,7 @@ function PoolDetailInner({
                     <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#F4A340', textAlign: 'right' }}>BrownFi</span>
                     <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#978A80', textAlign: 'right' }}>{competitor.name}</span>
                   </div>
-                  <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`} kodiak={competitorData ? competitorFees : '--'} />
+                  <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 3 })}%`} kodiak={competitorData ? competitorFees : '--'} />
                   <StatCompareRow
                     label="TVL"
                     ours={formatPrice(pairRaw?.tvl ?? 0)}
