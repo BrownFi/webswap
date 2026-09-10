@@ -19,13 +19,12 @@ import { useV3PoolOnChain } from 'hooks/useV3PoolsOnChain'
 import { useVersion } from 'hooks/useVersion'
 import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
-import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
+import { aprToApy, formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenMetadataOverride, getTokenSymbol, shortenAddress } from 'utils'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { currencyId } from 'utils/currencyId'
-import { PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
+import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
-import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
 import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
 import { getRestakers } from 'constants/restakers'
 
@@ -251,7 +250,7 @@ function PoolDetailInner({
 
   const pairStats: PairStats | undefined = pairRaw as unknown as PairStats | undefined
 
-  const { tradingFee, volume24h, bgtAPR, merklCampaignApr } = usePoolStats({
+  const { tradingFee, volume24h, feeAPR, bgtAPR, merklCampaignApr } = usePoolStats({
     pair,
     pairStats,
     enableFetchDetail: true,
@@ -265,18 +264,9 @@ function PoolDetailInner({
   // meaningless — zero them so the cards render their "--" default. (Matches
   // the pool-list behavior in PositionCard.)
   const ratiosMeaningful = Number(pairRaw?.tvl) >= 10
-  // Returns metric. V3 (with the LP-vs-UniV2 comparison enabled) shows the
-  // annualized LP-vs-UniV2 outperformance ("Annualized Return"); V2 shows the
-  // simple 24h-fees/TVL daily ratio ("24h Fees / TVL") — Jason 2026-06-18.
-  const feeOverTvl =
-    ratiosMeaningful && Number(pairRaw?.feeDay) > 0 ? (Number(pairRaw.feeDay) / Number(pairRaw.tvl)) * 100 : 0
-  const feeAprDisplay = !ratiosMeaningful
-    ? 0
-    : isV3Like(version) && USE_V3_UNIV2_COMPARISON
-      ? computeV3FeeApr(pairRaw, chainId)
-      : feeOverTvl
-  // "Annualized Return" label is shared by V2 + V3. The V3-only (?) hint lives
-  // in <AnnualizedReturnInfo/> (interactive tooltip with a clickable Learn More).
+  // Fee APY is the indexer's gross fee APR converted with 360-period
+  // compounding. It replaces the LP-vs-UniV2 Annualized Return metric.
+  const feeApyDisplay = ratiosMeaningful ? aprToApy(feeAPR ?? 0) : 0
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   // Berachain hardfork moved rewards from BGT → native BERA, so the incentive shows
   // BERA branding (the `bgtAPR` data field name is kept — it's the same reward APR).
@@ -662,15 +652,14 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* Returns card (title removed per Jason) — Annualized Return +
-                BGT/Incentive APR. */}
+            {/* Returns card — Fee APY + BGT/Incentive APR. */}
             <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
                 <StatInline
-                  label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? (<span className="inline-flex items-center">Annualized Return<AnnualizedReturnInfo /></span>) : '24h Fees / TVL'}
-                  value={(feeAprDisplay > 0 ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
-                  valueColor={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD'}
+                  label="Fee APY"
+                  value={(feeApyDisplay > 0 ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                  valueColor="#83CF84"
                 />
                 {incentiveApr > 0 && (
                   <div>
@@ -707,11 +696,10 @@ function PoolDetailInner({
               <div className="hidden lg:block">
                 <div className="mb-3 lg:mb-4">
                   <div className="text-[12px] lg:text-[13px] inline-flex items-center" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                    {isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'}
-                    {isV3Like(version) && USE_V3_UNIV2_COMPARISON && <AnnualizedReturnInfo />}
+                    Fee APY
                   </div>
-                  <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: isV3Like(version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD', marginTop: '2px' }}>
-                    {(feeAprDisplay > 0 ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                  <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
+                    {(feeApyDisplay > 0 ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   </div>
                 </div>
                 {incentiveApr > 0 && (

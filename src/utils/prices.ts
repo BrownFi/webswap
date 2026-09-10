@@ -117,3 +117,10 @@ export function formatNumberLambda(value: string | number | undefined | null, op
   }).format(number)
   return formatNumberString(formattedNumber)
 }
+
+// APR -> APY using 360 compounding periods per year. Input and output are
+// percentages (for example, 20 APR becomes approximately 22.13 APY).
+export function aprToApy(aprPercent: number): number {
+  if (!Number.isFinite(aprPercent) || aprPercent <= 0) return aprPercent
+  return (Math.pow(1 + aprPercent / 100 / 360, 360) - 1) * 100
+}

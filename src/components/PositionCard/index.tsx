@@ -36,10 +36,10 @@ import { usePythPrices } from 'hooks/usePythPrices'
 import { useVersion } from 'hooks/useVersion'
 import { getEtherscanLink, getScanText, getTokenSymbol } from 'utils'
 import { orderedCurrencyIds, shouldReverseDisplay } from 'utils/pair'
-import { formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
+import { aprToApy, formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } from './liquidityUtils'
 import { PairSettingsModal } from './PairSettingsModal'
-import { merklCampaignPool, getPairBgt, PairStats, usePoolStats, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from './usePoolStats'
+import { merklCampaignPool, getPairBgt, PairStats, usePoolStats } from './usePoolStats'
 
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
@@ -146,6 +146,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const {
     tradingFee,
     totalSupply: totalPoolTokens,
+    feeAPR,
     bgtAPR,
     volume24h,
     volume7d,
@@ -190,7 +191,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
   const token0Price = hermesPrices.CURRENCY_A || pythPrices.CURRENCY_A || pairStats?.token0?.price || 0
   const token1Price = hermesPrices.CURRENCY_B || pythPrices.CURRENCY_B || pairStats?.token1?.price || 0
 
-  const { tvl, lpPrice, columnValue } = useMemo(() => {
+  const { tvl, lpPrice, feeAPY } = useMemo(() => {
     const r0 = token0Price * Number(pair.reserve0.toSignificant(6))
     const r1 = token1Price * Number(pair.reserve1.toSignificant(6))
     const tvl = r0 + r1
@@ -200,18 +201,11 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
     // "--". Threshold, not `tvl > 0`, because a low-TVL pool still blows up.
     const MIN_TVL_FOR_RATIOS = 10
     const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS
-    // Returns column. V3 (with the LP-vs-UniV2 comparison enabled) shows the
-    // annualized LP-vs-UniV2 outperformance ("Annualized Return"); V2 shows the
-    // simple 24h-fees/TVL daily ratio ("24h Fees / TVL") — Jason 2026-06-18.
-    const feeDay = Number(pairStats?.feeDay) || 0
-    const feeOverTvl = ratiosMeaningful ? (feeDay / tvl) * 100 : 0
-    const columnValue = !ratiosMeaningful
-      ? 0
-      : isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON
-        ? computeV3FeeApr(pairStats, pair.chainId)
-        : feeOverTvl
-    return { tvl, lpPrice, columnValue }
-  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats])
+    // Fee APY is the indexer's gross fee APR converted with 360-period
+    // compounding, shown consistently for V2 and V3.
+    const feeAPY = ratiosMeaningful ? aprToApy(feeAPR ?? 0) : 0
+    return { tvl, lpPrice, feeAPY }
+  }, [token0Price, token1Price, pair, totalPoolTokens, pairStats, feeAPR])
 
   const stakedLiquidityTokenAmount = parseStakeLpAmount(pairAccount?.stakeLP, pair.liquidityToken)
 
@@ -297,7 +291,7 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                  {isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'}: <span style={{ color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>{columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}</span>
+                  Fee APY: <span style={{ color: '#83CF84' }}>{feeAPY > 0 ? `${formatNumberLambda(feeAPY, { maximumFractionDigits: 2 })}%` : '--'}</span>
                 </span>
               </div>
               {/* TVL-cap / Concentration-Level tags on their own line so they don't
@@ -344,10 +338,9 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
           <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1 : 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(tvl)}</span>
           {/* Vol 24h */}
           <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1 : 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
-          {/* Returns column — V3: annualized LP-vs-UniV2 return (green); V2: 24h
-              fees / TVL (white, per Jason — green is reserved for the V3 return). */}
-          <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1.3 : 1.7, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: isV3Like(pair.version) && USE_V3_UNIV2_COMPARISON ? '#83CF84' : '#FBFBFD' }}>
-            {columnValue > 0 ? `${formatNumberLambda(columnValue, { maximumFractionDigits: 2 })}%` : '--'}
+          {/* Fee APY — indexer APR converted to APY with 360-period compounding. */}
+          <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1.3 : 1.7, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+            {feeAPY > 0 ? `${formatNumberLambda(feeAPY, { maximumFractionDigits: 2 })}%` : '--'}
           </span>
           {/* BGT APR — Berachain + V3-only (V2 BGT hidden; see enableBgt note). */}
           {chainId === ChainId.BERA_MAINNET && isV3Like(pair.version) && (

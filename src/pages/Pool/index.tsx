@@ -11,8 +11,7 @@ import { Flex, Text } from 'components/Rebass'
 import { useTokenBalancesWithLoadingIndicator } from 'state/wallet/hooks'
 import { TYPE } from 'theme'
 
-import { PairStats, getPairBgt, computeV3FeeApr, USE_V3_UNIV2_COMPARISON } from 'components/PositionCard/usePoolStats'
-import { AnnualizedReturnInfo } from 'components/pool/AnnualizedReturnInfo'
+import { PairStats, getPairBgt } from 'components/PositionCard/usePoolStats'
 import { Dots } from 'components/swap/styleds'
 import { isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
@@ -29,6 +28,7 @@ import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
 import { getTokenMetadataOverride } from 'utils'
+import { aprToApy } from 'utils/prices'
 import { RobinhoodGigaBanner } from 'components/pool/RobinhoodGigaBanner'
 
 // Minimum TVL (USD) for a pool to appear in the prod (mainnet) list. Below
@@ -221,14 +221,9 @@ export default function Pool() {
       if (sortKey === 'bgtAPR') {
         return bgtAprByAddr[p.id.toLowerCase()] ?? 0
       }
-      // Returns-column sort. V3 (flag on) sorts by the annualized LP-vs-UniV2
-      // return; V2 sorts by the 24h-fees/TVL daily ratio it now displays.
+      // Sort Fee APY using the same indexer APR conversion shown in each row.
       if (sortKey === 'apr') {
-        if (isV3Like(version) && USE_V3_UNIV2_COMPARISON) {
-          return computeV3FeeApr(p, chainId)
-        }
-        const feeDayTvl = Number(p.tvl) > 0 ? (Number(p.feeDay) || 0) / Number(p.tvl) : 0
-        return feeDayTvl
+        return aprToApy(Number(p.apr) || 0)
       }
       return Number((p as any)[sortKey]) || 0
     }
@@ -404,7 +399,7 @@ export default function Pool() {
                   <span style={{ flex: 2 }}>Pool</span>
                   <SortHeader label="TVL" flex={isV3Like(version) ? 1 : 1.3} active={sortKey === 'tvl'} dir={sortDir} onClick={() => handleSort('tvl')} />
                   <SortHeader label="24h Volume" flex={isV3Like(version) ? 1 : 1.3} active={sortKey === 'volumeDay'} dir={sortDir} onClick={() => handleSort('volumeDay')} />
-                  <SortHeader label={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? 'Annualized Return' : '24h Fees / TVL'} flex={isV3Like(version) ? 1.3 : 1.7} info={isV3Like(version) && USE_V3_UNIV2_COMPARISON ? <AnnualizedReturnInfo /> : undefined} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
+                  <SortHeader label="Fee APY" flex={isV3Like(version) ? 1.3 : 1.7} active={sortKey === 'apr'} dir={sortDir} onClick={() => handleSort('apr')} />
                   {chainId === ChainId.BERA_MAINNET && isV3Like(version) && (
                     <SortHeader label="BERA APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
@@ -413,7 +408,7 @@ export default function Pool() {
                 <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET && isV3Like(version)} showV3Return={isV3Like(version) && USE_V3_UNIV2_COMPARISON} />
+              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET && isV3Like(version)} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -518,11 +513,11 @@ function SortHeader({
   active: boolean
   dir: 'asc' | 'desc'
   onClick: () => void
-  // Column width relative to other columns (default 1). Longer headers like
-  // "Annualized Return" use a wider basis so they don't crowd their neighbours.
+  // Column width relative to other columns (default 1). Longer headers use a
+  // wider basis so they don't crowd their neighbours.
   flex?: number
-  // Optional (?) helper rendered OUTSIDE the sort button (so a click on it
-  // doesn't trigger sorting) — used for the Annualized Return tooltip.
+  // Optional helper rendered OUTSIDE the sort button so a click on it doesn't
+  // trigger sorting.
   info?: React.ReactNode
 }) {
   return (
@@ -574,7 +569,7 @@ function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
   )
 }
 
-function PairListSkeleton({ showBgt, showV3Return }: { showBgt: boolean; showV3Return: boolean }) {
+function PairListSkeleton({ showBgt }: { showBgt: boolean }) {
   return (
     <>
       {/* Table header */}
@@ -592,7 +587,7 @@ function PairListSkeleton({ showBgt, showV3Return }: { showBgt: boolean; showV3R
         <span style={{ flex: 2 }}>Pool</span>
         <span style={{ flex: 1, textAlign: 'left' }}>TVL</span>
         <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
-        <span style={{ flex: 1.3, textAlign: 'left' }}>{showV3Return ? 'Annualized Return' : '24h Fees / TVL'}</span>
+        <span style={{ flex: 1.3, textAlign: 'left' }}>Fee APY</span>
         {showBgt && <span style={{ flex: 1, textAlign: 'left' }}>BERA APR</span>}
         <span style={{ flex: 1, textAlign: 'right' }}>Provide Liquidity</span>
       </div>
@@ -617,7 +612,7 @@ function PairListSkeleton({ showBgt, showV3Return }: { showBgt: boolean; showV3R
               <div className="animate-pulse rounded" style={{ background: '#493E35', height: 14, width: '35%' }} />
             </div>
           </div>
-          {/* Desktop-only columns: TVL, 24h Volume, Annualized Return, [BGT APR], actions */}
+          {/* Desktop-only columns: TVL, 24h Volume, Fee APY, [BGT APR], actions */}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1.3, height: 20, background: '#493E35' }} />
