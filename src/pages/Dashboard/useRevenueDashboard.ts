@@ -62,8 +62,6 @@ const ZERO_X_RECIPIENTS = [
 ]
 const KYBER_RECIPIENTS = ['0x8f10b468b06c6fd214b65f87778827f7d113f996']
 
-const ROBINHOOD_CHAIN_ID = 4663
-
 const ZERO_X_VOLUME_QUERY = `
   query ZeroXVolume($timestampGte: BigInt, $recipients: [String!]) {
     transactions(first: 1000, where: { type: "SWAP", to_in: $recipients, timestamp_gte: $timestampGte }, orderBy: timestamp, orderDirection: desc) {
@@ -311,20 +309,14 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
     // `factoryDayDatas.dailyFees` is only the current UTC-day bucket, so it
     // can be materially lower during the day.
     totalFee24h: pairs.reduce((acc, pair) => acc + num(pair?.feeDay), 0),
-    // Revenue is a simulation for Robinhood: 7% of rolling 24h pool fees.
-    totalRevenue24h:
-      chainId === ROBINHOOD_CHAIN_ID
-        ? pairs.reduce((acc, pair) => acc + num(pair?.feeDay), 0) * 0.07
-        : pairs.reduce((acc, pair) => acc + num(pair?.feeDay) * num(pair?.feeSplit), 0),
+    totalRevenue24h: pairs.reduce((acc, pair) => acc + num(pair?.feeDay) * num(pair?.feeSplit), 0),
     totalVolume7d: sumDays(factoryDays, 'dailyVolume', 7),
     totalFee7d: sumDays(factoryDays, 'dailyFees', 7),
-    totalRevenue7d:
-      chainId === ROBINHOOD_CHAIN_ID ? sumDays(factoryDays, 'dailyFees', 7) * 0.07 : sumDays(factoryDays, 'dailyRevenue', 7),
+    totalRevenue7d: sumDays(factoryDays, 'dailyRevenue', 7),
     totalVolume30d: sumDays(factoryDays, 'dailyVolume', 30),
     totalFee30d: sumDays(factoryDays, 'dailyFees', 30),
-    totalRevenue30d:
-      chainId === ROBINHOOD_CHAIN_ID ? sumDays(factoryDays, 'dailyFees', 30) * 0.07 : sumDays(factoryDays, 'dailyRevenue', 30),
-    history: historyFromDays(factoryDays, chainId === ROBINHOOD_CHAIN_ID ? 0.07 : null),
+    totalRevenue30d: sumDays(factoryDays, 'dailyRevenue', 30),
+    history: historyFromDays(factoryDays, null),
   }
 }
 
