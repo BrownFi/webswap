@@ -6,7 +6,7 @@ import { keccak256, pack } from '@ethersproject/solidity'
 import { encodeAbiParameters, parseAbiParameters } from 'viem'
 import { createReadClient } from '../rpc'
 import { ChainId } from '../constants/chainId'
-import { buildPythUpdatesUrl } from '../constants/pyth'
+import { buildPythUpdatesUrl, normalizePythUpdateData } from '../constants/pyth'
 import {
   BigintIsh,
   ZERO,
@@ -64,7 +64,7 @@ async function getCachedUpdateData(feedIds: string[], chainId?: number): Promise
     const resp = await fetch(pythUrl.toString())
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
     const json = await resp.json()
-    const dataBytes = (json.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+    const dataBytes = normalizePythUpdateData(json.binary?.data)
     const encoded = encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
     // Prune expired entries so the Map can't grow unbounded across a long session
     // (each visited pool adds a feed-set key), then cache this one.

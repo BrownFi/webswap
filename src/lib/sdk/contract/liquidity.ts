@@ -5,7 +5,7 @@ import { ChainId } from '../constants/chainId'
 import { beraFeeOverrides } from 'utils/beraGas'
 import { Field, ApprovalState } from '../constants/enums'
 import { WETH } from '../constants/tokens'
-import { buildPythUpdatesUrl } from '../constants/pyth'
+import { buildPythUpdatesUrl, normalizePythUpdateData } from '../constants/pyth'
 import { Token } from '../entities/token'
 import { Currency, ETHER } from '../entities/currency'
 import { CurrencyAmount } from '../entities/fractions/currencyAmount'
@@ -52,7 +52,7 @@ async function fetchPythData(
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()
 
-  const updateData = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+  const updateData = normalizePythUpdateData(data.binary?.data)
 
   // parsed prices (same response) -> feed id (0x, lowercase) -> price, then map to address
   const priceByFeed: Record<string, number> = {}

@@ -2,7 +2,7 @@ import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId } from '../constants/chainId'
-import { buildPythUpdatesUrl } from '../constants/pyth'
+import { buildPythUpdatesUrl, normalizePythUpdateData } from '../constants/pyth'
 import { beraFeeOverrides } from 'utils/beraGas'
 import { BIPS_BASE } from '../constants/types'
 import { SwapCallbackState } from '../constants/enums'
@@ -41,7 +41,7 @@ async function buildSwapUpdateData(tokenAddresses: string[], chainId: number, ve
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()
-  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+  const dataBytes = normalizePythUpdateData(data.binary?.data)
   return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
 }
 

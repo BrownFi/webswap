@@ -12,7 +12,7 @@ import { encodeAbiParameters, parseAbiParameters } from 'viem'
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
 import { routerV3Gen, zapV3Gen } from 'lib/sdk/constants/addresses'
 import { createReadClient } from 'lib/sdk/rpc'
-import { buildPythUpdatesUrl } from 'lib/sdk/constants/pyth'
+import { buildPythUpdatesUrl, normalizePythUpdateData } from 'lib/sdk/constants/pyth'
 
 // On v3-final deployments zap entrypoints live on a separate BrownFiV3Zap
 // contract. On older deployments the router still hosts them, so we fall
@@ -146,7 +146,7 @@ export async function buildV3UpdateData(
   const response = await fetch(pythUrl.toString())
   if (!response.ok) throw new Error(`Pyth API error: HTTP ${response.status}`)
   const data = await response.json()
-  const dataBytes = (data.binary.data as string[]).map((b: string) => `0x${b}`) as `0x${string}`[]
+  const dataBytes = normalizePythUpdateData(data.binary?.data)
   return encodeAbiParameters(parseAbiParameters('bytes[]'), [dataBytes])
 }
 

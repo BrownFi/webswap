@@ -24,3 +24,11 @@ export function buildPythUpdatesUrl(chainId: number | undefined, feedIds: string
   feedIds.forEach((id) => url.searchParams.append('ids[]', id))
   return url
 }
+
+/** Normalize BE/Hermes hex payloads and discard feeds with no update payload. */
+export function normalizePythUpdateData(data: unknown): `0x${string}`[] {
+  if (!Array.isArray(data)) return []
+  return data
+    .filter((value): value is string => typeof value === 'string' && value.replace(/^0x/i, '').length > 0)
+    .map((value) => `0x${value.replace(/^0x/i, '')}` as `0x${string}`)
+}
