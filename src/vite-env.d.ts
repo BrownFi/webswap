@@ -10,6 +10,8 @@ interface ImportMetaEnv {
   // VITE_ENVIRONMENT, which functionally selects chains/API. Falls back to
   // VITE_ENVIRONMENT when unset — see `appEnvLabel` in connectors/index.ts.
   readonly VITE_ENV_LABEL?: string
+  // Local-only geo response override, e.g. VITE_GEO_COUNTRY=VN.
+  readonly VITE_GEO_COUNTRY?: string
   // Kyber affiliate fee (optional — all three required together to engage).
   readonly VITE_KYBER_FEE_RECEIVER?: string
   readonly VITE_KYBER_FEE_BPS?: string

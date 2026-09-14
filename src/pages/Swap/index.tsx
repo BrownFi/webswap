@@ -55,6 +55,8 @@ import { getTokenSymbol } from 'utils'
 import ConnectWallet from 'components/ConnectWallet'
 import { StyledBalanceMaxMini } from 'components/swap/styleds'
 import QuestionHelper from 'components/QuestionHelper'
+import GeoBlockedSwap from 'components/GeoBlockedSwap'
+import { useVietnamSwapRestriction } from 'hooks/useVietnamSwapRestriction'
 
 // Aggregator-route Price ratio renderer — mirrors TradePrice's invert toggle
 // but derives the ratio from amountIn / amountOut directly instead of the V2
@@ -128,7 +130,7 @@ function AggregatorDetails({
   )
 }
 
-export default function Swap() {
+function SwapForm() {
   const navigate = useNavigate()
   const loadedUrlParams = useDefaultsFromURLSearch()
   const { account, chainId } = useActiveWeb3React()
@@ -1024,4 +1026,11 @@ export default function Swap() {
       )}
     </>
   )
+}
+
+export default function Swap() {
+  const { loading, restricted } = useVietnamSwapRestriction()
+  if (loading) return null
+  if (restricted) return <GeoBlockedSwap />
+  return <SwapForm />
 }
