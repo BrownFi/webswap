@@ -60,6 +60,10 @@ const ZERO_X_RECIPIENTS = [
   '0x39b38686a19836ac10162c490e4558e120cbbe5f',
   '0x6aa80dbbed9ae5ab45fbf61f9644fada3b29326e',
 ]
+const HYPEREVM_ZERO_X_RECIPIENTS = [
+  ...ZERO_X_RECIPIENTS,
+  '0xf3a1a31b6c00bc738eacd28492eae4753dff7677',
+]
 const KYBER_RECIPIENTS = ['0x8f10b468b06c6fd214b65f87778827f7d113f996']
 
 const ZERO_X_VOLUME_QUERY = `
@@ -445,7 +449,10 @@ export function useRevenueDashboard(): RevenueDashboardResult {
   const zeroXQueries = useQueries({
     queries: zeroXChains.map((chainId) => ({
       queryKey: ['revenueDashboard:0x:v2', chainId],
-      queryFn: () => fetchAggregatorVolume(chainId, ZERO_X_RECIPIENTS),
+      queryFn: () => fetchAggregatorVolume(
+        chainId,
+        chainId === 999 ? HYPEREVM_ZERO_X_RECIPIENTS : ZERO_X_RECIPIENTS,
+      ),
       staleTime: 5 * 60_000,
       gcTime: 30 * 60_000,
       refetchInterval: false as const,

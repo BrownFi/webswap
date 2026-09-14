@@ -402,7 +402,6 @@ function DashboardStatsBar({
 function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
   const [expanded, setExpanded] = useState(false)
   const chainMeta = useMemo(() => availableChains.find((chain) => chain.id === row.chainId), [row.chainId])
-  const isRobinhood = row.chainId === 4663
   const isHemi = row.chainId === 43111
   const values = periodValues(row, period)
 
@@ -429,7 +428,6 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
           <div className="min-w-0 flex-1">
             <div style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '18px', color: '#FBFBFD' }}>
               {row.chainName}
-              {isRobinhood && <span style={{ marginLeft: 6, color: '#D8A072' }}>(Simulation)</span>}
             </div>
           </div>
         </div>
