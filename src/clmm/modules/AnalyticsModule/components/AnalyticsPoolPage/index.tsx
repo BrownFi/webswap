@@ -17,6 +17,7 @@ import { getPercentChange } from "@clmm/utils/common/getPercentChange";
 import { unwrappedToken } from "@clmm/utils/common/unwrappedToken";
 import { usePoolChartData } from "@clmm/hooks/analytics";
 import PageContainer from "@clmm/components/common/PageContainer";
+import { useVietnamSwapRestriction } from "../../../../../hooks/useVietnamSwapRestriction";
 
 const LiquidityStats = ({
     token0,
@@ -135,6 +136,8 @@ export function AnalyticsPoolPage() {
     const [span, setSpan] = useState<ChartSpanType>(CHART_SPAN.MONTH);
 
     const [, pool, poolSecurityStatus] = usePool(poolId as Address);
+    const { loading: geoLoading, restricted: swapRestricted } = useVietnamSwapRestriction();
+    const hideTradeButton = geoLoading || swapRestricted;
 
     const enableActions = poolSecurityStatus === SecurityState.ENABLED;
 
@@ -214,8 +217,8 @@ export function AnalyticsPoolPage() {
                     />
                 </div>
                 <div className="flex flex-col gap-3">
-                    { enableActions && <div className="grid grid-cols-2 gap-3">
-                         <Link
+                    { enableActions && <div className={`grid ${hideTradeButton ? "grid-cols-1" : "grid-cols-2"} gap-3`}>
+                         {!hideTradeButton && <Link
                              className="col-span-1 w-full"
                              to={{
                                  pathname: "/clamm/swap",
@@ -232,7 +235,7 @@ export function AnalyticsPoolPage() {
                                 <ArrowDownUp size={20} />
                                 Trade
                             </Button>
-                        </Link>
+                        </Link>}
                          <Link className="col-span-1 w-full" to={`/clamm/pool/${poolId}/new-position`}>
                             <Button variant={"primaryLink"} size={"lg"} className="gap-2 rounded-xl">
                                 <Plus size={20} />
