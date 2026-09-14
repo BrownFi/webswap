@@ -264,9 +264,9 @@ function PoolDetailInner({
   // meaningless — zero them so the cards render their "--" default. (Matches
   // the pool-list behavior in PositionCard.)
   const ratiosMeaningful = Number(pairRaw?.tvl) >= 10
-  // Fee APY is the indexer's gross fee APR converted with 360-period
-  // compounding. It replaces the LP-vs-UniV2 Annualized Return metric.
-  const feeApyDisplay = ratiosMeaningful ? aprToApy(feeAPR ?? 0) : 0
+  // Fee APY is the net LP fee APR converted with 360-period compounding. It
+  // replaces the LP-vs-UniV2 Annualized Return metric.
+  const feeApyDisplay = ratiosMeaningful && pairStats ? aprToApy(feeAPR ?? 0) : undefined
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   // Berachain hardfork moved rewards from BGT → native BERA, so the incentive shows
   // BERA branding (the `bgtAPR` data field name is kept — it's the same reward APR).
@@ -658,7 +658,7 @@ function PoolDetailInner({
               <div className="flex flex-col gap-2 lg:hidden">
                 <StatInline
                   label="Fee APY"
-                  value={(feeApyDisplay > 0 ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                  value={(feeApyDisplay != null ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   valueColor="#83CF84"
                 />
                 {incentiveApr > 0 && (
@@ -699,7 +699,7 @@ function PoolDetailInner({
                     Fee APY
                   </div>
                   <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
-                    {(feeApyDisplay > 0 ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                    {(feeApyDisplay != null ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   </div>
                 </div>
                 {incentiveApr > 0 && (

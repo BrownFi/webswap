@@ -221,9 +221,11 @@ export default function Pool() {
       if (sortKey === 'bgtAPR') {
         return bgtAprByAddr[p.id.toLowerCase()] ?? 0
       }
-      // Sort Fee APY using the same indexer APR conversion shown in each row.
+      // Sort by the same net LP Fee APY shown in each row, excluding the
+      // protocol/dev fee split before converting APR to APY.
       if (sortKey === 'apr') {
-        return aprToApy(Number(p.apr) || 0)
+        const feeShare = 1 - Number(isV3Like(version) ? (p.feeSplit ?? 0) : p.protocolFee)
+        return aprToApy((Number(p.apr) || 0) * feeShare)
       }
       return Number((p as any)[sortKey]) || 0
     }
