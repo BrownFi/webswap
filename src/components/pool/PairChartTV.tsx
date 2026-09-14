@@ -286,19 +286,11 @@ type SeriesMeta = {
   lineStyle?: LineStyle
 }
 
-// Original BrownFi palette. HODL + UniV2 reference benchmarks render
-// 1px + dotted (LineStyle.Dotted) AND at ~60% opacity (alpha `99` ≈ 0.6)
-// so they read as muted references vs LP Price's default 2px solid.
-// UniV2 uses red to distinguish it from HODL's blue.
-//
 // Net PnL and Volume are both green but in clearly different shades:
 // Net PnL = #83CF84 (light pastel green, line) and Volume = #16A34A
 // (deep saturated green, histogram). The hue distance + render-type
 // difference keeps them visually separable on the same chart.
 const SERIES_ALL: SeriesMeta[] = [
-  { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
-  { key: 'bnhPrice',      label: 'HODL Price',     color: '#9CA3AF99', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
-  { key: 'uniV2Price',    label: 'UniV2 Price',    color: '#E0484899', type: 'line',      priceScaleId: 'right',  yAxis: 'right', lineWidth: 1, lineStyle: LineStyle.Dotted },
   // "LP vs. UniV2" = LP's % outperformance over the UniV2 constant-product
   // benchmark: (lp − uni) / uni × 100. Shares the hidden 'pct' overlay scale
   // with "LP vs. BH" — both are percentages, so they auto-fit together and are
