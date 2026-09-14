@@ -27,6 +27,7 @@ import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
 import { PoolBalanceChart } from 'components/pool/PoolBalanceChart'
 import { getRestakers } from 'constants/restakers'
+import { useVietnamSwapRestriction } from 'hooks/useVietnamSwapRestriction'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -227,8 +228,10 @@ function PoolDetailInner({
 }) {
   const { chainId: walletChainId, account } = useActiveWeb3React()
   const { version, isBeta } = useVersion({ chainId, pair })
+  const { loading: geoLoading, restricted: swapRestricted } = useVietnamSwapRestriction()
   const navigate = useNavigate()
   const isRobinhood = chainId === ChainId.ROBINHOOD_MAINNET
+  const hideSwapButton = geoLoading || swapRestricted
   const gigaDexPoolUrl = `https://www.gigadex.fi/pool/${pairAddress.toLowerCase()}/add-liquidity`
 
   // Chain match check for the action buttons (Add Liquidity, Swap). When
@@ -562,40 +565,42 @@ function PoolDetailInner({
             {/* Primary actions — thin button strip, no surrounding card. Two
                 inline buttons side-by-side so they stay above the fold without
                 eating vertical space. */}
-            <div className="hidden lg:grid grid-cols-2 gap-2">
+            <div className={`hidden lg:grid ${hideSwapButton ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
               {/* Swap + Add Liquidity action buttons. Both are click-handlers
                   (not raw Links) so we can branch on wallet chain match:
                   if matches → navigate; if not → trigger wallet switch and
                   navigate on success. Mirrors Uniswap's multi-chain pattern. */}
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!walletMatchesPool) {
-                    await switchToTarget()
-                    // Don't navigate after the switch — the user may have
-                    // rejected. They can re-click; matches will be true now
-                    // if accepted, falling through to the navigate branch.
-                    return
-                  }
-                  navigate(`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`)
-                }}
-                disabled={isSwitching}
-                className="inline-flex items-center justify-center"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #493E35',
-                  borderRadius: '8px',
-                  padding: '10px',
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#FBFBFD',
-                  cursor: isSwitching ? 'wait' : 'pointer',
-                  opacity: isSwitching ? 0.7 : 1,
-                }}
-              >
-                {walletMatchesPool ? 'Swap' : `Switch to ${targetChainName}`}
-              </button>
+              {!hideSwapButton && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!walletMatchesPool) {
+                      await switchToTarget()
+                      // Don't navigate after the switch — the user may have
+                      // rejected. They can re-click; matches will be true now
+                      // if accepted, falling through to the navigate branch.
+                      return
+                    }
+                    navigate(`/swap?inputCurrency=${currencyId(currency0)}&outputCurrency=${currencyId(currency1)}`)
+                  }}
+                  disabled={isSwitching}
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #493E35',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontFamily: 'Inter',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#FBFBFD',
+                    cursor: isSwitching ? 'wait' : 'pointer',
+                    opacity: isSwitching ? 0.7 : 1,
+                  }}
+                >
+                  {walletMatchesPool ? 'Swap' : `Switch to ${targetChainName}`}
+                </button>
+              )}
               {isRobinhood ? (
                 <a
                   href={gigaDexPoolUrl}

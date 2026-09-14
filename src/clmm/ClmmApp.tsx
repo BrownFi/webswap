@@ -13,6 +13,8 @@ import { SwapPageView } from './pages/Swap/types'
 // CLMM's Tailwind 3 stylesheet, compiled in-tree by webswap's PostCSS and scoped
 // under .clmm-root (see src/clmm/clmm.css + postcss.config.js).
 import './clmm.css'
+import GeoBlockedSwap from '../components/GeoBlockedSwap'
+import { useVietnamSwapRestriction } from '../hooks/useVietnamSwapRestriction'
 
 const HEMI_CHAIN_ID = 43111
 
@@ -35,6 +37,13 @@ const { TokensList, TransactionsList, AnalyticsPoolPage, AnalyticsTokenPage } = 
 // Reserve vertical space while a lazy page chunk loads so the footer/layout
 // doesn't collapse then expand (avoids a jump between CLMM pages).
 const s = (n: React.ReactNode) => <Suspense fallback={<div className="min-h-[70vh] w-full" />}>{n}</Suspense>
+
+function ClmmSwapRoute() {
+  const { loading, restricted } = useVietnamSwapRestriction()
+  if (loading) return <div className="min-h-[70vh] w-full" />
+  if (restricted) return <GeoBlockedSwap />
+  return s(<SwapPage type={SwapPageView.SWAP} />)
+}
 
 // CLMM's contracts/tokens are Hemi-only. CLMM hooks index chain-keyed maps
 // (TOKENS[DEFAULT_CHAIN_ID], WNATIVE[...], graphql clients, etc.) which only
@@ -83,7 +92,7 @@ export default function ClmmApp() {
           <Layout>
             <Routes>
               <Route index element={<Navigate replace to="swap" />} />
-              <Route path="swap" element={s(<SwapPage type={SwapPageView.SWAP} />)} />
+              <Route path="swap" element={<ClmmSwapRoute />} />
               {/* Pool list is /clamm/pool (singular) to match the oracle-based side's /pool. */}
               <Route path="pool" element={s(<PoolsPage />)} />
               <Route path="pool/create" element={s(<CreatePoolPage />)} />
