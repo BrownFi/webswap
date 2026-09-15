@@ -29,7 +29,7 @@ import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
 import { getRestakers } from 'constants/restakers'
-import { competitorBestReference, getCompetitor, competitorLookupKey, CompetitorPairData } from 'services/competitors'
+import { competitorBestReference, competitorReferences, getCompetitor, competitorLookupKey, CompetitorPairData } from 'services/competitors'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -298,11 +298,23 @@ function PoolDetailInner({
       ? competitorPairMap?.[competitorLookupKey(chainId, pairRaw.token0.id, pairRaw.token1.id)]
       : undefined
   const competitorReference = competitorData ? competitorBestReference(competitorData) : undefined
-  const competitorFees = competitorReference ? `${formatNumberLambda(competitorReference.feeTier / 10000, { maximumFractionDigits: 3 })}%` : '--'
-  const competitorTvls = competitorReference ? formatCompactPrice(competitorReference.tvlUSD) : '--'
-  const competitorIsV4 = competitorReference?.version === 'V4'
-  const competitorVolumes = competitorReference ? formatCompactPrice(competitorReference.vol24hUSD) : '--'
-  const competitorFees24h = competitorReference ? formatCompactPrice(competitorReference.fees24hUSD) : '--'
+  const competitorReferencesForDisplay = competitorData
+    ? (chainId === ChainId.ROBINHOOD_MAINNET
+      ? competitorReferences(competitorData).slice().sort((a, b) => b.vol24hUSD - a.vol24hUSD).slice(0, 2)
+      : competitorReference ? [competitorReference] : [])
+    : []
+  const competitorFees = competitorReferencesForDisplay.length
+    ? competitorReferencesForDisplay.map((reference) => `${formatNumberLambda(reference.feeTier / 10000, { maximumFractionDigits: 3 })}%`).join(' / ')
+    : '--'
+  const competitorTvls = competitorReferencesForDisplay.length
+    ? competitorReferencesForDisplay.map((reference) => `${formatCompactPrice(reference.tvlUSD)}${reference.version === 'V4' ? ' (V4)' : ''}`).join(' / ')
+    : '--'
+  const competitorVolumes = competitorReferencesForDisplay.length
+    ? competitorReferencesForDisplay.map((reference) => formatCompactPrice(reference.vol24hUSD)).join(' / ')
+    : '--'
+  const competitorFees24h = competitorReferencesForDisplay.length
+    ? competitorReferencesForDisplay.map((reference) => formatCompactPrice(reference.fees24hUSD)).join(' / ')
+    : '--'
 
   // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
   // values (6,606,088% / 2,378,191,932%). Below a $30 TVL floor they're
@@ -468,7 +480,7 @@ function PoolDetailInner({
 
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_390px] gap-6 mt-4">
           {/* Left column */}
           <div className="flex flex-col gap-5 order-2 lg:order-1">
             {/* Cross-chain action affordance now lives ON the action buttons
@@ -862,24 +874,26 @@ function PoolDetailInner({
               {showCompetitor && competitor ? (
                 // BrownFi vs competitor comparison: two value columns per metric.
                 <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '12px', marginBottom: '10px' }}>
+                   <div style={{ display: 'grid', gridTemplateColumns: '0.75fr 1fr 1.5fr', columnGap: '8px', marginBottom: '10px' }}>
                     <span />
                     <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#F4A340', textAlign: 'right' }}>BrownFi</span>
                     <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', color: '#978A80', textAlign: 'right' }}>{competitor.name}</span>
                   </div>
-                  <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 3 })}%`} kodiak={competitorData ? competitorFees : '--'} />
-                  <StatCompareRow
-                    label="TVL"
-                    ours={formatPrice(pairRaw?.tvl ?? 0)}
-                    kodiak={<>{competitorTvls}{competitorIsV4 && <span style={{ fontSize: '11px', color: '#978A80', marginLeft: '3px' }}>(V4)</span>}</>}
-                  />
-                  <StatCompareRow label="24H volume" ours={formatPrice(volume24h ?? 0)} kodiak={competitorData ? competitorVolumes : '--'} />
-                  <StatCompareRow
-                    label="24H fees / TVL"
-                    ours={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)}
-                    kodiak={competitorData ? feesTvlPct(competitorData.fees24hUSD, competitorData.tvlUSD) : '--'}
-                  />
-                  <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={competitorData ? competitorFees24h : '--'} />
+                   <StatCompareRow label="Fee" ours={`${formatNumberLambda(tradingFee, { minimumFractionDigits: 1, maximumFractionDigits: 3 })}%`} kodiak={competitorFees} />
+                   <StatCompareRow
+                     label="TVL"
+                     ours={formatPrice(pairRaw?.tvl ?? 0)}
+                     kodiak={competitorTvls}
+                   />
+                    <StatCompareRow label="24H volume" ours={formatCompactPrice(volume24h ?? 0)} kodiak={competitorVolumes} />
+                   <StatCompareRow
+                     label="24H fees/TVL"
+                     ours={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)}
+                     kodiak={competitorReferencesForDisplay.length
+                       ? competitorReferencesForDisplay.map((reference) => feesTvlPct(reference.fees24hUSD, reference.tvlUSD)).join(' / ')
+                       : '--'}
+                   />
+                   <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={competitorFees24h} />
                   <StatCompareRow label="24H revenue" ours={formatPrice(revenue24h)} kodiak="--" />
                 </div>
               ) : (
@@ -888,14 +902,14 @@ function PoolDetailInner({
                   <div className="flex flex-col gap-2 lg:hidden">
                     <StatInline label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
                     <StatInline label="24H volume" value={formatPrice(volume24h ?? 0)} />
-                    <StatInline label="24H fees / TVL" value={ratiosMeaningful ? feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number) : '--'} />
+                     <StatInline label="24H fees/TVL" value={ratiosMeaningful ? feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number) : '--'} />
                     <StatInline label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
                     <StatInline label="24H revenue" value={formatPrice(revenue24h)} />
                   </div>
                   <div className="hidden lg:block">
                     <StatRow label="TVL" value={formatPrice(pairRaw?.tvl ?? 0)} />
                     <StatRow label="24H volume" value={formatPrice(volume24h ?? 0)} />
-                    <StatRow label="24H fees / TVL" value={ratiosMeaningful ? feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number) : '--'} />
+                     <StatRow label="24H fees/TVL" value={ratiosMeaningful ? feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number) : '--'} />
                     <StatRow label="24H fees (Auto-compound)" value={formatPrice((pairRaw?.feeDay ?? 0) as number)} />
                     <StatRow label="24H revenue" value={formatPrice(revenue24h)} />
                   </div>
@@ -1001,10 +1015,10 @@ function feesTvlPct(fees: number, tvl: number): string {
 
 function StatCompareRow({ label, ours, kodiak }: { label: string; ours: string; kodiak: ReactNode }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '12px', alignItems: 'baseline', marginBottom: '12px' }}>
-      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '13px', color: '#978A80' }}>{label}</span>
-      <span style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '15px', color: '#FBFBFD', textAlign: 'right' }}>{ours}</span>
-      <span style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '15px', color: '#FBFBFD', textAlign: 'right' }}>{kodiak}</span>
+    <div style={{ display: 'grid', gridTemplateColumns: '0.75fr 1fr 1.5fr', columnGap: '8px', alignItems: 'baseline', marginBottom: '12px' }}>
+      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '12px', color: '#978A80' }}>{label}</span>
+      <span style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '13px', color: '#FBFBFD', textAlign: 'right' }}>{ours}</span>
+      <span style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '13px', color: '#FBFBFD', textAlign: 'right' }}>{kodiak}</span>
     </div>
   )
 }
@@ -1061,7 +1075,7 @@ function PoolDetailSkeleton() {
         <SkeletonBar w={220} h={36} rounded="rounded-[8px]" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_390px] gap-6 mt-4">
         {/* Left column */}
         <div className="flex flex-col gap-5 order-2 lg:order-1">
           {/* Desktop-only header */}
