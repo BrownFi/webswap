@@ -304,7 +304,9 @@ function PoolDetailInner({
       : competitorReference ? [competitorReference] : [])
     : []
   const competitorFees = competitorReferencesForDisplay.length
-    ? competitorReferencesForDisplay.map((reference) => `${formatNumberLambda(reference.feeTier / 10000, { maximumFractionDigits: 3 })}%`).join(' / ')
+    ? competitorReferencesForDisplay
+      .map((reference) => reference.isDynamicFee ? 'Dynamic' : `${formatNumberLambda(reference.feeTier / 10000, { maximumFractionDigits: 3 })}%`)
+      .join(' / ')
     : '--'
   const competitorTvls = competitorReferencesForDisplay.length
     ? competitorReferencesForDisplay.map((reference) => `${formatCompactPrice(reference.tvlUSD)}${reference.version === 'V4' ? ' (V4)' : ''}`).join(' / ')
@@ -313,7 +315,7 @@ function PoolDetailInner({
     ? competitorReferencesForDisplay.map((reference) => formatCompactPrice(reference.vol24hUSD)).join(' / ')
     : '--'
   const competitorFees24h = competitorReferencesForDisplay.length
-    ? competitorReferencesForDisplay.map((reference) => formatCompactPrice(reference.fees24hUSD)).join(' / ')
+    ? competitorReferencesForDisplay.map((reference) => reference.isDynamicFee ? '--' : formatCompactPrice(reference.fees24hUSD)).join(' / ')
     : '--'
 
   // Ratio/APR columns divide by TVL, so a near-empty pool produces absurd
@@ -890,7 +892,7 @@ function PoolDetailInner({
                      label="24H fees/TVL"
                      ours={feesTvlPct((pairRaw?.feeDay ?? 0) as number, (pairRaw?.tvl ?? 0) as number)}
                      kodiak={competitorReferencesForDisplay.length
-                       ? competitorReferencesForDisplay.map((reference) => feesTvlPct(reference.fees24hUSD, reference.tvlUSD)).join(' / ')
+                      ? competitorReferencesForDisplay.map((reference) => reference.isDynamicFee ? '--' : feesTvlPct(reference.fees24hUSD, reference.tvlUSD)).join(' / ')
                        : '--'}
                    />
                    <StatCompareRow label="24H fees" ours={formatPrice((pairRaw?.feeDay ?? 0) as number)} kodiak={competitorFees24h} />

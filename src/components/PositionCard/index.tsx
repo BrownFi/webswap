@@ -115,7 +115,11 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
   const enableMerklCampaignApr = merklCampaignPool.includes(pair.liquidityToken.address.toLowerCase())
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
   const competitorReference = competitor ? competitorBestReference(competitor) : undefined
-  const competitorFees = competitorReference ? `${formatNumberLambda(competitorReference.feeTier / 10000, { maximumFractionDigits: 3 })}%` : '--'
+  const competitorFees = competitorReference
+    ? competitorReference.isDynamicFee
+      ? 'Dynamic'
+      : `${formatNumberLambda(competitorReference.feeTier / 10000, { maximumFractionDigits: 3 })}%`
+    : '--'
   const competitorTvls = competitorReference ? formatCompactPrice(competitorReference.tvlUSD) : '--'
   const competitorIsV4 = competitorReference?.version === 'V4'
   const competitorVolumes = competitorReference ? formatCompactPrice(competitorReference.vol24hUSD) : '--'

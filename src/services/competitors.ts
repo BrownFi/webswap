@@ -11,6 +11,7 @@ import { fetchEtherexPairMap } from './etherexService'
 export type CompetitorReference = {
   version: 'V3' | 'V4'
   feeTier: number
+  isDynamicFee?: boolean
   tvlUSD: number
   vol24hUSD: number
   fees24hUSD: number
@@ -33,7 +34,7 @@ export function competitorReferences(data: CompetitorPairData): CompetitorRefere
 }
 
 export function competitorBestReference(data: CompetitorPairData): CompetitorReference {
-  return competitorReferences(data).reduce((best, reference) => (reference.tvlUSD > best.tvlUSD ? reference : best))
+  return competitorReferences(data).reduce((best, reference) => (reference.vol24hUSD > best.vol24hUSD ? reference : best))
 }
 
 // Map key for a token pair: both addresses lowercased and sorted so token order

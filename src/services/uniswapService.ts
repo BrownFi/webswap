@@ -42,6 +42,7 @@ interface UniswapLiquidityPoolRaw {
   poolIdentifier?: string
   protocolVersion?: 'V3' | 'V4'
   feeTier?: number
+  isDynamicFee?: boolean
   tvlUsd?: number
   volumeUsd1d?: number
   token0Address?: string
@@ -58,6 +59,7 @@ const ROBINHOOD_UNISWAP_POOL_IDS = [
   '0x6fa3ee0048e78bf0a513eb0ab56f482944a767c21db990fcf555605e69f05659', '0x9194a557b6a6bb2236b49ea7e2bbccec5d3eeb705aef00903be4b3de1d949579',
   '0x8517f8071ae5b831b738052f12125e8e3d6c158b78728aa44ce3b25e5104d32e', '0xa92a3df27a00a276183ff7265fd8affa11df1fe8bb23ddfaf13f6c879a3f818b',
   '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e', '0x17578C0e0D15da44f31677263114F71aE76653EA', '0xa6975f4720a95aa9cdfa9b010a065b0e941534c93f9fa708104c08f0ac029ca0',
+  '0x4be9657ec9002e528f4f17a5c43edc525a07f888f7b180c2afbf75e096c4f38a', '0x486435a1f76cd58193f854c6e6213cd05fd58d637865d02065ff558b387fa6ea',
 ]
 
 async function fetchUniswapLiquidityPools(): Promise<UniswapLiquidityPoolRaw[]> {
@@ -86,13 +88,15 @@ export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, Com
     if (!pool.token0Address || !pool.token1Address) return
     const version = pool.protocolVersion ?? 'V3'
     const feeTier = Number(pool.feeTier) || 0
+    const isDynamicFee = pool.isDynamicFee === true
     const vol24hUSD = Number(pool.volumeUsd1d) || 0
     const reference: CompetitorReference = {
       version,
       feeTier,
+      isDynamicFee,
       tvlUSD: Number(pool.tvlUsd) || 0,
       vol24hUSD,
-      fees24hUSD: (vol24hUSD * feeTier) / 1_000_000 || 0,
+      fees24hUSD: isDynamicFee ? 0 : (vol24hUSD * feeTier) / 1_000_000 || 0,
     }
     const token0Address = pool.token0Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token0Address
     const token1Address = pool.token1Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token1Address
