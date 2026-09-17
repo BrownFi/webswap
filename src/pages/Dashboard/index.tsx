@@ -82,17 +82,17 @@ function periodValues(row: RevenueChainRow | RevenueVersionRow, period: Dashboar
   return { volume: row.totalVolume24h, fee: row.totalFee24h, revenue: row.totalRevenue24h }
 }
 
-function PeriodToggle({ period, onChange }: { period: DashboardPeriod; onChange: (period: DashboardPeriod) => void }) {
+function PeriodToggle({ period, onChange, vertical = false }: { period: DashboardPeriod; onChange: (period: DashboardPeriod) => void; vertical?: boolean }) {
   return (
-    <div className="flex items-center gap-1" role="group" aria-label="Dashboard period">
+    <div className={vertical ? 'flex flex-col items-center gap-1' : 'flex items-center gap-1'} role="group" aria-label="Dashboard period">
       {(['24h', '7d', '30d', 'all'] as DashboardPeriod[]).map((option) => (
         <button
           key={option}
           type="button"
           onClick={() => onChange(option)}
           style={{
-            border: `1px solid ${period === option ? '#D8A072' : '#493E35'}`,
-            background: period === option ? '#2F2823' : '#1E1915',
+            border: 'none',
+            background: period === option ? '#2F2823' : 'transparent',
             color: period === option ? '#D8A072' : '#FBFBFD',
             borderRadius: 8,
             padding: '8px 12px',
@@ -222,13 +222,11 @@ function DashboardStatsBar({
   stats,
   breakdown,
   period,
-  onPeriodChange,
   isLoading,
 }: {
   stats: { label: string; value: string; sub?: string; group: 'total' | '24h' }[]
   breakdown: RevenueStatsBreakdown[]
   period: DashboardPeriod
-  onPeriodChange: (period: DashboardPeriod) => void
   isLoading?: boolean
 }) {
   const totalStats = stats.filter((stat) => stat.group === 'total')
@@ -380,19 +378,18 @@ function DashboardStatsBar({
   return (
     <div style={{ background: '#2F2823', borderRadius: '16px', padding: '16px 20px' }}>
       <div className="flex items-center justify-end gap-2 mb-4">
-        <PeriodToggle period={period} onChange={onPeriodChange} />
         <button
           type="button"
           onClick={() => setShowBreakdown((value) => !value)}
           style={{
-            background: '#1E1915',
-            border: '1px solid #493E35',
+            background: showBreakdown ? '#2F2823' : 'transparent',
+            border: 'none',
             borderRadius: '8px',
             padding: '8px 12px',
             fontFamily: 'Inter',
             fontSize: '12px',
             fontWeight: 600,
-            color: '#FBFBFD',
+            color: showBreakdown ? '#D8A072' : '#FBFBFD',
             cursor: 'pointer',
           }}
         >
@@ -638,7 +635,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
         </div>
       </button>
       {expanded && (
-        <div style={{ borderTop: '1px solid #2F2823', padding: '12px 16px 16px', overflowX: 'auto' }}>
+        <div style={{ background: '#000000', borderTop: '1px solid #2F2823', borderRadius: '0 0 12px 12px', padding: '12px 16px 16px', overflowX: 'auto' }}>
           <ChainHistoryCharts row={row} period={period} />
           <ChainPairMetrics row={row} period={period} />
         </div>
@@ -712,13 +709,19 @@ export default function Dashboard() {
       <AutoColumn gap="md" justify="center" className="p-[12px] pt-[16px] sm:pt-[24px] lg:p-[24px]">
         <AutoColumn className="gap-4 sm:gap-6" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
           <TitleRow padding={'0'}>
-            <Flex alignItems="center" className="gap-4 flex-wrap">
+            <Flex alignItems="center" justifyContent="space-between" className="gap-4 flex-wrap">
               <span
                 className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]"
                 style={{ fontFamily: 'Inter', fontWeight: 600, letterSpacing: '-0.02em', color: '#FBFBFD' }}
               >
                 Dashboard
               </span>
+              <div
+                className="fixed right-3 top-1/2 z-30 -translate-y-1/2 rounded-[10px] p-1 shadow-lg"
+                style={{ background: '#1E1915', boxShadow: '0 8px 24px rgba(0, 0, 0, 0.24)' }}
+              >
+                <PeriodToggle period={period} onChange={setPeriod} vertical />
+              </div>
             </Flex>
           </TitleRow>
 
@@ -726,7 +729,6 @@ export default function Dashboard() {
             stats={statCards}
             breakdown={breakdown}
             period={period}
-            onPeriodChange={setPeriod}
             isLoading={isLoading || isLoadingProtocolStats}
           />
           <DashboardHistoryChart history={stats.history} period={period} />
