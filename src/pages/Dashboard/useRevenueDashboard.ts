@@ -362,10 +362,10 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
   const gaugePairs = pairs.filter((pair) => num(pair?.feeSplit) === 1).map((pair) => String(pair.id).toLowerCase())
   if (gaugePairs.length === 0) return base
   const gaugeStarts = await Promise.all(gaugePairs.map(async (pair) => {
-    const data = await graphqlFetcher({ operationName: 'RobinhoodGaugeStart', query: ROBINHOOD_GAUGE_START_QUERY, variables: { chainId, pair } })
+    const data = await graphqlFetcher({ operationName: 'RobinhoodGaugeStart', query: ROBINHOOD_GAUGE_START_QUERY, variables: { chainId, version, pair } })
     const timestamp = num((data as any)?.transactions?.[0]?.timestamp)
     const previous = timestamp > 0
-      ? await graphqlFetcher({ operationName: 'RobinhoodGaugePrevious', query: ROBINHOOD_GAUGE_PREVIOUS_QUERY, variables: { chainId, pair, timestamp: String(timestamp) } })
+      ? await graphqlFetcher({ operationName: 'RobinhoodGaugePrevious', query: ROBINHOOD_GAUGE_PREVIOUS_QUERY, variables: { chainId, version, pair, timestamp: String(timestamp) } })
       : null
     return { pair, timestamp, previousSplit: num((previous as any)?.transactions?.[0]?.feeSplit) }
   }))
@@ -378,6 +378,7 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
     query: ROBINHOOD_GAUGE_FEES_QUERY,
     variables: {
       chainId,
+      version,
       pairs: [...starts.keys()],
       dayStart: Math.floor(earliestStart / 86_400) * 86_400,
       hourStart: Math.floor(Math.min(earliestStart, Date.now() / 1000 - 24 * 3_600) / 3_600) * 3_600,
