@@ -3,9 +3,10 @@ import { availableChains } from 'connectors'
 import { useMemo } from 'react'
 import { VERSION, V3_OFFICIAL_USE_INDEXER } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
+import { ROBINHOOD_GAUGE_HISTORY, type RobinhoodGaugeHistory } from './robinhoodGauge'
 
 const CHAIN_REVENUE_QUERY = `
-  query ChainRevenue {
+  query ChainRevenue($gaugePairs: [String!], $gaugeDayStart: Int, $gaugeHourStart: Int) {
     factories {
       tvl
       totalVolume
@@ -20,9 +21,20 @@ const CHAIN_REVENUE_QUERY = `
       dailyRevenue
     }
     pairs(first: 1000) {
+      id
       volumeDay
       feeDay
       feeSplit
+    }
+    gaugePairDayDatas: pairDayDatas(first: 1000, orderBy: dayStartUnix, orderDirection: desc, where: { pair_in: $gaugePairs, dayStartUnix_gte: $gaugeDayStart }) {
+      pair { id }
+      dayStartUnix
+      totalFee
+    }
+    gaugePairHourDatas: pairHourDatas(first: 1000, orderBy: hourStartUnix, orderDirection: desc, where: { pair_in: $gaugePairs, hourStartUnix_gte: $gaugeHourStart }) {
+      pair { id }
+      hourStartUnix
+      totalFee
     }
   }
 `
@@ -32,6 +44,12 @@ const HEMI_SUBGRAPH_URL = import.meta.env.VITE_GRAPH_API_KEY
   : 'https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest'
 const HEMI_SUBGRAPH_FALLBACK_URL = 'https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest'
 const HEMI_REVENUE_RATE = 0.1
+const ROBINHOOD_CHAIN_ID = 4663
+const ROBINHOOD_GAUGE_REVENUE_SPLIT = 0.07
+const ROBINHOOD_GAUGE_RETAINED_SPLIT = 1 - ROBINHOOD_GAUGE_REVENUE_SPLIT
+const discoveredGaugeHistory = new Map<string, RobinhoodGaugeHistory>()
+const knownRobinhoodGaugePairs = Object.keys(ROBINHOOD_GAUGE_HISTORY)
+const earliestKnownGaugeStart = Math.min(...Object.values(ROBINHOOD_GAUGE_HISTORY).map((history) => history.startedAt))
 
 const HEMI_REVENUE_QUERY = `
   query HemiRevenue {
@@ -51,6 +69,37 @@ const HEMI_REVENUE_QUERY = `
       tvlUSD
       volumeUSD
       feesUSD
+    }
+  }
+`
+
+const ROBINHOOD_GAUGE_START_QUERY = `
+  query RobinhoodGaugeStart($pair: String!) {
+    transactions(first: 1, orderBy: timestamp, orderDirection: asc, where: { pair: $pair, type: "SWAP", feeSplit: "1" }) {
+      timestamp
+    }
+  }
+`
+
+const ROBINHOOD_GAUGE_PREVIOUS_QUERY = `
+  query RobinhoodGaugePrevious($pair: String!, $timestamp: BigInt!) {
+    transactions(first: 1, orderBy: timestamp, orderDirection: desc, where: { pair: $pair, type: "SWAP", timestamp_lt: $timestamp }) {
+      feeSplit
+    }
+  }
+`
+
+const ROBINHOOD_GAUGE_FEES_QUERY = `
+  query RobinhoodGaugeFees($pairs: [String!], $dayStart: Int, $hourStart: Int) {
+    pairDayDatas(first: 1000, orderBy: dayStartUnix, orderDirection: desc, where: { pair_in: $pairs, dayStartUnix_gte: $dayStart }) {
+      pair { id }
+      dayStartUnix
+      totalFee
+    }
+    pairHourDatas(first: 1000, orderBy: hourStartUnix, orderDirection: desc, where: { pair_in: $pairs, hourStartUnix_gte: $hourStart }) {
+      pair { id }
+      hourStartUnix
+      totalFee
     }
   }
 `
@@ -298,12 +347,18 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
   const data = await graphqlFetcher({
     operationName: 'ChainRevenue',
     query: CHAIN_REVENUE_QUERY,
-    variables: { chainId, version },
+    variables: {
+      chainId,
+      version,
+      gaugePairs: knownRobinhoodGaugePairs,
+      gaugeDayStart: Math.floor(earliestKnownGaugeStart / 86_400) * 86_400,
+      gaugeHourStart: Math.floor(Math.min(earliestKnownGaugeStart, Date.now() / 1000 - 24 * 3_600) / 3_600) * 3_600,
+    },
   })
   const factory = (data as any)?.factories?.[0]
   const factoryDays: any[] = (data as any)?.factoryDayDatas ?? []
   const pairs: any[] = (data as any)?.pairs ?? []
-  return {
+  const base = {
     totalValueLocked: num(factory?.tvl),
     totalVolumeAllTime: num(factory?.totalVolume),
     totalFeeAllTime: num(factory?.totalFee),
@@ -321,6 +376,94 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
     totalFee30d: sumDays(factoryDays, 'dailyFees', 30),
     totalRevenue30d: sumDays(factoryDays, 'dailyRevenue', 30),
     history: historyFromDays(factoryDays, null),
+  }
+  if (chainId !== ROBINHOOD_CHAIN_ID || version !== VERSION.V3_OFFICIAL) return base
+
+  const gaugePairs = pairs.filter((pair) => num(pair?.feeSplit) === 1).map((pair) => String(pair.id).toLowerCase())
+  if (gaugePairs.length === 0) return base
+  const unknownGaugePairs = gaugePairs.filter((pair) => !ROBINHOOD_GAUGE_HISTORY[pair] && !discoveredGaugeHistory.has(pair))
+  const gaugeStarts = await Promise.all(gaugePairs.map(async (pair) => {
+    const known = ROBINHOOD_GAUGE_HISTORY[pair] ?? discoveredGaugeHistory.get(pair)
+    if (known) return { pair, timestamp: known.startedAt, previousSplit: known.previousSplit }
+    const data = await graphqlFetcher({ operationName: 'RobinhoodGaugeStart', query: ROBINHOOD_GAUGE_START_QUERY, variables: { chainId, version, pair } })
+    const timestamp = num((data as any)?.transactions?.[0]?.timestamp)
+    const previous = timestamp > 0
+      ? await graphqlFetcher({ operationName: 'RobinhoodGaugePrevious', query: ROBINHOOD_GAUGE_PREVIOUS_QUERY, variables: { chainId, version, pair, timestamp: String(timestamp) } })
+      : null
+    const previousSplit = num((previous as any)?.transactions?.[0]?.feeSplit)
+    if (timestamp > 0) discoveredGaugeHistory.set(pair, {
+      startedAt: timestamp,
+      previousSplit,
+      timeline: [{ timestamp: 0, split: previousSplit }, { timestamp, split: 1 }],
+    })
+    return { pair, timestamp, previousSplit }
+  }))
+  const starts = new Map(gaugeStarts.filter((item) => item.timestamp > 0).map((item) => [item.pair, item.timestamp]))
+  const previousSplits = new Map(gaugeStarts.filter((item) => item.timestamp > 0).map((item) => [item.pair, item.previousSplit]))
+  if (starts.size === 0) return base
+  const earliestStart = Math.min(...starts.values())
+  let gaugeData = {
+    pairDayDatas: (data as any)?.gaugePairDayDatas ?? [],
+    pairHourDatas: (data as any)?.gaugePairHourDatas ?? [],
+  }
+  if (unknownGaugePairs.length > 0) {
+    gaugeData = await graphqlFetcher({
+      operationName: 'RobinhoodGaugeFees',
+      query: ROBINHOOD_GAUGE_FEES_QUERY,
+      variables: {
+        chainId,
+        version,
+        pairs: [...starts.keys()],
+        dayStart: Math.floor(earliestStart / 86_400) * 86_400,
+        hourStart: Math.floor(Math.min(earliestStart, Date.now() / 1000 - 24 * 3_600) / 3_600) * 3_600,
+      },
+    }) as any
+  }
+  const correctionByDay = new Map<number, number>()
+  for (const day of gaugeData?.pairDayDatas ?? []) {
+    const pair = String(day.pair.id).toLowerCase()
+    const start = starts.get(pair)
+    const dayStart = num(day.dayStartUnix)
+    if (!start || dayStart <= Math.floor(start / 86_400) * 86_400) continue
+    correctionByDay.set(dayStart, (correctionByDay.get(dayStart) ?? 0) + num(day.totalFee) * ROBINHOOD_GAUGE_RETAINED_SPLIT)
+  }
+  for (const hour of gaugeData?.pairHourDatas ?? []) {
+    const pair = String(hour.pair.id).toLowerCase()
+    const start = starts.get(pair)
+    const hourStart = num(hour.hourStartUnix)
+    const dayStart = Math.floor(hourStart / 86_400) * 86_400
+    if (!start || dayStart !== Math.floor(start / 86_400) * 86_400 || hourStart < Math.floor(start / 3_600) * 3_600) continue
+    correctionByDay.set(dayStart, (correctionByDay.get(dayStart) ?? 0) + num(hour.totalFee) * ROBINHOOD_GAUGE_RETAINED_SPLIT)
+  }
+  const revenueCorrection = (period: DashboardPeriod) => {
+    const cutoff = period === '24h'
+      ? Math.floor(Date.now() / 1000 / 3_600) * 3_600 - 23 * 3_600
+      : period === '7d'
+        ? num(factoryDays[6]?.dayStartUnix)
+        : period === '30d'
+          ? num(factoryDays[29]?.dayStartUnix)
+          : 0
+    if (period === '24h') {
+      return (gaugeData?.pairHourDatas ?? []).reduce((total: number, hour: any) => {
+        const pair = String(hour.pair.id).toLowerCase()
+        const start = starts.get(pair)
+        const hourStart = num(hour.hourStartUnix)
+        if (!start || hourStart < cutoff) return total
+        const effectiveCorrection = hourStart >= Math.floor(start / 3_600) * 3_600
+          ? ROBINHOOD_GAUGE_RETAINED_SPLIT
+          : 1 - (previousSplits.get(pair) ?? 0)
+        return total + num(hour.totalFee) * effectiveCorrection
+      }, 0)
+    }
+    return [...correctionByDay.entries()].reduce((total, [dayStart, correction]) => (dayStart >= cutoff ? total + correction : total), 0)
+  }
+  return {
+    ...base,
+    totalRevenue24h: base.totalRevenue24h - revenueCorrection('24h'),
+    totalRevenue7d: base.totalRevenue7d - revenueCorrection('7d'),
+    totalRevenue30d: base.totalRevenue30d - revenueCorrection('30d'),
+    totalRevenueAllTime: base.totalRevenueAllTime - revenueCorrection('all'),
+    history: base.history.map((day) => ({ ...day, revenue: day.revenue - (correctionByDay.get(day.timestamp) ?? 0) })),
   }
 }
 
