@@ -236,6 +236,7 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
               <div key={pair.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] items-center" style={{ padding: '12px', borderTop: '1px solid #2F2823', fontFamily: 'Inter', fontSize: 12 }}>
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="truncate font-semibold" style={{ color: '#FBFBFD' }}><PairLabel pair={pair} chainId={row.chainId} /></div>
+                  {pair.isGauge && <span style={{ color: '#D8A072', fontSize: 10, fontWeight: 600 }}>Gauge</span>}
                   {pair.revenueEstimated && <span style={{ color: '#6B6059', fontSize: 10 }}>est.</span>}
                 </div>
                 <span className="text-right" style={{ color: '#CFC7C1' }}>{fmtUsd(pair.tvl)}</span>

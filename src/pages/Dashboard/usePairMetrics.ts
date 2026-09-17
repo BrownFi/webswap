@@ -79,6 +79,7 @@ export type DashboardPairMetric = {
   revenue: number
   apr: number
   revenueEstimated: boolean
+  isGauge: boolean
 }
 
 function num(value: unknown): number {
@@ -161,6 +162,7 @@ function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMet
     revenue: isHemi ? fee * 0.1 : fee * feeSplit,
     apr: isHemi ? feeApr(fee, tvl, period, pair.days.length) : num(pair.apr),
     revenueEstimated: false,
+    isGauge: !isHemi && num(pair.feeSplit) === 1,
   }
 }
 
