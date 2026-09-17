@@ -433,7 +433,7 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
   }
   const revenueCorrection = (period: DashboardPeriod) => {
     const cutoff = period === '24h'
-      ? Math.floor(Date.now() / 3_600) * 3_600 - 23 * 3_600
+      ? Math.floor(Date.now() / 1000 / 3_600) * 3_600 - 23 * 3_600
       : period === '7d'
         ? num(factoryDays[6]?.dayStartUnix)
         : period === '30d'
