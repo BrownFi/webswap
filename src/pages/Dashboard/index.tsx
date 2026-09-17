@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Token } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -123,17 +123,28 @@ function PeriodToggle({ period, onChange, vertical = false }: { period: Dashboar
 }
 
 function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof RevenueHistoryPoint; label: string; color: string; history: RevenueHistoryPoint[] }) {
+  const chartContainerRef = useRef<HTMLDivElement>(null)
+  const [chartWidth, setChartWidth] = useState(0)
   const chartData = history.map((point) => ({
     ...point,
     label: new Date(point.timestamp * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
   }))
+  useEffect(() => {
+    const element = chartContainerRef.current
+    if (!element) return
+    const updateWidth = () => setChartWidth(element.clientWidth)
+    updateWidth()
+    const observer = new ResizeObserver(updateWidth)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
   return (
     <div style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: '10px', padding: '12px 14px', minWidth: 0 }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
         <span style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>{label}</span>
       </div>
-      <div style={{ width: '100%', height: 150, minWidth: 1, minHeight: 150 }}>
-        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={150}>
+      <div ref={chartContainerRef} style={{ width: '100%', height: 150, minWidth: 1, minHeight: 150 }}>
+        {chartWidth > 0 && <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={150}>
           <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={`dashboard-${String(dataKey)}-fill`} x1="0" y1="0" x2="0" y2="1">
@@ -150,7 +161,7 @@ function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof R
             />
             <Area type="monotone" dataKey={dataKey} name={label} stroke={color} fill={`url(#dashboard-${String(dataKey)}-fill)`} strokeWidth={2} dot={false} />
           </AreaChart>
-        </ResponsiveContainer>
+        </ResponsiveContainer>}
       </div>
     </div>
   )
