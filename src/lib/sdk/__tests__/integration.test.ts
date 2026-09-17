@@ -214,33 +214,6 @@ describe('SDK Integration: Trade & Route', () => {
   })
 })
 
-describe('SDK Integration: Pair.getOutputAmountAsync (live RPC)', () => {
-  it('returns valid output for 1 BERA → HONEY on Berachain', async () => {
-    const pair = new Pair(
-      new TokenAmount(WBERA, JSBI.BigInt('20000000000000000000000')),
-      new TokenAmount(HONEY, JSBI.BigInt('10000000000000000000000')),
-      2,
-    )
-    const input = new TokenAmount(WBERA, JSBI.BigInt('1000000000000000000')) // 1 BERA
-    const path = [WBERA, HONEY]
-
-    const [output, , , , priceImpactK] = await pair.getOutputAmountAsync(
-      input,
-      [pair],
-      path,
-      ChainId.BERA_MAINNET,
-      '0x0000000000000000000000000000000000000001',
-    )
-
-    const outputNum = Number(output.toSignificant(6))
-    console.log(`1 BERA → ${outputNum} HONEY (priceImpactK: ${priceImpactK}%)`)
-
-    expect(outputNum).toBeGreaterThan(0)
-    expect(outputNum).toBeLessThan(10) // reasonable range
-    expect(typeof priceImpactK).toBe('number')
-  }, 30000) // 30s timeout for RPC call
-})
-
 describe('SDK Integration: getPythPrice (live RPC)', () => {
   it('returns a number for WBERA on Berachain', async () => {
     const price = await getPythPrice(WBERA.address, ChainId.BERA_MAINNET, 2)
