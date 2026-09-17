@@ -6,7 +6,7 @@ import { graphqlFetcher } from 'utils/graphql'
 import { ROBINHOOD_GAUGE_HISTORY, type RobinhoodGaugeHistory } from './robinhoodGauge'
 
 const CHAIN_REVENUE_QUERY = `
-  query ChainRevenue {
+  query ChainRevenue($gaugePairs: [String!], $gaugeDayStart: Int, $gaugeHourStart: Int) {
     factories {
       tvl
       totalVolume
@@ -26,6 +26,16 @@ const CHAIN_REVENUE_QUERY = `
       feeDay
       feeSplit
     }
+    gaugePairDayDatas: pairDayDatas(first: 1000, orderBy: dayStartUnix, orderDirection: desc, where: { pair_in: $gaugePairs, dayStartUnix_gte: $gaugeDayStart }) {
+      pair { id }
+      dayStartUnix
+      totalFee
+    }
+    gaugePairHourDatas: pairHourDatas(first: 1000, orderBy: hourStartUnix, orderDirection: desc, where: { pair_in: $gaugePairs, hourStartUnix_gte: $gaugeHourStart }) {
+      pair { id }
+      hourStartUnix
+      totalFee
+    }
   }
 `
 
@@ -38,6 +48,8 @@ const ROBINHOOD_CHAIN_ID = 4663
 const ROBINHOOD_GAUGE_REVENUE_SPLIT = 0.07
 const ROBINHOOD_GAUGE_RETAINED_SPLIT = 1 - ROBINHOOD_GAUGE_REVENUE_SPLIT
 const discoveredGaugeHistory = new Map<string, RobinhoodGaugeHistory>()
+const knownRobinhoodGaugePairs = Object.keys(ROBINHOOD_GAUGE_HISTORY)
+const earliestKnownGaugeStart = Math.min(...Object.values(ROBINHOOD_GAUGE_HISTORY).map((history) => history.startedAt))
 
 const HEMI_REVENUE_QUERY = `
   query HemiRevenue {
@@ -335,7 +347,13 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
   const data = await graphqlFetcher({
     operationName: 'ChainRevenue',
     query: CHAIN_REVENUE_QUERY,
-    variables: { chainId, version },
+    variables: {
+      chainId,
+      version,
+      gaugePairs: knownRobinhoodGaugePairs,
+      gaugeDayStart: Math.floor(earliestKnownGaugeStart / 86_400) * 86_400,
+      gaugeHourStart: Math.floor(Math.min(earliestKnownGaugeStart, Date.now() / 1000 - 24 * 3_600) / 3_600) * 3_600,
+    },
   })
   const factory = (data as any)?.factories?.[0]
   const factoryDays: any[] = (data as any)?.factoryDayDatas ?? []
@@ -363,6 +381,7 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
 
   const gaugePairs = pairs.filter((pair) => num(pair?.feeSplit) === 1).map((pair) => String(pair.id).toLowerCase())
   if (gaugePairs.length === 0) return base
+  const unknownGaugePairs = gaugePairs.filter((pair) => !ROBINHOOD_GAUGE_HISTORY[pair] && !discoveredGaugeHistory.has(pair))
   const gaugeStarts = await Promise.all(gaugePairs.map(async (pair) => {
     const known = ROBINHOOD_GAUGE_HISTORY[pair] ?? discoveredGaugeHistory.get(pair)
     if (known) return { pair, timestamp: known.startedAt, previousSplit: known.previousSplit }
@@ -379,17 +398,23 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
   const previousSplits = new Map(gaugeStarts.filter((item) => item.timestamp > 0).map((item) => [item.pair, item.previousSplit]))
   if (starts.size === 0) return base
   const earliestStart = Math.min(...starts.values())
-  const gaugeData = await graphqlFetcher({
-    operationName: 'RobinhoodGaugeFees',
-    query: ROBINHOOD_GAUGE_FEES_QUERY,
-    variables: {
-      chainId,
-      version,
-      pairs: [...starts.keys()],
-      dayStart: Math.floor(earliestStart / 86_400) * 86_400,
-      hourStart: Math.floor(Math.min(earliestStart, Date.now() / 1000 - 24 * 3_600) / 3_600) * 3_600,
-    },
-  }) as any
+  let gaugeData = {
+    pairDayDatas: (data as any)?.gaugePairDayDatas ?? [],
+    pairHourDatas: (data as any)?.gaugePairHourDatas ?? [],
+  }
+  if (unknownGaugePairs.length > 0) {
+    gaugeData = await graphqlFetcher({
+      operationName: 'RobinhoodGaugeFees',
+      query: ROBINHOOD_GAUGE_FEES_QUERY,
+      variables: {
+        chainId,
+        version,
+        pairs: [...starts.keys()],
+        dayStart: Math.floor(earliestStart / 86_400) * 86_400,
+        hourStart: Math.floor(Math.min(earliestStart, Date.now() / 1000 - 24 * 3_600) / 3_600) * 3_600,
+      },
+    }) as any
+  }
   const correctionByDay = new Map<number, number>()
   for (const day of gaugeData?.pairDayDatas ?? []) {
     const pair = String(day.pair.id).toLowerCase()
