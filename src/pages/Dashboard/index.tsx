@@ -724,7 +724,7 @@ export default function Dashboard() {
     },
     {
       label: 'Total Fee All-time',
-      value: fmtUsd(protocolStats?.feesAllTime ?? 0),
+      value: fmtUsd(stats.totalFeeAllTime),
       sub: 'Since launch',
       group: 'total' as const,
     },

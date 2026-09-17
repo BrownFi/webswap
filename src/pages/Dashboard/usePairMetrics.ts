@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { VERSION } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
+import { ROBINHOOD_GAUGE_HISTORY } from './robinhoodGauge'
 import type { DashboardPeriod, RevenueChainRow } from './useRevenueDashboard'
 
 const V3_PAIR_METRICS_QUERY = `
-  query DashboardPairMetrics {
+  query DashboardPairMetrics($gaugePairs: [String!], $gaugeHourStart: Int) {
     pairs(first: 1000) {
       id
       quoteTokenIndex
@@ -23,6 +24,11 @@ const V3_PAIR_METRICS_QUERY = `
       dayStartUnix
       tvl
       totalVolume
+      totalFee
+    }
+    gaugePairHourDatas: pairHourDatas(first: 1000, orderBy: hourStartUnix, orderDirection: desc, where: { pair_in: $gaugePairs, hourStartUnix_gte: $gaugeHourStart }) {
+      pair { id }
+      hourStartUnix
       totalFee
     }
   }
@@ -65,6 +71,7 @@ type RawPair = {
   token0: { id: string; symbol: string; name: string; decimals: number }
   token1: { id: string; symbol: string; name: string; decimals: number }
   days: RawDay[]
+  hourly?: RawDay[]
   hemi?: boolean
 }
 
@@ -88,11 +95,13 @@ function num(value: unknown): number {
 }
 
 async function fetchV3PairMetrics(chainId: number): Promise<RawPair[]> {
+  const gaugePairs = Object.keys(ROBINHOOD_GAUGE_HISTORY)
+  const gaugeHourStart = Math.floor(Math.min(...Object.values(ROBINHOOD_GAUGE_HISTORY).map((history) => history.startedAt), Date.now() / 1000 - 30 * 86_400) / 3_600) * 3_600
   const data = (await graphqlFetcher({
     operationName: 'DashboardPairMetrics',
     query: V3_PAIR_METRICS_QUERY,
-    variables: { chainId, version: VERSION.V3_OFFICIAL },
-  })) as { pairs?: RawPair[]; pairDayDatas?: Array<{ pair: { id: string }; dayStartUnix: string | number; tvl: string | number; totalVolume: string | number; totalFee: string | number }> } | null
+    variables: { chainId, version: VERSION.V3_OFFICIAL, gaugePairs, gaugeHourStart },
+  })) as { pairs?: RawPair[]; pairDayDatas?: Array<{ pair: { id: string }; dayStartUnix: string | number; tvl: string | number; totalVolume: string | number; totalFee: string | number }>; gaugePairHourDatas?: Array<{ pair: { id: string }; hourStartUnix: string | number; totalFee: string | number }> } | null
   const daysByPair = new Map<string, RawDay[]>()
   for (const day of data?.pairDayDatas ?? []) {
     const id = day.pair.id.toLowerCase()
@@ -100,7 +109,14 @@ async function fetchV3PairMetrics(chainId: number): Promise<RawPair[]> {
     days.push({ key: String(day.dayStartUnix), tvl: num(day.tvl), volume: num(day.totalVolume), fee: num(day.totalFee) })
     daysByPair.set(id, days)
   }
-  return (data?.pairs ?? []).map((pair) => ({ ...pair, days: daysByPair.get(pair.id.toLowerCase()) ?? [] }))
+  const hoursByPair = new Map<string, RawDay[]>()
+  for (const hour of data?.gaugePairHourDatas ?? []) {
+    const id = hour.pair.id.toLowerCase()
+    const hours = hoursByPair.get(id) ?? []
+    hours.push({ key: String(hour.hourStartUnix), tvl: 0, volume: 0, fee: num(hour.totalFee) })
+    hoursByPair.set(id, hours)
+  }
+  return (data?.pairs ?? []).map((pair) => ({ ...pair, days: daysByPair.get(pair.id.toLowerCase()) ?? [], hourly: hoursByPair.get(pair.id.toLowerCase()) ?? [] }))
 }
 
 async function fetchHemiPairMetrics(): Promise<RawPair[]> {
@@ -141,6 +157,22 @@ function feeApr(fee: number, tvl: number, period: DashboardPeriod, availableDays
   return (fee / tvl) * (365 / periodDays) * 100
 }
 
+function gaugeRevenue(pair: RawPair, period: DashboardPeriod) {
+  const history = ROBINHOOD_GAUGE_HISTORY[pair.id.toLowerCase()]
+  if (!history || !pair.hourly?.length) return undefined
+  const cutoff = period === '24h' ? Date.now() / 1000 - 86_400 : period === '7d' ? Date.now() / 1000 - 7 * 86_400 : period === '30d' ? Date.now() / 1000 - 30 * 86_400 : 0
+  return pair.hourly.reduce((total, hour) => {
+    const timestamp = num(hour.key)
+    if (timestamp < cutoff) return total
+    let split = 0
+    for (const transition of history.timeline) {
+      if (timestamp >= transition.timestamp) split = transition.split
+      else break
+    }
+    return total + hour.fee * (split === 1 ? 0.07 : split)
+  }, 0)
+}
+
 function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMetric {
   const feeSplit = num(pair.feeSplit)
   const isHemi = pair.hemi === true
@@ -160,7 +192,7 @@ function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMet
     tvl,
     volume,
     fee,
-    revenue: isHemi ? fee * 0.1 : fee * (isGauge ? 0.07 : feeSplit),
+    revenue: isHemi ? fee * 0.1 : isGauge ? (gaugeRevenue(pair, period) ?? fee * 0.07) : fee * feeSplit,
     apr: isHemi ? feeApr(fee, tvl, period, pair.days.length) : num(pair.apr),
     revenueEstimated: false,
     isGauge,

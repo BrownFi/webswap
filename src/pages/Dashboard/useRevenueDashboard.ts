@@ -391,7 +391,11 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
       ? await graphqlFetcher({ operationName: 'RobinhoodGaugePrevious', query: ROBINHOOD_GAUGE_PREVIOUS_QUERY, variables: { chainId, version, pair, timestamp: String(timestamp) } })
       : null
     const previousSplit = num((previous as any)?.transactions?.[0]?.feeSplit)
-    if (timestamp > 0) discoveredGaugeHistory.set(pair, { startedAt: timestamp, previousSplit })
+    if (timestamp > 0) discoveredGaugeHistory.set(pair, {
+      startedAt: timestamp,
+      previousSplit,
+      timeline: [{ timestamp: 0, split: previousSplit }, { timestamp, split: 1 }],
+    })
     return { pair, timestamp, previousSplit }
   }))
   const starts = new Map(gaugeStarts.filter((item) => item.timestamp > 0).map((item) => [item.pair, item.timestamp]))
