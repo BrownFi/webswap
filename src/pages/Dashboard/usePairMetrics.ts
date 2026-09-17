@@ -134,25 +134,32 @@ function sumDays(days: RawDay[], period: DashboardPeriod, field: 'tvl' | 'volume
   return days.slice(0, count).reduce((total, day) => total + day[field], 0)
 }
 
+function feeApr(fee: number, tvl: number, period: DashboardPeriod, availableDays: number) {
+  if (fee <= 0 || tvl <= 0) return 0
+  const periodDays = period === '24h' ? 1 : period === '7d' ? 7 : period === '30d' ? 30 : Math.max(1, availableDays)
+  return (fee / tvl) * (365 / periodDays) * 100
+}
+
 function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMetric {
   const feeSplit = num(pair.feeSplit)
   const isHemi = pair.hemi === true
   const fee = period === '24h' && !isHemi ? num(pair.feeDay) : sumDays(pair.days, period, 'fee')
   const volume = period === '24h' && !isHemi
     ? num(pair.volumeDay)
-    : period === '7d' && pair.volume7Day
-      ? num(pair.volume7Day)
-      : sumDays(pair.days, period, 'volume')
+      : period === '7d' && pair.volume7Day
+        ? num(pair.volume7Day)
+        : sumDays(pair.days, period, 'volume')
+  const tvl = num(pair.tvl) || (pair.days[0]?.tvl ?? 0)
   return {
     id: pair.id,
     token0: pair.token0,
     token1: pair.token1,
     quoteTokenIndex: pair.quoteTokenIndex,
-    tvl: num(pair.tvl) || (pair.days[0]?.tvl ?? 0),
+    tvl,
     volume,
     fee,
     revenue: isHemi ? fee * 0.1 : fee * feeSplit,
-    apr: num(pair.apr),
+    apr: isHemi ? feeApr(fee, tvl, period, pair.days.length) : num(pair.apr),
     revenueEstimated: false,
   }
 }
