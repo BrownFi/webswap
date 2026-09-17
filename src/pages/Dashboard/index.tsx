@@ -11,8 +11,12 @@ import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
 import { shouldReverseDisplay } from 'utils/pair'
 import { VERSION } from 'lib/sdk/constants/addresses'
-import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { CurrencyLogo } from 'components/CurrencyLogo'
 import { checksumAddress, type Address } from 'viem'
+import hemiEtherLogo from 'assets/images/hemi-ether.svg'
+import hemiUsdcLogo from 'assets/images/hemi-usdc.svg'
+import hemiUsdtLogo from 'assets/images/hemi-usdt.png'
+import hemiWbtcLogo from 'assets/images/hemi-wbtc.svg'
 import {
   useRevenueDashboard,
   type RevenueChainRow,
@@ -24,6 +28,15 @@ import {
 import { useDashboardPairMetrics, type DashboardPairMetric } from './usePairMetrics'
 
 const HEMI_ICON_URL = 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png'
+const HEMI_TOKEN_LOGOS: Record<string, string> = {
+  '0x4200000000000000000000000000000000000006': hemiEtherLogo,
+  '0x99e3de3817f6081b2568208337ef83295b7f591d': 'https://framerusercontent.com/images/n4PMW5jyEJaRcKYdx8zsaKQ1J9Q.svg?width=360&height=360',
+  '0xaa40c0c7644e0b2b224509571e10ad20d9c4ef28': 'https://assets.coingecko.com/coins/images/1/standard/bitcoin.png',
+  '0x03c7054bcb39f7b2e5b2c7acb37583e32d70cfa3': hemiWbtcLogo,
+  '0xad11a8beb98bbf61dbb1aa0f6d6f2ecd87b35afa': hemiUsdcLogo,
+  '0xbb0d083fb1be0a9f6157ec484b6c79e0a4e31c2e': hemiUsdtLogo,
+  '0xd3599ae62ee280709a22268a46d23164214e345b': '/VUSD_Favicon_192.png',
+}
 
 function fmtUsd(n: number) {
   if (!Number.isFinite(n) || n === 0) return '$0.00'
@@ -171,10 +184,31 @@ function PairLabel({ pair, chainId }: { pair: DashboardPairMetric; chainId: numb
   return (
     <div className="flex items-center gap-4">
       <div style={{ width: 30, flexShrink: 0 }}>
-        <DoubleCurrencyLogo currency0={token0} currency1={token1} size={22} quoteTokenIndex={pair.quoteTokenIndex} chainId={chainId} />
+        <div className="relative flex items-center">
+          <PairTokenLogo token={isReversed ? token1 : token0} chainId={chainId} />
+          <PairTokenLogo token={isReversed ? token0 : token1} chainId={chainId} overlap />
+        </div>
       </div>
       <span>{getTokenSymbol(first, chainId)} / {getTokenSymbol(second, chainId)}</span>
     </div>
+  )
+}
+
+function PairTokenLogo({ token, chainId, overlap = false }: { token: Token; chainId: number; overlap?: boolean }) {
+  const fallback = chainId === 43111 ? HEMI_TOKEN_LOGOS[token.address.toLowerCase()] : undefined
+  return fallback ? (
+    <img
+      src={fallback}
+      alt={`${token.symbol} logo`}
+      style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', position: overlap ? 'absolute' : undefined, left: overlap ? 13 : undefined, zIndex: overlap ? 1 : 2 }}
+    />
+  ) : (
+    <CurrencyLogo
+      currency={token}
+      size="22px"
+      chainId={chainId}
+      style={{ position: overlap ? 'absolute' : undefined, left: overlap ? 13 : undefined, zIndex: overlap ? 1 : 2 }}
+    />
   )
 }
 

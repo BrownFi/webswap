@@ -170,7 +170,7 @@ export function useDashboardPairMetrics(row: RevenueChainRow, period: DashboardP
     retry: 1,
   })
   const hemiQuery = useQuery({
-    queryKey: ['dashboardPairMetrics', 'hemi'],
+    queryKey: ['dashboardPairMetrics', 'hemi', row.chainId],
     queryFn: fetchHemiPairMetrics,
     enabled: expanded && hasHemi,
     staleTime: 5 * 60_000,
@@ -179,11 +179,15 @@ export function useDashboardPairMetrics(row: RevenueChainRow, period: DashboardP
     retry: 1,
   })
   const pairs = useMemo(
-    () => [...(v3Query.data ?? []), ...(hemiQuery.data ?? [])]
+    () => [...(hasV3 ? v3Query.data ?? [] : []), ...(hasHemi ? hemiQuery.data ?? [] : [])]
       .map((pair) => normalizePair(pair, period))
       .filter((pair) => pair.tvl >= 10)
       .sort((a, b) => b.tvl - a.tvl),
-    [v3Query.data, hemiQuery.data, period],
+    [hasV3, hasHemi, v3Query.data, hemiQuery.data, period],
   )
-  return { pairs, isLoading: v3Query.isLoading || hemiQuery.isLoading, isError: !!v3Query.error || !!hemiQuery.error }
+  return {
+    pairs,
+    isLoading: (hasV3 && v3Query.isLoading) || (hasHemi && hemiQuery.isLoading),
+    isError: (hasV3 && !!v3Query.error) || (hasHemi && !!hemiQuery.error),
+  }
 }
