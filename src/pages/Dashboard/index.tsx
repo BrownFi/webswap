@@ -226,7 +226,7 @@ function PairTokenLogo({ token, chainId, overlap = false }: { token: Token; chai
 function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
   const { pairs, isLoading, isError } = useDashboardPairMetrics(row, period, true)
   return (
-    <div style={{ marginTop: 16 }}>
+    <div style={{ marginTop: 16, minWidth: 0, width: '100%', maxWidth: '100%' }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
         <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 600, color: '#CFC7C1' }}>Pair metrics</span>
         <span style={{ fontFamily: 'Inter', fontSize: 11, color: '#6B6059' }}>{periodLabel(period)} · Live {row.versions.some((version) => version.version === 'hemi') ? 'Hemi' : 'V3'} data</span>
@@ -238,8 +238,8 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
       ) : pairs.length === 0 ? (
         <div style={{ padding: '18px 0', color: '#978A80', fontFamily: 'Inter', fontSize: 12 }}>No live pair data found.</div>
       ) : (
-        <div style={{ overflowX: 'auto', border: '1px solid #2F2823', borderRadius: 10 }}>
-          <div style={{ minWidth: 730 }}>
+        <div style={{ display: 'block', width: '100%', maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain', touchAction: 'pan-x', border: '1px solid #2F2823', borderRadius: 10 }}>
+          <div className="w-[730px] md:w-full">
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr]" style={{ padding: '10px 12px', background: '#2F2823', color: '#978A80', fontFamily: 'Inter', fontSize: 11, fontWeight: 600 }}>
               <span>Pair</span><span className="text-right">TVL</span><span className="text-right">Volume</span><span className="text-right">APR</span><span className="text-right">Fee</span><span className="text-right">Revenue</span>
             </div>
@@ -519,7 +519,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
   const values = periodValues(row, period)
 
   return (
-    <div style={{ background: '#1E1915', borderRadius: '12px', border: '1px solid #2F2823' }}>
+    <div style={{ background: '#1E1915', borderRadius: '12px', border: '1px solid #2F2823', minWidth: 0 }}>
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
@@ -681,7 +681,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
         </div>
       </button>
       {expanded && (
-        <div style={{ background: '#000000', borderTop: '1px solid #2F2823', borderRadius: '0 0 12px 12px', padding: '12px 16px 16px', overflowX: 'auto' }}>
+        <div style={{ background: '#000000', borderTop: '1px solid #2F2823', borderRadius: '0 0 12px 12px', padding: '12px 16px 16px', minWidth: 0 }}>
           <ChainHistoryCharts row={row} period={period} />
           <ChainPairMetrics row={row} period={period} />
         </div>
@@ -751,9 +751,9 @@ export default function Dashboard() {
   ]
 
   return (
-    <PageWrapper>
-      <AutoColumn gap="md" justify="center" className="p-[12px] pt-[16px] sm:pt-[24px] lg:p-[24px]">
-        <AutoColumn className="gap-4 sm:gap-6" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+    <PageWrapper className="min-w-0">
+      <AutoColumn gap="md" justify="center" className="min-w-0 p-[12px] pt-[16px] sm:pt-[24px] lg:p-[24px]">
+        <AutoColumn className="min-w-0 gap-4 sm:gap-6" style={{ width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
           <TitleRow padding={'0'}>
             <Flex alignItems="center" justifyContent="space-between" className="gap-4 flex-wrap">
               <span
@@ -762,14 +762,11 @@ export default function Dashboard() {
               >
                 Dashboard
               </span>
-              <div
-                className="fixed right-3 top-1/2 z-30 -translate-y-1/2 rounded-[10px] p-1 shadow-lg"
-                style={{ background: '#1E1915', boxShadow: '0 8px 24px rgba(0, 0, 0, 0.24)' }}
-              >
-                <PeriodToggle period={period} onChange={setPeriod} vertical />
-              </div>
             </Flex>
           </TitleRow>
+          <div className="fixed right-3 top-[86px] z-30 rounded-[10px] p-1 shadow-lg" style={{ background: '#1E1915', boxShadow: '0 8px 24px rgba(0, 0, 0, 0.24)' }}>
+            <PeriodToggle period={period} onChange={setPeriod} vertical />
+          </div>
 
           <DashboardStatsBar
             stats={statCards}
