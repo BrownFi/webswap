@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { Token } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { availableChains } from 'connectors'
@@ -7,7 +8,11 @@ import { Flex } from 'components/Rebass'
 import { EmptyProposals, PageWrapper, TitleRow } from 'pages/Pool/styleds'
 import { fetchProtocolStats, type ProtocolStats } from 'services/protocolStatsService'
 import { TYPE } from 'theme'
+import { getTokenSymbol } from 'utils'
+import { shouldReverseDisplay } from 'utils/pair'
 import { VERSION } from 'lib/sdk/constants/addresses'
+import { DoubleCurrencyLogo } from 'components/DoubleLogo'
+import { checksumAddress, type Address } from 'viem'
 import {
   useRevenueDashboard,
   type RevenueChainRow,
@@ -16,6 +21,7 @@ import {
   type DashboardPeriod,
   type RevenueHistoryPoint,
 } from './useRevenueDashboard'
+import { useDashboardPairMetrics, type DashboardPairMetric } from './usePairMetrics'
 
 const HEMI_ICON_URL = 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png'
 
@@ -29,6 +35,14 @@ function fmtUsd(n: number) {
         ? `$${(abs / 1_000).toFixed(2)}K`
         : `$${abs.toFixed(2)}`
   return n < 0 ? `-${formatted}` : formatted
+}
+
+function fmtPercent(n: number) {
+  return Number.isFinite(n) && n !== 0 ? `${n.toFixed(2)}%` : '0.00%'
+}
+
+function periodLabel(period: DashboardPeriod) {
+  return period === '7d' ? '7D' : period === '30d' ? '30D' : period === 'all' ? 'All' : '24h'
 }
 
 function VolumeMetric({
@@ -146,6 +160,62 @@ function DashboardHistoryChart({ history, period }: { history: RevenueHistoryPoi
 
 function ChainHistoryCharts({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
   return <DashboardHistoryChart history={row.history} period={period} />
+}
+
+function PairLabel({ pair, chainId }: { pair: DashboardPairMetric; chainId: number }) {
+  const token0 = new Token(chainId, checksumAddress(pair.token0.id as Address), pair.token0.decimals, pair.token0.symbol, pair.token0.name)
+  const token1 = new Token(chainId, checksumAddress(pair.token1.id as Address), pair.token1.decimals, pair.token1.symbol, pair.token1.name)
+  const isReversed = shouldReverseDisplay(token0, token1, chainId, pair.quoteTokenIndex)
+  const first = isReversed ? token1 : token0
+  const second = isReversed ? token0 : token1
+  return (
+    <div className="flex items-center gap-4">
+      <div style={{ width: 30, flexShrink: 0 }}>
+        <DoubleCurrencyLogo currency0={token0} currency1={token1} size={22} quoteTokenIndex={pair.quoteTokenIndex} chainId={chainId} />
+      </div>
+      <span>{getTokenSymbol(first, chainId)} / {getTokenSymbol(second, chainId)}</span>
+    </div>
+  )
+}
+
+function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
+  const { pairs, isLoading, isError } = useDashboardPairMetrics(row, period, true)
+  return (
+    <div style={{ marginTop: 16 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 600, color: '#CFC7C1' }}>Pair metrics</span>
+        <span style={{ fontFamily: 'Inter', fontSize: 11, color: '#6B6059' }}>{periodLabel(period)} · Live {row.versions.some((version) => version.version === 'hemi') ? 'Hemi' : 'V3'} data</span>
+      </div>
+      {isLoading ? (
+        <div style={{ padding: '18px 0', color: '#978A80', fontFamily: 'Inter', fontSize: 12 }}>Loading pair metrics...</div>
+      ) : isError ? (
+        <div style={{ padding: '18px 0', color: '#FF7A95', fontFamily: 'Inter', fontSize: 12 }}>Pair metrics are temporarily unavailable.</div>
+      ) : pairs.length === 0 ? (
+        <div style={{ padding: '18px 0', color: '#978A80', fontFamily: 'Inter', fontSize: 12 }}>No live pair data found.</div>
+      ) : (
+        <div style={{ overflowX: 'auto', border: '1px solid #2F2823', borderRadius: 10 }}>
+          <div style={{ minWidth: 730 }}>
+            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr]" style={{ padding: '10px 12px', background: '#2F2823', color: '#978A80', fontFamily: 'Inter', fontSize: 11, fontWeight: 600 }}>
+              <span>Pair</span><span className="text-right">TVL</span><span className="text-right">Volume</span><span className="text-right">APR</span><span className="text-right">Fee</span><span className="text-right">Revenue</span>
+            </div>
+            {pairs.map((pair) => (
+              <div key={pair.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] items-center" style={{ padding: '12px', borderTop: '1px solid #2F2823', fontFamily: 'Inter', fontSize: 12 }}>
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="truncate font-semibold" style={{ color: '#FBFBFD' }}><PairLabel pair={pair} chainId={row.chainId} /></div>
+                  {pair.revenueEstimated && <span style={{ color: '#6B6059', fontSize: 10 }}>est.</span>}
+                </div>
+                <span className="text-right" style={{ color: '#CFC7C1' }}>{fmtUsd(pair.tvl)}</span>
+                <span className="text-right" style={{ color: '#CFC7C1' }}>{fmtUsd(pair.volume)}</span>
+                <span className="text-right" style={{ color: '#D8A072' }}>{fmtPercent(pair.apr)}</span>
+                <span className="text-right" style={{ color: '#CFC7C1' }}>{fmtUsd(pair.fee)}</span>
+                <span className="text-right" style={{ color: '#D8A072' }}>{fmtUsd(pair.revenue)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function DashboardStatsBar({
@@ -570,6 +640,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
       {expanded && (
         <div style={{ borderTop: '1px solid #2F2823', padding: '12px 16px 16px', overflowX: 'auto' }}>
           <ChainHistoryCharts row={row} period={period} />
+          <ChainPairMetrics row={row} period={period} />
         </div>
       )}
     </div>
