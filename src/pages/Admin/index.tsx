@@ -61,7 +61,7 @@ const V3_SETTERS_ABI = [
 ] as const
 
 const GAMMA_BATCH_ABI = ['function setGammasOfPairs(tuple(address tokenA,address tokenB,uint32 gamma)[] pairs)'] as const
-const GAMMA_BATCH_CONTRACT = '0x6A8818427b9C41b29731FC01cbf70A63d0b6fbEf'
+const GAMMA_BATCH_CONTRACT = '0xcd2781588b27d663E3D3B6A08Bc96AAab2Fe3f87'
 
 const toFixedPoint = (value: string, decimals: number) => {
   const trimmed = value.trim()
