@@ -423,7 +423,7 @@ function DashboardStatsBar({
 
   return (
     <div style={{ background: '#2F2823', borderRadius: '16px', padding: '16px 20px' }}>
-      <div className="flex items-center justify-end gap-2 mb-4">
+      <div className="hidden items-center justify-end gap-2 mb-4 md:flex">
         <button
           type="button"
           onClick={() => setShowBreakdown((value) => !value)}
@@ -507,6 +507,25 @@ function DashboardStatsBar({
         <div>{renderDesktopMetric(totalStats[3])}</div>
         <div>{dailyStats[2] ? renderDesktopMetric(dailyStats[2]) : null}</div>
         <div />
+      </div>
+      <div className="mt-4 flex justify-end md:hidden">
+        <button
+          type="button"
+          onClick={() => setShowBreakdown((value) => !value)}
+          style={{
+            background: showBreakdown ? '#2F2823' : 'transparent',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '8px 12px',
+            fontFamily: 'Inter',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: showBreakdown ? '#D8A072' : '#FBFBFD',
+            cursor: 'pointer',
+          }}
+        >
+          {showBreakdown ? 'Hide Detail' : 'Detail'}
+        </button>
       </div>
     </div>
   )
