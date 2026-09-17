@@ -112,7 +112,7 @@ export function getEtherscanLink(
       prefix = 'https://lineascan.build'
       break
     case ChainId.ROBINHOOD_MAINNET:
-      prefix = 'https://robinhoodchain.blockscout.com'
+      prefix = 'https://robin.etherscan.io'
       break
     case ChainId.SEI_MAINNET:
       prefix = 'https://seiscan.io'

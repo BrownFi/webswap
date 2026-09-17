@@ -63,6 +63,12 @@ describe('extended utils', () => {
         'https://arbiscan.io/address/0xabc',
       )
     })
+
+    it('Robinhood mainnet', () => {
+      expect(getEtherscanLink(ChainId.ROBINHOOD_MAINNET, '0xabc', 'address')).toBe(
+        'https://robin.etherscan.io/address/0xabc',
+      )
+    })
   })
 
   describe('#escapeRegExp', () => {

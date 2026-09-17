@@ -115,7 +115,7 @@ const robinhood: Chain = {
     default: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
   },
   blockExplorers: {
-    default: { name: 'Robinhood Chain Explorer', url: 'https://robinhoodchain.blockscout.com' },
+    default: { name: 'Robinhood Etherscan', url: 'https://robin.etherscan.io' },
   },
   iconUrl: robinhoodIcon,
 }

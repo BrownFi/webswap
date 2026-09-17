@@ -219,6 +219,9 @@ export default function Header() {
             <StyledNavLink id="dashboard-nav-link" to="/dashboard" end className={isDashboardActive ? 'active' : ''}>
               Dashboard
             </StyledNavLink>
+            <StyledNavLink id="settings-nav-link" to="/settings">
+              Settings
+            </StyledNavLink>
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them
                 in the nav at all — avoids the duplicate on mobile. */}
