@@ -73,6 +73,7 @@ type RawPair = {
   days: RawDay[]
   hourly?: RawDay[]
   hemi?: boolean
+  robinhood?: boolean
 }
 
 export type DashboardPairMetric = {
@@ -116,7 +117,12 @@ async function fetchV3PairMetrics(chainId: number): Promise<RawPair[]> {
     hours.push({ key: String(hour.hourStartUnix), tvl: 0, volume: 0, fee: num(hour.totalFee) })
     hoursByPair.set(id, hours)
   }
-  return (data?.pairs ?? []).map((pair) => ({ ...pair, days: daysByPair.get(pair.id.toLowerCase()) ?? [], hourly: hoursByPair.get(pair.id.toLowerCase()) ?? [] }))
+  return (data?.pairs ?? []).map((pair) => ({
+    ...pair,
+    days: daysByPair.get(pair.id.toLowerCase()) ?? [],
+    hourly: hoursByPair.get(pair.id.toLowerCase()) ?? [],
+    robinhood: chainId === 4663,
+  }))
 }
 
 async function fetchHemiPairMetrics(): Promise<RawPair[]> {
@@ -176,7 +182,7 @@ function gaugeRevenue(pair: RawPair, period: DashboardPeriod) {
 function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMetric {
   const feeSplit = num(pair.feeSplit)
   const isHemi = pair.hemi === true
-  const isGauge = !isHemi && feeSplit === 1
+  const isGauge = pair.robinhood === true && !isHemi && feeSplit === 1
   const fee = period === '24h' && !isHemi ? num(pair.feeDay) : sumDays(pair.days, period, 'fee')
   const volume = period === '24h' && !isHemi
     ? num(pair.volumeDay)
