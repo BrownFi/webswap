@@ -144,6 +144,7 @@ function feeApr(fee: number, tvl: number, period: DashboardPeriod, availableDays
 function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMetric {
   const feeSplit = num(pair.feeSplit)
   const isHemi = pair.hemi === true
+  const isGauge = !isHemi && feeSplit === 1
   const fee = period === '24h' && !isHemi ? num(pair.feeDay) : sumDays(pair.days, period, 'fee')
   const volume = period === '24h' && !isHemi
     ? num(pair.volumeDay)
@@ -159,10 +160,10 @@ function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMet
     tvl,
     volume,
     fee,
-    revenue: isHemi ? fee * 0.1 : fee * feeSplit,
+    revenue: isHemi ? fee * 0.1 : fee * (isGauge ? 0.07 : feeSplit),
     apr: isHemi ? feeApr(fee, tvl, period, pair.days.length) : num(pair.apr),
     revenueEstimated: false,
-    isGauge: !isHemi && num(pair.feeSplit) === 1,
+    isGauge,
   }
 }
 
