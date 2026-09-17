@@ -132,8 +132,8 @@ function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof R
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
         <span style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>{label}</span>
       </div>
-      <div style={{ width: '100%', height: 150 }}>
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+      <div style={{ width: '100%', height: 150, minWidth: 1, minHeight: 150 }}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={150}>
           <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={`dashboard-${String(dataKey)}-fill`} x1="0" y1="0" x2="0" y2="1">
