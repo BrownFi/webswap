@@ -25,9 +25,24 @@ const SETTINGS_PAIR_METRICS = `
   query SettingsPairMetrics {
     pairs {
       id
+      fee
+      feeSplit
       tvl
       volumeDay
       apr
+      lambda
+      kB
+      kQ
+      compress
+      sSell
+      sBuy
+      fixS
+      disThreshold
+      sBound
+      pythWeight
+      gamma
+      token0 { id decimals name symbol }
+      token1 { id decimals name symbol }
     }
   }
 `
@@ -524,10 +539,14 @@ function GlobalSettingsModal({
 export default function SettingsPage() {
   const { chainId = ChainId.ROBINHOOD_MAINNET } = useActiveWeb3React()
   const factory = FACTORY_ADDRESS_V3_OFFICIAL[chainId]
-  const { data: onChainPools = [], isLoading, error, refetch: refetchPools } = useV3PoolsOnChain(chainId, VERSION.V3_OFFICIAL, !!factory)
   const useIndexer = v3UseIndexer(chainId, VERSION.V3_OFFICIAL)
-  const { data: metricData } = useQuery<{
-    pairs: Array<Pick<PairStats, 'id' | 'tvl' | 'volumeDay' | 'apr'>>
+  const { data: onChainPools = [], isLoading: isLoadingOnChain, error: onChainError, refetch: refetchPools } = useV3PoolsOnChain(
+    chainId,
+    VERSION.V3_OFFICIAL,
+    !!factory && !useIndexer,
+  )
+  const { data: metricData, isLoading: isLoadingIndexer, error: indexerError, refetch: refetchMetrics } = useQuery<{
+    pairs: PairStats[]
   }>({
     queryKey: ['settingsPairMetrics', chainId],
     queryFn: () =>
@@ -541,11 +560,17 @@ export default function SettingsPage() {
     refetchInterval: 60_000,
   })
   const pools = useMemo(() => {
-    const metrics = new Map((metricData?.pairs ?? []).map((pair) => [pair.id.toLowerCase(), pair]))
-    return onChainPools
-      .map((pair) => ({ ...pair, ...metrics.get(pair.id.toLowerCase()) }))
+    const source = useIndexer ? metricData?.pairs ?? [] : onChainPools
+    return source
+      .slice()
       .sort((a, b) => Number(b.tvl || 0) - Number(a.tvl || 0))
-  }, [metricData?.pairs, onChainPools])
+  }, [metricData?.pairs, onChainPools, useIndexer])
+  const isLoading = useIndexer ? isLoadingIndexer : isLoadingOnChain
+  const error = useIndexer ? indexerError : onChainError
+  const refreshPools = () => {
+    void refetchPools()
+    void refetchMetrics()
+  }
   const [query, setQuery] = useState('')
   const [managedPair, setManagedPair] = useState<PairStats | null>(null)
   const [showGlobalSettings, setShowGlobalSettings] = useState(false)
@@ -647,7 +672,7 @@ export default function SettingsPage() {
         factory={factory}
         onDismiss={() => setManagedPair(null)}
         onChanged={() => {
-          void refetchPools()
+          refreshPools()
         }}
       />
       <GlobalSettingsModal
@@ -656,7 +681,7 @@ export default function SettingsPage() {
         chainId={chainId}
         pools={pools}
         onChanged={() => {
-          void refetchPools()
+          refreshPools()
         }}
       />
     </Page>
