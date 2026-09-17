@@ -132,6 +132,9 @@ export async function onRequest(context) {
 
   const url = new URL(request.url)
 
+  // Public metadata must be served as JSON, not replaced by the login HTML.
+  if (url.pathname === '/manifest.json') return next()
+
   // Already authenticated: cookie holds h1, valid iff SHA-256(h1) === check.
   const cookies = parseCookies(request.headers.get('Cookie') || '')
   const cookieVal = cookies[COOKIE]
