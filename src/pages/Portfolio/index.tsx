@@ -138,8 +138,8 @@ function PortfolioStatsBar({
 // Version pill rendered next to each position. Distinct from BrownFi's
 // V2/V3 toggle elsewhere — this is a read-only badge so the user knows
 // which contract surface holds the position.
-function VersionBadge({ version }: { version: 2 | 4 }) {
-  const v3 = isV3Like(version)
+function VersionBadge({ version }: { version: 2 | 4 | 'hemi' }) {
+  const v3 = version === 'hemi' || isV3Like(version)
   return (
     <span
       style={{
@@ -154,7 +154,7 @@ function VersionBadge({ version }: { version: 2 | 4 }) {
         letterSpacing: '0.04em',
       }}
     >
-      {versionLabel(version)}
+         {version === 'hemi' ? 'Hemi' : versionLabel(version)}
     </span>
   )
 }
@@ -197,7 +197,10 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
   // Without this, the detail page falls back to the user's global V2/V3
   // toggle from Redux — clicking a V2 position while Redux is on V3 (or
   // vice versa) would query the wrong indexer and "Pool not found".
-  const handleClick = () => navigate(`/pool/${positionChainId}/${position.pair.id}?v=${versionToSlug(position.version)}`)
+  const handleClick = () => {
+    if (position.version === 'hemi') return
+    navigate(`/pool/${positionChainId}/${position.pair.id}?v=${versionToSlug(position.version)}`)
+  }
 
   const pnlPct = position.basePortfolio > 0 ? position.unrealizedPnL / position.basePortfolio : 0
 
@@ -217,11 +220,11 @@ function PositionRow({ position }: { position: PortfolioPosition }) {
 
   return (
     <div
-      role="button"
-      tabIndex={0}
+      role={position.version === 'hemi' ? undefined : 'button'}
+      tabIndex={position.version === 'hemi' ? undefined : 0}
       onClick={handleClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') handleClick()
+        if (position.version !== 'hemi' && (e.key === 'Enter' || e.key === ' ')) handleClick()
       }}
       className="flex items-center max-md:flex-wrap max-md:gap-2 cursor-pointer hover:!bg-[#252019]"
       style={{

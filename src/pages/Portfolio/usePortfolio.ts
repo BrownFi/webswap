@@ -26,11 +26,11 @@
  * the totals don't drop when dust is bucketed out.
  */
 import { useMemo } from 'react'
-import { useQueries } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useActiveWeb3React } from 'hooks'
 import { ChainId } from '@brownfi/sdk'
 import { V3_OFFICIAL_USE_INDEXER, VERSION } from 'lib/sdk/constants/addresses'
-import { availableChains } from 'connectors'
+import { availableChains, isBetaApi, isV3Enabled } from 'connectors'
 import { graphqlFetcher } from 'utils/graphql'
 import { useHermesPricesByFeed } from 'hooks/useHermesPricesByFeed'
 
@@ -71,18 +71,48 @@ const PAIR_ACCOUNTS_QUERY = `
   }
 `
 
-// V2 positions are queried on every SUPPORTED chain (availableChains), so this
-// tracks the live chain set automatically — no hardcoded list to drift (that's
-// how BSC/SEI lingered after being turned off). Per-chain query failures are
-// handled gracefully, so a chain without a V2 indexer just adds nothing.
-const V2_INDEXER_CHAINS: ChainId[] = availableChains.map((c) => c.id as ChainId)
+const HEMI_SUBGRAPH_URL = import.meta.env.VITE_GRAPH_API_KEY
+  ? `https://gateway.thegraph.com/api/${import.meta.env.VITE_GRAPH_API_KEY}/subgraphs/id/D1UwhrB45geUZTNQ2QwrXwGEhk69iBESApJJzz378ZeS`
+  : 'https://api.studio.thegraph.com/query/50593/hemi-analytics/version/latest'
+
+const HEMI_POSITIONS_QUERY = `
+  query HemiPositions($owner: Bytes!) {
+    positions(where: { owner: $owner }) {
+      id
+      liquidity
+      depositedToken0
+      depositedToken1
+      pool {
+        id
+        liquidity
+        totalValueLockedUSD
+        token0 { id symbol name decimals derivedMatic }
+        token1 { id symbol name decimals derivedMatic }
+      }
+    }
+  }
+`
+
+// Wallet-supported chains and indexed chains are different capabilities. Keep
+// beta's V2 list explicit so dead indexer routes do not fire on every visit.
+const BETA_V2_INDEXER_CHAINS: ChainId[] = [
+  ChainId.BASE_MAINNET,
+  ChainId.ARBITRUM_MAINNET,
+  ChainId.LINEA_MAINNET,
+  ChainId.MONAD,
+  ChainId.SEI_MAINNET,
+]
+const V2_INDEXER_CHAINS: ChainId[] = (isBetaApi
+  ? BETA_V2_INDEXER_CHAINS
+  : availableChains.map((c) => c.id as ChainId)
+).filter((chainId) => availableChains.some((chain) => chain.id === chainId))
 
 // V3 (Official) indexer chains — where V3_OFFICIAL_USE_INDEXER is on (the BE /
 // Goldsky V3 indexer is live). Pilot is retired, so the portfolio reads Official
 // only. Currently Bera + HyperEVM + Arbitrum.
 const V3_INDEXER_CHAINS: ChainId[] = (Object.keys(V3_OFFICIAL_USE_INDEXER) as unknown as ChainId[])
   .map((k) => Number(k) as ChainId)
-  .filter((id) => V3_OFFICIAL_USE_INDEXER[id])
+  .filter((id) => V3_OFFICIAL_USE_INDEXER[id] && isV3Enabled && availableChains.some((chain) => chain.id === id))
 
 export interface PortfolioPair {
   id: string
@@ -100,7 +130,7 @@ export interface PortfolioPair {
 export interface PortfolioPosition {
   id: string
   /** Source indexer version. UI shows "V2" / "V3" badge from this. */
-  version: 2 | 4
+  version: 2 | 4 | 'hemi'
   /** EVM chainId this position lives on. UI shows chain icon from this. */
   chainId: ChainId
   lp: number
@@ -215,9 +245,79 @@ interface FetchTask {
   version: 2 | 4
 }
 
+type HemiPosition = {
+  id: string
+  liquidity: string
+  depositedToken0: string
+  depositedToken1: string
+  pool: {
+    id: string
+    liquidity: string
+    totalValueLockedUSD: string
+    token0: { id: string; symbol: string; name: string; decimals: number; derivedMatic: string }
+    token1: { id: string; symbol: string; name: string; decimals: number; derivedMatic: string }
+  }
+}
+
+async function fetchHemiPositions(account: string): Promise<HemiPosition[]> {
+  const response = await fetch(HEMI_SUBGRAPH_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ operationName: 'HemiPositions', query: HEMI_POSITIONS_QUERY, variables: { owner: account } }),
+  })
+  if (!response.ok) throw new Error(`Hemi API HTTP ${response.status}`)
+  const body = await response.json()
+  if (body.errors?.length) throw new Error(body.errors.map((error: { message?: string }) => error.message ?? 'Hemi API failed').join('; '))
+  return body.data?.positions ?? []
+}
+
+function hemiToPosition(raw: HemiPosition): PortfolioPosition {
+  const poolLiquidity = asNumber(raw.pool.liquidity)
+  const positionLiquidity = asNumber(raw.liquidity)
+  const poolValue = asNumber(raw.pool.totalValueLockedUSD)
+  const value = poolLiquidity > 0 ? (positionLiquidity / poolLiquidity) * poolValue : 0
+  return {
+    id: `43111-${raw.id}`,
+    version: 'hemi',
+    chainId: 43111 as ChainId,
+    lp: positionLiquidity,
+    stakeLP: 0,
+    lpPortfolio: value,
+    basePortfolio: value,
+    bnhPortfolio: value,
+    unrealizedPnL: 0,
+    unrealizedBnHPnL: 0,
+    bnhROI: 0,
+    lpROI: 0,
+    bnh0: 0,
+    bnh1: 0,
+    updatedAt: 0,
+    pair: {
+      id: raw.pool.id,
+      fee: 0,
+      tvl: poolValue,
+      apr: 0,
+      volumeDay: 0,
+      reserve0: 0,
+      reserve1: 0,
+      totalSupply: poolLiquidity,
+      token0: { ...raw.pool.token0, price: 0, priceFeedId: null },
+      token1: { ...raw.pool.token1, price: 0, priceFeedId: null },
+    },
+  }
+}
+
 export function usePortfolio(): PortfolioResult {
   const { account } = useActiveWeb3React()
   const accountLower = account?.toLowerCase()
+  const hemiQuery = useQuery({
+    queryKey: ['portfolio', 'hemi', accountLower],
+    queryFn: () => fetchHemiPositions(accountLower!),
+    enabled: !!accountLower,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: true,
+  })
 
   // Build the full fan-out: every V2 indexer chain + every V3 indexer chain.
   // The same wallet address works across all EVM chains, so we fire one
@@ -274,9 +374,9 @@ export function usePortfolio(): PortfolioResult {
       const rows: any[] = (q.data as any)?.pairAccounts ?? []
       rows.forEach((row) => merged.push(rowToPosition(row, version, chainId)))
     })
+    ;(hemiQuery.data ?? []).forEach((row) => merged.push(hemiToPosition(row)))
     return merged
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queries, tasks])
+  }, [queries, tasks, hemiQuery.data])
 
   // Unique Pyth feed ids across EVERY position's tokens. Feeds are chain-global, so
   // dedup collapses the same token on different chains → the whole page prices from
@@ -296,11 +396,11 @@ export function usePortfolio(): PortfolioResult {
 
   return useMemo<PortfolioResult>(() => {
     // Loading: at least one query has never returned yet AND is currently in flight.
-    const isLoading = queries.some((q) => q.isLoading && q.isFetching)
+    const isLoading = queries.some((q) => q.isLoading && q.isFetching) || hemiQuery.isLoading
     // Error: EVERY query failed. Per-chain failures shouldn't blank the
     // whole portfolio — we still surface positions from the queries that
     // did succeed.
-    const isError = queries.every((q) => !!q.error)
+    const isError = queries.every((q) => !!q.error) && !!hemiQuery.error
 
     // Filter out indexer aggregate rows (where account === pair). These
     // show up for pool-level BGT staking aggregations and aren't the
@@ -354,5 +454,5 @@ export function usePortfolio(): PortfolioResult {
       isLoading,
       isError,
     }
-  }, [queries, mergedRaw, priceByFeed])
+  }, [queries, mergedRaw, priceByFeed, hemiQuery.error, hemiQuery.isLoading])
 }

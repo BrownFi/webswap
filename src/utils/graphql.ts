@@ -58,6 +58,9 @@ export const graphqlFetcher = async ({
     })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const res = await response.json()
+    if (Array.isArray(res.errors) && res.errors.length > 0) {
+      throw new Error(res.errors.map((error: { message?: string }) => error.message ?? 'GraphQL request failed').join('; '))
+    }
     return res.data ?? null
   } finally {
     clearTimeout(timeoutId)

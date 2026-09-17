@@ -1,4 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { ChainId } from '@brownfi/sdk'
+import { buildPythUpdatesUrl } from 'lib/sdk/constants/pyth'
 
 // Batched Hermes prices keyed by Pyth FEED ID (not token address). The Portfolio
 // page holds many positions across many chains; Pyth feed ids are chain-global (a
@@ -9,7 +11,6 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 // Contrast with useHermesPrices (per-pair): that resolves feed ids via an on-chain
 // factory read and is scoped to one chain. This one takes feed ids directly.
 
-const HERMES_URL = 'https://hermes.pyth.network/v2/updates/price/latest'
 // Stable empty reference so `data ?? EMPTY` never hands consumers a fresh object
 // each render (which would spin dependent effects/memos).
 const EMPTY: Record<string, number> = {}
@@ -22,8 +23,7 @@ async function fetchByFeed(feedIds: string[]): Promise<Record<string, number>> {
   if (!feedIds.length) return out
   for (let i = 0; i < feedIds.length; i += CHUNK) {
     const chunk = feedIds.slice(i, i + CHUNK)
-    const url = new URL(`${HERMES_URL}?encoding=hex`)
-    chunk.forEach((f) => url.searchParams.append('ids[]', f))
+    const url = buildPythUpdatesUrl(ChainId.BERA_MAINNET, chunk)
     const resp = await fetch(url.toString())
     if (!resp.ok) throw new Error(`Hermes HTTP ${resp.status}`)
     const data = await resp.json()
