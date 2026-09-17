@@ -28,6 +28,7 @@ import { Modal } from 'components/Modal'
 import { EmptyProposals, IndexerModalContent, PageWrapper, TitleRow } from './styleds'
 import { ButtonPrimary } from 'components/Button'
 import { getTokenMetadataOverride } from 'utils'
+import { fetchGigaPoolApr, GigaPoolApr } from 'services/gigadexService'
 import { aprToApy } from 'utils/prices'
 import { RobinhoodGigaBanner } from 'components/pool/RobinhoodGigaBanner'
 
@@ -165,7 +166,7 @@ export default function Pool() {
   // version-agnostic. Extra V3 fields pass through unchanged.
   // Sortable columns. Default: TVL desc. Fee APR uses indexer's `apr`. The
   // 24h-Fees/TVL and BGT APR columns are computed client-side below.
-  type SortKey = 'tvl' | 'volumeDay' | 'apr' | 'bgtAPR'
+  type SortKey = 'tvl' | 'volumeDay' | 'apr' | 'bgtAPR' | 'gigaAPR'
   type SortDir = 'asc' | 'desc'
   const [sortKey, setSortKey] = useState<SortKey>('tvl')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -205,6 +206,15 @@ export default function Pool() {
     return m
   }, [pairAddresses, bgtAprQueries])
 
+  const showGiga = chainId === ChainId.ROBINHOOD_MAINNET && isV3Like(version)
+  const { data: gigaAprByAddr = {} } = useQuery<Record<string, GigaPoolApr>>({
+    queryKey: ['gigaPoolApr', ChainId.ROBINHOOD_MAINNET],
+    queryFn: fetchGigaPoolApr,
+    enabled: showGiga,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+  })
+
   const sortedPairs = useMemo(() => {
     // V2 → indexer. V3 → indexer or on-chain depending on v3UseIndexer.
     const raw: PairStats[] =
@@ -221,6 +231,9 @@ export default function Pool() {
       if (sortKey === 'bgtAPR') {
         return bgtAprByAddr[p.id.toLowerCase()] ?? 0
       }
+      if (sortKey === 'gigaAPR') {
+        return gigaAprByAddr[p.id.toLowerCase()]?.apr ?? 0
+      }
       // Sort by the same net LP Fee APY shown in each row, excluding the
       // protocol/dev fee split before converting APR to APY.
       if (sortKey === 'apr') {
@@ -230,7 +243,7 @@ export default function Pool() {
       return Number((p as any)[sortKey]) || 0
     }
     return normalized.slice().sort((a, b) => (valueOf(b) - valueOf(a)) * dir)
-  }, [data?.pairs, onChainV3Pools, version, sortKey, sortDir, bgtAprByAddr])
+  }, [data?.pairs, onChainV3Pools, version, sortKey, sortDir, bgtAprByAddr, gigaAprByAddr])
 
   const blocklist = useMemo(
     () =>
@@ -405,12 +418,15 @@ export default function Pool() {
                   {chainId === ChainId.BERA_MAINNET && isV3Like(version) && (
                     <SortHeader label="BERA APR" active={sortKey === 'bgtAPR'} dir={sortDir} onClick={() => handleSort('bgtAPR')} />
                   )}
+                  {showGiga && (
+                    <SortHeader label="GIGA APR" active={sortKey === 'gigaAPR'} dir={sortDir} onClick={() => handleSort('gigaAPR')} />
+                  )}
                   <span style={{ flex: 1, textAlign: 'right' }}>Provide Liquidity</span>
                 </div>
-                <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} />
+                <MemoizedPairList pairs={searchFilteredPairs} chainId={chainId} version={version} gigaAprByAddr={gigaAprByAddr} />
               </>
             ) : enableGraphQL && (isV3Like(version) && !v3UseIndexer ? isLoadingOnChainV3 : isLoadingPairs) ? (
-              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET && isV3Like(version)} />
+              <PairListSkeleton showBgt={chainId === ChainId.BERA_MAINNET && isV3Like(version)} showGiga={showGiga} />
             ) : !enableGraphQL ? (
               <OnChainLiquidityPositions />
             ) : (
@@ -571,7 +587,7 @@ function SortIcon({ state }: { state: 'up' | 'down' | 'both' }) {
   )
 }
 
-function PairListSkeleton({ showBgt }: { showBgt: boolean }) {
+function PairListSkeleton({ showBgt, showGiga }: { showBgt: boolean; showGiga: boolean }) {
   return (
     <>
       {/* Table header */}
@@ -591,6 +607,7 @@ function PairListSkeleton({ showBgt }: { showBgt: boolean }) {
         <span style={{ flex: 1, textAlign: 'left' }}>24h Volume</span>
         <span style={{ flex: 1.3, textAlign: 'left' }}>Fee APY</span>
         {showBgt && <span style={{ flex: 1, textAlign: 'left' }}>BERA APR</span>}
+        {showGiga && <span style={{ flex: 1, textAlign: 'left' }}>GIGA APR</span>}
         <span style={{ flex: 1, textAlign: 'right' }}>Provide Liquidity</span>
       </div>
       {[0, 1, 2, 3, 4].map((i) => (
@@ -619,6 +636,7 @@ function PairListSkeleton({ showBgt }: { showBgt: boolean }) {
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1.3, height: 20, background: '#493E35' }} />
           {showBgt && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
+          {showGiga && <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 20, background: '#493E35' }} />}
           <div className="max-md:hidden animate-pulse rounded" style={{ flex: 1, height: 40, background: '#493E35' }} />
         </div>
       ))}
@@ -630,10 +648,12 @@ function MemoizedPairList({
   pairs,
   chainId,
   version,
+  gigaAprByAddr,
 }: {
   pairs: PairStats[]
   chainId: number
   version: number
+  gigaAprByAddr: Record<string, GigaPoolApr>
 }) {
   const pairsWithObjects = useMemo(
     () =>
@@ -686,7 +706,7 @@ function MemoizedPairList({
   return (
     <>
       {pairsWithObjects.map(({ pair, stats }) => (
-        <FullPositionCard key={pair.liquidityToken.address} pair={pair} pairStats={stats} />
+        <FullPositionCard key={pair.liquidityToken.address} pair={pair} pairStats={stats} gigaApr={gigaAprByAddr[stats.id.toLowerCase()]?.apr} />
       ))}
     </>
   )

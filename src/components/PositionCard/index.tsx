@@ -117,12 +117,14 @@ interface PositionCardProps {
   showUnwrapped?: boolean
   border?: string
   stakedBalance?: TokenAmount
+  gigaApr?: number
 }
 
-export default function FullPositionCard({ pair, pairStats, border }: PositionCardProps) {
+export default function FullPositionCard({ pair, pairStats, border, gigaApr }: PositionCardProps) {
   const navigate = useNavigate()
   const { account, chainId } = useActiveWeb3React()
   const isRobinhood = chainId === ChainId.ROBINHOOD_MAINNET
+  const showGiga = isRobinhood && isV3Like(pair.version)
   const gigaDexPoolUrl = `https://www.gigadex.fi/pool/${pair.liquidityToken.address.toLowerCase()}/add-liquidity`
   const { isTest, isBeta, version } = useVersion({ chainId, pair })
   const [{ isFavorite }] = usePairStorage({ pair })
@@ -317,6 +319,12 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
                   )}
                 </div>
               )}
+              {showGiga && gigaApr !== undefined && (
+                <div className="md:hidden text-[12px] inline-flex items-center gap-1" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80', marginTop: '2px' }}>
+                  GIGA APR: <span style={{ color: '#83CF84' }}>+{formatNumberLambda(gigaApr, { maximumFractionDigits: 2 })}%</span>
+                  <img src="https://www.gigadex.fi/giga-icon.png" alt="GIGA" style={{ width: 14, height: 14, borderRadius: '50%' }} />
+                </div>
+              )}
               {!isMainnet && (
                 <div className="mt-1.5" onClick={(e) => e.stopPropagation()}>
                   <PoolBalanceBar
@@ -355,6 +363,16 @@ export default function FullPositionCard({ pair, pairStats, border }: PositionCa
               ) : (
                 '--'
               )}
+            </span>
+          )}
+          {showGiga && (
+            <span className="max-md:hidden text-left inline-flex items-center justify-start gap-1.5" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
+              {gigaApr !== undefined ? (
+                <>
+                  +{formatNumberLambda(gigaApr, { maximumFractionDigits: 2 })}%
+                  <img src="https://www.gigadex.fi/giga-icon.png" alt="GIGA" style={{ width: 16, height: 16, borderRadius: '50%' }} />
+                </>
+              ) : '--'}
             </span>
           )}
           {/* Actions */}

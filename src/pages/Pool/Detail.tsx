@@ -21,6 +21,7 @@ import { useV3Indexer, isV3Like, versionLabel, slugToVersion } from 'lib/sdk/con
 import { graphqlFetcher } from 'utils/graphql'
 import { aprToApy, formatNumber, formatNumberLambda, formatPrice } from 'utils/prices'
 import { getEtherscanLink, getTokenMetadataOverride, getTokenSymbol, shortenAddress } from 'utils'
+import { fetchGigaPoolApr, GigaPoolApr } from 'services/gigadexService'
 import { unwrappedToken } from 'utils/wrappedCurrency'
 import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats } from 'components/PositionCard/usePoolStats'
@@ -258,6 +259,14 @@ function PoolDetailInner({
     pairStats,
     enableFetchDetail: true,
   })
+  const { data: gigaAprByAddr = {} } = useQuery<Record<string, GigaPoolApr>>({
+    queryKey: ['gigaPoolApr', ChainId.ROBINHOOD_MAINNET],
+    queryFn: fetchGigaPoolApr,
+    enabled: isRobinhood && isV3Like(pair.version),
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+  })
+  const gigaApr = gigaAprByAddr[pairAddress.toLowerCase()]?.apr
 
   const devStats = useDevStats({ pair, pairStats, enabled: !isMainnet })
   const [showSettings, setShowSettings] = useState(false)
@@ -657,7 +666,7 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* Returns card — Fee APY + BGT/Incentive APR. */}
+            {/* Returns card — Fee APY + incentive APRs. */}
             <div className="p-4 lg:p-5" style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px' }}>
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
@@ -666,6 +675,9 @@ function PoolDetailInner({
                   value={(feeApyDisplay != null ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   valueColor="#83CF84"
                 />
+                {isRobinhood && gigaApr !== undefined && (
+                  <StatInline label="GIGA APR" value={`+${formatNumberLambda(gigaApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
+                )}
                 {incentiveApr > 0 && (
                   <div>
                     <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
@@ -707,6 +719,17 @@ function PoolDetailInner({
                     {(feeApyDisplay != null ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
                   </div>
                 </div>
+                {isRobinhood && gigaApr !== undefined && (
+                  <div className="mb-3 lg:mb-4">
+                    <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
+                      GIGA APR
+                      <img src="https://www.gigadex.fi/giga-icon.png" alt="GIGA" style={{ width: '14px', height: '14px', borderRadius: '50%' }} />
+                    </div>
+                    <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
+                      +{formatNumberLambda(gigaApr, { maximumFractionDigits: 2 })}%
+                    </div>
+                  </div>
+                )}
                 {incentiveApr > 0 && (
                   <div className="mb-3 lg:mb-4">
                     <div className="text-[12px] lg:text-[13px] inline-flex items-center gap-1.5 flex-wrap" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
