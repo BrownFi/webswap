@@ -50,7 +50,11 @@ const ERC20_ABI = [{ type: 'function', name: 'decimals', stateMutability: 'view'
 
 const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11' as const
 const ZERO = '0x0000000000000000000000000000000000000000'
-const MAX_DIRECT_POOLS = 4
+// OracleGateway exposes indexed entries without an array-length getter. Probe a
+// generous contiguous range so pairs with more than the current 2-4 entries are
+// still rendered in full; zero-address slots are discarded below.
+const MAX_DIRECT_POOLS = 8
+const MAX_POOL_PATHS = 8
 
 export interface OracleDirectPoolThreshold {
   address: string
@@ -67,6 +71,7 @@ export interface OracleThresholds {
   /** Two-hop path: min threshold + actual, both in BASE-token units. */
   minTvlPath: number | null
   actualPath: number | null
+  actualPaths: (number | null)[]
   twapWindows: number[]
 }
 
@@ -100,7 +105,18 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
       { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 1n] },
       { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 2n] },
       { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 3n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 4n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 5n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 6n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3Pools', args: [pair, 7n] },
       { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 0n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 1n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 2n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 3n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 4n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 5n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 6n] },
+      { address: o, abi: ORACLE_ABI, functionName: 'v3PoolPaths', args: [pair, 7n] },
       { address: o, abi: ORACLE_ABI, functionName: 'TWAL_WINDOW_MULTIPLIER' },
       { address: o, abi: ORACLE_ABI, functionName: 'TWAL_WINDOW_MAX' },
     ],
@@ -111,28 +127,26 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
   const directPools = Array.from({ length: MAX_DIRECT_POOLS }, (_, index) => ok<string>(2 + index))
     .filter((address): address is string => !!address && address.toLowerCase() !== ZERO)
   const pathOffset = 2 + MAX_DIRECT_POOLS
-  const path = ok<readonly [string, number, string, number]>(pathOffset)
-  const twalMult = Number(ok<number | bigint>(pathOffset + 1) ?? 0)
-  const twalMax = Number(ok<number | bigint>(pathOffset + 2) ?? 0)
+  const paths = Array.from({ length: MAX_POOL_PATHS }, (_, index) => ok<readonly [string, number, string, number]>(pathOffset + index))
+    .filter((path): path is readonly [string, number, string, number] => !!path && path[0].toLowerCase() !== ZERO)
+  const twalOffset = pathOffset + MAX_POOL_PATHS
+  const twalMult = Number(ok<number | bigint>(twalOffset) ?? 0)
+  const twalMax = Number(ok<number | bigint>(twalOffset + 1) ?? 0)
 
   const isDirect = directPools.length > 0
-  const isPath = !!path && path[0].toLowerCase() !== ZERO
-
-  // The pools whose price/liquidity we resolve: the primary direct pool, or the two
-  // path legs. (quoteTokenIndex for a direct pool comes from the oracle; for a path
-  // leg it's carried on the path tuple.)
-  const legs: { pool: Addr; qti: number }[] = isDirect
-    ? directPools.map((pool) => ({ pool: pool as Addr, qti: -1 })) // qti filled from oracle in stage 2
-    : isPath
-    ? [
-        { pool: path![0] as Addr, qti: Number(path![1]) },
-        ...(path![2].toLowerCase() !== ZERO ? [{ pool: path![2] as Addr, qti: Number(path![3]) }] : []),
-      ]
-    : []
+  const directLegs = directPools.map((pool) => ({ pool: pool as Addr, qti: -1 }))
+  const pathLegGroups = paths
+    .map((path) => [
+      { pool: path[0] as Addr, qti: Number(path[1]) },
+      ...(path[2].toLowerCase() !== ZERO ? [{ pool: path[2] as Addr, qti: Number(path[3]) }] : []),
+    ])
+    .filter((group): group is [{ pool: Addr; qti: number }, { pool: Addr; qti: number }] => group.length === 2)
+  const legs = [...directLegs, ...pathLegGroups.flat()]
+  const directLegCount = directLegs.length
 
   const toNum = (v: bigint | undefined) => (v && v > 0n ? Number(formatUnits(v, 18)) : null)
   if (!legs.length) {
-    return { minTvlDirect: toNum(minQ), actualDirect: null, directPools: [], minTvlPath: toNum(minPB), actualPath: null, twapWindows: [] }
+    return { minTvlDirect: toNum(minQ), actualDirect: null, directPools: [], minTvlPath: toNum(minPB), actualPath: null, actualPaths: [], twapWindows: [] }
   }
 
   // ── Stage 2: per-pool metadata + V3 state + V4 adapter probe ──
@@ -241,9 +255,10 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
 
   let actualDirect: number | null = null
   let actualPath: number | null = null
+  const actualPaths: (number | null)[] = []
   const directPoolThresholds: OracleDirectPoolThreshold[] = []
   if (isDirect) {
-    resolved.forEach((r, li) => {
+    resolved.slice(0, directLegCount).forEach((r, li) => {
       if (!r) return
       const pl = plOf(r, li)
       const actual = pl ? Number(formatUnits(directActualQuote(pl, r.qti), 18)) : null
@@ -251,15 +266,20 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
     })
     const actualValues = directPoolThresholds.map((pool) => pool.actual).filter((value): value is number => value != null)
     actualDirect = actualValues.length ? actualValues.reduce((sum, value) => sum + value, 0) : null
-  } else if (isPath) {
-    const r1 = resolved[0]
-    const r2 = resolved[1]
-    if (r1 && r2) {
-      const pl1 = plOf(r1, 0)
-      const pl2 = plOf(r2, 1)
-      if (pl1 && pl2) actualPath = Number(formatUnits(pathActualBase(pl1, r1.qti, pl2, r2.qti), 18))
-    }
   }
+  pathLegGroups.forEach((group, pathIndex) => {
+    const firstIndex = directLegCount + pathLegGroups.slice(0, pathIndex).reduce((count, previous) => count + previous.length, 0)
+    const r1 = resolved[firstIndex]
+    const r2 = resolved[firstIndex + 1]
+    let actual: number | null = null
+    if (r1 && r2) {
+      const pl1 = plOf(r1, firstIndex)
+      const pl2 = plOf(r2, firstIndex + 1)
+      if (pl1 && pl2) actual = Number(formatUnits(pathActualBase(pl1, r1.qti, pl2, r2.qti), 18))
+    }
+    actualPaths.push(actual)
+  })
+  actualPath = actualPaths[0] ?? null
 
-  return { minTvlDirect: toNum(minQ), actualDirect, directPools: directPoolThresholds, minTvlPath: toNum(minPB), actualPath, twapWindows }
+  return { minTvlDirect: toNum(minQ), actualDirect, directPools: directPoolThresholds, minTvlPath: toNum(minPB), actualPath, actualPaths, twapWindows }
 }

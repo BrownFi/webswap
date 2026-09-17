@@ -948,7 +948,14 @@ function PoolDetailInner({
                           />
                         ))}
                       {oracleThresholds.minTvlPath != null && (
-                        <StatInline small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol)} />
+                        (oracleThresholds.actualPaths.length > 0 ? oracleThresholds.actualPaths : [oracleThresholds.actualPath]).map((actual, index, paths) => (
+                          <StatInline
+                            key={`path-${index}`}
+                            small
+                            label={`Min TVL / Actual${paths.length > 1 ? ` #${index + 1}` : ''}`}
+                            value={fmtMinActual(oracleThresholds.minTvlPath!, actual, oracleBaseSymbol)}
+                          />
+                        ))
                       )}
                       {oracleThresholds.twapWindows.length > 0 && (
                         <StatInline small label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
@@ -965,7 +972,14 @@ function PoolDetailInner({
                           />
                         ))}
                       {oracleThresholds.minTvlPath != null && (
-                        <StatRow small label="Min TVL / Actual" value={fmtMinActual(oracleThresholds.minTvlPath, oracleThresholds.actualPath, oracleBaseSymbol)} />
+                        (oracleThresholds.actualPaths.length > 0 ? oracleThresholds.actualPaths : [oracleThresholds.actualPath]).map((actual, index, paths) => (
+                          <StatRow
+                            key={`path-${index}`}
+                            small
+                            label={`Min TVL / Actual${paths.length > 1 ? ` #${index + 1}` : ''}`}
+                            value={fmtMinActual(oracleThresholds.minTvlPath!, actual, oracleBaseSymbol)}
+                          />
+                        ))
                       )}
                       {oracleThresholds.twapWindows.length > 0 && (
                         <StatRow small label="TWAP window" value={`${oracleThresholds.twapWindows.join(' / ')}s`} />
