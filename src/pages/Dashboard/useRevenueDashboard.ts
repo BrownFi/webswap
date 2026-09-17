@@ -3,6 +3,7 @@ import { availableChains } from 'connectors'
 import { useMemo } from 'react'
 import { VERSION, V3_OFFICIAL_USE_INDEXER } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
+import { ROBINHOOD_GAUGE_HISTORY, type RobinhoodGaugeHistory } from './robinhoodGauge'
 
 const CHAIN_REVENUE_QUERY = `
   query ChainRevenue {
@@ -36,6 +37,7 @@ const HEMI_REVENUE_RATE = 0.1
 const ROBINHOOD_CHAIN_ID = 4663
 const ROBINHOOD_GAUGE_REVENUE_SPLIT = 0.07
 const ROBINHOOD_GAUGE_RETAINED_SPLIT = 1 - ROBINHOOD_GAUGE_REVENUE_SPLIT
+const discoveredGaugeHistory = new Map<string, RobinhoodGaugeHistory>()
 
 const HEMI_REVENUE_QUERY = `
   query HemiRevenue {
@@ -362,12 +364,16 @@ async function fetchChainRevenue(chainId: number, version: typeof VERSION.V2 | t
   const gaugePairs = pairs.filter((pair) => num(pair?.feeSplit) === 1).map((pair) => String(pair.id).toLowerCase())
   if (gaugePairs.length === 0) return base
   const gaugeStarts = await Promise.all(gaugePairs.map(async (pair) => {
+    const known = ROBINHOOD_GAUGE_HISTORY[pair] ?? discoveredGaugeHistory.get(pair)
+    if (known) return { pair, timestamp: known.startedAt, previousSplit: known.previousSplit }
     const data = await graphqlFetcher({ operationName: 'RobinhoodGaugeStart', query: ROBINHOOD_GAUGE_START_QUERY, variables: { chainId, version, pair } })
     const timestamp = num((data as any)?.transactions?.[0]?.timestamp)
     const previous = timestamp > 0
       ? await graphqlFetcher({ operationName: 'RobinhoodGaugePrevious', query: ROBINHOOD_GAUGE_PREVIOUS_QUERY, variables: { chainId, version, pair, timestamp: String(timestamp) } })
       : null
-    return { pair, timestamp, previousSplit: num((previous as any)?.transactions?.[0]?.feeSplit) }
+    const previousSplit = num((previous as any)?.transactions?.[0]?.feeSplit)
+    if (timestamp > 0) discoveredGaugeHistory.set(pair, { startedAt: timestamp, previousSplit })
+    return { pair, timestamp, previousSplit }
   }))
   const starts = new Map(gaugeStarts.filter((item) => item.timestamp > 0).map((item) => [item.pair, item.timestamp]))
   const previousSplits = new Map(gaugeStarts.filter((item) => item.timestamp > 0).map((item) => [item.pair, item.previousSplit]))
