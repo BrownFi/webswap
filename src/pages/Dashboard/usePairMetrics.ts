@@ -153,7 +153,7 @@ function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMet
     fee,
     revenue: isHemi ? fee * 0.1 : fee * feeSplit,
     apr: num(pair.apr),
-    revenueEstimated: isHemi,
+    revenueEstimated: false,
   }
 }
 
