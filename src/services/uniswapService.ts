@@ -13,6 +13,11 @@ const UNISWAP_LIQUIDITY_PROXY_BASE = import.meta.env.VITE_UNISWAP_LIQUIDITY_PROX
 const UNISWAP_GRAPHQL_PATH = '/v1/graphql'
 const UNISWAP_LIQUIDITY_PATH = '/uniswap.liquidity.v2.LiquidityService/GetPool'
 const ROBINHOOD_WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73'
+const ROBINHOOD_PONS = '0x39dBED3a2bd333467115dE45665cC57F813C4571'
+const ROBINHOOD_USDG = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'
+const PONS_USDG_KEY = competitorPairKey(ROBINHOOD_PONS, ROBINHOOD_USDG)
+const PONS_WETH_KEY = competitorPairKey(ROBINHOOD_PONS, ROBINHOOD_WETH)
+const PONS_WETH_REFERENCE = '0xed50bdeea8adc232f159486192a4157281d722ff'
 const NATIVE_ETH = '0x0000000000000000000000000000000000000000'
 
 // The explore-pools query app.uniswap.org uses. `feeTier` comes back in
@@ -59,7 +64,7 @@ const ROBINHOOD_UNISWAP_POOL_IDS = [
   '0x6fa3ee0048e78bf0a513eb0ab56f482944a767c21db990fcf555605e69f05659', '0x9194a557b6a6bb2236b49ea7e2bbccec5d3eeb705aef00903be4b3de1d949579',
   '0x8517f8071ae5b831b738052f12125e8e3d6c158b78728aa44ce3b25e5104d32e', '0xa92a3df27a00a276183ff7265fd8affa11df1fe8bb23ddfaf13f6c879a3f818b',
   '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e', '0x17578C0e0D15da44f31677263114F71aE76653EA', '0xa6975f4720a95aa9cdfa9b010a065b0e941534c93f9fa708104c08f0ac029ca0',
-  '0x4be9657ec9002e528f4f17a5c43edc525a07f888f7b180c2afbf75e096c4f38a', '0x486435a1f76cd58193f854c6e6213cd05fd58d637865d02065ff558b387fa6ea',
+  '0x4be9657ec9002e528f4f17a5c43edc525a07f888f7b180c2afbf75e096c4f38a', '0xEd50bDeeA8aDC232f159486192a4157281D722ff',
 ]
 
 async function fetchUniswapLiquidityPools(): Promise<UniswapLiquidityPoolRaw[]> {
@@ -102,8 +107,13 @@ export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, Com
     const token1Address = pool.token1Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token1Address
     const key = competitorPairKey(token0Address, token1Address)
     if (key === competitorPairKey('0x117cc2133c37B721F49dE2A7a74833232B3B4C0C', '0x5fc5360D0400aFd4f2af552ADD042D716F1d168') && pool.poolIdentifier?.toLowerCase() !== '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907') return
-    const existing = map[key]
-    map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
+    const mapKeys = key === PONS_WETH_KEY && pool.poolIdentifier?.toLowerCase() === PONS_WETH_REFERENCE
+      ? [key, PONS_USDG_KEY]
+      : [key]
+    mapKeys.forEach((mapKey) => {
+      const existing = map[mapKey]
+      map[mapKey] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
+    })
   })
   Object.values(map).forEach((data) => data.references?.sort((a, b) => a.version.localeCompare(b.version)))
   return map

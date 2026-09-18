@@ -309,7 +309,13 @@ function PoolDetailInner({
       .join(' / ')
     : '--'
   const competitorTvls = competitorReferencesForDisplay.length
-    ? competitorReferencesForDisplay.map((reference) => `${formatCompactPrice(reference.tvlUSD)}${reference.version === 'V4' ? ' (V4)' : ''}`).join(' / ')
+    ? competitorReferencesForDisplay.map((reference, index) => (
+      <span key={`${reference.version}-${index}`}>
+        {index > 0 && ' / '}
+        {formatCompactPrice(reference.tvlUSD)}
+        {reference.version === 'V4' && <span style={{ fontSize: '11px', color: '#978A80', marginLeft: '3px' }}>(V4)</span>}
+      </span>
+    ))
     : '--'
   const competitorVolumes = competitorReferencesForDisplay.length
     ? competitorReferencesForDisplay.map((reference) => formatCompactPrice(reference.vol24hUSD)).join(' / ')
