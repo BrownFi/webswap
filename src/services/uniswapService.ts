@@ -15,10 +15,8 @@ const UNISWAP_LIQUIDITY_PATH = '/uniswap.liquidity.v2.LiquidityService/GetPool'
 const ROBINHOOD_WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73'
 const ROBINHOOD_PONS = '0x39dBED3a2bd333467115dE45665cC57F813C4571'
 const ROBINHOOD_USDG = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'
-const ROBINHOOD_MSTR = '0xec262a75e413fAfD0dF80480274532C79D42da09'
 const PONS_USDG_KEY = competitorPairKey(ROBINHOOD_PONS, ROBINHOOD_USDG)
 const PONS_WETH_KEY = competitorPairKey(ROBINHOOD_PONS, ROBINHOOD_WETH)
-const MSTR_USDG_KEY = competitorPairKey(ROBINHOOD_MSTR, ROBINHOOD_USDG)
 const PONS_WETH_REFERENCE = '0xed50bdeea8adc232f159486192a4157281d722ff'
 const NATIVE_ETH = '0x0000000000000000000000000000000000000000'
 
@@ -65,7 +63,7 @@ const ROBINHOOD_UNISWAP_POOL_IDS = [
   '0xfe2a80bb5618fd14984b92ca6d45bf5ba67443ddb1435e28b2e48df2fc1526cd', '0x319bac87e616a89e241c10aeb8afd4892a852cdd8b373cd9765ecddc40b87cfe',
   '0x6fa3ee0048e78bf0a513eb0ab56f482944a767c21db990fcf555605e69f05659', '0x9194a557b6a6bb2236b49ea7e2bbccec5d3eeb705aef00903be4b3de1d949579',
   '0x8517f8071ae5b831b738052f12125e8e3d6c158b78728aa44ce3b25e5104d32e', '0xa92a3df27a00a276183ff7265fd8affa11df1fe8bb23ddfaf13f6c879a3f818b',
-  '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e', '0x17578C0e0D15da44f31677263114F71aE76653EA', '0xa6975f4720a95aa9cdfa9b010a065b0e941534c93f9fa708104c08f0ac029ca0',
+  '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e', '0xa6975f4720a95aa9cdfa9b010a065b0e941534c93f9fa708104c08f0ac029ca0',
   '0x4be9657ec9002e528f4f17a5c43edc525a07f888f7b180c2afbf75e096c4f38a', '0xEd50bDeeA8aDC232f159486192a4157281D722ff',
 ]
 
@@ -108,9 +106,6 @@ export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, Com
     const token0Address = pool.token0Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token0Address
     const token1Address = pool.token1Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token1Address
     const key = competitorPairKey(token0Address, token1Address)
-    // The MSTR/USDG comparison should use the two Uniswap V4 references;
-    // exclude the legacy 1% V3 pool from the Stats card.
-    if (key === MSTR_USDG_KEY && version === 'V3' && feeTier === 10000) return
     if (key === competitorPairKey('0x117cc2133c37B721F49dE2A7a74833232B3B4C0C', '0x5fc5360D0400aFd4f2af552ADD042D716F1d168') && pool.poolIdentifier?.toLowerCase() !== '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907') return
     const mapKeys = key === PONS_WETH_KEY && pool.poolIdentifier?.toLowerCase() === PONS_WETH_REFERENCE
       ? [key, PONS_USDG_KEY]
