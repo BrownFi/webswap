@@ -54,8 +54,8 @@ export interface ProtocolStats {
 const ROBINHOOD_CHAIN_ID = 4663
 
 // Chains served by the V3 indexer. Deliberately NOT derived from
-// ROUTER_ADDRESS_V3_OFFICIAL (that map lacks Robinhood) — this is the list of
-// chains the indexer actually answers for.
+// ROUTER_ADDRESS_V3_OFFICIAL — this is the list of chains the indexer actually
+// answers for, which can change independently from frontend deployments.
 const V3_INDEXER_CHAINS: number[] = [
   ChainId.BERA_MAINNET,
   ChainId.ARBITRUM_MAINNET,
