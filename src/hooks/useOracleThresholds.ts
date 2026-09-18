@@ -281,5 +281,8 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
   })
   actualPath = actualPaths[0] ?? null
 
-  return { minTvlDirect: toNum(minQ), actualDirect, directPools: directPoolThresholds, minTvlPath: toNum(minPB), actualPath, actualPaths, twapWindows }
+  // The gateway can retain a non-zero global path threshold even when this
+  // pair has no configured path. Do not render that orphan threshold as an
+  // incomplete "Min TVL / Actual" row.
+  return { minTvlDirect: toNum(minQ), actualDirect, directPools: directPoolThresholds, minTvlPath: paths.length ? toNum(minPB) : null, actualPath, actualPaths, twapWindows }
 }
