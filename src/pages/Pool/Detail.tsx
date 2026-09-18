@@ -328,7 +328,10 @@ function PoolDetailInner({
   const annualReturn = !ratiosMeaningful ? 0 : computeV3FeeApr(pairRaw, chainId)
   // Fee APY = indexer APR converted to APY (n=360 compounding), V2 + V3.
   const feeAprDisplay = ratiosMeaningful ? aprToApy(feeAPR ?? 0) : 0
-  const revenue24h = Number(pairRaw?.feeDay ?? 0) * Number(pairRaw?.protocolFee ?? 0)
+  // Robinhood gauge pools route 7% of fees to protocol revenue. The indexer's
+  // feeSplit=1 marks the gauge state, not a 100% revenue share.
+  const isRobinhoodGauge = chainId === ChainId.ROBINHOOD_MAINNET && Number(pairRaw?.feeSplit ?? pairRaw?.protocolFee ?? 0) === 1
+  const revenue24h = Number(pairRaw?.feeDay ?? 0) * (isRobinhoodGauge ? 0.07 : Number(pairRaw?.protocolFee ?? 0))
   const incentiveApr = (bgtAPR || 0) + (merklCampaignApr || 0)
   // Berachain hardfork moved rewards from BGT → native BERA, so the incentive shows
   // BERA branding (the `bgtAPR` data field name is kept — it's the same reward APR).
