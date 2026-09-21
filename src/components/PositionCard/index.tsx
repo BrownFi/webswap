@@ -76,6 +76,9 @@ const StyledPositionCard = styled.div<{ bgColor?: any; $expanded?: boolean }>`
   }
 `
 
+// DOLO's feed ID exists, but the feed currently has no live price update.
+const APR_DISABLED_PAIRS = new Set(['0x16b3a5e95db753fe5195244fa208301e38beae2a'])
+
 const pairBGT: Record<string, [string, string]> = {
   '0xd932c344e21ef6C3a94971bf4D4cC71304E2a66C': [
     // BERA/HONEY
@@ -197,7 +200,10 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
     // APR/ratio columns divide by TVL, so a near-empty pool produces absurd
     // values. Below a $30 TVL floor zero them so the column renders "--".
     const MIN_TVL_FOR_RATIOS = 30
-    const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS
+    // V3 TVL/APR is only trustworthy when both token prices are live. DOLO's
+    // feed ID exists, but its feed currently has no price update.
+    const hasV3PriceFeeds = !isV3Like(pair.version) || !APR_DISABLED_PAIRS.has(pair.liquidityToken.address.toLowerCase())
+    const ratiosMeaningful = tvl >= MIN_TVL_FOR_RATIOS && hasV3PriceFeeds
     // Fee APY (LP share) — indexer/volume-based APR converted to APY (n=360
     // compounding). Shown for V2 + V3 (unchanged source; feeAPRIndexer is raw).
     const feeAPRFallback = tradingFee * (((Number(volume24h) || 0) * 365) / (tvl || 1))
