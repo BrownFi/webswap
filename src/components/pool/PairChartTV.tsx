@@ -44,8 +44,10 @@ import { hasUniV2Price, usePairTransactions } from './usePairTransactions'
 // back to pool creation, ≤1000 pts within 30d); ALL reads daily — so only 1D's
 // granularity changes (15-min → hourly); 7D/1M/ALL keep their resolution.
 
-// Per-swap point: relative price + USD volume (tx source).
-type Point = { t: number; price0: number; vol: number }
+// Per-swap point: relative price + USD volume (tx source). LP price may be
+// absent on older or non-V3 transaction rows and must not invalidate the other
+// series.
+type Point = { t: number; price0: number; lpPrice?: number; vol: number }
 
 // Aggregate row (pairDay/HourData) → the two benchmark % lines via TVL math.
 type AggPoint = { t: number; lpVsHodl: number | null; lpVsUniV2: number | null }
@@ -60,9 +62,10 @@ type AggRow = {
   uniV2Reserve1?: string
 }
 
-type ToggleKey = 'price0' | 'lpVsHodl' | 'lpVsUniV2' | 'volume'
+type ToggleKey = 'price0' | 'lpPrice' | 'lpVsHodl' | 'lpVsUniV2' | 'volume'
 
 const COLOR_PRICE = '#EC4899' // relative price (pink) — matches Pool Balance's price line
+const COLOR_LP_PRICE = '#D8A072'
 const COLOR_HODL = '#83CF84' // LP vs. HODL (green)
 const COLOR_UNIV2 = '#22D3EE' // LP vs. UniV2 (cyan)
 const COLOR_VOLUME = '#16A34A' // volume (deep green histogram)
@@ -108,10 +111,12 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
   const baseSymbol = baseIdx === 0 ? sym0 : sym1
   const quoteSymbol = baseIdx === 0 ? sym1 : sym0
   const relPriceLabel = `${baseSymbol}/${quoteSymbol}`
+  const iskHYPEUSDT = pairAddress === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3'
 
   const [range, setRange] = useState<RangeKey>('7D')
   const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({
     price0: true,
+    lpPrice: true,
     lpVsHodl: true,
     lpVsUniV2: true,
     volume: true,
@@ -137,16 +142,17 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
         const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
         const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
         const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
+        const lpRaw = Number(t.lpPrice)
         // USD volume of the swap = input amount × its (post-swap) USD unit price.
         const a0In = Number(t.amount0In) || 0
         const a1In = Number(t.amount1In) || 0
         const p0USD = Number(t.reserve0) > 0 ? r0 / Number(t.reserve0) : 0
         const p1USD = Number(t.reserve1) > 0 ? r1 / Number(t.reserve1) : 0
         const vol = a0In > 0 ? a0In * p0USD : a1In > 0 ? a1In * p1USD : 0
-        return { t: Number(t.timestamp), price0, vol }
+        return { t: Number(t.timestamp), price0, lpPrice: iskHYPEUSDT ? lpRaw / 1e9 : lpRaw, vol }
       })
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.price0))
-  }, [combinedTxs, baseIdx, quoteIdx])
+  }, [combinedTxs, baseIdx, quoteIdx, iskHYPEUSDT])
 
   // ── Benchmark % lines (LP vs. HODL / LP vs. UniV2) from reserve-based TVL math ──
   // Sourced from the aggregate (the tx entity lacks tvl + benchmark reserves). Fetch
@@ -234,8 +240,14 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     [allPoints, bucket],
   )
   const seriesData = useMemo(() => {
-    if (!grid) return { price0: [], lpVsHodl: [], lpVsUniV2: [], volume: [] as { time: any; value: number; color: string }[] }
+    if (!grid) return { price0: [], lpPrice: [], lpVsHodl: [], lpVsUniV2: [], volume: [] as { time: any; value: number; color: string }[] }
     const txClosed = bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd)
+    const lpClosed = bucketClose(
+      allPoints.filter((p) => Number.isFinite(p.lpPrice)),
+      bucket,
+      grid.gridStart,
+      grid.gridEnd,
+    )
     const aggClosed = bucketClose(aggPoints, bucket, grid.gridStart, grid.gridEnd)
     const volMap = new Map<number, number>()
     for (const p of allPoints) {
@@ -246,6 +258,9 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     }
     return {
       price0: txClosed.filter((p) => Number.isFinite(p.price0)).map((p) => ({ time: p.t as any, value: p.price0 })),
+      lpPrice: lpClosed
+        .filter((p) => Number.isFinite(p.lpPrice))
+        .map((p) => ({ time: p.t as any, value: p.lpPrice as number })),
       lpVsHodl: aggClosed
         .filter((p) => p.lpVsHodl != null && Number.isFinite(p.lpVsHodl))
         .map((p) => ({ time: p.t as any, value: p.lpVsHodl as number })),
@@ -264,6 +279,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     ? []
     : [
         ...(latest && Number.isFinite(latest.price0) ? [{ key: 'price0' as const, label: relPriceLabel, color: COLOR_PRICE }] : []),
+        ...(seriesData.lpPrice.length ? [{ key: 'lpPrice' as const, label: 'LP Price', color: COLOR_LP_PRICE }] : []),
         { key: 'lpVsHodl' as const, label: 'LP vs. HODL', color: COLOR_HODL },
         ...(keepUniV2 ? [{ key: 'lpVsUniV2' as const, label: 'LP vs. UniV2', color: COLOR_UNIV2 }] : []),
         { key: 'volume' as const, label: 'Volume', color: COLOR_VOLUME },
@@ -272,6 +288,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const price0Ref = useRef<ISeriesApi<'Area'> | null>(null)
+  const lpPriceRef = useRef<ISeriesApi<'Line'> | null>(null)
   const lpVsHodlRef = useRef<ISeriesApi<'Line'> | null>(null)
   const lpVsUniV2Ref = useRef<ISeriesApi<'Line'> | null>(null)
   const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null)
@@ -384,6 +401,16 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       priceFormat: { type: 'custom', formatter: (v: number) => formatRel(v), minMove: 0.00000001 },
     })
     price0.priceScale().applyOptions({ scaleMargins: { top: 0.15, bottom: 0.15 } })
+    // LP Price — separate right-side overlay scale because it is denominated in
+    // LP-token USD value, unlike the relative token price above.
+    const lpPrice = chart.addSeries(LineSeries, {
+      ...commonNoLabels,
+      priceScaleId: 'lpPrice',
+      color: COLOR_LP_PRICE,
+      lineWidth: 1,
+      priceFormat: { type: 'custom', formatter: (v: number) => formatPrice(v, { maximumFractionDigits: 4 }), minMove: 0.0001 },
+    })
+    lpPrice.priceScale().applyOptions({ scaleMargins: { top: 0.15, bottom: 0.15 } })
     // LP vs. HODL — LEFT % axis.
     const lpVsHodl = chart.addSeries(LineSeries, {
       ...commonNoLabels,
@@ -428,6 +455,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       }
       setHovered({
         price0: read(price0),
+        lpPrice: read(lpPrice),
         lpVsHodl: read(lpVsHodl),
         lpVsUniV2: read(lpVsUniV2),
         volume: read(volume),
@@ -444,6 +472,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 
     price0Ref.current = price0
+    lpPriceRef.current = lpPrice
     lpVsHodlRef.current = lpVsHodl
     lpVsUniV2Ref.current = lpVsUniV2
     volumeRef.current = volume
@@ -452,6 +481,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       chart.remove()
       chartRef.current = null
       price0Ref.current = null
+      lpPriceRef.current = null
       lpVsHodlRef.current = null
       lpVsUniV2Ref.current = null
       volumeRef.current = null
@@ -470,6 +500,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     const rangeChanged = lastRangeRef.current !== range
     const savedRange = ts?.getVisibleRange() ?? null
     price0Ref.current?.setData(seriesData.price0)
+    lpPriceRef.current?.setData(seriesData.lpPrice)
     lpVsHodlRef.current?.setData(seriesData.lpVsHodl)
     lpVsUniV2Ref.current?.setData(seriesData.lpVsUniV2)
     volumeRef.current?.setData(seriesData.volume)
@@ -488,6 +519,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
   // Toggle visibility from the bottom legend.
   useEffect(() => {
     price0Ref.current?.applyOptions({ visible: visible.price0 })
+    lpPriceRef.current?.applyOptions({ visible: visible.lpPrice })
     lpVsHodlRef.current?.applyOptions({ visible: visible.lpVsHodl })
     lpVsUniV2Ref.current?.applyOptions({ visible: visible.lpVsUniV2 })
     volumeRef.current?.applyOptions({ visible: visible.volume })
@@ -556,6 +588,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
           const dateStr = date.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
           const rows: { key: ToggleKey; label: string; color: string; text: string }[] = []
           if (visible.price0 && hovered.price0 !== undefined) rows.push({ key: 'price0', label: relPriceLabel, color: COLOR_PRICE, text: formatRel(hovered.price0) })
+          if (visible.lpPrice && hovered.lpPrice !== undefined) rows.push({ key: 'lpPrice', label: 'LP Price', color: COLOR_LP_PRICE, text: formatPrice(hovered.lpPrice, { maximumFractionDigits: 4 }) })
           if (visible.lpVsHodl && hovered.lpVsHodl !== undefined) rows.push({ key: 'lpVsHodl', label: 'LP vs. HODL', color: COLOR_HODL, text: formatPct(hovered.lpVsHodl) })
           if (keepUniV2 && visible.lpVsUniV2 && hovered.lpVsUniV2 !== undefined) rows.push({ key: 'lpVsUniV2', label: 'LP vs. UniV2', color: COLOR_UNIV2, text: formatPct(hovered.lpVsUniV2) })
           if (visible.volume && hovered.volume !== undefined) rows.push({ key: 'volume', label: 'Volume', color: COLOR_VOLUME, text: formatPrice(hovered.volume, { maximumFractionDigits: 0 }) })
