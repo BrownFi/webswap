@@ -291,6 +291,7 @@ type SeriesMeta = {
 // (deep saturated green, histogram). The hue distance + render-type
 // difference keeps them visually separable on the same chart.
 const SERIES_ALL: SeriesMeta[] = [
+  { key: 'lpPrice',       label: 'LP Price',       color: '#D8A072',   type: 'line',      priceScaleId: 'right',  yAxis: 'right' },
   // "LP vs. UniV2" = LP's % outperformance over the UniV2 constant-product
   // benchmark: (lp − uni) / uni × 100. Shares the hidden 'pct' overlay scale
   // with "LP vs. BH" — both are percentages, so they auto-fit together and are
