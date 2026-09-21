@@ -64,15 +64,18 @@ function VolumeMetric({
   chainId,
   version,
   period,
+  source = 'zeroX',
 }: {
   volume: number
   total: number
   chainId: number
   version?: RevenueVersionRow['version']
   period?: DashboardPeriod
+  source?: 'zeroX' | 'kyber'
 }) {
   if (period !== undefined && period !== '24h') return <span>-</span>
-  if ((chainId !== 4663 && chainId !== 999) || (version !== undefined && version !== VERSION.V3_OFFICIAL))
+  const supportedChains = source === 'kyber' ? [80094, 999, 42161, 59144, 4663] : [4663, 999]
+  if (!supportedChains.includes(chainId) || (version !== undefined && version !== VERSION.V3_OFFICIAL))
     return <span>-</span>
   const share = total > 0 ? `${((volume / total) * 100).toFixed(1)}%` : '0.0%'
   return (
@@ -639,7 +642,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
             color: '#FBFBFD',
           }}
         >
-          <VolumeMetric volume={row.kyberVolume24h} total={values.volume} chainId={row.chainId} period={period} />
+           <VolumeMetric volume={row.kyberVolume24h} total={values.volume} chainId={row.chainId} period={period} source="kyber" />
         </div>
         <div
           className="max-md:hidden"
@@ -689,7 +692,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
           />
           <MetricChip
             label="Kyber Vol."
-            value={<VolumeMetric volume={row.kyberVolume24h} total={values.volume} chainId={row.chainId} period={period} />}
+             value={<VolumeMetric volume={row.kyberVolume24h} total={values.volume} chainId={row.chainId} period={period} source="kyber" />}
           />
           <MetricChip label={`Fee ${PERIOD_LABELS[period]}`} value={fmtUsd(values.fee)} />
           <MetricChip

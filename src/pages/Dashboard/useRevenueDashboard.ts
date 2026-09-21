@@ -604,23 +604,30 @@ export function useRevenueDashboard(): RevenueDashboardResult {
     })),
   })
   const kyberQueries = useQueries({
-    queries: zeroXChains.map((chainId) => ({
-      queryKey: ['revenueDashboard:kyber:v1', chainId],
-      queryFn: () => fetchAggregatorVolume(chainId, KYBER_RECIPIENTS),
-      staleTime: 5 * 60_000,
-      gcTime: 30 * 60_000,
-      refetchInterval: false as const,
-      refetchOnWindowFocus: true,
-      retry: 1,
-    })),
+    queries: tasks
+      .filter((task) => task.kind === 'indexer')
+      .map((task) => task.chainId)
+      .map((chainId) => ({
+        queryKey: ['revenueDashboard:kyber:v1', chainId],
+        queryFn: () => fetchAggregatorVolume(chainId, KYBER_RECIPIENTS),
+        staleTime: 5 * 60_000,
+        gcTime: 30 * 60_000,
+        refetchInterval: false as const,
+        refetchOnWindowFocus: true,
+        retry: 1,
+      })),
   })
   const zeroXVolumeByChain = useMemo(
     () => new Map(zeroXChains.map((chainId, index) => [chainId, zeroXQueries[index]?.data ?? 0])),
     [zeroXQueries],
   )
   const kyberVolumeByChain = useMemo(
-    () => new Map(zeroXChains.map((chainId, index) => [chainId, kyberQueries[index]?.data ?? 0])),
-    [kyberQueries],
+    () => new Map(
+      tasks
+        .filter((task) => task.kind === 'indexer')
+        .map((task, index) => [task.chainId, kyberQueries[index]?.data ?? 0]),
+    ),
+    [tasks, kyberQueries],
   )
 
   const liveVersionRows = useMemo<RevenueVersionRow[]>(() => {
