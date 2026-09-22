@@ -42,6 +42,12 @@ import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } 
 import { PairSettingsModal } from './PairSettingsModal'
 import { merklCampaignPool, PairStats, usePoolStats, computeV3FeeApr } from './usePoolStats'
 
+const formatFeeApy = (value: number | undefined): string => {
+  if (!value) return '--'
+  if (value > 10_000) return '>10k%'
+  return `${formatNumberLambda(value, { maximumFractionDigits: 2 })}%`
+}
+
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
   flex-wrap: wrap;
@@ -315,7 +321,7 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
                 )}
                 {!isMainnet && (
                   <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#83CF84' }}>
-                    Fee APY: {feeAPY ? `${formatNumberLambda(feeAPY, { maximumFractionDigits: 2 })}%` : '--'}
+                    Fee APY: {formatFeeApy(feeAPY)}
                   </span>
                 )}
               </div>
@@ -376,7 +382,7 @@ export default function FullPositionCard({ pair, pairStats, border, competitor, 
           {/* Fee APY — indexer APR converted to APY (V2 + V3); beta/non-mainnet only */}
           {!isMainnet && (
             <span className="max-md:hidden text-left" style={{ flex: 1, fontFamily: 'Inter', fontWeight: 600, fontSize: '15px', lineHeight: '22px', color: '#83CF84' }}>
-              {feeAPY ? `${formatNumberLambda(feeAPY, { maximumFractionDigits: 2 })}%` : '--'}
+              {formatFeeApy(feeAPY)}
             </span>
           )}
           {/* Incentive APR (green with BERA icon when applicable) */}

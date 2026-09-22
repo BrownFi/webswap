@@ -34,6 +34,13 @@ import { competitorBestReference, competitorReferences, getCompetitor, competito
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
 )
+
+const formatFeeApy = (value: number | undefined): string => {
+  if (!value) return '--'
+  if (value > 10_000) return '>10k%'
+  return `${formatNumberLambda(value, { maximumFractionDigits: 2 })}%`
+}
+
 const YourPositionCard = lazy(() =>
   import('components/pool/YourPositionCard').then((m) => ({ default: m.YourPositionCard })),
 )
@@ -746,7 +753,7 @@ function PoolDetailInner({
               {/* Mobile: inline rows. */}
               <div className="flex flex-col gap-2 lg:hidden">
                 {isV3Like(version) && <StatInline label="Annual Return" value={(annualReturn ? `${formatNumberLambda(annualReturn, { maximumFractionDigits: 2 })}%` : '--')} valueColor={annualReturn >= 0 ? '#83CF84' : '#E04848'} />}
-                {!isMainnet && <StatInline label="Fee APY" value={(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')} valueColor="#83CF84" />}
+                {!isMainnet && <StatInline label="Fee APY" value={formatFeeApy(feeAprDisplay)} valueColor="#83CF84" />}
                 {incentiveApr > 0 && (
                   <div>
                     <StatInline label={incentiveLabel} value={`+${formatNumberLambda(incentiveApr, { maximumFractionDigits: 2 })}%`} valueColor="#83CF84" />
@@ -796,7 +803,7 @@ function PoolDetailInner({
                       Fee APY
                     </span>
                     <span className="text-[14px] lg:text-[16px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84' }}>
-                      {(feeAprDisplay ? `${formatNumberLambda(feeAprDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                      {formatFeeApy(feeAprDisplay)}
                     </span>
                   </div>
                 )}
