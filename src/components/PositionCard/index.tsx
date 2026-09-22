@@ -41,6 +41,12 @@ import { deriveLiquidityMetrics, formatLiquidityBreakdown, parseStakeLpAmount } 
 import { PairSettingsModal } from './PairSettingsModal'
 import { merklCampaignPool, getPairBgt, PairStats, usePoolStats } from './usePoolStats'
 
+const formatFeeApy = (value: number | undefined): string => {
+  if (value == null) return '--'
+  if (value > 10_000) return '>10k%'
+  return `${formatNumberLambda(value, { maximumFractionDigits: 2 })}%`
+}
+
 export const FixedHeightRow = styled(RowBetween)`
   min-height: 24px;
   flex-wrap: wrap;
@@ -293,7 +299,7 @@ export default function FullPositionCard({ pair, pairStats, border, gigaApr }: P
                 {isBeta && <ButtonSecondary className="!w-fit !bg-orange-500/40 !px-1 !text-xs !py-0 shrink-0">Beta</ButtonSecondary>}
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>TVL: {formatPrice(tvl)}</span>
                 <span className="md:hidden text-[12px]" style={{ fontFamily: 'Inter', fontWeight: 500, color: '#978A80' }}>
-                  Fee APY: <span style={{ color: '#83CF84' }}>{feeAPY != null ? `${formatNumberLambda(feeAPY, { maximumFractionDigits: 2 })}%` : '--'}</span>
+                  Fee APY: <span style={{ color: '#83CF84' }}>{formatFeeApy(feeAPY)}</span>
                 </span>
               </div>
               {/* TVL-cap / Concentration-Level tags on their own line so they don't
@@ -348,7 +354,7 @@ export default function FullPositionCard({ pair, pairStats, border, gigaApr }: P
           <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1 : 1.3, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#FBFBFD' }}>{formatPrice(volume24h)}</span>
           {/* Fee APY — net LP APR converted to APY with 360-period compounding. */}
           <span className="max-md:hidden text-left" style={{ flex: isV3Like(pair.version) ? 1.3 : 1.7, fontFamily: 'Inter', fontWeight: 600, fontSize: '20px', lineHeight: '30px', color: '#83CF84' }}>
-            {feeAPY != null ? `${formatNumberLambda(feeAPY, { maximumFractionDigits: 2 })}%` : '--'}
+            {formatFeeApy(feeAPY)}
           </span>
           {/* BGT APR — Berachain + V3-only (V2 BGT hidden; see enableBgt note). */}
           {chainId === ChainId.BERA_MAINNET && isV3Like(pair.version) && (

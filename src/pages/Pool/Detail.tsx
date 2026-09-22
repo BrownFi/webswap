@@ -33,6 +33,12 @@ import { useVietnamSwapRestriction } from 'hooks/useVietnamSwapRestriction'
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
 )
+
+const formatFeeApy = (value: number | undefined): string => {
+  if (value == null) return '--'
+  if (value > 10_000) return '>10k%'
+  return `${formatNumberLambda(value, { maximumFractionDigits: 2 })}%`
+}
 const YourPositionCard = lazy(() =>
   import('components/pool/YourPositionCard').then((m) => ({ default: m.YourPositionCard })),
 )
@@ -672,7 +678,7 @@ function PoolDetailInner({
               <div className="flex flex-col gap-2 lg:hidden">
                 <StatInline
                   label="Fee APY"
-                  value={(feeApyDisplay != null ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                  value={formatFeeApy(feeApyDisplay)}
                   valueColor="#83CF84"
                 />
                 {isRobinhood && gigaApr !== undefined && (
@@ -716,7 +722,7 @@ function PoolDetailInner({
                     Fee APY
                   </div>
                   <div className="text-[18px] lg:text-[22px]" style={{ fontFamily: 'Inter', fontWeight: 700, color: '#83CF84', marginTop: '2px' }}>
-                    {(feeApyDisplay != null ? `${formatNumberLambda(feeApyDisplay, { maximumFractionDigits: 2 })}%` : '--')}
+                    {formatFeeApy(feeApyDisplay)}
                   </div>
                 </div>
                 {isRobinhood && gigaApr !== undefined && (
