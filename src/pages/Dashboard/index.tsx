@@ -4,8 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { availableChains } from 'connectors'
 import { AutoColumn } from 'components/Column'
-import { Flex } from 'components/Rebass'
-import { EmptyProposals, PageWrapper, TitleRow } from 'pages/Pool/styleds'
+import { EmptyProposals, PageWrapper } from 'pages/Pool/styleds'
 import { fetchProtocolStats, type ProtocolStats } from 'services/protocolStatsService'
 import { TYPE } from 'theme'
 import { getTokenSymbol } from 'utils'
@@ -137,7 +136,7 @@ function PeriodToggle({ period, onChange, vertical = false }: { period: Dashboar
   )
 }
 
-function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof RevenueHistoryPoint; label: string; color: string; history: RevenueHistoryPoint[] }) {
+function MiniHistoryChart({ dataKey, label, color, history, stretch = false }: { dataKey: keyof RevenueHistoryPoint; label: string; color: string; history: RevenueHistoryPoint[]; stretch?: boolean }) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const [chartWidth, setChartWidth] = useState(0)
   const chartData = history.map((point) => ({
@@ -154,18 +153,18 @@ function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof R
     return () => observer.disconnect()
   }, [])
   return (
-    <div style={{ background: '#000000', border: '1px solid #2F2823', borderRadius: '10px', padding: '12px 14px', minWidth: 0 }}>
+    <div className={stretch ? 'h-full' : undefined} style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '12px 14px', minWidth: 0 }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-        <span style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>{label}</span>
+        <span style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#FBFBFD' }}>{label}</span>
       </div>
-      <div ref={chartContainerRef} style={{ width: '100%', height: 150, minWidth: 1, minHeight: 150 }}>
+      <div ref={chartContainerRef} className={stretch ? 'h-[calc(100%-28px)]' : undefined} style={{ width: '100%', height: stretch ? undefined : 150, minWidth: 1, minHeight: 150 }}>
         {chartWidth > 0 && <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={150}>
           <LineChart data={chartData} margin={{ top: 8, right: 10, left: 4, bottom: 4 }}>
-            <CartesianGrid stroke="#493E35" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#6B6059' }} tickLine={{ stroke: '#6B6059' }} minTickGap={24} />
-            <YAxis width={42} tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#6B6059' }} tickLine={{ stroke: '#6B6059' }} tickFormatter={fmtChartAxis} domain={['dataMin', 'dataMax']} />
+            <CartesianGrid stroke="#2F2823" vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#493E35' }} tickLine={{ stroke: '#493E35' }} minTickGap={24} />
+            <YAxis width={42} tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#493E35' }} tickLine={{ stroke: '#493E35' }} tickFormatter={fmtChartAxis} domain={['dataMin', 'dataMax']} />
             <Tooltip
-              contentStyle={{ background: '#1E1915', border: '1px solid #493E35', borderRadius: 8, fontFamily: 'Inter', fontSize: 11 }}
+              contentStyle={{ background: 'rgba(20, 16, 14, 0.95)', border: '1px solid #2F2823', borderRadius: 6, fontFamily: 'Inter', fontSize: 11, boxShadow: '0 4px 14px rgba(0,0,0,0.4)' }}
               formatter={(value) => [fmtUsd(Number(value)), label.startsWith('TVL') ? 'TVL' : label.startsWith('Volume') ? 'Vol.' : label.startsWith('Revenue') ? 'Rev.' : 'Fee']}
             />
             <Line type="monotone" dataKey={dataKey} name={label} stroke={color} strokeWidth={1.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} connectNulls />
@@ -176,17 +175,17 @@ function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof R
   )
 }
 
-function DashboardHistoryChart({ history, period }: { history: RevenueHistoryPoint[]; period: DashboardPeriod }) {
+function DashboardHistoryChart({ history, period, stretch = false }: { history: RevenueHistoryPoint[]; period: DashboardPeriod; stretch?: boolean }) {
   // Exclude the incomplete current UTC-day bucket from the all-time series.
   const completed = history.slice(0, -1)
   const points = period === 'all' ? completed : completed.slice(-(period === '30d' ? 30 : 7))
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <MiniHistoryChart dataKey="tvl" label="TVL" color="#D8A072" history={points} />
-      <MiniHistoryChart dataKey="volume" label="Volume" color="#D8A072" history={points} />
-      <MiniHistoryChart dataKey="fee" label="Fee" color="#D8A072" history={points} />
-      <MiniHistoryChart dataKey="revenue" label="Revenue" color="#D8A072" history={points} />
+    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2${stretch ? ' h-full' : ''}`}>
+      <MiniHistoryChart dataKey="tvl" label="TVL" color="#D8A072" history={points} stretch={stretch} />
+      <MiniHistoryChart dataKey="volume" label="Volume" color="#D8A072" history={points} stretch={stretch} />
+      <MiniHistoryChart dataKey="fee" label="Fee" color="#D8A072" history={points} stretch={stretch} />
+      <MiniHistoryChart dataKey="revenue" label="Revenue" color="#D8A072" history={points} stretch={stretch} />
     </div>
   )
 }
@@ -195,7 +194,7 @@ function PairHistoryCharts({ history, period }: { history: DashboardPairMetric['
   // Pair-day data arrives newest-first, while the shared chart removes the
   // last point as the incomplete current bucket.
   const ordered = [...history].sort((a, b) => a.timestamp - b.timestamp)
-  return <DashboardHistoryChart history={ordered} period={period} />
+  return <DashboardHistoryChart history={ordered} period={period} stretch />
 }
 
 function ChainPairRevenueChart({ pairs, period }: { pairs: DashboardPairMetric[]; period: DashboardPeriod }) {
@@ -214,16 +213,16 @@ function ChainPairRevenueChart({ pairs, period }: { pairs: DashboardPairMetric[]
   }, [pairs, period])
   const colors = ['#D8A072', '#6FB3E6', '#A98BE8', '#76C893', '#E58C8C', '#D6C36A']
   return (
-    <div style={{ background: '#000000', border: '1px solid #2F2823', borderRadius: '10px', padding: '12px 14px', minWidth: 0, height: 460 }}>
-      <div style={{ marginBottom: 8, fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>Revenue by pair</div>
+    <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '12px 14px', minWidth: 0, height: 460 }}>
+      <div style={{ marginBottom: 8, fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#FBFBFD' }}>Revenue by pair</div>
       <div style={{ width: '100%', height: 390, minWidth: 1 }}>
         <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={180}>
           <LineChart data={points} margin={{ top: 8, right: 10, left: 4, bottom: 4 }}>
-            <CartesianGrid stroke="#493E35" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="timestamp" tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#6B6059' }} tickLine={{ stroke: '#6B6059' }} minTickGap={24} tickFormatter={(value) => new Date(Number(value) * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
-            <YAxis width={42} tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#6B6059' }} tickLine={{ stroke: '#6B6059' }} tickFormatter={fmtChartAxis} domain={['dataMin', 'dataMax']} />
+            <CartesianGrid stroke="#2F2823" vertical={false} />
+            <XAxis dataKey="timestamp" tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#493E35' }} tickLine={{ stroke: '#493E35' }} minTickGap={24} tickFormatter={(value) => new Date(Number(value) * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
+            <YAxis width={42} tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#493E35' }} tickLine={{ stroke: '#493E35' }} tickFormatter={fmtChartAxis} domain={['dataMin', 'dataMax']} />
             <Tooltip
-              contentStyle={{ background: '#1E1915', border: '1px solid #493E35', borderRadius: 8, fontFamily: 'Inter', fontSize: 11 }}
+              contentStyle={{ background: 'rgba(20, 16, 14, 0.95)', border: '1px solid #2F2823', borderRadius: 6, fontFamily: 'Inter', fontSize: 11, boxShadow: '0 4px 14px rgba(0,0,0,0.4)' }}
               labelFormatter={(value) => new Date(Number(value) * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               formatter={(value, name) => {
                 const index = Number(String(name).replace('pair', ''))
@@ -235,7 +234,7 @@ function ChainPairRevenueChart({ pairs, period }: { pairs: DashboardPairMetric[]
               const index = Number(String(value).replace('pair', ''))
               const pair = pairs[index]
               return pair ? `${pair.token0.symbol} / ${pair.token1.symbol}` : value
-            }} wrapperStyle={{ fontFamily: 'Inter', fontSize: 10 }} />
+            }} wrapperStyle={{ fontFamily: 'Inter', fontSize: 10, color: '#CFC7C1' }} />
             {pairs.map((pair, index) => <Line key={pair.id} type="monotone" dataKey={`pair${index}`} name={`pair${index}`} stroke={colors[index % colors.length]} strokeWidth={1.5} dot={false} connectNulls />)}
           </LineChart>
         </ResponsiveContainer>
@@ -311,13 +310,13 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
           <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between" style={{ marginBottom: 10 }}>
             <span style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 11 }}>Performance inside this chain</span>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-[210px]">
+              {chartMode === 'pair' && <div className="relative w-full sm:w-[210px]">
                 <button type="button" onClick={() => setPairMenuOpen((open) => !open)} aria-haspopup="listbox" aria-expanded={pairMenuOpen} className="flex w-full items-center justify-between rounded-lg border border-[#493E35] bg-[#1E1915] px-3 py-1.5 text-left font-inter text-[11px] text-[#FBFBFD]">
                   <span className="truncate">{selectedPair ? `${selectedPair.token0.symbol} / ${selectedPair.token1.symbol}` : 'Select pair'}</span>
                   <span style={{ color: '#978A80', transform: pairMenuOpen ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }}>⌄</span>
                 </button>
                 {pairMenuOpen && (
-                  <div role="listbox" className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 overflow-hidden rounded-lg border border-[#493E35] bg-[#1E1915] p-1 shadow-xl">
+                  <div role="listbox" className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 overflow-hidden rounded-lg border border-[#493E35] bg-black p-1 shadow-xl">
                     {pairs.map((pair) => {
                       const active = pair.id === selectedPair?.id
                       return (
@@ -329,10 +328,10 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
                     })}
                   </div>
                 )}
-              </div>
+              </div>}
               <div className="flex w-full rounded-lg border border-[#493E35] bg-[#1E1915] p-0.5 sm:w-auto" role="group" aria-label="Dashboard chart mode">
                 <button type="button" onClick={() => setChartMode('chain')} aria-pressed={chartMode === 'chain'} className="flex-1 rounded-md px-3 py-1.5 font-inter text-[11px] font-semibold transition-colors sm:flex-none" style={{ background: chartMode === 'chain' ? '#985C2A' : 'transparent', color: chartMode === 'chain' ? '#FFFFFF' : '#978A80', cursor: 'pointer' }}>
-                  Chain revenue
+                  Chain metrics
                 </button>
                 <button type="button" onClick={() => setChartMode('pair')} aria-pressed={chartMode === 'pair'} className="flex-1 rounded-md px-3 py-1.5 font-inter text-[11px] font-semibold transition-colors sm:flex-none" style={{ background: chartMode === 'pair' ? '#985C2A' : 'transparent', color: chartMode === 'pair' ? '#FFFFFF' : '#978A80', cursor: 'pointer' }}>
                   Pair metrics
@@ -340,16 +339,23 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
               </div>
             </div>
           </div>
-          <div style={{ minHeight: 460 }}>
-            {chartMode === 'chain' ? <ChainPairRevenueChart pairs={pairs} period={period} /> : selectedPair && <PairHistoryCharts history={selectedPair.history} period={period} />}
+          <div className="lg:h-[460px]" style={{ minHeight: 460 }}>
+            {chartMode === 'chain' ? (
+              <div className="grid grid-cols-1 items-start gap-3 lg:h-[460px] lg:grid-cols-2">
+                <DashboardHistoryChart history={row.history} period={period} stretch />
+                <ChainPairRevenueChart pairs={pairs} period={period} />
+              </div>
+            ) : selectedPair ? (
+              <PairHistoryCharts history={selectedPair.history} period={period} />
+            ) : null}
           </div>
-          <div style={{ display: 'block', width: '100%', maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain', touchAction: 'pan-x', border: '1px solid #2F2823', borderRadius: 10, marginTop: 12 }}>
-          <div className="w-[730px] md:w-full">
-            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr]" style={{ padding: '10px 12px', background: '#2F2823', color: '#978A80', fontFamily: 'Inter', fontSize: 11, fontWeight: 600 }}>
+          <div style={{ display: 'block', width: '100%', maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain', touchAction: 'pan-x', marginTop: 12 }}>
+          <div className="w-[730px] md:w-full" style={{ background: '#000000' }}>
+            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr]" style={{ padding: '10px 12px', background: '#1E1915', borderRadius: '10px', color: '#978A80', fontFamily: 'Inter', fontSize: 11, fontWeight: 600 }}>
               <span>Pair</span><span className="text-right">TVL</span><span className="text-right">Volume</span><span className="text-right">APR</span><span className="text-right">Fee</span><span className="text-right">Revenue</span>
             </div>
             {pairs.map((pair) => (
-              <div key={pair.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] items-center" onClick={() => { setSelectedPairId(pair.id); setChartMode('pair') }} style={{ padding: '12px', borderTop: '1px solid #2F2823', fontFamily: 'Inter', fontSize: 12, cursor: 'pointer' }}>
+              <div key={pair.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] items-center" onClick={() => { setSelectedPairId(pair.id); setChartMode('pair') }} style={{ padding: '12px', fontFamily: 'Inter', fontSize: 12, cursor: 'pointer' }}>
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="truncate font-semibold" style={{ color: '#FBFBFD' }}><PairLabel pair={pair} chainId={row.chainId} /></div>
                   <Link to={poolDetailHref(pair, row.chainId)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()} aria-label={`Open ${pair.token0.symbol} / ${pair.token1.symbol} pool`} title="Open pool detail in a new tab" style={{ color: '#978A80', display: 'inline-flex' }}><ExternalLink size={13} /></Link>
@@ -373,11 +379,21 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
 
 function DashboardChartSkeleton() {
   return (
-    <div style={{ height: 460, border: '1px solid #2F2823', borderRadius: 10, background: '#000000', padding: '16px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-      <div style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 11 }}>Loading pair metrics...</div>
-      <div style={{ height: 1, background: '#2F2823', boxShadow: '0 -72px 0 #2F2823, 0 -144px 0 #2F2823, 0 -216px 0 #2F2823' }} />
-      <div className="flex items-end gap-2" style={{ height: 180, opacity: 0.45 }}>
-        {[35, 58, 42, 76, 54, 88, 64, 72, 46, 82].map((height, index) => <div key={index} style={{ flex: 1, height: `${height}%`, borderRadius: '3px 3px 0 0', background: '#493E35' }} />)}
+    <div className="grid grid-cols-1 gap-3 lg:h-[460px] lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {['TVL', 'Volume', 'Fee', 'Revenue'].map((label) => (
+          <div key={label} className="animate-pulse" style={{ minHeight: 150, border: '1px solid #2F2823', borderRadius: 12, background: '#1E1915', padding: '12px 14px' }}>
+            <div style={{ width: '28%', height: 14, borderRadius: 4, background: '#493E35', marginBottom: 14 }} />
+            <div style={{ height: 1, background: '#2F2823', boxShadow: '0 -42px 0 #2F2823, 0 -84px 0 #2F2823' }} />
+            <div style={{ height: 72, marginTop: 18, borderRadius: 4, background: 'linear-gradient(135deg, transparent 0 25%, #493E35 25% 27%, transparent 27% 42%, #493E35 42% 44%, transparent 44% 61%, #493E35 61% 63%, transparent 63%)' }} />
+            <span className="sr-only">Loading {label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="animate-pulse" style={{ minHeight: 460, border: '1px solid #2F2823', borderRadius: 12, background: '#1E1915', padding: '12px 14px' }}>
+        <div style={{ width: '30%', height: 14, borderRadius: 4, background: '#493E35', marginBottom: 18 }} />
+        <div style={{ height: 1, background: '#2F2823', boxShadow: '0 72px 0 #2F2823, 0 144px 0 #2F2823, 0 216px 0 #2F2823' }} />
+        <div style={{ height: 250, marginTop: 34, borderRadius: 4, background: 'linear-gradient(135deg, transparent 0 18%, #493E35 18% 19%, transparent 19% 35%, #493E35 35% 36%, transparent 36% 55%, #493E35 55% 56%, transparent 56% 75%, #493E35 75% 76%, transparent 76%)' }} />
       </div>
     </div>
   )
@@ -541,11 +557,15 @@ function DashboardStatsBar({
   )
 
   return (
-    <div style={{ background: '#2F2823', borderRadius: '16px', padding: '16px 20px' }}>
-      <div className="hidden items-center justify-end gap-2 mb-4 md:flex">
+    <div style={{ background: '#1E1915', borderRadius: '16px', padding: '16px 20px' }}>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div style={{ fontFamily: 'Inter', fontSize: '24px', fontWeight: 600, color: '#FBFBFD', letterSpacing: '-0.02em' }}>
+          Dashboard
+        </div>
         <button
           type="button"
           onClick={() => setShowBreakdown((value) => !value)}
+          className="hidden md:block"
           style={{
             background: showBreakdown ? '#2F2823' : 'transparent',
             border: 'none',
@@ -657,12 +677,12 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
   const values = periodValues(row, period)
 
   return (
-    <div style={{ background: '#1E1915', borderRadius: '12px', border: '1px solid #2F2823', minWidth: 0 }}>
+    <div style={{ background: 'transparent', borderRadius: 0, border: 'none', minWidth: 0 }}>
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="w-full flex items-center max-md:flex-wrap max-md:gap-2 text-left"
-        style={{ background: 'transparent', border: 'none', padding: '16px' }}
+        className="w-full flex items-center max-md:flex-wrap max-md:gap-2 text-left p-4 sm:p-5"
+        style={{ background: 'transparent', border: 'none' }}
       >
         <div className="flex items-center gap-3 min-w-0 max-md:w-full" style={{ flex: 2 }}>
           {chainMeta?.iconUrl ? (
@@ -819,7 +839,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
         </div>
       </button>
       {expanded && (
-       <div style={{ background: '#000000', borderTop: '1px solid #2F2823', borderRadius: '0 0 12px 12px', padding: '12px 16px 16px', minWidth: 0 }}>
+       <div style={{ background: '#000000', borderTop: 'none', borderRadius: '12px', padding: '12px 16px 16px', minWidth: 0 }}>
           <ChainPairMetrics row={row} period={period} />
         </div>
       )}
@@ -888,19 +908,9 @@ export default function Dashboard() {
   ]
 
   return (
-    <PageWrapper className="min-w-0">
+    <PageWrapper className="min-w-0" style={{ background: 'transparent', border: 'none', borderRadius: 0 }}>
       <AutoColumn gap="md" justify="center" className="min-w-0 p-[12px] pt-[16px] sm:pt-[24px] lg:p-[24px]">
         <AutoColumn className="min-w-0 gap-4 sm:gap-6" style={{ width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          <TitleRow padding={'0'}>
-            <Flex alignItems="center" justifyContent="space-between" className="gap-4 flex-wrap">
-              <span
-                className="text-[24px] sm:text-[36px] leading-[32px] sm:leading-[44px]"
-                style={{ fontFamily: 'Inter', fontWeight: 600, letterSpacing: '-0.02em', color: '#FBFBFD' }}
-              >
-                Dashboard
-              </span>
-            </Flex>
-          </TitleRow>
           <div className="fixed right-3 top-[86px] z-30 rounded-[10px] p-1 shadow-lg" style={{ background: '#1E1915', boxShadow: '0 8px 24px rgba(0, 0, 0, 0.24)' }}>
             <PeriodToggle period={period} onChange={setPeriod} vertical />
           </div>
@@ -913,48 +923,50 @@ export default function Dashboard() {
           />
           <DashboardHistoryChart history={stats.history} period={period} />
 
-          <div
-            className="hidden md:flex items-center"
-            style={{
-              padding: '8px 16px',
-              fontFamily: 'Inter',
-              fontWeight: 500,
-              fontSize: '14px',
-              color: '#978A80',
-              gap: '8px',
-            }}
-          >
-            <span style={{ flex: 2 }}>Chain</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Rev. All-time</span>
-             <span style={{ flex: 1, textAlign: 'right' }}>Vol. {PERIOD_LABELS[period]}</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>0x Vol.</span>
-            <span style={{ flex: 1, textAlign: 'right' }}>Kyber Vol.</span>
-             <span style={{ flex: 1, textAlign: 'right' }}>Fee {PERIOD_LABELS[period]}</span>
-             <span style={{ flex: 1, textAlign: 'right' }}>Revenue {PERIOD_LABELS[period]}</span>
-            <span style={{ flex: 0.35 }} />
-          </div>
-
-          {isError ? (
-            <EmptyProposals>
-              <TYPE.body color={'#978A80'} textAlign="center">
-                Failed to load dashboard data.
-              </TYPE.body>
-            </EmptyProposals>
-          ) : chains.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {chains.map((row) => (
-                <ChainRow key={row.chainId} row={row} period={period} />
-              ))}
+          <div style={{ background: '#1E1915', borderRadius: '16px', overflow: 'hidden', padding: '12px 16px 16px' }}>
+            <div
+              className="hidden md:flex items-center"
+              style={{
+                padding: '8px 0',
+                fontFamily: 'Inter',
+                fontWeight: 500,
+                fontSize: '14px',
+                color: '#978A80',
+                gap: '8px',
+              }}
+            >
+              <span style={{ flex: 2 }}>Chain</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>TVL</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Fee All-time</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Rev. All-time</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Vol. {PERIOD_LABELS[period]}</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>0x Vol.</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Kyber Vol.</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Fee {PERIOD_LABELS[period]}</span>
+              <span style={{ flex: 1, textAlign: 'right' }}>Revenue {PERIOD_LABELS[period]}</span>
+              <span style={{ flex: 0.35 }} />
             </div>
-          ) : (
-            <EmptyProposals>
-              <TYPE.body color={'#978A80'} textAlign="center">
-                No dashboard data found.
-              </TYPE.body>
-            </EmptyProposals>
-          )}
+
+            {isError ? (
+              <EmptyProposals>
+                <TYPE.body color={'#978A80'} textAlign="center">
+                  Failed to load dashboard data.
+                </TYPE.body>
+              </EmptyProposals>
+            ) : chains.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {chains.map((row) => (
+                  <ChainRow key={row.chainId} row={row} period={period} />
+                ))}
+              </div>
+            ) : (
+              <EmptyProposals>
+                <TYPE.body color={'#978A80'} textAlign="center">
+                  No dashboard data found.
+                </TYPE.body>
+              </EmptyProposals>
+            )}
+          </div>
         </AutoColumn>
       </AutoColumn>
     </PageWrapper>
