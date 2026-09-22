@@ -197,24 +197,34 @@ function PairHistoryCharts({ history, period }: { history: DashboardPairMetric['
   return <DashboardHistoryChart history={ordered} period={period} stretch />
 }
 
-function ChainPairRevenueChart({ pairs, period }: { pairs: DashboardPairMetric[]; period: DashboardPeriod }) {
+type PairChartMetric = 'tvl' | 'volume' | 'fee' | 'revenue'
+
+const PAIR_CHART_METRICS: { value: PairChartMetric; label: string }[] = [
+  { value: 'tvl', label: 'TVL' },
+  { value: 'volume', label: 'Volume' },
+  { value: 'fee', label: 'Fee' },
+  { value: 'revenue', label: 'Revenue' },
+]
+
+function ChainPairRevenueChart({ pairs, period, metric }: { pairs: DashboardPairMetric[]; period: DashboardPeriod; metric: PairChartMetric }) {
+  const metricLabel = PAIR_CHART_METRICS.find((option) => option.value === metric)?.label ?? 'Revenue'
   const points = useMemo(() => {
     const byTimestamp = new Map<number, Record<string, number>>()
     pairs.forEach((pair, pairIndex) => {
       const key = `pair${pairIndex}`
       pair.history.forEach((point) => {
         const row = byTimestamp.get(point.timestamp) ?? { timestamp: point.timestamp }
-        row[key] = point.revenue
+        row[key] = point[metric]
         byTimestamp.set(point.timestamp, row)
       })
     })
     const completed = [...byTimestamp.values()].sort((a, b) => Number(a.timestamp) - Number(b.timestamp)).slice(0, -1)
     return period === 'all' ? completed : completed.slice(-(period === '30d' ? 30 : 7))
-  }, [pairs, period])
+  }, [pairs, period, metric])
   const colors = ['#D8A072', '#6FB3E6', '#A98BE8', '#76C893', '#E58C8C', '#D6C36A']
   return (
     <div style={{ background: '#1E1915', border: '1px solid #2F2823', borderRadius: '12px', padding: '12px 14px', minWidth: 0, height: 460 }}>
-      <div style={{ marginBottom: 8, fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#FBFBFD' }}>Revenue by pair</div>
+      <div style={{ marginBottom: 8, fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#FBFBFD' }}>{metricLabel} by pair</div>
       <div style={{ width: '100%', height: 390, minWidth: 1 }}>
         <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={180}>
           <LineChart data={points} margin={{ top: 8, right: 10, left: 4, bottom: 4 }}>
@@ -239,6 +249,32 @@ function ChainPairRevenueChart({ pairs, period }: { pairs: DashboardPairMetric[]
           </LineChart>
         </ResponsiveContainer>
       </div>
+    </div>
+  )
+}
+
+function PairMetricSelect({ value, onChange }: { value: PairChartMetric; onChange: (metric: PairChartMetric) => void }) {
+  const [open, setOpen] = useState(false)
+  const selected = PAIR_CHART_METRICS.find((option) => option.value === value) ?? PAIR_CHART_METRICS[0]
+  return (
+    <div className="relative w-full sm:w-[150px]">
+      <button type="button" onClick={() => setOpen((isOpen) => !isOpen)} aria-haspopup="listbox" aria-expanded={open} className="flex w-full items-center justify-between rounded-lg border border-[#493E35] bg-[#1E1915] px-3 py-1.5 text-left font-inter text-[11px] text-[#FBFBFD]">
+        <span>{selected.label}</span>
+        <span style={{ color: '#978A80', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }}>⌄</span>
+      </button>
+      {open && (
+        <div role="listbox" className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 overflow-hidden rounded-lg border border-[#493E35] bg-black p-1 shadow-xl">
+          {PAIR_CHART_METRICS.map((option) => {
+            const active = option.value === value
+            return (
+              <button key={option.value} type="button" role="option" aria-selected={active} onClick={() => { onChange(option.value); setOpen(false) }} className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left font-inter text-[11px] transition-colors hover:bg-[#2F2823]" style={{ background: active ? '#2F2823' : 'transparent', color: active ? '#D8A072' : '#FBFBFD' }}>
+                <span>{option.label}</span>
+                {active && <span style={{ color: '#D8A072' }}>✓</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -287,6 +323,7 @@ function PairTokenLogo({ token, chainId, overlap = false }: { token: Token; chai
 function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
   const { pairs, isLoading, isError } = useDashboardPairMetrics(row, period, true)
   const [chartMode, setChartMode] = useState<'chain' | 'pair'>('chain')
+  const [pairChartMetric, setPairChartMetric] = useState<PairChartMetric>('revenue')
   const [selectedPairId, setSelectedPairId] = useState('')
   const [pairMenuOpen, setPairMenuOpen] = useState(false)
   const selectedPair = pairs.find((pair) => pair.id === selectedPairId) ?? pairs[0]
@@ -310,6 +347,7 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
           <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between" style={{ marginBottom: 10 }}>
             <span style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 11 }}>Performance inside this chain</span>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              {chartMode === 'chain' && <PairMetricSelect value={pairChartMetric} onChange={setPairChartMetric} />}
               {chartMode === 'pair' && <div className="relative w-full sm:w-[210px]">
                 <button type="button" onClick={() => setPairMenuOpen((open) => !open)} aria-haspopup="listbox" aria-expanded={pairMenuOpen} className="flex w-full items-center justify-between rounded-lg border border-[#493E35] bg-[#1E1915] px-3 py-1.5 text-left font-inter text-[11px] text-[#FBFBFD]">
                   <span className="truncate">{selectedPair ? `${selectedPair.token0.symbol} / ${selectedPair.token1.symbol}` : 'Select pair'}</span>
@@ -343,7 +381,7 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
             {chartMode === 'chain' ? (
               <div className="grid grid-cols-1 items-start gap-3 lg:h-[460px] lg:grid-cols-2">
                 <DashboardHistoryChart history={row.history} period={period} stretch />
-                <ChainPairRevenueChart pairs={pairs} period={period} />
+                <ChainPairRevenueChart pairs={pairs} period={period} metric={pairChartMetric} />
               </div>
             ) : selectedPair ? (
               <PairHistoryCharts history={selectedPair.history} period={period} />
