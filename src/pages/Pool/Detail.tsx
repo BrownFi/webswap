@@ -949,7 +949,7 @@ function PoolDetailInner({
                       style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '14px', color: '#FBFBFD' }}
                     >
                       Oracle
-                      <QuestionHelper text="Minimum UniV3 pool/path liquidity required to price this pair, and the TWAP window used by the oracle. Read live on-chain." />
+                      <QuestionHelper text="Direct and two-hop oracle liquidity are shown in their respective token units. A path only qualifies when its actual liquidity meets the minimum threshold. Values are read live on-chain." />
                     </div>
                     {/* Mobile: compact inline rows (token only, no ≈USD), tight spacing.
                         mt-2 keeps a gap from the stats rows above since the heading is hidden. */}
@@ -959,7 +959,7 @@ function PoolDetailInner({
                           <StatInline
                             key={pool.address || 'direct'}
                             small
-                            label={`Min TVL / Actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''} (${pool.kind === 'v4-adapter' ? 'V4' : pool.kind === 'v3' ? 'V3' : 'Unknown'})`}
+                            label={`Direct min / actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''} (${pool.kind === 'v4-adapter' ? 'V4' : pool.kind === 'v3' ? 'V3' : 'Unknown'})${pool.actual != null ? (pool.actual >= oracleThresholds.minTvlDirect! ? ' · active' : ' · below threshold') : ''}`}
                             value={fmtMinActual(oracleThresholds.minTvlDirect!, pool.actual, oracleQuoteSymbol)}
                           />
                         ))}
@@ -968,7 +968,7 @@ function PoolDetailInner({
                           <StatInline
                             key={`path-${index}`}
                             small
-                            label={`Min TVL / Actual${paths.length > 1 ? ` #${index + 1}` : ''}`}
+                            label={`Path min / actual${paths.length > 1 ? ` #${index + 1}` : ''}${actual != null ? (actual >= oracleThresholds.minTvlPath! ? ' · active' : ' · below threshold') : ''}`}
                             value={fmtMinActual(oracleThresholds.minTvlPath!, actual, oracleBaseSymbol)}
                           />
                         ))
@@ -983,7 +983,7 @@ function PoolDetailInner({
                           <StatRow
                             key={pool.address || 'direct'}
                             small
-                            label={`Min TVL / Actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''} (${pool.kind === 'v4-adapter' ? 'V4' : pool.kind === 'v3' ? 'V3' : 'Unknown'})`}
+                            label={`Direct min / actual${oracleDirectPools.length > 1 ? ` #${index + 1}` : ''} (${pool.kind === 'v4-adapter' ? 'V4' : pool.kind === 'v3' ? 'V3' : 'Unknown'})${pool.actual != null ? (pool.actual >= oracleThresholds.minTvlDirect! ? ' · active' : ' · below threshold') : ''}`}
                             value={fmtMinActual(oracleThresholds.minTvlDirect!, pool.actual, oracleQuoteSymbol)}
                           />
                         ))}
@@ -992,7 +992,7 @@ function PoolDetailInner({
                           <StatRow
                             key={`path-${index}`}
                             small
-                            label={`Min TVL / Actual${paths.length > 1 ? ` #${index + 1}` : ''}`}
+                            label={`Path min / actual${paths.length > 1 ? ` #${index + 1}` : ''}${actual != null ? (actual >= oracleThresholds.minTvlPath! ? ' · active' : ' · below threshold') : ''}`}
                             value={fmtMinActual(oracleThresholds.minTvlPath!, actual, oracleBaseSymbol)}
                           />
                         ))

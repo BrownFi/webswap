@@ -185,7 +185,10 @@ async function fetchOracleThresholds(chainId: number, pairAddress: string): Prom
   }
   const resolved: (Leg | null)[] = legs.map((l, li) => {
     const window = Number(g2<number | bigint>(li, 0) ?? 0)
-    const poolQti = isDirect ? Number(g2<number | bigint>(li, 1) ?? 0) : l.qti
+    // Direct pools use the gateway's per-pool mapping; path legs must use the
+    // quote-token index stored on the path itself. A pool can have different
+    // semantics in a path than in the direct-pool mapping.
+    const poolQti = l.qti >= 0 ? l.qti : Number(g2<number | bigint>(li, 1) ?? 0)
     const token0 = g2<string>(li, 2)
     const token1 = g2<string>(li, 3)
     const slot0 = g2<readonly unknown[]>(li, 4)
