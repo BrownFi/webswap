@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Token } from '@brownfi/sdk'
 import { useQuery } from '@tanstack/react-query'
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { availableChains } from 'connectors'
 import { AutoColumn } from 'components/Column'
 import { Flex } from 'components/Rebass'
@@ -12,6 +12,8 @@ import { getTokenSymbol } from 'utils'
 import { shouldReverseDisplay } from 'utils/pair'
 import { VERSION } from 'lib/sdk/constants/addresses'
 import { CurrencyLogo } from 'components/CurrencyLogo'
+import { Circle, ExternalLink } from 'react-feather'
+import { Link } from 'react-router-dom'
 import { checksumAddress, type Address } from 'viem'
 import hemiEtherLogo from 'assets/images/hemi-ether.svg'
 import hemiUsdcLogo from 'assets/images/hemi-usdc.svg'
@@ -52,6 +54,16 @@ function fmtUsd(n: number) {
 
 function fmtPercent(n: number) {
   return Number.isFinite(n) && n !== 0 ? `${n.toFixed(2)}%` : '0.00%'
+}
+
+function fmtChartAxis(n: number) {
+  if (!Number.isFinite(n)) return '0'
+  const abs = Math.abs(n)
+  const trim = (value: number) => value.toFixed(abs >= 1_000_000 ? 1 : 2).replace(/\.00$|(?<=\.[0-9])0$/, '')
+  if (abs >= 1_000_000_000) return `${trim(n / 1_000_000_000)}b`
+  if (abs >= 1_000_000) return `${trim(n / 1_000_000)}m`
+  if (abs >= 1_000) return `${trim(n / 1_000)}k`
+  return trim(n)
 }
 
 function periodLabel(period: DashboardPeriod) {
@@ -142,28 +154,22 @@ function MiniHistoryChart({ dataKey, label, color, history }: { dataKey: keyof R
     return () => observer.disconnect()
   }, [])
   return (
-    <div style={{ background: '#2F2823', border: '1px solid #493E35', borderRadius: '10px', padding: '12px 14px', minWidth: 0 }}>
+    <div style={{ background: '#000000', border: '1px solid #2F2823', borderRadius: '10px', padding: '12px 14px', minWidth: 0 }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
         <span style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>{label}</span>
       </div>
       <div ref={chartContainerRef} style={{ width: '100%', height: 150, minWidth: 1, minHeight: 150 }}>
         {chartWidth > 0 && <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={150}>
-          <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id={`dashboard-${String(dataKey)}-fill`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={0.28} />
-                <stop offset="100%" stopColor={color} stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#2F2823" vertical={false} />
-            <XAxis dataKey="label" hide />
-            <YAxis hide domain={['auto', 'auto']} />
+          <LineChart data={chartData} margin={{ top: 8, right: 10, left: 4, bottom: 4 }}>
+            <CartesianGrid stroke="#493E35" strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#6B6059' }} tickLine={{ stroke: '#6B6059' }} minTickGap={24} />
+            <YAxis width={42} tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#6B6059' }} tickLine={{ stroke: '#6B6059' }} tickFormatter={fmtChartAxis} domain={['dataMin', 'dataMax']} />
             <Tooltip
               contentStyle={{ background: '#1E1915', border: '1px solid #493E35', borderRadius: 8, fontFamily: 'Inter', fontSize: 11 }}
               formatter={(value) => [fmtUsd(Number(value)), label.startsWith('TVL') ? 'TVL' : label.startsWith('Volume') ? 'Vol.' : label.startsWith('Revenue') ? 'Rev.' : 'Fee']}
             />
-            <Area type="monotone" dataKey={dataKey} name={label} stroke={color} fill={`url(#dashboard-${String(dataKey)}-fill)`} strokeWidth={2} dot={false} />
-          </AreaChart>
+            <Line type="monotone" dataKey={dataKey} name={label} stroke={color} strokeWidth={1.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} connectNulls />
+          </LineChart>
         </ResponsiveContainer>}
       </div>
     </div>
@@ -176,7 +182,7 @@ function DashboardHistoryChart({ history, period }: { history: RevenueHistoryPoi
   const points = period === 'all' ? completed : completed.slice(-(period === '30d' ? 30 : 7))
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 gap-3">
       <MiniHistoryChart dataKey="tvl" label="TVL" color="#D8A072" history={points} />
       <MiniHistoryChart dataKey="volume" label="Volume" color="#D8A072" history={points} />
       <MiniHistoryChart dataKey="fee" label="Fee" color="#D8A072" history={points} />
@@ -185,8 +191,57 @@ function DashboardHistoryChart({ history, period }: { history: RevenueHistoryPoi
   )
 }
 
-function ChainHistoryCharts({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
-  return <DashboardHistoryChart history={row.history} period={period} />
+function PairHistoryCharts({ history, period }: { history: DashboardPairMetric['history']; period: DashboardPeriod }) {
+  // Pair-day data arrives newest-first, while the shared chart removes the
+  // last point as the incomplete current bucket.
+  const ordered = [...history].sort((a, b) => a.timestamp - b.timestamp)
+  return <DashboardHistoryChart history={ordered} period={period} />
+}
+
+function ChainPairRevenueChart({ pairs, period }: { pairs: DashboardPairMetric[]; period: DashboardPeriod }) {
+  const points = useMemo(() => {
+    const byTimestamp = new Map<number, Record<string, number>>()
+    pairs.forEach((pair, pairIndex) => {
+      const key = `pair${pairIndex}`
+      pair.history.forEach((point) => {
+        const row = byTimestamp.get(point.timestamp) ?? { timestamp: point.timestamp }
+        row[key] = point.revenue
+        byTimestamp.set(point.timestamp, row)
+      })
+    })
+    const completed = [...byTimestamp.values()].sort((a, b) => Number(a.timestamp) - Number(b.timestamp)).slice(0, -1)
+    return period === 'all' ? completed : completed.slice(-(period === '30d' ? 30 : 7))
+  }, [pairs, period])
+  const colors = ['#D8A072', '#6FB3E6', '#A98BE8', '#76C893', '#E58C8C', '#D6C36A']
+  return (
+    <div style={{ background: '#000000', border: '1px solid #2F2823', borderRadius: '10px', padding: '12px 14px', minWidth: 0, height: 460 }}>
+      <div style={{ marginBottom: 8, fontFamily: 'Inter', fontSize: 13, fontWeight: 600, color: '#CFC7C1' }}>Revenue by pair</div>
+      <div style={{ width: '100%', height: 390, minWidth: 1 }}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={180}>
+          <LineChart data={points} margin={{ top: 8, right: 10, left: 4, bottom: 4 }}>
+            <CartesianGrid stroke="#493E35" strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="timestamp" tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#6B6059' }} tickLine={{ stroke: '#6B6059' }} minTickGap={24} tickFormatter={(value) => new Date(Number(value) * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
+            <YAxis width={42} tick={{ fill: '#978A80', fontSize: 10 }} axisLine={{ stroke: '#6B6059' }} tickLine={{ stroke: '#6B6059' }} tickFormatter={fmtChartAxis} domain={['dataMin', 'dataMax']} />
+            <Tooltip
+              contentStyle={{ background: '#1E1915', border: '1px solid #493E35', borderRadius: 8, fontFamily: 'Inter', fontSize: 11 }}
+              labelFormatter={(value) => new Date(Number(value) * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              formatter={(value, name) => {
+                const index = Number(String(name).replace('pair', ''))
+                const pair = pairs[index]
+                return [fmtUsd(Number(value)), pair ? `${pair.token0.symbol} / ${pair.token1.symbol}` : String(name)]
+              }}
+            />
+            <Legend formatter={(value) => {
+              const index = Number(String(value).replace('pair', ''))
+              const pair = pairs[index]
+              return pair ? `${pair.token0.symbol} / ${pair.token1.symbol}` : value
+            }} wrapperStyle={{ fontFamily: 'Inter', fontSize: 10 }} />
+            {pairs.map((pair, index) => <Line key={pair.id} type="monotone" dataKey={`pair${index}`} name={`pair${index}`} stroke={colors[index % colors.length]} strokeWidth={1.5} dot={false} connectNulls />)}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
 }
 
 function PairLabel({ pair, chainId }: { pair: DashboardPairMetric; chainId: number }) {
@@ -206,6 +261,10 @@ function PairLabel({ pair, chainId }: { pair: DashboardPairMetric; chainId: numb
       <span>{getTokenSymbol(first, chainId)} / {getTokenSymbol(second, chainId)}</span>
     </div>
   )
+}
+
+function poolDetailHref(pair: DashboardPairMetric, chainId: number) {
+  return `/pool/${chainId}/${pair.id}${pair.isHemi ? '' : '?v=v3-official'}`
 }
 
 function PairTokenLogo({ token, chainId, overlap = false }: { token: Token; chainId: number; overlap?: boolean }) {
@@ -228,28 +287,72 @@ function PairTokenLogo({ token, chainId, overlap = false }: { token: Token; chai
 
 function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: DashboardPeriod }) {
   const { pairs, isLoading, isError } = useDashboardPairMetrics(row, period, true)
+  const [chartMode, setChartMode] = useState<'chain' | 'pair'>('chain')
+  const [selectedPairId, setSelectedPairId] = useState('')
+  const [pairMenuOpen, setPairMenuOpen] = useState(false)
+  const selectedPair = pairs.find((pair) => pair.id === selectedPairId) ?? pairs[0]
+  useEffect(() => {
+    if (pairs.length && !pairs.some((pair) => pair.id === selectedPairId)) setSelectedPairId(pairs[0].id)
+  }, [pairs, selectedPairId])
   return (
     <div style={{ marginTop: 16, minWidth: 0, width: '100%', maxWidth: '100%' }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
         <span style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 600, color: '#CFC7C1' }}>Pair metrics</span>
-        <span style={{ fontFamily: 'Inter', fontSize: 11, color: '#6B6059' }}>{periodLabel(period)} · Live {row.versions.some((version) => version.version === 'hemi') ? 'Hemi' : 'V3'} data</span>
+        <span className="inline-flex items-center gap-1.5" style={{ fontFamily: 'Inter', fontSize: 11, color: '#FFFFFF' }}>{periodLabel(period)} <Circle size={7} fill="#5FB98A" strokeWidth={0} aria-hidden="true" /> Live {row.versions.some((version) => version.version === 'hemi') ? 'Hemi' : 'V3'} data</span>
       </div>
       {isLoading ? (
-        <div style={{ padding: '18px 0', color: '#978A80', fontFamily: 'Inter', fontSize: 12 }}>Loading pair metrics...</div>
+        <DashboardChartSkeleton />
       ) : isError ? (
         <div style={{ padding: '18px 0', color: '#FF7A95', fontFamily: 'Inter', fontSize: 12 }}>Pair metrics are temporarily unavailable.</div>
       ) : pairs.length === 0 ? (
         <div style={{ padding: '18px 0', color: '#978A80', fontFamily: 'Inter', fontSize: 12 }}>No live pair data found.</div>
       ) : (
-        <div style={{ display: 'block', width: '100%', maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain', touchAction: 'pan-x', border: '1px solid #2F2823', borderRadius: 10 }}>
+        <>
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between" style={{ marginBottom: 10 }}>
+            <span style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 11 }}>Performance inside this chain</span>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-[210px]">
+                <button type="button" onClick={() => setPairMenuOpen((open) => !open)} aria-haspopup="listbox" aria-expanded={pairMenuOpen} className="flex w-full items-center justify-between rounded-lg border border-[#493E35] bg-[#1E1915] px-3 py-1.5 text-left font-inter text-[11px] text-[#FBFBFD]">
+                  <span className="truncate">{selectedPair ? `${selectedPair.token0.symbol} / ${selectedPair.token1.symbol}` : 'Select pair'}</span>
+                  <span style={{ color: '#978A80', transform: pairMenuOpen ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }}>⌄</span>
+                </button>
+                {pairMenuOpen && (
+                  <div role="listbox" className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 overflow-hidden rounded-lg border border-[#493E35] bg-[#1E1915] p-1 shadow-xl">
+                    {pairs.map((pair) => {
+                      const active = pair.id === selectedPair?.id
+                      return (
+                        <button key={pair.id} type="button" role="option" aria-selected={active} onClick={() => { setSelectedPairId(pair.id); setPairMenuOpen(false) }} className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left font-inter text-[11px] transition-colors hover:bg-[#2F2823]" style={{ background: active ? '#2F2823' : 'transparent', color: active ? '#D8A072' : '#FBFBFD' }}>
+                          <span>{pair.token0.symbol} / {pair.token1.symbol}</span>
+                          {active && <span style={{ color: '#D8A072' }}>✓</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+              <div className="flex w-full rounded-lg border border-[#493E35] bg-[#1E1915] p-0.5 sm:w-auto" role="group" aria-label="Dashboard chart mode">
+                <button type="button" onClick={() => setChartMode('chain')} aria-pressed={chartMode === 'chain'} className="flex-1 rounded-md px-3 py-1.5 font-inter text-[11px] font-semibold transition-colors sm:flex-none" style={{ background: chartMode === 'chain' ? '#985C2A' : 'transparent', color: chartMode === 'chain' ? '#FFFFFF' : '#978A80', cursor: 'pointer' }}>
+                  Chain revenue
+                </button>
+                <button type="button" onClick={() => setChartMode('pair')} aria-pressed={chartMode === 'pair'} className="flex-1 rounded-md px-3 py-1.5 font-inter text-[11px] font-semibold transition-colors sm:flex-none" style={{ background: chartMode === 'pair' ? '#985C2A' : 'transparent', color: chartMode === 'pair' ? '#FFFFFF' : '#978A80', cursor: 'pointer' }}>
+                  Pair metrics
+                </button>
+              </div>
+            </div>
+          </div>
+          <div style={{ minHeight: 460 }}>
+            {chartMode === 'chain' ? <ChainPairRevenueChart pairs={pairs} period={period} /> : selectedPair && <PairHistoryCharts history={selectedPair.history} period={period} />}
+          </div>
+          <div style={{ display: 'block', width: '100%', maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain', touchAction: 'pan-x', border: '1px solid #2F2823', borderRadius: 10, marginTop: 12 }}>
           <div className="w-[730px] md:w-full">
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr]" style={{ padding: '10px 12px', background: '#2F2823', color: '#978A80', fontFamily: 'Inter', fontSize: 11, fontWeight: 600 }}>
               <span>Pair</span><span className="text-right">TVL</span><span className="text-right">Volume</span><span className="text-right">APR</span><span className="text-right">Fee</span><span className="text-right">Revenue</span>
             </div>
             {pairs.map((pair) => (
-              <div key={pair.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] items-center" style={{ padding: '12px', borderTop: '1px solid #2F2823', fontFamily: 'Inter', fontSize: 12 }}>
+              <div key={pair.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] items-center" onClick={() => { setSelectedPairId(pair.id); setChartMode('pair') }} style={{ padding: '12px', borderTop: '1px solid #2F2823', fontFamily: 'Inter', fontSize: 12, cursor: 'pointer' }}>
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="truncate font-semibold" style={{ color: '#FBFBFD' }}><PairLabel pair={pair} chainId={row.chainId} /></div>
+                  <Link to={poolDetailHref(pair, row.chainId)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()} aria-label={`Open ${pair.token0.symbol} / ${pair.token1.symbol} pool`} title="Open pool detail in a new tab" style={{ color: '#978A80', display: 'inline-flex' }}><ExternalLink size={13} /></Link>
                   {pair.isGauge && <span style={{ color: '#D8A072', fontSize: 10, fontWeight: 600 }}>Gauge</span>}
                   {pair.revenueEstimated && <span style={{ color: '#6B6059', fontSize: 10 }}>est.</span>}
                 </div>
@@ -261,8 +364,21 @@ function ChainPairMetrics({ row, period }: { row: RevenueChainRow; period: Dashb
               </div>
             ))}
           </div>
-        </div>
+          </div>
+        </>
       )}
+    </div>
+  )
+}
+
+function DashboardChartSkeleton() {
+  return (
+    <div style={{ height: 460, border: '1px solid #2F2823', borderRadius: 10, background: '#000000', padding: '16px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 11 }}>Loading pair metrics...</div>
+      <div style={{ height: 1, background: '#2F2823', boxShadow: '0 -72px 0 #2F2823, 0 -144px 0 #2F2823, 0 -216px 0 #2F2823' }} />
+      <div className="flex items-end gap-2" style={{ height: 180, opacity: 0.45 }}>
+        {[35, 58, 42, 76, 54, 88, 64, 72, 46, 82].map((height, index) => <div key={index} style={{ flex: 1, height: `${height}%`, borderRadius: '3px 3px 0 0', background: '#493E35' }} />)}
+      </div>
     </div>
   )
 }
@@ -703,8 +819,7 @@ function ChainRow({ row, period }: { row: RevenueChainRow; period: DashboardPeri
         </div>
       </button>
       {expanded && (
-        <div style={{ background: '#000000', borderTop: '1px solid #2F2823', borderRadius: '0 0 12px 12px', padding: '12px 16px 16px', minWidth: 0 }}>
-          <ChainHistoryCharts row={row} period={period} />
+       <div style={{ background: '#000000', borderTop: '1px solid #2F2823', borderRadius: '0 0 12px 12px', padding: '12px 16px 16px', minWidth: 0 }}>
           <ChainPairMetrics row={row} period={period} />
         </div>
       )}

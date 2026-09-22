@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { VERSION } from 'lib/sdk/constants/addresses'
 import { graphqlFetcher } from 'utils/graphql'
-import { ROBINHOOD_GAUGE_HISTORY } from './robinhoodGauge'
+import { ROBINHOOD_GAUGE_HISTORY, type RobinhoodGaugeHistory } from './robinhoodGauge'
 import type { DashboardPeriod, RevenueChainRow } from './useRevenueDashboard'
 
 const V3_PAIR_METRICS_QUERY = `
@@ -88,6 +88,16 @@ export type DashboardPairMetric = {
   apr: number
   revenueEstimated: boolean
   isGauge: boolean
+  isHemi: boolean
+  history: DashboardPairHistoryPoint[]
+}
+
+export type DashboardPairHistoryPoint = {
+  timestamp: number
+  tvl: number
+  volume: number
+  fee: number
+  revenue: number
 }
 
 function num(value: unknown): number {
@@ -170,13 +180,18 @@ function gaugeRevenue(pair: RawPair, period: DashboardPeriod) {
   return pair.hourly.reduce((total, hour) => {
     const timestamp = num(hour.key)
     if (timestamp < cutoff) return total
-    let split = 0
-    for (const transition of history.timeline) {
-      if (timestamp >= transition.timestamp) split = transition.split
-      else break
-    }
+    const split = gaugeSplitAt(history, timestamp)
     return total + hour.fee * (split === 1 ? 0.07 : split)
   }, 0)
+}
+
+function gaugeSplitAt(history: RobinhoodGaugeHistory, timestamp: number) {
+  let split = 0
+  for (const transition of history.timeline) {
+    if (timestamp >= transition.timestamp) split = transition.split
+    else break
+  }
+  return split
 }
 
 function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMetric {
@@ -190,6 +205,17 @@ function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMet
         ? num(pair.volume7Day)
         : sumDays(pair.days, period, 'volume')
   const tvl = num(pair.tvl) || (pair.days[0]?.tvl ?? 0)
+  const history = pair.days.map((day) => {
+    const timestamp = num(day.key)
+    const gaugeHistory = ROBINHOOD_GAUGE_HISTORY[pair.id.toLowerCase()]
+    const gaugeSplit = isGauge && gaugeHistory ? gaugeSplitAt(gaugeHistory, timestamp) : 0
+    const revenue = isHemi
+      ? day.fee * 0.1
+      : isGauge
+        ? day.fee * (gaugeSplit === 1 ? 0.07 : gaugeSplit)
+        : day.fee * feeSplit
+    return { timestamp, tvl: day.tvl, volume: day.volume, fee: day.fee, revenue }
+  })
   return {
     id: pair.id,
     token0: pair.token0,
@@ -202,6 +228,8 @@ function normalizePair(pair: RawPair, period: DashboardPeriod): DashboardPairMet
     apr: isHemi ? feeApr(fee, tvl, period, pair.days.length) : num(pair.apr),
     revenueEstimated: false,
     isGauge,
+    isHemi,
+    history,
   }
 }
 
