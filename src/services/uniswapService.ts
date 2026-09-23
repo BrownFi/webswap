@@ -5,7 +5,7 @@
 // `Origin: https://app.uniswap.org` server-side: `/uniswap/*` → the gateway via
 // functions/uniswap (CF Pages, beta/bera), api/uniswap (Vercel, dev), and
 // vite.config server.proxy (local dev).
-import { CompetitorPairData, CompetitorReference, competitorPairKey } from './competitors'
+import { CompetitorPairData, CompetitorReference, competitorPairKey } from './competitorTypes'
 
 // Same-origin proxy prefix (see functions/uniswap, vercel.json, vite.config).
 const UNISWAP_PROXY_BASE = import.meta.env.VITE_UNISWAP_PROXY_BASE || '/uniswap'
@@ -15,9 +15,15 @@ const UNISWAP_LIQUIDITY_PATH = '/uniswap.liquidity.v2.LiquidityService/GetPool'
 const ROBINHOOD_WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73'
 const ROBINHOOD_PONS = '0x39dBED3a2bd333467115dE45665cC57F813C4571'
 const ROBINHOOD_USDG = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'
-const PONS_USDG_KEY = competitorPairKey(ROBINHOOD_PONS, ROBINHOOD_USDG)
-const PONS_WETH_KEY = competitorPairKey(ROBINHOOD_PONS, ROBINHOOD_WETH)
-const PONS_WETH_REFERENCE = '0xed50bdeea8adc232f159486192a4157281d722ff'
+const ROBINHOOD_NVDA = '0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC'
+const ROBINHOOD_SPCX = '0x4a0E65A3EcceC6dBe60AE065F2e7bb85Fae35eEa'
+const ROBINHOOD_SPY = '0x117cc2133c37B721F49dE2A7a74833232B3B4C0C'
+const ROBINHOOD_GOOGL = '0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3'
+const ROBINHOOD_MSTR = '0xec262a75e413fAfD0dF80480274532C79D42da09'
+const ROBINHOOD_MU = '0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD'
+const ROBINHOOD_MSFT = '0xe93237C50D904957Cf27E7B1133b510C669c2e74'
+const ROBINHOOD_TSLA = '0x322F0929c4625eD5bAd873c95208D54E1c003b2d'
+const ROBINHOOD_CASHCAT = '0x020bfC650A365f8BB26819deAAbF3E21291018b4'
 const NATIVE_ETH = '0x0000000000000000000000000000000000000000'
 
 // The explore-pools query app.uniswap.org uses. `feeTier` comes back in
@@ -54,18 +60,27 @@ interface UniswapLiquidityPoolRaw {
   token1Address?: string
 }
 
-const ROBINHOOD_UNISWAP_POOL_IDS = [
-  '0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3', '0x52e65B17fB6E5BA00Ed806f37Afcd2DaA50271Ca', '0x69BfaF19C9f377BB306a89aEd9F6B07e2c1a8d9a',
-  '0xc61284332117c3FB23A2A56cceFFD07F7aF60029', '0xEb07d9587eFD1778dFb9c385Ec43EF6d5F9fE401', '0xDDCBBa3666f578E3F09516f21Ff85BFee859AB5e',
-  '0xA43b424Bc609495AED4BCD88d654934b510B0aD9', '0xd057B1Bc54917855BBee58eAd58647f47caB35E5', '0xeb60bCD1D920ad6E102690CCFC6fB488899E1510',
-  '0xf4ACdAEEB7022862A763C9B1B885e11191c889E3', '0x3bb34a44f1b2b5f32c034c38a53065a521a47b199700fa9bd19d60985ff24bf1',
-  '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907', '0x2bca43d9d8c75399e3c6ba14e9dc88f44ca8968bb4694a8be4f80bd5a550df2e',
-  '0xfe2a80bb5618fd14984b92ca6d45bf5ba67443ddb1435e28b2e48df2fc1526cd', '0x319bac87e616a89e241c10aeb8afd4892a852cdd8b373cd9765ecddc40b87cfe',
-  '0x6fa3ee0048e78bf0a513eb0ab56f482944a767c21db990fcf555605e69f05659', '0x9194a557b6a6bb2236b49ea7e2bbccec5d3eeb705aef00903be4b3de1d949579',
-  '0x8517f8071ae5b831b738052f12125e8e3d6c158b78728aa44ce3b25e5104d32e', '0xa92a3df27a00a276183ff7265fd8affa11df1fe8bb23ddfaf13f6c879a3f818b',
-  '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e', '0xa6975f4720a95aa9cdfa9b010a065b0e941534c93f9fa708104c08f0ac029ca0',
-  '0x4be9657ec9002e528f4f17a5c43edc525a07f888f7b180c2afbf75e096c4f38a', '0xEd50bDeeA8aDC232f159486192a4157281D722ff',
-]
+// One curated Uniswap reference per Robinhood pair. PairInfo oracle pools are the
+// default source; curated V4 fallbacks are used when an oracle pool is not indexed
+// by Uniswap or has insufficient liquidity for a useful comparison.
+const ROBINHOOD_REFERENCE_POOLS = [
+  [competitorPairKey(ROBINHOOD_WETH, ROBINHOOD_USDG), '0x52e65B17fB6E5BA00Ed806f37Afcd2DaA50271Ca'],
+  [competitorPairKey(ROBINHOOD_USDG, ROBINHOOD_NVDA), '0xd4EB21209C4D6093f80B5b84f5C45cc093EA14a3'],
+  [competitorPairKey(ROBINHOOD_SPCX, ROBINHOOD_USDG), '0xEb07d9587eFD1778dFb9c385Ec43EF6d5F9fE401'],
+  [competitorPairKey(ROBINHOOD_SPY, ROBINHOOD_USDG), '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907'],
+  [competitorPairKey(ROBINHOOD_WETH, ROBINHOOD_SPY), '0xDDCBBa3666f578E3F09516f21Ff85BFee859AB5e'],
+  [competitorPairKey(ROBINHOOD_SPY, ROBINHOOD_GOOGL), '0xAFdFB72b9fa1F28d552BA1a88dB58ee522ed0803'],
+  [competitorPairKey(ROBINHOOD_WETH, ROBINHOOD_SPCX), '0xC3c9F0171490Ef0F4536fe493F3b0EbB5ee0CB5e'],
+  [competitorPairKey(ROBINHOOD_USDG, ROBINHOOD_MSTR), '0x319bac87e616a89e241c10aeb8afd4892a852cdd8b373cd9765ecddc40b87cfe'],
+  [competitorPairKey(ROBINHOOD_USDG, ROBINHOOD_MU), '0xd057B1Bc54917855BBee58eAd58647f47caB35E5'],
+  [competitorPairKey(ROBINHOOD_USDG, ROBINHOOD_MSFT), '0xeb60bCD1D920ad6E102690CCFC6fB488899E1510'],
+  [competitorPairKey(ROBINHOOD_TSLA, ROBINHOOD_USDG), '0xf4ACdAEEB7022862A763C9B1B885e11191c889E3'],
+  [competitorPairKey(ROBINHOOD_CASHCAT, ROBINHOOD_WETH), '0xd42A491087a15E5afd51FEb3606066Cc152d2b09'],
+  [competitorPairKey(ROBINHOOD_PONS, ROBINHOOD_USDG), '0x7A192E71564ec66eE0763e328a3Ac274942dE4e1'],
+] as const
+
+const ROBINHOOD_UNISWAP_POOL_IDS = ROBINHOOD_REFERENCE_POOLS.map(([, poolId]) => poolId)
+const ROBINHOOD_POOL_ORDER = new Map(ROBINHOOD_REFERENCE_POOLS.map(([key, poolId], index) => [`${key}:${poolId.toLowerCase()}`, index]))
 
 async function fetchUniswapLiquidityPools(): Promise<UniswapLiquidityPoolRaw[]> {
   const controller = new AbortController()
@@ -77,10 +92,10 @@ async function fetchUniswapLiquidityPools(): Promise<UniswapLiquidityPoolRaw[]> 
       body: JSON.stringify({ poolIdentifiers: ROBINHOOD_UNISWAP_POOL_IDS, chainId: 4663 }),
       signal: controller.signal,
     })
-    if (!res.ok) return []
-    return ((await res.json()) as { pools?: UniswapLiquidityPoolRaw[] }).pools ?? []
-  } catch {
-    return []
+    if (!res.ok) throw new Error(`Uniswap liquidity request failed: HTTP ${res.status}`)
+    const json = (await res.json()) as { pools?: UniswapLiquidityPoolRaw[] }
+    if (!Array.isArray(json.pools)) throw new Error('Uniswap liquidity response is invalid')
+    return json.pools
   } finally {
     clearTimeout(timeoutId)
   }
@@ -96,6 +111,7 @@ export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, Com
     const isDynamicFee = pool.isDynamicFee === true
     const vol24hUSD = Number(pool.volumeUsd1d) || 0
     const reference: CompetitorReference = {
+      poolIdentifier: pool.poolIdentifier,
       version,
       feeTier,
       isDynamicFee,
@@ -106,16 +122,19 @@ export async function fetchUniswapRobinhoodPairMap(): Promise<Record<string, Com
     const token0Address = pool.token0Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token0Address
     const token1Address = pool.token1Address.toLowerCase() === NATIVE_ETH ? ROBINHOOD_WETH : pool.token1Address
     const key = competitorPairKey(token0Address, token1Address)
-    if (key === competitorPairKey('0x117cc2133c37B721F49dE2A7a74833232B3B4C0C', '0x5fc5360D0400aFd4f2af552ADD042D716F1d168') && pool.poolIdentifier?.toLowerCase() !== '0xe5923c8a8be481ec89a2ca784a2bbfa4235de6d88f92260fd66b660c4babf907') return
-    const mapKeys = key === PONS_WETH_KEY && pool.poolIdentifier?.toLowerCase() === PONS_WETH_REFERENCE
-      ? [key, PONS_USDG_KEY]
-      : [key]
-    mapKeys.forEach((mapKey) => {
-      const existing = map[mapKey]
-      map[mapKey] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
-    })
+    const existing = map[key]
+    map[key] = existing ? { ...existing, references: [...(existing.references ?? []), reference] } : { ...reference, references: [reference] }
   })
-  Object.values(map).forEach((data) => data.references?.sort((a, b) => a.version.localeCompare(b.version)))
+  Object.entries(map).forEach(([key, data]) => data.references?.sort((a, b) => {
+    const aOrder = ROBINHOOD_POOL_ORDER.get(`${key}:${a.poolIdentifier?.toLowerCase()}`) ?? Number.MAX_SAFE_INTEGER
+    const bOrder = ROBINHOOD_POOL_ORDER.get(`${key}:${b.poolIdentifier?.toLowerCase()}`) ?? Number.MAX_SAFE_INTEGER
+    return aOrder - bOrder
+  }))
+  Object.entries(map).forEach(([key, data]) => {
+    const references = data.references ?? []
+    const selected = references.find((reference) => reference.version === 'V3') ?? references.find((reference) => reference.version === 'V4')
+    if (selected) map[key] = { ...selected, references: [selected] }
+  })
   return map
 }
 
@@ -131,8 +150,9 @@ export async function fetchUniswapPairMap(): Promise<Record<string, CompetitorPa
       body: JSON.stringify({ query: TOP_V3_POOLS_QUERY, variables: { chain: 'ARBITRUM', first: 50 } }),
       signal: controller.signal,
     })
-    if (!res.ok) return {}
+    if (!res.ok) throw new Error(`Uniswap GraphQL request failed: HTTP ${res.status}`)
     const json = (await res.json()) as { data?: { topV3Pools?: UniswapPoolRaw[] } }
+    if (!json.data || !Array.isArray(json.data.topV3Pools)) throw new Error('Uniswap GraphQL response is invalid')
     const pools = json.data?.topV3Pools ?? []
     const map: Record<string, CompetitorPairData> = {}
     for (const p of pools) {
@@ -149,8 +169,6 @@ export async function fetchUniswapPairMap(): Promise<Record<string, CompetitorPa
       }
     }
     return map
-  } catch {
-    return {}
   } finally {
     clearTimeout(timeoutId)
   }

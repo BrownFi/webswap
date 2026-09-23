@@ -7,25 +7,9 @@ import { fetchKodiakPairMap } from './kodiakService'
 import { fetchProjectXPairMap } from './projectXService'
 import { fetchUniswapPairMap, fetchUniswapRobinhoodPairMap } from './uniswapService'
 import { fetchEtherexPairMap } from './etherexService'
-
-export type CompetitorReference = {
-  version: 'V3' | 'V4'
-  feeTier: number
-  isDynamicFee?: boolean
-  tvlUSD: number
-  vol24hUSD: number
-  fees24hUSD: number
-}
-
-export interface CompetitorPairData {
-  // feeTier in hundredths of a bip (500 = 0.05%, 3000 = 0.3%).
-  feeTier: number
-  tvlUSD: number
-  vol24hUSD: number
-  fees24hUSD: number
-  /** Multiple reference pools, ordered V3 then V4 when both exist. */
-  references?: CompetitorReference[]
-}
+import { CompetitorPairData, CompetitorReference, competitorPairKey } from './competitorTypes'
+export type { CompetitorPairData, CompetitorReference } from './competitorTypes'
+export { competitorPairKey } from './competitorTypes'
 
 export function competitorReferences(data: CompetitorPairData): CompetitorReference[] {
   return data.references?.length
@@ -37,16 +21,13 @@ export function competitorBestReference(data: CompetitorPairData): CompetitorRef
   return competitorReferences(data).reduce((best, reference) => (reference.vol24hUSD > best.vol24hUSD ? reference : best))
 }
 
-// Map key for a token pair: both addresses lowercased and sorted so token order
-// never matters when matching across DEXes.
-export function competitorPairKey(a: string, b: string): string {
-  return [a.toLowerCase(), b.toLowerCase()].sort().join('-')
-}
-
 // Berachain token addresses used by the reference-pair overrides below.
 const BERA_DOLO = '0x0F81001eF0A83ecCE5ccebf63EB302c70a39a654'
 const BERA_HONEY = '0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce'
 const BERA_WBERA = '0x6969696969696969696969696969696969696969'
+const ROBINHOOD_CASHCAT = '0x020bfC650A365f8BB26819deAAbF3E21291018b4'
+const ROBINHOOD_USDG = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'
+const ROBINHOOD_WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73'
 
 // Reference-pair overrides. For a few of our pools the natural same-pair match
 // on the competitor DEX is a near-dead pool (negligible TVL/volume), so the
@@ -58,6 +39,9 @@ const REFERENCE_PAIR_OVERRIDES: Partial<Record<number, Record<string, string>>> 
     // Kodiak's DOLO/HONEY pool is dead (~$59 TVL, $0 24h vol). Reference the
     // active DOLO/WBERA pool instead (~$128k TVL, ~$9.5k 24h vol).
     [competitorPairKey(BERA_DOLO, BERA_HONEY)]: competitorPairKey(BERA_DOLO, BERA_WBERA),
+  },
+  [ChainId.ROBINHOOD_MAINNET]: {
+    [competitorPairKey(ROBINHOOD_CASHCAT, ROBINHOOD_USDG)]: competitorPairKey(ROBINHOOD_CASHCAT, ROBINHOOD_WETH),
   },
 }
 

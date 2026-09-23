@@ -29,7 +29,7 @@ import { currencyId } from 'utils/currencyId'
 import { PairStats, usePoolStats, computeV3FeeApr } from 'components/PositionCard/usePoolStats'
 import QuestionHelper from 'components/QuestionHelper'
 import { getRestakers } from 'constants/restakers'
-import { competitorBestReference, competitorReferences, getCompetitor, competitorLookupKey, CompetitorPairData } from 'services/competitors'
+import { competitorBestReference, getCompetitor, competitorLookupKey, CompetitorPairData } from 'services/competitors'
 
 const PairChartTV = lazy(() =>
   import('components/pool/PairChartTV').then((m) => ({ default: m.PairChartTV })),
@@ -305,11 +305,7 @@ function PoolDetailInner({
       ? competitorPairMap?.[competitorLookupKey(chainId, pairRaw.token0.id, pairRaw.token1.id)]
       : undefined
   const competitorReference = competitorData ? competitorBestReference(competitorData) : undefined
-  const competitorReferencesForDisplay = competitorData
-    ? (chainId === ChainId.ROBINHOOD_MAINNET
-      ? competitorReferences(competitorData).slice().sort((a, b) => b.vol24hUSD - a.vol24hUSD).slice(0, 2)
-      : competitorReference ? [competitorReference] : [])
-    : []
+  const competitorReferencesForDisplay = competitorData && competitorReference ? [competitorReference] : []
   const competitorFees = competitorReferencesForDisplay.length
     ? competitorReferencesForDisplay
       .map((reference) => reference.isDynamicFee ? 'Dynamic' : `${formatNumberLambda(reference.feeTier / 10000, { maximumFractionDigits: 3 })}%`)

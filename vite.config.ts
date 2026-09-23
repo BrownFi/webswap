@@ -22,16 +22,14 @@ function uniswapLiquidityProxy() {
           res.end(JSON.stringify({ pools: [] }))
           return
         }
-        const pools = []
-        for (let i = 0; i < poolIdentifiers.length; i += 4) {
-          const batch = await Promise.all(poolIdentifiers.slice(i, i + 4).map(async (addressOrId: string) => {
-            try {
-              const response = await fetch(UNISWAP_LIQUIDITY_UPSTREAM, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pool: { addressOrId, chainId } }) })
-              return response.ok ? (await response.json()).pool ?? null : null
-            } catch { return null }
-          }))
-          pools.push(...batch.filter(Boolean))
-        }
+        const pools = (await Promise.all(poolIdentifiers.map(async (addressOrId: string) => {
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), 8_000)
+          try {
+            const response = await fetch(UNISWAP_LIQUIDITY_UPSTREAM, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pool: { addressOrId, chainId } }), signal: controller.signal })
+            return response.ok ? (await response.json()).pool ?? null : null
+          } catch { return null } finally { clearTimeout(timeout) }
+        }))).filter(Boolean)
         res.setHeader('content-type', 'application/json')
         res.end(JSON.stringify({ pools }))
       })
