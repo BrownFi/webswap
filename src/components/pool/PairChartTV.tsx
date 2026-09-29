@@ -303,7 +303,7 @@ const SERIES_ALL: SeriesMeta[] = [
   // (lp − bnh) / bnh × 100. Same 'pct' overlay scale as LP vs. UniV2 — and kept
   // right next to it in the legend so the two % benchmarks read together.
   // Internal key stays `netPnL` to avoid a sweep across the indexer field name.
-  { key: 'netPnL',        label: 'LP vs. BH',      color: '#83CF84',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden' },
+  { key: 'netPnL',        label: 'LP vs. BH',      color: '#83CF84',   type: 'line',      priceScaleId: 'pct',    yAxis: 'hidden', lineWidth: 1, lineStyle: LineStyle.Dotted },
   // "LP vs. BH3" = LP's % outperformance over the 3rd buy-and-hold benchmark:
   // (lp − bh3) / bh3 × 100. Same 'pct' overlay + math as "LP vs. BH", just against
   // bh3Price. Gated via availableSeries + the query field strip to the chains that
