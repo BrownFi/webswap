@@ -417,6 +417,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       priceScaleId: 'left',
       color: COLOR_HODL,
       lineWidth: 1,
+      lineStyle: LineStyle.Dotted,
       priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
     })
     // LP vs. UniV2 — LEFT % axis (omitted when the chain lacks uniV2Price).
@@ -426,6 +427,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
           priceScaleId: 'left',
           color: COLOR_UNIV2,
           lineWidth: 1,
+          lineStyle: LineStyle.Dotted,
           priceFormat: { type: 'custom', formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`, minMove: 0.01 },
         })
       : null
