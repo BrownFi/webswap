@@ -1,0 +1,35 @@
+import { Currency, CurrencyAmount } from '@cryptoalgebra/integral-sdk'
+import { Address, erc20Abi } from 'viem'
+import { useAccount, useReadContract } from 'wagmi'
+import { DEFAULT_CHAIN_ID } from '@clmm/config'
+
+export function useNeedAllowance(
+  currency: Currency | null | undefined,
+  amount: CurrencyAmount<Currency> | undefined,
+  spender: Address | undefined,
+  fastPolling: boolean = false,
+) {
+  const { address: account } = useAccount()
+
+  const {
+    data: allowance,
+    refetch,
+    isLoading,
+    isError,
+  } = useReadContract({
+    address: currency?.wrapped.address as Address,
+    abi: erc20Abi,
+    functionName: 'allowance',
+    args: account && spender ? [account, spender] : undefined,
+    chainId: currency?.chainId ?? DEFAULT_CHAIN_ID,
+    query: {
+      refetchInterval: fastPolling ? 1000 : false,
+    },
+  })
+
+  const needAllowance = Boolean(
+    !currency?.isNative && typeof allowance === 'bigint' && amount && amount.greaterThan(allowance.toString()),
+  )
+
+  return { needAllowance, allowance, isLoading, isError, refetchAllowance: refetch }
+}

@@ -1,18 +1,24 @@
-import { availableChains } from 'connectors'
+import { HEMI_CHAIN_ID, selectableChains } from 'connectors'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { chainSelector, switchChain } from 'state/chainSlice'
-import { useAccount } from 'wagmi'
+import { useAccount, useSwitchChain } from 'wagmi'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const CustomChainSelect = () => {
-  const { isConnected, chainId } = useAccount()
+  const { isConnected } = useAccount()
   const chain = useSelector(chainSelector)
-  const isWrongNetwork = availableChains.every((chain) => chain.id !== chainId)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { switchChain: switchWagmiChain } = useSwitchChain()
 
   const [isOpen, setOpen] = useState(false)
 
-  if (isConnected && !isWrongNetwork) return <div />
+  const hemiChain = selectableChains.find((candidate) => candidate.id === HEMI_CHAIN_ID)
+  const displayChain = location.pathname.startsWith('/clamm') && hemiChain ? hemiChain : chain
+
+  if (isConnected) return <div />
 
   return (
     <>
@@ -26,14 +32,21 @@ const CustomChainSelect = () => {
         }}
         onClick={() => setOpen(true)}
       >
-        <img style={{ width: '18px', height: '18px', borderRadius: '50%' }} src={chain.iconUrl as string} alt={chain.name} />
-        <span style={{ color: '#FBFBFD', fontSize: '13px', fontWeight: 500 }}>{chain.name}</span>
+        <img style={{ width: '18px', height: '18px', borderRadius: '50%' }} src={displayChain.iconUrl as string} alt={displayChain.name} />
+        <span style={{ color: '#FBFBFD', fontSize: '13px', fontWeight: 500 }}>{displayChain.name}</span>
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
           <path d="M5 7.5L10 12.5L15 7.5" stroke="#978A80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
-      <ChainModal isOpen={isOpen} onClose={() => setOpen(false)} />
+      <ChainModal
+        isOpen={isOpen}
+        onClose={() => setOpen(false)}
+        onSwitchChain={(chainId) => {
+          switchWagmiChain({ chainId })
+          navigate(chainId === HEMI_CHAIN_ID ? '/clamm/swap' : '/swap')
+        }}
+      />
     </>
   )
 }
@@ -49,11 +62,14 @@ export const ChainModal = ({
 }) => {
   const chain = useSelector(chainSelector)
   const dispatch = useDispatch()
+  const { chainId: walletChainId } = useAccount()
+  const location = useLocation()
+  const activeChainId = walletChainId ?? (location.pathname.startsWith('/clamm') ? HEMI_CHAIN_ID : chain?.id)
 
   if (!isOpen) return null
   return createPortal(
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/75 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -84,16 +100,19 @@ export const ChainModal = ({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {availableChains.map((c) => {
-            const isActive = chain?.id === c.id
+          {selectableChains.map((c) => {
+            const isHemi = c.id === HEMI_CHAIN_ID
+            const isActive = activeChainId === c.id
 
             return (
               <button
                 key={c.id}
                 onClick={() => {
                   onClose()
-                  const parsed = JSON.parse(JSON.stringify(c, null, 2))
-                  dispatch(switchChain(parsed))
+                  if (!isHemi) {
+                    const parsed = JSON.parse(JSON.stringify(c, null, 2))
+                    dispatch(switchChain(parsed))
+                  }
                   if (onSwitchChain) onSwitchChain(c.id)
                 }}
                 style={{

@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+  // CLAMM uses its own scoped Tailwind configuration.
+  content: ['./src/**/*.{js,jsx,ts,tsx}', '!./src/clmm/**'],
   darkMode: 'class',
   theme: {
     screens: {

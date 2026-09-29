@@ -109,12 +109,13 @@ const StyledConnectButton = () => {
   )
 }
 import SwitchVersion from 'components/SwitchVersion'
-import { appEnvLabel, isMainnet } from 'connectors'
+import { appEnvLabel, HEMI_CHAIN_ID, isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useAccount } from 'wagmi'
 import CustomAccountDisplay from './CustomAccountDisplay'
 import CustomChainSelect from './CustomChainSelect'
 import HamburgerMenu from './HamburgerMenu'
+import { isFeeClaimWallet } from '@clmm/config/fee-split'
 
 function StyledNavLink({
   id,
@@ -159,13 +160,50 @@ export const StyledMenuButton = ({ className, children, ...props }: React.Button
   </button>
 )
 
+function MainNav() {
+  const { address, chainId } = useAccount()
+  const location = useLocation()
+  const showClmmNav = chainId === HEMI_CHAIN_ID || location.pathname.startsWith('/clamm')
+  const clmmPoolActive = location.pathname.startsWith('/clamm/pool')
+  const webswapPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((path) =>
+    location.pathname.startsWith(path),
+  )
+  const dashboardActive = location.pathname.startsWith('/dashboard')
+
+  if (showClmmNav) {
+    return (
+      <>
+        <StyledNavLink id="swap-nav-link" to="/clamm/swap">Swap</StyledNavLink>
+        <StyledNavLink id="pool-nav-link" to="/clamm/pool" className={clmmPoolActive ? 'active' : ''}>
+          CLAMM
+        </StyledNavLink>
+        <StyledNavLink id="analytics-nav-link" to="/clamm/analytics">Analytics</StyledNavLink>
+        {isFeeClaimWallet(address) && (
+          <StyledNavLink id="claim-fee-nav-link" to="/clamm/claim-fee">Claim Fees</StyledNavLink>
+        )}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <StyledNavLink id="swap-nav-link" to="/swap">Swap</StyledNavLink>
+      <StyledNavLink id="pool-nav-link" to="/pool" end className={webswapPoolActive ? 'active' : ''}>Pool</StyledNavLink>
+      <StyledNavLink id="portfolio-nav-link" to="/portfolio">Portfolio</StyledNavLink>
+      <StyledNavLink id="dashboard-nav-link" to="/dashboard" end className={dashboardActive ? 'active' : ''}>
+        Dashboard
+      </StyledNavLink>
+      <StyledNavLink id="settings-nav-link" to="/settings">Settings</StyledNavLink>
+    </>
+  )
+}
+
 export default function Header() {
   const { account } = useActiveWeb3React()
-  const { isConnected } = useAccount()
+  const { isConnected, chainId } = useAccount()
   const showCustomAccountDisplay = !!account && !isConnected
   const location = useLocation()
-  const isPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((p) => location.pathname.startsWith(p))
-  const isDashboardActive = location.pathname.startsWith('/dashboard')
+  const showClmmNav = chainId === HEMI_CHAIN_ID || location.pathname.startsWith('/clamm')
 
   return (
     <div
@@ -174,7 +212,7 @@ export default function Header() {
     >
       {/* Left: Logo + Nav */}
       <div className="flex items-center gap-6 max-md:gap-3">
-        <Link to="/swap" className="flex items-center shrink-0">
+        <Link to={showClmmNav ? '/clamm/swap' : '/swap'} className="flex items-center shrink-0">
           <div className="transition-transform duration-300 hover:-rotate-[5deg]">
             <img className="min-w-[120px] w-[120px] lg:w-[142px] lg:min-w-[142px]" src={Logo} alt="logo" />
           </div>
@@ -196,7 +234,7 @@ export default function Header() {
           </span>
         )}
 
-        <SwitchVersion isMobile />
+        {!showClmmNav && <SwitchVersion isMobile />}
 
         <HamburgerMenu>
         <nav aria-label="Main navigation">
@@ -207,21 +245,7 @@ export default function Header() {
               borderRadius: '8px',
             }}
           >
-            <StyledNavLink id="swap-nav-link" to="/swap">
-              Swap
-            </StyledNavLink>
-            <StyledNavLink id="pool-nav-link" to="/pool" end className={isPoolActive ? 'active' : ''}>
-              Pool
-            </StyledNavLink>
-            <StyledNavLink id="portfolio-nav-link" to="/portfolio">
-              Portfolio
-            </StyledNavLink>
-            <StyledNavLink id="dashboard-nav-link" to="/dashboard" end className={isDashboardActive ? 'active' : ''}>
-              Dashboard
-            </StyledNavLink>
-            <StyledNavLink id="settings-nav-link" to="/settings">
-              Settings
-            </StyledNavLink>
+            <MainNav />
             {/* Blog & Docs moved to the footer per UX feedback. Footer is
                 always rendered (desktop + mobile) so we no longer surface them
                 in the nav at all — avoids the duplicate on mobile. */}
