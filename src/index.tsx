@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, useLocation } from 'react-router-dom'
 import Blocklist from 'components/Blocklist'
 import App from 'pages/App'
 import store from 'state'
@@ -40,13 +40,19 @@ const baseUrl = import.meta.env.BASE_URL
 const routerBasename = !baseUrl || baseUrl === '.' || baseUrl === '/' ? undefined : baseUrl
 
 function Updaters() {
+  const onClmm = useLocation().pathname.startsWith('/clamm')
+
   return (
     <>
       <ListsUpdater />
       <UserUpdater />
-      <ApplicationUpdater />
-      <TransactionUpdater />
-      <MulticallUpdater />
+      {!onClmm && (
+        <>
+          <ApplicationUpdater />
+          <TransactionUpdater />
+          <MulticallUpdater />
+        </>
+      )}
     </>
   )
 }

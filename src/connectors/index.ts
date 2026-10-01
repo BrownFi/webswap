@@ -106,6 +106,23 @@ const monad = overrideChain({
   ],
 })
 
+export const HEMI_CHAIN_ID = 43111
+export const hemi: Chain = {
+  id: HEMI_CHAIN_ID,
+  name: 'Hemi',
+  nativeCurrency: { decimals: 18, name: 'Ether', symbol: 'ETH' },
+  rpcUrls: {
+    default: { http: ['https://rpc.hemi.network/rpc'] },
+  },
+  blockExplorers: {
+    default: { name: 'Hemi Explorer', url: 'https://explorer.hemi.xyz' },
+  },
+  contracts: {
+    multicall3: { address: '0x69D57B9D705eaD73a5d2f2476C30c55bD755cc2F', blockCreated: 4904420 },
+  },
+  iconUrl: 'https://assets.coingecko.com/coins/images/68469/standard/hemi.png',
+}
+
 // Robinhood Chain (Arbitrum L2, native ETH) — not in viem/chains, defined inline.
 const robinhood: Chain = {
   id: 4663,
@@ -176,6 +193,10 @@ const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
+// Hemi is wallet-selectable for CLAMM but intentionally excluded from BrownFi's
+// product chain list because the legacy swap/pool state has no Hemi token maps.
+export const selectableChains = [...availableChains, hemi] as [Chain, ...Chain[]]
+
 // RainbowKit's default wallet groups (Rainbow, MetaMask, Coinbase, WalletConnect,
 // plus EIP-6963 auto-detected injected wallets). We add Rabby into the "Popular"
 // group so it sits alongside the main wallets — by name, with icon + install
@@ -199,9 +220,11 @@ const wallets = inSafeApp
       i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet, safeWallet] } : group,
     )
 
+const walletChains = [...availableChains, hemi] as [Chain, ...Chain[]]
+
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',
-  chains: availableChains,
+  chains: walletChains,
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? '',
   ssr: false,
   wallets,

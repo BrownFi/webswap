@@ -1,5 +1,7 @@
-import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useAccount } from 'wagmi'
+import { HEMI_CHAIN_ID } from 'connectors'
 import 'rc-slider/assets/index.css'
 import 'theme/fonts.css'
 import 'theme/index.css'
@@ -27,8 +29,9 @@ const PoolDetail = lazy(() => import('./Pool/Detail'))
 const Portfolio = lazy(() => import('./Portfolio'))
 const Dashboard = lazy(() => import('./Dashboard'))
 const Settings = lazy(() => import('./Admin'))
+const ClmmApp = lazy(() => import('@clmm/ClmmApp'))
 
-const BodyWrapper = styled.div`
+const BodyWrapper = styled.div<{ $clmm?: boolean }>`
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -53,18 +56,43 @@ const BodyWrapper = styled.div`
     padding-top: 100px;
     padding-bottom: 100px;
   `};
+
+  ${({ $clmm }) => $clmm && `min-width: 0;`}
 `
 
+function ChainRouteSync() {
+  const { chainId, isConnected } = useAccount()
+  const navigate = useNavigate()
+  const onClmm = useLocation().pathname.startsWith('/clamm')
+
+  useEffect(() => {
+    if (chainId === HEMI_CHAIN_ID && !onClmm) navigate('/clamm/swap')
+    else if (isConnected && chainId && chainId !== HEMI_CHAIN_ID && onClmm) navigate('/swap')
+  }, [chainId, isConnected, navigate, onClmm])
+
+  return null
+}
 
 export default function App() {
+  const onClmm = useLocation().pathname.startsWith('/clamm')
+
   return (
     <Suspense fallback={null}>
+      <ChainRouteSync />
       <GoogleAnalyticsReporter />
       <DarkModeQueryParamReader />
       <StaticScreen>
-        <BodyWrapper>
+        <BodyWrapper $clmm={onClmm}>
           <Popups />
           <Routes>
+            <Route
+              path="/clamm/*"
+              element={
+                <RouteErrorBoundary>
+                  <ClmmApp />
+                </RouteErrorBoundary>
+              }
+            />
             <Route path="/" element={<Navigate to="/swap" replace />} />
             <Route path="/home" element={<Navigate to="/swap" replace />} />
             <Route

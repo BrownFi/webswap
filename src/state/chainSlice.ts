@@ -3,12 +3,14 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { getDefaultChain } from 'connectors'
 import { AppState } from 'state'
 
+const toSerializableChain = (chain: Chain): Chain => JSON.parse(JSON.stringify(chain)) as Chain
+
 export const chainSlice = createSlice({
-  initialState: getDefaultChain() as Chain,
+  initialState: toSerializableChain(getDefaultChain() as Chain),
   name: 'selectedChain',
   reducers: {
     switchChain: (state, { payload: chain }: PayloadAction<Chain>) => {
-      return chain
+      return toSerializableChain(chain)
     },
   },
 })
