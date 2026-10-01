@@ -5,6 +5,7 @@ import { IDerivedSwapInfo, useSwapState } from '@clmm/state/swapStore'
 import { SwapField } from '@clmm/types/swap-field'
 import { useNordsternQuote } from './useNordsternQuote'
 import { useSwapRoutePreference } from '@clmm/state/routePreferenceStore'
+import { NORDSTERN_PREVIEW_ACCOUNT } from '@clmm/config/nordstern'
 
 /**
  * Best-of comparison between the native Algebra trade and a Nordstern aggregator
@@ -44,7 +45,7 @@ export function useNordsternSwap(derivedSwap: IDerivedSwapInfo) {
     tokenOut: outputCurrency?.wrapped.address as Address,
     tokenOutIsNative: outputCurrency?.isNative,
     amountIn,
-    from: address as Address,
+    from: address ?? NORDSTERN_PREVIEW_ACCOUNT,
     slippage,
     enabled: isExactIn && !isWrap,
   })

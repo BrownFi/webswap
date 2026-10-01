@@ -19,6 +19,10 @@ export const NORDSTERN_ROUTER: Record<number, Address> = {
 // Sentinel the API uses for the native token.
 export const NORDSTERN_NATIVE_SENTINEL = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' as Address
 
+// Nordstern requires `from` to build a quote even when no wallet is connected.
+// The query is replaced with the connected account's quote before execution.
+export const NORDSTERN_PREVIEW_ACCOUNT = '0x0000000000000000000000000000000000000000' as Address
+
 export const isNordsternSupported = (chainId?: number) => Boolean(chainId && NORDSTERN_ROUTER[chainId])
 
 /**
