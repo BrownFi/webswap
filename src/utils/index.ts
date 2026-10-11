@@ -114,6 +114,9 @@ export function getEtherscanLink(
     case ChainId.ROBINHOOD_MAINNET:
       prefix = 'https://robin.etherscan.io'
       break
+    case ChainId.HEMI_MAINNET:
+      prefix = 'https://explorer.hemi.xyz'
+      break
     case ChainId.SEI_MAINNET:
       prefix = 'https://seiscan.io'
       break
@@ -335,6 +338,8 @@ export function getScanText(chainId: ChainId) {
       return 'Lineascan'
     case ChainId.ROBINHOOD_MAINNET:
       return 'Blockscout'
+    case ChainId.HEMI_MAINNET:
+      return 'Hemi Explorer'
     case ChainId.SEI_MAINNET:
       return 'Seiscan'
     case ChainId.MONAD:

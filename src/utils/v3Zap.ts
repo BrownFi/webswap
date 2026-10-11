@@ -12,7 +12,7 @@ import { encodeAbiParameters, parseAbiParameters } from 'viem'
 import { getRouterAddress, getFactoryAddress } from 'lib/sdk/utils'
 import { routerV3Gen, zapV3Gen } from 'lib/sdk/constants/addresses'
 import { createReadClient } from 'lib/sdk/rpc'
-import { buildPythUpdatesUrl, normalizePythUpdateData } from 'lib/sdk/constants/pyth'
+import { buildPythUpdatesUrl, usesEmptyPythUpdateData, normalizePythUpdateData } from 'lib/sdk/constants/pyth'
 
 // On v3-final deployments zap entrypoints live on a separate BrownFiV3Zap
 // contract. On older deployments the router still hosts them, so we fall
@@ -98,6 +98,9 @@ export async function buildV3UpdateData(
   chainId: ChainId,
   version: number,
 ): Promise<string> {
+  // Keeper-fed oracle chains (Hemi): zap takes the empty bytes '0x' — the router
+  // reads the price the keeper already pushed, so no feed-id reads or blob fetch.
+  if (usesEmptyPythUpdateData(chainId)) return '0x'
   const factoryAddress = getFactoryAddress(chainId, version)
   if (!factoryAddress) {
     // If no V3 factory, return empty encoded bytes

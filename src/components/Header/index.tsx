@@ -11,7 +11,9 @@ import { useSwitchChain } from 'wagmi'
 const StyledConnectButton = () => {
   const [chainModalOpen, setChainModalOpen] = useState(false)
   const [accountModalOpen, setAccountModalOpen] = useState(false)
-  const { switchChain } = useSwitchChain()
+  // switchChainAsync (not switchChain): ChainModal awaits the switch before it
+  // routes, so CLAMM is never entered while the wallet is still on another chain.
+  const { switchChainAsync } = useSwitchChain()
 
   return (
     <ConnectButton.Custom>
@@ -61,7 +63,7 @@ const StyledConnectButton = () => {
                     <ChainModal
                       isOpen={chainModalOpen}
                       onClose={() => setChainModalOpen(false)}
-                      onSwitchChain={(chainId) => switchChain?.({ chainId })}
+                      onSwitchChain={(chainId) => switchChainAsync({ chainId })}
                     />
                   </>
                 )
@@ -97,7 +99,7 @@ const StyledConnectButton = () => {
                   <ChainModal
                     isOpen={chainModalOpen}
                     onClose={() => setChainModalOpen(false)}
-                    onSwitchChain={(chainId) => switchChain?.({ chainId })}
+                    onSwitchChain={(chainId) => switchChainAsync({ chainId })}
                   />
                 </div>
               )
@@ -109,7 +111,7 @@ const StyledConnectButton = () => {
   )
 }
 import SwitchVersion from 'components/SwitchVersion'
-import { appEnvLabel, HEMI_CHAIN_ID, isMainnet } from 'connectors'
+import { appEnvLabel, isMainnet } from 'connectors'
 import { useActiveWeb3React } from 'hooks'
 import { useAccount } from 'wagmi'
 import CustomAccountDisplay from './CustomAccountDisplay'
@@ -161,9 +163,11 @@ export const StyledMenuButton = ({ className, children, ...props }: React.Button
 )
 
 function MainNav() {
-  const { address, chainId } = useAccount()
+  const { address } = useAccount()
   const location = useLocation()
-  const showClmmNav = chainId === HEMI_CHAIN_ID || location.pathname.startsWith('/clamm')
+  // Route-based only: Hemi now hosts BOTH BrownFi V3 (webswap nav) and CLAMM, so
+  // the wallet being on Hemi no longer implies the CLAMM product.
+  const showClmmNav = location.pathname.startsWith('/clamm')
   const clmmPoolActive = location.pathname.startsWith('/clamm/pool')
   const webswapPoolActive = ['/pool', '/add', '/remove', '/create', '/find'].some((path) =>
     location.pathname.startsWith(path),
@@ -200,10 +204,10 @@ function MainNav() {
 
 export default function Header() {
   const { account } = useActiveWeb3React()
-  const { isConnected, chainId } = useAccount()
+  const { isConnected } = useAccount()
   const showCustomAccountDisplay = !!account && !isConnected
   const location = useLocation()
-  const showClmmNav = chainId === HEMI_CHAIN_ID || location.pathname.startsWith('/clamm')
+  const showClmmNav = location.pathname.startsWith('/clamm')
 
   return (
     <div

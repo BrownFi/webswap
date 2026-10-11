@@ -8,6 +8,17 @@ import { ChainId } from './chainId'
 // The BE proxy is served on the same host as the indexer (VITE_API_URL): api.brownfi.io
 // on prod, beta-api on beta, dev-api on dev — all expose /pyth/v2/updates/price/latest.
 // Deriving from VITE_API_URL keeps each chain on the right host per environment.
+// Chains where the FE must NOT send a Pyth update blob: the router's oracle is
+// keeper-fed on-chain, so every updateData argument is the empty bytes '0x' (per
+// Chester, 2026-10-09). These chains still USE Pyth — factory.priceFeedIds holds
+// the canonical Pyth feed ids and router.PYTH() serves the prices — so feed-id
+// lookups and off-chain Hermes price reads (USD display) stay enabled; only the
+// in-tx update is dropped, because pushing a blob the keeper already owns is
+// redundant (and the custom oracle rejects it).
+const EMPTY_UPDATE_DATA_CHAINS = new Set<number>([ChainId.HEMI_MAINNET])
+export const usesEmptyPythUpdateData = (chainId?: number): boolean =>
+  chainId != null && EMPTY_UPDATE_DATA_CHAINS.has(chainId)
+
 const HERMES_UPDATES = 'https://hermes.pyth.network/v2/updates/price/latest'
 const API_BASE = (import.meta.env.VITE_API_URL || 'https://api.brownfi.io').replace(/\/$/, '')
 const API_PROXY_UPDATES = `${API_BASE}/pyth/v2/updates/price/latest`
@@ -20,7 +31,11 @@ export function pythUpdatesBase(chainId?: number): string {
     chainId === ChainId.ROBINHOOD_MAINNET ||
     chainId === ChainId.ARBITRUM_MAINNET ||
     chainId === ChainId.LINEA_MAINNET ||
-    chainId === ChainId.HYPER_EVM
+    chainId === ChainId.HYPER_EVM ||
+    // Hemi never sends an update blob (see usesEmptyPythUpdateData), but its feed
+    // ids are still read off-chain for USD display — and the public Hermes host
+    // started answering 401 to our egress, so use the proxy here too.
+    chainId === ChainId.HEMI_MAINNET
     ? API_PROXY_UPDATES
     : HERMES_UPDATES
 }

@@ -178,6 +178,7 @@ const mainChains: readonly [Chain, ...Chain[]] = [
   linea,
   monad,
   robinhood,
+  hemi,
 ]
 const betaChains: readonly [Chain, ...Chain[]] = [
   berachain,
@@ -187,15 +188,18 @@ const betaChains: readonly [Chain, ...Chain[]] = [
   linea,
   monad,
   robinhood,
+  hemi,
 ]
 const testChains: readonly [Chain, ...Chain[]] = [berachain, sepolia]
 
 export const availableChains = appEnv === 'mainnet' ? mainChains : appEnv === 'beta' ? betaChains : testChains
 export const getDefaultChain = (index?: number): Chain => availableChains[index ?? 0]
 
-// Hemi is wallet-selectable for CLAMM but intentionally excluded from BrownFi's
-// product chain list because the legacy swap/pool state has no Hemi token maps.
-export const selectableChains = [...availableChains, hemi] as [Chain, ...Chain[]]
+// Hemi is a full BrownFi V3 chain since 2026-10 (it also hosts the separate CLAMM
+// product — the chain dropdown offers both as distinct entries). On envs whose
+// chain list doesn't include Hemi (testnet), keep it wallet-selectable for CLAMM.
+const hasHemi = availableChains.some((c) => c.id === HEMI_CHAIN_ID)
+export const selectableChains = (hasHemi ? [...availableChains] : [...availableChains, hemi]) as [Chain, ...Chain[]]
 
 // RainbowKit's default wallet groups (Rainbow, MetaMask, Coinbase, WalletConnect,
 // plus EIP-6963 auto-detected injected wallets). We add Rabby into the "Popular"
@@ -220,7 +224,7 @@ const wallets = inSafeApp
       i === popularIdx ? { ...group, wallets: [...group.wallets, rabbyWallet, safeWallet] } : group,
     )
 
-const walletChains = [...availableChains, hemi] as [Chain, ...Chain[]]
+const walletChains = (hasHemi ? [...availableChains] : [...availableChains, hemi]) as [Chain, ...Chain[]]
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Brownfi',

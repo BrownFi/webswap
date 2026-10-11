@@ -83,6 +83,7 @@ const CHAIN_NAMES: Record<number, string> = {
   [ChainId.LINEA_MAINNET]: 'Linea',
   [ChainId.ARBITRUM_MAINNET]: 'Arbitrum',
   [ChainId.ROBINHOOD_MAINNET]: 'Robinhood',
+  [ChainId.HEMI_MAINNET]: 'Hemi',
 }
 
 const Page = styled.main`

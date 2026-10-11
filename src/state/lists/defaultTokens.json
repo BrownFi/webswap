@@ -611,6 +611,22 @@
       "symbol": "LBGT",
       "decimals": 18,
       "logoURI": "https://berascan.com/token/images/lbgt_32.svg"
+    },
+    {
+      "chainId": 43111,
+      "address": "0x4200000000000000000000000000000000000006",
+      "name": "Wrapped Ether",
+      "symbol": "WETH",
+      "decimals": 18,
+      "logoURI": "https://assets.coingecko.com/coins/images/2518/small/weth.png"
+    },
+    {
+      "chainId": 43111,
+      "address": "0xad11a8BEb98bbf61dbb1aa0F6d6F2ECD87b35afA",
+      "name": "USD Coin",
+      "symbol": "USDC.e",
+      "decimals": 6,
+      "logoURI": "https://assets.coingecko.com/coins/images/6319/small/usdc.png"
     }
   ]
 }

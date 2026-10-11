@@ -29,7 +29,7 @@ import { useMemo } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useActiveWeb3React } from 'hooks'
 import { ChainId } from '@brownfi/sdk'
-import { V3_OFFICIAL_USE_INDEXER, VERSION } from 'lib/sdk/constants/addresses'
+import { ROUTER_ADDRESS, V3_OFFICIAL_USE_INDEXER, VERSION } from 'lib/sdk/constants/addresses'
 import { availableChains, isBetaApi, isV3Enabled } from 'connectors'
 import { graphqlFetcher } from 'utils/graphql'
 import { useHermesPricesByFeed } from 'hooks/useHermesPricesByFeed'
@@ -105,7 +105,13 @@ const BETA_V2_INDEXER_CHAINS: ChainId[] = [
 const V2_INDEXER_CHAINS: ChainId[] = (isBetaApi
   ? BETA_V2_INDEXER_CHAINS
   : availableChains.map((c) => c.id as ChainId)
-).filter((chainId) => availableChains.some((chain) => chain.id === chainId))
+)
+  .filter((chainId) => availableChains.some((chain) => chain.id === chainId))
+  // A chain with no V2 router never had V2 pools, so its /indexer route answers
+  // HTTP 500 — the prod branch above derives from the wallet chain list, which
+  // now includes V3-only chains (Hemi, Robinhood). Same intent as the explicit
+  // beta list: do not fire dead indexer routes on every Portfolio visit.
+  .filter((chainId) => !!ROUTER_ADDRESS[chainId])
 
 // V3 (Official) indexer chains — where V3_OFFICIAL_USE_INDEXER is on (the BE /
 // Goldsky V3 indexer is live). Pilot is retired, so the portfolio reads Official

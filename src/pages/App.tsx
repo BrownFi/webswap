@@ -66,8 +66,10 @@ function ChainRouteSync() {
   const onClmm = useLocation().pathname.startsWith('/clamm')
 
   useEffect(() => {
-    if (chainId === HEMI_CHAIN_ID && !onClmm) navigate('/clamm/swap')
-    else if (isConnected && chainId && chainId !== HEMI_CHAIN_ID && onClmm) navigate('/swap')
+    // CLAMM serves ONLY Hemi — leave it when the wallet lands on another chain.
+    // The reverse is no longer forced: Hemi hosts BOTH BrownFi V3 (webswap routes)
+    // and CLAMM, and the chain dropdown picks the product via its two Hemi rows.
+    if (isConnected && chainId && chainId !== HEMI_CHAIN_ID && onClmm) navigate('/swap')
   }, [chainId, isConnected, navigate, onClmm])
 
   return null

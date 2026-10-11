@@ -13,6 +13,14 @@ export const graphqlFetcher = async ({
   variables: object
 }) => {
   const { chainId, version, ...restVar } = variables as { chainId: number; version?: number }
+  // No V3 indexer for this chain (V3_OFFICIAL_USE_INDEXER off, e.g. Hemi until the
+  // BE configures chainId 43111) → the endpoint answers HTTP 500 for every call.
+  // Short-circuit here rather than per-hook: pool list and pool detail each fan out
+  // a handful of V3 queries (pair, pair-account, transactions, chart buckets), and
+  // gating them one by one has already let strays through. Those pages read on-chain
+  // on these chains anyway, so returning no data is the correct answer — and it
+  // matches the `res.data ?? null` contract every caller already handles.
+  if (isV3Like(version) && !v3UseIndexer(chainId, version)) return null
   if (chainId !== ChainId.BERA_MAINNET) {
     query = query.replace(/stakeLP/g, '')
   }

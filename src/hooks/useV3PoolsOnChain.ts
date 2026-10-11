@@ -7,14 +7,18 @@
  * `factory.allPairs()` directly and rehydrates each pool's state via
  * Multicall3 so the FE shows what's actually on-chain on the new factory.
  *
- * Trade-off: time-series fields (tvl, apr, volumeDay, volume7Day) come back
- * as 0 because they require indexer history. The list renders, sorting is
- * weak, charts are blank. This is acceptable for testing during the
- * window between contract deploy and indexer catch-up.
+ * TVL IS computed here: reserves come from the pair and USD prices from the
+ * factory's Pyth feed ids, so the value columns work without an indexer.
+ *
+ * Trade-off: the genuinely historical fields (apr, volumeDay, volume7Day, feeDay)
+ * still come back as 0 — they need indexer history with no on-chain equivalent —
+ * so those columns sort weakly and charts are blank. Acceptable during the window
+ * between contract deploy and indexer catch-up.
  */
 import { useQuery } from '@tanstack/react-query'
 import type { PairStats } from 'components/PositionCard/usePoolStats'
 import { factoryV3Gen } from 'lib/sdk/constants/addresses'
+import { getHermesPrices } from 'lib/sdk/utils'
 import { createReadClient, rpcUrlsFor } from 'lib/sdk/rpc'
 import { GET_CONFIG_ABI, fromQ64, fromPrec } from 'utils/v3Config'
 
@@ -49,6 +53,33 @@ type ConfigStruct = {
   pythWeight: number
   gamma: number
 }
+
+/**
+ * USD prices for the on-chain path, best effort. The V3 factory holds a Pyth feed
+ * id per token, so the same off-chain price source the router's keeper uses can
+ * price these pools: one price request covering ALL tokens at once, plus a cached
+ * feed-id read per token. Without this, TVL stays 0 on indexer-less chains even
+ * after someone adds liquidity, which reads as a bug. A failure (no feed
+ * registered, price host down) falls back to the old behavior of no prices rather
+ * than failing the whole pool list.
+ */
+async function fetchTokenPrices(
+  tokenAddresses: string[],
+  chainId: number,
+  version: number,
+): Promise<Record<string, number>> {
+  try {
+    return await getHermesPrices(tokenAddresses, chainId, version)
+  } catch {
+    return {}
+  }
+}
+
+/** TVL = Σ reserve × price, matching the indexer's definition (and the pool
+ *  detail page's value0 + value1). Sides whose token has no price contribute 0,
+ *  so a partially-priced pool is understated rather than hidden. */
+const computeTvl = (reserve0: number, price0: number, reserve1: number, price1: number) =>
+  reserve0 * price0 + reserve1 * price1
 
 const decodeConfig = (cfg: ConfigStruct) => ({
   kB: fromQ64(cfg.kB),
@@ -189,12 +220,20 @@ async function fetchV3PoolsOnChain(chainId: number, version: number): Promise<Pa
       decimals,
       symbol,
       name,
-      // price/priceFeedId would come from the indexer's price feed mapping.
-      // Leave at 0/empty — TVL columns will read 0 until indexer catches up.
+      // Filled in from the Pyth feeds below. priceFeedId stays empty: its only
+      // consumer (PoolBalanceChart's market reference) is indexer-gated anyway,
+      // so reading one per token would be RPC spent on an unused field.
       price: 0,
       priceFeedId: '',
       totalSupply: Number(totalSupplyRaw) / 10 ** decimals,
     }
+  }
+
+  // Step 4: USD prices for every token in the list (one request, best effort).
+  const prices = await fetchTokenPrices(uniqueTokens, chainId, version)
+  for (const addr of uniqueTokens) {
+    const price = prices[addr]
+    if (price > 0) tokenMap[addr].price = price
   }
 
   // Shape match: convert raw reserves → float in token units (the indexer
@@ -217,7 +256,8 @@ async function fetchV3PoolsOnChain(chainId: number, version: number): Promise<Pa
       totalSupply,
       reserve0,
       reserve1,
-      tvl: 0,
+      tvl: computeTvl(reserve0, t0?.price ?? 0, reserve1, t1?.price ?? 0),
+      // apr/volume need indexer history — no on-chain equivalent.
       apr: 0,
       volumeDay: 0,
       volume7Day: 0,
@@ -301,6 +341,15 @@ async function fetchV3PoolOnChain(chainId: number, version: number, pairAddress:
   const t0 = readToken(0, token0Addr)
   const t1 = readToken(4, token1Addr)
 
+  // USD prices from the factory's Pyth feeds (best effort) so the detail page's
+  // TVL / pool-balance split aren't stuck at 0 without an indexer.
+  const prices = await fetchTokenPrices([token0Addr, token1Addr], chainId, version)
+  if (prices[token0Addr] > 0) t0.price = prices[token0Addr]
+  if (prices[token1Addr] > 0) t1.price = prices[token1Addr]
+
+  const reserve0 = Number(reserves[0]) / 10 ** t0.decimals
+  const reserve1 = Number(reserves[1]) / 10 ** t1.decimals
+
   return {
     __typename: 'pair',
     id: pairAddress,
@@ -308,9 +357,10 @@ async function fetchV3PoolOnChain(chainId: number, version: number, pairAddress:
     protocolFee: 0,
     feeDay: 0,
     totalSupply: Number(totalSupplyRaw) / 1e18,
-    reserve0: Number(reserves[0]) / 10 ** t0.decimals,
-    reserve1: Number(reserves[1]) / 10 ** t1.decimals,
-    tvl: 0,
+    reserve0,
+    reserve1,
+    tvl: computeTvl(reserve0, t0.price, reserve1, t1.price),
+    // apr/volume need indexer history — no on-chain equivalent.
     apr: 0,
     volumeDay: 0,
     volume7Day: 0,

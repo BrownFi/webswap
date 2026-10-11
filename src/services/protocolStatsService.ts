@@ -8,8 +8,11 @@
  *      rolling-24h volume/fees (`pairs`), combined in a single request.
  *      All-time values are pre-summed by the indexer; only the 24h rolling
  *      numbers are summed client-side over pairs.
- *   2. Hemi (CLMM product) — read from the hemi-analytics subgraph. Hemi hosts
- *      no BrownFi V3, so its factory aggregates come from that subgraph.
+ *   2. Hemi CLMM product — read from the hemi-analytics subgraph, which only
+ *      covers the Algebra/CLMM pools. Hemi ALSO runs BrownFi V3 (deployed
+ *      2026-10-09); once its BE /indexer/v3 is configured for chainId 43111
+ *      that part arrives through source 1 like every other V3 chain, and the
+ *      two must be summed rather than treated as alternatives.
  *   3. V2 (sunset) — all-time volume/fees frozen as constants. V2 is dead, so
  *      these never change; hardcoding them avoids re-fetching a stopped
  *      indexer while keeping the historical all-time numbers in the cards.
@@ -64,8 +67,9 @@ const V3_INDEXER_CHAINS: number[] = [
   ROBINHOOD_CHAIN_ID,
 ]
 
-// Hemi (CLMM product) — no BrownFi V3 deployment on Hemi; its stats come from
-// the hemi-analytics subgraph (HEMI_SUBGRAPH_URL above).
+// Hemi CLMM product — stats come from the hemi-analytics subgraph
+// (HEMI_SUBGRAPH_URL above). Hemi's separate BrownFi V3 deployment is NOT in
+// that subgraph; it joins via the V3 indexer once chainId 43111 is configured.
 
 // V2 is sunset. These all-time figures are FROZEN snapshots of the legacy V2
 // indexer (`factories.totalVolume` / `factories.totalFee`, summed over its 5

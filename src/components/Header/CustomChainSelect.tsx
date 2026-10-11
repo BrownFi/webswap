@@ -10,13 +10,14 @@ const CustomChainSelect = () => {
   const { isConnected } = useAccount()
   const chain = useSelector(chainSelector)
   const location = useLocation()
-  const navigate = useNavigate()
-  const { switchChain: switchWagmiChain } = useSwitchChain()
+  const { switchChainAsync } = useSwitchChain()
 
   const [isOpen, setOpen] = useState(false)
 
   const hemiChain = selectableChains.find((candidate) => candidate.id === HEMI_CHAIN_ID)
-  const displayChain = location.pathname.startsWith('/clamm') && hemiChain ? hemiChain : chain
+  const onClamm = location.pathname.startsWith('/clamm')
+  const displayChain = onClamm && hemiChain ? hemiChain : chain
+  const displayName = onClamm ? 'Hemi CLAMM' : displayChain.name
 
   if (isConnected) return <div />
 
@@ -32,8 +33,8 @@ const CustomChainSelect = () => {
         }}
         onClick={() => setOpen(true)}
       >
-        <img style={{ width: '18px', height: '18px', borderRadius: '50%' }} src={displayChain.iconUrl as string} alt={displayChain.name} />
-        <span style={{ color: '#FBFBFD', fontSize: '13px', fontWeight: 500 }}>{displayChain.name}</span>
+        <img style={{ width: '18px', height: '18px', borderRadius: '50%' }} src={displayChain.iconUrl as string} alt={displayName} />
+        <span style={{ color: '#FBFBFD', fontSize: '13px', fontWeight: 500 }}>{displayName}</span>
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
           <path d="M5 7.5L10 12.5L15 7.5" stroke="#978A80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
@@ -42,14 +43,17 @@ const CustomChainSelect = () => {
       <ChainModal
         isOpen={isOpen}
         onClose={() => setOpen(false)}
-        onSwitchChain={(chainId) => {
-          switchWagmiChain({ chainId })
-          navigate(chainId === HEMI_CHAIN_ID ? '/clamm/swap' : '/swap')
-        }}
+        onSwitchChain={(chainId) => switchChainAsync({ chainId })}
       />
     </>
   )
 }
+
+// One selectable row. Hemi appears TWICE — once as the BrownFi V3 chain ("Hemi")
+// and once as the separate CLAMM product ("Hemi CLAMM"). Both share wagmi chain
+// id 43111; only the route distinguishes them, so `clamm` rides along as the
+// FE-side mode and the active highlight keys off the current pathname.
+type ChainRow = { chain: (typeof selectableChains)[number]; clamm: boolean }
 
 export const ChainModal = ({
   isOpen,
@@ -58,13 +62,22 @@ export const ChainModal = ({
 }: {
   isOpen: boolean
   onClose: () => void
-  onSwitchChain?: (chainId: number) => void
+  // May return a promise (wagmi's switchChainAsync). It is awaited before routing
+  // so CLAMM isn't entered while the wallet is still on the previous chain — see
+  // the click handler below.
+  onSwitchChain?: (chainId: number) => void | Promise<unknown>
 }) => {
   const chain = useSelector(chainSelector)
   const dispatch = useDispatch()
   const { chainId: walletChainId } = useAccount()
   const location = useLocation()
-  const activeChainId = walletChainId ?? (location.pathname.startsWith('/clamm') ? HEMI_CHAIN_ID : chain?.id)
+  const navigate = useNavigate()
+  const onClamm = location.pathname.startsWith('/clamm')
+  const activeChainId = walletChainId ?? (onClamm ? HEMI_CHAIN_ID : chain?.id)
+
+  const rows: ChainRow[] = selectableChains.flatMap((c) =>
+    c.id === HEMI_CHAIN_ID ? [{ chain: c, clamm: false }, { chain: c, clamm: true }] : [{ chain: c, clamm: false }],
+  )
 
   if (!isOpen) return null
   return createPortal(
@@ -100,20 +113,36 @@ export const ChainModal = ({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {selectableChains.map((c) => {
-            const isHemi = c.id === HEMI_CHAIN_ID
-            const isActive = activeChainId === c.id
+          {rows.map(({ chain: c, clamm }) => {
+            // Same wagmi chain id for both Hemi rows → disambiguate by route mode.
+            const isActive = activeChainId === c.id && (c.id !== HEMI_CHAIN_ID || clamm === onClamm)
+            const label = clamm ? 'Hemi CLAMM' : c.name
 
             return (
               <button
-                key={c.id}
-                onClick={() => {
+                key={`${c.id}${clamm ? '-clamm' : ''}`}
+                onClick={async () => {
                   onClose()
-                  if (!isHemi) {
+                  // CLAMM is a standalone app shell with its own config — it never
+                  // reads the webswap redux chain, so only non-CLAMM picks update it.
+                  if (!clamm) {
                     const parsed = JSON.parse(JSON.stringify(c, null, 2))
                     dispatch(switchChain(parsed))
                   }
-                  if (onSwitchChain) onSwitchChain(c.id)
+                  // AWAIT the wallet switch before routing. ChainRouteSync ejects
+                  // from /clamm whenever the connected wallet isn't on Hemi, so
+                  // navigating first would bounce the user straight back out while
+                  // the switch is still pending approval. A rejected switch leaves
+                  // the user where they are rather than on a product they can't use.
+                  try {
+                    await onSwitchChain?.(c.id)
+                  } catch {
+                    return
+                  }
+                  // Route follows the picked PRODUCT: CLAMM lives under /clamm,
+                  // everything else (Hemi V3 included) is the regular webswap.
+                  if (clamm && !onClamm) navigate('/clamm/swap')
+                  else if (!clamm && onClamm) navigate('/swap')
                 }}
                 style={{
                   display: 'flex',
@@ -132,8 +161,8 @@ export const ChainModal = ({
                   color: isActive ? '#FFFFFF' : '#CFC7C1',
                 }}
               >
-                {c.iconUrl && <img src={c.iconUrl as string} alt={c.name} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />}
-                <span>{c.name}</span>
+                {c.iconUrl && <img src={c.iconUrl as string} alt={label} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />}
+                <span>{label}</span>
               </button>
             )
           })}

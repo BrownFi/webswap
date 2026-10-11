@@ -6,7 +6,7 @@ import { keccak256, pack } from '@ethersproject/solidity'
 import { encodeAbiParameters, parseAbiParameters } from 'viem'
 import { createReadClient } from '../rpc'
 import { ChainId } from '../constants/chainId'
-import { buildPythUpdatesUrl, normalizePythUpdateData } from '../constants/pyth'
+import { buildPythUpdatesUrl, usesEmptyPythUpdateData, normalizePythUpdateData } from '../constants/pyth'
 import {
   BigintIsh,
   ZERO,
@@ -142,6 +142,9 @@ async function getFeedPriceAndFee(pairs: Pair[], chainId: number): Promise<[stri
 
 // Helper: fetch Pyth price update data and encode for V2/V3 router
 async function solidityPackHelper(addresses: string[], chainId: number, version: number = 2): Promise<string> {
+  // Keeper-fed oracle chains (Hemi): quotes take the empty bytes '0x' — the router
+  // reads the price the keeper already pushed, so no feed-id reads or blob fetch.
+  if (usesEmptyPythUpdateData(chainId)) return '0x'
   const client = createReadClient(chainId)
   const { getFactoryAddress: getFactory, getCachedPriceFeedId } = await import('../utils')
   const factoryAddr = getFactory(chainId, version)

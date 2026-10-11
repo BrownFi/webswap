@@ -127,6 +127,10 @@ export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.LINEA_MAINNET]: '0x0bf5Fa65dAE6Db32250E5DC74489cedadd38D338',
   [ChainId.ARBITRUM_MAINNET]: '0x6C0a11200c022AF316F591158B5686931ef93DCf',
   [ChainId.ROBINHOOD_MAINNET]: '0x32B2A647821613e730e7ED967462A629Ba887527',
+  // Hemi (43111) — BrownFi V3 deployed 2026-10-09. Its Pyth oracle is keeper-fed
+  // (router.PYTH() below), so the FE sends an empty '0x' updateData — pushing a blob
+  // reverts UnauthorizedUpdater. See usesEmptyPythUpdateData in constants/pyth.ts.
+  [ChainId.HEMI_MAINNET]: '0xa98A8C15a91505c927709c2D77B734db4a4E1426',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
@@ -135,6 +139,7 @@ export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.LINEA_MAINNET]: '0xD9a702839510ee2859bCE697F51Aae49bF8949d7',
   [ChainId.ARBITRUM_MAINNET]: '0xe49805412EDFDF4C458B297e7C1534588Fa3F1F0',
   [ChainId.ROBINHOOD_MAINNET]: '0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA',
+  [ChainId.HEMI_MAINNET]: '0x70877942671ac2A263f2E0bE309B2B53A397AF15',
 }
 export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x26645261161FA5A9736a30a51A8110a2C5082402',
@@ -143,6 +148,7 @@ export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.LINEA_MAINNET]: '0xF956002B9B6Da21BB66A413aC694Ca564377cd9a',
   [ChainId.ARBITRUM_MAINNET]: '0x98ab6C5CBb15A49AA0451427e3bA69599bC022E7',
   [ChainId.ROBINHOOD_MAINNET]: '0x6AFAf53dC5c65edD683Ed2f5522E725455Ac370D',
+  [ChainId.HEMI_MAINNET]: '0x47F26C3363E2Dd3529aF4a092Faf6e99c7cE6B29',
 }
 export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
@@ -162,6 +168,9 @@ export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   // of 2026-07-29 (live on api + beta-api, returns the WETH/USDG pool), so use the
   // indexer (pool list/detail + charts the on-chain path can't give).
   [ChainId.ROBINHOOD_MAINNET]: true,
+  // Hemi V3 deployed 2026-10-09 — on-chain reads (useV3PoolsOnChain) until Manh's
+  // BE /indexer/v3 is configured for chainId 43111; flip to true once it's live.
+  [ChainId.HEMI_MAINNET]: false,
 }
 
 /** Per-version address-map resolvers (used by the SDK getters + readers). */
@@ -276,6 +285,9 @@ export const ORACLE_GATEWAY_ADDRESS: Record<number, string> = {
   [ChainId.ARBITRUM_MAINNET]: '0xC2977cB679ddb708DBAFe600E4E6c951eBE180a6',
   [ChainId.LINEA_MAINNET]: '0x53981b24075B72790dd3931AE469B47155215c4A',
   [ChainId.BERA_MAINNET]: '0x315062EA5686289BCBe138424FD10591BeB37a75',
+  // Hemi: read live from factory.priceOracle() 2026-10-11. On Hemi this gateway IS
+  // the router's whole price source (no Pyth on this chain).
+  [ChainId.HEMI_MAINNET]: '0x27DA3715dfFEe25A7de5C65F499e2f62be25f56D',
 }
 
 export const PYTH_ADDRESS: Record<number, string> = {
@@ -284,6 +296,10 @@ export const PYTH_ADDRESS: Record<number, string> = {
   [ChainId.ARBITRUM_MAINNET]: '0xC8fB14C8F54A20a04ABDd24b2B33C2bd6B4E2ad9',
   // Robinhood: router.PYTH() custom oracle (getUpdateFee=0, keeper-fed like Bera/Linea).
   [ChainId.ROBINHOOD_MAINNET]: '0xa80258Eea4BA0865610eb239045737D08929c40b',
+  // Hemi: router.PYTH() custom oracle, read live 2026-10-11. Keeper-fed with the
+  // CANONICAL Pyth feed ids (factory.priceFeedIds returns e.g. the standard
+  // ETH/USD id), which is why the FE never sends an update blob on this chain.
+  [ChainId.HEMI_MAINNET]: '0x68F963E0CEC0360a003AB8c6D61FA3f39497c463',
   [ChainId.BSC_MAINNET]: '0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594',
   [ChainId.BASE_MAINNET]: '0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a',
   [ChainId.BERA_MAINNET]: '0x2880aB155794e7179c9eE2e38200202908C17B43',
@@ -334,6 +350,7 @@ export const RPC_URLS: Record<number, string> = {
   [ChainId.ARBITRUM_SEPOLIA]: 'https://sepolia-rollup.arbitrum.io/rpc',
   [ChainId.ARBITRUM_MAINNET]: 'https://arb1.arbitrum.io/rpc',
   [ChainId.ROBINHOOD_MAINNET]: 'https://rpc.mainnet.chain.robinhood.com',
+  [ChainId.HEMI_MAINNET]: 'https://rpc.hemi.network/rpc',
   [ChainId.BERA_MAINNET]: 'https://rpc.berachain.com',
   [ChainId.HYPER_EVM]: 'https://rpc.hyperliquid.xyz/evm',
   [ChainId.LINEA_MAINNET]: 'https://rpc.linea.build',
@@ -361,6 +378,7 @@ export const RPC_FALLBACKS: Record<number, string[]> = {
   ],
   [ChainId.ARBITRUM_MAINNET]: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.drpc.org', 'https://arbitrum.therpc.io'],
   [ChainId.ROBINHOOD_MAINNET]: ['https://rpc.mainnet.chain.robinhood.com'],
+  [ChainId.HEMI_MAINNET]: ['https://rpc.hemi.network/rpc', 'https://hemi.drpc.org'],
   [ChainId.BSC_MAINNET]: ['https://bsc-dataseed1.defibit.io', 'https://bsc-dataseed1.ninicoin.io', 'https://bsc.drpc.org'],
   [ChainId.LINEA_MAINNET]: ['https://rpc.linea.build', 'https://1rpc.io/linea', 'https://linea.drpc.org'],
   [ChainId.SEI_MAINNET]: ['https://evm-rpc.sei-apis.com', 'https://sei.drpc.org', 'https://sei-evm-rpc.publicnode.com'],

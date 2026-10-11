@@ -2,7 +2,7 @@ import { isV3Like } from '../constants'
 import JSBI from 'jsbi'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ChainId } from '../constants/chainId'
-import { buildPythUpdatesUrl, normalizePythUpdateData } from '../constants/pyth'
+import { buildPythUpdatesUrl, usesEmptyPythUpdateData, normalizePythUpdateData } from '../constants/pyth'
 import { beraFeeOverrides } from 'utils/beraGas'
 import { BIPS_BASE } from '../constants/types'
 import { SwapCallbackState } from '../constants/enums'
@@ -23,6 +23,9 @@ export { SwapCallbackState }
 
 // Build Pyth updateData for V2/V3 swap calls (router pays Pyth from its own balance)
 async function buildSwapUpdateData(tokenAddresses: string[], chainId: number, version: number): Promise<string> {
+  // Keeper-fed oracle chains (Hemi): only the keeper may push prices, so sending a
+  // blob reverts UnauthorizedUpdater — updateData must be the empty bytes '0x'.
+  if (usesEmptyPythUpdateData(chainId)) return '0x'
   const factoryAddr = getFactoryAddress(chainId, version)
   if (!factoryAddr) return encodeAbiParameters(parseAbiParameters('bytes[]'), [[]])
 

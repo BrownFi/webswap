@@ -5,7 +5,7 @@ import { ChainId } from '../constants/chainId'
 import { beraFeeOverrides } from 'utils/beraGas'
 import { Field, ApprovalState } from '../constants/enums'
 import { WETH } from '../constants/tokens'
-import { buildPythUpdatesUrl, normalizePythUpdateData } from '../constants/pyth'
+import { buildPythUpdatesUrl, usesEmptyPythUpdateData, normalizePythUpdateData } from '../constants/pyth'
 import { Token } from '../entities/token'
 import { Currency, ETHER } from '../entities/currency'
 import { CurrencyAmount } from '../entities/fractions/currencyAmount'
@@ -298,7 +298,20 @@ export async function addLiquidity(
   const tokenBWrapped = (wrappedCurrency(currencyB, chainId)?.address ?? '').toLowerCase()
   let pythUpdateEncoded: `0x${string}` | null = null
   let hermesPrices: Record<string, number> = {}
-  if (version >= 2) {
+  if (version >= 2 && usesEmptyPythUpdateData(chainId)) {
+    // Keeper-fed oracle chains (Hemi): only the keeper may push a price, so the
+    // router takes an empty '0x' updateData. The PRICES from the same source are
+    // still used, so the slippage floors stay Pyth-anchored exactly like every
+    // other chain (the feed ids do exist on this factory). A price failure only
+    // costs us that anchoring — it must not fail an add that needs no blob.
+    pythUpdateEncoded = '0x'
+    try {
+      const { prices } = await fetchPythData([tokenAWrapped, tokenBWrapped], chainId, version)
+      hermesPrices = prices
+    } catch {
+      hermesPrices = {}
+    }
+  } else if (version >= 2) {
     const { updateData, prices } = await fetchPythData([tokenAWrapped, tokenBWrapped], chainId, version)
     hermesPrices = prices
     pythUpdateEncoded =
