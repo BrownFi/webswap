@@ -367,6 +367,24 @@ const ERROR_REGISTRY: Record<string, ErrorEntry> = {
   },
   '0x19abf40e': { label: 'Stale Pyth price', hint: 'Oracle price is stale. Try again in a few seconds.' },
 
+  // Pyth oracle errors (PythErrors.sol). These surface on chains whose oracle is
+  // fed by a keeper rather than by the swap itself (Hemi): if the keeper stops,
+  // the pool has no usable price and every quote reverts here. Without these
+  // entries the UI showed nothing, which reads as a broken pool rather than a
+  // price-feed outage.
+  '0x14aebe68': {
+    label: 'Price feed unavailable',
+    hint: 'This pool has no oracle price on-chain yet, so it cannot be quoted. This is a price-feed outage, not a problem with your input — please report it.',
+  },
+  '0xe69ffece': {
+    label: 'Invalid price update',
+    hint: 'The oracle rejected the price update data. Refresh the page and try again.',
+  },
+  '0xff7338bb': {
+    label: 'Price update not permitted',
+    hint: "This chain's oracle only accepts prices from its own updater, so the app must not submit one. Please report this — it means the app is misconfigured for this chain.",
+  },
+
   // Legacy V2 string-style errors (kept for completeness; mostly already
   // decoded by ethers via the V2 ABI but listed for safety).
   '0x827e7b7f': { label: 'Insufficient liquidity', hint: 'Pool does not have enough liquidity for this trade.' },
