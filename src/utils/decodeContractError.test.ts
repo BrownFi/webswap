@@ -20,6 +20,20 @@ describe('decodeContractError', () => {
     expect(msg).toMatch(/slippage tolerance/i)
   })
 
+  // Pyth oracle reverts. Reachable on chains whose oracle is keeper-fed rather
+  // than updated by the swap itself (Hemi): when the keeper stops pushing, every
+  // quote reverts PriceFeedNotFound and the toast used to render empty.
+  it('decodes PriceFeedNotFound from the real on-chain selector', () => {
+    const msg = decodeContractError({ code: 'CALL_EXCEPTION', data: '0x14aebe68', reason: null })
+    expect(msg).toMatch(/Price feed unavailable/)
+    expect(decodeContractErrorLabel({ data: '0x14aebe68' })).toBe('Price feed unavailable')
+  })
+
+  it('decodes InvalidUpdateData and UnauthorizedUpdater', () => {
+    expect(decodeContractErrorLabel({ data: '0xe69ffece' })).toBe('Invalid price update')
+    expect(decodeContractErrorLabel({ data: '0xff7338bb' })).toBe('Price update not permitted')
+  })
+
   it('decodes a BrownFi V3 string revert via error.reason', () => {
     const msg = decodeContractError({ reason: 'BrownFiV3: INSUFFICIENT_INITIAL_VALUE' })
     expect(msg).toMatch(/Initial liquidity too low/)
