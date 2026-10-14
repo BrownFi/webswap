@@ -29,6 +29,17 @@ describe('decodeContractError', () => {
     expect(decodeContractErrorLabel({ data: '0x14aebe68' })).toBe('Price feed unavailable')
   })
 
+  // Real revert captured from the beta admin page on Robinhood: the wallet held
+  // the fee/kappa/gamma roles but not the OracleSetter role, so pythWeight was
+  // rejected while every other parameter saved. The selector carries the caller.
+  it('decodes AccessManagedUnauthorized with its caller argument', () => {
+    const data = '0x068ca9d8' + '000000000000000000000000be9536bef1137915dcb047bb7a915ee9b0961de4'
+    const msg = decodeContractError({ code: 'CALL_EXCEPTION', data, reason: null })
+    expect(msg).toMatch(/lacks permission/i)
+    expect(msg).toMatch(/role/i)
+    expect(decodeContractErrorLabel({ data })).toBe('Wallet lacks permission for this parameter')
+  })
+
   it('decodes InvalidUpdateData and UnauthorizedUpdater', () => {
     expect(decodeContractErrorLabel({ data: '0xe69ffece' })).toBe('Invalid price update')
     expect(decodeContractErrorLabel({ data: '0xff7338bb' })).toBe('Price update not permitted')

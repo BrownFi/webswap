@@ -367,6 +367,17 @@ const ERROR_REGISTRY: Record<string, ErrorEntry> = {
   },
   '0x19abf40e': { label: 'Stale Pyth price', hint: 'Oracle price is stale. Try again in a few seconds.' },
 
+  // OpenZeppelin AccessManaged — the factory's per-parameter setters are
+  // `restricted`, and each one maps to its OWN role id in the AccessManager, so a
+  // wallet can legitimately set some parameters and be rejected on others (seen on
+  // Robinhood: a wallet with the fee/kappa/gamma roles but not the OracleSetter
+  // role could not set pythWeight or disThreshold). Without this entry the admin
+  // page showed an empty toast, which reads as a broken form.
+  '0x068ca9d8': {
+    label: 'Wallet lacks permission for this parameter',
+    hint: 'The connected wallet does not hold the on-chain role this specific parameter requires — each one is gated separately, which is why other parameters still save. Ask whoever controls the factory AccessManager to grant this wallet the matching role.',
+  },
+
   // Pyth oracle errors (PythErrors.sol). These surface on chains whose oracle is
   // fed by a keeper rather than by the swap itself (Hemi): if the keeper stops,
   // the pool has no usable price and every quote reverts here. Without these
