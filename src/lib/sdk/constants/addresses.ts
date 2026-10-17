@@ -127,10 +127,12 @@ export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.LINEA_MAINNET]: '0x0bf5Fa65dAE6Db32250E5DC74489cedadd38D338',
   [ChainId.ARBITRUM_MAINNET]: '0x6C0a11200c022AF316F591158B5686931ef93DCf',
   [ChainId.ROBINHOOD_MAINNET]: '0x32B2A647821613e730e7ED967462A629Ba887527',
-  // Hemi (43111) — BrownFi V3 deployed 2026-10-09. Its Pyth oracle is keeper-fed
-  // (router.PYTH() below), so the FE sends an empty '0x' updateData — pushing a blob
-  // reverts UnauthorizedUpdater. See usesEmptyPythUpdateData in constants/pyth.ts.
-  [ChainId.HEMI_MAINNET]: '0xa98A8C15a91505c927709c2D77B734db4a4E1426',
+  // Hemi (43111) — redeployed 2026-10-16 as the "whitelist" router/zap generation
+  // (prev router 0xa98A8C15…). Its Pyth oracle is keeper-fed (router.PYTH() below),
+  // so the FE sends an empty '0x' updateData — verified 2026-10-17 that even this
+  // router is still rejected with UnauthorizedUpdater when it tries to push, so the
+  // keeper remains the only writer. See usesEmptyPythUpdateData in constants/pyth.ts.
+  [ChainId.HEMI_MAINNET]: '0x6318e200c5957e161905AFbF8b6E30E8b731B20D',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
@@ -139,7 +141,7 @@ export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.LINEA_MAINNET]: '0xD9a702839510ee2859bCE697F51Aae49bF8949d7',
   [ChainId.ARBITRUM_MAINNET]: '0xe49805412EDFDF4C458B297e7C1534588Fa3F1F0',
   [ChainId.ROBINHOOD_MAINNET]: '0x831880Bd3b331249DF63bacC6e21495e5e8f1eAA',
-  [ChainId.HEMI_MAINNET]: '0x70877942671ac2A263f2E0bE309B2B53A397AF15',
+  [ChainId.HEMI_MAINNET]: '0x0df2D3B2219aacfD87Dd7051ea9CB6382CA38B30',
 }
 export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x26645261161FA5A9736a30a51A8110a2C5082402',
@@ -148,7 +150,7 @@ export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.LINEA_MAINNET]: '0xF956002B9B6Da21BB66A413aC694Ca564377cd9a',
   [ChainId.ARBITRUM_MAINNET]: '0x98ab6C5CBb15A49AA0451427e3bA69599bC022E7',
   [ChainId.ROBINHOOD_MAINNET]: '0x6AFAf53dC5c65edD683Ed2f5522E725455Ac370D',
-  [ChainId.HEMI_MAINNET]: '0x47F26C3363E2Dd3529aF4a092Faf6e99c7cE6B29',
+  [ChainId.HEMI_MAINNET]: '0x13D96941348dd92eFe850064577fCDB60024D13f',
 }
 export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
@@ -285,9 +287,10 @@ export const ORACLE_GATEWAY_ADDRESS: Record<number, string> = {
   [ChainId.ARBITRUM_MAINNET]: '0xC2977cB679ddb708DBAFe600E4E6c951eBE180a6',
   [ChainId.LINEA_MAINNET]: '0x53981b24075B72790dd3931AE469B47155215c4A',
   [ChainId.BERA_MAINNET]: '0x315062EA5686289BCBe138424FD10591BeB37a75',
-  // Hemi: read live from factory.priceOracle() 2026-10-11. On Hemi this gateway IS
-  // the router's whole price source (no Pyth on this chain).
-  [ChainId.HEMI_MAINNET]: '0x27DA3715dfFEe25A7de5C65F499e2f62be25f56D',
+  // Hemi: the 2026-10-16 redeploy's `adapter`, read live from factory.priceOracle()
+  // 2026-10-17 (prev 0x27DA3715…). It is a proxy (145 bytes) unlike the other chains'
+  // direct deployments.
+  [ChainId.HEMI_MAINNET]: '0x8FAdCD5576f9e5da067134801c9B931389C1db17',
 }
 
 export const PYTH_ADDRESS: Record<number, string> = {
