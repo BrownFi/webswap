@@ -127,12 +127,15 @@ export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.LINEA_MAINNET]: '0x0bf5Fa65dAE6Db32250E5DC74489cedadd38D338',
   [ChainId.ARBITRUM_MAINNET]: '0x6C0a11200c022AF316F591158B5686931ef93DCf',
   [ChainId.ROBINHOOD_MAINNET]: '0x32B2A647821613e730e7ED967462A629Ba887527',
-  // Hemi (43111) — redeployed 2026-10-16 as the "whitelist" router/zap generation
-  // (prev router 0xa98A8C15…). Its Pyth oracle is keeper-fed (router.PYTH() below),
-  // so the FE sends an empty '0x' updateData — verified 2026-10-17 that even this
+  // Hemi (43111) — the FULL router for the 2026-10-16 factory. NOT the "whitelist"
+  // router 0x6318e200… that shipped with it: that one is swap-only (no add/remove
+  // liquidity in any signature variant), so addLiquidityETH hit a non-existent
+  // selector and reverted with empty '0x' data. Chester pointed us here 2026-10-19.
+  // Shares its address with Base's V2 router — same deployer nonce on two chains,
+  // not a copy-paste slip. Pyth oracle is keeper-fed (router.PYTH() below) and this
   // router is still rejected with UnauthorizedUpdater when it tries to push, so the
-  // keeper remains the only writer. See usesEmptyPythUpdateData in constants/pyth.ts.
-  [ChainId.HEMI_MAINNET]: '0x6318e200c5957e161905AFbF8b6E30E8b731B20D',
+  // FE keeps sending an empty '0x' updateData — see usesEmptyPythUpdateData.
+  [ChainId.HEMI_MAINNET]: '0x454d337F8afb2dF8168547ab85d937D2445Df47a',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
