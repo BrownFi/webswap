@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { isV3Like } from '@brownfi/sdk'
 import { Pair } from '@brownfi/sdk'
 import { BigNumber } from '@ethersproject/bignumber'
@@ -75,7 +76,23 @@ export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
     return undefined
   }, [pairStats, version])
 
-  const hasIndexerData = fromIndexer !== undefined
+  // The indexer is only trusted while it is CURRENT. `updatedAt` is a chain-wide
+  // batch stamp, so a stale one means the whole indexer stopped — and config is
+  // exactly where that hurts: an admin sets a parameter, the write lands on-chain,
+  // and the panel keeps echoing the pre-write value from the dead indexer, so the
+  // write looks like it failed and gets retried. Seen on Robinhood 2026-10-21: fee
+  // was 1 bip on-chain while the indexer (3.6 days behind) still said 3 bips.
+  // Same 2-hour rule usePoolStats already applies to its own indexer values, so a
+  // healthy indexer still serves the whole pool list from one GraphQL request and
+  // no extra RPC fires.
+  const INDEXER_MAX_AGE_MINUTES = 120
+  const indexerIsFresh = useMemo(() => {
+    if (!pairStats) return false
+    if (!pairStats.updatedAt) return true // no stamp to judge by — keep prior behavior
+    return dayjs().diff(dayjs.unix(pairStats.updatedAt), 'minute') < INDEXER_MAX_AGE_MINUTES
+  }, [pairStats])
+
+  const hasIndexerData = fromIndexer !== undefined && indexerIsFresh
 
   // All params start undefined so the UI skips them on first load instead of
   // flashing zeros (the previous lambda:0 / kappa:0 / fee:0 placeholders
@@ -179,5 +196,7 @@ export const useDevStats = ({ pair, pairStats, enabled = true }: Props) => {
     stableSave({ lambda, kappa, fee, protocolFee, feeSplit: 0 })
   }, [version, v2Contract, hasIndexerData, lambdaCall.result, kappaCall.result, feeCall.result, protocolFeeCall.result, stableSave])
 
-  return fromIndexer ?? getDevStats()
+  // Stale indexer → fall through to the on-chain values the query above fetched
+  // (cached in storage), rather than rendering the stale projection.
+  return (hasIndexerData ? fromIndexer : undefined) ?? getDevStats()
 }
