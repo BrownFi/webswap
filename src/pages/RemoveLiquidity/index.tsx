@@ -705,6 +705,14 @@ export default function RemoveLiquidity() {
                       <Dots>Approving</Dots>
                     ) : approval === ApprovalState.APPROVED ? (
                       'Approved'
+                    ) : approval === ApprovalState.UNKNOWN ? (
+                      // The allowance read hasn't landed (or there's no amount yet), so
+                      // the button is disabled and approveCallback would return silently.
+                      // Labelling it "Approve" made that read as a broken app — reported
+                      // on Robinhood 2026-10-22 as "ấn approve không chạy gì cả". Say it
+                      // is still loading instead. Swap and AddLiquidity don't need this:
+                      // they only render their approve buttons once the state is known.
+                      <Dots>Loading</Dots>
                     ) : (
                       'Approve'
                     )}
