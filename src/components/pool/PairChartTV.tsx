@@ -19,7 +19,7 @@ import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
-import { hasUniV2Price, usePairTransactions } from './usePairTransactions'
+import { hasUniV2Price } from './usePairTransactions'
 
 // LP chart (Pool Detail). Four lines only, per boss (2026-07-16):
 //   • Relative Price  — BASE priced in QUOTE (e.g. WBERA/HONEY), RIGHT axis
@@ -27,8 +27,12 @@ import { hasUniV2Price, usePairTransactions } from './usePairTransactions'
 //   • LP vs. UniV2    — LP's % outperformance over the UniV2 benchmark, LEFT % axis
 //   • Volume          — per-bucket USD volume histogram, bottom
 //
-// Relative price + Volume come from the per-swap `transactions` source (bucketGrid
-// + bucketClose + setVisibleRange zoom + scroll-to-load-more), same as Pool Balance.
+// EVERY series now comes from pairHour/DayData (bucketGrid + bucketClose +
+// setVisibleRange zoom). Relative price and Volume used to be derived per swap from
+// the `transactions` entity, which meant paging up to 20k rows to draw one chart
+// while the per-swap detail was discarded by the bucketing anyway. The aggregate
+// carries the same quantities per bucket, so the chart costs two requests. Note the
+// granularity floor that follows from this: bars are clamped to >= 1 hour.
 //
 // The two % benchmark lines (LP vs. HODL / LP vs. UniV2) are computed from the
 // reserve-based TVL math on pairDay/HourData — NOT the old per-swap price ratio.
@@ -44,16 +48,24 @@ import { hasUniV2Price, usePairTransactions } from './usePairTransactions'
 // back to pool creation, ≤1000 pts within 30d); ALL reads daily — so only 1D's
 // granularity changes (15-min → hourly); 7D/1M/ALL keep their resolution.
 
-// Per-swap point: relative price + USD volume (tx source). LP price may be
-// absent on older or non-V3 transaction rows and must not invalidate the other
-// series.
-type Point = { t: number; price0: number; lpPrice?: number; vol: number }
-
-// Aggregate row (pairDay/HourData) → the two benchmark % lines via TVL math.
-type AggPoint = { t: number; lpVsHodl: number | null; lpVsUniV2: number | null }
+// One point per aggregate bucket, carrying EVERY line: relative price, LP price,
+// volume, and the two benchmark %. There is no per-swap point type any more — price
+// and volume used to come from the `transactions` entity, which meant paging up to
+// 20k rows for detail the bucketing then threw away. lpPrice stays optional: it can
+// be absent on older rows and must not invalidate the other series.
+type AggPoint = {
+  t: number
+  price0: number
+  lpPrice?: number
+  vol: number
+  lpVsHodl: number | null
+  lpVsUniV2: number | null
+}
 type AggRow = {
   t: string
   tvl?: string
+  totalVolume?: string
+  lpPrice?: string
   bnhReserve0?: string
   bnhReserve1?: string
   token0Price?: string
@@ -122,37 +134,11 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     volume: true,
   })
 
-  // ONE shared tx feed for this pool — the Pool Balance chart on the same page
-  // reads the identical cache (react-query dedupes by key), so the page makes a
-  // single tx request + shares load-more paging.
-  const { txns: combinedTxs, loadMore, isLoading } = usePairTransactions(chainId, pairAddress, version)
-
-  // Per-swap points, chronological (indexer returns newest-first → reverse).
-  const allPoints = useMemo<Point[]>(() => {
-    return [...combinedTxs]
-      .reverse()
-      .map((t) => {
-        const r0 = Number(t.reserve0USD)
-        const r1 = Number(t.reserve1USD)
-        // RELATIVE price = base priced in quote (base USD price ÷ quote USD price).
-        const baseAmt = Number(baseIdx === 0 ? t.reserve0 : t.reserve1)
-        const baseUsd = baseIdx === 0 ? r0 : r1
-        const quoteAmt = Number(quoteIdx === 0 ? t.reserve0 : t.reserve1)
-        const quoteUsd = quoteIdx === 0 ? r0 : r1
-        const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
-        const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
-        const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
-        const lpRaw = Number(t.lpPrice)
-        // USD volume of the swap = input amount × its (post-swap) USD unit price.
-        const a0In = Number(t.amount0In) || 0
-        const a1In = Number(t.amount1In) || 0
-        const p0USD = Number(t.reserve0) > 0 ? r0 / Number(t.reserve0) : 0
-        const p1USD = Number(t.reserve1) > 0 ? r1 / Number(t.reserve1) : 0
-        const vol = a0In > 0 ? a0In * p0USD : a1In > 0 ? a1In * p1USD : 0
-        return { t: Number(t.timestamp), price0, lpPrice: iskHYPEUSDT ? lpRaw / 1e9 : lpRaw, vol }
-      })
-      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.price0))
-  }, [combinedTxs, baseIdx, quoteIdx, iskHYPEUSDT])
+  // No tx feed any more: price and volume used to be derived per swap, which meant
+  // paging `transactions` 1000 at a time (up to 20k rows) just to draw this chart.
+  // pairHour/DayData carries the same quantities per bucket, and the chart already
+  // resampled everything onto a bucket grid, so the per-swap detail was discarded
+  // anyway. Costs one aggregate request per tier instead.
 
   // ── Benchmark % lines (LP vs. HODL / LP vs. UniV2) from reserve-based TVL math ──
   // Sourced from the aggregate (the tx entity lacks tvl + benchmark reserves). Fetch
@@ -170,6 +156,8 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
         rows: ${entity}(first: 1000, orderBy: ${timeKey}, orderDirection: desc, where: { pair: $pair }) {
           t: ${timeKey}
           tvl
+          totalVolume
+          lpPrice
           bnhReserve0
           bnhReserve1
           token0Price
@@ -186,14 +174,14 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       query: makeAggQuery(entity, timeKey),
       variables: { chainId, version, pair: pairAddress.toLowerCase() },
     })
-  const { data: hourResp } = useQuery<{ rows: AggRow[] }>({
+  const { data: hourResp, isLoading: hourLoading } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['pairBenchAggHour', chainId, pairAddress, version, keepUniV2],
     queryFn: aggQueryFn('pairHourDatas', 'hourStartUnix'),
     refetchInterval: 60_000,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
-  const { data: dayResp } = useQuery<{ rows: AggRow[] }>({
+  const { data: dayResp, isLoading: dayLoading } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['pairBenchAggDay', chainId, pairAddress, version, keepUniV2],
     queryFn: aggQueryFn('pairDayDatas', 'dayStartUnix'),
     refetchInterval: 60_000,
@@ -211,8 +199,17 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       const p1 = Number(d.token1Price) || 0
       const bnhVal = (Number(d.bnhReserve0) || 0) * p0 + (Number(d.bnhReserve1) || 0) * p1
       const uniVal = (Number(d.uniV2Reserve0) || 0) * p0 + (Number(d.uniV2Reserve1) || 0) * p1
+      // RELATIVE price = base priced in quote. token0Price/token1Price are the USD
+      // unit prices, which is what the tx feed used to derive from reserveUSD/reserve.
+      const baseUsd = baseIdx === 0 ? p0 : p1
+      const quoteUsd = quoteIdx === 0 ? p0 : p1
+      const lpRaw = Number(d.lpPrice)
       return {
         t,
+        price0: quoteUsd > 0 ? baseUsd / quoteUsd : NaN,
+        lpPrice: Number.isFinite(lpRaw) ? (iskHYPEUSDT ? lpRaw / 1e9 : lpRaw) : undefined,
+        // Already a per-bucket USD sum, so no client-side summing is needed.
+        vol: Number(d.totalVolume) || 0,
         lpVsHodl: bnhVal > 0 ? ((tvl - bnhVal) / bnhVal) * 100 : null,
         lpVsUniV2: keepUniV2 && uniVal > 0 ? ((tvl - uniVal) / uniVal) * 100 : null,
       }
@@ -225,19 +222,35 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     // recent part → full-history coverage with fine recent resolution, no overlap.
     const earliestHourly = hourly.length ? hourly[0].t : Infinity
     return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
-  }, [hourResp, dayResp, keepUniV2])
+  }, [hourResp, dayResp, keepUniV2, baseIdx, quoteIdx, iskHYPEUSDT])
+
+  const isLoading = hourLoading || dayLoading
+
+  // Price/LP-price/volume now share one source with the % lines, so the former
+  // "tx points" are simply the aggregate points.
+  const allPoints = aggPoints
 
   // Resample onto a linear time grid (bucketClose = carry-forward close, so lines
-  // stay continuous across quiet buckets). Volume is SUMMED per bucket.
-  const { bucket } = RANGE_BUCKETS[range]
-  // Seed the grid from the TX feed's first point (price/volume) — NOT the aggregate.
-  // The aggregate (pairHour/DayData) has buckets from pool CREATION, which can predate
-  // the first swap; seeding from it would extend the % lines left of where the price
-  // and volume lines begin. Clipping to the tx window keeps all lines aligned — earlier
-  // aggregate buckets still seed the carry-in level so the % line opens at the right value.
+  // stay continuous across quiet buckets).
+  // Bars can never be finer than the data. pairHourData is hourly, so the shared
+  // 1D preset's 15-minute bars left 3 of every 4 buckets empty and the carry-forward
+  // turned the lines into visible stair-steps. Clamp to the source granularity —
+  // 1D becomes 24 hourly bars. The shared RANGE_BUCKETS stays as-is because Pool
+  // Balance still reads the per-swap tx feed, where 15-minute bars are real.
+  const AGG_BUCKET_FLOOR = 60 * 60
+  const bucket = Math.max(RANGE_BUCKETS[range].bucket, AGG_BUCKET_FLOOR)
+  // Seed from the first bucket with real activity, NOT allPoints[0]: pairHour/DayData
+  // has buckets from pool CREATION, which can predate the first trade, and seeding
+  // there would stretch every line left into a flat dead zone. A bucket counts as
+  // active once it has volume or a benchmark value (benchmark reserves only exist
+  // once the pool has liquidity).
+  const firstActiveT = useMemo(() => {
+    const first = allPoints.find((p) => p.vol > 0 || p.lpVsHodl != null)
+    return first ? first.t : allPoints.length ? allPoints[0].t : null
+  }, [allPoints])
   const grid = useMemo(
-    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
-    [allPoints, bucket],
+    () => bucketGrid(firstActiveT, bucket, Math.floor(Date.now() / 1000)),
+    [firstActiveT, bucket],
   )
   const seriesData = useMemo(() => {
     if (!grid) return { price0: [], lpPrice: [], lpVsHodl: [], lpVsUniV2: [], volume: [] as { time: any; value: number; color: string }[] }
@@ -249,6 +262,9 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       grid.gridEnd,
     )
     const aggClosed = bucketClose(aggPoints, bucket, grid.gridStart, grid.gridEnd)
+    // Aggregate rows are already per-bucket sums. They still need summing when the
+    // chart bucket is COARSER than the source bucket (e.g. a 1d chart bucket over
+    // hourly rows), which is exactly what this accumulate does.
     const volMap = new Map<number, number>()
     for (const p of allPoints) {
       if (!(p.vol > 0)) continue
@@ -295,7 +311,6 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
 
   const [hovered, setHovered] = useState<Partial<Record<ToggleKey, number>> | null>(null)
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
-  const loadMoreRef = useRef<() => void>(() => {})
 
   // Apply the timeframe as a VISIBLE-RANGE (zoom) preset — the chart always holds
   // the full loaded data. 'ALL' = fit everything; bounded ranges = the last N
@@ -313,9 +328,6 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
   }, [range, seriesData])
   const applyRangePresetRef = useRef(applyRangePreset)
   applyRangePresetRef.current = applyRangePreset
-
-  // Scroll-to-load-more pages older txs via the shared hook.
-  loadMoreRef.current = loadMore
 
   // Create chart + series once.
   useEffect(() => {
@@ -466,12 +478,8 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
-    // Scroll-to-load-more: when the left edge nears the loaded start, page older.
-    const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
-      if (!logical) return
-      if (logical.from < 10) loadMoreRef.current()
-    }
-    chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
+    // No scroll-to-load-more: the hourly + daily tiers already cover the pool's
+    // whole history in the one fetch, so there is nothing left to page in.
 
     price0Ref.current = price0
     lpPriceRef.current = lpPrice

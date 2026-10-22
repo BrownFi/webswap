@@ -12,8 +12,12 @@ import {
   createChart,
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { isV3Like } from '@brownfi/sdk'
+import { graphqlFetcher } from 'utils/graphql'
+import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
-import { usePairTransactions } from './usePairTransactions'
+import { hasReserveUsdAggregate, usePairTransactions } from './usePairTransactions'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
 // Same data + computation as the recharts version: pool-balance % split from the
@@ -86,6 +90,17 @@ type Props = {
   showLpVsBh?: boolean
 }
 
+// Aggregate row (pairHour/DayData) — the tx-free source, where the indexer has it.
+type AggRow = {
+  t: string
+  reserve0USD?: string
+  reserve1USD?: string
+  token0Price?: string
+  token1Price?: string
+  lpPrice?: string
+  bnhPrice?: string
+}
+
 type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0'
 
 export function PoolBalanceChart({
@@ -121,12 +136,97 @@ export function PoolBalanceChart({
   // tx request + shares load-more paging. The hook fetches the superset of fields
   // (reserves + lpPrice/bnhPrice/bh3Price/uniV2Price/amounts); this chart uses
   // reserves always, plus lpPrice/bnhPrice for the LP-vs-BH line when showLpVsBh.
-  const { txns: combinedTxs, loadMore, isLoading } = usePairTransactions(chainId, pairAddress, version)
+  // Prefer the AGGREGATE where the indexer has reserve0USD/reserve1USD: the per-swap
+  // feed pages `transactions` 1000 at a time (up to 20k) purely to be resampled onto
+  // the bucket grid below, so the per-swap detail is thrown away anyway. Only
+  // Robinhood ships those fields today — the other chains answer "has no field
+  // 'reserve0USD'", so they keep the tx path until Manh adds them (see
+  // hasReserveUsdAggregate). When the aggregate is used the tx request is skipped
+  // entirely, which is the whole point.
+  const useAgg = hasReserveUsdAggregate(chainId) && isV3Like(version)
+  const { txns: combinedTxs, loadMore, isLoading: txLoading } = usePairTransactions(
+    chainId,
+    pairAddress,
+    version,
+    !useAgg,
+  )
+
+  const makeAggQuery = (entity: string, timeKey: 'hourStartUnix' | 'dayStartUnix') =>
+    withFirstActivityGte(
+      `query PoolBalanceAgg($pair: String!) {
+        rows: ${entity}(first: 1000, orderBy: ${timeKey}, orderDirection: desc, where: { pair: $pair }) {
+          t: ${timeKey}
+          reserve0USD
+          reserve1USD
+          token0Price
+          token1Price
+          lpPrice
+          bnhPrice
+        }
+      }`,
+      timeKey,
+      chainId,
+      pairAddress,
+    )
+  const aggQueryFn = (entity: string, timeKey: 'hourStartUnix' | 'dayStartUnix') => () =>
+    graphqlFetcher({
+      operationName: 'PoolBalanceAgg',
+      query: makeAggQuery(entity, timeKey),
+      variables: { chainId, version, pair: pairAddress.toLowerCase() },
+    })
+  const { data: aggHour, isLoading: aggHourLoading } = useQuery<{ rows: AggRow[] }>({
+    queryKey: ['poolBalanceAggHour', chainId, pairAddress, version],
+    queryFn: aggQueryFn('pairHourDatas', 'hourStartUnix'),
+    enabled: useAgg,
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+  const { data: aggDay, isLoading: aggDayLoading } = useQuery<{ rows: AggRow[] }>({
+    queryKey: ['poolBalanceAggDay', chainId, pairAddress, version],
+    queryFn: aggQueryFn('pairDayDatas', 'dayStartUnix'),
+    enabled: useAgg,
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  })
+  const isLoading = useAgg ? aggHourLoading || aggDayLoading : txLoading
+
+  // Same shape the tx path produces, so everything downstream is untouched.
+  const aggPoints = useMemo<Point[]>(() => {
+    const toPoint = (d: AggRow): Point => {
+      const r0 = Number(d.reserve0USD)
+      const r1 = Number(d.reserve1USD)
+      const total = r0 + r1
+      const p0 = Number(d.token0Price) || 0
+      const p1 = Number(d.token1Price) || 0
+      // token0Price/token1Price ARE the USD unit prices the tx path divided out of
+      // reserveUSD/reserve, so the relative price is the same quantity.
+      const baseUsdPrice = baseIdx === 0 ? p0 : p1
+      const quoteUsdPrice = quoteIdx === 0 ? p0 : p1
+      const lp = Number(d.lpPrice)
+      const bnh = Number(d.bnhPrice)
+      return {
+        t: Number(d.t),
+        pct0: total > 0 ? (r0 / total) * 100 : NaN,
+        pct1: total > 0 ? 100 - (r0 / total) * 100 : NaN,
+        price0: quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN,
+        lpVsBh: lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null,
+      }
+    }
+    const asc = (rows: AggRow[] | undefined) =>
+      (rows ?? []).map(toPoint).filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0)).sort((a, b) => a.t - b.t)
+    const hourly = asc(aggHour?.rows)
+    const daily = asc(aggDay?.rows)
+    // Daily for the old part + hourly for the recent part → full history, fine recent.
+    const earliestHourly = hourly.length ? hourly[0].t : Infinity
+    return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
+  }, [aggHour, aggDay, baseIdx, quoteIdx])
 
   // Full fetched series as a % split, chronological (indexer returns newest-first).
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point
   // also carries the LP-vs-BH value from the latest daily bucket ≤ its timestamp.
-  const allPoints = useMemo<Point[]>(() => {
+  const txPoints = useMemo<Point[]>(() => {
     return [...combinedTxs]
       .reverse()
       .map((t) => {
@@ -158,6 +258,8 @@ export function PoolBalanceChart({
       .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
   }, [combinedTxs, baseIdx, quoteIdx])
 
+  const allPoints = useAgg ? aggPoints : txPoints
+
   // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
   // unique time values; two trades can share a second). Keep the latest reserve
   // snapshot for a given second by overwriting as we walk ascending.
@@ -170,7 +272,10 @@ export function PoolBalanceChart({
   // between trades) so the x-axis is LINEAR in clock time (even spacing, gap-free)
   // instead of following raw trade density. Bucket size per timeframe from RANGE_BUCKETS
   // (1D = 15-min on bera; beta uses 5-min).
-  const { bucket } = RANGE_BUCKETS[range]
+  // Bars can't be finer than the source: the aggregate is hourly, so the 1D preset's
+  // 15-minute bars would leave 3 of every 4 buckets empty and the carry-forward would
+  // draw stair-steps. The tx path keeps the preset as-is — there, 15-minute bars are real.
+  const bucket = useAgg ? Math.max(RANGE_BUCKETS[range].bucket, 60 * 60) : RANGE_BUCKETS[range].bucket
   const grid = useMemo(
     () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
     [allPoints, bucket],
@@ -255,7 +360,7 @@ export function PoolBalanceChart({
   applyRangePresetRef.current = applyRangePreset
 
   // Scroll-to-load-more pages older txs via the shared hook.
-  loadMoreRef.current = loadMore
+  loadMoreRef.current = useAgg ? () => {} : loadMore
 
   // Create chart + series once.
   useEffect(() => {
@@ -450,6 +555,7 @@ export function PoolBalanceChart({
     // full set and can scroll past the loaded edge to extend it.
     const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
       if (!logical) return
+      // Nothing to page when the aggregate already covers the whole history.
       if (logical.from < 10) loadMoreRef.current()
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)

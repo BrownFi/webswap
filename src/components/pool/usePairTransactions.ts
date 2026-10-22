@@ -89,7 +89,25 @@ export type UsePairTransactions = {
   hasMore: boolean
 }
 
-export function usePairTransactions(chainId: number, pairAddress: string, version: number): UsePairTransactions {
+/**
+ * Chains whose pairHour/DayData carries reserve0USD/reserve1USD, so the pool-balance
+ * split can be read from the aggregate and this per-swap feed isn't needed at all.
+ * TEMPORARY per-chain list: Robinhood's indexer ships 41 fields while Bera, Arbitrum,
+ * Linea and HyperEVM ship 22 and answer `Type 'PairHourData' has no field
+ * 'reserve0USD'`. Manh is adding them; delete this gate (and the tx path) once every
+ * chain has the fields.
+ */
+const CHAINS_WITH_RESERVE_USD_AGG = new Set<number>([ChainId.ROBINHOOD_MAINNET])
+export const hasReserveUsdAggregate = (chainId: number) => CHAINS_WITH_RESERVE_USD_AGG.has(chainId)
+
+export function usePairTransactions(
+  chainId: number,
+  pairAddress: string,
+  version: number,
+  // Lets a caller that can read the aggregate skip this feed entirely. Without it
+  // the request fires regardless and nothing is saved.
+  enabled = true,
+): UsePairTransactions {
   // Derived from (chainId, version) — both already in the query key — so both
   // charts compute the same value and share one cache entry.
   const keepUniV2 = hasUniV2Price(chainId) && isV3Like(version)
@@ -114,7 +132,7 @@ export function usePairTransactions(chainId: number, pairAddress: string, versio
       const before = oldest ? Number(oldest.timestamp) : undefined
       return before && Number.isFinite(before) ? before : undefined
     },
-    enabled: !!pair && !!chainId,
+    enabled: enabled && !!pair && !!chainId,
     staleTime: 60_000,
   })
 
