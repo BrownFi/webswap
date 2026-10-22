@@ -383,7 +383,15 @@ export const RPC_FALLBACKS: Record<number, string[]> = {
     'https://developer-access-mainnet.base.org',
   ],
   [ChainId.ARBITRUM_MAINNET]: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.drpc.org', 'https://arbitrum.therpc.io'],
-  [ChainId.ROBINHOOD_MAINNET]: ['https://rpc.mainnet.chain.robinhood.com'],
+  // Robinhood was the only chain here with a single endpoint, so any wobble on it
+  // stalled every read with nowhere to rotate to. Both alternates verified 2026-10-22:
+  // eth_chainId 0x1237, head within a few blocks of the official node, and they serve
+  // eth_call (read the live BF-V3 LP totalSupply through each).
+  [ChainId.ROBINHOOD_MAINNET]: [
+    'https://rpc.mainnet.chain.robinhood.com',
+    'https://robinhood.drpc.org',
+    'https://robinhood-rpc.publicnode.com',
+  ],
   [ChainId.HEMI_MAINNET]: ['https://rpc.hemi.network/rpc', 'https://hemi.drpc.org'],
   [ChainId.BSC_MAINNET]: ['https://bsc-dataseed1.defibit.io', 'https://bsc-dataseed1.ninicoin.io', 'https://bsc.drpc.org'],
   [ChainId.LINEA_MAINNET]: ['https://rpc.linea.build', 'https://1rpc.io/linea', 'https://linea.drpc.org'],
