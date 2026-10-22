@@ -102,7 +102,13 @@ export const ROUTER_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.HYPER_EVM]: '0x98F6369ecf2A2f7A519773AC40C561701a89828b',
   [ChainId.ARBITRUM_MAINNET]: '0x6C0a11200c022AF316F591158B5686931ef93DCf',
   [ChainId.LINEA_MAINNET]: '0x0bf5Fa65dAE6Db32250E5DC74489cedadd38D338',
-  [ChainId.ROBINHOOD_MAINNET]: '0x2A08Da7B6590ce5D217161F234069CfC54DBe554',
+  // Robinhood router/zap redeployed; prod lagged beta on these two. Verified on-chain
+  // 2026-10-22: both resolve to the SAME factory 0x831880Bd…, the router implements every
+  // entrypoint the FE calls (add/remove liquidity, the three swap variants, the quote) and
+  // the zap all four zapIn/zapOut. NOTE gigadex.fi — which runs its own frontend on these
+  // same BrownFi contracts — still hardcodes the OLD router 0x2A08Da7B…, so that one must
+  // keep working until they update.
+  [ChainId.ROBINHOOD_MAINNET]: '0x32B2A647821613e730e7ED967462A629Ba887527',
 }
 export const FACTORY_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.BERA_MAINNET]: '0x6Ccf36d3EaE84b2eB608704070B90f4419BBcD28',
@@ -116,7 +122,7 @@ export const ZAP_ADDRESS_V3_OFFICIAL: Record<number, string> = {
   [ChainId.HYPER_EVM]: '0xF211a742898FC57244769163ff6a47025048c4Dc',
   [ChainId.ARBITRUM_MAINNET]: '0x98ab6C5CBb15A49AA0451427e3bA69599bC022E7',
   [ChainId.LINEA_MAINNET]: '0xF956002B9B6Da21BB66A413aC694Ca564377cd9a',
-  [ChainId.ROBINHOOD_MAINNET]: '0x92927Ff9420aF3347Ae25ad618Eb844E78EFe8E1',
+  [ChainId.ROBINHOOD_MAINNET]: '0x6AFAf53dC5c65edD683Ed2f5522E725455Ac370D',
 }
 export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   [ChainId.BERA_MAINNET]: true,
