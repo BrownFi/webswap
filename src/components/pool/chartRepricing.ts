@@ -20,12 +20,6 @@
 // Volume is never synthesised: there is no volume to report, and drawing bars would
 // misstate the pool's activity.
 
-/**
- * A pool counts as quiet once its last traded bucket is this far behind: one bucket
- * of the hourly aggregate, which is also the charts' bar-width floor.
- */
-export const QUIET_AFTER_SECONDS = 60 * 60
-
 /** One point per aggregate bucket, carrying every line the chart draws. */
 export type AggPoint = {
   t: number
@@ -54,34 +48,6 @@ export type AggRow = {
   reserve1?: string
 }
 
-/**
- * The newest row that records a real observation, i.e. one with volume. Falls back
- * to the newest row when the pool has never traded, so callers always get an anchor.
- * `rows` need not be sorted.
- *
- * Used for STALENESS only: because a quiet pool still gets hourly rows, "newest row"
- * is always ~now and says nothing about whether the prices in it are current.
- */
-export function pickLastTradedRow<T extends { t: string; totalVolume?: string }>(rows: T[]): T | null {
-  let best: T | null = null
-  let bestT = -Infinity
-  let newest: T | null = null
-  let newestT = -Infinity
-  for (const row of rows) {
-    const t = Number(row.t)
-    if (!Number.isFinite(t)) continue
-    if (t > newestT) {
-      newestT = t
-      newest = row
-    }
-    if (Number(row.totalVolume) > 0 && t > bestT) {
-      bestT = t
-      best = row
-    }
-  }
-  return best ?? newest
-}
-
 /** `[unixSeconds, price]` samples, ascending. */
 export type PriceSample = [number, number]
 
@@ -103,6 +69,57 @@ export function buildPriceLookup(samples: PriceSample[]): (t: number) => number 
       else hi = mid - 1
     }
     return asc[lo][1]
+  }
+}
+
+type AnchorRow = { t: string; totalVolume?: string; token0Price?: string; token1Price?: string }
+
+/**
+ * Resolves the off-chain prices to value a frozen bucket at.
+ *
+ * Two things this gets right that the obvious version does not:
+ *
+ * 1. EVERY bucket without volume is frozen, not just the ones after the pool's last
+ *    swap. A pool that traded on the 24th and again on the 26th carries the 24th's
+ *    price through all of the 25th; treating only the trailing run as stale leaves
+ *    interior gaps flat, which is what they look like on screen.
+ *
+ * 2. The off-chain feed sits at a small but steady offset from the pool's own oracle
+ *    (CoinGecko's ETH/USDG ran +0.75% above it on 2026-10-26). Substituting the feed's
+ *    absolute price would make every gap jump on entry and snap back at the next swap
+ *    — a sawtooth that is pure source mismatch. So the feed is used for the SHAPE
+ *    only: each gap starts from the price the chain last recorded and moves by the
+ *    feed's RELATIVE change since that moment. Continuous at both ends by
+ *    construction, and the no-op property still holds at the anchor itself.
+ */
+export function buildOverrideResolver(
+  rows: AnchorRow[],
+  at0: (t: number) => number | null,
+  at1: (t: number) => number | null,
+): (t: number) => { price0: number; price1: number } | null {
+  const anchors = rows
+    .filter((r) => Number(r.totalVolume) > 0 && Number(r.token0Price) > 0 && Number(r.token1Price) > 0)
+    .map((r) => ({ t: Number(r.t), p0: Number(r.token0Price), p1: Number(r.token1Price) }))
+    .filter((a) => Number.isFinite(a.t))
+    .sort((a, b) => a.t - b.t)
+  if (!anchors.length) return () => null
+
+  return (t: number) => {
+    if (t < anchors[0].t) return null // nothing traded yet — leave the row alone
+    let lo = 0
+    let hi = anchors.length - 1
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2)
+      if (anchors[mid].t <= t) lo = mid
+      else hi = mid - 1
+    }
+    const a = anchors[lo]
+    const base0 = at0(a.t)
+    const base1 = at1(a.t)
+    const now0 = at0(t)
+    const now1 = at1(t)
+    if (!base0 || !base1 || !now0 || !now1) return null
+    return { price0: a.p0 * (now0 / base0), price1: a.p1 * (now1 / base1) }
   }
 }
 

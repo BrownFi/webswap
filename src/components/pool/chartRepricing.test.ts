@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { AggRow, BalanceRow, balanceRowToPoint, buildPriceLookup, pickLastTradedRow, rowToPoint } from './chartRepricing'
+import {
+  AggRow,
+  BalanceRow,
+  balanceRowToPoint,
+  buildOverrideResolver,
+  buildPriceLookup,
+  rowToPoint,
+} from './chartRepricing'
 import { daysForWindow, getCoinId } from './useTokenPriceHistory'
 
 // Fixtures: USDG/NVDA on Robinhood (0x8825EDfF…), the pool that exposed the problem.
@@ -39,33 +46,6 @@ const FROZEN_ROW: AggRow = {
 }
 
 const BASE_IDX = 1 as const // NVDA (token1) priced in USDG (token0)
-
-describe('pickLastTradedRow', () => {
-  it('picks the last bucket WITH volume, not the newest row', () => {
-    // The regression this guards: a dead pool still gets an hourly row, so "newest
-    // row" is always ~now and taking it made the chart think it was up to date.
-    const rows: AggRow[] = [TRADED_ROW, { ...FROZEN_ROW, t: '1792807200' }, FROZEN_ROW]
-    expect(pickLastTradedRow(rows)?.t).toBe(TRADED_ROW.t)
-  })
-
-  it('prefers the most recent traded bucket when several traded', () => {
-    const rows: AggRow[] = [
-      { ...TRADED_ROW, t: '100', totalVolume: '5' },
-      { ...TRADED_ROW, t: '300', totalVolume: '7' },
-      { ...TRADED_ROW, t: '200', totalVolume: '9' },
-    ]
-    expect(pickLastTradedRow(rows)?.t).toBe('300')
-  })
-
-  it('falls back to the newest row when the pool never traded', () => {
-    expect(pickLastTradedRow([{ ...FROZEN_ROW, t: '100' }, { ...FROZEN_ROW, t: '300' }])?.t).toBe('300')
-  })
-
-  it('returns null for no rows and ignores unparseable timestamps', () => {
-    expect(pickLastTradedRow([])).toBeNull()
-    expect(pickLastTradedRow([{ ...TRADED_ROW, t: 'nope' }])).toBeNull()
-  })
-})
 
 describe('buildPriceLookup', () => {
   const at = buildPriceLookup([
@@ -290,5 +270,68 @@ describe('balanceRowToPoint', () => {
     const plain = balanceRowToPoint(broken, BASE_IDX)
     expect(p.pct0).toBeCloseTo(plain.pct0, 8)
     expect(p.price0).toBeCloseTo(plain.price0, 8)
+  })
+})
+
+describe('buildOverrideResolver', () => {
+  // A pool that traded at t=0 and again at t=200, with an idle stretch between.
+  const rows = [
+    { t: '0', totalVolume: '10', token0Price: '1', token1Price: '2000' },
+    { t: '100', totalVolume: '0', token0Price: '1', token1Price: '2000' }, // frozen
+    { t: '200', totalVolume: '5', token0Price: '1', token1Price: '2100' },
+    { t: '300', totalVolume: '0', token0Price: '1', token1Price: '2100' }, // frozen
+  ]
+  // The off-chain feed sits 0.75% above the chain's price at every point — exactly the
+  // offset measured between CoinGecko's ETH/USDG and the pool's own oracle.
+  const OFFSET = 1.0075
+  const feed1: Record<number, number> = { 0: 2000 * OFFSET, 100: 2050 * OFFSET, 200: 2100 * OFFSET, 300: 2200 * OFFSET }
+  const at0 = () => 1
+  const at1 = (t: number) => feed1[t] ?? null
+  const resolve = buildOverrideResolver(rows, at0, at1)
+
+  it('re-prices an INTERIOR gap, not just the trailing one', () => {
+    // The bug this guards: only the stretch after the pool's LAST trade was treated as
+    // stale, so a pool that traded on the 24th and again on the 26th showed the 25th
+    // as a dead flat line.
+    expect(resolve(100)).not.toBeNull()
+  })
+
+  it('carries the feed\'s relative move, not its absolute price', () => {
+    // Chain said 2000 at the anchor and the feed rose 2.5% by t=100, so the bucket is
+    // worth 2050 — NOT the feed's own 2065.4, which would jump by the source offset.
+    expect(resolve(100)!.price1).toBeCloseTo(2050, 6)
+    expect(resolve(100)!.price1).not.toBeCloseTo(2050 * OFFSET, 2)
+  })
+
+  it('introduces no jump at a gap boundary, whatever the source offset', () => {
+    // Re-pricing the anchor itself must return exactly the chain's own price, so the
+    // re-priced stretch joins the traded buckets continuously instead of sawtoothing.
+    expect(resolve(0)!.price1).toBeCloseTo(2000, 9)
+    expect(resolve(200)!.price1).toBeCloseTo(2100, 9)
+  })
+
+  it('anchors to the most recent trade before the bucket', () => {
+    // t=300 follows the 2100 trade, so a 2200/2100 feed move lands at 2200 — if it had
+    // anchored on the FIRST trade (2000) it would read 2200/2000 x 2000 = 2200 too,
+    // so check a feed move that distinguishes them.
+    const r = buildOverrideResolver(rows, at0, (t) => ({ 0: 1000, 200: 2000, 300: 3000 })[t] ?? null)
+    // From the t=200 anchor (chain 2100) the feed tripled... no: 3000/2000 = 1.5x.
+    expect(r(300)!.price1).toBeCloseTo(2100 * 1.5, 6)
+  })
+
+  it('leaves buckets before the first trade alone', () => {
+    const r = buildOverrideResolver([{ t: '100', totalVolume: '1', token0Price: '1', token1Price: '2' }], at0, at1)
+    expect(r(50)).toBeNull()
+  })
+
+  it('returns null when the feed has no sample for either end', () => {
+    expect(resolve(999)).toBeNull() // no feed point at 999
+    const r = buildOverrideResolver(rows, at0, (t) => (t === 100 ? 2050 : null))
+    expect(r(100)).toBeNull() // feed has the bucket but not its anchor
+  })
+
+  it('returns null when nothing in the series ever traded', () => {
+    const r = buildOverrideResolver([{ t: '0', totalVolume: '0', token0Price: '1', token1Price: '2' }], at0, at1)
+    expect(r(0)).toBeNull()
   })
 })

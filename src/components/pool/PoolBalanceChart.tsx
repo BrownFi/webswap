@@ -18,7 +18,7 @@ import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
 import { hasChartRepricing, hasReserveUsdAggregate, usePairTransactions } from './usePairTransactions'
-import { QUIET_AFTER_SECONDS, balanceRowToPoint, pickLastTradedRow } from './chartRepricing'
+import { BalanceRow, balanceRowToPoint, buildOverrideResolver } from './chartRepricing'
 import { useTokenPriceHistory } from './useTokenPriceHistory'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
@@ -100,15 +100,9 @@ type Props = {
 }
 
 // Aggregate row (pairHour/DayData) — the tx-free source, where the indexer has it.
-type AggRow = {
-  t: string
-  reserve0USD?: string
-  reserve1USD?: string
-  token0Price?: string
-  token1Price?: string
-  lpPrice?: string
-  bnhPrice?: string
-}
+// The row shape this chart's query selects — defined with the re-pricing helpers so
+// the fields and the maths that reads them stay in step.
+type AggRow = BalanceRow
 
 type ToggleKey = 't0' | 't1' | 'lpbh' | 'price0'
 
@@ -206,47 +200,43 @@ export function PoolBalanceChart({
   })
   const isLoading = useAgg ? aggHourLoading || aggDayLoading : txLoading
 
-  // ── Re-pricing a quiet pool ────────────────────────────────────────────────
+  // ── Re-pricing frozen buckets ──────────────────────────────────────────────
   // reserve0USD/reserve1USD are reserve x the ON-CHAIN price, and that price is only
-  // written by a swap — so a pool that stops trading freezes the balance split, the
-  // relative price AND the LP-vs-BH line all at once. Same treatment as the LP chart
-  // (see chartRepricing.ts): detect quiet from the last bucket WITH volume, then value
-  // each row's own holdings at the off-chain price for that row's hour.
-  const lastTradedRow = useMemo(
-    () => pickLastTradedRow([...(aggDay?.rows ?? []), ...(aggHour?.rows ?? [])]),
-    [aggHour, aggDay],
-  )
-  const lastTradedT = lastTradedRow ? Number(lastTradedRow.t) : null
+  // written by a swap — so every bucket without volume freezes the balance split, the
+  // relative price AND the LP-vs-BH line together. Same treatment as the LP chart; see
+  // chartRepricing.ts for why interior gaps count and why the feed is used for the
+  // relative move only.
+  const earliestHourT = useMemo(() => {
+    const ts = (aggHour?.rows ?? []).map((r) => Number(r.t)).filter(Number.isFinite)
+    return ts.length ? Math.min(...ts) : null
+  }, [aggHour])
   const nowSec = Math.floor(aggHourUpdatedAt / 1000)
-  const isQuiet =
-    useAgg && hasChartRepricing(chainId) && lastTradedT != null && nowSec - lastTradedT > QUIET_AFTER_SECONDS
   const priceHistory = useTokenPriceHistory({
     chainId,
     token0Address,
     token1Address,
-    spanSeconds: isQuiet && lastTradedT != null ? nowSec - lastTradedT : 0,
-    enabled: isQuiet,
+    spanSeconds: earliestHourT != null ? nowSec - earliestHourT : 0,
+    enabled: useAgg && hasChartRepricing(chainId) && earliestHourT != null,
   })
 
   // Same shape the tx path produces, so everything downstream is untouched.
   const aggPoints = useMemo<Point[]>(() => {
-    const overrideAt = (t: number) => {
-      if (!priceHistory || lastTradedT == null || t <= lastTradedT) return null
-      const price0 = priceHistory.at0(t)
-      const price1 = priceHistory.at1(t)
-      return price0 != null && price1 != null ? { price0, price1 } : null
-    }
-    const asc = (rows: AggRow[] | undefined) =>
-      (rows ?? [])
-        .map((d) => balanceRowToPoint(d, baseIdx, overrideAt(Number(d.t))))
+    const asc = (rows: AggRow[] | undefined) => {
+      const list = rows ?? []
+      const resolve = priceHistory ? buildOverrideResolver(list, priceHistory.at0, priceHistory.at1) : null
+      return list
+        .map((d) =>
+          balanceRowToPoint(d, baseIdx, resolve && !(Number(d.totalVolume) > 0) ? resolve(Number(d.t)) : null),
+        )
         .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
         .sort((a, b) => a.t - b.t)
+    }
     const hourly = asc(aggHour?.rows)
     const daily = asc(aggDay?.rows)
     // Daily for the old part + hourly for the recent part → full history, fine recent.
     const earliestHourly = hourly.length ? hourly[0].t : Infinity
     return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
-  }, [aggHour, aggDay, baseIdx, priceHistory, lastTradedT])
+  }, [aggHour, aggDay, baseIdx, priceHistory])
 
   // Full fetched series as a % split, chronological (indexer returns newest-first).
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point

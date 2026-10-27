@@ -20,7 +20,7 @@ import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
 import { hasChartRepricing, hasUniV2Price } from './usePairTransactions'
-import { AggPoint, AggRow, QUIET_AFTER_SECONDS, pickLastTradedRow, rowToPoint } from './chartRepricing'
+import { AggPoint, AggRow, buildOverrideResolver, rowToPoint } from './chartRepricing'
 import { useTokenPriceHistory } from './useTokenPriceHistory'
 
 // LP chart (Pool Detail). Four lines only, per boss (2026-07-16):
@@ -178,53 +178,53 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1, token0Addr
     placeholderData: keepPreviousData,
   })
 
-  // ── Re-pricing a quiet pool ────────────────────────────────────────────────
-  // A pool that stops trading still gets hourly rows, but their prices are frozen at
-  // the last swap, so every line flatlines. See chartRepricing.ts. Detect it from the
-  // last bucket WITH volume — the newest row is always ~now and proves nothing.
-  const lastTradedRow = useMemo(
-    () => pickLastTradedRow([...(dayResp?.rows ?? []), ...(hourResp?.rows ?? [])]),
-    [hourResp, dayResp],
-  )
-  const lastTradedT = lastTradedRow ? Number(lastTradedRow.t) : null
+  // ── Re-pricing frozen buckets ──────────────────────────────────────────────
+  // A bucket without volume carries the last swap's price, so its lines sit still
+  // even while the market moves. See chartRepricing.ts — this covers interior gaps,
+  // not just the stretch after the pool's last trade.
+  const earliestHourT = useMemo(() => {
+    const ts = (hourResp?.rows ?? []).map((r) => Number(r.t)).filter(Number.isFinite)
+    return ts.length ? Math.min(...ts) : null
+  }, [hourResp])
   // Wall-clock "now" from the query's own fetch stamp rather than Date.now(): it
   // refreshes with the 60s refetch, and reading it keeps render pure.
   const nowSec = Math.floor(hourUpdatedAt / 1000)
-  const isQuiet = hasChartRepricing(chainId) && lastTradedT != null && nowSec - lastTradedT > QUIET_AFTER_SECONDS
   const priceHistory = useTokenPriceHistory({
     chainId,
     token0Address: token0Address ?? pair.token0.address,
     token1Address: token1Address ?? pair.token1.address,
-    spanSeconds: isQuiet && lastTradedT != null ? nowSec - lastTradedT : 0,
-    enabled: isQuiet,
+    // Cover the whole hourly window the chart can show, not just the trailing gap.
+    spanSeconds: earliestHourT != null ? nowSec - earliestHourT : 0,
+    enabled: hasChartRepricing(chainId) && earliestHourT != null,
   })
 
   const aggPoints = useMemo<AggPoint[]>(() => {
-    // Rows up to and including the last traded bucket are priced by the chain and
-    // left alone; only the frozen stretch after it is valued off-chain.
-    const overrideAt = (t: number) => {
-      if (!priceHistory || lastTradedT == null || t <= lastTradedT) return null
-      const price0 = priceHistory.at0(t)
-      const price1 = priceHistory.at1(t)
-      return price0 != null && price1 != null ? { price0, price1 } : null
+    // Anchors are per tier, so a daily row is valued against daily anchors and an
+    // hourly row against hourly ones — never mixed.
+    const asc = (rows: AggRow[] | undefined) => {
+      const list = rows ?? []
+      const resolve = priceHistory ? buildOverrideResolver(list, priceHistory.at0, priceHistory.at1) : null
+      return list
+        .map((row) =>
+          rowToPoint({
+            row,
+            baseIdx,
+            keepUniV2,
+            scaleLpPriceDown: iskHYPEUSDT,
+            // A bucket that traded is already priced by the chain — leave it.
+            override: resolve && !(Number(row.totalVolume) > 0) ? resolve(Number(row.t)) : null,
+          }),
+        )
+        .filter((p) => Number.isFinite(p.t))
+        .sort((a, b) => a.t - b.t)
     }
-    const toPoint = (row: AggRow): AggPoint =>
-      rowToPoint({
-        row,
-        baseIdx,
-        keepUniV2,
-        scaleLpPriceDown: iskHYPEUSDT,
-        override: overrideAt(Number(row.t)),
-      })
-    const asc = (rows: AggRow[] | undefined) =>
-      (rows ?? []).map(toPoint).filter((p) => Number.isFinite(p.t)).sort((a, b) => a.t - b.t)
     const hourly = asc(hourResp?.rows)
     const daily = asc(dayResp?.rows)
     // Daily for the old part (before the hourly window begins) + hourly for the
     // recent part → full-history coverage with fine recent resolution, no overlap.
     const earliestHourly = hourly.length ? hourly[0].t : Infinity
     return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
-  }, [hourResp, dayResp, keepUniV2, baseIdx, iskHYPEUSDT, priceHistory, lastTradedT])
+  }, [hourResp, dayResp, keepUniV2, baseIdx, iskHYPEUSDT, priceHistory])
 
   const isLoading = hourLoading || dayLoading
 
