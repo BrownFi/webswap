@@ -100,6 +100,20 @@ export type UsePairTransactions = {
 const CHAINS_WITH_RESERVE_USD_AGG = new Set<number>([ChainId.ROBINHOOD_MAINNET])
 export const hasReserveUsdAggregate = (chainId: number) => CHAINS_WITH_RESERVE_USD_AGG.has(chainId)
 
+/**
+ * Chains where the Pool Detail charts re-price a quiet pool's rows from an off-chain
+ * price (see chartRepricing.ts). Two things gate this, and both are per-chain:
+ *  - the indexer must ship per-row reserves, since a row can only be re-valued with
+ *    its own liquidity (PairChartTV asks for reserve0/reserve1 only here);
+ *  - every token in every pool on the chain needs a price-history id
+ *    (useTokenPriceHistory), or its pools silently keep the old flat behaviour.
+ * Robinhood satisfies both and has pools dead for days (USDG/NVDA last swapped
+ * 2026-10-24). The other chains read fine today, so they are left alone rather than
+ * put through a behaviour change on prod. Adding a chain means doing both above.
+ */
+const CHAINS_WITH_CHART_REPRICING = new Set<number>([ChainId.ROBINHOOD_MAINNET])
+export const hasChartRepricing = (chainId: number) => CHAINS_WITH_CHART_REPRICING.has(chainId)
+
 export function usePairTransactions(
   chainId: number,
   pairAddress: string,

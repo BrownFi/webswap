@@ -17,7 +17,9 @@ import { isV3Like } from '@brownfi/sdk'
 import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
-import { hasReserveUsdAggregate, usePairTransactions } from './usePairTransactions'
+import { hasChartRepricing, hasReserveUsdAggregate, usePairTransactions } from './usePairTransactions'
+import { QUIET_AFTER_SECONDS, balanceRowToPoint, pickLastTradedRow } from './chartRepricing'
+import { useTokenPriceHistory } from './useTokenPriceHistory'
 
 // Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
 // Same data + computation as the recharts version: pool-balance % split from the
@@ -78,6 +80,13 @@ type Props = {
   version: number
   symbol0: string
   symbol1: string
+  // Token addresses in the INDEXER's token0/token1 order, used to resolve the price
+  // feeds that re-price a quiet pool (see chartRepricing.ts). Must match the order of
+  // the rows' token0Price/token1Price — an SDK Pair sorts its tokens by address and
+  // would silently swap the two feeds on any pool the indexer did not store sorted.
+  // Optional: without them the chart reads its rows as-is, i.e. today's behaviour.
+  token0Address?: string
+  token1Address?: string
   // Pool base/quote signal (= shouldReverseDisplay). Drives BOTH the legend order
   // AND the colors: when true the base is raw token1, so it lists first + is gold.
   reversed?: boolean
@@ -109,6 +118,8 @@ export function PoolBalanceChart({
   version,
   symbol0,
   symbol1,
+  token0Address,
+  token1Address,
   reversed = false,
   showLpVsBh = true,
 }: Props) {
@@ -162,6 +173,9 @@ export function PoolBalanceChart({
           token1Price
           lpPrice
           bnhPrice
+          totalVolume
+          bnhReserve0
+          bnhReserve1
         }
       }`,
       timeKey,
@@ -174,7 +188,7 @@ export function PoolBalanceChart({
       query: makeAggQuery(entity, timeKey),
       variables: { chainId, version, pair: pairAddress.toLowerCase() },
     })
-  const { data: aggHour, isLoading: aggHourLoading } = useQuery<{ rows: AggRow[] }>({
+  const { data: aggHour, isLoading: aggHourLoading, dataUpdatedAt: aggHourUpdatedAt } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['poolBalanceAggHour', chainId, pairAddress, version],
     queryFn: aggQueryFn('pairHourDatas', 'hourStartUnix'),
     enabled: useAgg,
@@ -192,36 +206,47 @@ export function PoolBalanceChart({
   })
   const isLoading = useAgg ? aggHourLoading || aggDayLoading : txLoading
 
+  // ── Re-pricing a quiet pool ────────────────────────────────────────────────
+  // reserve0USD/reserve1USD are reserve x the ON-CHAIN price, and that price is only
+  // written by a swap — so a pool that stops trading freezes the balance split, the
+  // relative price AND the LP-vs-BH line all at once. Same treatment as the LP chart
+  // (see chartRepricing.ts): detect quiet from the last bucket WITH volume, then value
+  // each row's own holdings at the off-chain price for that row's hour.
+  const lastTradedRow = useMemo(
+    () => pickLastTradedRow([...(aggDay?.rows ?? []), ...(aggHour?.rows ?? [])]),
+    [aggHour, aggDay],
+  )
+  const lastTradedT = lastTradedRow ? Number(lastTradedRow.t) : null
+  const nowSec = Math.floor(aggHourUpdatedAt / 1000)
+  const isQuiet =
+    useAgg && hasChartRepricing(chainId) && lastTradedT != null && nowSec - lastTradedT > QUIET_AFTER_SECONDS
+  const priceHistory = useTokenPriceHistory({
+    chainId,
+    token0Address,
+    token1Address,
+    spanSeconds: isQuiet && lastTradedT != null ? nowSec - lastTradedT : 0,
+    enabled: isQuiet,
+  })
+
   // Same shape the tx path produces, so everything downstream is untouched.
   const aggPoints = useMemo<Point[]>(() => {
-    const toPoint = (d: AggRow): Point => {
-      const r0 = Number(d.reserve0USD)
-      const r1 = Number(d.reserve1USD)
-      const total = r0 + r1
-      const p0 = Number(d.token0Price) || 0
-      const p1 = Number(d.token1Price) || 0
-      // token0Price/token1Price ARE the USD unit prices the tx path divided out of
-      // reserveUSD/reserve, so the relative price is the same quantity.
-      const baseUsdPrice = baseIdx === 0 ? p0 : p1
-      const quoteUsdPrice = quoteIdx === 0 ? p0 : p1
-      const lp = Number(d.lpPrice)
-      const bnh = Number(d.bnhPrice)
-      return {
-        t: Number(d.t),
-        pct0: total > 0 ? (r0 / total) * 100 : NaN,
-        pct1: total > 0 ? 100 - (r0 / total) * 100 : NaN,
-        price0: quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN,
-        lpVsBh: lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null,
-      }
+    const overrideAt = (t: number) => {
+      if (!priceHistory || lastTradedT == null || t <= lastTradedT) return null
+      const price0 = priceHistory.at0(t)
+      const price1 = priceHistory.at1(t)
+      return price0 != null && price1 != null ? { price0, price1 } : null
     }
     const asc = (rows: AggRow[] | undefined) =>
-      (rows ?? []).map(toPoint).filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0)).sort((a, b) => a.t - b.t)
+      (rows ?? [])
+        .map((d) => balanceRowToPoint(d, baseIdx, overrideAt(Number(d.t))))
+        .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
+        .sort((a, b) => a.t - b.t)
     const hourly = asc(aggHour?.rows)
     const daily = asc(aggDay?.rows)
     // Daily for the old part + hourly for the recent part → full history, fine recent.
     const earliestHourly = hourly.length ? hourly[0].t : Infinity
     return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
-  }, [aggHour, aggDay, baseIdx, quoteIdx])
+  }, [aggHour, aggDay, baseIdx, priceHistory, lastTradedT])
 
   // Full fetched series as a % split, chronological (indexer returns newest-first).
   // Kept in RAW token order — colors/lines are tied to each raw token. Each point
