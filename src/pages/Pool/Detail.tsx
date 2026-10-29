@@ -550,8 +550,6 @@ function PoolDetailInner({
                 reversed={isReversed}
                 symbol0={symbol0}
                 symbol1={symbol1}
-                token0Address={pairRaw.token0?.id}
-                token1Address={pairRaw.token1?.id}
               />
             </Suspense>
 
@@ -562,9 +560,10 @@ function PoolDetailInner({
               </Suspense>
             </div>
 
-            {/* Pool balance over time — pool-wide composition %, base-token price,
-                and tx history. V3 ONLY: the V2 indexer has no `transactions` query
-                (404s), so the chart would be empty on V2. LP-vs-BH line hidden. */}
+            {/* Pool balance over time — pool-wide composition % and base-token price,
+                from pairHour/DayData. V3 ONLY: those per-bucket reserves and prices are
+                a V3 indexer feature, so the chart would be empty on V2. LP-vs-BH line
+                hidden. */}
             {isV3Like(version) && (
               // LP-vs-HODL line removed from the Pool Balance chart (boss request,
               // 2026-07-16) — moved to the LP chart as "LP vs BH". Leaves pct0/pct1
@@ -575,8 +574,6 @@ function PoolDetailInner({
                 version={version}
                 symbol0={symbol0}
                 symbol1={symbol1}
-                token0Address={pairRaw.token0?.id}
-                token1Address={pairRaw.token1?.id}
                 reversed={isReversed}
                 quoteTokenIndex={pairRaw.quoteTokenIndex}
                 showLpVsBh={false}

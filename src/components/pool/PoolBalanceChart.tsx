@@ -13,35 +13,27 @@ import {
 } from 'lightweight-charts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { isV3Like } from '@brownfi/sdk'
 import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
-import { hasChartRepricing, hasReserveUsdAggregate, usePairTransactions } from './usePairTransactions'
-import { BalanceRow, balanceRowToPoint, buildOverrideResolver } from './chartRepricing'
-import { useTokenPriceHistory } from './useTokenPriceHistory'
+import { BalanceRow, balanceRowToPoint } from './chartRows'
 
-// Lightweight-charts (TradingView v5) reimplementation of PoolBalanceChart.
-// Same data + computation as the recharts version: pool-balance % split from the
-// indexer's `Transaction` entity (reserve0USD/reserve1USD per tx), plus an
-// overlaid daily LP-vs-BH % line on a right scale.
+// Pool Balance chart (Pool Detail), on lightweight-charts (TradingView v5): each
+// token's % of pool value, the relative price, and an LP-vs-BH % line on a right scale.
 //
-// The headline thing this prototype tests is "dominant-token shading": instead of
-// recharts' two band Areas, the token0 % is drawn as a single BaselineSeries with
-// its base value pinned at 50%. The fill ABOVE 50 is orange (token0-heavy) and
-// BELOW 50 is blue (token1-heavy), so the dominant token is read directly from the
-// fill color of one continuous series.
+// Every series comes from pairHour/DayData — hourly for the recent part, daily for
+// older history. It used to read the indexer's `Transaction` entity on most chains,
+// paging up to 20k swaps only to resample them onto the bucket grid; the aggregate
+// carries the same quantities per bucket, so the chart costs two requests. Bars are
+// therefore never finer than an hour.
+//
+// "Dominant-token shading": the token0 % is drawn as a single BaselineSeries with its
+// base value pinned at 50%. The fill ABOVE 50 is orange (token0-heavy) and BELOW 50
+// is blue (token1-heavy), so the dominant token is read straight from the fill color.
 //
 // Colors follow BASE/QUOTE via the `reversed` (= shouldReverseDisplay) signal:
 // the BASE token is always orange/gold, the QUOTE always blue — consistent across
 // every pool. `reversed` also lists the base first in the legend rows.
-// Tx feed now comes from the shared `usePairTransactions` hook (one request +
-// shared paging with the LP chart on the same page). PairTxn carries the superset
-// of fields; this chart uses reserves (+ lpPrice/bnhPrice when showLpVsBh).
-// pct0/pct1 = each token's % of pool value; lpVsBh = LP-vs-buy&hold % (right
-// axis), computed per-swap from the tx's own lpPrice/bnhPrice; basePrice = the BASE (non-quote) token's
-// USD price for this tx (its reserveUSD / its reserve), drawn on its own isolated
-// overlay scale. Base is chosen via quoteTokenIndex.
 type Point = {
   t: number
   pct0: number
@@ -80,13 +72,6 @@ type Props = {
   version: number
   symbol0: string
   symbol1: string
-  // Token addresses in the INDEXER's token0/token1 order, used to resolve the price
-  // feeds that re-price a quiet pool (see chartRepricing.ts). Must match the order of
-  // the rows' token0Price/token1Price — an SDK Pair sorts its tokens by address and
-  // would silently swap the two feeds on any pool the indexer did not store sorted.
-  // Optional: without them the chart reads its rows as-is, i.e. today's behaviour.
-  token0Address?: string
-  token1Address?: string
   // Pool base/quote signal (= shouldReverseDisplay). Drives BOTH the legend order
   // AND the colors: when true the base is raw token1, so it lists first + is gold.
   reversed?: boolean
@@ -112,12 +97,10 @@ export function PoolBalanceChart({
   version,
   symbol0,
   symbol1,
-  token0Address,
-  token1Address,
   reversed = false,
   showLpVsBh = true,
 }: Props) {
-  const [range, setRange] = useState<RangeKey>('7D')
+  const [range, setRange] = useState<RangeKey>('1M')
   // Per-series visibility, toggled by the bottom legend (like PairChartTV).
   const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ t0: true, t1: true, lpbh: true, price0: true })
 
@@ -126,7 +109,6 @@ export function PoolBalanceChart({
   // `reversed` (= shouldReverseDisplay: quoteTokenIndex for V3, symbol whitelist
   // for V2) so the chart agrees with the pair title everywhere — single source.
   const baseIdx = reversed ? 1 : 0
-  const quoteIdx = baseIdx === 0 ? 1 : 0
   const baseSymbol = baseIdx === 0 ? symbol0 : symbol1
   const quoteSymbol = baseIdx === 0 ? symbol1 : symbol0
 
@@ -136,40 +118,17 @@ export function PoolBalanceChart({
   const token0Color = reversed ? COLOR1 : COLOR0
   const token1Color = reversed ? COLOR0 : COLOR1
 
-  // ONE shared tx feed for this pool — the LP chart (PairChartTV) on the same
-  // page reads the identical react-query cache, so the detail page makes a single
-  // tx request + shares load-more paging. The hook fetches the superset of fields
-  // (reserves + lpPrice/bnhPrice/bh3Price/uniV2Price/amounts); this chart uses
-  // reserves always, plus lpPrice/bnhPrice for the LP-vs-BH line when showLpVsBh.
-  // Prefer the AGGREGATE where the indexer has reserve0USD/reserve1USD: the per-swap
-  // feed pages `transactions` 1000 at a time (up to 20k) purely to be resampled onto
-  // the bucket grid below, so the per-swap detail is thrown away anyway. Only
-  // Robinhood ships those fields today — the other chains answer "has no field
-  // 'reserve0USD'", so they keep the tx path until Manh adds them (see
-  // hasReserveUsdAggregate). When the aggregate is used the tx request is skipped
-  // entirely, which is the whole point.
-  const useAgg = hasReserveUsdAggregate(chainId) && isV3Like(version)
-  const { txns: combinedTxs, loadMore, isLoading: txLoading } = usePairTransactions(
-    chainId,
-    pairAddress,
-    version,
-    !useAgg,
-  )
-
   const makeAggQuery = (entity: string, timeKey: 'hourStartUnix' | 'dayStartUnix') =>
     withFirstActivityGte(
       `query PoolBalanceAgg($pair: String!) {
         rows: ${entity}(first: 1000, orderBy: ${timeKey}, orderDirection: desc, where: { pair: $pair }) {
           t: ${timeKey}
-          reserve0USD
-          reserve1USD
+          reserve0
+          reserve1
           token0Price
           token1Price
           lpPrice
           bnhPrice
-          totalVolume
-          bnhReserve0
-          bnhReserve1
         }
       }`,
       timeKey,
@@ -182,10 +141,9 @@ export function PoolBalanceChart({
       query: makeAggQuery(entity, timeKey),
       variables: { chainId, version, pair: pairAddress.toLowerCase() },
     })
-  const { data: aggHour, isLoading: aggHourLoading, dataUpdatedAt: aggHourUpdatedAt } = useQuery<{ rows: AggRow[] }>({
+  const { data: aggHour, isLoading: aggHourLoading } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['poolBalanceAggHour', chainId, pairAddress, version],
     queryFn: aggQueryFn('pairHourDatas', 'hourStartUnix'),
-    enabled: useAgg,
     refetchInterval: 60_000,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
@@ -193,104 +151,37 @@ export function PoolBalanceChart({
   const { data: aggDay, isLoading: aggDayLoading } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['poolBalanceAggDay', chainId, pairAddress, version],
     queryFn: aggQueryFn('pairDayDatas', 'dayStartUnix'),
-    enabled: useAgg,
     refetchInterval: 60_000,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
-  const isLoading = useAgg ? aggHourLoading || aggDayLoading : txLoading
 
-  // ── Re-pricing frozen buckets ──────────────────────────────────────────────
-  // reserve0USD/reserve1USD are reserve x the ON-CHAIN price, and that price is only
-  // written by a swap — so every bucket without volume freezes the balance split, the
-  // relative price AND the LP-vs-BH line together. Same treatment as the LP chart; see
-  // chartRepricing.ts for why interior gaps count and why the feed is used for the
-  // relative move only.
-  const earliestHourT = useMemo(() => {
-    const ts = (aggHour?.rows ?? []).map((r) => Number(r.t)).filter(Number.isFinite)
-    return ts.length ? Math.min(...ts) : null
-  }, [aggHour])
-  const nowSec = Math.floor(aggHourUpdatedAt / 1000)
-  const priceHistory = useTokenPriceHistory({
-    chainId,
-    token0Address,
-    token1Address,
-    spanSeconds: earliestHourT != null ? nowSec - earliestHourT : 0,
-    enabled: useAgg && hasChartRepricing(chainId) && earliestHourT != null,
-  })
+  const isLoading = aggHourLoading || aggDayLoading
 
-  // Same shape the tx path produces, so everything downstream is untouched.
-  const aggPoints = useMemo<Point[]>(() => {
-    const asc = (rows: AggRow[] | undefined) => {
-      const list = rows ?? []
-      const resolve = priceHistory ? buildOverrideResolver(list, priceHistory.at0, priceHistory.at1) : null
-      return list
-        .map((d) =>
-          balanceRowToPoint(d, baseIdx, resolve && !(Number(d.totalVolume) > 0) ? resolve(Number(d.t)) : null),
-        )
+  const allPoints = useMemo<Point[]>(() => {
+    // Wait for BOTH tiers — see the LP chart: drawing the daily tier alone first
+    // flashes a coarse step chart before the hourly rows replace it.
+    if (aggHourLoading || aggDayLoading) return []
+    const asc = (rows: AggRow[] | undefined) =>
+      (rows ?? [])
+        .map((d) => balanceRowToPoint(d, baseIdx))
         .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
         .sort((a, b) => a.t - b.t)
-    }
     const hourly = asc(aggHour?.rows)
     const daily = asc(aggDay?.rows)
     // Daily for the old part + hourly for the recent part → full history, fine recent.
     const earliestHourly = hourly.length ? hourly[0].t : Infinity
     return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
-  }, [aggHour, aggDay, baseIdx, priceHistory])
+  }, [aggHourLoading, aggDayLoading, aggHour, aggDay, baseIdx])
 
-  // Full fetched series as a % split, chronological (indexer returns newest-first).
-  // Kept in RAW token order — colors/lines are tied to each raw token. Each point
-  // also carries the LP-vs-BH value from the latest daily bucket ≤ its timestamp.
-  const txPoints = useMemo<Point[]>(() => {
-    return [...combinedTxs]
-      .reverse()
-      .map((t) => {
-        const r0 = Number(t.reserve0USD)
-        const r1 = Number(t.reserve1USD)
-        const total = r0 + r1
-        const pct0 = total > 0 ? (r0 / total) * 100 : NaN
-        const pct1 = 100 - pct0
-        // RELATIVE price = base token priced in the quote token (the pool exchange
-        // rate). Computed as base's USD price ÷ quote's USD price — correct even
-        // though BrownFi reserves aren't value-balanced. base/quote chosen via
-        // quoteTokenIndex (base = non-quote token).
-        const baseAmt = Number(baseIdx === 0 ? t.reserve0 : t.reserve1)
-        const baseUsd = baseIdx === 0 ? r0 : r1
-        const quoteAmt = Number(quoteIdx === 0 ? t.reserve0 : t.reserve1)
-        const quoteUsd = quoteIdx === 0 ? r0 : r1
-        const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
-        const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
-        const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
-        // Per-swap LP-vs-BH % from the tx's OWN lpPrice/bnhPrice (like beta) — a smooth
-        // point-per-trade line, NOT the coarse daily step it used to read from
-        // pairDayData. null when the fields weren't fetched (line off) or are absent, so
-        // the series just hides.
-        const lp = Number(t.lpPrice)
-        const bnh = Number(t.bnhPrice)
-        const lpVsBh = lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null
-        return { t: Number(t.timestamp), pct0, pct1, price0, lpVsBh }
-      })
-      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
-  }, [combinedTxs, baseIdx, quoteIdx])
-
-  const allPoints = useAgg ? aggPoints : txPoints
-
-  // De-duplicate timestamps (lightweight-charts requires strictly-ascending,
-  // unique time values; two trades can share a second). Keep the latest reserve
-  // snapshot for a given second by overwriting as we walk ascending.
-  //
-  // The chart always holds the FULL accumulated set — the timeframe selector is a
-  // zoom preset (visible TIME range), not a data filter, so every range can
-  // scroll left and trigger load-more.
-  // Resample the per-swap points onto a time GRID (bucketClose = last swap in each
-  // bucket, carried forward across empty buckets — correct since balance/price hold
-  // between trades) so the x-axis is LINEAR in clock time (even spacing, gap-free)
-  // instead of following raw trade density. Bucket size per timeframe from RANGE_BUCKETS
-  // (1D = 15-min on bera; beta uses 5-min).
+  // The chart always holds the full history — the timeframe selector is a zoom preset
+  // (visible TIME range), not a data filter.
+  // Resample onto a linear time GRID (bucketClose = last point in each bucket, carried
+  // forward across empty buckets) so the x-axis is even in clock time.
   // Bars can't be finer than the source: the aggregate is hourly, so the 1D preset's
   // 15-minute bars would leave 3 of every 4 buckets empty and the carry-forward would
-  // draw stair-steps. The tx path keeps the preset as-is — there, 15-minute bars are real.
-  const bucket = useAgg ? Math.max(RANGE_BUCKETS[range].bucket, 60 * 60) : RANGE_BUCKETS[range].bucket
+  // draw stair-steps.
+  const bucket = Math.max(RANGE_BUCKETS[range].bucket, 60 * 60)
   const grid = useMemo(
     () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
     [allPoints, bucket],
@@ -351,9 +242,6 @@ export function PoolBalanceChart({
   // null when the cursor is outside the plot area. Mirrors PairChartTV's `tip`.
   const [tip, setTip] = useState<{ x: number; y: number; time: number } | null>(null)
 
-  // Latest `loadMore`, read from the once-created chart subscription.
-  const loadMoreRef = useRef<() => void>(() => {})
-
   // Apply the current timeframe as a VISIBLE-RANGE (zoom) preset — the chart
   // always holds the full data, so this only changes what's on screen. 'ALL' =
   // fit everything; bounded ranges = the last N seconds up to the newest point.
@@ -373,9 +261,6 @@ export function PoolBalanceChart({
   // `applyRangePreset` as a dependency (which would re-fire it on every range tick).
   const applyRangePresetRef = useRef(applyRangePreset)
   applyRangePresetRef.current = applyRangePreset
-
-  // Scroll-to-load-more pages older txs via the shared hook.
-  loadMoreRef.current = useAgg ? () => {} : loadMore
 
   // Create chart + series once.
   useEffect(() => {
@@ -564,16 +449,6 @@ export function PoolBalanceChart({
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
-    // Scroll-to-load-more: when the left edge of the visible logical range nears
-    // the start of the loaded data, page older txs. Fires on ANY timeframe — the
-    // selector is now a zoom preset, not a data filter, so every range holds the
-    // full set and can scroll past the loaded edge to extend it.
-    const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
-      if (!logical) return
-      // Nothing to page when the aggregate already covers the whole history.
-      if (logical.from < 10) loadMoreRef.current()
-    }
-    chart.timeScale().subscribeVisibleLogicalRangeChange(rangeChangeHandler as any)
 
     baseSeriesRef.current = baseSeries
     line1Ref.current = line1

@@ -19,9 +19,8 @@ import { graphqlFetcher } from 'utils/graphql'
 import { withFirstActivityGte } from 'lib/sdk/constants/poolFirstActivity'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
 import { RANGE_BUCKETS, RANGE_KEYS, RangeKey, bucketGrid, bucketClose } from './chartTimeBuckets'
-import { hasChartRepricing, hasUniV2Price } from './usePairTransactions'
-import { AggPoint, AggRow, buildOverrideResolver, rowToPoint } from './chartRepricing'
-import { useTokenPriceHistory } from './useTokenPriceHistory'
+import { hasUniV2Price } from './chartChains'
+import { AggPoint, AggRow, rowToPoint } from './chartRows'
 
 // LP chart (Pool Detail). Four lines only, per boss (2026-07-16):
 //   • Relative Price  — BASE priced in QUOTE (e.g. WBERA/HONEY), RIGHT axis
@@ -50,8 +49,7 @@ import { useTokenPriceHistory } from './useTokenPriceHistory'
 // back to pool creation, ≤1000 pts within 30d); ALL reads daily — so only 1D's
 // granularity changes (15-min → hourly); 7D/1M/ALL keep their resolution.
 
-// AggRow/AggPoint and the row -> point reading live in chartRepricing.ts, which also
-// handles valuing a quiet pool's rows at an off-chain price.
+// AggRow/AggPoint and the row -> point reading live in chartRows.ts.
 type ToggleKey = 'price0' | 'lpPrice' | 'lpVsHodl' | 'lpVsUniV2' | 'volume'
 
 const COLOR_PRICE = '#EC4899' // relative price (pink) — matches Pool Balance's price line
@@ -86,13 +84,9 @@ type Props = {
   reversed?: boolean
   symbol0?: string
   symbol1?: string
-  // Token addresses in the INDEXER's token0/token1 order — see PoolBalanceChart for
-  // why the SDK pair's own (sorted) order must not be assumed to match.
-  token0Address?: string
-  token1Address?: string
 }
 
-const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1, token0Address, token1Address }: Props) => {
+const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) => {
   const chainId = pair.chainId
   const version = pair.version
   const pairAddress = pair.liquidityToken.address
@@ -109,7 +103,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1, token0Addr
   const relPriceLabel = `${baseSymbol}/${quoteSymbol}`
   const iskHYPEUSDT = pairAddress === '0xBb78f5ad054CAC4274813b6A4BBcC47D75a18BC3'
 
-  const [range, setRange] = useState<RangeKey>('7D')
+  const [range, setRange] = useState<RangeKey>('1M')
   const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({
     price0: true,
     lpPrice: true,
@@ -129,16 +123,9 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1, token0Addr
   // BOTH tiers, range-independent (stable query keys, no refetch on range switch):
   //   • hourly (pairHourDatas) → fine resolution for the recent ~41d (≤1000 pts);
   //   • daily  (pairDayDatas)  → full pool history (≤1000 days).
-  // They're merged (daily for the old part, hourly for the recent part) so the %
-  // lines cover the WHOLE range the tx feed can scroll-load back to — otherwise a
-  // single hourly query capped the lines at ~41d and they stopped extending on
-  // scroll while price/volume kept loading older.
+  // They're merged (daily for the old part, hourly for the recent part) so the lines
+  // cover the pool's whole history — a single hourly query would cap them at ~41d.
   const uniAggFields = keepUniV2 ? '\n            uniV2Reserve0\n            uniV2Reserve1' : ''
-  // A stale row can only be re-priced with its OWN liquidity, so the re-pricing
-  // chains need the per-row reserves. Requested per chain because the field only
-  // exists where the indexer ships the wider schema — asking elsewhere fails the
-  // whole query with `Type 'PairHourData' has no field 'reserve0'`.
-  const reserveAggFields = hasChartRepricing(chainId) ? '\n            reserve0\n            reserve1' : ''
   const makeAggQuery = (entity: string, timeKey: 'hourStartUnix' | 'dayStartUnix') =>
     withFirstActivityGte(
       `query PairBenchAgg($pair: String!) {
@@ -150,7 +137,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1, token0Addr
           bnhReserve0
           bnhReserve1
           token0Price
-          token1Price${uniAggFields}${reserveAggFields}
+          token1Price${uniAggFields}
         }
       }`,
       timeKey,
@@ -163,7 +150,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1, token0Addr
       query: makeAggQuery(entity, timeKey),
       variables: { chainId, version, pair: pairAddress.toLowerCase() },
     })
-  const { data: hourResp, isLoading: hourLoading, dataUpdatedAt: hourUpdatedAt } = useQuery<{ rows: AggRow[] }>({
+  const { data: hourResp, isLoading: hourLoading } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['pairBenchAggHour', chainId, pairAddress, version, keepUniV2],
     queryFn: aggQueryFn('pairHourDatas', 'hourStartUnix'),
     refetchInterval: 60_000,
@@ -178,53 +165,23 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1, token0Addr
     placeholderData: keepPreviousData,
   })
 
-  // ── Re-pricing frozen buckets ──────────────────────────────────────────────
-  // A bucket without volume carries the last swap's price, so its lines sit still
-  // even while the market moves. See chartRepricing.ts — this covers interior gaps,
-  // not just the stretch after the pool's last trade.
-  const earliestHourT = useMemo(() => {
-    const ts = (hourResp?.rows ?? []).map((r) => Number(r.t)).filter(Number.isFinite)
-    return ts.length ? Math.min(...ts) : null
-  }, [hourResp])
-  // Wall-clock "now" from the query's own fetch stamp rather than Date.now(): it
-  // refreshes with the 60s refetch, and reading it keeps render pure.
-  const nowSec = Math.floor(hourUpdatedAt / 1000)
-  const priceHistory = useTokenPriceHistory({
-    chainId,
-    token0Address: token0Address ?? pair.token0.address,
-    token1Address: token1Address ?? pair.token1.address,
-    // Cover the whole hourly window the chart can show, not just the trailing gap.
-    spanSeconds: earliestHourT != null ? nowSec - earliestHourT : 0,
-    enabled: hasChartRepricing(chainId) && earliestHourT != null,
-  })
-
   const aggPoints = useMemo<AggPoint[]>(() => {
-    // Anchors are per tier, so a daily row is valued against daily anchors and an
-    // hourly row against hourly ones — never mixed.
-    const asc = (rows: AggRow[] | undefined) => {
-      const list = rows ?? []
-      const resolve = priceHistory ? buildOverrideResolver(list, priceHistory.at0, priceHistory.at1) : null
-      return list
-        .map((row) =>
-          rowToPoint({
-            row,
-            baseIdx,
-            keepUniV2,
-            scaleLpPriceDown: iskHYPEUSDT,
-            // A bucket that traded is already priced by the chain — leave it.
-            override: resolve && !(Number(row.totalVolume) > 0) ? resolve(Number(row.t)) : null,
-          }),
-        )
+    // Wait for BOTH tiers. Drawing whichever lands first paints a coarse daily-only
+    // chart and then redraws it once the hourly rows arrive — a visible flash on
+    // every load.
+    if (hourLoading || dayLoading) return []
+    const asc = (rows: AggRow[] | undefined) =>
+      (rows ?? [])
+        .map((row) => rowToPoint({ row, baseIdx, keepUniV2, scaleLpPriceDown: iskHYPEUSDT }))
         .filter((p) => Number.isFinite(p.t))
         .sort((a, b) => a.t - b.t)
-    }
     const hourly = asc(hourResp?.rows)
     const daily = asc(dayResp?.rows)
     // Daily for the old part (before the hourly window begins) + hourly for the
     // recent part → full-history coverage with fine recent resolution, no overlap.
     const earliestHourly = hourly.length ? hourly[0].t : Infinity
     return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
-  }, [hourResp, dayResp, keepUniV2, baseIdx, iskHYPEUSDT, priceHistory])
+  }, [hourLoading, dayLoading, hourResp, dayResp, keepUniV2, baseIdx, iskHYPEUSDT])
 
   const isLoading = hourLoading || dayLoading
 
@@ -237,8 +194,7 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1, token0Addr
   // Bars can never be finer than the data. pairHourData is hourly, so the shared
   // 1D preset's 15-minute bars left 3 of every 4 buckets empty and the carry-forward
   // turned the lines into visible stair-steps. Clamp to the source granularity —
-  // 1D becomes 24 hourly bars. The shared RANGE_BUCKETS stays as-is because Pool
-  // Balance still reads the per-swap tx feed, where 15-minute bars are real.
+  // 1D becomes 24 hourly bars.
   const bucket = Math.max(RANGE_BUCKETS[range].bucket, AGG_BUCKET_FLOOR)
   // Seed from the first bucket with real activity, NOT allPoints[0]: pairHour/DayData
   // has buckets from pool CREATION, which can predate the first trade, and seeding
