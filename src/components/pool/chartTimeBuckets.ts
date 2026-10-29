@@ -1,15 +1,12 @@
-// Shared time-bucketing for the tx-based pool charts (Pool Balance, Oracle Spread).
+// Shared time-bucketing for the Pool Balance and Oracle Spread charts.
 //
 // Why: lightweight-charts spaces points by LOGICAL INDEX (data-point count), not
-// clock time — so plotting one point per swap makes a busy hour many times wider
-// than a quiet hour, and a pool that hasn't traded in days still sits flush at the
-// right edge (no visual "it's been quiet"). These helpers resample the per-swap
-// points onto a fixed time grid per timeframe (like the LP timeframe chart), so
-// the x-axis is linear in real time and recent inactivity shows as a flat stretch.
+// clock time. These helpers resample the charts' points (one per pairHour/DayData
+// bucket) onto a fixed time grid per timeframe, so the x-axis is linear in real time
+// and recent inactivity shows as a flat stretch or a gap.
 //
-// The line series become per-bucket CLOSE values (last swap in the bucket), carried
-// forward across empty buckets — balances/prices/spread don't change without a
-// trade, so a flat line during a gap is correct. Volume is SUMMED per bucket.
+// The line series become per-bucket CLOSE values (last point in the bucket), carried
+// forward across empty buckets. Volume is SUMMED per bucket.
 
 export type RangeKey = '1D' | '7D' | '1M' | 'ALL'
 
@@ -17,7 +14,9 @@ export type RangeKey = '1D' | '7D' | '1M' | 'ALL'
 // Sizes chosen so a window holds ~90–200 bars: enough detail, never so many that
 // gap-filling to `now` blows up the point count.
 export const RANGE_BUCKETS: Record<RangeKey, { bucket: number; span: number | null }> = {
-  '1D': { bucket: 5 * 60, span: 86400 }, // 5-min bars, last 24h (288 bars)
+  // Hourly, not finer: the source is pairHourData, so shorter bars would leave most
+  // of them empty and the carry-forward would draw stair-steps.
+  '1D': { bucket: 60 * 60, span: 86400 }, // 1-hour bars, last 24h (24 bars)
   '7D': { bucket: 60 * 60, span: 7 * 86400 }, // 1-hour bars, last 7d (168 bars)
   '1M': { bucket: 4 * 60 * 60, span: 30 * 86400 }, // 4-hour bars, last 30d (180 bars)
   ALL: { bucket: 86400, span: null }, // daily bars, full loaded history
@@ -27,9 +26,9 @@ export const RANGE_KEYS: RangeKey[] = ['1D', '7D', '1M', 'ALL']
 
 // Compute the [gridStart, gridEnd] bucket-aligned grid. gridEnd is always "now"
 // (so the carried line reaches the present); gridStart follows the EARLIEST loaded
-// swap. The grid holds the full loaded history at this bucket size — the timeframe
-// is a zoom preset (visible window), NOT a data filter — so scrolling left reveals
-// older bars and triggers load-more, matching the LP chart. null when no data.
+// point. The grid holds everything loaded at this bucket size — the timeframe is a
+// zoom preset (visible window), NOT a data filter — so scrolling left reveals older
+// bars, back to the start of the tier the range reads. null when no data.
 export function bucketGrid(
   firstTs: number | null,
   bucket: number,

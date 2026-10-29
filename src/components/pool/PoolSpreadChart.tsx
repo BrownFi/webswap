@@ -3,7 +3,6 @@ import {
   CrosshairMode,
   HistogramSeries,
   IChartApi,
-  IRange,
   ISeriesApi,
   LineSeries,
   LineStyle,
@@ -17,18 +16,19 @@ import { syncSegmentPool } from './segmentPool'
 import { usePoolMarketPrice } from 'hooks/usePoolMarketPrice'
 import { isMarketRefPair as isMarketRef } from './marketRefPairs'
 import { InfoTooltip } from 'components/pool/AnnualizedReturnInfo'
-import { PoolTxn, fetchPoolTxnsPage, usePoolTransactions } from 'hooks/usePoolTransactions'
+import { PoolAggRow, usePoolAggregates, volumeLegs } from 'hooks/usePoolAggregates'
 
-// "oSpread" = the oracle-vs-AMM price spread per SWAP, from the indexer Transaction
-// entity: (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel. It oscillates around 0
+// "oSpread" = the oracle-vs-AMM price spread at a swap:
+// (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel. It oscillates around 0
 // (positive = oracle above the AMM price, negative = below). Rows come from the SHARED
-// usePoolTransactions fetch (one call for all pool charts); we filter to SWAPs here.
+// usePoolAggregates fetch (one call per tier for all pool charts), which holds each
+// bucket's LAST swap — so the line is one reading per hour that traded.
 
 type Range = RangeKey
 
 // s = oSpread in %; price0 = pool exchange rate (base priced in quote); lpVsBh =
-// LP-vs-buy&hold %; vol = this swap's USD volume; volUp = base token was net-bought.
-type Point = { t: number; s: number; price0: number; lpVsBh: number | null; vol: number; volUp: boolean }
+// LP-vs-buy&hold %.
+type Point = { t: number; s: number; price0: number; lpVsBh: number | null }
 
 const COLOR = '#D8A072'
 const COLOR_PRICE0 = '#EC4899' // pink — pool's own price (matches the Pool Balance chart)
@@ -106,7 +106,7 @@ export function PoolSpreadChart({
   token0FeedId,
   token1FeedId,
 }: Props) {
-  const [range, setRange] = useState<Range>('7D')
+  const [range, setRange] = useState<Range>('1M')
   // price0 (the pool's WETH/USDC.e price line) is hidden by default — it overlaps the
   // Market line and clutters the spread view. Toggle it on from the legend if wanted.
   const [visible, setVisible] = useState<Record<ToggleKey, boolean>>({ spread: true, price0: false, market: true, lpbh: true, vol: true })
@@ -114,27 +114,17 @@ export function PoolSpreadChart({
   // Base/quote (via `reversed`) — the pool price + market lines are base priced in
   // quote, matching the Pool Balance chart.
   const baseIdx = reversed ? 1 : 0
-  const quoteIdx = baseIdx === 0 ? 1 : 0
   const baseSymbol = baseIdx === 0 ? symbol0 : symbol1
   const quoteSymbol = baseIdx === 0 ? symbol1 : symbol0
   const baseFeedId = baseIdx === 0 ? token0FeedId : token1FeedId
   const quoteFeedId = baseIdx === 0 ? token1FeedId : token0FeedId
   const isMarketRefPair = isMarketRef(chainId, pairAddress)
 
-  // Shared newest-1000 rows (one fetch for all pool charts). Older rows paged below.
-  const { txns: baseTxns, isLoading } = usePoolTransactions({ pairAddress, chainId, version })
+  // Shared hourly + daily aggregates (one fetch per tier for all pool charts).
+  const { dailyRows, hourlyRows, isLoading } = usePoolAggregates({ pairAddress, chainId, version })
+  // One tier per range (see usePoolAggregates): daily bars read daily rows, the rest hourly.
+  const rows = RANGE_BUCKETS[range].bucket >= 86_400 ? dailyRows : hourlyRows
 
-  // Older batches accumulated by scroll-to-load-more (newest-first, like the base).
-  const [olderTxs, setOlderTxs] = useState<PoolTxn[]>([])
-  // No concurrent fetches; stop once a batch returns < 1000 (older end reached).
-  const loadingRef = useRef(false)
-  const exhaustedRef = useRef(false)
-  // Scroll-position preservation: capture the visible TIME range before a prepend
-  // and restore it after setData (so the view doesn't jump as bars grow left).
-  const pendingRestoreRef = useRef(false)
-  const savedRangeRef = useRef<IRange<Time> | null>(null)
-  // Latest `loadMore`, read from the once-created chart subscription.
-  const loadMoreRef = useRef<() => void>(() => {})
   // Visible-window rendering: debounce timer for scroll-driven window updates, a stable
   // handle to the latest updater (read from the once-created subscription), and a flag
   // for "have we framed the preset for the current range yet" (so scroll rebuilds and
@@ -143,15 +133,6 @@ export function PoolSpreadChart({
   const updateWindowRef = useRef<() => void>(() => {})
   const framedForRangeRef = useRef(false)
 
-  // Reset accumulation + paging guards when the pool identity changes.
-  useEffect(() => {
-    setOlderTxs([])
-    loadingRef.current = false
-    exhaustedRef.current = false
-    pendingRestoreRef.current = false
-    savedRangeRef.current = null
-  }, [pairAddress, chainId, version])
-
   // Reset the render window + "framed" flag when the pool or timeframe changes, so the
   // new view opens at the new timeframe's default preset (not a stale scrolled window).
   useEffect(() => {
@@ -159,76 +140,54 @@ export function PoolSpreadChart({
     framedForRangeRef.current = false
   }, [pairAddress, chainId, version, range])
 
-  // Initial batch (newest-first) + accumulated older batches (also newest-first),
-  // so the whole thing stays a single descending list. The oldest accumulated
-  // timestamp (last element) is the cursor for the next `timestamp_lt` page.
-  // Unfiltered accumulated rows (all tx types) — the load-more cursor pages by the
-  // oldest LOADED row, so it mustn't be the SWAP-filtered subset (older non-swap rows
-  // are already loaded → paging by the oldest swap would re-fetch them).
-  const combinedTxs = useMemo<PoolTxn[]>(() => [...baseTxns, ...olderTxs], [baseTxns, olderTxs])
+  // The pool price + LP-vs-BH of one bucket — read the same way as the Pool Balance
+  // chart, so the two charts on the page show the same pool price.
+  const lineOf = useCallback(
+    (r: PoolAggRow) => {
+      const baseUsd = baseIdx === 0 ? r.token0Price : r.token1Price
+      const quoteUsd = baseIdx === 0 ? r.token1Price : r.token0Price
+      return {
+        price0: baseUsd > 0 && quoteUsd > 0 ? baseUsd / quoteUsd : NaN,
+        lpVsBh: r.lpPrice > 0 && r.bnhPrice > 0 ? (r.lpPrice / r.bnhPrice - 1) * 100 : null,
+      }
+    },
+    [baseIdx],
+  )
 
-  // oSpread per swap (× 100 for %), chronological (indexer returns newest-first). The
-  // shared fetch returns ALL tx types; the spread + its volume are SWAP-only, so
-  // filter to swaps here (the old dedicated query used where:{type:"SWAP"}).
-  const allPoints = useMemo<Point[]>(() => {
-    // Drop swaps with a future timestamp — a bad indexer record dated ahead of
-    // now sits at the end of the series, so the chart frames right up to it
-    // (stretching the axis "today → Jul 26"). Real block timestamps are never
-    // ahead of now; a 1h margin absorbs any clock skew.
-    const futureCutoff = Math.floor(Date.now() / 1000) + 3600
-    return [...combinedTxs]
-      .filter((t) => t.type === 'SWAP')
-      .reverse()
-      .map((t) => {
-        const p0 = Number(t.pythPrice0)
-        const p1 = Number(t.pythPrice1)
-        const amm = Number(t.ammPriceRel)
-        const adj = Number(t.adjPriceRel)
-        // pythPrice0/pythPrice1 is token0/token1, but ammPriceRel/adjPriceRel use
-        // the pool's quote orientation (inverted when token0 is the quote). Pick
-        // the oracle-ratio orientation that matches ammPriceRel — the spread is
-        // tiny, so the matching orientation is unambiguous — before the subtract.
-        const rA = p1 !== 0 ? p0 / p1 : NaN
-        const rB = p0 !== 0 ? p1 / p0 : NaN
-        const ratio =
-          Number.isFinite(rA) && (!Number.isFinite(rB) || Math.abs(rA - amm) <= Math.abs(rB - amm)) ? rA : rB
-        // Skip swaps with a missing AMM price (ammPriceRel = 0) — early-pool data
-        // anomalies that otherwise compute to a bogus ~100% spread (the "100% at
-        // the start"). Only amm > 0 (and adj > 0) is a real trade price.
-        const s = amm > 0 && adj > 0 && Number.isFinite(ratio) ? ((ratio - amm) / adj) * 100 : NaN
-        // Same per-swap USD volume as the Pool Balance chart:
-        // (amount0In + amount0Out) × (reserve0USD / reserve0). Direction relative to
-        // the BASE token: base bought (leaves pool → baseOut) = up, sold = down.
-        const r0 = Number(t.reserve0)
-        const u0 = Number(t.reserve0USD)
-        const vol = r0 > 0 ? (Number(t.amount0In) + Number(t.amount0Out)) * (u0 / r0) : 0
-        const baseOut = Number(baseIdx === 0 ? t.amount0Out : t.amount1Out)
-        const baseIn = Number(baseIdx === 0 ? t.amount0In : t.amount1In)
-        // Pool exchange rate (base priced in quote) from reserve USD — identical to
-        // the Pool Balance chart's price0, so the two charts show the same pool price.
-        const r1 = Number(t.reserve1)
-        const u1 = Number(t.reserve1USD)
-        const baseAmt = baseIdx === 0 ? r0 : r1
-        const baseUsd = baseIdx === 0 ? u0 : u1
-        const quoteAmt = quoteIdx === 0 ? r0 : r1
-        const quoteUsd = quoteIdx === 0 ? u0 : u1
-        const baseUsdPrice = baseAmt > 0 ? baseUsd / baseAmt : NaN
-        const quoteUsdPrice = quoteAmt > 0 ? quoteUsd / quoteAmt : NaN
-        const price0 = quoteUsdPrice > 0 ? baseUsdPrice / quoteUsdPrice : NaN
-        // LP-vs-BH % from the per-swap benchmark prices (indexer) — same as the
-        // Pool Balance chart. null when the chain lacks the fields (stripped query).
-        const lp = Number(t.lpPrice)
-        const bnh = Number(t.bnhPrice)
-        const lpVsBh = lp > 0 && bnh > 0 ? (lp / bnh - 1) * 100 : null
-        return { t: Number(t.timestamp), s, price0, lpVsBh, vol: Number.isFinite(vol) ? vol : 0, volUp: baseOut >= baseIn }
-      })
-      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.s) && p.t <= futureCutoff)
-  }, [combinedTxs, baseIdx, quoteIdx])
+  // oSpread (× 100 for %), one point per bucket that had a swap: the oracle fields on
+  // pairHour/DayData are the bucket's LAST swap, so this is the spread at that swap.
+  // A bucket without a swap carries 0 in those fields — not a reading — and is left
+  // out, so the spread line gaps across no-trade time as it did per swap.
+  const allPoints = useMemo<Point[]>(
+    () =>
+      rows
+        .map((r) => {
+          const { pythPrice0: p0, pythPrice1: p1, ammPriceRel: amm, adjPriceRel: adj } = r
+          // pythPrice0/pythPrice1 is token0/token1, but ammPriceRel/adjPriceRel use
+          // the pool's quote orientation (inverted when token0 is the quote). Pick
+          // the oracle-ratio orientation that matches ammPriceRel — the spread is
+          // tiny, so the matching orientation is unambiguous — before the subtract.
+          const rA = p1 !== 0 ? p0 / p1 : NaN
+          const rB = p0 !== 0 ? p1 / p0 : NaN
+          const ratio =
+            Number.isFinite(rA) && (!Number.isFinite(rB) || Math.abs(rA - amm) <= Math.abs(rB - amm)) ? rA : rB
+          // amm > 0 and adj > 0 are what mark a real reading (see above).
+          const s = r.totalVolume > 0 && amm > 0 && adj > 0 && Number.isFinite(ratio) ? ((ratio - amm) / adj) * 100 : NaN
+          return { t: r.t, s, ...lineOf(r) }
+        })
+        .filter((p) => Number.isFinite(p.s)),
+    [rows, lineOf],
+  )
+  // The price and LP-vs-BH lines read EVERY bucket, not just the ones with a swap: the
+  // indexer prices quiet hours too (Robinhood since 2026-10-28), and reading only
+  // traded buckets would hold this chart flat while the Pool Balance chart moves.
+  const linePoints = useMemo(() => rows.map((r) => ({ t: r.t, ...lineOf(r) })), [rows, lineOf])
+  // Signed volume: each bucket's base-bought and base-sold USD as two legs.
+  const volPoints = useMemo(() => rows.flatMap(volumeLegs), [rows])
 
-  // Timeframe = a real time GRID resampled from the per-swap points, so the x-axis
-  // is linear in clock time. The grid holds the FULL loaded history at this bucket
-  // size; the range is a zoom preset (visible window), so scroll-left reveals older
-  // bars + loads more (like the LP chart). gridEnd is always "now".
+  // Timeframe = a real time GRID resampled from the bucket points, so the x-axis is
+  // linear in clock time. The grid holds the FULL history at this bucket size; the
+  // range is a zoom preset (visible window). gridEnd is always "now".
   // Chart's current visible [from,to] in unix secs, updated on scroll (debounced).
   // null = use the timeframe's default preset window. Drives VISIBLE-WINDOW RENDERING:
   // gapped segments are built only for what's on screen, not the full loaded history.
@@ -236,13 +195,13 @@ export function PoolSpreadChart({
 
   const { bucket } = RANGE_BUCKETS[range]
   const grid = useMemo(
-    () => bucketGrid(allPoints.length ? allPoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
-    [allPoints, bucket],
+    () => bucketGrid(linePoints.length ? linePoints[0].t : null, bucket, Math.floor(Date.now() / 1000)),
+    [linePoints, bucket],
   )
 
   // The window (+ pad) the gapped segment pools are materialized for. lightweight-charts
   // can't gap a single line, so each no-trade segment is its own series — building that
-  // for the whole loaded history is ~hundreds of series at 1D/5-min. So we build only
+  // for the whole history can run to hundreds of series at 1D. So we build only
   // the on-screen slice. FULL data stays loaded; scrolling just rebuilds for the new
   // window. Pad each side so moderate scrolls don't hit an empty edge before the rebuild.
   const lastTime = allPoints.length ? allPoints[allPoints.length - 1].t : null
@@ -255,9 +214,8 @@ export function PoolSpreadChart({
     return { from: from - pad, to: to + pad }
   }, [renderWindow, lastTime, range, grid, bucket])
 
-  // Full carried close series (a cheap array — no series yet). price0/volume use it whole
-  // (single series = cheap, and they anchor the time axis so scroll reveals history);
-  // the gapped pools use only the windowed slice.
+  // Spread close series over the full grid (a cheap array — no series yet); the gapped
+  // pools use only the windowed slice of it.
   const bucketed = useMemo(
     () => (grid ? bucketClose(allPoints, bucket, grid.gridStart, grid.gridEnd) : []),
     [allPoints, bucket, grid],
@@ -270,14 +228,19 @@ export function PoolSpreadChart({
   // Spread line gaps across no-trade buckets → segment pool, built for the WINDOW only.
   // Break on every empty bucket so tiny "dust" gaps show (per product).
   const spreadSegments = useMemo(() => toGappedSegments(windowedBucketed, (p) => p.s), [windowedBucketed])
+  // The price and LP-vs-BH lines, over every bucket (see linePoints).
+  const lineBucketed = useMemo(
+    () => (grid ? bucketClose(linePoints, bucket, grid.gridStart, grid.gridEnd) : []),
+    [linePoints, bucket, grid],
+  )
   // LP-vs-BH is a CARRIED continuous line (product reverted the gap) — a single series
   // over the full grid on the left axis, so no windowing/pool needed for it.
   const lpVsBhData = useMemo(
     () =>
-      bucketed
+      lineBucketed
         .filter((p) => p.lpVsBh != null && Number.isFinite(p.lpVsBh))
         .map((p) => ({ time: p.t as any, value: p.lpVsBh as number })),
-    [bucketed],
+    [lineBucketed],
   )
   const hasLpVsBh = lpVsBhData.length > 0
   // Newest observed spread time from the FULL data (not the window) so the preset always
@@ -289,10 +252,21 @@ export function PoolSpreadChart({
     return null
   }, [bucketed])
 
+  // Why there is no spread line, worded so the viewer knows what to do about it. The
+  // sub-daily ranges read only the hourly tier (~41 days), so a pool whose last swap is
+  // older has no reading there even though ALL has.
+  const emptyNote = useMemo(() => {
+    if (allPoints.length) return null
+    const traded = (list: PoolAggRow[]) => list.some((r) => r.totalVolume > 0)
+    if (traded(rows)) return "No oracle readings were recorded for this pool's swaps."
+    if (rows !== dailyRows && traded(dailyRows)) return 'No swaps in the last ~41 days. Switch to ALL for older history.'
+    return 'No swaps on this pool yet.'
+  }, [allPoints, rows, dailyRows])
+
   // Pool price line (base priced in quote) — carried, single series over the FULL grid.
   const price0Data = useMemo(
-    () => bucketed.filter((p) => Number.isFinite(p.price0)).map((p) => ({ time: p.t as any, value: p.price0 })),
-    [bucketed],
+    () => lineBucketed.filter((p) => Number.isFinite(p.price0)).map((p) => ({ time: p.t as any, value: p.price0 })),
+    [lineBucketed],
   )
 
   // Signed volume histogram — bar height = total USD volume in the BUCKET, sign/
@@ -300,16 +274,12 @@ export function PoolSpreadChart({
   // it reconciles with the LP chart's volume over the same period.
   const volumeData = useMemo(() => {
     if (!grid) return []
-    return bucketVolume(allPoints, bucket, grid.gridStart, grid.gridEnd, COLOR_VOL_UP, COLOR_VOL_DOWN)
-  }, [allPoints, bucket, grid])
+    return bucketVolume(volPoints, bucket, grid.gridStart, grid.gridEnd, COLOR_VOL_UP, COLOR_VOL_DOWN)
+  }, [volPoints, bucket, grid])
 
   // Market reference price (gated to MARKET_REF_PAIRS) — same hook + 'price' scale as
   // the Pool Balance chart, so the pool price vs market comparison matches there.
-  // Fetch only the VISIBLE window, not the full loaded grid: at 5-min the whole loaded
-  // history is ~1300 Pyth bars per feed (slow on the 7D→1D switch), while the view only
-  // shows `span` seconds. Bounds the fetch to the timeframe window (ALL = full grid).
-  // Keep market history aligned with the full loaded pool window. Scroll-to-load
-  // moves gridStart backward, which should extend this reference line as well.
+  // Keep market history aligned with the full pool window.
   const marketFrom = grid?.gridStart ?? null
   const marketRaw = usePoolMarketPrice({
     baseFeedId,
@@ -328,31 +298,6 @@ export function PoolSpreadChart({
 
   // The "now" spread is always the latest swap, independent of the timeframe.
   const latest = allPoints[allPoints.length - 1]
-
-  // Fetch the next older batch and prepend it. Guarded so only one fetch runs at
-  // a time, and stops once a batch comes back < 1000 (older end reached). Capture
-  // the visible TIME range first so the post-setData effect can restore the view.
-  const loadMore = useCallback(async () => {
-    if (loadingRef.current || exhaustedRef.current) return
-    const oldest = combinedTxs[combinedTxs.length - 1]
-    if (!oldest) return
-    const before = Number(oldest.timestamp)
-    if (!Number.isFinite(before)) return
-    loadingRef.current = true
-    try {
-      const batch = await fetchPoolTxnsPage(chainId, version, pairAddress, before)
-      if (batch.length < 1000) exhaustedRef.current = true
-      if (batch.length > 0) {
-        // Times of existing bars don't change, so the saved TIME range stays valid.
-        savedRangeRef.current = chartRef.current?.timeScale().getVisibleRange() ?? null
-        pendingRestoreRef.current = true
-        setOlderTxs((prev) => [...prev, ...batch])
-      }
-    } finally {
-      loadingRef.current = false
-    }
-  }, [combinedTxs, chainId, version, pairAddress])
-  loadMoreRef.current = loadMore
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -381,7 +326,7 @@ export function PoolSpreadChart({
   >(null)
 
   // Building the gapped spread as many segment series is a synchronous chunk of work
-  // (each no-trade gap = its own series; the 1D/5-min view can be ~150+). Show a brief
+  // (each no-trade gap = its own series; the 1D view can need many). Show a brief
   // "Rendering…" overlay for those heavy builds, and defer the work one paint so the
   // overlay is actually visible instead of the click feeling frozen.
   const [rendering, setRendering] = useState(false)
@@ -395,12 +340,15 @@ export function PoolSpreadChart({
     const ts = chartRef.current?.timeScale()
     if (!ts) return
     const rangeSpan = RANGE_BUCKETS[range].span
-    if (rangeSpan == null || lastSpreadTime == null) {
+    // Anchor on the latest spread reading, or on the price line when there is none, so
+    // a pool without readings in this range still opens at the preset window.
+    const anchor = lastSpreadTime ?? (price0Data.length ? (price0Data[price0Data.length - 1].time as number) : null)
+    if (rangeSpan == null || anchor == null) {
       ts.fitContent()
       return
     }
-    ts.setVisibleRange({ from: (lastSpreadTime - rangeSpan) as Time, to: lastSpreadTime as Time })
-  }, [range, lastSpreadTime])
+    ts.setVisibleRange({ from: (anchor - rangeSpan) as Time, to: anchor as Time })
+  }, [range, lastSpreadTime, price0Data])
   // Stable handle so the data-push effect can apply the preset without taking
   // `applyRangePreset` as a dependency (which would re-fire it on every range tick).
   const applyRangePresetRef = useRef(applyRangePreset)
@@ -590,13 +538,11 @@ export function PoolSpreadChart({
     }
     chart.subscribeCrosshairMove(crosshairHandler as any)
 
-    // On scroll/zoom: (1) page older swaps when near the left edge of loaded data;
-    // (2) rebuild the gapped segments for the new visible window (debounced so a fast
-    // scroll doesn't churn — the segment pad covers the interim). winTimerRef +
-    // updateWindowRef are stable refs, so this once-created handler stays valid.
+    // On scroll/zoom: rebuild the gapped segments for the new visible window (debounced
+    // so a fast scroll doesn't churn — the segment pad covers the interim). winTimerRef
+    // + updateWindowRef are stable refs, so this once-created handler stays valid.
     const rangeChangeHandler = (logical: { from: number; to: number } | null) => {
       if (!logical) return
-      if (logical.from < 10) loadMoreRef.current()
       if (winTimerRef.current != null) clearTimeout(winTimerRef.current)
       winTimerRef.current = window.setTimeout(() => updateWindowRef.current(), 120)
     }
@@ -635,15 +581,8 @@ export function PoolSpreadChart({
       lpbhRef.current?.setData(lpVsBhData)
       price0Ref.current?.setData(price0Data)
       volSeriesRef.current?.setData(volumeData)
-      if (spreadSegments.length) {
-        if (pendingRestoreRef.current) {
-          // A load-more prepend just grew the series on the LEFT — keep the same TIME
-          // window so the view doesn't jump. Do NOT re-apply the preset here.
-          const saved = savedRangeRef.current
-          if (saved) chart.timeScale().setVisibleRange(saved)
-          pendingRestoreRef.current = false
-          savedRangeRef.current = null
-        } else if (!framedForRangeRef.current) {
+      if (spreadSegments.length || price0Data.length) {
+        if (!framedForRangeRef.current) {
           // First data for this timeframe → frame the preset. Scroll-driven rebuilds and
           // 60s refetches (already framed) keep the current view instead of snapping back.
           applyRangePresetRef.current()
@@ -754,12 +693,12 @@ export function PoolSpreadChart({
               Loading oracle spread…
             </div>
           )}
-          {!isLoading && allPoints.length === 0 && (
+          {!isLoading && emptyNote && (
             <div
               className="absolute inset-0 flex items-center justify-center"
               style={{ color: '#978A80', fontFamily: 'Inter', fontSize: 13 }}
             >
-              No swaps on this pool yet.
+              {emptyNote}
             </div>
           )}
           {rendering && allPoints.length > 0 && (

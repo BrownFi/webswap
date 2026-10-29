@@ -68,9 +68,18 @@ const hasBh3Price = (chainId: number) => CHAINS_WITH_BH3_PRICE.has(chainId)
 // `uniV2Price`/`bh3Price` only exist on the V3 indexer schema, and only on some
 // chains. Strip each optional field unless the chain exposes it AND the pair is V3
 // (V2 pairs route to the V2 schema, which has neither — querying is a validation error).
-const buildQuery = (template: string, keepUniV2: boolean, keepBh3: boolean, keepBenchReserves: boolean) => {
+const buildQuery = (
+  template: string,
+  keepUniV2: boolean,
+  keepBh3: boolean,
+  keepBenchReserves: boolean,
+  keepBuySell: boolean,
+) => {
   let q = keepUniV2 ? template : template.replace(/\s*uniV2Price\s*/g, '\n')
   if (!keepBh3) q = q.replace(/\s*bh3Price\s*/g, '\n')
+  // buyVolume/sellVolume are V3-indexer fields (every V3 chain has them); the V2
+  // schema rejects them.
+  if (!keepBuySell) q = q.replace(/\s*buyVolume\s*/g, '\n').replace(/\s*sellVolume\s*/g, '\n')
   // New benchmark math (boss 2026-07-17): value each benchmark's RESERVES at the
   // bucket's token prices vs the LP's tvl —
   //   bnh   = bh3Reserve0·token0Price + bh3Reserve1·token1Price → lpVsBh3  = (tvl−bnh)/bnh
@@ -121,6 +130,8 @@ const GET_PAIR_STATS = `
       dayStartUnix
       tvl
       totalVolume
+      buyVolume
+      sellVolume
       totalFee
       apr
       lpPrice
@@ -150,6 +161,8 @@ const GET_PAIR_STATS_HOUR = `
       hourStartUnix
       tvl
       totalVolume
+      buyVolume
+      sellVolume
       totalFee
       apr
       lpPrice
@@ -180,6 +193,8 @@ const GET_PAIR_STATS_HOUR_OLDER = `
       hourStartUnix
       tvl
       totalVolume
+      buyVolume
+      sellVolume
       totalFee
       apr
       lpPrice
@@ -196,53 +211,15 @@ const GET_PAIR_STATS_HOUR_OLDER = `
   }
 `
 
-// PROTOTYPE (research/lp-candlestick): recent swaps for the DAILY stacked
-// buy/sell volume. Client-side bucketed by day. `first: 1000` is a prototype
-// limitation — pools with >1000 swaps show partial data for the oldest days.
-const GET_PAIR_SWAPS = `
-  query PairSwaps($pair: String) {
-    transactions(first: 1000, where: { pair: $pair, type: "SWAP" }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      amount0In
-      amount0Out
-      reserve0
-      reserve0USD
-    }
-  }
-`
-
-// Older page (cursor = oldest timestamp of the previous batch) so we can loop past
-// the 1000/query cap and cover full history for the buy/sell volume split. Dropped
-// once the indexer exposes buyVolume/sellVolume on pairDayData/pairHourData.
-const GET_PAIR_SWAPS_OLDER = `
-  query PairSwapsOlder($pair: String, $before: BigInt) {
-    transactions(first: 1000, where: { pair: $pair, type: "SWAP", timestamp_lt: $before }, orderBy: timestamp, orderDirection: desc) {
-      timestamp
-      amount0In
-      amount0Out
-      reserve0
-      reserve0USD
-    }
-  }
-`
-
-// Safety cap on the pagination loop: 20 batches = up to 20k swaps. Busy/old pools
-// beyond that keep only the most-recent 20k (logged) — still far past the old
-// 1000-swap limit, and moot once the indexer returns aggregate buy/sell volume.
-const MAX_SWAP_BATCHES = 20
-
-type SwapTxn = {
-  timestamp: number | string
-  amount0In: number | string
-  amount0Out: number | string
-  reserve0: number | string
-  reserve0USD: number | string
-}
-
 type DayData = {
   dayStartUnix: number
   tvl: number
   totalVolume: number
+  // Buy/sell split of totalVolume on the pool's BASE token (buyVolume = base bought) —
+  // the indexer orients it by quoteTokenIndex, the same signal `reversed` comes from.
+  // Absent on V2.
+  buyVolume?: number
+  sellVolume?: number
   totalFee: number
   apr: number
   lpPrice: number
@@ -330,13 +307,13 @@ const fmtVolUsd = (v: number): string => {
 
 type Props = {
   pair: Pair
-  // Base/quote display orientation (= shouldReverseDisplay). When true the base is
-  // token1, so buy/sell volume must be colored against token1, not raw token0 —
-  // otherwise a base-sell shows green here but red on the Pool Balance chart.
+  // Base/quote display orientation (= shouldReverseDisplay). Not read for the volume
+  // colors any more (the indexer's buy/sell split is already base-oriented); kept so
+  // the memo below still re-renders when the orientation changes.
   reversed?: boolean
 }
 
-const PairChartTVInner = ({ pair, reversed = false }: Props) => {
+const PairChartTVInner = ({ pair }: Props) => {
   const showExtendedMetrics = !isMainnet
   const supportsUniV2 = hasUniV2Price(pair.chainId)
   const isV3 = isV3Like(pair.version)
@@ -393,7 +370,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStats',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2, keepBh3, keepBenchReserves), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS, keepUniV2, keepBh3, keepBenchReserves, isV3), 'dayStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -407,7 +384,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     queryFn: () =>
       graphqlFetcher({
         operationName: 'PairStatsHour',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2, keepBh3, keepBenchReserves), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR, keepUniV2, keepBh3, keepBenchReserves, isV3), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() },
       }),
     refetchInterval: 60_000,
@@ -415,88 +392,6 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     placeholderData: keepPreviousData,
     enabled: isHourly,
   })
-
-  // PROTOTYPE: recent swaps for the stacked buy/sell volume. Enabled in BOTH modes
-  // (daily buckets by day, 1h by hour) — the recent first:1000 swaps cover both.
-  const { data: swapResp } = useQuery<{ transactions: SwapTxn[] }>({
-    queryKey: ['pairSwaps', pair.chainId, pair.liquidityToken.address, pair.version],
-    // Loop with a timestamp_lt cursor to pull FULL swap history (not just the
-    // newest 1000) so the buy/sell volume has no gap. Stops when a batch returns
-    // < 1000 (oldest reached) or the MAX_SWAP_BATCHES safety cap is hit.
-    queryFn: async () => {
-      const base = { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase() }
-      const all: SwapTxn[] = []
-      let before: string | undefined
-      for (let i = 0; i < MAX_SWAP_BATCHES; i++) {
-        const resp = (await graphqlFetcher({
-          operationName: before ? 'PairSwapsOlder' : 'PairSwaps',
-          query: withFirstActivityGte(
-            before ? GET_PAIR_SWAPS_OLDER : GET_PAIR_SWAPS,
-            'timestamp',
-            pair.chainId,
-            pair.liquidityToken.address,
-          ),
-          variables: before ? { ...base, before } : base,
-        })) as { transactions?: SwapTxn[] } | null
-        const txs = resp?.transactions ?? []
-        all.push(...txs)
-        if (txs.length < 1000) break
-        before = String(txs[txs.length - 1].timestamp)
-        if (i === MAX_SWAP_BATCHES - 1) {
-          console.warn(`[PairChartTV] swap history capped at ${MAX_SWAP_BATCHES}k — older volume buckets omitted`)
-        }
-      }
-      return { transactions: all }
-    },
-    // Full-history fetch is heavier than a single page, so refresh less often than
-    // the 60s price polling — volume bars don't need sub-minute freshness.
-    refetchInterval: 5 * 60_000,
-    staleTime: 5 * 60_000,
-    placeholderData: keepPreviousData,
-    // V3 only — V2's indexer has no per-swap `transactions` for a buy/sell split
-    // (the query 500s), so V2 falls back to the aggregate totalVolume bars.
-    enabled: !!pair.liquidityToken.address && !!pair.chainId && isV3,
-  })
-
-  // PROTOTYPE: bucket swaps and split buy/sell USD volume. Bucket size follows the
-  // mode — per HOUR in 1h, per DAY otherwise.
-  //  - vol (USD) = (amount0In + amount0Out) × token0-USD-price
-  //  - isBuy = amount0Out > amount0In (token0 LEFT the pool → someone bought token0)
-  //    NOTE (demo simplification): this is raw-token0 orientation. A base/quote-
-  //    aware buy/sell (flip when token0 is the quote) can layer on later.
-  // Produces two ASC-by-bucket arrays: volTotal (buy+sell) and volSell (sell only)
-  // — the stacked-histogram trick draws green(total) behind, red(sell) on top.
-  const { volTotal, volSell } = useMemo(() => {
-    const rows = swapResp?.transactions ?? []
-    const bucket = isHourly ? 3600 : 86400
-    // Drop any swap with a bad/future timestamp — a single future-dated bucket
-    // stretches the whole time axis and paints phantom future dates on it.
-    const nowSec = Math.floor(Date.now() / 1000)
-    const byBucket = new Map<number, { buy: number; sell: number }>()
-    rows.forEach((t) => {
-      const ts = Number(t.timestamp)
-      if (!Number.isFinite(ts) || ts > nowSec) return
-      const reserve0 = Number(t.reserve0)
-      const in0 = Number(t.amount0In)
-      const out0 = Number(t.amount0Out)
-      const vol = reserve0 > 0 ? (in0 + out0) * (Number(t.reserve0USD) / reserve0) : 0
-      if (!Number.isFinite(vol) || vol <= 0) return
-      // Color buy/sell against the BASE token (matches the Pool Balance chart + the
-      // price line), NOT raw token0. Base bought = green. When `reversed`, base is
-      // token1, so a base buy means token0 ENTERS the pool (in0 > out0) — flip.
-      const isBuy = reversed ? in0 > out0 : out0 > in0
-      const bucketStart = Math.floor(ts / bucket) * bucket
-      const acc = byBucket.get(bucketStart) ?? { buy: 0, sell: 0 }
-      acc.buy += isBuy ? vol : 0
-      acc.sell += isBuy ? 0 : vol
-      byBucket.set(bucketStart, acc)
-    })
-    const buckets = [...byBucket.entries()].sort((a, b) => a[0] - b[0])
-    return {
-      volTotal: buckets.map(([time, v]) => ({ time: time as any, value: v.buy + v.sell })),
-      volSell: buckets.map(([time, v]) => ({ time: time as any, value: v.sell })),
-    }
-  }, [swapResp, isHourly, reversed])
 
   const isPending = isHourly ? isPendingHour : isPendingDay
   const data = isHourly ? hourResp : dayResp
@@ -555,6 +450,10 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
       const bh3Raw = Number(d.bh3Price) || 0
       const tvlRaw = Number(d.tvl) || 0
       const volRaw = Number(d.totalVolume) || 0
+      // Buy/sell are already BASE-oriented (base bought = green), matching the Pool
+      // Balance chart and the price line — no flip for `reversed`.
+      const volBuy = Number(d.buyVolume) || 0
+      const volSell = Number(d.sellVolume) || 0
       // Apply the iskHYPEUSDT scale BEFORE computing the diff so we don't mix raw
       // and scaled values (only affects the price-ratio fallback + the price lines).
       const lp = iskHYPEUSDT ? lpRaw / 1e9 : lpRaw
@@ -597,6 +496,8 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
         netPnL: bnh ? ((lp - bnh) / bnh) * 100 : 0,
         lpVsBh3,
         volume: volRaw,
+        volBuy,
+        volSell,
       }
     }
     if (isHourly) {
@@ -621,19 +522,17 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
   // effect re-runs and re-frames to the newly selected window.
   const chartData = useMemo(() => [...fullChartData], [fullChartData, range, isHourly])
 
-  // PROTOTYPE: scope the stacked volume to the SAME window as the price data so the
-  // range selector zooms the chart (the volume no longer stretches it to all
-  // history). Scope the volume to the earliest VISIBLE price bucket
-  // (chartData[0].time) in EVERY mode — for 1D that's the loaded hourly window,
-  // for ALL it's a no-op (all data), for 7D/1M it's the sliced range — so
-  // fitContent always frames the price window, not the full swap history.
-  const { chartVolTotal, chartVolSell } = useMemo(() => {
-    const cutoff = chartData.length ? Number(chartData[0].time) : 0
-    return {
-      chartVolTotal: volTotal.filter((p) => Number(p.time) >= cutoff),
-      chartVolSell: volSell.filter((p) => Number(p.time) >= cutoff),
-    }
-  }, [volTotal, volSell, chartData])
+  // Stacked buy/sell volume, from the SAME aggregate rows as every other line — so it
+  // covers exactly the loaded window (incl. the 1D load-more) with no extra request.
+  // It used to page the per-swap `transactions` feed (up to 20k swaps) to bucket them
+  // client-side. Green(total) is drawn behind, red(sell) on top.
+  const { chartVolTotal, chartVolSell } = useMemo(
+    () => ({
+      chartVolTotal: chartData.map((p) => ({ time: p.time as any, value: p.volBuy + p.volSell })),
+      chartVolSell: chartData.map((p) => ({ time: p.time as any, value: p.volSell })),
+    }),
+    [chartData],
+  )
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -668,7 +567,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     try {
       const res = (await graphqlFetcher({
         operationName: 'PairStatsHourOlder',
-        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2, keepBh3, keepBenchReserves), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
+        query: withFirstActivityGte(buildQuery(GET_PAIR_STATS_HOUR_OLDER, keepUniV2, keepBh3, keepBenchReserves, isV3), 'hourStartUnix', pair.chainId, pair.liquidityToken.address),
         variables: { chainId: pair.chainId, version: pair.version, pair: pair.liquidityToken.address.toLowerCase(), before },
       })) as { pairHourDatas?: HourData[] } | null
       const batch = res?.pairHourDatas ?? []
@@ -682,7 +581,7 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     } finally {
       loadingRef.current = false
     }
-  }, [combinedHours, keepUniV2, pair.chainId, pair.version, pair.liquidityToken.address])
+  }, [combinedHours, keepUniV2, isV3, pair.chainId, pair.version, pair.liquidityToken.address])
   loadMoreRef.current = loadMore
 
   // Create chart once
@@ -806,8 +705,8 @@ const PairChartTVInner = ({ pair, reversed = false }: Props) => {
     // PROTOTYPE: daily STACKED buy/sell volume on the same 'volume' scale. The
     // trick: GREEN (total = buy+sell) is created FIRST so it draws BEHIND, then
     // RED (sell) is created SECOND so it draws ON TOP — covering 0→sell. Net
-    // visual: red-bottom / green-top stack. Fed only in daily mode (empty in 1h,
-    // where the existing single 'volume' histogram is used instead).
+    // visual: red-bottom / green-top stack. Fed in every mode on V3; V2 has no
+    // buy/sell split and keeps the single 'volume' histogram instead.
     const volBuy = chart.addSeries(HistogramSeries, {
       ...commonNoLabels,
       color: COLOR_BUY,

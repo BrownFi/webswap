@@ -632,12 +632,12 @@ function PoolDetailInner({
             </div>
 
             {/* Pool analytics charts (balance/imbalance + oracle spread) — beta/dev
-                ONLY (hidden on mainnet per product) AND V3-only: both query the
-                indexer's `transactions` entity, which the V2 indexer doesn't have
-                (it 500s), so they'd error on V2 pools. */}
+                ONLY (hidden on mainnet per product) AND V3-only: both read V3-only
+                pairHour/DayData fields (oracle, config, buy/sell volume) that the V2
+                indexer doesn't have (it 500s), so they'd error on V2 pools. */}
             {!isMainnet && isV3Like(version) && (
               <>
-                {/* Pool balance / imbalance over time — pool-wide (reserve0USD/reserve1USD per tx), lightweight-charts (TradingView) */}
+                {/* Pool balance / imbalance over time — pool-wide (reserve × price per hourly/daily bucket), lightweight-charts (TradingView) */}
                 <PoolBalanceChart
                   pairAddress={pairAddress}
                   chainId={chainId}
@@ -650,7 +650,7 @@ function PoolDetailInner({
                   token1FeedId={pairRaw.token1?.priceFeedId}
                 />
 
-                {/* Oracle spread (oSpread) over time — (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel per SWAP */}
+                {/* Oracle spread (oSpread) over time — (pythPrice0/pythPrice1 − ammPriceRel) / adjPriceRel at each bucket's last swap */}
                 <PoolSpreadChart
                   pairAddress={pairAddress}
                   chainId={chainId}
