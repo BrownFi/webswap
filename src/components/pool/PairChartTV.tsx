@@ -45,6 +45,9 @@ const CHAINS_WITH_UNIV2_PRICE = !isV3Enabled
       ChainId.HYPER_EVM,
       ChainId.MONAD,
       ChainId.ROBINHOOD_MAINNET,
+      // Hemi (43111) — verified 2026-10-29 on the beta API: uniV2/bh3 prices and
+      // reserves + token prices carry real values on pairDay/HourData.
+      ChainId.HEMI_MAINNET,
     ])
 const hasUniV2Price = (chainId: number) => CHAINS_WITH_UNIV2_PRICE.has(chainId)
 // `bh3Price` (a 3rd buy-and-hold benchmark) is an aggregate field the indexer
@@ -63,6 +66,9 @@ const CHAINS_WITH_BH3_PRICE = !isV3Enabled
       // Robinhood (4663) — verified 2026-08-03: bh3Price returns real data on the
       // Robinhood V3 indexer (beta-api /indexer/v3?chainId=4663).
       ChainId.ROBINHOOD_MAINNET,
+      // Hemi (43111) — verified 2026-10-29 on the beta API: uniV2/bh3 prices and
+      // reserves + token prices carry real values on pairDay/HourData.
+      ChainId.HEMI_MAINNET,
     ])
 const hasBh3Price = (chainId: number) => CHAINS_WITH_BH3_PRICE.has(chainId)
 // `uniV2Price`/`bh3Price` only exist on the V3 indexer schema, and only on some
@@ -116,6 +122,9 @@ const CHAINS_WITH_BENCH_RESERVES = !isV3Enabled
       // token0Price/token1Price all return real data, enabling the reserve-based
       // TVL benchmark math (same as Bera) instead of the old price-ratio fallback.
       ChainId.ROBINHOOD_MAINNET,
+      // Hemi (43111) — verified 2026-10-29 on the beta API: uniV2/bh3 prices and
+      // reserves + token prices carry real values on pairDay/HourData.
+      ChainId.HEMI_MAINNET,
     ])
 const hasBenchReserves = (chainId: number) => CHAINS_WITH_BENCH_RESERVES.has(chainId)
 

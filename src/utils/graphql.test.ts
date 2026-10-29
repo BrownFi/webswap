@@ -11,10 +11,10 @@ describe('graphqlFetcher V3 indexer gating', () => {
     vi.unstubAllGlobals()
   })
 
-  // Hemi runs BrownFi V3 but its BE /indexer/v3 is not configured for chainId
-  // 43111 yet, so every V3 query there answers HTTP 500. Pool list and pool
-  // detail each fan out several V3 queries, so a stray one is both noisy and
-  // slow — the fetch must not happen at all.
+  // Base runs BrownFi V3 but its BE /indexer/v3 is not configured for chainId
+  // 8453, so every V3 query there answers HTTP 500. Pool list and pool detail each
+  // fan out several V3 queries, so a stray one is both noisy and slow — the fetch
+  // must not happen at all. (Hemi was the example until its indexer went live.)
   it('makes no request for a V3 chain whose indexer is off', async () => {
     const fetchSpy = vi.fn()
     vi.stubGlobal('fetch', fetchSpy)
@@ -22,7 +22,7 @@ describe('graphqlFetcher V3 indexer gating', () => {
     const result = await graphqlFetcher({
       operationName: 'Pair',
       query: QUERY,
-      variables: { chainId: ChainId.HEMI_MAINNET, version: VERSION.V3_OFFICIAL, id: '0x0' },
+      variables: { chainId: ChainId.BASE_MAINNET, version: VERSION.V3_OFFICIAL, id: '0x0' },
     })
 
     expect(result).toBeNull()

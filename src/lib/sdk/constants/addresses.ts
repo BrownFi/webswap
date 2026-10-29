@@ -173,9 +173,12 @@ export const V3_OFFICIAL_USE_INDEXER: Record<number, boolean> = {
   // of 2026-07-29 (live on api + beta-api, returns the WETH/USDG pool), so use the
   // indexer (pool list/detail + charts the on-chain path can't give).
   [ChainId.ROBINHOOD_MAINNET]: true,
-  // Hemi V3 deployed 2026-10-09 — on-chain reads (useV3PoolsOnChain) until Manh's
-  // BE /indexer/v3 is configured for chainId 43111; flip to true once it's live.
-  [ChainId.HEMI_MAINNET]: false,
+  // Hemi V3 deployed 2026-10-09 (redeployed 2026-10-16) — BE /indexer/v3 indexes
+  // chainId 43111 on the beta API as of 2026-10-29: head current, the pool list and
+  // pair-detail queries answer with every field, and WETH/USDC.e's reserves match
+  // on-chain exactly. So read the indexer (volume/TVL/fee-APR/charts the on-chain
+  // path can't give).
+  [ChainId.HEMI_MAINNET]: true,
 }
 
 /** Per-version address-map resolvers (used by the SDK getters + readers). */
