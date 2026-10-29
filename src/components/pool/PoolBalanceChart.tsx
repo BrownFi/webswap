@@ -141,14 +141,14 @@ export function PoolBalanceChart({
       query: makeAggQuery(entity, timeKey),
       variables: { chainId, version, pair: pairAddress.toLowerCase() },
     })
-  const { data: aggHour, isLoading: aggHourLoading } = useQuery<{ rows: AggRow[] }>({
+  const { data: aggHour, isLoading: aggHourLoading, isPlaceholderData: aggHourPlaceholder } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['poolBalanceAggHour', chainId, pairAddress, version],
     queryFn: aggQueryFn('pairHourDatas', 'hourStartUnix'),
     refetchInterval: 60_000,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
-  const { data: aggDay, isLoading: aggDayLoading } = useQuery<{ rows: AggRow[] }>({
+  const { data: aggDay, isLoading: aggDayLoading, isPlaceholderData: aggDayPlaceholder } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['poolBalanceAggDay', chainId, pairAddress, version],
     queryFn: aggQueryFn('pairDayDatas', 'dayStartUnix'),
     refetchInterval: 60_000,
@@ -156,23 +156,24 @@ export function PoolBalanceChart({
     placeholderData: keepPreviousData,
   })
 
-  const isLoading = aggHourLoading || aggDayLoading
+  // Placeholder data counts as loaded, so on a pool switch one tier could land and be
+  // joined with the OTHER tier's previous-pool placeholder — count it as loading.
+  const isLoading = aggHourLoading || aggDayLoading || aggHourPlaceholder || aggDayPlaceholder
+  // Each range reads ONE tier, never a mix — daily bars (ALL) the daily rows, hourly-or-
+  // finer bars the hourly rows. See the LP chart for why.
+  const dailyBars = Math.max(RANGE_BUCKETS[range].bucket, 60 * 60) >= 86_400
 
   const allPoints = useMemo<Point[]>(() => {
     // Wait for BOTH tiers — see the LP chart: drawing the daily tier alone first
     // flashes a coarse step chart before the hourly rows replace it.
-    if (aggHourLoading || aggDayLoading) return []
+    if (isLoading) return []
     const asc = (rows: AggRow[] | undefined) =>
       (rows ?? [])
         .map((d) => balanceRowToPoint(d, baseIdx))
         .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.pct0))
         .sort((a, b) => a.t - b.t)
-    const hourly = asc(aggHour?.rows)
-    const daily = asc(aggDay?.rows)
-    // Daily for the old part + hourly for the recent part → full history, fine recent.
-    const earliestHourly = hourly.length ? hourly[0].t : Infinity
-    return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
-  }, [aggHourLoading, aggDayLoading, aggHour, aggDay, baseIdx])
+    return asc(dailyBars ? aggDay?.rows : aggHour?.rows)
+  }, [isLoading, dailyBars, aggHour, aggDay, baseIdx])
 
   // The chart always holds the full history — the timeframe selector is a zoom preset
   // (visible TIME range), not a data filter.

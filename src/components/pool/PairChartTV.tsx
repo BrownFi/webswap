@@ -123,8 +123,8 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
   // BOTH tiers, range-independent (stable query keys, no refetch on range switch):
   //   • hourly (pairHourDatas) → fine resolution for the recent ~41d (≤1000 pts);
   //   • daily  (pairDayDatas)  → full pool history (≤1000 days).
-  // They're merged (daily for the old part, hourly for the recent part) so the lines
-  // cover the pool's whole history — a single hourly query would cap them at ~41d.
+  // ALL reads the daily tier (the pool's whole history); 1D/7D/1M read the hourly
+  // tier (~41d), never a mix of the two — see `dailyBars` below.
   const uniAggFields = keepUniV2 ? '\n            uniV2Reserve0\n            uniV2Reserve1' : ''
   const makeAggQuery = (entity: string, timeKey: 'hourStartUnix' | 'dayStartUnix') =>
     withFirstActivityGte(
@@ -150,14 +150,14 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
       query: makeAggQuery(entity, timeKey),
       variables: { chainId, version, pair: pairAddress.toLowerCase() },
     })
-  const { data: hourResp, isLoading: hourLoading } = useQuery<{ rows: AggRow[] }>({
+  const { data: hourResp, isLoading: hourLoading, isPlaceholderData: hourPlaceholder } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['pairBenchAggHour', chainId, pairAddress, version, keepUniV2],
     queryFn: aggQueryFn('pairHourDatas', 'hourStartUnix'),
     refetchInterval: 60_000,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
-  const { data: dayResp, isLoading: dayLoading } = useQuery<{ rows: AggRow[] }>({
+  const { data: dayResp, isLoading: dayLoading, isPlaceholderData: dayPlaceholder } = useQuery<{ rows: AggRow[] }>({
     queryKey: ['pairBenchAggDay', chainId, pairAddress, version, keepUniV2],
     queryFn: aggQueryFn('pairDayDatas', 'dayStartUnix'),
     refetchInterval: 60_000,
@@ -165,25 +165,28 @@ const PairChartTVInner = ({ pair, reversed = false, symbol0, symbol1 }: Props) =
     placeholderData: keepPreviousData,
   })
 
+  // Placeholder data counts as loaded, so on a pool switch one tier could land and be
+  // joined with the OTHER tier's previous-pool placeholder — count it as loading.
+  const isLoading = hourLoading || dayLoading || hourPlaceholder || dayPlaceholder
+  // Each range reads ONE tier, never a mix: daily bars (ALL) the daily rows — each is a
+  // whole day's volume and close, and 1000 of them reach past every pool's creation —
+  // and hourly-or-finer bars the hourly rows. Joining the two double-counted the seam
+  // day (USDG/NVDA 2026-09-17: 355k + 147k for a 355k day), and a daily row on an
+  // hourly grid put a whole day's volume in one bar at 00:00.
+  const dailyBars = Math.max(RANGE_BUCKETS[range].bucket, AGG_BUCKET_FLOOR) >= 86_400
+
   const aggPoints = useMemo<AggPoint[]>(() => {
     // Wait for BOTH tiers. Drawing whichever lands first paints a coarse daily-only
     // chart and then redraws it once the hourly rows arrive — a visible flash on
     // every load.
-    if (hourLoading || dayLoading) return []
+    if (isLoading) return []
     const asc = (rows: AggRow[] | undefined) =>
       (rows ?? [])
         .map((row) => rowToPoint({ row, baseIdx, keepUniV2, scaleLpPriceDown: iskHYPEUSDT }))
         .filter((p) => Number.isFinite(p.t))
         .sort((a, b) => a.t - b.t)
-    const hourly = asc(hourResp?.rows)
-    const daily = asc(dayResp?.rows)
-    // Daily for the old part (before the hourly window begins) + hourly for the
-    // recent part → full-history coverage with fine recent resolution, no overlap.
-    const earliestHourly = hourly.length ? hourly[0].t : Infinity
-    return [...daily.filter((d) => d.t < earliestHourly), ...hourly]
-  }, [hourLoading, dayLoading, hourResp, dayResp, keepUniV2, baseIdx, iskHYPEUSDT])
-
-  const isLoading = hourLoading || dayLoading
+    return asc(dailyBars ? dayResp?.rows : hourResp?.rows)
+  }, [isLoading, dailyBars, hourResp, dayResp, keepUniV2, baseIdx, iskHYPEUSDT])
 
   // Price/LP-price/volume share one source with the % lines, so the former
   // "tx points" are simply the aggregate points.

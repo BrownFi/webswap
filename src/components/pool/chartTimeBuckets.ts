@@ -27,9 +27,9 @@ export const RANGE_KEYS: RangeKey[] = ['1D', '7D', '1M', 'ALL']
 
 // Compute the [gridStart, gridEnd] bucket-aligned grid. gridEnd is always "now"
 // (so the carried line reaches the present); gridStart follows the EARLIEST loaded
-// swap. The grid holds the full loaded history at this bucket size — the timeframe
-// is a zoom preset (visible window), NOT a data filter — so scrolling left reveals
-// older bars and triggers load-more, matching the LP chart. null when no data.
+// point. The grid holds everything loaded at this bucket size — the timeframe is a
+// zoom preset (visible window), NOT a data filter — so scrolling left reveals older
+// bars, back to the start of the tier the range reads. null when no data.
 export function bucketGrid(
   firstTs: number | null,
   bucket: number,
